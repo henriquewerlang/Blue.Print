@@ -1,0 +1,60 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{4C5F4E41-85C7-4780-8AB3-17FE979378CC}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Delphi.Rest.Runtime.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Delphi.Rest.Design.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="..\Test\Delphi.Rest.Test.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="Delphi_Rest_Runtime">
+        <MSBuild Projects="Delphi.Rest.Runtime.dproj"/>
+    </Target>
+    <Target Name="Delphi_Rest_Runtime:Clean">
+        <MSBuild Projects="Delphi.Rest.Runtime.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Delphi_Rest_Runtime:Make">
+        <MSBuild Projects="Delphi.Rest.Runtime.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Delphi_Rest_Design">
+        <MSBuild Projects="Delphi.Rest.Design.dproj"/>
+    </Target>
+    <Target Name="Delphi_Rest_Design:Clean">
+        <MSBuild Projects="Delphi.Rest.Design.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Delphi_Rest_Design:Make">
+        <MSBuild Projects="Delphi.Rest.Design.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Delphi_Rest_Test">
+        <MSBuild Projects="..\Test\Delphi.Rest.Test.dproj"/>
+    </Target>
+    <Target Name="Delphi_Rest_Test:Clean">
+        <MSBuild Projects="..\Test\Delphi.Rest.Test.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Delphi_Rest_Test:Make">
+        <MSBuild Projects="..\Test\Delphi.Rest.Test.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="Delphi_Rest_Runtime;Delphi_Rest_Design;Delphi_Rest_Test"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="Delphi_Rest_Runtime:Clean;Delphi_Rest_Design:Clean;Delphi_Rest_Test:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="Delphi_Rest_Runtime:Make;Delphi_Rest_Design:Make;Delphi_Rest_Test:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

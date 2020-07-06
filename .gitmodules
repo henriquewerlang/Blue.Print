@@ -1,0 +1,9 @@
+[submodule "Externals/Delphi.Mock"]
+	path = Externals/Delphi.Mock
+	url = ../Delphi.Mock.git
+[submodule "Externals/DUnitX"]
+	path = Externals/DUnitX
+	url = ../../VSoftTechnologies/DUnitX.git
+[submodule "Externals/FastMM5"]
+	path = Externals/FastMM5
+	url = ../../pleriche/FastMM5.git
