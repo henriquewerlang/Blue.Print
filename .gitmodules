@@ -7,3 +7,6 @@
 [submodule "Externals/FastMM5"]
 	path = Externals/FastMM5
 	url = ../../pleriche/FastMM5.git
+[submodule "Package/Externals/DUnitX"]
+	path = Package/Externals/DUnitX
+	url = ../../VSoftTechnologies/DUnitX.git
