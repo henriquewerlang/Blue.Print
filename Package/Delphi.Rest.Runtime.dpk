@@ -29,7 +29,8 @@
 {$IMPLICITBUILD ON}
 
 requires
-  rtl;
+  rtl,
+  inet;
 
 contains
   Delphi.Rest.Web.Service.Component in '..\Delphi.Rest.Web.Service.Component.pas';

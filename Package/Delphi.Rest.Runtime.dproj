@@ -113,6 +113,7 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="rtl.dcp"/>
+        <DCCReference Include="inet.dcp"/>
         <DCCReference Include="..\Delphi.Rest.Web.Service.Component.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
