@@ -10,10 +10,14 @@ uses
   TestInsight.DUnitX,
   {$ELSE}
   DUnitX.Loggers.Console,
-  DUnitX.Loggers.Xml.NUnit,
   {$ENDIF }
-  DUnitX.TestFramework;
+  DUnitX.TestFramework,
+  Delphi.Rest.Server.Service.Component in '..\Delphi.Rest.Server.Service.Component.pas',
+  Delphi.Rest.Server.Service.Component.Test in 'Delphi.Rest.Server.Service.Component.Test.pas',
+  Delphi.Rest.Client.Service in '..\Delphi.Rest.Client.Service.pas',
+  Delphi.Rest.Client.Service.Test in 'Delphi.Rest.Client.Service.Test.pas';
 
+// Para não remover os itens abaixo.
 {$IFNDEF TESTINSIGHT}
 var
   runner: ITestRunner;

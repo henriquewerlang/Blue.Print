@@ -33,6 +33,8 @@ requires
   inet;
 
 contains
-  Delphi.Rest.Web.Service.Component in '..\Delphi.Rest.Web.Service.Component.pas';
+  Delphi.Rest.Server.Service.Component in '..\Delphi.Rest.Server.Service.Component.pas',
+  Delphi.Rest.Client.Service in '..\Delphi.Rest.Client.Service.pas',
+  Delphi.Rest.Communication in '..\Delphi.Rest.Communication.pas';
 
 end.

@@ -1,11 +1,11 @@
-﻿unit Delphi.Rest.Web.Service.Component;
+﻿unit Delphi.Rest.Server.Service.Component;
 
 interface
 
 uses System.Classes, Web.HTTPApp;
 
 type
-  TRestWebService = class(TComponent, IGetWebAppServices, IWebAppServices)
+  TRestServerService = class(TComponent, IGetWebAppServices, IWebAppServices)
   private
     // IGetWebAppServices
     function GetWebAppServices: IWebAppServices;
@@ -14,40 +14,41 @@ type
     function GetActive: Boolean;
     function GetExceptionHandler: TObject;
     function HandleRequest: Boolean;
+
     procedure FinishContext;
     procedure InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);
   end;
 
 implementation
 
-{ TRestWebService }
+{ TRestServerService }
 
-procedure TRestWebService.FinishContext;
+procedure TRestServerService.FinishContext;
 begin
 
 end;
 
-function TRestWebService.GetActive: Boolean;
+function TRestServerService.GetActive: Boolean;
 begin
   Result := False;
 end;
 
-function TRestWebService.GetExceptionHandler: TObject;
+function TRestServerService.GetExceptionHandler: TObject;
 begin
   Result := nil;
 end;
 
-function TRestWebService.GetWebAppServices: IWebAppServices;
+function TRestServerService.GetWebAppServices: IWebAppServices;
 begin
   Result := Self;
 end;
 
-function TRestWebService.HandleRequest: Boolean;
+function TRestServerService.HandleRequest: Boolean;
 begin
   Result := False;
 end;
 
-procedure TRestWebService.InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);
+procedure TRestServerService.InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);
 begin
 
 end;

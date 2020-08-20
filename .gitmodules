@@ -1,6 +1,6 @@
 [submodule "Externals/Delphi.Mock"]
 	path = Externals/Delphi.Mock
-	url = ../Delphi.Mock.git
+	url = ../Delphi.Mock
 [submodule "Externals/DUnitX"]
 	path = Externals/DUnitX
 	url = ../../VSoftTechnologies/DUnitX.git
