@@ -2,7 +2,7 @@ unit Delphi.Rest.Communication;
 
 interface
 
-uses System.Rtti;
+uses System.Rtti, System.SysUtils;
 
 type
   TBody = class

@@ -16,6 +16,8 @@ type
     procedure WhenCallSendRequestMustSendABodyInParams;
     [Test]
     procedure TheBodyParameterMustHaveTheValuesOfCallingProcedure;
+    [Test]
+    procedure TheURLPassedInConstructorMustContatWithTheRequestURL;
   end;
 
 {$M+}
@@ -35,7 +37,7 @@ procedure TClientServiceTest.TheBodyParameterMustHaveTheValuesOfCallingProcedure
 begin
   var Communication := TMock.CreateInterface<IRestCommunication>;
 
-  var Client := TClientService.Create(Communication.Instance);
+  var Client := TClientService.Create(EmptyStr, Communication.Instance);
   var Service := Client.GetService<IServiceTest>;
 
   Communication.Expect.CustomExpect(
@@ -57,10 +59,24 @@ procedure TClientServiceTest.TheURLOfServerCallMustContainTheNameOfInterfacePlus
 begin
   var Communication := TMock.CreateInterface<IRestCommunication>;
 
-  var Client := TClientService.Create(Communication.Instance);
+  var Client := TClientService.Create(EmptyStr, Communication.Instance);
   var Service := Client.GetService<IServiceTest>;
 
   Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedute'), It.IsAny<TBody>);
+
+  Service.TestProcedute;
+
+  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+end;
+
+procedure TClientServiceTest.TheURLPassedInConstructorMustContatWithTheRequestURL;
+begin
+  var Communication := TMock.CreateInterface<IRestCommunication>;
+
+  var Client := TClientService.Create('http://myurl.com', Communication.Instance);
+  var Service := Client.GetService<IServiceTest>;
+
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('http://myurl.com/ServiceTest/TestProcedute'), It.IsAny<TBody>);
 
   Service.TestProcedute;
 
@@ -71,7 +87,7 @@ procedure TClientServiceTest.WhenCallSendRequestMustSendABodyInParams;
 begin
   var Communication := TMock.CreateInterface<IRestCommunication>;
 
-  var Client := TClientService.Create(Communication.Instance);
+  var Client := TClientService.Create(EmptyStr, Communication.Instance);
   var Service := Client.GetService<IServiceTest>;
 
   Communication.Expect.Once.When.SendRequest(It.IsAny<String>, It.IsNotEqualTo<TBody>(nil));
@@ -85,7 +101,7 @@ procedure TClientServiceTest.WhenCallTheProcedureMustGenerateTheRequestForServer
 begin
   var Communication := TMock.CreateInterface<IRestCommunication>;
 
-  var Client := TClientService.Create(Communication.Instance);
+  var Client := TClientService.Create(EmptyStr, Communication.Instance);
   var Service := Client.GetService<IServiceTest>;
 
   Communication.Expect.Once.When.SendRequest(It.IsAny<String>, It.IsAny<TBody>);
