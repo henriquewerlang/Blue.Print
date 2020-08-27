@@ -2,11 +2,15 @@
 
 interface
 
-uses System.Classes, Web.HTTPApp;
+uses System.Classes, System.SysUtils, Web.HTTPApp;
 
 type
-  TRestServerService = class(TComponent, IGetWebAppServices, IWebAppServices)
+  TRestServerService = class(TComponent, IGetWebAppServices, IWebAppServices, IWebExceptionHandler)
   private
+    FActive: Boolean;
+    FRequest: TWebRequest;
+    FResponse: TWebResponse;
+
     // IGetWebAppServices
     function GetWebAppServices: IWebAppServices;
 
@@ -15,8 +19,16 @@ type
     function GetExceptionHandler: TObject;
     function HandleRequest: Boolean;
 
+    // IWebExceptionHandler
+    procedure HandleException(E: Exception; var Handled: Boolean);
+
     procedure FinishContext;
     procedure InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);
+  public
+    property Request: TWebRequest read FRequest;
+    property Response: TWebResponse read FResponse;
+  published
+    property Active: Boolean read FActive write FActive;
   end;
 
 implementation
@@ -30,7 +42,7 @@ end;
 
 function TRestServerService.GetActive: Boolean;
 begin
-  Result := False;
+  Result := FActive;
 end;
 
 function TRestServerService.GetExceptionHandler: TObject;
@@ -43,14 +55,21 @@ begin
   Result := Self;
 end;
 
+procedure TRestServerService.HandleException(E: Exception; var Handled: Boolean);
+begin
+
+end;
+
 function TRestServerService.HandleRequest: Boolean;
 begin
-  Result := False;
+  Result := True;
 end;
 
 procedure TRestServerService.InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);
 begin
-
+  FRequest := Request;
+  FResponse := Response;
 end;
 
 end.
+
