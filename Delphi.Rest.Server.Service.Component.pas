@@ -18,12 +18,11 @@ type
     function GetActive: Boolean;
     function GetExceptionHandler: TObject;
     function HandleRequest: Boolean;
+    procedure FinishContext;
+    procedure InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);
 
     // IWebExceptionHandler
     procedure HandleException(E: Exception; var Handled: Boolean);
-
-    procedure FinishContext;
-    procedure InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);
   public
     property Request: TWebRequest read FRequest;
     property Response: TWebResponse read FResponse;
@@ -62,7 +61,7 @@ end;
 
 function TRestServerService.HandleRequest: Boolean;
 begin
-  Result := True;
+  Result := False;
 end;
 
 procedure TRestServerService.InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);
