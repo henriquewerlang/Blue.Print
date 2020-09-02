@@ -20,7 +20,7 @@ type
   public
     constructor Create(URL: String; Communication: IRestCommunication);
 
-    function GetService<T{$IFDEF DCC}: IInterface{$ENDIF}>: T;
+    function GetService<T: IInterface>: T;
   end;
 
 implementation
