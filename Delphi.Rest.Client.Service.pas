@@ -2,7 +2,7 @@ unit Delphi.Rest.Client.Service;
 
 interface
 
-uses System.Rtti, System.SysUtils, System.Types, Delphi.Rest.Communication;
+uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, Delphi.Rest.Communication;
 
 type
   TClientService = class
@@ -17,6 +17,7 @@ type
 {$ELSE}
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 {$ENDIF}
+    function Deserialize(const JSON: String; Method: TRttiMethod): {$IFDEF PAS2JS}JSValue{$ELSE}TValue{$ENDIF};
   public
     constructor Create(URL: String; Communication: IRestCommunication);
 
@@ -24,6 +25,14 @@ type
   end;
 
 implementation
+
+uses Delphi.Rest.JSON.Serializer,
+{$IFDEF PAS2JS}
+  JS, JSON.Serializers.Pas2Js
+{$ELSE}
+  System.JSON.Serializers
+{$ENDIF}
+  ;
 
 { TClientService }
 
@@ -34,6 +43,23 @@ begin
   FCommunication := Communication;
   FContext := TRttiContext.Create;
   FURL := URL;
+end;
+
+function TClientService.Deserialize(const JSON: String; Method: TRttiMethod): {$IFDEF PAS2JS}JSValue{$ELSE}TValue{$ENDIF};
+var
+  Serializer: TRestJsonSerializer;
+
+begin
+  if Assigned(Method.ReturnType) then
+  begin
+    Serializer := TRestJsonSerializer.Create;
+
+    Result := Serializer.Deserialize(JSON, Method.ReturnType.Handle);
+
+    Serializer.Free;
+  end
+  else
+    Result := TValue.Empty;
 end;
 
 function TClientService.GetService<T>: T;
@@ -70,7 +96,7 @@ begin
   for A := Succ(Low(Args)) to High(Args) do
     Body.Values := Body.Values + [{$IFDEF PAS2JS}TValue.FromJSValue{$ENDIF}(Args[A])];
 
-  FCommunication.SendRequest(Format('%s/%s/%s', [FURL, Method.Parent.Name.Substring(1), Method.Name]), Body);
+  Result := Deserialize(FCommunication.SendRequest(Format('%s/%s/%s', [FURL, Method.Parent.Name.Substring(1), Method.Name]), Body), Method);
 
   Body.Free;
 end;

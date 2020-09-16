@@ -2,7 +2,7 @@ unit Delphi.Rest.Communication.Pas2Js;
 
 interface
 
-uses Delphi.Rest.Communication, Web;
+uses Delphi.Rest.Communication, Web, System.Rtti;
 
 type
   TRestCommunication = class(TInterfacedObject, IRestCommunication)
@@ -21,7 +21,7 @@ var
 begin
   Connection := TJSXMLHttpRequest.New;
 
-  Connection.Open('GET', URL);
+  Connection.Open('GET', URL, False);
 
   Connection.Send(Body);
 
