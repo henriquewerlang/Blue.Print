@@ -17,7 +17,7 @@ type
 {$ELSE}
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 {$ENDIF}
-    function Deserialize(const JSON: String; Method: TRttiMethod): {$IFDEF PAS2JS}JSValue{$ELSE}TValue{$ENDIF};
+    function Deserialize(const JSON: String; Method: TRttiMethod): TValue;
   public
     constructor Create(URL: String; Communication: IRestCommunication);
 
@@ -32,7 +32,7 @@ uses Delphi.Rest.JSON.Serializer,
 {$ELSE}
   System.JSON.Serializers
 {$ENDIF}
-  ;
+    ;
 
 { TClientService }
 
@@ -45,7 +45,7 @@ begin
   FURL := URL;
 end;
 
-function TClientService.Deserialize(const JSON: String; Method: TRttiMethod): {$IFDEF PAS2JS}JSValue{$ELSE}TValue{$ENDIF};
+function TClientService.Deserialize(const JSON: String; Method: TRttiMethod): TValue;
 var
   Serializer: TRestJsonSerializer;
 
@@ -74,8 +74,10 @@ begin
 end;
 
 {$IFDEF PAS2JS}
+
 function TClientService.OnInvokeMethod(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
 {$ELSE}
+
 procedure TClientService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 {$ENDIF}
 var
@@ -92,14 +94,12 @@ begin
 {$IFDEF PAS2JS}
   Method := FRttiType.GetMethod(aMethodName);
 {$ENDIF}
-
   for A := Succ(Low(Args)) to High(Args) do
     Body.Values := Body.Values + [{$IFDEF PAS2JS}TValue.FromJSValue{$ENDIF}(Args[A])];
 
-  Result := Deserialize(FCommunication.SendRequest(Format('%s/%s/%s', [FURL, Method.Parent.Name.Substring(1), Method.Name]), Body), Method);
+  Result := Deserialize(FCommunication.SendRequest(Format('%s/%s/%s', [FURL, Method.Parent.Name.Substring(1), Method.Name]), Body), Method){$IFDEF PAS2JS}.AsJSValue{$ENDIF};
 
   Body.Free;
 end;
 
 end.
-
