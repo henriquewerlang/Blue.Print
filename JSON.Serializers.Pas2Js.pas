@@ -95,7 +95,7 @@ begin
     begin
       Prop := RttiType.GetProperty(Key);
 
-      Prop.SetValue(Result.AsObject, DeserializeJSON(JSONObject[Key], Prop.PropertyType));
+      Prop.SetValue(Result.AsObject, DeserializeJSON(JSONObject[Key], Prop.PropertyType).AsJSValue);
     end;
   end;
 end;
