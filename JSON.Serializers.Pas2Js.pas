@@ -85,13 +85,18 @@ var
   Prop: TRttiProperty;
 
 begin
-  Result := TValue.FromJSValue(CreateObject(RttiType));
-
-  for Key in TJSObject.Keys(JSONObject) do
+  if JSON = NULL then
+    Result := TValue.Empty
+  else
   begin
-    Prop := RttiType.GetProperty(Key);
+    Result := TValue.FromJSValue(CreateObject(RttiType));
 
-    Prop.SetValue(Result.AsObject, DeserializeJSON(JSONObject[Key], Prop.PropertyType));
+    for Key in TJSObject.Keys(JSONObject) do
+    begin
+      Prop := RttiType.GetProperty(Key);
+
+      Prop.SetValue(Result.AsObject, DeserializeJSON(JSONObject[Key], Prop.PropertyType));
+    end;
   end;
 end;
 
