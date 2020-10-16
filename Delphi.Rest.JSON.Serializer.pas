@@ -34,7 +34,6 @@ var
 
 begin
   Serializer := TJsonSerializer.Create;
-  Serializer.ContractResolver := TJsonDefaultContractResolver.Create(TJsonMemberSerialization.Public);
 
   Result := Serializer.Deserialize(AJson, TypeInfo);
 
@@ -62,6 +61,7 @@ var
 
   LJsonReader: TJsonTextReader;
 begin
+  ContractResolver := TJsonDefaultContractResolver.Create(TJsonMemberSerialization.Public);
   LStringReader := TStringReader.Create(AJson);
   try
     LJsonReader := TJsonTextReader.Create(LStringReader);

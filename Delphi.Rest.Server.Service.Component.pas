@@ -6,6 +6,7 @@ uses System.Classes, System.SysUtils, System.Rtti, Web.HTTPApp, Delphi.Rest.Serv
 
 type
   EInvalidParameterType = class(Exception);
+  TOnGetServiceContainer = function: IServiceContainer of object;
 
   TRestServerService = class(TComponent, IGetWebAppServices, IWebAppServices, IWebExceptionHandler)
   private
@@ -14,10 +15,12 @@ type
     FResponse: TWebResponse;
     FServiceContainer: IServiceContainer;
     FSerializer: TRestJsonSerializer;
+    FOnGetServiceContainer: TOnGetServiceContainer;
 
     function GetParams(Info: TRttiMethod; const Params: TArray<String>; var ConvertedParams: TArray<TValue>): Boolean;
     function GetParamValue(Param: TRttiParameter; const Value: String): TValue;
     function GetSerializer: TRestJsonSerializer;
+    function GetServiceContainer: IServiceContainer;
     function GetValue(RttiType: TRttiType; const Value: String): TValue;
 
     // IGetWebAppServices
@@ -40,9 +43,10 @@ type
 
     property Request: TWebRequest read FRequest;
     property Response: TWebResponse read FResponse;
-    property ServiceContainer: IServiceContainer read FServiceContainer write FServiceContainer;
+    property ServiceContainer: IServiceContainer read GetServiceContainer write FServiceContainer;
   published
     property Active: Boolean read FActive write FActive;
+    property OnGetServiceContainer: TOnGetServiceContainer read FOnGetServiceContainer write FOnGetServiceContainer;
   end;
 
 implementation
@@ -98,6 +102,14 @@ begin
     FSerializer := TRestJsonSerializer.Create;
 
   Result := FSerializer;
+end;
+
+function TRestServerService.GetServiceContainer: IServiceContainer;
+begin
+  if not Assigned(FServiceContainer) and Assigned(FOnGetServiceContainer) then
+    FServiceContainer := FOnGetServiceContainer;
+
+  Result := FServiceContainer;
 end;
 
 function TRestServerService.GetValue(RttiType: TRttiType; const Value: String): TValue;
