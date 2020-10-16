@@ -26,6 +26,7 @@ var
   nunitLogger : ITestLogger;
 {$ENDIF}
 begin
+  ReportMemoryLeaksOnShutdown := True;
 {$IFDEF TESTINSIGHT}
   TestInsight.DUnitX.RunRegisteredTests;
 {$ELSE}

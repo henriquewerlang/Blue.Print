@@ -74,26 +74,25 @@ begin
 end;
 
 {$IFDEF PAS2JS}
-
 function TClientService.OnInvokeMethod(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
 {$ELSE}
-
 procedure TClientService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 {$ENDIF}
 var
-{$IFDEF PAS2JS}
-  Method: TRttiMethod;
-
-{$ENDIF}
   A: Integer;
 
   Body: TBody;
 
+{$IFDEF PAS2JS}
+  Method: TRttiMethod;
+
+{$ENDIF}
 begin
   Body := TBody.Create;
 {$IFDEF PAS2JS}
   Method := FRttiType.GetMethod(aMethodName);
 {$ENDIF}
+
   for A := Succ(Low(Args)) to High(Args) do
     Body.Values := Body.Values + [{$IFDEF PAS2JS}TValue.FromJSValue{$ENDIF}(Args[A])];
 

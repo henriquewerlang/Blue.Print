@@ -4,7 +4,7 @@ interface
 
 uses System.Rtti, System.TypInfo,
   {$IFDEF DCC}
-  System.JSON.Serializers, System.Classes, System.JSON.Readers
+  System.JSON.Serializers, System.Classes, System.JSON.Readers, System.JSON.Writers, System.SysUtils
   {$ELSE}
   JSON.Serializers.Pas2Js
   {$ENDIF}
@@ -19,6 +19,7 @@ type
 
   {$IFDEF DCC}
   TJsonSerializerHelper = class helper for TJsonSerializer
+    function Serialize(const AValue: TValue): String; inline;
     function Deserialize(const AJson: String; TypeInfo: PTypeInfo): TValue; overload;
   end;
   {$ENDIF}
@@ -33,6 +34,7 @@ var
 
 begin
   Serializer := TJsonSerializer.Create;
+  Serializer.ContractResolver := TJsonDefaultContractResolver.Create(TJsonMemberSerialization.Public);
 
   Result := Serializer.Deserialize(AJson, TypeInfo);
 
@@ -73,6 +75,36 @@ begin
     end;
   finally
     LStringReader.Free;
+  end;
+end;
+
+function TJsonSerializerHelper.Serialize(const AValue: TValue): String;
+var
+  StringBuilder: TStringBuilder;
+  StringWriter: TStringWriter;
+  JsonWriter: TJsonTextWriter;
+
+begin
+  StringBuilder := TStringBuilder.Create($7FFF);
+  StringWriter := TStringWriter.Create(StringBuilder);
+  try
+    JsonWriter := TJsonTextWriter.Create(StringWriter);
+    JsonWriter.FloatFormatHandling := FloatFormatHandling;
+    JsonWriter.DateFormatHandling := DateFormatHandling;
+    JsonWriter.DateTimeZoneHandling := DateTimeZoneHandling;
+    JsonWriter.StringEscapeHandling := StringEscapeHandling;
+    JsonWriter.Formatting := Formatting;
+
+    try
+      InternalSerialize(JsonWriter, AValue);
+    finally
+      JsonWriter.Free;
+    end;
+
+    Result := StringBuilder.ToString(True);
+  finally
+    StringWriter.Free;
+    StringBuilder.Free;
   end;
 end;
 {$ENDIF}

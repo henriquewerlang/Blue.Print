@@ -57,6 +57,8 @@ begin
   Service.TestProcedureWithParam('String', 1234);
 
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Client.Free;
 end;
 
 procedure TClientServiceTest.TheURLOfServerCallMustContainTheNameOfInterfacePlusTheProcedureName;
@@ -71,6 +73,8 @@ begin
   Service.TestProcedute;
 
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Client.Free;
 end;
 
 procedure TClientServiceTest.TheURLPassedInConstructorMustContatWithTheRequestURL;
@@ -85,6 +89,8 @@ begin
   Service.TestProcedute;
 
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Client.Free;
 end;
 
 procedure TClientServiceTest.WhenCallAFunctionMustReturnTheValueOfFunctionAsSpected;
@@ -97,6 +103,8 @@ begin
   Communication.Setup.WillReturn('8888').When.SendRequest(It.IsAny<String>, It.IsAny<TBody>);
 
   Assert.AreEqual(8888, Service.TestFunction);
+
+  Client.Free;
 end;
 
 procedure TClientServiceTest.WhenCallSendRequestMustSendABodyInParams;
@@ -111,6 +119,8 @@ begin
   Service.TestProcedureWithParam('String', 1234);
 
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Client.Free;
 end;
 
 procedure TClientServiceTest.WhenCallTheProcedureMustGenerateTheRequestForServer;
@@ -125,6 +135,8 @@ begin
   Service.TestProcedute;
 
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Client.Free;
 end;
 
 end.
