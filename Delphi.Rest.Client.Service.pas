@@ -96,7 +96,7 @@ begin
   for A := Succ(Low(Args)) to High(Args) do
     Body.Values := Body.Values + [{$IFDEF PAS2JS}TValue.FromJSValue{$ENDIF}(Args[A])];
 
-  Result := Deserialize(FCommunication.SendRequest(Format('%s/%s/%s', [FURL, Method.Parent.Name.Substring(1), Method.Name]), Body), Method){$IFDEF PAS2JS}.AsJSValue{$ENDIF};
+  Result := Deserialize(FCommunication.SendRequest(Format('%s/%s/%s', [FURL, FRttiType.Name.Substring(1), Method.Name]), Body), Method){$IFDEF PAS2JS}.AsJSValue{$ENDIF};
 
   Body.Free;
 end;
