@@ -33,7 +33,7 @@ type
     procedure WhenTheTypeIsInvalidMustRaiseAnError(ProcedureName: String);
     [TestCase('Array', 'ProcArray;[''abc'', ''zzz'']', ';')]
     [TestCase('Char', 'ProcChar,''S''')]
-    [TestCase('Class', 'ProcClass,{Value: 1234}')]
+    [TestCase('Class', 'ProcClass,{"Value": 1234}')]
     [TestCase('Enum', 'ProcEnum,Enum3')]
     [TestCase('Float', 'ProcFloat,123.456')]
     [TestCase('Int64', 'ProcInt64,123456789012')]
@@ -52,6 +52,8 @@ type
     procedure WhenTheRequestExecutionWasSucessfullyMustReturnTheJSONResult;
     [Test]
     procedure WhenTheRequestIsForAProcedureCantRaiseErrorOfSerialization;
+    [Test]
+    procedure WhenTheRequestCallAFunctionAndTheReturnIsAClassMustReturnTheJSONAsSpected;
   end;
 
   {$RTTI EXPLICIT METHODS([vcProtected, vcPublic])}
@@ -109,6 +111,7 @@ type
 
   IService = interface
     ['{FD524CA4-55CF-4005-B47A-48B220718AA0}']
+    function FuncClass: TMyClass;
     function FuncInteger: Integer;
 
     procedure Proc;
@@ -136,6 +139,9 @@ type
 
   TService = class(TInterfacedObject, IService)
   private
+    FMyClass: TMyClass;
+
+    function FuncClass: TMyClass;
     function FuncInteger: Integer;
 
     procedure Proc;
@@ -161,6 +167,8 @@ type
     procedure ProcWString(Value: WideString);
   public
     ProcedureCalled: String;
+
+    destructor Destroy; override;
   end;
 
   TServiceContainer = class(TInterfacedObject, IServiceContainer)
@@ -320,6 +328,25 @@ begin
   Rest.HandleRequest;
 
   Assert.AreEqual('ProcParam=123', Service.ProcedureCalled);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenTheRequestCallAFunctionAndTheReturnIsAClassMustReturnTheJSONAsSpected;
+begin
+  var Container := TServiceContainer.Create(TService.Create);
+  var Request := TMock.CreateClass<TWebRequestMock>;
+  var Response := TWebResponseMock.Create(Request.Instance);
+
+  Request.Setup.WillReturn('/IService/FuncClass').When.GetStringVariable(It.IsAny<Integer>);
+
+  var Rest := CreateRestService(Request.Instance, Response, Container);
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual('{"Value":5555}', Response.Content);
 
   Request.Free;
 
@@ -603,6 +630,20 @@ begin
 end;
 
 { TService }
+
+destructor TService.Destroy;
+begin
+  FMyClass.Free;
+
+  inherited;
+end;
+
+function TService.FuncClass: TMyClass;
+begin
+  FMyClass := TMyClass.Create;
+  FMyClass.Value := 5555;
+  Result := FMyClass;
+end;
 
 function TService.FuncInteger: Integer;
 begin

@@ -85,6 +85,7 @@ var
   JsonWriter: TJsonTextWriter;
 
 begin
+  ContractResolver := TJsonDefaultContractResolver.Create(TJsonMemberSerialization.Public);
   StringBuilder := TStringBuilder.Create($7FFF);
   StringWriter := TStringWriter.Create(StringBuilder);
   try
