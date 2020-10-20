@@ -33,7 +33,7 @@ type
 
 implementation
 
-uses System.SysUtils, System.Rtti, Delphi.Rest.Client.Service, Delphi.Mock, Delphi.Rest.Communication;
+uses System.SysUtils, System.Rtti, Delphi.Rest.Client.Service, Delphi.Mock;
 
 { TClientServiceTest }
 
@@ -44,7 +44,7 @@ begin
   var Client := TClientService.Create(EmptyStr, Communication.Instance);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedute'), It.IsAny<TBody>);
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedute'));
 
   Service.TestProcedute;
 
@@ -60,7 +60,7 @@ begin
   var Client := TClientService.Create('http://myurl.com', Communication.Instance);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('http://myurl.com/ServiceTest/TestProcedute'), It.IsAny<TBody>);
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('http://myurl.com/ServiceTest/TestProcedute'));
 
   Service.TestProcedute;
 
@@ -76,7 +76,7 @@ begin
   var Client := TClientService.Create(EmptyStr, Communication.Instance);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedureWithParam/"abc"/123'), It.IsAny<TBody>);
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedureWithParam/"abc"/123'));
 
   Service.TestProcedureWithParam('abc', 123);
 
@@ -92,7 +92,7 @@ begin
   var Client := TClientService.Create(EmptyStr, Communication.Instance);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Setup.WillReturn('8888').When.SendRequest(It.IsAny<String>, It.IsAny<TBody>);
+  Communication.Setup.WillReturn('8888').When.SendRequest(It.IsAny<String>);
 
   Assert.AreEqual(8888, Service.TestFunction);
 
@@ -106,7 +106,7 @@ begin
   var Client := TClientService.Create(EmptyStr, Communication.Instance);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsAny<String>, It.IsNotEqualTo<TBody>(nil));
+  Communication.Expect.Once.When.SendRequest(It.IsAny<String>);
 
   Service.TestProcedureWithParam('String', 1234);
 
@@ -122,7 +122,7 @@ begin
   var Client := TClientService.Create(EmptyStr, Communication.Instance);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsAny<String>, It.IsAny<TBody>);
+  Communication.Expect.Once.When.SendRequest(It.IsAny<String>);
 
   Service.TestProcedute;
 

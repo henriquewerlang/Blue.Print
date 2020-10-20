@@ -2,16 +2,26 @@ unit Delphi.Rest.Client.Service;
 
 interface
 
-uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, Delphi.Rest.JSON.Serializer, Delphi.Rest.Communication;
+uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, Delphi.Rest.JSON.Serializer;
 
 type
+  IRestCommunication = interface
+    ['{33BB3249-F044-4BDF-B3E0-EA2378A040C4}']
+    function SendRequest(URL: String): String;
+  end;
+
+  TRestCommunication = class(TInterfacedObject, IRestCommunication)
+  private
+    function SendRequest(URL: String): String;
+  end;
+
   TClientService = class
   private
-    FCommunication: IRestCommunication;
     FContext: TRttiContext;
     FRttiType: TRttiInterfaceType;
     FURL: String;
     FSerializer: TRestJsonSerializer;
+    FCommunication: IRestCommunication;
 
 {$IFDEF PAS2JS}
     function GetURLParams(const Args: TJSValueDynArray): String;
@@ -21,26 +31,35 @@ type
 
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 {$ENDIF}
+
     function Deserialize(const JSON: String; Method: TRttiMethod): TValue;
   public
-    constructor Create(URL: String; Communication: IRestCommunication);
+    constructor Create(URL: String); overload;
+    constructor Create(URL: String; Communication: IRestCommunication); overload;
 
     destructor Destroy; override;
 
     function GetService<T: IInterface>: T;
+
+    property Communication: IRestCommunication read FCommunication write FCommunication;
   end;
 
 implementation
 
 uses
 {$IFDEF PAS2JS}
-  JS, JSON.Serializers.Pas2Js
+  JS, Web, JSON.Serializers.Pas2Js
 {$ELSE}
   System.JSON.Serializers
 {$ENDIF}
     ;
 
 { TClientService }
+
+constructor TClientService.Create(URL: String);
+begin
+  Create(URL, TRestCommunication.Create);
+end;
 
 constructor TClientService.Create(URL: String; Communication: IRestCommunication);
 begin
@@ -107,22 +126,37 @@ function TClientService.OnInvokeMethod(const aMethodName: String; const Args: TJ
 {$ELSE}
 procedure TClientService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 {$ENDIF}
-var
-  Body: TBody;
-
 {$IFDEF PAS2JS}
+var
   Method: TRttiMethod;
 
 {$ENDIF}
 begin
-  Body := TBody.Create;
 {$IFDEF PAS2JS}
   Method := FRttiType.GetMethod(aMethodName);
 {$ENDIF}
 
-  Result := Deserialize(FCommunication.SendRequest(Format('%s/%s/%s%s', [FURL, FRttiType.Name.Substring(1), Method.Name, GetURLParams(Args)]), Body), Method){$IFDEF PAS2JS}.AsJSValue{$ENDIF};
+  Result := Deserialize(Communication.SendRequest(Format('%s/%s/%s%s', [FURL, FRttiType.Name.Substring(1), Method.Name, GetURLParams(Args)])), Method){$IFDEF PAS2JS}.AsJSValue{$ENDIF};
+end;
 
-  Body.Free;
+{ TRestCommunication }
+
+function TRestCommunication.SendRequest(URL: String): String;
+{$IFDEF PAS2JS}
+var
+  Connection: TJSXMLHttpRequest;
+
+{$ENDIF}
+begin
+{$IFDEF PAS2JS}
+  Connection := TJSXMLHttpRequest.New;
+
+  Connection.Open('GET', URL, False);
+
+  Connection.Send;
+
+  Result := Connection.ResponseText;
+{$ENDIF}
 end;
 
 end.
