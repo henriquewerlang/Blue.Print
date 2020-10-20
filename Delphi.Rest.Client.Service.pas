@@ -13,8 +13,11 @@ type
     FURL: String;
 
 {$IFDEF PAS2JS}
+    function GetURLParams(const Args: TJSValueDynArray): String;
     function OnInvokeMethod(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
 {$ELSE}
+    function GetURLParams(const Args: TArray<TValue>): String;
+
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 {$ENDIF}
     function Deserialize(const JSON: String; Method: TRttiMethod): TValue;
@@ -74,13 +77,29 @@ begin
 end;
 
 {$IFDEF PAS2JS}
+function TClientService.GetURLParams(const Args: TJSValueDynArray): String;
+{$ELSE}
+function TClientService.GetURLParams(const Args: TArray<TValue>): String;
+{$ENDIF}
+var
+  A: Integer;
+
+begin
+  Result := EmptyStr;
+
+  for A := Low(Args) to High(Args) do
+begin
+    Result := Result + '/' + String(Args[A]){$IFDEF DCC}.ToString{$ENDIF};
+    writeln(string(Args[A]));
+end;
+end;
+
+{$IFDEF PAS2JS}
 function TClientService.OnInvokeMethod(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
 {$ELSE}
 procedure TClientService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 {$ENDIF}
 var
-  A: Integer;
-
   Body: TBody;
 
 {$IFDEF PAS2JS}
@@ -93,12 +112,10 @@ begin
   Method := FRttiType.GetMethod(aMethodName);
 {$ENDIF}
 
-  for A := Succ(Low(Args)) to High(Args) do
-    Body.Values := Body.Values + [{$IFDEF PAS2JS}TValue.FromJSValue{$ENDIF}(Args[A])];
-
-  Result := Deserialize(FCommunication.SendRequest(Format('%s/%s/%s', [FURL, FRttiType.Name.Substring(1), Method.Name]), Body), Method){$IFDEF PAS2JS}.AsJSValue{$ENDIF};
+  Result := Deserialize(FCommunication.SendRequest(Format('%s/%s/%s%s', [FURL, FRttiType.Name.Substring(1), Method.Name, GetURLParams(Args)]), Body), Method){$IFDEF PAS2JS}.AsJSValue{$ENDIF};
 
   Body.Free;
 end;
 
 end.
+

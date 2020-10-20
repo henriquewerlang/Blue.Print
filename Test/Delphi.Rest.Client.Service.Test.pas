@@ -15,11 +15,11 @@ type
     [Test]
     procedure WhenCallSendRequestMustSendABodyInParams;
     [Test]
-    procedure TheBodyParameterMustHaveTheValuesOfCallingProcedure;
-    [Test]
     procedure TheURLPassedInConstructorMustContatWithTheRequestURL;
     [Test]
     procedure WhenCallAFunctionMustReturnTheValueOfFunctionAsSpected;
+    [Test]
+    procedure WhenCallAFunctionMustConvertTheFunctionParamsInTheGetURL;
   end;
 
 {$M+}
@@ -36,30 +36,6 @@ implementation
 uses System.SysUtils, System.Rtti, Delphi.Rest.Client.Service, Delphi.Mock, Delphi.Rest.Communication;
 
 { TClientServiceTest }
-
-procedure TClientServiceTest.TheBodyParameterMustHaveTheValuesOfCallingProcedure;
-begin
-  var Communication := TMock.CreateInterface<IRestCommunication>;
-
-  var Client := TClientService.Create(EmptyStr, Communication.Instance);
-  var Service := Client.GetService<IServiceTest>;
-
-  Communication.Expect.CustomExpect(
-    function (Params: TArray<TValue>): String
-    begin
-      var Body := Params[1].AsObject as TBody;
-      Result := EmptyStr;
-
-      if (Length(Body.Values) < 2) or (Body.Values[0].AsString <> 'String') or (Body.Values[1].AsInteger <> 1234) then
-        Result := 'Assert error!';
-    end).When.SendRequest(It.IsAny<String>, It.IsAny<TBody>);
-
-  Service.TestProcedureWithParam('String', 1234);
-
-  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
-
-  Client.Free;
-end;
 
 procedure TClientServiceTest.TheURLOfServerCallMustContainTheNameOfInterfacePlusTheProcedureName;
 begin
@@ -87,6 +63,22 @@ begin
   Communication.Expect.Once.When.SendRequest(It.IsEqualTo('http://myurl.com/ServiceTest/TestProcedute'), It.IsAny<TBody>);
 
   Service.TestProcedute;
+
+  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Client.Free;
+end;
+
+procedure TClientServiceTest.WhenCallAFunctionMustConvertTheFunctionParamsInTheGetURL;
+begin
+  var Communication := TMock.CreateInterface<IRestCommunication>;
+
+  var Client := TClientService.Create(EmptyStr, Communication.Instance);
+  var Service := Client.GetService<IServiceTest>;
+
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedureWithParam/abc/123'), It.IsAny<TBody>);
+
+  Service.TestProcedureWithParam('abc', 123);
 
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 
