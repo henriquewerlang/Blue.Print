@@ -76,7 +76,7 @@ begin
   var Client := TClientService.Create(EmptyStr, Communication.Instance);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedureWithParam/abc/123'), It.IsAny<TBody>);
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedureWithParam/"abc"/123'), It.IsAny<TBody>);
 
   Service.TestProcedureWithParam('abc', 123);
 

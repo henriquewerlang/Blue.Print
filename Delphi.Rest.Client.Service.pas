@@ -2,7 +2,7 @@ unit Delphi.Rest.Client.Service;
 
 interface
 
-uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, Delphi.Rest.Communication;
+uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, Delphi.Rest.JSON.Serializer, Delphi.Rest.Communication;
 
 type
   TClientService = class
@@ -11,6 +11,7 @@ type
     FContext: TRttiContext;
     FRttiType: TRttiInterfaceType;
     FURL: String;
+    FSerializer: TRestJsonSerializer;
 
 {$IFDEF PAS2JS}
     function GetURLParams(const Args: TJSValueDynArray): String;
@@ -24,12 +25,14 @@ type
   public
     constructor Create(URL: String; Communication: IRestCommunication);
 
+    destructor Destroy; override;
+
     function GetService<T: IInterface>: T;
   end;
 
 implementation
 
-uses Delphi.Rest.JSON.Serializer,
+uses
 {$IFDEF PAS2JS}
   JS, JSON.Serializers.Pas2Js
 {$ELSE}
@@ -45,24 +48,23 @@ begin
 
   FCommunication := Communication;
   FContext := TRttiContext.Create;
+  FSerializer := TRestJsonSerializer.Create;
   FURL := URL;
 end;
 
 function TClientService.Deserialize(const JSON: String; Method: TRttiMethod): TValue;
-var
-  Serializer: TRestJsonSerializer;
-
 begin
   if Assigned(Method.ReturnType) then
-  begin
-    Serializer := TRestJsonSerializer.Create;
-
-    Result := Serializer.Deserialize(JSON, Method.ReturnType.Handle);
-
-    Serializer.Free;
-  end
+    Result := FSerializer.Deserialize(JSON, Method.ReturnType.Handle)
   else
     Result := TValue.Empty;
+end;
+
+destructor TClientService.Destroy;
+begin
+  FSerializer.Free;
+
+  inherited;
 end;
 
 function TClientService.GetService<T>: T;
@@ -81,17 +83,23 @@ function TClientService.GetURLParams(const Args: TJSValueDynArray): String;
 {$ELSE}
 function TClientService.GetURLParams(const Args: TArray<TValue>): String;
 {$ENDIF}
+const
+  COMPILER_OFFSET =
+{$IFDEF DCC}
+    1
+{$ELSE}
+    0
+{$ENDIF}
+    ;
+
 var
   A: Integer;
 
 begin
   Result := EmptyStr;
 
-  for A := Low(Args) to High(Args) do
-begin
-    Result := Result + '/' + String(Args[A]){$IFDEF DCC}.ToString{$ENDIF};
-    writeln(string(Args[A]));
-end;
+  for A := Low(Args) + COMPILER_OFFSET to High(Args) do
+    Result := Result + '/' + FSerializer.Serialize({$IFDEF PAS2JS}TValue.FromJSValue{$ENDIF}(Args[A]));
 end;
 
 {$IFDEF PAS2JS}

@@ -115,50 +115,6 @@ end;
 function TRestServerService.GetValue(RttiType: TRttiType; const Value: String): TValue;
 begin
   case RttiType.TypeKind of
-    tkArray: ;
-    tkMRecord: ;
-    tkRecord: ;
-
-    tkClass: Result := Serializer.Deserialize(Value, RttiType.Handle);
-
-    tkDynArray:
-    begin
-      var ArrayType := TRttiDynamicArrayType(RttiType);
-      var Return: TArray<TValue> := nil;
-      var Values := Value.Substring(1, Value.Length - 2).Split([',']);
-
-      for var ArrayValue in Values do
-        Return := Return + [GetValue(ArrayType.ElementType, ArrayValue.Trim)];
-
-      Result := TValue.FromArray(ArrayType.Handle, Return);
-    end;
-
-    tkChar,
-    tkLString,
-    tkString,
-    tkUString,
-    tkWChar,
-    tkWString: Result := Value.Substring(1, Value.Length - 2);
-
-    tkEnumeration: Result := TValue.FromOrdinal(RttiType.Handle, GetEnumValue(RttiType.Handle, Value));
-
-    tkFloat: Result := StrToFloat(Value, TFormatSettings.Invariant);
-
-    tkInt64: Result := Value.ToInt64;
-
-    tkInteger: Result := Value.ToInteger;
-
-    tkSet:
-    begin
-      var EnumValue := 0;
-      var EnumNames := Value.Substring(1, Value.Length - 2).Split([',']);
-
-      for var EnumName in EnumNames do
-        EnumValue := EnumValue + Trunc(IntPower(2, GetValue(TRttiSetType(RttiType).ElementType, EnumName.Trim).AsOrdinal));
-
-      TValue.Make(EnumValue, RttiType.Handle, Result);
-    end;
-
     tkClassRef,
     tkMethod,
     tkInterface,
@@ -166,6 +122,7 @@ begin
     tkProcedure,
     tkUnknown,
     tkVariant: raise EInvalidParameterType.Create('The param type is invalid!');
+    else Result := FSerializer.Deserialize(Value, RttiType.Handle);
   end;
 end;
 
