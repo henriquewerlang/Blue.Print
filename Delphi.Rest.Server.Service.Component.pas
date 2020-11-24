@@ -142,36 +142,43 @@ end;
 
 function TRestServerService.HandleRequest: Boolean;
 begin
-  var Info: TRttiType := nil;
-  var Instance := TValue.Empty;
-  var Params := Request.URL.Split(['/'], TStringSplitOptions.ExcludeEmpty);
+  var URL := Request.URL;
 
-  Result := (Length(Params) > 0) and ServiceContainer.GetService(Params[0], Info, Instance);
+  Result := ExtractFileExt(URL).IsEmpty;
 
   if Result then
-    if Length(Params) = 1 then
-      Response.StatusCode := HTTP_STATUS_NOT_FOUND
-    else
-    begin
-      var Method := Info.GetMethod(Params[1]);
+  begin
+    var Info: TRttiType := nil;
+    var Instance := TValue.Empty;
+    var Params := URL.Split(['/'], TStringSplitOptions.ExcludeEmpty);
 
-      if Assigned(Method) then
+    Result := (Length(Params) > 0) and ServiceContainer.GetService(Params[0], Info, Instance);
+
+    if Result then
+      if Length(Params) = 1 then
+        Response.StatusCode := HTTP_STATUS_NOT_FOUND
+      else
       begin
-        var ProcParams: TArray<TValue>;
+        var Method := Info.GetMethod(Params[1]);
 
-        if GetParams(Method, Params, ProcParams) then
+        if Assigned(Method) then
         begin
-          var Return := Method.Invoke(Instance, ProcParams);
+          var ProcParams: TArray<TValue>;
 
-          if Assigned(Method.ReturnType) then
-            Response.Content := Serializer.Serialize(Return);
+          if GetParams(Method, Params, ProcParams) then
+          begin
+            var Return := Method.Invoke(Instance, ProcParams);
+
+            if Assigned(Method.ReturnType) then
+              Response.Content := Serializer.Serialize(Return);
+          end
+          else
+            Response.StatusCode := HTTP_STATUS_BAD_REQUEST;
         end
         else
-          Response.StatusCode := HTTP_STATUS_BAD_REQUEST;
-      end
-      else
-        Response.StatusCode := HTTP_STATUS_NOT_FOUND;
-    end;
+          Response.StatusCode := HTTP_STATUS_NOT_FOUND;
+      end;
+  end;
 end;
 
 procedure TRestServerService.InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);

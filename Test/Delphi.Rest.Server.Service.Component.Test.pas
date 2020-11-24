@@ -72,6 +72,8 @@ type
     procedure TheExceptionMessageMustBeInTheContentOfTheResponse;
     [Test]
     procedure AfterHandleTheExceptionMustSendTheResponseForTheClient;
+    [Test]
+    procedure WhenTheRequestIsAFileTheRequestMustReturnFalse;
   end;
 
   {$RTTI EXPLICIT METHODS([vcProtected, vcPublic])}
@@ -178,6 +180,7 @@ type
     procedure ProcLString(Value: AnsiString);
     procedure ProcMethod(Method: TNotifyEvent);
     procedure ProcParam(Param: Integer);
+    procedure ProcParamString(Param: String);
     procedure ProcPointer(P: Pointer);
     procedure ProcProcedure(Proc: TProc);
     procedure ProcSet(Value: TMyEnumeratorSet);
@@ -486,6 +489,23 @@ begin
   Rest.HandleRequest;
 
   Assert.AreEqual('123456', Response.Content);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenTheRequestIsAFileTheRequestMustReturnFalse;
+begin
+  var Container := TServiceContainer.Create(TService.Create);
+  var Request := TMock.CreateClass<TWebRequestMock>;
+  var Response := TWebResponseMock.Create(Request.Instance);
+
+  Request.Setup.WillReturn('IService/ProcParamString/File.file').When.GetStringVariable(It.IsAny<Integer>);
+
+  var Rest := CreateRestService(Request.Instance, Response, Container);
+
+  Assert.IsFalse(Rest.HandleRequest);
 
   Request.Free;
 
@@ -849,6 +869,11 @@ end;
 procedure TService.ProcParam(Param: Integer);
 begin
   ProcedureCalled := Format('%s=%d', ['ProcParam', Param]);
+end;
+
+procedure TService.ProcParamString(Param: String);
+begin
+
 end;
 
 procedure TService.ProcPointer(P: Pointer);
