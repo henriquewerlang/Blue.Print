@@ -66,6 +66,12 @@ type
     procedure WhenCalledTheGetExceptionHandlerMustReturnTheExceptionHandler;
     [Test]
     procedure WhenAnExceptionIsHandledMustReturnTrueInTheHandleParam;
+    [Test]
+    procedure OnceTheExceptionIsHandledTheStatusCodeMustBe500;
+    [Test]
+    procedure TheExceptionMessageMustBeInTheContentOfTheResponse;
+    [Test]
+    procedure AfterHandleTheExceptionMustSendTheResponseForTheClient;
   end;
 
   {$RTTI EXPLICIT METHODS([vcProtected, vcPublic])}
@@ -91,6 +97,7 @@ type
   private
     FStatusCode: Integer;
     FContent: String;
+    FSent: Boolean;
   protected
     function GetContent: String; override;
     function GetDateVariable(Index: Integer): TDateTime; override;
@@ -106,6 +113,8 @@ type
     procedure SetStatusCode(Value: Integer); override;
     procedure SetStringVariable(Index: Integer; const Value: String); override;
   public
+    function Sent: Boolean; override;
+
     procedure SendRedirect(const URI: String); override;
     procedure SendResponse; override;
     procedure SendStream(AStream: TStream); override;
@@ -200,6 +209,25 @@ uses Winapi.WinInet, Delphi.Mock;
 
 { TRestServerServiceTest }
 
+procedure TRestServerServiceTest.AfterHandleTheExceptionMustSendTheResponseForTheClient;
+begin
+  var Request := TMock.CreateClass<TWebRequestMock>;
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Handled := False;
+  var Handler := CreateRestService(Request.Instance, Response, nil) as IWebExceptionHandler;
+  var MyException := Exception.Create('Error');
+
+  Handler.HandleException(MyException, Handled);
+
+  Assert.IsTrue(Response.Sent);
+
+  MyException.Free;
+
+  Request.Free;
+
+  Response.Free;
+end;
+
 procedure TRestServerServiceTest.ConvertingParamsAsExpected(ProcedureName, Value: String);
 begin
   var Request := TMock.CreateClass<TWebRequestMock>;
@@ -287,6 +315,25 @@ begin
   Response.Free;
 end;
 
+procedure TRestServerServiceTest.OnceTheExceptionIsHandledTheStatusCodeMustBe500;
+begin
+  var Request := TMock.CreateClass<TWebRequestMock>;
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Handled := False;
+  var Handler := CreateRestService(Request.Instance, Response, nil) as IWebExceptionHandler;
+  var MyException := Exception.Create('Error');
+
+  Handler.HandleException(MyException, Handled);
+
+  Assert.AreEqual(500, Response.StatusCode);
+
+  MyException.Free;
+
+  Request.Free;
+
+  Response.Free;
+end;
+
 procedure TRestServerServiceTest.Setup;
 begin
   FRestService := TRestServerService.Create(nil);
@@ -300,6 +347,25 @@ end;
 procedure TRestServerServiceTest.TearDown;
 begin
   FRestService.Free;
+end;
+
+procedure TRestServerServiceTest.TheExceptionMessageMustBeInTheContentOfTheResponse;
+begin
+  var Request := TMock.CreateClass<TWebRequestMock>;
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Handled := False;
+  var Handler := CreateRestService(Request.Instance, Response, nil) as IWebExceptionHandler;
+  var MyException := Exception.Create('Error');
+
+  Handler.HandleException(MyException, Handled);
+
+  Assert.AreEqual('Error', Response.Content);
+
+  MyException.Free;
+
+  Request.Free;
+
+  Response.Free;
 end;
 
 procedure TRestServerServiceTest.WhenAnExceptionIsHandledMustReturnTrueInTheHandleParam;
@@ -613,12 +679,18 @@ procedure TWebResponseMock.SendResponse;
 begin
   inherited;
 
+  FSent := True;
 end;
 
 procedure TWebResponseMock.SendStream(AStream: TStream);
 begin
   inherited;
 
+end;
+
+function TWebResponseMock.Sent: Boolean;
+begin
+  Result := FSent;
 end;
 
 procedure TWebResponseMock.SetContent(const Value: String);

@@ -74,7 +74,7 @@ end;
 
 function TRestServerService.GetExceptionHandler: TObject;
 begin
-  Result := nil;
+  Result := Self;
 end;
 
 function TRestServerService.GetParams(Info: TRttiMethod; const Params: TArray<String>; var ConvertedParams: TArray<TValue>): Boolean;
@@ -133,7 +133,11 @@ end;
 
 procedure TRestServerService.HandleException(E: Exception; var Handled: Boolean);
 begin
+  Handled := True;
+  Response.Content := E.Message;
+  Response.StatusCode := HTTP_STATUS_SERVER_ERROR;
 
+  Response.SendResponse;
 end;
 
 function TRestServerService.HandleRequest: Boolean;
