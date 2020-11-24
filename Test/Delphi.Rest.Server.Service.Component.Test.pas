@@ -6,10 +6,18 @@ uses System.SysUtils, System.Classes, System.Rtti, Web.HTTPApp, DUnitX.TestFrame
 
 type
   [TestFixture]
-  TRestServerServiceTest = class(TComponent)
+  TRestServerServiceTest = class
   private
+    FRestService: TRestServerService;
+
     function CreateRestService(Request: TWebRequest; Response: TWebResponse; Container: IServiceContainer = nil): IWebAppServices;
   public
+    [Setup]
+    procedure Setup;
+    [SetupFixture]
+    procedure SetupFixture;
+    [TearDown]
+    procedure TearDown;
     [Test]
     procedure WhenTheRequestIsTheRootURLMustReturnHandledToFalse;
     [Test]
@@ -54,6 +62,10 @@ type
     procedure WhenTheRequestIsForAProcedureCantRaiseErrorOfSerialization;
     [Test]
     procedure WhenTheRequestCallAFunctionAndTheReturnIsAClassMustReturnTheJSONAsSpected;
+    [Test]
+    procedure WhenCalledTheGetExceptionHandlerMustReturnTheExceptionHandler;
+    [Test]
+    procedure WhenAnExceptionIsHandledMustReturnTrueInTheHandleParam;
   end;
 
   {$RTTI EXPLICIT METHODS([vcProtected, vcPublic])}
@@ -195,7 +207,7 @@ begin
   var Service := TService.Create;
   var ServiceI: IService := Service;
 
-  var Container := TServiceContainer.Create(ServiceI);
+  var Container := TServiceContainer.Create(ServiceI) as IServiceContainer;
 
   Request.Setup.WillReturn(Format('/IService/%s/%s', [ProcedureName, Value])).When.GetStringVariable(It.IsAny<Integer>);
 
@@ -214,9 +226,8 @@ end;
 
 function TRestServerServiceTest.CreateRestService(Request: TWebRequest; Response: TWebResponse; Container: IServiceContainer): IWebAppServices;
 begin
-  var Rest := TRestServerService.Create(Self);
-  Rest.ServiceContainer := Container;
-  Result := Rest;
+  FRestService.ServiceContainer := Container;
+  Result := FRestService;
 
   Result.InitContext(nil, Request, Response);
 end;
@@ -276,6 +287,49 @@ begin
   Response.Free;
 end;
 
+procedure TRestServerServiceTest.Setup;
+begin
+  FRestService := TRestServerService.Create(nil);
+end;
+
+procedure TRestServerServiceTest.SetupFixture;
+begin
+  TMock.CreateClass<TWebRequestMock>.Free;
+end;
+
+procedure TRestServerServiceTest.TearDown;
+begin
+  FRestService.Free;
+end;
+
+procedure TRestServerServiceTest.WhenAnExceptionIsHandledMustReturnTrueInTheHandleParam;
+begin
+  var Request := TMock.CreateClass<TWebRequestMock>;
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Handled := False;
+  var Handler := CreateRestService(Request.Instance, Response, nil) as IWebExceptionHandler;
+  var MyException := Exception.Create('Error');
+
+  Handler.HandleException(MyException, Handled);
+
+  Assert.IsTrue(Handled);
+
+  MyException.Free;
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenCalledTheGetExceptionHandlerMustReturnTheExceptionHandler;
+begin
+  var Rest := CreateRestService(nil, nil, nil) as IWebAppServices;
+
+  var Handler := Rest.GetExceptionHandler;
+
+  Assert.IsNotNull(Handler);
+end;
+
 procedure TRestServerServiceTest.WhenFindTheClassToRespondTheRequestMustReturnHandledToTrue;
 begin
   var Container := TServiceContainer.Create(True);
@@ -319,7 +373,7 @@ begin
   var Service := TService.Create;
   var ServiceI: IService := Service;
 
-  var Container := TServiceContainer.Create(ServiceI);
+  var Container := TServiceContainer.Create(ServiceI) as IServiceContainer;
 
   Request.Setup.WillReturn('/IService/ProcParam/123').When.GetStringVariable(It.IsAny<Integer>);
 

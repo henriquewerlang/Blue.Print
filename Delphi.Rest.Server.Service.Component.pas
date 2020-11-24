@@ -138,8 +138,8 @@ end;
 
 function TRestServerService.HandleRequest: Boolean;
 begin
-  var Info: TRttiType;
-  var Instance: TValue;
+  var Info: TRttiType := nil;
+  var Instance := TValue.Empty;
   var Params := Request.URL.Split(['/'], TStringSplitOptions.ExcludeEmpty);
 
   Result := (Length(Params) > 0) and ServiceContainer.GetService(Params[0], Info, Instance);

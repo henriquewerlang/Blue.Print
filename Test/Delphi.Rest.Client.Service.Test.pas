@@ -8,6 +8,8 @@ type
   [TestFixture]
   TClientServiceTest = class
   public
+    [SetupFixture]
+    procedure SetupFixture;
     [Test]
     procedure WhenCallTheProcedureMustGenerateTheRequestForServer;
     [Test]
@@ -36,6 +38,13 @@ implementation
 uses System.SysUtils, System.Rtti, Delphi.Rest.Client.Service, Delphi.Mock;
 
 { TClientServiceTest }
+
+procedure TClientServiceTest.SetupFixture;
+begin
+  TMock.CreateInterface<IRestCommunication>;
+  var Client := TClientService.Create(EmptyStr, nil);
+  var Service := Client.GetService<IServiceTest>;
+end;
 
 procedure TClientServiceTest.TheURLOfServerCallMustContainTheNameOfInterfacePlusTheProcedureName;
 begin
