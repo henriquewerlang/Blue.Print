@@ -5,6 +5,7 @@
 {$ENDIF}
 {$STRONGLINKTYPES ON}
 uses
+  FastMM5 in '..\Externals\FastMM5\FastMM5.pas',
   System.SysUtils,
   {$IFDEF TESTINSIGHT}
   TestInsight.DUnitX,
@@ -12,6 +13,7 @@ uses
   DUnitX.Loggers.Console,
   {$ENDIF }
   DUnitX.TestFramework,
+  DUnitX.MemoryLeakMonitor.FastMM5,
   Delphi.Rest.Server.Service.Component in '..\Delphi.Rest.Server.Service.Component.pas',
   Delphi.Rest.Server.Service.Component.Test in 'Delphi.Rest.Server.Service.Component.Test.pas',
   Delphi.Rest.Client.Service in '..\Delphi.Rest.Client.Service.pas',
@@ -26,7 +28,6 @@ var
   nunitLogger : ITestLogger;
 {$ENDIF}
 begin
-  ReportMemoryLeaksOnShutdown := True;
 {$IFDEF TESTINSIGHT}
   TestInsight.DUnitX.RunRegisteredTests;
 {$ELSE}
