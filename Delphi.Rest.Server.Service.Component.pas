@@ -51,7 +51,7 @@ type
 
 implementation
 
-uses System.TypInfo, System.Math, Winapi.WinInet{$IFDEF DCC}, System.JSON.Serializers{$ENDIF};
+uses System.TypInfo, System.Math, Winapi.WinInet, REST.Types{$IFDEF DCC}, System.JSON.Serializers{$ENDIF};
 
 { TRestServerService }
 
@@ -170,7 +170,12 @@ begin
             var Return := Method.Invoke(Instance, ProcParams);
 
             if Assigned(Method.ReturnType) then
+            begin
               Response.Content := Serializer.Serialize(Return);
+              Response.ContentType := CONTENTTYPE_APPLICATION_JSON;
+            end;
+
+            Response.StatusCode := HTTP_STATUS_OK;
           end
           else
             Response.StatusCode := HTTP_STATUS_BAD_REQUEST;

@@ -74,6 +74,10 @@ type
     procedure AfterHandleTheExceptionMustSendTheResponseForTheClient;
     [Test]
     procedure WhenTheRequestIsAFileTheRequestMustReturnFalse;
+    [Test]
+    procedure WhenTheRequestExecuteAsExpectedTheStatusCode200;
+    [Test]
+    procedure WhenTheRequestedFunctionAsAReturnMustFillTheContentTypeWithApplicationJSON;
   end;
 
   {$RTTI EXPLICIT METHODS([vcProtected, vcPublic])}
@@ -100,6 +104,8 @@ type
     FStatusCode: Integer;
     FContent: String;
     FSent: Boolean;
+    FIntegerVariable: array[0..200] of Integer;
+    FStringVariable: array[0..200] of String;
   protected
     function GetContent: String; override;
     function GetDateVariable(Index: Integer): TDateTime; override;
@@ -150,6 +156,7 @@ type
     procedure ProcLString(Value: AnsiString);
     procedure ProcMethod(Method: TNotifyEvent);
     procedure ProcParam(Param: Integer);
+    procedure ProcParamString(Param: String);
     procedure ProcPointer(P: Pointer);
     procedure ProcProcedure(Proc: TProc);
     procedure ProcSet(Value: TMyEnumeratorSet);
@@ -208,7 +215,7 @@ type
 
 implementation
 
-uses Winapi.WinInet, Delphi.Mock;
+uses Winapi.WinInet, Delphi.Mock, REST.Types;
 
 { TRestServerServiceTest }
 
@@ -476,6 +483,47 @@ begin
   Response.Free;
 end;
 
+procedure TRestServerServiceTest.WhenTheRequestedFunctionAsAReturnMustFillTheContentTypeWithApplicationJSON;
+begin
+  var Container := TServiceContainer.Create(TService.Create);
+  var Request := TMock.CreateClass<TWebRequestMock>;
+  var Response := TWebResponseMock.Create(Request.Instance);
+
+  Request.Setup.WillReturn('/IService/FuncInteger').When.GetStringVariable(It.IsAny<Integer>);
+
+  var Rest := CreateRestService(Request.Instance, Response, Container);
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(CONTENTTYPE_APPLICATION_JSON, Response.ContentType);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenTheRequestExecuteAsExpectedTheStatusCode200;
+begin
+  var Request := TMock.CreateClass<TWebRequestMock>;
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Service := TService.Create;
+  var ServiceI: IService := Service;
+
+  var Container := TServiceContainer.Create(ServiceI) as IServiceContainer;
+
+  Request.Setup.WillReturn('IService/ProcParamString/"Abc"').When.GetStringVariable(It.IsAny<Integer>);
+
+  var Rest := CreateRestService(Request.Instance, Response, Container);
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(200, Response.StatusCode);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
 procedure TRestServerServiceTest.WhenTheRequestExecutionWasSucessfullyMustReturnTheJSONResult;
 begin
   var Container := TServiceContainer.Create(TService.Create);
@@ -671,7 +719,7 @@ end;
 
 function TWebResponseMock.GetIntegerVariable(Index: Integer): Integer;
 begin
-  Result := 0;
+  Result := FIntegerVariable[Index];
 end;
 
 function TWebResponseMock.GetLogMessage: String;
@@ -686,7 +734,7 @@ end;
 
 function TWebResponseMock.GetStringVariable(Index: Integer): String;
 begin
-
+  Result := FStringVariable[Index];
 end;
 
 procedure TWebResponseMock.SendRedirect(const URI: String);
@@ -728,8 +776,7 @@ end;
 
 procedure TWebResponseMock.SetIntegerVariable(Index, Value: Integer);
 begin
-  inherited;
-
+  FIntegerVariable[Index] := Value;
 end;
 
 procedure TWebResponseMock.SetLogMessage(const Value: String);
@@ -745,8 +792,7 @@ end;
 
 procedure TWebResponseMock.SetStringVariable(Index: Integer; const Value: String);
 begin
-  inherited;
-
+  FStringVariable[Index] := Value;
 end;
 
 { TServiceContainer }
