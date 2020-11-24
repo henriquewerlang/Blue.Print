@@ -35,7 +35,6 @@ requires
 contains
   Delphi.Rest.Server.Service.Component in '..\Delphi.Rest.Server.Service.Component.pas',
   Delphi.Rest.Client.Service in '..\Delphi.Rest.Client.Service.pas',
-  Delphi.Rest.Communication in '..\Delphi.Rest.Communication.pas',
   Delphi.Rest.JSON.Serializer in '..\Delphi.Rest.JSON.Serializer.pas',
   Delphi.Rest.Service.Container in '..\Delphi.Rest.Service.Container.pas';
 

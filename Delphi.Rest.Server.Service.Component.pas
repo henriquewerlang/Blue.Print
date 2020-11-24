@@ -51,7 +51,7 @@ type
 
 implementation
 
-uses System.TypInfo, System.Math, Winapi.WinInet;
+uses System.TypInfo, System.Math, Winapi.WinInet{$IFDEF DCC}, System.JSON.Serializers{$ENDIF};
 
 { TRestServerService }
 
