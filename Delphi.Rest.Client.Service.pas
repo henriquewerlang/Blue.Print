@@ -155,6 +155,9 @@ begin
 
   Connection.Send;
 
+  if Connection.Status <> 200 then
+    raise Exception.CreateFmt('The service "%s" called not found!', [URL]);
+
   Result := Connection.ResponseText;
 {$ENDIF}
 end;
