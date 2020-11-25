@@ -25,11 +25,11 @@ var
   Method: TRttiMethod;
 
 begin
-  Result := nil;
-
   for Method in RttiType.GetMethods do
     if (Method.MethodKind = mkConstructor) and (Length(Method.MethodTypeInfo.ProcSig.Params) = 0) then
       Exit(Method.Invoke(TJSObject(TRttiInstanceType(RttiType).MetaClassType), nil).AsObject);
+
+  Result := TObject(TJSObject.Create(TJSObject(TRttiInstanceType(RttiType).MetaClassType)));
 end;
 
 function TJsonSerializer.Deserialize(const AJson: String; TypeInfo: PTypeInfo): TValue;
