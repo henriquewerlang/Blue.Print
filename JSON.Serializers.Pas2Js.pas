@@ -102,7 +102,7 @@ end;
 
 function TJsonSerializer.Serialize(const AValue: TValue): String;
 begin
-
+  Result := TJSJSON.stringify(AValue.AsJSValue);
 end;
 
 end.
