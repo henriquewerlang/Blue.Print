@@ -11,12 +11,15 @@ type
     function DeserializeArray(const JSON: JSValue; RttiType: TRttiType): TValue;
     function DeserializeObject(const JSON: JSValue; RttiType: TRttiType): TValue;
     function DeserializeJSON(const JSON: JSValue; RttiType: TRttiType): TValue;
+    function SerializeJSON(Key, Value: JSValue): JSValue;
   public
     function Serialize(const AValue: TValue): String;
     function Deserialize(const AJson: String; TypeInfo: PTypeInfo): TValue;
   end;
 
 implementation
+
+uses System.SysUtils;
 
 { TJsonSerializer }
 
@@ -102,7 +105,30 @@ end;
 
 function TJsonSerializer.Serialize(const AValue: TValue): String;
 begin
-  Result := TJSJSON.stringify(AValue.AsJSValue);
+  Result := TJSJSON.stringify(AValue.AsJSValue, @SerializeJSON);
+end;
+
+function TJsonSerializer.SerializeJSON(Key, Value: JSValue): JSValue;
+var
+  CurrentObject: TJSObject absolute Value;
+
+  NewObject: TJSObject;
+
+  FieldName: String;
+
+begin
+  if IsObject(Value) and not IsArray(Value) then
+  begin
+    NewObject := TJSObject.New;
+
+    for FieldName in TJSObject.Keys(CurrentObject) do
+      NewObject[FieldName.SubString(1)] := CurrentObject[FieldName];
+
+    Result := NewObject;
+  end
+  else
+    Result := Value;
 end;
 
 end.
+
