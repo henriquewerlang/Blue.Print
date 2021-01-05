@@ -22,13 +22,20 @@ type
     procedure WhenCallAFunctionMustReturnTheValueOfFunctionAsSpected;
     [Test]
     procedure WhenCallAFunctionMustConvertTheFunctionParamsInTheGetURL;
+    [Test]
+    procedure SendingARequestWithoutParamsMustLoadTheURLWithoutParamSeparator;
+    [Test]
+    procedure SendingARequestWithOneParamMustPutTheParamSeparatorInTheURLAndTheNameAndValueParam;
+    [Test]
+    procedure WhenTheRequestHasMoreThenOneParameterMustSepareteThenWithTheSeparetorChar;
   end;
 
   IServiceTest = interface(IInvokable)
     ['{61DCD8A8-AD02-4EA3-AFC7-8425F7B12D6B}']
     function TestFunction: Integer;
 
-    procedure TestProcedute;
+    procedure TestProcedure;
+    procedure TestProcedureWithOneParam(Param: String);
     procedure TestProcedureWithParam(Param1: String; Param2: Integer);
   end;
 
@@ -37,6 +44,38 @@ implementation
 uses System.SysUtils, System.Rtti, Delphi.Rest.Client.Service, Delphi.Mock, Delphi.Rest.JSON.Serializer;
 
 { TClientServiceTest }
+
+procedure TClientServiceTest.SendingARequestWithOneParamMustPutTheParamSeparatorInTheURLAndTheNameAndValueParam;
+begin
+  var Communication := TMock.CreateInterface<IRestCommunication>;
+
+  var Client := TClientService.Create(EmptyStr, Communication.Instance);
+  var Service := Client.GetService<IServiceTest>;
+
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedureWithOneParam?Param="abcd"'));
+
+  Service.TestProcedureWithOneParam('abcd');
+
+  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Client.Free;
+end;
+
+procedure TClientServiceTest.SendingARequestWithoutParamsMustLoadTheURLWithoutParamSeparator;
+begin
+  var Communication := TMock.CreateInterface<IRestCommunication>;
+
+  var Client := TClientService.Create(EmptyStr, Communication.Instance);
+  var Service := Client.GetService<IServiceTest>;
+
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedure'));
+
+  Service.TestProcedure;
+
+  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Client.Free;
+end;
 
 procedure TClientServiceTest.SetupFixture;
 begin
@@ -58,9 +97,9 @@ begin
   var Client := TClientService.Create(EmptyStr, Communication.Instance);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedute'));
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedure'));
 
-  Service.TestProcedute;
+  Service.TestProcedure;
 
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 
@@ -74,9 +113,9 @@ begin
   var Client := TClientService.Create('http://myurl.com', Communication.Instance);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('http://myurl.com/ServiceTest/TestProcedute'));
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('http://myurl.com/ServiceTest/TestProcedure'));
 
-  Service.TestProcedute;
+  Service.TestProcedure;
 
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 
@@ -90,7 +129,7 @@ begin
   var Client := TClientService.Create(EmptyStr, Communication.Instance);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedureWithParam/"abc"/123'));
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedureWithParam?Param1="abc"&Param2=123'));
 
   Service.TestProcedureWithParam('abc', 123);
 
@@ -138,7 +177,23 @@ begin
 
   Communication.Expect.Once.When.SendRequest(It.IsAny<String>);
 
-  Service.TestProcedute;
+  Service.TestProcedure;
+
+  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Client.Free;
+end;
+
+procedure TClientServiceTest.WhenTheRequestHasMoreThenOneParameterMustSepareteThenWithTheSeparetorChar;
+begin
+  var Communication := TMock.CreateInterface<IRestCommunication>;
+
+  var Client := TClientService.Create(EmptyStr, Communication.Instance);
+  var Service := Client.GetService<IServiceTest>;
+
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedureWithParam?Param1="abcd"&Param2=1234'));
+
+  Service.TestProcedureWithParam('abcd', 1234);
 
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 

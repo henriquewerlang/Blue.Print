@@ -23,14 +23,13 @@ type
     FSerializer: TRestJsonSerializer;
     FCommunication: IRestCommunication;
 
-{$IFDEF PAS2JS}
-    function GetURLParams(const Args: TJSValueDynArray): String;
-    function OnInvokeMethod(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
-{$ELSE}
-    function GetURLParams(const Args: TArray<TValue>): String;
+    function GetURLParams(Method: TRttiMethod; const Args: {$IFDEF PAS2JS}TJSValueDynArray{$ELSE}TArray<TValue>{$ENDIF}): String;
 
+    {$IFDEF PAS2JS}
+    function OnInvokeMethod(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
+    {$ELSE}
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
-{$ENDIF}
+    {$ENDIF}
 
     function Deserialize(const JSON: String; Method: TRttiMethod): TValue;
   public
@@ -97,28 +96,29 @@ begin
   Instance.QueryInterface(FRttiType.GUID, Result);
 end;
 
-{$IFDEF PAS2JS}
-function TClientService.GetURLParams(const Args: TJSValueDynArray): String;
-{$ELSE}
-function TClientService.GetURLParams(const Args: TArray<TValue>): String;
-{$ENDIF}
+function TClientService.GetURLParams(Method: TRttiMethod; const Args: {$IFDEF PAS2JS}TJSValueDynArray{$ELSE}TArray<TValue>{$ENDIF}): String;
 const
-  COMPILER_OFFSET =
-{$IFDEF DCC}
-    1
-{$ELSE}
-    0
-{$ENDIF}
-    ;
+  COMPILER_OFFSET = {$IFDEF DCC}1{$ELSE}0{$ENDIF};
 
 var
   A: Integer;
 
+  Params: TArray<TRttiParameter>;
+
 begin
+  Params := Method.GetParameters;
   Result := EmptyStr;
 
-  for A := Low(Args) + COMPILER_OFFSET to High(Args) do
-    Result := Result + '/' + FSerializer.Serialize({$IFDEF PAS2JS}TValue.FromJSValue{$ENDIF}(Args[A]));
+  for A := Low(Params) to High(Params) do
+  begin
+    if not Result.IsEmpty then
+      Result := Result + '&';
+
+    Result := Result + Format('%s=%s', [Params[A].Name, FSerializer.Serialize({$IFDEF PAS2JS}TValue.FromJSValue{$ENDIF}(Args[COMPILER_OFFSET + A]))]);
+  end;
+
+  if not Result.IsEmpty then
+    Result := '?' + Result;
 end;
 
 {$IFDEF PAS2JS}
@@ -136,7 +136,7 @@ begin
   Method := FRttiType.GetMethod(aMethodName);
 {$ENDIF}
 
-  Result := Deserialize(Communication.SendRequest(Format('%s/%s/%s%s', [FURL, FRttiType.Name.Substring(1), Method.Name, GetURLParams(Args)])), Method){$IFDEF PAS2JS}.AsJSValue{$ENDIF};
+  Result := Deserialize(Communication.SendRequest(Format('%s/%s/%s%s', [FURL, FRttiType.Name.Substring(1), Method.Name, GetURLParams(Method, Args)])), Method){$IFDEF PAS2JS}.AsJSValue{$ENDIF};
 end;
 
 { TRestCommunication }

@@ -17,11 +17,12 @@ type
     FSerializer: TRestJsonSerializer;
     FOnGetServiceContainer: TOnGetServiceContainer;
 
-    function GetParams(Info: TRttiMethod; const Params: TArray<String>; var ConvertedParams: TArray<TValue>): Boolean;
+    function GetParams(Info: TRttiMethod; var ConvertedParams: TArray<TValue>): Boolean;
     function GetParamValue(Param: TRttiParameter; const Value: String): TValue;
     function GetSerializer: TRestJsonSerializer;
     function GetServiceContainer: IServiceContainer;
-    function GetValue(RttiType: TRttiType; const Value: String): TValue;
+
+    procedure SortQueryFields;
 
     // IGetWebAppServices
     function GetWebAppServices: IWebAppServices;
@@ -77,23 +78,31 @@ begin
   Result := Self;
 end;
 
-function TRestServerService.GetParams(Info: TRttiMethod; const Params: TArray<String>; var ConvertedParams: TArray<TValue>): Boolean;
-const
-  OFFSET_PROCEDURE = 2;
-
+function TRestServerService.GetParams(Info: TRttiMethod; var ConvertedParams: TArray<TValue>): Boolean;
 begin
   ConvertedParams := [];
   var Parameters := Info.GetParameters;
-  Result := Length(Params) - OFFSET_PROCEDURE = Length(Parameters);
+  Result := Length(Parameters) = Request.QueryFields.Count;
+
+  SortQueryFields;
 
   if Result then
-    for var A := Low(Parameters) to High(Parameters) do
-      ConvertedParams := ConvertedParams + [GetParamValue(Parameters[A], Params[A + OFFSET_PROCEDURE])];
+    for var Param in Parameters do
+      ConvertedParams := ConvertedParams + [GetParamValue(Param, Request.QueryFields.Values[Param.Name])];
 end;
 
 function TRestServerService.GetParamValue(Param: TRttiParameter; const Value: String): TValue;
 begin
-  Result := GetValue(Param.ParamType, Value);
+  case Param.ParamType.TypeKind of
+    tkClassRef,
+    tkInterface,
+    tkMethod,
+    tkPointer,
+    tkProcedure,
+    tkUnknown,
+    tkVariant: raise EInvalidParameterType.Create('The param type is invalid!');
+    else Result := FSerializer.Deserialize(Value, Param.ParamType.Handle);
+  end;
 end;
 
 function TRestServerService.GetSerializer: TRestJsonSerializer;
@@ -110,20 +119,6 @@ begin
     FServiceContainer := FOnGetServiceContainer;
 
   Result := FServiceContainer;
-end;
-
-function TRestServerService.GetValue(RttiType: TRttiType; const Value: String): TValue;
-begin
-  case RttiType.TypeKind of
-    tkClassRef,
-    tkInterface,
-    tkMethod,
-    tkPointer,
-    tkProcedure,
-    tkUnknown,
-    tkVariant: raise EInvalidParameterType.Create('The param type is invalid!');
-    else Result := FSerializer.Deserialize(Value, RttiType.Handle);
-  end;
 end;
 
 function TRestServerService.GetWebAppServices: IWebAppServices;
@@ -155,9 +150,7 @@ begin
     Result := (Length(Params) > 0) and ServiceContainer.GetService(Params[0], Info, Instance);
 
     if Result then
-      if Length(Params) = 1 then
-        Response.StatusCode := HTTP_STATUS_NOT_FOUND
-      else
+      if Length(Params) = 2 then
       begin
         var Method := Info.GetMethod(Params[1]);
 
@@ -165,7 +158,7 @@ begin
         begin
           var ProcParams: TArray<TValue>;
 
-          if GetParams(Method, Params, ProcParams) then
+          if GetParams(Method, ProcParams) then
           begin
             var Return := Method.Invoke(Instance, ProcParams);
 
@@ -182,7 +175,9 @@ begin
         end
         else
           Response.StatusCode := HTTP_STATUS_NOT_FOUND;
-      end;
+      end
+      else
+        Response.StatusCode := HTTP_STATUS_NOT_FOUND;
   end;
 end;
 
@@ -190,6 +185,11 @@ procedure TRestServerService.InitContext(WebModule: TComponent; Request: TWebReq
 begin
   FRequest := Request;
   FResponse := Response;
+end;
+
+procedure TRestServerService.SortQueryFields;
+begin
+  TStringList(Request.QueryFields).Sorted := True;
 end;
 
 end.

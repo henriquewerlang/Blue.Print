@@ -31,6 +31,8 @@ type
     [Test]
     procedure WhenTheRequestIsCorrectMustCallTheProcedureRequested;
     [Test]
+    procedure WhenThePathHasMoreThenTwoLevelsMustReturn404;
+    [Test]
     procedure WhenTheProcedureHaveParamMustCallWithTheParamOfTheRequest;
     [TestCase('ClassRef', 'ProcClassRef')]
     [TestCase('Method', 'ProcMethod')]
@@ -52,8 +54,22 @@ type
     [TestCase('UString', 'ProcUString,''abcd''')]
     [TestCase('WChar', 'ProcWChar,''W''')]
     [TestCase('WString', 'ProcWString,''abcd''')]
+    procedure MustCallTheProcedureWithTheParamValuePassed(ProcedureName, Value: String);
+    [TestCase('Array', 'ProcArray;[''abc'', ''zzz'']', ';')]
+    [TestCase('Char', 'ProcChar,''S''')]
+    [TestCase('Class', 'ProcClass,{"Value": 1234}')]
+    [TestCase('Enum', 'ProcEnum,2')]
+    [TestCase('Float', 'ProcFloat,123.456')]
+    [TestCase('Int64', 'ProcInt64,123456789012')]
+    [TestCase('Integer', 'ProcInteger,1234')]
+    [TestCase('LString', 'ProcLString,''abcd''')]
+    [TestCase('Set', 'ProcSet;13', ';')]
+    [TestCase('String', 'ProcString,''abcd''')]
+    [TestCase('UString', 'ProcUString,''abcd''')]
+    [TestCase('WChar', 'ProcWChar,''W''')]
+    [TestCase('WString', 'ProcWString,''abcd''')]
     procedure ConvertingParamsAsExpected(ProcedureName, Value: String);
-    [TestCase('More then', '123/123/123')]
+    [TestCase('More then', 'Param1=123&Param2=123&Param3=123')]
     [TestCase('Less then', '')]
     procedure WhenTheAmountOfRequestParametersIsDiferrentFromTheAmoutOfProcedureParametersMustReturnBadRequest(Params: String);
     [Test]
@@ -142,27 +158,28 @@ type
     ['{FD524CA4-55CF-4005-B47A-48B220718AA0}']
     function FuncClass: TMyClass;
     function FuncInteger: Integer;
+    function ProcedureCalled: String;
 
     procedure Proc;
     procedure ProcArray(Value: TArray<String>);
     procedure ProcChar(Value: AnsiChar);
-    procedure ProcClass(&Class: TMyClass);
-    procedure ProcClassRef(&Class: TClass);
+    procedure ProcClass(Value: TMyClass);
+    procedure ProcClassRef(Value: TClass);
     procedure ProcEnum(Value: TMyEnumerator);
     procedure ProcFloat(Value: Currency);
     procedure ProcInt64(Value: Int64);
     procedure ProcInteger(Value: Integer);
-    procedure ProcInterface(&Interface: IInterface);
+    procedure ProcInterface(Value: IInterface);
     procedure ProcLString(Value: AnsiString);
-    procedure ProcMethod(Method: TNotifyEvent);
-    procedure ProcParam(Param: Integer);
-    procedure ProcParamString(Param: String);
-    procedure ProcPointer(P: Pointer);
-    procedure ProcProcedure(Proc: TProc);
+    procedure ProcMethod(Value: TNotifyEvent);
+    procedure ProcParam(Value: Integer);
+    procedure ProcParamString(Value: String);
+    procedure ProcPointer(Value: Pointer);
+    procedure ProcProcedure(Value: TProc);
     procedure ProcSet(Value: TMyEnumeratorSet);
     procedure ProcString(Value: ShortString);
     procedure ProcUString(Value: UnicodeString);
-    procedure ProcVariant(V: Variant);
+    procedure ProcVariant(Value: Variant);
     procedure ProcWChar(Value: Char);
     procedure ProcWString(Value: WideString);
   end;
@@ -170,35 +187,35 @@ type
   TService = class(TInterfacedObject, IService)
   private
     FMyClass: TMyClass;
+    FProcedureCalled: String;
 
     function FuncClass: TMyClass;
     function FuncInteger: Integer;
+    function ProcedureCalled: String;
 
     procedure Proc;
     procedure ProcArray(Value: TArray<String>);
     procedure ProcChar(Value: AnsiChar);
-    procedure ProcClass(&Class: TMyClass);
-    procedure ProcClassRef(&Class: TClass);
+    procedure ProcClass(Value: TMyClass);
+    procedure ProcClassRef(Value: TClass);
     procedure ProcEnum(Value: TMyEnumerator);
     procedure ProcFloat(Value: Currency);
     procedure ProcInt64(Value: Int64);
     procedure ProcInteger(Value: Integer);
-    procedure ProcInterface(&Interface: IInterface);
+    procedure ProcInterface(Value: IInterface);
     procedure ProcLString(Value: AnsiString);
-    procedure ProcMethod(Method: TNotifyEvent);
-    procedure ProcParam(Param: Integer);
+    procedure ProcMethod(Value: TNotifyEvent);
+    procedure ProcParam(Value: Integer);
     procedure ProcParamString(Param: String);
-    procedure ProcPointer(P: Pointer);
-    procedure ProcProcedure(Proc: TProc);
+    procedure ProcPointer(Value: Pointer);
+    procedure ProcProcedure(Value: TProc);
     procedure ProcSet(Value: TMyEnumeratorSet);
     procedure ProcString(Value: ShortString);
     procedure ProcUString(Value: UnicodeString);
-    procedure ProcVariant(V: Variant);
+    procedure ProcVariant(Value: Variant);
     procedure ProcWChar(Value: Char);
     procedure ProcWString(Value: WideString);
   public
-    ProcedureCalled: String;
-
     destructor Destroy; override;
   end;
 
@@ -215,7 +232,7 @@ type
 
 implementation
 
-uses Winapi.WinInet, Delphi.Mock, REST.Types, Delphi.Rest.JSON.Serializer;
+uses System.NetEncoding, Winapi.WinInet, Delphi.Mock, REST.Types, Delphi.Rest.JSON.Serializer;
 
 { TRestServerServiceTest }
 
@@ -246,7 +263,9 @@ begin
 
   var Container := TServiceContainer.Create(Service) as IServiceContainer;
 
-  Request.Setup.WillReturn(Format('/IService/%s/%s', [ProcedureName, Value])).When.GetStringVariable(It.IsAny<Integer>);
+  Request.Setup.WillReturn(Format('/IService/%s', [ProcedureName])).When.GetStringVariable(It.IsEqualTo(2));
+
+  Request.Setup.WillReturn('Value=' + Value).When.GetStringVariable(It.IsEqualTo(3));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
@@ -275,7 +294,7 @@ begin
   var Request := TMock.CreateClass<TWebRequestMock>;
   var Response := TWebResponseMock.Create(Request.Instance);
 
-  Request.Setup.WillReturn('/IService/AnyProcudure').When.GetStringVariable(It.IsAny<Integer>);
+  Request.Setup.WillReturn('/IService/AnyProcudure').When.GetStringVariable(It.IsEqualTo(2));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
@@ -294,7 +313,7 @@ begin
   var Request := TMock.CreateClass<TWebRequestMock>;
   var Response := TWebResponseMock.Create(Request.Instance);
 
-  Request.Setup.WillReturn('/IAnotherService/Procedure').When.GetStringVariable(It.IsAny<Integer>);
+  Request.Setup.WillReturn('/IAnotherService/Procedure').When.GetStringVariable(It.IsEqualTo(2));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
@@ -311,13 +330,36 @@ begin
   var Request := TMock.CreateClass<TWebRequestMock>;
   var Response := TWebResponseMock.Create(Request.Instance);
 
-  Request.Setup.WillReturn('/IService').When.GetStringVariable(It.IsAny<Integer>);
+  Request.Setup.WillReturn('/IService').When.GetStringVariable(It.IsEqualTo(2));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
   Rest.HandleRequest;
 
   Assert.AreEqual(HTTP_STATUS_NOT_FOUND, Response.StatusCode);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.MustCallTheProcedureWithTheParamValuePassed(ProcedureName, Value: String);
+begin
+  var Request := TMock.CreateClass<TWebRequestMock>;
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Service: IService := TService.Create;
+
+  var Container := TServiceContainer.Create(Service) as IServiceContainer;
+
+  Request.Setup.WillReturn(Format('/IService/%s', [ProcedureName])).When.GetStringVariable(It.IsEqualTo(2));
+
+  Request.Setup.WillReturn('Value=' + TNetEncoding.URL.Encode(Value)).When.GetStringVariable(It.IsEqualTo(3));
+
+  var Rest := CreateRestService(Request.Instance, Response, Container);
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(Format('%s=%s', [ProcedureName, Value]), Service.ProcedureCalled);
 
   Request.Free;
 
@@ -429,7 +471,7 @@ begin
   var Request := TMock.CreateClass<TWebRequestMock>;
   var Response := TWebResponseMock.Create(Request.Instance);
 
-  Request.Setup.WillReturn('/IService').When.GetStringVariable(It.IsAny<Integer>);
+  Request.Setup.WillReturn('/IService').When.GetStringVariable(It.IsEqualTo(2));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
@@ -446,13 +488,37 @@ begin
   var Request := TMock.CreateClass<TWebRequestMock>;
   var Response := TWebResponseMock.Create(Request.Instance);
 
-  Request.Setup.WillReturn('/IService/ProcInteger/' + Params).When.GetStringVariable(It.IsAny<Integer>);
+  Request.Setup.WillReturn('/IService/ProcInteger').When.GetStringVariable(It.IsEqualTo(2));
+
+  Request.Setup.WillReturn(Params).When.GetStringVariable(It.IsEqualTo(3));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
   Rest.HandleRequest;
 
   Assert.AreEqual(HTTP_STATUS_BAD_REQUEST, Response.StatusCode);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenThePathHasMoreThenTwoLevelsMustReturn404;
+begin
+  var Request := TMock.CreateClass<TWebRequestMock>;
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Service := TService.Create;
+  var ServiceI: IService := Service;
+
+  var Container := TServiceContainer.Create(ServiceI);
+
+  Request.Setup.WillReturn('/IService/Proc/Proc').When.GetStringVariable(It.IsEqualTo(2));
+
+  var Rest := CreateRestService(Request.Instance, Response, Container);
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(HTTP_STATUS_NOT_FOUND, Response.StatusCode);
 
   Request.Free;
 
@@ -468,7 +534,9 @@ begin
 
   var Container := TServiceContainer.Create(ServiceI) as IServiceContainer;
 
-  Request.Setup.WillReturn('/IService/ProcParam/123').When.GetStringVariable(It.IsAny<Integer>);
+  Request.Setup.WillReturn('/IService/ProcParam').When.GetStringVariable(It.IsEqualTo(2));
+
+  Request.Setup.WillReturn('Value=123').When.GetStringVariable(It.IsEqualTo(3));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
@@ -487,7 +555,9 @@ begin
   var Request := TMock.CreateClass<TWebRequestMock>;
   var Response := TWebResponseMock.Create(Request.Instance);
 
-  Request.Setup.WillReturn('/IService/FuncClass').When.GetStringVariable(It.IsAny<Integer>);
+  Request.Setup.WillReturn('/IService/FuncClass').When.GetStringVariable(It.IsEqualTo(2));
+
+  Request.Setup.WillReturn(EmptyStr).When.GetStringVariable(It.IsEqualTo(3));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
@@ -506,7 +576,9 @@ begin
   var Request := TMock.CreateClass<TWebRequestMock>;
   var Response := TWebResponseMock.Create(Request.Instance);
 
-  Request.Setup.WillReturn('/IService/FuncInteger').When.GetStringVariable(It.IsAny<Integer>);
+  Request.Setup.WillReturn('/IService/FuncInteger').When.GetStringVariable(It.IsEqualTo(2));
+
+  Request.Setup.WillReturn(EmptyStr).When.GetStringVariable(It.IsEqualTo(3));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
@@ -527,7 +599,9 @@ begin
 
   var Container := TServiceContainer.Create(Service) as IServiceContainer;
 
-  Request.Setup.WillReturn('IService/ProcParamString/"Abc"').When.GetStringVariable(It.IsAny<Integer>);
+  Request.Setup.WillReturn('IService/ProcParamString').When.GetStringVariable(It.IsEqualTo(2));
+
+  Request.Setup.WillReturn('Value="Abc"').When.GetStringVariable(It.IsEqualTo(3));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
@@ -546,7 +620,9 @@ begin
   var Request := TMock.CreateClass<TWebRequestMock>;
   var Response := TWebResponseMock.Create(Request.Instance);
 
-  Request.Setup.WillReturn('/IService/FuncInteger').When.GetStringVariable(It.IsAny<Integer>);
+  Request.Setup.WillReturn('/IService/FuncInteger').When.GetStringVariable(It.IsEqualTo(2));
+
+  Request.Setup.WillReturn(EmptyStr).When.GetStringVariable(It.IsEqualTo(3));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
@@ -565,7 +641,7 @@ begin
   var Request := TMock.CreateClass<TWebRequestMock>;
   var Response := TWebResponseMock.Create(Request.Instance);
 
-  Request.Setup.WillReturn('IService/ProcParamString/File.file').When.GetStringVariable(It.IsAny<Integer>);
+  Request.Setup.WillReturn('IService/ProcParamString/File.file').When.GetStringVariable(It.IsEqualTo(2));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
@@ -585,7 +661,9 @@ begin
 
   var Container := TServiceContainer.Create(ServiceI);
 
-  Request.Setup.WillReturn('/IService/Proc').When.GetStringVariable(It.IsAny<Integer>);
+  Request.Setup.WillReturn('/IService/Proc').When.GetStringVariable(It.IsEqualTo(2));
+
+  Request.Setup.WillReturn(EmptyStr).When.GetStringVariable(It.IsEqualTo(3));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
@@ -604,7 +682,7 @@ begin
   var Request := TMock.CreateClass<TWebRequestMock>;
   var Response := TWebResponseMock.Create(Request.Instance);
 
-  Request.Setup.WillReturn('/IService/ProcInteger/1234').When.GetStringVariable(It.IsAny<Integer>);
+  Request.Setup.WillReturn('/IService/ProcInteger?Value=1234').When.GetStringVariable(It.IsEqualTo(2));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
@@ -624,7 +702,7 @@ begin
   var Request := TMock.CreateClass<TWebRequestMock>;
   var Response := TWebResponseMock.Create(Request.Instance);
 
-  Request.Setup.WillReturn('/').When.GetStringVariable(It.IsAny<Integer>);
+  Request.Setup.WillReturn('/').When.GetStringVariable(It.IsEqualTo(2));
 
   var Rest := CreateRestService(Request.Instance, Response);
 
@@ -643,7 +721,9 @@ begin
 
   var Container := TServiceContainer.Create(Service);
 
-  Request.Setup.WillReturn(Format('/IService/%s/123', [ProcedureName])).When.GetStringVariable(It.IsAny<Integer>);
+  Request.Setup.WillReturn(Format('/IService/%s', [ProcedureName])).When.GetStringVariable(It.IsEqualTo(2));
+
+  Request.Setup.WillReturn('Value=123').When.GetStringVariable(It.IsEqualTo(3));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
@@ -859,77 +939,75 @@ end;
 
 procedure TService.Proc;
 begin
-  ProcedureCalled := 'Proc';
+  FProcedureCalled := 'Proc';
 end;
 
 procedure TService.ProcArray(Value: TArray<String>);
 begin
-  if (Length(Value) = 0) or (Value[0] <> 'abc') or (Value[1] <> 'zzz') then
-    raise Exception.Create('Value invalid');
+  if Length(Value) > 0 then
+    FProcedureCalled := Format('ProcArray=[''%s'', ''%s'']', [Value[0], Value[1]]);
 end;
 
 procedure TService.ProcChar(Value: AnsiChar);
 begin
-  if Value <> 'S' then
-    raise Exception.Create('Value invalid');
+  FProcedureCalled := Format('ProcChar=''%s''', [Value]);
 end;
 
-procedure TService.ProcClass(&Class: TMyClass);
+procedure TService.ProcClass(Value: TMyClass);
 begin
-  if not Assigned(&Class) or (&Class.Value <> 1234) then
-    raise Exception.Create('Value invalid');
+  FProcedureCalled := Format('ProcClass={"Value": %d}', [Value.Value]);
 
-  &Class.Free;
+  Value.Free;
 end;
 
-procedure TService.ProcClassRef(&Class: TClass);
+procedure TService.ProcClassRef(Value: TClass);
 begin
 
+end;
+
+function TService.ProcedureCalled: String;
+begin
+  Result := FProcedureCalled;
 end;
 
 procedure TService.ProcEnum(Value: TMyEnumerator);
 begin
-  if Value <> Enum3 then
-    raise Exception.Create('Value invalid');
+  FProcedureCalled := Format('ProcEnum=%d', [Ord(Value)]);
 end;
 
 procedure TService.ProcFloat(Value: Currency);
 begin
-  if Value <> 123.456 then
-    raise Exception.Create('Value invalid');
+  FProcedureCalled := Format('ProcFloat=%.3f', [Value], TFormatSettings.Invariant);
 end;
 
 procedure TService.ProcInt64(Value: Int64);
 begin
-  if Value <> 123456789012 then
-    raise Exception.Create('Value invalid');
+  FProcedureCalled := Format('ProcInt64=%d', [Value]);
 end;
 
 procedure TService.ProcInteger(Value: Integer);
 begin
-  if Value <> 1234 then
-    raise Exception.Create('Value invalid');
+  FProcedureCalled := Format('ProcInteger=%d', [Value]);
 end;
 
-procedure TService.ProcInterface(&Interface: IInterface);
+procedure TService.ProcInterface(Value: IInterface);
 begin
 
 end;
 
 procedure TService.ProcLString(Value: AnsiString);
 begin
-  if Value <> 'abcd' then
-    raise Exception.Create('Value invalid');
+  FProcedureCalled := Format('ProcLString=''%s''', [Value]);
 end;
 
-procedure TService.ProcMethod(Method: TNotifyEvent);
+procedure TService.ProcMethod(Value: TNotifyEvent);
 begin
 
 end;
 
-procedure TService.ProcParam(Param: Integer);
+procedure TService.ProcParam(Value: Integer);
 begin
-  ProcedureCalled := Format('%s=%d', ['ProcParam', Param]);
+  FProcedureCalled := Format('%s=%d', ['ProcParam', Value]);
 end;
 
 procedure TService.ProcParamString(Param: String);
@@ -937,49 +1015,44 @@ begin
 
 end;
 
-procedure TService.ProcPointer(P: Pointer);
+procedure TService.ProcPointer(Value: Pointer);
 begin
 
 end;
 
-procedure TService.ProcProcedure(Proc: TProc);
+procedure TService.ProcProcedure(Value: TProc);
 begin
 
 end;
 
 procedure TService.ProcSet(Value: TMyEnumeratorSet);
 begin
-  if Value <> [Enum1,Enum3,Enum4] then
-    raise Exception.Create('Value invalid');
+  FProcedureCalled := Format('ProcSet=%d', [PByte(@Value)^]);
 end;
 
 procedure TService.ProcString(Value: ShortString);
 begin
-  if Value <> 'abcd' then
-    raise Exception.Create('Value invalid');
+  FProcedureCalled := Format('ProcString=''%s''', [Value]);
 end;
 
 procedure TService.ProcUString(Value: UnicodeString);
 begin
-  if Value <> 'abcd' then
-    raise Exception.Create('Value invalid');
+  FProcedureCalled := Format('ProcUString=''%s''', [Value]);
 end;
 
-procedure TService.ProcVariant(V: Variant);
+procedure TService.ProcVariant(Value: Variant);
 begin
 
 end;
 
 procedure TService.ProcWChar(Value: Char);
 begin
-  if Value <> 'W' then
-    raise Exception.Create('Value invalid');
+  FProcedureCalled := Format('ProcWChar=''%s''', [Value]);
 end;
 
 procedure TService.ProcWString(Value: WideString);
 begin
-  if Value <> 'abcd' then
-    raise Exception.Create('Value invalid');
+  FProcedureCalled := Format('ProcWString=''%s''', [Value]);
 end;
 
 end.
