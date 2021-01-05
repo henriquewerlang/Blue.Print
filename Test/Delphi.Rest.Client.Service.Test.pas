@@ -34,15 +34,21 @@ type
 
 implementation
 
-uses System.SysUtils, System.Rtti, Delphi.Rest.Client.Service, Delphi.Mock;
+uses System.SysUtils, System.Rtti, Delphi.Rest.Client.Service, Delphi.Mock, Delphi.Rest.JSON.Serializer;
 
 { TClientServiceTest }
 
 procedure TClientServiceTest.SetupFixture;
 begin
+  // Avoiding memory leak reporting.
   TMock.CreateInterface<IRestCommunication>;
   var Client := TClientService.Create(EmptyStr, nil);
+  var Serializer := TRestJsonSerializer.Create;
   var Service := Client.GetService<IServiceTest>;
+
+  Serializer.Serialize('abc');
+
+  Serializer.Free;
 end;
 
 procedure TClientServiceTest.TheURLOfServerCallMustContainTheNameOfInterfacePlusTheProcedureName;

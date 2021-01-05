@@ -215,7 +215,7 @@ type
 
 implementation
 
-uses Winapi.WinInet, Delphi.Mock, REST.Types;
+uses Winapi.WinInet, Delphi.Mock, REST.Types, Delphi.Rest.JSON.Serializer;
 
 { TRestServerServiceTest }
 
@@ -351,6 +351,24 @@ end;
 procedure TRestServerServiceTest.SetupFixture;
 begin
   TMock.CreateClass<TWebRequestMock>.Free;
+
+  var Serializer := TRestJsonSerializer.Create;
+
+  Serializer.Serialize('abc');
+
+  Serializer.Deserialize('{"Value": 1234}', TypeInfo(TMyClass)).AsObject.Free;
+  Serializer.Deserialize('"C"', TypeInfo(Char));
+  Serializer.Deserialize('"C"', TypeInfo(AnsiChar));
+  Serializer.Deserialize('[''abc'', ''zzz'']', TypeInfo(TArray<String>));
+  Serializer.Deserialize('''my string''', TypeInfo(String));
+  Serializer.Deserialize('''my string''', TypeInfo(ShortString));
+  Serializer.Deserialize('''my string''', TypeInfo(AnsiString));
+  Serializer.Deserialize('1', TypeInfo(TMyEnumerator));
+  Serializer.Deserialize('1', TypeInfo(TMyEnumeratorSet));
+  Serializer.Deserialize('1234', TypeInfo(Integer));
+  Serializer.Deserialize('1234', TypeInfo(Int64));
+
+  Serializer.Free;
 end;
 
 procedure TRestServerServiceTest.TearDown;
