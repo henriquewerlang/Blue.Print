@@ -24,8 +24,7 @@ type
     procedure WhenCallAFunctionMustConvertTheFunctionParamsInTheGetURL;
   end;
 
-{$M+}
-  IServiceTest = interface
+  IServiceTest = interface(IInvokable)
     ['{61DCD8A8-AD02-4EA3-AFC7-8425F7B12D6B}']
     function TestFunction: Integer;
 

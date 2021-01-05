@@ -116,8 +116,8 @@ function TRestServerService.GetValue(RttiType: TRttiType; const Value: String): 
 begin
   case RttiType.TypeKind of
     tkClassRef,
-    tkMethod,
     tkInterface,
+    tkMethod,
     tkPointer,
     tkProcedure,
     tkUnknown,

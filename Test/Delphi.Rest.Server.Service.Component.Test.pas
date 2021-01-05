@@ -242,10 +242,9 @@ procedure TRestServerServiceTest.ConvertingParamsAsExpected(ProcedureName, Value
 begin
   var Request := TMock.CreateClass<TWebRequestMock>;
   var Response := TWebResponseMock.Create(Request.Instance);
-  var Service := TService.Create;
-  var ServiceI: IService := Service;
+  var Service: IService := TService.Create;
 
-  var Container := TServiceContainer.Create(ServiceI) as IServiceContainer;
+  var Container := TServiceContainer.Create(Service) as IServiceContainer;
 
   Request.Setup.WillReturn(Format('/IService/%s/%s', [ProcedureName, Value])).When.GetStringVariable(It.IsAny<Integer>);
 
@@ -506,10 +505,9 @@ procedure TRestServerServiceTest.WhenTheRequestExecuteAsExpectedTheStatusCode200
 begin
   var Request := TMock.CreateClass<TWebRequestMock>;
   var Response := TWebResponseMock.Create(Request.Instance);
-  var Service := TService.Create;
-  var ServiceI: IService := Service;
+  var Service: IService := TService.Create;
 
-  var Container := TServiceContainer.Create(ServiceI) as IServiceContainer;
+  var Container := TServiceContainer.Create(Service) as IServiceContainer;
 
   Request.Setup.WillReturn('IService/ProcParamString/"Abc"').When.GetStringVariable(It.IsAny<Integer>);
 
@@ -623,10 +621,9 @@ procedure TRestServerServiceTest.WhenTheTypeIsInvalidMustRaiseAnError(ProcedureN
 begin
   var Request := TMock.CreateClass<TWebRequestMock>;
   var Response := TWebResponseMock.Create(Request.Instance);
-  var Service := TService.Create;
-  var ServiceI: IService := Service;
+  var Service: IService := TService.Create;
 
-  var Container := TServiceContainer.Create(ServiceI);
+  var Container := TServiceContainer.Create(Service);
 
   Request.Setup.WillReturn(Format('/IService/%s/123', [ProcedureName])).When.GetStringVariable(It.IsAny<Integer>);
 
