@@ -13,8 +13,8 @@ type
     function DeserializeJSON(const JSON: JSValue; RttiType: TRttiType): TValue;
     function SerializeJSON(Key, Value: JSValue): JSValue;
   public
-    function Serialize(const AValue: TValue): String;
     function Deserialize(const AJson: String; TypeInfo: PTypeInfo): TValue;
+    function Serialize(const AValue: TValue): String;
   end;
 
 implementation

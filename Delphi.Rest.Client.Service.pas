@@ -2,7 +2,7 @@ unit Delphi.Rest.Client.Service;
 
 interface
 
-uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, Delphi.Rest.JSON.Serializer;
+uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, Delphi.Rest.JSON.Serializer.Intf;
 
 type
   IRestCommunication = interface
@@ -20,9 +20,11 @@ type
     FContext: TRttiContext;
     FRttiType: TRttiInterfaceType;
     FURL: String;
-    FSerializer: TRestJsonSerializer;
+    FSerializer: IRestJsonSerializer;
     FCommunication: IRestCommunication;
 
+    function Deserialize(const JSON: String; Method: TRttiMethod): TValue;
+    function GetSerializer: IRestJsonSerializer;
     function GetURLParams(Method: TRttiMethod; const Args: {$IFDEF PAS2JS}TJSValueDynArray{$ELSE}TArray<TValue>{$ENDIF}): String;
 
     {$IFDEF PAS2JS}
@@ -30,28 +32,23 @@ type
     {$ELSE}
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
     {$ENDIF}
-
-    function Deserialize(const JSON: String; Method: TRttiMethod): TValue;
   public
     constructor Create(URL: String); overload;
     constructor Create(URL: String; Communication: IRestCommunication); overload;
 
-    destructor Destroy; override;
-
     function GetService<T: IInterface>: T;
 
     property Communication: IRestCommunication read FCommunication write FCommunication;
+    property Serializer: IRestJsonSerializer read GetSerializer write FSerializer;
   end;
 
 implementation
 
 uses
 {$IFDEF PAS2JS}
-  JS, Web, JSON.Serializers.Pas2Js
-{$ELSE}
-  System.JSON.Serializers
+  JS, Web, JSON.Serializers.Pas2Js,
 {$ENDIF}
-    ;
+  Delphi.Rest.JSON.Serializer;
 
 { TClientService }
 
@@ -66,23 +63,23 @@ begin
 
   FCommunication := Communication;
   FContext := TRttiContext.Create;
-  FSerializer := TRestJsonSerializer.Create;
   FURL := URL;
 end;
 
 function TClientService.Deserialize(const JSON: String; Method: TRttiMethod): TValue;
 begin
   if Assigned(Method.ReturnType) then
-    Result := FSerializer.Deserialize(JSON, Method.ReturnType.Handle)
+    Result := Serializer.Deserialize(JSON, Method.ReturnType.Handle)
   else
     Result := TValue.Empty;
 end;
 
-destructor TClientService.Destroy;
+function TClientService.GetSerializer: IRestJsonSerializer;
 begin
-  FSerializer.Free;
+  if not Assigned(FSerializer) then
+    FSerializer := TRestJsonSerializer.Create;
 
-  inherited;
+  Result := FSerializer;
 end;
 
 function TClientService.GetService<T>: T;
@@ -114,7 +111,7 @@ begin
     if not Result.IsEmpty then
       Result := Result + '&';
 
-    Result := Result + Format('%s=%s', [Params[A].Name, FSerializer.Serialize({$IFDEF PAS2JS}TValue.FromJSValue{$ENDIF}(Args[COMPILER_OFFSET + A]))]);
+    Result := Result + Format('%s=%s', [Params[A].Name, Serializer.Serialize({$IFDEF PAS2JS}TValue.FromJSValue{$ENDIF}(Args[COMPILER_OFFSET + A]))]);
   end;
 
   if not Result.IsEmpty then

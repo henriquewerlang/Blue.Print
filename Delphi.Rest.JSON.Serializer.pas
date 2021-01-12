@@ -4,23 +4,23 @@ interface
 
 uses System.Rtti, System.TypInfo,
   {$IFDEF DCC}
-  System.JSON.Serializers, System.Classes, System.JSON.Readers, System.JSON.Writers, System.SysUtils
+  System.JSON.Serializers, System.Classes, System.JSON.Readers, System.JSON.Writers, System.SysUtils,
   {$ELSE}
-  JSON.Serializers.Pas2Js
+  JSON.Serializers.Pas2Js,
   {$ENDIF}
-  ;
+  Delphi.Rest.JSON.Serializer.Intf;
 
 type
-  TRestJsonSerializer = class
-  public
-    function Serialize(const AValue: TValue): String; inline;
+  TRestJsonSerializer = class(TInterfacedObject, IRestJsonSerializer)
+  private
     function Deserialize(const AJson: String; TypeInfo: PTypeInfo): TValue; inline;
+    function Serialize(const AValue: TValue): String; inline;
   end;
 
   {$IFDEF DCC}
   TJsonSerializerHelper = class helper for TJsonSerializer
-    function Serialize(const AValue: TValue): String; inline;
     function Deserialize(const AJson: String; TypeInfo: PTypeInfo): TValue; overload;
+    function Serialize(const AValue: TValue): String; inline;
   end;
   {$ENDIF}
 

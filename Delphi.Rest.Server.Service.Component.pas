@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Classes, System.SysUtils, System.Rtti, Web.HTTPApp, Delphi.Rest.Service.Container, Delphi.Rest.JSON.Serializer;
+uses System.Classes, System.SysUtils, System.Rtti, Web.HTTPApp, Delphi.Rest.Service.Container, Delphi.Rest.JSON.Serializer.Intf;
 
 type
   EInvalidParameterType = class(Exception);
@@ -14,12 +14,12 @@ type
     FRequest: TWebRequest;
     FResponse: TWebResponse;
     FServiceContainer: IServiceContainer;
-    FSerializer: TRestJsonSerializer;
+    FSerializer: IRestJsonSerializer;
     FOnGetServiceContainer: TOnGetServiceContainer;
 
     function GetParams(Info: TRttiMethod; var ConvertedParams: TArray<TValue>): Boolean;
     function GetParamValue(Param: TRttiParameter; const Value: String): TValue;
-    function GetSerializer: TRestJsonSerializer;
+    function GetSerializer: IRestJsonSerializer;
     function GetServiceContainer: IServiceContainer;
 
     procedure SortQueryFields;
@@ -37,13 +37,10 @@ type
 
     // IWebExceptionHandler
     procedure HandleException(E: Exception; var Handled: Boolean);
-
-    property Serializer: TRestJsonSerializer read GetSerializer;
   public
-    destructor Destroy; override;
-
     property Request: TWebRequest read FRequest;
     property Response: TWebResponse read FResponse;
+    property Serializer: IRestJsonSerializer read GetSerializer write FSerializer;
     property ServiceContainer: IServiceContainer read GetServiceContainer write FServiceContainer;
   published
     property Active: Boolean read FActive write FActive;
@@ -52,16 +49,9 @@ type
 
 implementation
 
-uses System.TypInfo, System.Math, Winapi.WinInet, REST.Types{$IFDEF DCC}, System.JSON.Serializers{$ENDIF};
+uses System.TypInfo, System.Math, Winapi.WinInet, REST.Types, Delphi.Rest.JSON.Serializer;
 
 { TRestServerService }
-
-destructor TRestServerService.Destroy;
-begin
-  FSerializer.Free;
-
-  inherited;
-end;
 
 procedure TRestServerService.FinishContext;
 begin
@@ -101,11 +91,11 @@ begin
     tkProcedure,
     tkUnknown,
     tkVariant: raise EInvalidParameterType.Create('The param type is invalid!');
-    else Result := FSerializer.Deserialize(Value, Param.ParamType.Handle);
+    else Result := Serializer.Deserialize(Value, Param.ParamType.Handle);
   end;
 end;
 
-function TRestServerService.GetSerializer: TRestJsonSerializer;
+function TRestServerService.GetSerializer: IRestJsonSerializer;
 begin
   if not Assigned(FSerializer) then
     FSerializer := TRestJsonSerializer.Create;

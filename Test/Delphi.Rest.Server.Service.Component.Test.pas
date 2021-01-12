@@ -2,7 +2,7 @@
 
 interface
 
-uses System.SysUtils, System.Classes, System.Rtti, Web.HTTPApp, DUnitX.TestFramework, Delphi.Rest.Server.Service.Component, Delphi.Rest.Service.Container;
+uses System.SysUtils, System.Classes, System.Rtti, Web.HTTPApp, DUnitX.TestFramework, Delphi.Rest.Server.Service.Component, Delphi.Rest.Service.Container, Delphi.Rest.JSON.Serializer.Intf;
 
 type
   [TestFixture]
@@ -394,7 +394,7 @@ procedure TRestServerServiceTest.SetupFixture;
 begin
   TMock.CreateClass<TWebRequestMock>.Free;
 
-  var Serializer := TRestJsonSerializer.Create;
+  var Serializer: IRestJsonSerializer := TRestJsonSerializer.Create;
 
   Serializer.Serialize('abc');
 
@@ -409,8 +409,6 @@ begin
   Serializer.Deserialize('1', TypeInfo(TMyEnumeratorSet));
   Serializer.Deserialize('1234', TypeInfo(Integer));
   Serializer.Deserialize('1234', TypeInfo(Int64));
-
-  Serializer.Free;
 end;
 
 procedure TRestServerServiceTest.TearDown;
@@ -529,10 +527,9 @@ procedure TRestServerServiceTest.WhenTheProcedureHaveParamMustCallWithTheParamOf
 begin
   var Request := TMock.CreateClass<TWebRequestMock>;
   var Response := TWebResponseMock.Create(Request.Instance);
-  var Service := TService.Create;
-  var ServiceI: IService := Service;
+  var Service: IService := TService.Create;
 
-  var Container := TServiceContainer.Create(ServiceI) as IServiceContainer;
+  var Container := TServiceContainer.Create(Service) as IServiceContainer;
 
   Request.Setup.WillReturn('/IService/ProcParam').When.GetStringVariable(It.IsEqualTo(2));
 
