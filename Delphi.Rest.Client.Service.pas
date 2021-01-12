@@ -46,9 +46,10 @@ implementation
 
 uses
 {$IFDEF PAS2JS}
-  JS, Web, JSON.Serializers.Pas2Js,
-{$ENDIF}
+  JS, Web, Pas2Js.Rest.JSON.Serializers;
+{$ELSE}
   Delphi.Rest.JSON.Serializer;
+{$ENDIF}
 
 { TClientService }
 

@@ -2,13 +2,7 @@ unit Delphi.Rest.JSON.Serializer;
 
 interface
 
-uses System.Rtti, System.TypInfo,
-  {$IFDEF DCC}
-  System.JSON.Serializers, System.Classes, System.JSON.Readers, System.JSON.Writers, System.SysUtils,
-  {$ELSE}
-  JSON.Serializers.Pas2Js,
-  {$ENDIF}
-  Delphi.Rest.JSON.Serializer.Intf;
+uses System.Rtti, System.TypInfo, System.JSON.Serializers, System.Classes, System.JSON.Readers, System.JSON.Writers, System.SysUtils, Delphi.Rest.JSON.Serializer.Intf;
 
 type
   TRestJsonSerializer = class(TInterfacedObject, IRestJsonSerializer)
@@ -17,12 +11,10 @@ type
     function Serialize(const AValue: TValue): String; inline;
   end;
 
-  {$IFDEF DCC}
   TJsonSerializerHelper = class helper for TJsonSerializer
     function Deserialize(const AJson: String; TypeInfo: PTypeInfo): TValue; overload;
     function Serialize(const AValue: TValue): String; inline;
   end;
-  {$ENDIF}
 
 implementation
 
@@ -52,7 +44,6 @@ begin
   Serializer.Free;
 end;
 
-{$IFDEF DCC}
 { TJsonSerializerHelper }
 
 function TJsonSerializerHelper.Deserialize(const AJson: String; TypeInfo: PTypeInfo): TValue;
@@ -108,7 +99,6 @@ begin
     StringBuilder.Free;
   end;
 end;
-{$ENDIF}
 
 end.
 
