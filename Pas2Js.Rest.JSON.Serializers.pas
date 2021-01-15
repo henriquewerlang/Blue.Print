@@ -14,12 +14,14 @@ type
     function DeserializeArray(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeJSON(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeObject(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
-    function SerializeJSON(Key, Value: JSValue): JSValue; virtual;
+    function SerializeArray(const Value: TValue; RttiType: TRttiDynamicArrayType): JSValue; virtual;
+    function SerializeJSON(const Value: TValue; RttiType: TRttiType): JSValue; virtual;
+    function SerializeObject(const Value: TValue; RttiType: TRttiInstanceType): JSValue; virtual;
   end;
 
 implementation
 
-uses SysUtils;
+uses SysUtils, DateUtils;
 
 { TRestJsonSerializer }
 
@@ -75,6 +77,8 @@ begin
     Result := DeserializeObject(JSON, RttiType)
   else if RttiType is TRttiDynamicArrayType then
     Result := DeserializeArray(JSON, RttiType)
+  else if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
+    Result := TValue.From(RFC3339ToDateTime(String(JSON)))
   else
     Result := TValue.FromJSValue(JSON);
 end;
@@ -104,30 +108,65 @@ begin
 end;
 
 function TRestJsonSerializer.Serialize(const AValue: TValue): String;
+var
+  Context: TRTTIContext;
+
+  RttiType: TRttiType;
+
 begin
-  Result := TJSJSON.stringify(AValue.AsJSValue, @SerializeJSON);
+  Context := TRTTIContext.Create;
+  RttiType := Context.GetType(AValue.TypeInfo);
+
+  Result := TJSJSON.stringify(SerializeJSON(AValue, RttiType));
+
+  Context.Free;
 end;
 
-function TRestJsonSerializer.SerializeJSON(Key, Value: JSValue): JSValue;
+function TRestJsonSerializer.SerializeArray(const Value: TValue; RttiType: TRttiDynamicArrayType): JSValue;
 var
-  CurrentObject: TJSObject absolute Value;
+  A: Integer;
 
-  NewObject: TJSObject;
-
-  FieldName: String;
+  NewArray: TArray<JSValue>;
 
 begin
-  if IsObject(Value) and not IsArray(Value) then
-  begin
-    NewObject := TJSObject.New;
+  SetLength(NewArray, Value.GetArrayLength);
 
-    for FieldName in TJSObject.Keys(CurrentObject) do
-      NewObject[FieldName.SubString(1)] := CurrentObject[FieldName];
+  for A := 0 to Pred(Value.GetArrayLength) do
+    NewArray[A] := SerializeJSON(Value.GetArrayElement(A), RttiType.ElementType);
 
-    Result := NewObject;
-  end
+  Result := NewArray;
+end;
+
+function TRestJsonSerializer.SerializeJSON(const Value: TValue; RttiType: TRttiType): JSValue;
+begin
+  if RttiType.IsInstance then
+    Result := SerializeObject(Value, RttiType.AsInstance)
+  else if RttiType is TRttiDynamicArrayType then
+    Result := SerializeArray(Value, RttiType as TRttiDynamicArrayType)
+  else if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
+    Result := DateTimeToRFC3339(Value.AsExtended)
   else
-    Result := Value;
+    Result := Value.AsJSValue;
+end;
+
+function TRestJsonSerializer.SerializeObject(const Value: TValue; RttiType: TRttiInstanceType): JSValue;
+var
+  Prop: TRttiProperty;
+
+  Return: TJSObject;
+
+begin
+  if Value.IsEmpty then
+    Result := NULL
+  else
+  begin
+    Return := TJSObject.new;
+
+    for Prop in RttiType.GetProperties do
+      Return[Prop.Name] := SerializeJSON(Prop.GetValue(Value.AsObject), Prop.PropertyType);
+
+    Result := Return;
+  end;
 end;
 
 end.
