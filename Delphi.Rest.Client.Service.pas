@@ -25,12 +25,11 @@ type
 
     function Deserialize(const JSON: String; Method: TRttiMethod): TValue;
     function GetSerializer: IRestJsonSerializer;
-    function GetURLParams(Method: TRttiMethod; const Args: {$IFDEF PAS2JS}TJSValueDynArray{$ELSE}TArray<TValue>{$ENDIF}): String;
+    function GetURLParams(Method: TRttiMethod; const Args: TArray<TValue>): String;
 
-    {$IFDEF PAS2JS}
-    function OnInvokeMethod(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
-    {$ELSE}
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
+    {$IFDEF PAS2JS}
+    function OnInvokeMethodPas2Js(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
     {$ENDIF}
   public
     constructor Create(URL: String); overload;
@@ -50,6 +49,9 @@ uses
 {$ELSE}
   Delphi.Rest.JSON.Serializer;
 {$ENDIF}
+
+const
+  COMPILER_OFFSET = 1;
 
 { TClientService }
 
@@ -89,15 +91,12 @@ var
 
 begin
   FRttiType := FContext.GetType(TypeInfo(T)) as TRttiInterfaceType;
-  Instance := TVirtualInterface.Create(TypeInfo(T), {$IFDEF PAS2JS}@{$ENDIF}OnInvokeMethod);
+  Instance := TVirtualInterface.Create(TypeInfo(T), {$IFDEF PAS2JS}@OnInvokeMethodPas2Js{$ELSE}OnInvokeMethod{$ENDIF});
 
   Instance.QueryInterface(FRttiType.GUID, Result);
 end;
 
-function TClientService.GetURLParams(Method: TRttiMethod; const Args: {$IFDEF PAS2JS}TJSValueDynArray{$ELSE}TArray<TValue>{$ENDIF}): String;
-const
-  COMPILER_OFFSET = {$IFDEF DCC}1{$ELSE}0{$ENDIF};
-
+function TClientService.GetURLParams(Method: TRttiMethod; const Args: TArray<TValue>): String;
 var
   A: Integer;
 
@@ -112,30 +111,47 @@ begin
     if not Result.IsEmpty then
       Result := Result + '&';
 
-    Result := Result + Format('%s=%s', [Params[A].Name, Serializer.Serialize({$IFDEF PAS2JS}TValue.FromJSValue{$ENDIF}(Args[COMPILER_OFFSET + A]))]);
+    Result := Result + Format('%s=%s', [Params[A].Name, Serializer.Serialize(Args[COMPILER_OFFSET + A])]);
   end;
 
   if not Result.IsEmpty then
     Result := '?' + Result;
 end;
 
-{$IFDEF PAS2JS}
-function TClientService.OnInvokeMethod(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
-{$ELSE}
 procedure TClientService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
-{$ENDIF}
+begin
+  Result := Deserialize(Communication.SendRequest(Format('%s/%s/%s%s', [FURL, FRttiType.Name.Substring(1), Method.Name, GetURLParams(Method, Args)])), Method);
+end;
+
 {$IFDEF PAS2JS}
+function TClientService.OnInvokeMethodPas2Js(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
 var
+  A: Integer;
+
   Method: TRttiMethod;
 
-{$ENDIF}
-begin
-{$IFDEF PAS2JS}
-  Method := FRttiType.GetMethod(aMethodName);
-{$ENDIF}
+  Params: TArray<TValue>;
 
-  Result := Deserialize(Communication.SendRequest(Format('%s/%s/%s%s', [FURL, FRttiType.Name.Substring(1), Method.Name, GetURLParams(Method, Args)])), Method){$IFDEF PAS2JS}.AsJSValue{$ENDIF};
+  Return: TValue;
+
+  Param: TRttiParameter;
+
+  Parameters: TArray<TRttiParameter>;
+
+begin
+  Method := FRttiType.GetMethod(aMethodName);
+  Parameters := Method.GetParameters;
+
+  SetLength(Params, Succ(Length(Args)));
+
+  for A := Low(Args) to High(Args) do
+    Params[COMPILER_OFFSET + A] := TValue.Make(Parameters[A].ParamType.Handle, Args[A]);
+
+  OnInvokeMethod(Method, Params, Return);
+
+  Result := Return.AsJSValue;
 end;
+{$ENDIF}
 
 { TRestCommunication }
 
