@@ -7,12 +7,12 @@ uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, Delphi.Rest.JSO
 type
   IRestCommunication = interface
     ['{33BB3249-F044-4BDF-B3E0-EA2378A040C4}']
-    function SendRequest(URL: String): String;
+    function SendRequest(URL: String): String;{$IFDEF PAS2JS} async;{$ENDIF}
   end;
 
   TRestCommunication = class(TInterfacedObject, IRestCommunication)
   private
-    function SendRequest(URL: String): String;
+    function SendRequest(URL: String): String;{$IFDEF PAS2JS} async;{$ENDIF}
   end;
 
   TClientService = class
@@ -30,6 +30,7 @@ type
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
     {$IFDEF PAS2JS}
     function OnInvokeMethodPas2Js(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
+    function OnInvokeMethodPas2JsAsync(const aMethodName: String; const Args: TJSValueDynArray): JSValue; async;
     {$ENDIF}
   public
     constructor Create(URL: String); overload;
@@ -125,6 +126,11 @@ end;
 
 {$IFDEF PAS2JS}
 function TClientService.OnInvokeMethodPas2Js(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
+begin
+  Result := OnInvokeMethodPas2JsAsync(aMethodName, Args);
+end;
+
+function TClientService.OnInvokeMethodPas2JsAsync(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
 var
   A: Integer;
 
@@ -158,21 +164,14 @@ end;
 function TRestCommunication.SendRequest(URL: String): String;
 {$IFDEF PAS2JS}
 var
-  Connection: TJSXMLHttpRequest;
+  Response: TJSResponse;
 
 {$ENDIF}
 begin
 {$IFDEF PAS2JS}
-  Connection := TJSXMLHttpRequest.New;
+  Response := await(Window.Fetch(URL));
 
-  Connection.Open('GET', URL, False);
-
-  Connection.Send;
-
-  if Connection.Status <> 200 then
-    raise Exception.CreateFmt('The service "%s" called not found!', [URL]);
-
-  Result := Connection.ResponseText;
+  Result := await(Response.Text);
 {$ENDIF}
 end;
 
