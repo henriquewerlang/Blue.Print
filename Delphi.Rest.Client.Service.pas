@@ -27,10 +27,9 @@ type
     function GetSerializer: IRestJsonSerializer;
     function GetURLParams(Method: TRttiMethod; const Args: TArray<TValue>): String;
 
-    procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
+    procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);{$IFDEF PAS2JS} async;{$ENDIF}
     {$IFDEF PAS2JS}
     function OnInvokeMethodPas2Js(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
-    function OnInvokeMethodPas2JsAsync(const aMethodName: String; const Args: TJSValueDynArray): JSValue; async;
     {$ENDIF}
   public
     constructor Create(URL: String); overload;
@@ -121,16 +120,11 @@ end;
 
 procedure TClientService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 begin
-  Result := Deserialize(Communication.SendRequest(Format('%s/%s/%s%s', [FURL, FRttiType.Name.Substring(1), Method.Name, GetURLParams(Method, Args)])), Method);
+  Result := Deserialize({$IFDEF PAS2JS}await{$ENDIF}(Communication.SendRequest(Format('%s/%s/%s%s', [FURL, FRttiType.Name.Substring(1), Method.Name, GetURLParams(Method, Args)]))), Method);
 end;
 
 {$IFDEF PAS2JS}
 function TClientService.OnInvokeMethodPas2Js(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
-begin
-  Result := OnInvokeMethodPas2JsAsync(aMethodName, Args);
-end;
-
-function TClientService.OnInvokeMethodPas2JsAsync(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
 var
   A: Integer;
 
