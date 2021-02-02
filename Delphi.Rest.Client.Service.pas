@@ -1,4 +1,4 @@
-unit Delphi.Rest.Client.Service;
+﻿unit Delphi.Rest.Client.Service;
 
 interface
 
@@ -30,6 +30,7 @@ type
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);{$IFDEF PAS2JS} async;{$ENDIF}
     {$IFDEF PAS2JS}
     function OnInvokeMethodPas2Js(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
+    function OnInvokeMethodPas2JsAsync(const aMethodName: String; const Args: TJSValueDynArray): JSValue; async;
     {$ENDIF}
   public
     constructor Create(URL: String); overload;
@@ -43,12 +44,12 @@ type
 
 implementation
 
-uses
+uses Delphi.Rest.Exceptions,
 {$IFDEF PAS2JS}
-  JS, Web, Pas2Js.Rest.JSON.Serializers;
+  JS, Web, Pas2Js.Rest.JSON.Serializers
 {$ELSE}
-  Delphi.Rest.JSON.Serializer;
-{$ENDIF}
+  Delphi.Rest.JSON.Serializer
+{$ENDIF};
 
 const
   COMPILER_OFFSET = 1;
@@ -125,6 +126,11 @@ end;
 
 {$IFDEF PAS2JS}
 function TClientService.OnInvokeMethodPas2Js(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
+begin
+  Result := OnInvokeMethodPas2JsAsync(aMethodName, Args);
+end;
+
+function TClientService.OnInvokeMethodPas2JsAsync(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
 var
   A: Integer;
 
@@ -147,7 +153,7 @@ begin
   for A := Low(Args) to High(Args) do
     Params[COMPILER_OFFSET + A] := TValue.Make(Parameters[A].ParamType.Handle, Args[A]);
 
-  OnInvokeMethod(Method, Params, Return);
+  await(OnInvokeMethod(Method, Params, Return));
 
   Result := Return.AsJSValue;
 end;
@@ -165,7 +171,10 @@ begin
 {$IFDEF PAS2JS}
   Response := await(Window.Fetch(URL));
 
-  Result := await(Response.Text);
+  if Response.OK then
+    Result := await(Response.Text)
+  else
+    raise EHTTPStatusError.Create(Response.status, await(Response.Text));
 {$ENDIF}
 end;
 
