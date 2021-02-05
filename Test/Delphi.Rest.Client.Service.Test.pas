@@ -49,10 +49,10 @@ procedure TClientServiceTest.SendingARequestWithOneParamMustPutTheParamSeparator
 begin
   var Communication := TMock.CreateInterface<IRestCommunication>;
 
-  var Client := TClientService.Create(EmptyStr, Communication.Instance);
+  var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedureWithOneParam?Param="abcd"'));
+  Communication.Expect.Once.When.SendRequestSync(It.IsEqualTo('/ServiceTest/TestProcedureWithOneParam?Param="abcd"'));
 
   Service.TestProcedureWithOneParam('abcd');
 
@@ -65,10 +65,10 @@ procedure TClientServiceTest.SendingARequestWithoutParamsMustLoadTheURLWithoutPa
 begin
   var Communication := TMock.CreateInterface<IRestCommunication>;
 
-  var Client := TClientService.Create(EmptyStr, Communication.Instance);
+  var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedure'));
+  Communication.Expect.Once.When.SendRequestSync(It.IsEqualTo('/ServiceTest/TestProcedure'));
 
   Service.TestProcedure;
 
@@ -81,7 +81,7 @@ procedure TClientServiceTest.SetupFixture;
 begin
   // Avoiding memory leak reporting.
   TMock.CreateInterface<IRestCommunication>;
-  var Client := TClientService.Create(EmptyStr, nil);
+  var Client := TClientService.Create(EmptyStr, nil, False);
   var Serializer: IRestJsonSerializer := TRestJsonSerializer.Create;
   var Service := Client.GetService<IServiceTest>;
 
@@ -92,10 +92,10 @@ procedure TClientServiceTest.TheURLOfServerCallMustContainTheNameOfInterfacePlus
 begin
   var Communication := TMock.CreateInterface<IRestCommunication>;
 
-  var Client := TClientService.Create(EmptyStr, Communication.Instance);
+  var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedure'));
+  Communication.Expect.Once.When.SendRequestSync(It.IsEqualTo('/ServiceTest/TestProcedure'));
 
   Service.TestProcedure;
 
@@ -108,10 +108,10 @@ procedure TClientServiceTest.TheURLPassedInConstructorMustContatWithTheRequestUR
 begin
   var Communication := TMock.CreateInterface<IRestCommunication>;
 
-  var Client := TClientService.Create('http://myurl.com', Communication.Instance);
+  var Client := TClientService.Create('http://myurl.com', Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('http://myurl.com/ServiceTest/TestProcedure'));
+  Communication.Expect.Once.When.SendRequestSync(It.IsEqualTo('http://myurl.com/ServiceTest/TestProcedure'));
 
   Service.TestProcedure;
 
@@ -124,10 +124,10 @@ procedure TClientServiceTest.WhenCallAFunctionMustConvertTheFunctionParamsInTheG
 begin
   var Communication := TMock.CreateInterface<IRestCommunication>;
 
-  var Client := TClientService.Create(EmptyStr, Communication.Instance);
+  var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedureWithParam?Param1="abc"&Param2=123'));
+  Communication.Expect.Once.When.SendRequestSync(It.IsEqualTo('/ServiceTest/TestProcedureWithParam?Param1="abc"&Param2=123'));
 
   Service.TestProcedureWithParam('abc', 123);
 
@@ -140,10 +140,10 @@ procedure TClientServiceTest.WhenCallAFunctionMustReturnTheValueOfFunctionAsSpec
 begin
   var Communication := TMock.CreateInterface<IRestCommunication>;
 
-  var Client := TClientService.Create(EmptyStr, Communication.Instance);
+  var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Setup.WillReturn('8888').When.SendRequest(It.IsAny<String>);
+  Communication.Setup.WillReturn('8888').When.SendRequestSync(It.IsAny<String>);
 
   Assert.AreEqual(8888, Service.TestFunction);
 
@@ -154,10 +154,10 @@ procedure TClientServiceTest.WhenCallSendRequestMustSendABodyInParams;
 begin
   var Communication := TMock.CreateInterface<IRestCommunication>;
 
-  var Client := TClientService.Create(EmptyStr, Communication.Instance);
+  var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsAny<String>);
+  Communication.Expect.Once.When.SendRequestSync(It.IsAny<String>);
 
   Service.TestProcedureWithParam('String', 1234);
 
@@ -170,10 +170,10 @@ procedure TClientServiceTest.WhenCallTheProcedureMustGenerateTheRequestForServer
 begin
   var Communication := TMock.CreateInterface<IRestCommunication>;
 
-  var Client := TClientService.Create(EmptyStr, Communication.Instance);
+  var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsAny<String>);
+  Communication.Expect.Once.When.SendRequestSync(It.IsAny<String>);
 
   Service.TestProcedure;
 
@@ -186,10 +186,10 @@ procedure TClientServiceTest.WhenTheRequestHasMoreThenOneParameterMustSepareteTh
 begin
   var Communication := TMock.CreateInterface<IRestCommunication>;
 
-  var Client := TClientService.Create(EmptyStr, Communication.Instance);
+  var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
 
-  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedureWithParam?Param1="abcd"&Param2=1234'));
+  Communication.Expect.Once.When.SendRequestSync(It.IsEqualTo('/ServiceTest/TestProcedureWithParam?Param1="abcd"&Param2=1234'));
 
   Service.TestProcedureWithParam('abcd', 1234);
 
