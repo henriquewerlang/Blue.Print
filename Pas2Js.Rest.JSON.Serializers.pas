@@ -81,7 +81,10 @@ begin
   Context := TRTTIContext.Create;
   ClassRefType := Context.FindType(String(JSON)) as TRttiInstanceType;
 
-  Result := TValue.From(ClassRefType.MetaclassType);
+  if Assigned(ClassRefType) then
+    Result := TValue.From(ClassRefType.MetaclassType)
+  else
+    Result := TValue.Empty;
 end;
 
 function TRestJsonSerializer.DeserializeJSON(const JSON: JSValue; RttiType: TRttiType): TValue;
