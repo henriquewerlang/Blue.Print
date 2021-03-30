@@ -6,6 +6,7 @@ uses System.Classes, System.SysUtils, System.Rtti, Web.HTTPApp, Delphi.Rest.Serv
 
 type
   EInvalidParameterType = class(Exception);
+
   TOnGetServiceContainer = function: IServiceContainer of object;
 
   TRestServerService = class(TComponent, IGetWebAppServices, IWebAppServices, IWebExceptionHandler)
@@ -16,27 +17,26 @@ type
     FServiceContainer: IServiceContainer;
     FSerializer: IRestJsonSerializer;
     FOnGetServiceContainer: TOnGetServiceContainer;
-
     function GetParams(Info: TRttiMethod; var ConvertedParams: TArray<TValue>): Boolean;
     function GetParamValue(Param: TRttiParameter; const Value: String): TValue;
     function GetSerializer: IRestJsonSerializer;
     function GetServiceContainer: IServiceContainer;
 
     procedure SortQueryFields;
-
+  protected
     // IGetWebAppServices
-    function GetWebAppServices: IWebAppServices;
+    function GetWebAppServices: IWebAppServices; virtual;
 
     // IWebAppServices
-    function GetActive: Boolean;
-    function GetExceptionHandler: TObject;
-    function HandleRequest: Boolean;
+    function GetActive: Boolean; virtual;
+    function GetExceptionHandler: TObject; virtual;
+    function HandleRequest: Boolean; virtual;
 
-    procedure FinishContext;
-    procedure InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);
+    procedure FinishContext; virtual;
+    procedure InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse); virtual;
 
     // IWebExceptionHandler
-    procedure HandleException(E: Exception; var Handled: Boolean);
+    procedure HandleException(E: Exception; var Handled: Boolean); virtual;
   public
     property Request: TWebRequest read FRequest;
     property Response: TWebResponse read FResponse;
@@ -49,7 +49,7 @@ type
 
 implementation
 
-uses System.TypInfo, System.Math, Winapi.WinInet, REST.Types, Delphi.Rest.JSON.Serializer;
+uses System.TypInfo, System.Math, Winapi.WinInet, Rest.Types, Delphi.Rest.JSON.Serializer;
 
 { TRestServerService }
 
@@ -136,7 +136,6 @@ begin
     var Info: TRttiType := nil;
     var Instance := TValue.Empty;
     var Params := URL.Split(['/'], TStringSplitOptions.ExcludeEmpty);
-
     Result := (Length(Params) > 0) and ServiceContainer.GetService(Params[0], Info, Instance);
 
     if Result then
@@ -183,4 +182,3 @@ begin
 end;
 
 end.
-
