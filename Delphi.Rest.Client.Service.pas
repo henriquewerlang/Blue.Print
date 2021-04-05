@@ -7,14 +7,14 @@ uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, Delphi.Rest.JSO
 type
   IRestCommunication = interface
     ['{33BB3249-F044-4BDF-B3E0-EA2378A040C4}']
-    function SendRequestAsync(URL: String): String;{$IFDEF PAS2JS} async;{$ENDIF}
-    function SendRequestSync(URL: String): String;
+    function SendRequestAsync(const URL: String): String;{$IFDEF PAS2JS} async;{$ENDIF}
+    function SendRequestSync(const URL: String): String;
   end;
 
   TRestCommunication = class(TInterfacedObject, IRestCommunication)
   private
-    function SendRequestAsync(URL: String): String;{$IFDEF PAS2JS} async;{$ENDIF}
-    function SendRequestSync(URL: String): String;
+    function SendRequestAsync(const URL: String): String;{$IFDEF PAS2JS} async;{$ENDIF}
+    function SendRequestSync(const URL: String): String;
   end;
 
   TClientService = class
@@ -25,6 +25,7 @@ type
     FSerializer: IRestJsonSerializer;
     FCommunication: IRestCommunication;
     FAsyncInvoke: Boolean;
+    FOnExecuteException: TProc<Exception>;
 
     function Deserialize(const JSON: String; Method: TRttiMethod): TValue;
     function FormatURL(Method: TRttiMethod; const Args: TArray<TValue>): String;
@@ -33,21 +34,25 @@ type
     function SendRequestAsync(Method: TRttiMethod; const Args: TArray<TValue>): String;{$IFDEF PAS2JS} async;{$ENDIF}
     function SendRequestSync(Method: TRttiMethod; const Args: TArray<TValue>): String;
 
-    procedure OnInvokeMethodAsync(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue); {$IFDEF PAS2JS} async;{$ENDIF}
+    procedure OnInvokeMethodAsync(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);{$IFDEF PAS2JS} async;{$ENDIF}
     procedure OnInvokeMethodSync(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
+
     {$IFDEF PAS2JS}
     function GenerateParams(Method: TRttiMethod; const Args: TJSValueDynArray): TArray<TValue>;
-    function OnInvokeMethodPas2Js(const aMethodName: String; const Args: TJSValueDynArray): JSValue; virtual;
+    function OnInvokeMethodPas2Js(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
     function OnInvokeMethodPas2JsAsync(Method: TRttiMethod; const Args: TArray<TValue>): JSValue; async;
     function OnInvokeMethodPas2JsSync(Method: TRttiMethod; const Args: TArray<TValue>): JSValue;
+    {$ELSE}
+    procedure OnInvokeMethodDelphi(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
     {$ENDIF}
   public
-    constructor Create(URL: String; AsyncInvoke: Boolean); overload;
-    constructor Create(URL: String; Communication: IRestCommunication; AsyncInvoke: Boolean); overload;
+    constructor Create(const URL: String; AsyncInvoke: Boolean); overload;
+    constructor Create(const URL: String; Communication: IRestCommunication; AsyncInvoke: Boolean); overload;
 
     function GetService<T: IInterface>: T;
 
     property Communication: IRestCommunication read FCommunication write FCommunication;
+    property OnExecuteException: TProc<Exception> read FOnExecuteException write FOnExecuteException;
     property Serializer: IRestJsonSerializer read GetSerializer write FSerializer;
   end;
 
@@ -65,12 +70,12 @@ const
 
 { TClientService }
 
-constructor TClientService.Create(URL: String; AsyncInvoke: Boolean);
+constructor TClientService.Create(const URL: String; AsyncInvoke: Boolean);
 begin
   Create(URL, TRestCommunication.Create, AsyncInvoke);
 end;
 
-constructor TClientService.Create(URL: String; Communication: IRestCommunication; AsyncInvoke: Boolean);
+constructor TClientService.Create(const URL: String; Communication: IRestCommunication; AsyncInvoke: Boolean);
 begin
   inherited Create;
 
@@ -107,7 +112,7 @@ var
 
 begin
   FRttiType := FContext.GetType(TypeInfo(T)) as TRttiInterfaceType;
-  Instance := TVirtualInterface.Create(TypeInfo(T), {$IFDEF PAS2JS}@OnInvokeMethodPas2Js{$ELSE}OnInvokeMethodSync{$ENDIF});
+  Instance := TVirtualInterface.Create(TypeInfo(T), {$IFDEF PAS2JS}@OnInvokeMethodPas2Js{$ELSE}OnInvokeMethodDelphi{$ENDIF});
 
   Instance.QueryInterface(FRttiType.GUID, Result);
 end;
@@ -136,12 +141,36 @@ end;
 
 procedure TClientService.OnInvokeMethodSync(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 begin
-  Result := Deserialize(SendRequestSync(Method, Args), Method);
+  try
+    Result := Deserialize(SendRequestSync(Method, Args), Method);
+  except
+    on E: Exception do
+      if Assigned(FOnExecuteException) then
+        OnExecuteException(E)
+      else
+        raise;
+  end;
 end;
 
 procedure TClientService.OnInvokeMethodAsync(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 begin
-  Result := Deserialize({$IFDEF PAS2JS}await{$ENDIF}(SendRequestAsync(Method, Args)), Method);
+  try
+    Result := Deserialize({$IFDEF PAS2JS}await{$ENDIF}(SendRequestAsync(Method, Args)), Method);
+  except
+    on E: Exception do
+      if Assigned(FOnExecuteException) then
+        OnExecuteException(E)
+      else
+        raise;
+  end;
+end;
+
+procedure TClientService.OnInvokeMethodDelphi(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
+begin
+  if FAsyncInvoke then
+    OnInvokeMethodAsync(Method, Args, Result)
+  else
+    OnInvokeMethodSync(Method, Args, Result);
 end;
 
 function TClientService.SendRequestAsync(Method: TRttiMethod; const Args: TArray<TValue>): String;
@@ -210,7 +239,7 @@ end;
 
 { TRestCommunication }
 
-function TRestCommunication.SendRequestSync(URL: String): String;
+function TRestCommunication.SendRequestSync(const URL: String): String;
 {$IFDEF PAS2JS}
 var
   Connection: TJSXMLHttpRequest;
@@ -231,7 +260,7 @@ begin
 {$ENDIF}
 end;
 
-function TRestCommunication.SendRequestAsync(URL: String): String;
+function TRestCommunication.SendRequestAsync(const URL: String): String;
 {$IFDEF PAS2JS}
 var
   Response: TJSResponse;

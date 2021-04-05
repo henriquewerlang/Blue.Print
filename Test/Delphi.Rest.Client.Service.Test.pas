@@ -28,6 +28,16 @@ type
     procedure SendingARequestWithOneParamMustPutTheParamSeparatorInTheURLAndTheNameAndValueParam;
     [Test]
     procedure WhenTheRequestHasMoreThenOneParameterMustSepareteThenWithTheSeparetorChar;
+    [Test]
+    procedure WhenCreateAClientServiceASyncMustCallTheASyncMethodOfCommunicationClass;
+    [Test]
+    procedure WhenThePropertyOnExceptionIsLoadedMustCallTheEventWhenRaiseAnErrorInTheSyncCall;
+    [Test]
+    procedure WhenThePropertyOnExceptionIsNotLoadedMustCallTheEventWhenRaiseAnErrorInTheSyncCall;
+    [Test]
+    procedure WhenThePropertyOnExceptionIsLoadedMustCallTheEventWhenRaiseAnErrorInTheASyncCall;
+    [Test]
+    procedure WhenThePropertyOnExceptionIsNotLoadedMustCallTheEventWhenRaiseAnErrorInTheASyncCall;
   end;
 
   IServiceTest = interface(IInvokable)
@@ -178,6 +188,126 @@ begin
   Service.TestProcedure;
 
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Client.Free;
+end;
+
+procedure TClientServiceTest.WhenCreateAClientServiceASyncMustCallTheASyncMethodOfCommunicationClass;
+begin
+  var Communication := TMock.CreateInterface<IRestCommunication>;
+
+  var Client := TClientService.Create(EmptyStr, Communication.Instance, True);
+  var Service := Client.GetService<IServiceTest>;
+
+  Communication.Expect.Never.When.SendRequestSync(It.IsAny<String>);
+
+  Communication.Expect.Once.When.SendRequestAsync(It.IsAny<String>);
+
+  Service.TestProcedureWithOneParam('abcd');
+
+  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Client.Free;
+end;
+
+procedure TClientServiceTest.WhenThePropertyOnExceptionIsLoadedMustCallTheEventWhenRaiseAnErrorInTheASyncCall;
+begin
+  var Communication := TMock.CreateInterface<IRestCommunication>;
+
+  var ExcetionCalled := False;
+  var Client := TClientService.Create(EmptyStr, Communication.Instance, True);
+  var Service := Client.GetService<IServiceTest>;
+  Client.OnExecuteException :=
+    procedure (E: Exception)
+    begin
+      ExcetionCalled := True;
+    end;
+
+  Communication.Setup.WillExecute(
+    procedure
+    begin
+      raise Exception.Create('Error Message');
+    end).When.SendRequestAsync(It.IsAny<String>);
+
+  try
+    Service.TestProcedureWithOneParam('abcd');
+  except
+  end;
+
+  Assert.IsTrue(ExcetionCalled);
+
+  Client.Free;
+end;
+
+procedure TClientServiceTest.WhenThePropertyOnExceptionIsLoadedMustCallTheEventWhenRaiseAnErrorInTheSyncCall;
+begin
+  var Communication := TMock.CreateInterface<IRestCommunication>;
+
+  var ExcetionCalled := False;
+  var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
+  var Service := Client.GetService<IServiceTest>;
+  Client.OnExecuteException :=
+    procedure (E: Exception)
+    begin
+      ExcetionCalled := True;
+    end;
+
+  Communication.Setup.WillExecute(
+    procedure
+    begin
+      raise Exception.Create('Error Message');
+    end).When.SendRequestSync(It.IsAny<String>);
+
+  try
+    Service.TestProcedureWithOneParam('abcd');
+  except
+  end;
+
+  Assert.IsTrue(ExcetionCalled);
+
+  Client.Free;
+end;
+
+procedure TClientServiceTest.WhenThePropertyOnExceptionIsNotLoadedMustCallTheEventWhenRaiseAnErrorInTheASyncCall;
+begin
+  var Communication := TMock.CreateInterface<IRestCommunication>;
+
+  var Client := TClientService.Create(EmptyStr, Communication.Instance, True);
+  var Service := Client.GetService<IServiceTest>;
+
+  Communication.Setup.WillExecute(
+    procedure
+    begin
+      raise Exception.Create('Error Message');
+    end).When.SendRequestAsync(It.IsAny<String>);
+
+  Assert.WillRaise(
+    procedure
+    begin
+      Service.TestProcedureWithOneParam('abcd');
+    end, Exception);
+
+  Client.Free;
+end;
+
+procedure TClientServiceTest.WhenThePropertyOnExceptionIsNotLoadedMustCallTheEventWhenRaiseAnErrorInTheSyncCall;
+begin
+  var Communication := TMock.CreateInterface<IRestCommunication>;
+
+  var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
+  var Service := Client.GetService<IServiceTest>;
+
+  Communication.Setup.WillExecute(
+    procedure
+    begin
+      raise Exception.Create('Error Message');
+    end).When.SendRequestSync(It.IsAny<String>);
+
+  Assert.WillRaise(
+    procedure
+    begin
+      Service.TestProcedureWithOneParam('abcd');
+    end, Exception);
 
   Client.Free;
 end;
