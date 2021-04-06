@@ -24,11 +24,12 @@ type
     FURL: String;
     FSerializer: IRestJsonSerializer;
     FCommunication: IRestCommunication;
-    FAsyncInvoke: Boolean;
+    FAsynchronousInvoke: Boolean;
     FOnExecuteException: TProc<Exception>;
 
     function Deserialize(const JSON: String; Method: TRttiMethod): TValue;
     function FormatURL(Method: TRttiMethod; const Args: TArray<TValue>): String;
+    function GetCommunication: IRestCommunication;
     function GetSerializer: IRestJsonSerializer;
     function GetURLParams(Method: TRttiMethod; const Args: TArray<TValue>): String;
     function SendRequestAsync(Method: TRttiMethod; const Args: TArray<TValue>): String;{$IFDEF PAS2JS} async;{$ENDIF}
@@ -46,14 +47,16 @@ type
     procedure OnInvokeMethodDelphi(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
     {$ENDIF}
   public
-    constructor Create(const URL: String; AsyncInvoke: Boolean); overload;
-    constructor Create(const URL: String; Communication: IRestCommunication; AsyncInvoke: Boolean); overload;
+    constructor Create; overload;
+    constructor Create(const URL: String; Communication: IRestCommunication; AsynchronousInvoke: Boolean); overload;
 
     function GetService<T: IInterface>: T;
 
-    property Communication: IRestCommunication read FCommunication write FCommunication;
+    property AsynchronousInvoke: Boolean read FAsynchronousInvoke write FAsynchronousInvoke;
+    property Communication: IRestCommunication read GetCommunication write FCommunication;
     property OnExecuteException: TProc<Exception> read FOnExecuteException write FOnExecuteException;
     property Serializer: IRestJsonSerializer read GetSerializer write FSerializer;
+    property URL: String read FURL write FURL;
   end;
 
 implementation
@@ -70,18 +73,19 @@ const
 
 { TClientService }
 
-constructor TClientService.Create(const URL: String; AsyncInvoke: Boolean);
-begin
-  Create(URL, TRestCommunication.Create, AsyncInvoke);
-end;
-
-constructor TClientService.Create(const URL: String; Communication: IRestCommunication; AsyncInvoke: Boolean);
+constructor TClientService.Create;
 begin
   inherited Create;
 
-  FAsyncInvoke := AsyncInvoke;
-  FCommunication := Communication;
   FContext := TRttiContext.Create;
+end;
+
+constructor TClientService.Create(const URL: String; Communication: IRestCommunication; AsynchronousInvoke: Boolean);
+begin
+  inherited Create;
+
+  FAsynchronousInvoke := AsynchronousInvoke;
+  FCommunication := Communication;
   FURL := URL;
 end;
 
@@ -96,6 +100,14 @@ end;
 function TClientService.FormatURL(Method: TRttiMethod; const Args: TArray<TValue>): String;
 begin
   Result := Format('%s/%s/%s%s', [FURL, FRttiType.Name.Substring(1), Method.Name, GetURLParams(Method, Args)]);
+end;
+
+function TClientService.GetCommunication: IRestCommunication;
+begin
+  if not Assigned(FCommunication) then
+    FCommunication := TRestCommunication.Create;
+
+  Result := FCommunication;
 end;
 
 function TClientService.GetSerializer: IRestJsonSerializer;
@@ -165,13 +177,15 @@ begin
   end;
 end;
 
+{$IFDEF DCC}
 procedure TClientService.OnInvokeMethodDelphi(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 begin
-  if FAsyncInvoke then
+  if FAsynchronousInvoke then
     OnInvokeMethodAsync(Method, Args, Result)
   else
     OnInvokeMethodSync(Method, Args, Result);
 end;
+{$ENDIF}
 
 function TClientService.SendRequestAsync(Method: TRttiMethod; const Args: TArray<TValue>): String;
 begin
@@ -210,7 +224,7 @@ var
 begin
   Method := FRttiType.GetMethod(aMethodName);
 
-  if FAsyncInvoke then
+  if FAsynchronousInvoke then
     Result := OnInvokeMethodPas2JsAsync(Method, GenerateParams(Method, Args))
   else
     Result := OnInvokeMethodPas2JsSync(Method, GenerateParams(Method, Args));
