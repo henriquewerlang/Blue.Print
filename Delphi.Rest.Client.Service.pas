@@ -65,7 +65,7 @@ uses Delphi.Rest.Exceptions,
 {$IFDEF PAS2JS}
   JS, Web, Pas2Js.Rest.JSON.Serializers
 {$ELSE}
-  Delphi.Rest.JSON.Serializer
+  Delphi.Rest.JSON.Serializer, System.Net.HTTPClient
 {$ENDIF};
 
 const
@@ -271,6 +271,20 @@ begin
     Result := Connection.ResponseText
   else
     raise EHTTPStatusError.Create(Connection.status, Connection.ResponseText);
+{$ELSE}
+  var Connection := THTTPClient.Create;
+
+  var Response := Connection.Get(URL);
+  var Content := Response.ContentAsString(TEncoding.UTF8);
+
+  try
+    if Response.StatusCode = 200 then
+      Result := Content
+    else
+      raise EHTTPStatusError.Create(Response.StatusCode, Content);
+  finally
+    Connection.Free;
+  end;
 {$ENDIF}
 end;
 
@@ -288,6 +302,8 @@ begin
     Result := await(Response.Text)
   else
     raise EHTTPStatusError.Create(Response.status, await(Response.Text));
+{$ELSE}
+  Result := SendRequestSync(URL);
 {$ENDIF}
 end;
 

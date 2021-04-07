@@ -17,6 +17,7 @@ type
     FServiceContainer: IServiceContainer;
     FSerializer: IRestJsonSerializer;
     FOnGetServiceContainer: TOnGetServiceContainer;
+
     function GetParams(Info: TRttiMethod; var ConvertedParams: TArray<TValue>): Boolean;
     function GetParamValue(Param: TRttiParameter; const Value: String): TValue;
     function GetSerializer: IRestJsonSerializer;
