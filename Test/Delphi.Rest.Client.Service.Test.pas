@@ -2,11 +2,13 @@ unit Delphi.Rest.Client.Service.Test;
 
 interface
 
-uses DUnitX.TestFramework;
+uses DUnitX.TestFramework, Delphi.Rest.Client.Service, Delphi.Mock, Delphi.Mock.Intf;
 
 type
   [TestFixture]
   TClientServiceTest = class
+  private
+    function CreateMockCommunication: IMock<IRestCommunication>;
   public
     [SetupFixture]
     procedure SetupFixture;
@@ -38,6 +40,12 @@ type
     procedure WhenThePropertyOnExceptionIsLoadedMustCallTheEventWhenRaiseAnErrorInTheASyncCall;
     [Test]
     procedure WhenThePropertyOnExceptionIsNotLoadedMustCallTheEventWhenRaiseAnErrorInTheASyncCall;
+    [Test]
+    procedure WhenFillAHeaderMustPassTheValuesToTheCommunicationInterface;
+    [Test]
+    procedure TheFilledHeadersMustKeepTheValues;
+    [Test]
+    procedure TheHeadersFilledMustBeLoadedInTheCommunicationInterface;
   end;
 
   IServiceTest = interface(IInvokable)
@@ -51,13 +59,20 @@ type
 
 implementation
 
-uses System.SysUtils, System.Rtti, Delphi.Rest.Client.Service, Delphi.Mock, Delphi.Rest.JSON.Serializer, Delphi.Rest.JSON.Serializer.Intf;
+uses System.SysUtils, System.Rtti, System.Classes, Delphi.Rest.JSON.Serializer, Delphi.Rest.JSON.Serializer.Intf;
 
 { TClientServiceTest }
 
+function TClientServiceTest.CreateMockCommunication: IMock<IRestCommunication>;
+begin
+  Result := TMock.CreateInterface<IRestCommunication>;
+
+  Result.Setup.WillReturn(nil).When.SetHeaders(It.IsAny<TStrings>);
+end;
+
 procedure TClientServiceTest.SendingARequestWithOneParamMustPutTheParamSeparatorInTheURLAndTheNameAndValueParam;
 begin
-  var Communication := TMock.CreateInterface<IRestCommunication>;
+  var Communication := CreateMockCommunication;
 
   var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
@@ -73,7 +88,7 @@ end;
 
 procedure TClientServiceTest.SendingARequestWithoutParamsMustLoadTheURLWithoutParamSeparator;
 begin
-  var Communication := TMock.CreateInterface<IRestCommunication>;
+  var Communication := CreateMockCommunication;
 
   var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
@@ -90,7 +105,7 @@ end;
 procedure TClientServiceTest.SetupFixture;
 begin
   // Avoiding memory leak reporting.
-  TMock.CreateInterface<IRestCommunication>;
+  CreateMockCommunication;
   var Client := TClientService.Create(EmptyStr, nil, False);
   var Serializer: IRestJsonSerializer := TRestJsonSerializer.Create;
   var Service := Client.GetService<IServiceTest>;
@@ -98,9 +113,54 @@ begin
   Serializer.Serialize('abc');
 end;
 
-procedure TClientServiceTest.TheURLOfServerCallMustContainTheNameOfInterfacePlusTheProcedureName;
+procedure TClientServiceTest.TheFilledHeadersMustKeepTheValues;
+begin
+  var Client := TClientService.Create;
+
+  Client.Header['My Header'] := 'My Value';
+
+  Assert.AreEqual('My Value', Client.Header['My Header']);
+
+  Client.Free;
+end;
+
+procedure TClientServiceTest.TheHeadersFilledMustBeLoadedInTheCommunicationInterface;
 begin
   var Communication := TMock.CreateInterface<IRestCommunication>;
+  var HeaderCount := 0;
+
+  var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
+  var Service := Client.GetService<IServiceTest>;
+
+  Communication.Expect.Once.When.SendRequestAsync(It.IsAny<String>);
+
+  Communication.Expect.Once.When.SendRequestSync(It.IsAny<String>);
+
+  Communication.Expect.CustomExpect(
+    function (Values: TArray<TValue>): String
+    begin
+      if Values[0].AsObject is TStrings then
+        HeaderCount := HeaderCount + Values[0].AsType<TStrings>.Count;
+
+      Result := EmptyStr;
+    end).When.SetHeaders(It.IsAny<TStrings>);
+
+  Client.Header['My Header'] := 'abc';
+  Service.TestProcedureWithOneParam('abcd');
+
+  Client.AsynchronousInvoke := True;
+  Client.Header['My Header 2'] := 'abc';
+
+  Service.TestProcedureWithOneParam('abcd');
+
+  Assert.AreEqual(3, HeaderCount);
+
+  Client.Free;
+end;
+
+procedure TClientServiceTest.TheURLOfServerCallMustContainTheNameOfInterfacePlusTheProcedureName;
+begin
+  var Communication := CreateMockCommunication;
 
   var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
@@ -116,7 +176,7 @@ end;
 
 procedure TClientServiceTest.TheURLPassedInConstructorMustContatWithTheRequestURL;
 begin
-  var Communication := TMock.CreateInterface<IRestCommunication>;
+  var Communication := CreateMockCommunication;
 
   var Client := TClientService.Create('http://myurl.com', Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
@@ -132,7 +192,7 @@ end;
 
 procedure TClientServiceTest.WhenCallAFunctionMustConvertTheFunctionParamsInTheGetURL;
 begin
-  var Communication := TMock.CreateInterface<IRestCommunication>;
+  var Communication := CreateMockCommunication;
 
   var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
@@ -148,7 +208,7 @@ end;
 
 procedure TClientServiceTest.WhenCallAFunctionMustReturnTheValueOfFunctionAsSpected;
 begin
-  var Communication := TMock.CreateInterface<IRestCommunication>;
+  var Communication := CreateMockCommunication;
 
   var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
@@ -162,7 +222,7 @@ end;
 
 procedure TClientServiceTest.WhenCallSendRequestMustSendABodyInParams;
 begin
-  var Communication := TMock.CreateInterface<IRestCommunication>;
+  var Communication := CreateMockCommunication;
 
   var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
@@ -178,7 +238,7 @@ end;
 
 procedure TClientServiceTest.WhenCallTheProcedureMustGenerateTheRequestForServer;
 begin
-  var Communication := TMock.CreateInterface<IRestCommunication>;
+  var Communication := CreateMockCommunication;
 
   var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
@@ -194,7 +254,7 @@ end;
 
 procedure TClientServiceTest.WhenCreateAClientServiceASyncMustCallTheASyncMethodOfCommunicationClass;
 begin
-  var Communication := TMock.CreateInterface<IRestCommunication>;
+  var Communication := CreateMockCommunication;
 
   var Client := TClientService.Create(EmptyStr, Communication.Instance, True);
   var Service := Client.GetService<IServiceTest>;
@@ -210,9 +270,33 @@ begin
   Client.Free;
 end;
 
-procedure TClientServiceTest.WhenThePropertyOnExceptionIsLoadedMustCallTheEventWhenRaiseAnErrorInTheASyncCall;
+procedure TClientServiceTest.WhenFillAHeaderMustPassTheValuesToTheCommunicationInterface;
 begin
   var Communication := TMock.CreateInterface<IRestCommunication>;
+
+  var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
+  var Service := Client.GetService<IServiceTest>;
+
+  Communication.Expect.Once.When.SendRequestAsync(It.IsAny<String>);
+
+  Communication.Expect.Once.When.SendRequestSync(It.IsAny<String>);
+
+  Communication.Expect.ExecutionCount(2).When.SetHeaders(It.IsAny<TStrings>);
+
+  Service.TestProcedureWithOneParam('abcd');
+
+  Client.AsynchronousInvoke := True;
+
+  Service.TestProcedureWithOneParam('abcd');
+
+  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Client.Free;
+end;
+
+procedure TClientServiceTest.WhenThePropertyOnExceptionIsLoadedMustCallTheEventWhenRaiseAnErrorInTheASyncCall;
+begin
+  var Communication := CreateMockCommunication;
 
   var ExcetionCalled := False;
   var Client := TClientService.Create(EmptyStr, Communication.Instance, True);
@@ -241,7 +325,7 @@ end;
 
 procedure TClientServiceTest.WhenThePropertyOnExceptionIsLoadedMustCallTheEventWhenRaiseAnErrorInTheSyncCall;
 begin
-  var Communication := TMock.CreateInterface<IRestCommunication>;
+  var Communication := CreateMockCommunication;
 
   var ExcetionCalled := False;
   var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
@@ -270,7 +354,7 @@ end;
 
 procedure TClientServiceTest.WhenThePropertyOnExceptionIsNotLoadedMustCallTheEventWhenRaiseAnErrorInTheASyncCall;
 begin
-  var Communication := TMock.CreateInterface<IRestCommunication>;
+  var Communication := CreateMockCommunication;
 
   var Client := TClientService.Create(EmptyStr, Communication.Instance, True);
   var Service := Client.GetService<IServiceTest>;
@@ -292,7 +376,7 @@ end;
 
 procedure TClientServiceTest.WhenThePropertyOnExceptionIsNotLoadedMustCallTheEventWhenRaiseAnErrorInTheSyncCall;
 begin
-  var Communication := TMock.CreateInterface<IRestCommunication>;
+  var Communication := CreateMockCommunication;
 
   var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
@@ -314,7 +398,7 @@ end;
 
 procedure TClientServiceTest.WhenTheRequestHasMoreThenOneParameterMustSepareteThenWithTheSeparetorChar;
 begin
-  var Communication := TMock.CreateInterface<IRestCommunication>;
+  var Communication := CreateMockCommunication;
 
   var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;

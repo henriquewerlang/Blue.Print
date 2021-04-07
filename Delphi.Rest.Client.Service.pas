@@ -2,19 +2,25 @@
 
 interface
 
-uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, Delphi.Rest.JSON.Serializer.Intf;
+uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, Delphi.Rest.JSON.Serializer.Intf;
 
 type
   IRestCommunication = interface
     ['{33BB3249-F044-4BDF-B3E0-EA2378A040C4}']
     function SendRequestAsync(const URL: String): String;{$IFDEF PAS2JS} async;{$ENDIF}
     function SendRequestSync(const URL: String): String;
+
+    procedure SetHeaders(Headers: TStrings);
   end;
 
   TRestCommunication = class(TInterfacedObject, IRestCommunication)
   private
+    FHeaders: TStrings;
+
     function SendRequestAsync(const URL: String): String;{$IFDEF PAS2JS} async;{$ENDIF}
     function SendRequestSync(const URL: String): String;
+
+    procedure SetHeaders(Headers: TStrings);
   end;
 
   TClientService = class
@@ -26,10 +32,12 @@ type
     FCommunication: IRestCommunication;
     FAsynchronousInvoke: Boolean;
     FOnExecuteException: TProc<Exception>;
+    FHeaders: TStringList;
 
     function Deserialize(const JSON: String; Method: TRttiMethod): TValue;
     function FormatURL(Method: TRttiMethod; const Args: TArray<TValue>): String;
     function GetCommunication: IRestCommunication;
+    function GetHeader(Index: String): String;
     function GetSerializer: IRestJsonSerializer;
     function GetURLParams(Method: TRttiMethod; const Args: TArray<TValue>): String;
     function SendRequestAsync(Method: TRttiMethod; const Args: TArray<TValue>): String;{$IFDEF PAS2JS} async;{$ENDIF}
@@ -37,6 +45,7 @@ type
 
     procedure OnInvokeMethodAsync(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);{$IFDEF PAS2JS} async;{$ENDIF}
     procedure OnInvokeMethodSync(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
+    procedure SetHeader(Index: String; const Value: String);
 
     {$IFDEF PAS2JS}
     function GenerateParams(Method: TRttiMethod; const Args: TJSValueDynArray): TArray<TValue>;
@@ -50,10 +59,13 @@ type
     constructor Create; overload;
     constructor Create(const URL: String; Communication: IRestCommunication; AsynchronousInvoke: Boolean); overload;
 
+    destructor Destroy; override;
+
     function GetService<T: IInterface>: T;
 
     property AsynchronousInvoke: Boolean read FAsynchronousInvoke write FAsynchronousInvoke;
     property Communication: IRestCommunication read GetCommunication write FCommunication;
+    property Header[Index: String]: String read GetHeader write SetHeader;
     property OnExecuteException: TProc<Exception> read FOnExecuteException write FOnExecuteException;
     property Serializer: IRestJsonSerializer read GetSerializer write FSerializer;
     property URL: String read FURL write FURL;
@@ -78,11 +90,12 @@ begin
   inherited Create;
 
   FContext := TRttiContext.Create;
+  FHeaders := TStringList.Create;
 end;
 
 constructor TClientService.Create(const URL: String; Communication: IRestCommunication; AsynchronousInvoke: Boolean);
 begin
-  inherited Create;
+  Create;
 
   FAsynchronousInvoke := AsynchronousInvoke;
   FCommunication := Communication;
@@ -97,6 +110,13 @@ begin
     Result := TValue.Empty;
 end;
 
+destructor TClientService.Destroy;
+begin
+  FHeaders.Free;
+
+  inherited;
+end;
+
 function TClientService.FormatURL(Method: TRttiMethod; const Args: TArray<TValue>): String;
 begin
   Result := Format('%s/%s/%s%s', [FURL, FRttiType.Name.Substring(1), Method.Name, GetURLParams(Method, Args)]);
@@ -108,6 +128,11 @@ begin
     FCommunication := TRestCommunication.Create;
 
   Result := FCommunication;
+end;
+
+function TClientService.GetHeader(Index: String): String;
+begin
+  Result := FHeaders.Values[Index];
 end;
 
 function TClientService.GetSerializer: IRestJsonSerializer;
@@ -189,12 +214,21 @@ end;
 
 function TClientService.SendRequestAsync(Method: TRttiMethod; const Args: TArray<TValue>): String;
 begin
+  Communication.SetHeaders(FHeaders);
+
   Result := {$IFDEF PAS2JS}await{$ENDIF}(Communication.SendRequestAsync(FormatURL(Method, Args)));
 end;
 
 function TClientService.SendRequestSync(Method: TRttiMethod; const Args: TArray<TValue>): String;
 begin
+  Communication.SetHeaders(FHeaders);
+
   Result := Communication.SendRequestSync(FormatURL(Method, Args));
+end;
+
+procedure TClientService.SetHeader(Index: String; const Value: String);
+begin
+  FHeaders.Values[Index] := Value;
 end;
 
 {$IFDEF PAS2JS}
@@ -258,12 +292,17 @@ function TRestCommunication.SendRequestSync(const URL: String): String;
 var
   Connection: TJSXMLHttpRequest;
 
+  A: Integer;
+
 {$ENDIF}
 begin
 {$IFDEF PAS2JS}
   Connection := TJSXMLHttpRequest.New;
 
   Connection.Open('GET', URL, False);
+
+  for A := 0 to Pred(FHeaders.Count) do
+    Connection.setRequestHeader(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
 
   Connection.Send;
 
@@ -288,15 +327,34 @@ begin
 {$ENDIF}
 end;
 
+procedure TRestCommunication.SetHeaders(Headers: TStrings);
+begin
+  FHeaders := Headers;
+end;
+
 function TRestCommunication.SendRequestAsync(const URL: String): String;
 {$IFDEF PAS2JS}
 var
+  A: Integer;
+
   Response: TJSResponse;
+
+  Headers: TJSHTMLHeaders;
+
+  Config: TJSObject;
 
 {$ENDIF}
 begin
 {$IFDEF PAS2JS}
-  Response := await(Window.Fetch(URL));
+  Config := TJSObject.New;
+  Headers := TJSHTMLHeaders.New;
+
+  for A := 0 to Pred(FHeaders.Count) do
+    Headers.Append(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
+
+  Config['headers'] := Headers;
+
+  Response := await(Window.Fetch(URL, Config));
 
   if Response.OK then
     Result := await(Response.Text)
