@@ -31,7 +31,7 @@ type
     FSerializer: IRestJsonSerializer;
     FCommunication: IRestCommunication;
     FAsynchronousInvoke: Boolean;
-    FOnExecuteException: TProc<Exception>;
+    FOnExecuteException: TProc<Exception, IRestJsonSerializer>;
     FHeaders: TStringList;
 
     function Deserialize(const JSON: String; Method: TRttiMethod): TValue;
@@ -66,7 +66,7 @@ type
     property AsynchronousInvoke: Boolean read FAsynchronousInvoke write FAsynchronousInvoke;
     property Communication: IRestCommunication read GetCommunication write FCommunication;
     property Header[Index: String]: String read GetHeader write SetHeader;
-    property OnExecuteException: TProc<Exception> read FOnExecuteException write FOnExecuteException;
+    property OnExecuteException: TProc<Exception, IRestJsonSerializer> read FOnExecuteException write FOnExecuteException;
     property Serializer: IRestJsonSerializer read GetSerializer write FSerializer;
     property URL: String read FURL write FURL;
   end;
@@ -183,7 +183,7 @@ begin
   except
     on E: Exception do
       if Assigned(FOnExecuteException) then
-        OnExecuteException(E)
+        OnExecuteException(E, Serializer)
       else
         raise;
   end;
@@ -196,7 +196,7 @@ begin
   except
     on E: Exception do
       if Assigned(FOnExecuteException) then
-        OnExecuteException(E)
+        OnExecuteException(E, Serializer)
       else
         raise;
   end;
