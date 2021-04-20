@@ -302,7 +302,7 @@ begin
   var Client := TClientService.Create(EmptyStr, Communication.Instance, True);
   var Service := Client.GetService<IServiceTest>;
   Client.OnExecuteException :=
-    procedure (E: Exception)
+    procedure (E: Exception; Serializer: IRestJsonSerializer)
     begin
       ExcetionCalled := True;
     end;
@@ -331,7 +331,7 @@ begin
   var Client := TClientService.Create(EmptyStr, Communication.Instance, False);
   var Service := Client.GetService<IServiceTest>;
   Client.OnExecuteException :=
-    procedure (E: Exception)
+    procedure (E: Exception; Serializer: IRestJsonSerializer)
     begin
       ExcetionCalled := True;
     end;
