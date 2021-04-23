@@ -16,8 +16,8 @@ uses
   DUnitX.MemoryLeakMonitor.FastMM5,
   Delphi.Rest.Server.Service.Component in '..\Delphi.Rest.Server.Service.Component.pas',
   Delphi.Rest.Server.Service.Component.Test in 'Delphi.Rest.Server.Service.Component.Test.pas',
-  Delphi.Rest.Client.Service in '..\Delphi.Rest.Client.Service.pas',
-  Delphi.Rest.Client.Service.Test in 'Delphi.Rest.Client.Service.Test.pas';
+  Delphi.Rest.Remote.Service in '..\Delphi.Rest.Remote.Service.pas',
+  Delphi.Rest.Remote.Service.Test in 'Delphi.Rest.Remote.Service.Test.pas';
 
 // Para não remover os itens abaixo.
 {$IFNDEF TESTINSIGHT}
