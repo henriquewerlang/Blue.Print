@@ -287,11 +287,12 @@ begin
     raise EHTTPStatusError.Create(Connection.status, Connection.ResponseText);
 {$ELSE}
   var Connection := THTTPClient.Create;
-  var Response := Connection.Get(URL);
-
-  var Content := Response.ContentAsString(TEncoding.UTF8);
 
   try
+    var Response := Connection.Get(URL);
+
+    var Content := Response.ContentAsString(TEncoding.UTF8);
+
     if Response.StatusCode = 200 then
       Result := Content
     else
