@@ -233,9 +233,13 @@ var
 begin
   Method := FRttiType.GetMethod(aMethodName);
 
-//  if FAsynchronousInvoke then
-//    Result := OnInvokeMethodPas2JsAsync(Method, GenerateParams(Method, Args))
-//  else
+  if Method.IsAsyncCall then
+    Result := TJSPromise.New(
+      procedure(Resolve, Reject: TJSPromiseResolver)
+      begin
+        Resolve(OnInvokeMethodPas2JsAsync(Method, GenerateParams(Method, Args)));
+      end)
+  else
     Result := OnInvokeMethodPas2JsSync(Method, GenerateParams(Method, Args));
 end;
 
