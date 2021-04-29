@@ -10,6 +10,8 @@ type
     function Deserialize(const AJson: String; TypeInfo: PTypeInfo): TValue;
     function Serialize(const AValue: TValue): String;
   protected
+    FContext: TRttiContext;
+
     function CreateObject(RttiType: TRttiType): TObject; virtual;
     function DeserializeArray(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeClassRef(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
@@ -19,6 +21,8 @@ type
     function SerializeArray(const Value: TValue; RttiType: TRttiDynamicArrayType): JSValue; virtual;
     function SerializeJSON(const Value: TValue; RttiType: TRttiType): JSValue; virtual;
     function SerializeObject(const Value: TValue; RttiType: TRttiInstanceType): JSValue; virtual;
+  public
+    constructor Create;
   end;
 
 implementation
@@ -26,6 +30,13 @@ implementation
 uses SysUtils, DateUtils;
 
 { TRestJsonSerializer }
+
+constructor TRestJsonSerializer.Create;
+begin
+  inherited;
+
+  FContext := TRTTIContext.Create;
+end;
 
 function TRestJsonSerializer.CreateObject(RttiType: TRttiType): TObject;
 begin
@@ -39,17 +50,12 @@ end;
 
 function TRestJsonSerializer.Deserialize(const AJson: String; TypeInfo: PTypeInfo): TValue;
 var
-  Context: TRTTIContext;
-
   RttiType: TRttiType;
 
 begin
-  Context := TRTTIContext.Create;
-  RttiType := Context.GetType(TypeInfo);
+  RttiType := FContext.GetType(TypeInfo);
 
   Result := DeserializeJSON(TJSJSON.Parse(AJson), RttiType);
-
-  Context.Free;
 end;
 
 function TRestJsonSerializer.DeserializeArray(const JSON: JSValue; RttiType: TRttiType): TValue;
@@ -71,16 +77,12 @@ begin
   Result := TValue.FromArray(RttiArrayType.Handle, Values);
 end;
 
-
 function TRestJsonSerializer.DeserializeClassRef(const JSON: JSValue; RttiType: TRttiType): TValue;
 var
-  Context: TRTTIContext;
-
   ClassRefType: TRttiInstanceType;
 
 begin
-  Context := TRTTIContext.Create;
-  ClassRefType := Context.FindType(String(JSON)) as TRttiInstanceType;
+  ClassRefType := FContext.FindType(String(JSON)) as TRttiInstanceType;
 
   if Assigned(ClassRefType) then
     Result := TValue.From(ClassRefType.MetaclassType)
@@ -172,17 +174,12 @@ end;
 
 function TRestJsonSerializer.Serialize(const AValue: TValue): String;
 var
-  Context: TRTTIContext;
-
   RttiType: TRttiType;
 
 begin
-  Context := TRTTIContext.Create;
-  RttiType := Context.GetType(AValue.TypeInfo);
+  RttiType := FContext.GetType(AValue.TypeInfo);
 
   Result := TJSJSON.stringify(SerializeJSON(AValue, RttiType));
-
-  Context.Free;
 end;
 
 function TRestJsonSerializer.SerializeArray(const Value: TValue; RttiType: TRttiDynamicArrayType): JSValue;
