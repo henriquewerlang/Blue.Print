@@ -54,22 +54,23 @@ end;
 
 function TRestJsonSerializer.DeserializeArray(const JSON: JSValue; RttiType: TRttiType): TValue;
 var
+  A: Integer;
+
   RttiArrayType: TRttiDynamicArrayType absolute RttiType;
 
-  Value: JSValue;
+  JSONArray: TJSArray absolute JSON;
 
-  ValueArray: TJSArray absolute JSON;
-
-  Return: TJSArray;
+  Values: TArray<TValue>;
 
 begin
-  Return := TJSArray.new;
+  SetLength(Values, JSONArray.Length);
 
-  for Value in ValueArray do
-    Return.Push(DeserializeJSON(Value, RttiArrayType.ElementType).AsJSValue);
+  for A := 0 to Pred(JSONArray.Length) do
+    Values[A] := DeserializeJSON(JSONArray[A], RttiArrayType.ElementType);
 
-  Result := TValue.FromJSValue(Return);
+  Result := TValue.FromArray(RttiArrayType.Handle, Values);
 end;
+
 
 function TRestJsonSerializer.DeserializeClassRef(const JSON: JSValue; RttiType: TRttiType): TValue;
 var
