@@ -13,15 +13,19 @@ type
     FContext: TRttiContext;
 
     function CreateObject(RttiType: TRttiType): TObject; virtual;
+    function CreateRecord(RttiType: TRttiType): TJSObject; virtual;
     function DeserializeArray(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeClassRef(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeEnumerator(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeJSON(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeObject(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeObjectProperty(const Value: TValue; RttiType: TRttiType; const JSON: JSValue): TValue; virtual;
+    function DeserializeRecord(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function SerializeArray(const Value: TValue; RttiType: TRttiDynamicArrayType): JSValue; virtual;
     function SerializeJSON(const Value: TValue; RttiType: TRttiType): JSValue; virtual;
     function SerializeObject(const Value: TValue; RttiType: TRttiInstanceType): JSValue; virtual;
+
+    procedure DeserializeProperties(Instance: TJSObject; RttiType: TRttiType; const JSON: JSValue); virtual;
   public
     constructor Create;
   end;
@@ -41,10 +45,19 @@ end;
 
 function TRestJsonSerializer.CreateObject(RttiType: TRttiType): TObject;
 begin
+  Result := RttiType.AsInstance.MetaClassType.Create;
+end;
+
+function TRestJsonSerializer.CreateRecord(RttiType: TRttiType): TJSObject;
+var
+  RecordType: TRttiRecordType absolute RttiType;
+
+begin
 {$IFDEF PAS2JS}
+  Result := TJSObject(RecordType.RecordTypeInfo.Module[RecordType.Name]);
+
   asm
-    Result = Object.create(RttiType.FTypeInfo.class);
-    Result.$init();
+    Result = Object.create(Result);
   end;
 {$ENDIF}
 end;
@@ -100,6 +113,8 @@ function TRestJsonSerializer.DeserializeJSON(const JSON: JSValue; RttiType: TRtt
 begin
   if RttiType.IsInstance  then
     Result := DeserializeObject(JSON, RttiType)
+  else if RttiType.IsRecord then
+    Result := DeserializeRecord(JSON, RttiType)
   else if RttiType is TRttiClassRefType then
     Result := DeserializeClassRef(JSON, RttiType)
   else if RttiType is TRttiDynamicArrayType then
@@ -114,9 +129,30 @@ end;
 
 function TRestJsonSerializer.DeserializeObject(const JSON: JSValue; RttiType: TRttiType): TValue;
 var
+  CurrentObject: TObject;
+
+begin
+  if JSON = NULL then
+    Result := TValue.Empty
+  else
+  begin
+    CurrentObject := CreateObject(RttiType);
+    Result := TValue.FromJSValue(CurrentObject);
+
+    DeserializeProperties(TJSObject(CurrentObject), RttiType, JSON);
+  end;
+end;
+
+function TRestJsonSerializer.DeserializeObjectProperty(const Value: TValue; RttiType: TRttiType; const JSON: JSValue): TValue;
+begin
+  Result := DeserializeJSON(JSON, RttiType);
+end;
+
+procedure TRestJsonSerializer.DeserializeProperties(Instance: TJSObject; RttiType: TRttiType; const JSON: JSValue);
+var
   JSONObject: TJSObject absolute JSON;
 
-  FieldName, Key: String;
+  Key: String;
 
   Prop: TRttiProperty;
 
@@ -126,58 +162,53 @@ var
 
   KeyType: TRttiType;
 
-  ResultJSObject: TJSObject;
+begin
+  for Key in TJSObject.Keys(JSONObject) do
+  begin
+    Field := RttiType.GetField('F' + Key);
+    KeyType := nil;
+    Prop := RttiType.GetProperty(Key);
 
-  CurrentObject: TObject;
+    if not Assigned(Field) then
+      Field := RttiType.GetField(Key);
+
+    if Assigned(Prop) then
+    begin
+      KeyType := Prop.PropertyType;
+      Value := Prop.GetValue(Instance);
+    end
+    else if Assigned(Field) then
+    begin
+      KeyType := Field.FieldType;
+      Value := Field.GetValue(Instance);
+    end;
+
+    if Assigned(KeyType) then
+    begin
+      Value := DeserializeObjectProperty(Value, KeyType, JSONObject[Key]);
+
+      if Assigned(Prop) then
+        Prop.SetValue(Instance, Value)
+      else if Assigned(Field) then
+        Field.SetValue(Instance, Value);
+    end;
+  end;
+end;
+
+function TRestJsonSerializer.DeserializeRecord(const JSON: JSValue; RttiType: TRttiType): TValue;
+var
+  CurrentRecord: TJSObject;
 
 begin
   if JSON = NULL then
     Result := TValue.Empty
   else
   begin
-    CurrentObject := CreateObject(RttiType);
-    ResultJSObject := TJSObject(CurrentObject);
-    Result := TValue.FromJSValue(CurrentObject);
+    CurrentRecord := CreateRecord(RttiType);
+    Result := TValue.From(TObject(CurrentRecord));
 
-    for Key in TJSObject.Keys(JSONObject) do
-    begin
-      FieldName := 'F' + Key;
-      Prop := RttiType.GetProperty(Key);
-      KeyType := nil;
-
-      Field := RttiType.GetField(FieldName);
-
-      if Assigned(Prop) then
-      begin
-        KeyType := Prop.PropertyType;
-        Value := Prop.GetValue(CurrentObject);
-      end
-      else if Assigned(Field) then
-      begin
-        KeyType := Field.FieldType;
-        Value := Prop.GetValue(CurrentObject);
-      end;
-
-      if Assigned(KeyType) then
-      begin
-        Value := DeserializeObjectProperty(Value, KeyType, JSONObject[Key]);
-
-        if Assigned(Prop) then
-          Prop.SetValue(Result.AsObject, Value)
-        else
-          Field.SetValue(Result.AsObject, Value);
-      end
-      else if ResultJSObject.hasOwnProperty(FieldName) then
-        ResultJSObject[FieldName] := JSONObject[Key]
-      else
-        ResultJSObject['f' + Key] := JSONObject[Key];
-    end;
+    DeserializeProperties(CurrentRecord, RttiType, JSON);
   end;
-end;
-
-function TRestJsonSerializer.DeserializeObjectProperty(const Value: TValue; RttiType: TRttiType; const JSON: JSValue): TValue;
-begin
-  Result := DeserializeJSON(JSON, RttiType);
 end;
 
 function TRestJsonSerializer.Serialize(const AValue: TValue): String;
