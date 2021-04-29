@@ -15,6 +15,7 @@ type
     function CreateObject(RttiType: TRttiType): TObject; virtual;
     function DeserializeArray(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeClassRef(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
+    function DeserializeEnumerator(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeJSON(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeObject(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeObjectProperty(const Value: TValue; RttiType: TRttiType; const JSON: JSValue): TValue; virtual;
@@ -90,6 +91,11 @@ begin
     Result := TValue.Empty;
 end;
 
+function TRestJsonSerializer.DeserializeEnumerator(const JSON: JSValue; RttiType: TRttiType): TValue;
+begin
+  Result := TValue.FromOrdinal(RttiType.Handle, JSON);
+end;
+
 function TRestJsonSerializer.DeserializeJSON(const JSON: JSValue; RttiType: TRttiType): TValue;
 begin
   if RttiType.IsInstance  then
@@ -98,6 +104,8 @@ begin
     Result := DeserializeClassRef(JSON, RttiType)
   else if RttiType is TRttiDynamicArrayType then
     Result := DeserializeArray(JSON, RttiType)
+  else if RttiType is TRttiEnumerationType then
+    Result := DeserializeEnumerator(JSON, RttiType)
   else if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
     Result := TValue.From(RFC3339ToDateTime(String(JSON)))
   else
