@@ -45,7 +45,12 @@ end;
 
 function TRestJsonSerializer.CreateObject(RttiType: TRttiType): TObject;
 begin
-  Result := RttiType.AsInstance.MetaClassType.Create;
+{$IFDEF PAS2JS}
+  asm
+    Result = Object.create(RttiType.FTypeInfo.class);
+    Result.$init();
+  end;
+{$ENDIF}
 end;
 
 function TRestJsonSerializer.CreateRecord(RttiType: TRttiType): TJSObject;
@@ -191,7 +196,9 @@ begin
         Prop.SetValue(Instance, Value)
       else if Assigned(Field) then
         Field.SetValue(Instance, Value);
-    end;
+    end
+    else if Instance.hasOwnProperty('f' + Key) then
+      Instance['f' + Key] := JSONObject[Key];
   end;
 end;
 
