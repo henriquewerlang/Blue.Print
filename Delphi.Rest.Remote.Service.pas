@@ -7,7 +7,7 @@ uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes,
 type
   IRestCommunication = interface
     ['{33BB3249-F044-4BDF-B3E0-EA2378A040C4}']
-    function SendRequestSync(const URL: String): String;
+    function SendRequest(const URL: String): String;
 
     procedure SetHeaders(Headers: TStrings);
   end;
@@ -16,7 +16,7 @@ type
   private
     FHeaders: TStrings;
 
-    function SendRequestSync(const URL: String): String;
+    function SendRequest(const URL: String): String;
 
     procedure SetHeaders(Headers: TStrings);
   end;
@@ -36,9 +36,9 @@ type
     function GetHeader(Index: String): String;
     function GetHeaders: String;
     function GetURLParams(Method: TRttiMethod; const Args: TArray<TValue>): String;
-    function SendRequestSync(Method: TRttiMethod; const Args: TArray<TValue>): String;
+    function SendRequest(Method: TRttiMethod; const Args: TArray<TValue>): String;
 
-    procedure OnInvokeMethodSync(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
+    procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
     procedure SetHeader(Index: String; const Value: String);
     procedure SetHeaders(const Value: String);
 
@@ -117,7 +117,7 @@ const
 
 constructor TRemoteService.Create(TypeInfo: PTypeInfo);
 begin
-  inherited Create(TypeInfo, {$IFDEF PAS2JS}@OnInvokeMethodPas2Js{$ELSE}OnInvokeMethodSync{$ENDIF});
+  inherited Create(TypeInfo, {$IFDEF PAS2JS}@OnInvokeMethodPas2Js{$ELSE}OnInvokeMethod{$ENDIF});
 
   FContext := TRttiContext.Create;
   FHeaders := TStringList.Create;
@@ -176,10 +176,10 @@ begin
     Result := '?' + Result;
 end;
 
-procedure TRemoteService.OnInvokeMethodSync(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
+procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 begin
   try
-    Result := Deserialize(SendRequestSync(Method, Args), Method);
+    Result := Deserialize(SendRequest(Method, Args), Method);
   except
     on E: Exception do
       if Assigned(FOnExecuteException) then
@@ -189,11 +189,11 @@ begin
   end;
 end;
 
-function TRemoteService.SendRequestSync(Method: TRttiMethod; const Args: TArray<TValue>): String;
+function TRemoteService.SendRequest(Method: TRttiMethod; const Args: TArray<TValue>): String;
 begin
   Communication.SetHeaders(FHeaders);
 
-  Result := Communication.SendRequestSync(FormatURL(Method, Args));
+  Result := Communication.SendRequest(FormatURL(Method, Args));
 end;
 
 procedure TRemoteService.SetHeader(Index: String; const Value: String);
@@ -234,11 +234,7 @@ begin
   Method := FRttiType.GetMethod(aMethodName);
 
   if Method.IsAsyncCall then
-    Result := TJSPromise.New(
-      procedure(Resolve, Reject: TJSPromiseResolver)
-      begin
-        Resolve(OnInvokeMethodPas2JsAsync(Method, GenerateParams(Method, Args)));
-      end)
+    Result := OnInvokeMethodPas2JsAsync(Method, GenerateParams(Method, Args))
   else
     Result := OnInvokeMethodPas2JsSync(Method, GenerateParams(Method, Args));
 end;
@@ -248,7 +244,7 @@ var
   Return: TValue;
 
 begin
-  OnInvokeMethodSync(Method, Args, Return);
+  OnInvokeMethod(Method, Args, Return);
 
   Result := Return.AsJSValue;
 end;
@@ -258,7 +254,7 @@ var
   Return: TValue;
 
 begin
-  OnInvokeMethodSync(Method, Args, Return);
+  OnInvokeMethod(Method, Args, Return);
 
   Result := Return.AsJSValue;
 end;
@@ -266,7 +262,7 @@ end;
 
 { TRestCommunication }
 
-function TRestCommunication.SendRequestSync(const URL: String): String;
+function TRestCommunication.SendRequest(const URL: String): String;
 {$IFDEF PAS2JS}
 var
   Connection: TJSXMLHttpRequest;

@@ -90,7 +90,7 @@ begin
   var Client := CreateRemoteService(Communication.Instance);
   var Service := Client as IServiceTest;
 
-  Communication.Expect.Once.When.SendRequestSync(It.IsEqualTo('/ServiceTest/TestProcedureWithOneParam?Param="abcd"'));
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedureWithOneParam?Param="abcd"'));
 
   Service.TestProcedureWithOneParam('abcd');
 
@@ -104,7 +104,7 @@ begin
   var Client := CreateRemoteService(Communication.Instance);
   var Service := Client as IServiceTest;
 
-  Communication.Expect.Once.When.SendRequestSync(It.IsEqualTo('/ServiceTest/TestProcedure'));
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedure'));
 
   Service.TestProcedure;
 
@@ -141,7 +141,7 @@ begin
   var Client := CreateRemoteService(Communication.Instance);
   var Service := Client as IServiceTest;
 
-  Communication.Expect.Once.When.SendRequestSync(It.IsAny<String>);
+  Communication.Expect.Once.When.SendRequest(It.IsAny<String>);
 
   Communication.Expect.CustomExpect(
     function (Values: TArray<TValue>): String
@@ -165,7 +165,7 @@ begin
   var Client := CreateRemoteService(Communication.Instance);
   var Service := Client as IServiceTest;
 
-  Communication.Expect.Once.When.SendRequestSync(It.IsEqualTo('/ServiceTest/TestProcedure'));
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedure'));
 
   Service.TestProcedure;
 
@@ -179,7 +179,7 @@ begin
   var Client := CreateRemoteServiceURL('http://myurl.com', Communication.Instance);
   var Service := Client as IServiceTest;
 
-  Communication.Expect.Once.When.SendRequestSync(It.IsEqualTo('http://myurl.com/ServiceTest/TestProcedure'));
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('http://myurl.com/ServiceTest/TestProcedure'));
 
   Service.TestProcedure;
 
@@ -193,7 +193,7 @@ begin
   var Client := CreateRemoteService(Communication.Instance);
   var Service := Client as IServiceTest;
 
-  Communication.Expect.Once.When.SendRequestSync(It.IsEqualTo('/ServiceTest/TestProcedureWithParam?Param1="abc"&Param2=123'));
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedureWithParam?Param1="abc"&Param2=123'));
 
   Service.TestProcedureWithParam('abc', 123);
 
@@ -207,7 +207,7 @@ begin
   var Client := CreateRemoteService(Communication.Instance);
   var Service := Client as IServiceTest;
 
-  Communication.Setup.WillReturn('8888').When.SendRequestSync(It.IsAny<String>);
+  Communication.Setup.WillReturn('8888').When.SendRequest(It.IsAny<String>);
 
   Assert.AreEqual(8888, Service.TestFunction);
 end;
@@ -219,7 +219,7 @@ begin
   var Client := CreateRemoteService(Communication.Instance);
   var Service := Client as IServiceTest;
 
-  Communication.Expect.Once.When.SendRequestSync(It.IsAny<String>);
+  Communication.Expect.Once.When.SendRequest(It.IsAny<String>);
 
   Service.TestProcedureWithParam('String', 1234);
 
@@ -233,7 +233,7 @@ begin
   var Client := CreateRemoteService(Communication.Instance);
   var Service := Client as IServiceTest;
 
-  Communication.Expect.Once.When.SendRequestSync(It.IsAny<String>);
+  Communication.Expect.Once.When.SendRequest(It.IsAny<String>);
 
   Service.TestProcedure;
 
@@ -247,7 +247,7 @@ begin
   var Client := CreateRemoteService(Communication.Instance);
   var Service := Client as IServiceTest;
 
-  Communication.Expect.Once.When.SendRequestSync(It.IsAny<String>);
+  Communication.Expect.Once.When.SendRequest(It.IsAny<String>);
 
   Communication.Expect.Once.When.SetHeaders(It.IsAny<TStrings>);
 
@@ -297,7 +297,7 @@ begin
     procedure
     begin
       raise Exception.Create('Error Message');
-    end).When.SendRequestSync(It.IsAny<String>);
+    end).When.SendRequest(It.IsAny<String>);
 
   try
     Service.TestProcedureWithOneParam('abcd');
@@ -321,7 +321,7 @@ begin
         procedure
         begin
           raise Exception.Create('Error Message');
-        end).When.SendRequestSync(It.IsAny<String>);
+        end).When.SendRequest(It.IsAny<String>);
 
       Service.TestProcedureWithOneParam('abcd');
     end, Exception);
@@ -334,7 +334,7 @@ begin
   var Client := CreateRemoteService(Communication.Instance);
   var Service := Client as IServiceTest;
 
-  Communication.Expect.Once.When.SendRequestSync(It.IsEqualTo('/ServiceTest/TestProcedureWithParam?Param1="abcd"&Param2=1234'));
+  Communication.Expect.Once.When.SendRequest(It.IsEqualTo('/ServiceTest/TestProcedureWithParam?Param1="abcd"&Param2=1234'));
 
   Service.TestProcedureWithParam('abcd', 1234);
 
