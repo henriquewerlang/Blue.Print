@@ -8,6 +8,9 @@ type
   IRestCommunication = interface
     ['{33BB3249-F044-4BDF-B3E0-EA2378A040C4}']
     function SendRequest(const URL: String): String;
+    {$IFDEF PAS2JS}
+    function SendRequestAsync(const URL: String): String; async;
+    {$ENDIF}
 
     procedure SetHeaders(Headers: TStrings);
   end;
@@ -17,6 +20,9 @@ type
     FHeaders: TStrings;
 
     function SendRequest(const URL: String): String;
+    {$IFDEF PAS2JS}
+    function SendRequestAsync(const URL: String): String; async;
+    {$ENDIF}
 
     procedure SetHeaders(Headers: TStrings);
   end;
@@ -47,6 +53,9 @@ type
     function OnInvokeMethodPas2Js(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
     function OnInvokeMethodPas2JsAsync(Method: TRttiMethod; const Args: TArray<TValue>): JSValue; async;
     function OnInvokeMethodPas2JsSync(Method: TRttiMethod; const Args: TArray<TValue>): JSValue;
+    function SendRequestAsync(Method: TRttiMethod; const Args: TArray<TValue>): String; async;
+
+    procedure OnInvokeMethodAsync(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue); async;
     {$ENDIF}
   public
     constructor Create(TypeInfo: PTypeInfo);
@@ -239,6 +248,16 @@ begin
     Result := OnInvokeMethodPas2JsSync(Method, GenerateParams(Method, Args));
 end;
 
+function TRemoteService.OnInvokeMethodPas2JsAsync(Method: TRttiMethod; const Args: TArray<TValue>): JSValue;
+var
+  Return: TValue;
+
+begin
+  await(OnInvokeMethodAsync(Method, Args, Return));
+
+  Result := Return.AsJSValue;
+end;
+
 function TRemoteService.OnInvokeMethodPas2JsSync(Method: TRttiMethod; const Args: TArray<TValue>): JSValue;
 var
   Return: TValue;
@@ -249,15 +268,26 @@ begin
   Result := Return.AsJSValue;
 end;
 
-function TRemoteService.OnInvokeMethodPas2JsAsync(Method: TRttiMethod; const Args: TArray<TValue>): JSValue;
-var
-  Return: TValue;
-
+procedure TRemoteService.OnInvokeMethodAsync(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 begin
-  OnInvokeMethod(Method, Args, Return);
-
-  Result := Return.AsJSValue;
+  try
+    Result := Deserialize(await(String, SendRequestAsync(Method, Args)), Method);
+  except
+    on E: Exception do
+      if Assigned(FOnExecuteException) then
+        OnExecuteException(E, Serializer)
+      else
+        raise;
+  end;
 end;
+
+function TRemoteService.SendRequestAsync(Method: TRttiMethod; const Args: TArray<TValue>): String;
+begin
+  Communication.SetHeaders(FHeaders);
+
+  Result := await(String, Communication.SendRequestAsync(FormatURL(Method, Args)));
+end;
+
 {$ENDIF}
 
 { TRestCommunication }
@@ -302,6 +332,30 @@ begin
   end;
 {$ENDIF}
 end;
+
+{$IFDEF PAS2JS}
+function TRestCommunication.SendRequestAsync(const URL: String): String;
+var
+  A: Integer;
+
+  Options: TJSObject;
+
+  Response: TJSResponse;
+
+begin
+  Options := TJSObject.New;
+
+  for A := 0 to Pred(FHeaders.Count) do
+    Options[FHeaders.Names[A]] := FHeaders.ValueFromIndex[A];
+
+  Response := await(TJSResponse, Window.Fetch(URL, Options));
+
+  if Response.Status = 200 then
+    Result := await(String, Response.Text)
+  else
+    raise EHTTPStatusError.Create(Response.Status, await(String, Response.Text));
+end;
+{$ENDIF}
 
 procedure TRestCommunication.SetHeaders(Headers: TStrings);
 begin
