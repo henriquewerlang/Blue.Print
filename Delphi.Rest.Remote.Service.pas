@@ -37,7 +37,7 @@ type
     FOnExecuteException: TProc<Exception, IRestJsonSerializer>;
     FHeaders: TStringList;
 
-    function Deserialize(const JSON: String; Method: TRttiMethod): TValue;
+    function Deserialize(const JSON: String; RttiType: TRttiType): TValue;
     function FormatURL(Method: TRttiMethod; const Args: TArray<TValue>): String;
     function GetHeader(Index: String): String;
     function GetHeaders: String;
@@ -133,10 +133,10 @@ begin
   FRttiType := FContext.GetType(TypeInfo) as TRttiInterfaceType;
 end;
 
-function TRemoteService.Deserialize(const JSON: String; Method: TRttiMethod): TValue;
+function TRemoteService.Deserialize(const JSON: String; RttiType: TRttiType): TValue;
 begin
-  if Assigned(Method.ReturnType) then
-    Result := Serializer.Deserialize(JSON, Method.ReturnType.Handle)
+  if Assigned(RttiType) then
+    Result := Serializer.Deserialize(JSON, RttiType.Handle)
   else
     Result := TValue.Empty;
 end;
@@ -188,7 +188,7 @@ end;
 procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 begin
   try
-    Result := Deserialize(SendRequest(Method, Args), Method);
+    Result := Deserialize(SendRequest(Method, Args), Method.ReturnType);
   except
     on E: Exception do
       if Assigned(FOnExecuteException) then
@@ -269,9 +269,17 @@ begin
 end;
 
 procedure TRemoteService.OnInvokeMethodAsync(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
+var
+  ReturnType: TRttiType;
+
 begin
   try
-    Result := Deserialize(await(String, SendRequestAsync(Method, Args)), Method);
+    ReturnType := Method.ReturnType;
+
+    if ReturnType.IsInstanceExternal and (ReturnType.AsInstanceExternal.ExternalName = 'Promise') then
+      ReturnType := nil;
+
+    Result := Deserialize(await(String, SendRequestAsync(Method, Args)), ReturnType);
   except
     on E: Exception do
       if Assigned(FOnExecuteException) then
@@ -340,13 +348,18 @@ var
 
   Options: TJSObject;
 
+  RequestHeaders: TJSHTMLHeaders;
+
   Response: TJSResponse;
 
 begin
   Options := TJSObject.New;
+  RequestHeaders := TJSHTMLHeaders.New;
 
   for A := 0 to Pred(FHeaders.Count) do
-    Options[FHeaders.Names[A]] := FHeaders.ValueFromIndex[A];
+    RequestHeaders.Append(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
+
+  Options['headers'] := RequestHeaders;
 
   Response := await(TJSResponse, Window.Fetch(URL, Options));
 
