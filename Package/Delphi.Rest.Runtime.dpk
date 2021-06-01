@@ -30,12 +30,13 @@
 
 requires
   rtl,
-  inet;
+  inet,
+  RESTComponents;
 
 contains
   Delphi.Rest.Server.Service.Component in '..\Delphi.Rest.Server.Service.Component.pas',
-  Delphi.Rest.Client.Service in '..\Delphi.Rest.Client.Service.pas',
   Delphi.Rest.JSON.Serializer in '..\Delphi.Rest.JSON.Serializer.pas',
-  Delphi.Rest.Service.Container in '..\Delphi.Rest.Service.Container.pas';
+  Delphi.Rest.Service.Container in '..\Delphi.Rest.Service.Container.pas',
+  Delphi.Rest.JSON.Serializer.Intf in '..\Delphi.Rest.JSON.Serializer.Intf.pas';
 
 end.
