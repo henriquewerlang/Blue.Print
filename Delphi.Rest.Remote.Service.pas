@@ -276,7 +276,7 @@ begin
   try
     ReturnType := Method.ReturnType;
 
-    if ReturnType.IsInstanceExternal and (ReturnType.AsInstanceExternal.ExternalName = 'Promise') then
+    if Assigned(ReturnType) and ReturnType.IsInstanceExternal and (ReturnType.AsInstanceExternal.ExternalName = 'Promise') then
       ReturnType := nil;
 
     Result := Deserialize(await(String, SendRequestAsync(Method, Args)), ReturnType);
