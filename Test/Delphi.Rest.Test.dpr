@@ -17,7 +17,8 @@ uses
   Delphi.Rest.Server.Service.Component in '..\Delphi.Rest.Server.Service.Component.pas',
   Delphi.Rest.Server.Service.Component.Test in 'Delphi.Rest.Server.Service.Component.Test.pas',
   Delphi.Rest.Remote.Service in '..\Delphi.Rest.Remote.Service.pas',
-  Delphi.Rest.Remote.Service.Test in 'Delphi.Rest.Remote.Service.Test.pas';
+  Delphi.Rest.Remote.Service.Test in 'Delphi.Rest.Remote.Service.Test.pas',
+  Delphi.Rest.Types in '..\Delphi.Rest.Types.pas';
 
 // Para não remover os itens abaixo.
 {$IFNDEF TESTINSIGHT}
@@ -29,7 +30,7 @@ var
 {$ENDIF}
 begin
   FastMM_OutputDebugStringEvents := [];
-  FastMM_LogToFileEvents := [mmetUnexpectedMemoryLeakSummary];
+  FastMM_LogToFileEvents := [mmetUnexpectedMemoryLeakSummary, mmetUnexpectedMemoryLeakDetail];
   FastMM_MessageBoxEvents := [mmetDebugBlockDoubleFree, mmetDebugBlockReallocOfFreedBlock, mmetVirtualMethodCallOnFreedObject];
 
   FastMM_DeleteEventLogFile;
