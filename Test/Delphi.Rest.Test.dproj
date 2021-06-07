@@ -153,6 +153,7 @@
         <DCCReference Include="..\Delphi.Rest.Remote.Service.pas"/>
         <DCCReference Include="Delphi.Rest.Remote.Service.Test.pas"/>
         <DCCReference Include="..\Delphi.Rest.Types.pas"/>
+        <DCCReference Include="Delphi.Rest.Types.Test.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

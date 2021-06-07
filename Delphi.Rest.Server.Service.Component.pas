@@ -22,8 +22,6 @@ type
     function GetParamValue(Param: TRttiParameter; const Value: String): TValue;
     function GetSerializer: IRestJsonSerializer;
     function GetServiceContainer: IServiceContainer;
-
-    procedure SortQueryFields;
   protected
     // IGetWebAppServices
     function GetWebAppServices: IWebAppServices; virtual;
@@ -50,7 +48,7 @@ type
 
 implementation
 
-uses System.TypInfo, System.Math, Winapi.WinInet, Rest.Types, Delphi.Rest.JSON.Serializer;
+uses System.TypInfo, System.Math, Winapi.WinInet, Rest.Types, Delphi.Rest.JSON.Serializer, Delphi.Rest.Types;
 
 { TRestServerService }
 
@@ -72,14 +70,20 @@ end;
 function TRestServerService.GetParams(Info: TRttiMethod; var ConvertedParams: TArray<TValue>): Boolean;
 begin
   ConvertedParams := [];
+  var ParamType: TRESTParamType;
   var Parameters := Info.GetParameters;
-  Result := Length(Parameters) = Request.QueryFields.Count;
+  var RequestParams: TStrings;
 
-  SortQueryFields;
+  if TRESTParamAttribute.GetParamsInURL(Info, ParamType) and (ParamType = ptBody) or not (Request.MethodType in [mtDelete, mtGet]) then
+    RequestParams := Request.ContentFields
+  else
+    RequestParams := Request.QueryFields;
+
+  Result := Length(Parameters) = RequestParams.Count;
 
   if Result then
     for var Param in Parameters do
-      ConvertedParams := ConvertedParams + [GetParamValue(Param, Request.QueryFields.Values[Param.Name])];
+      ConvertedParams := ConvertedParams + [GetParamValue(Param, RequestParams.Values[Param.Name])];
 end;
 
 function TRestServerService.GetParamValue(Param: TRttiParameter; const Value: String): TValue;
@@ -175,11 +179,6 @@ procedure TRestServerService.InitContext(WebModule: TComponent; Request: TWebReq
 begin
   FRequest := Request;
   FResponse := Response;
-end;
-
-procedure TRestServerService.SortQueryFields;
-begin
-  TStringList(Request.QueryFields).Sorted := True;
 end;
 
 end.

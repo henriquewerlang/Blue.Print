@@ -2,6 +2,8 @@ unit Delphi.Rest.Types;
 
 interface
 
+uses System.Rtti;
+
 type
   TRESTMethod = (rmDelete, rmGet, rmPatch, rmPost, rmPut);
   TRESTParamType = (ptBody, ptURL);
@@ -11,6 +13,8 @@ type
     FMethod: TRESTMethod;
   public
     constructor Create(Method: TRESTMethod);
+
+    class function GetMethodType(Method: TRttiMethod; var MethodType: TRESTMethod): Boolean;
 
     property Method: TRESTMethod read FMethod write FMethod;
   end;
@@ -46,6 +50,8 @@ type
   public
     constructor Create(ParamType: TRESTParamType);
 
+    class function GetParamsInURL(Method: TRttiMethod; var ParamType: TRESTParamType): Boolean;
+
     property ParamType: TRESTParamType read FParamType write FParamType;
   end;
 
@@ -68,6 +74,28 @@ begin
   inherited Create;
 
   FMethod := Method;
+end;
+
+class function TRESTMethodAttribute.GetMethodType(Method: TRttiMethod; var MethodType: TRESTMethod): Boolean;
+
+  function GetTypeFromAttributes(RttiType: TRttiObject; var Value: TRESTMethod): Boolean;
+  var
+    Attribute: TCustomAttribute;
+
+  begin
+    Result := False;
+
+    for Attribute in RttiType.GetAttributes do
+      if Attribute is TRESTMethodAttribute then
+      begin
+        Value := TRESTMethodAttribute(Attribute).Method;
+
+        Exit(True);
+      end;
+  end;
+
+begin
+  Result := GetTypeFromAttributes(Method, MethodType) or GetTypeFromAttributes(Method.Parent, MethodType);
 end;
 
 { POSTAttribute }
@@ -112,6 +140,28 @@ begin
   inherited Create;
 
   FParamType := ParamType;
+end;
+
+class function TRESTParamAttribute.GetParamsInURL(Method: TRttiMethod; var ParamType: TRESTParamType): Boolean;
+
+  function GetTypeFromAttributes(RttiType: TRttiObject; var Value: TRESTParamType): Boolean;
+  var
+    Attribute: TCustomAttribute;
+
+  begin
+    Result := False;
+
+    for Attribute in RttiType.GetAttributes do
+      if Attribute is TRESTParamAttribute then
+      begin
+        Value := TRESTParamAttribute(Attribute).ParamType;
+
+        Exit(True);
+      end;
+  end;
+
+begin
+  Result := GetTypeFromAttributes(Method, ParamType) or GetTypeFromAttributes(Method.Parent, ParamType);
 end;
 
 { ParamInBody }

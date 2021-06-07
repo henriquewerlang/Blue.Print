@@ -170,28 +170,9 @@ begin
 end;
 
 function TRemoteService.GetComandFromMethod(Method: TRttiMethod): TRESTMethod;
-
-  function CheckAttributes(List: TArray<TCustomAttribute>; var Value: TRESTMethod): Boolean;
-  var
-    Attribute: TCustomAttribute;
-
-  begin
-    Result := False;
-
-    for Attribute in List do
-      if Attribute is TRESTMethodAttribute then
-      begin
-        Value := TRESTMethodAttribute(Attribute).Method;
-
-        Exit(True);
-      end;
-  end;
-
 begin
-  Result := rmGet;
-
-  if not CheckAttributes(Method.GetAttributes, Result) then
-    CheckAttributes(Method.Parent.GetAttributes, Result);
+  if not TRESTMethodAttribute.GetMethodType(Method, Result) then
+    Result := rmGet;
 end;
 
 function TRemoteService.GetHeader(Index: String): String;
@@ -205,30 +186,11 @@ begin
 end;
 
 function TRemoteService.GetParamsInURL(Method: TRttiMethod): Boolean;
-
-  function GetParamAttribute(List: TArray<TCustomAttribute>; var Value: TRESTParamType): Boolean;
-  var
-    Attribute: TCustomAttribute;
-
-  begin
-    Result := False;
-
-    for Attribute in List do
-      if Attribute is TRESTParamAttribute then
-      begin
-        Value := TRESTParamAttribute(Attribute).ParamType;
-
-        Exit(True);
-      end;
-  end;
-
 var
-  Attribute: TCustomAttribute;
-
   ParamType: TRESTParamType;
 
 begin
-  if GetParamAttribute(Method.GetAttributes, ParamType) or GetParamAttribute(Method.Parent.GetAttributes, ParamType) then
+  if TRESTParamAttribute.GetParamsInURL(Method, ParamType) then
     Result := ParamType = ptURL
   else
     Result := FRequest.Method in [rmGet, rmDelete];
