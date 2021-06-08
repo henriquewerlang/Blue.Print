@@ -404,12 +404,10 @@ begin
       rmPut: Response := Connection.Put(Request.URL);
     end;
 
-    var Content := Response.ContentAsString(TEncoding.UTF8);
+    Result := Response.ContentAsString(TEncoding.UTF8);
 
-    if Response.StatusCode = 200 then
-      Result := Content
-    else
-      raise EHTTPStatusError.Create(Response.StatusCode, Content);
+    if Response.StatusCode <> 200 then
+      raise EHTTPStatusError.Create(Response.StatusCode, Result);
   finally
     Connection.Free;
   end;
