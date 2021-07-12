@@ -381,7 +381,7 @@ begin
   if not Request.Params.IsEmpty then
     Connection.setRequestHeader('Content-Type', 'application/json');
 
-  Connection.Send(Request.Params);
+  Connection.Send(encodeURIComponent(Request.Params));
 
   if Connection.Status = 200 then
     Result := Connection.ResponseText
@@ -435,7 +435,7 @@ begin
 
   if not Request.Params.IsEmpty then
   begin
-    Options['body'] := Request.Params;
+    Options['body'] := encodeURIComponent(Request.Params);
 
     RequestHeaders.Append('Content-Type', 'application/json');
   end;
