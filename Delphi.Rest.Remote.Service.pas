@@ -277,7 +277,7 @@ begin
   SetLength(Result, Succ(Length(Args)));
 
   for A := Low(Args) to High(Args) do
-    Result[COMPILER_OFFSET + A] := TValue.Make(Parameters[A].ParamType.Handle, Args[A]);
+    TValue.Make(Args[A], Parameters[A].ParamType.Handle, Result[COMPILER_OFFSET + A]);
 end;
 
 function TRemoteService.OnInvokeMethodPas2Js(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
