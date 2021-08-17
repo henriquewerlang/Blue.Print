@@ -14,12 +14,14 @@ uses
   {$ENDIF }
   DUnitX.TestFramework,
   DUnitX.MemoryLeakMonitor.FastMM5,
-  Delphi.Rest.Server.Service.Component in '..\Delphi.Rest.Server.Service.Component.pas',
-  Delphi.Rest.Server.Service.Component.Test in 'Delphi.Rest.Server.Service.Component.Test.pas',
+  Delphi.Rest.Server.Service in '..\Delphi.Rest.Server.Service.pas',
+  Delphi.Rest.Server.Service.Test in 'Delphi.Rest.Server.Service.Test.pas',
   Delphi.Rest.Remote.Service in '..\Delphi.Rest.Remote.Service.pas',
   Delphi.Rest.Remote.Service.Test in 'Delphi.Rest.Remote.Service.Test.pas',
   Delphi.Rest.Types in '..\Delphi.Rest.Types.pas',
-  Delphi.Rest.Types.Test in 'Delphi.Rest.Types.Test.pas';
+  Delphi.Rest.Types.Test in 'Delphi.Rest.Types.Test.pas',
+  Delphi.Rest.Content.Parser.Test in 'Delphi.Rest.Content.Parser.Test.pas',
+  Delphi.Rest.Request.Mock in 'Delphi.Rest.Request.Mock.pas';
 
 // Para não remover os itens abaixo.
 {$IFNDEF TESTINSIGHT}

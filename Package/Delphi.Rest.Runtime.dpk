@@ -34,10 +34,11 @@ requires
   RESTComponents;
 
 contains
-  Delphi.Rest.Server.Service.Component in '..\Delphi.Rest.Server.Service.Component.pas',
+  Delphi.Rest.Server.Service in '..\Delphi.Rest.Server.Service.pas',
   Delphi.Rest.JSON.Serializer in '..\Delphi.Rest.JSON.Serializer.pas',
   Delphi.Rest.Service.Container in '..\Delphi.Rest.Service.Container.pas',
   Delphi.Rest.JSON.Serializer.Intf in '..\Delphi.Rest.JSON.Serializer.Intf.pas',
-  Delphi.Rest.Types in '..\Delphi.Rest.Types.pas';
+  Delphi.Rest.Types in '..\Delphi.Rest.Types.pas',
+  Delphi.Rest.Content.Parser in '..\Delphi.Rest.Content.Parser.pas';
 
 end.
