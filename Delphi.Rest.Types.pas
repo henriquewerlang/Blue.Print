@@ -2,11 +2,14 @@ unit Delphi.Rest.Types;
 
 interface
 
-uses System.Rtti;
+uses System.Rtti, System.Classes, {$IFDEF PAS2JS}Web{$ELSE}Web.HTTPApp, System.Net.Mime{$ENDIF};
 
 type
   TRESTMethod = (rmDelete, rmGet, rmPatch, rmPost, rmPut);
   TRESTParamType = (ptBody, ptURL);
+
+  TRESTFile = {$IFDEF PAS2JS}TJSHTMLFile{$ELSE}TAbstractWebRequestFile{$ENDIF};
+  TRESTFormData = {$IFDEF PAS2JS}TJSFormData{$ELSE}TMultipartFormData{$ENDIF};
 
   TRESTMethodAttribute = class(TCustomAttribute)
   private
@@ -66,6 +69,8 @@ type
   end;
 
 implementation
+
+uses System.SysUtils;
 
 { TRESTMethodAttribute }
 
@@ -178,4 +183,31 @@ begin
   inherited Create(ptURL);
 end;
 
+{ TRESTFile }
+
+{$IFDEF DCC}
+//constructor TRESTFile.Create(const FileName: String);
+//begin
+//  FFileStream := TFileStream.Create(FileName, fmOpenRead + fmShareDenyWrite);
+//
+//  Create(FileName, FFileStream);
+//end;
+//
+//constructor TRESTFile.Create(const FileName: String; Stream: TStream);
+//begin
+//  inherited Create;
+//
+//  FFileName := FileName;
+//  FStream := Stream;
+//end;
+//
+//destructor TRESTFile.Destroy;
+//begin
+//  FFileStream.Free;
+//
+//  inherited;
+//end;
+{$ENDIF}
+
 end.
+

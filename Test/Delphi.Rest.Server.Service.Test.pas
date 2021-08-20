@@ -3,7 +3,7 @@
 interface
 
 uses System.SysUtils, System.Classes, System.Rtti, Web.HTTPApp, DUnitX.TestFramework, Delphi.Rest.Server.Service, Delphi.Rest.Types, Delphi.Rest.Service.Container, Delphi.Mock,
-  Delphi.Mock.Classes, Delphi.Rest.JSON.Serializer.Intf, Delphi.Rest.Request.Mock;
+  Delphi.Mock.Classes, Delphi.Rest.JSON.Serializer.Intf, Delphi.Rest.Request.Mock, REST.Types;
 
 type
   [TestFixture]
@@ -12,7 +12,9 @@ type
     FRestService: TRestServerService;
 
     function CreateRestService(Request: TWebRequest; Response: TWebResponse; Container: IServiceContainer = nil): IWebAppServices;
-    function CreateRequestMock(ContentLength: Integer = 0; ContentType: String = 'text/plain'): TMock<TWebRequestMock>;
+    function CreateRequestMock: TMock<TWebRequestMock>; overload;
+    function CreateRequestMock(const URL, ContentType, ContentValue, QueryString: String): TMock<TWebRequestMock>; overload;
+    function CreateRequestMock(const URL, ContentType: String; const ContentValue: TBytes; const QueryString: String): TMock<TWebRequestMock>; overload;
   public
     [Setup]
     procedure Setup;
@@ -114,8 +116,22 @@ type
     procedure WhenTheContentIsABinaryValueMustPassTheValueToTheParamOfTheProcedureCalled;
     [Test]
     procedure WhenTheProcedureCalledIsAnArrayOfStreamMustCallTheCorrectProcedure;
-//    [Test]
-//    procedure WhenTheRequestHaveMoreThenOneFileAndTheParameterIsAnArrayOfStreamMustPassAllTheFilesInTheParameter;
+    [Test]
+    procedure WhenTheProcedureHasMoreThenOneFileMustLoadEachFileInTheCorrecParam;
+    [Test]
+    procedure IfTheParamIsInTheQueryFieldsCantTryToLoadTheValueFromContent;
+    [Test]
+    procedure WhenTheParamIsEmptyCantRaiseAnyErrorOfConversion;
+    [Test]
+    procedure WhenTryToLoadAParamFromTheContentMustLoadOnlyIfTheContentTypeIsFormURLEncoded;
+    [Test]
+    procedure WhenTryToLoadAParamFromTheContentMustLoadOnlyIfTheContentTypeIsMultiPartFormData;
+    [Test]
+    procedure WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContent;
+    [Test]
+    procedure WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContentIfTheContentIsAJSONValue;
+    [Test]
+    procedure WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContentIfTheContentIsTextPlain;
   end;
 
   TMyEnumerator = (Enum1, Enum2, Enum3, Enum4);
@@ -132,7 +148,7 @@ type
     ['{FD524CA4-55CF-4005-B47A-48B220718AA0}']
     function FuncClass: TMyClass;
     function FuncInteger: Integer;
-    function GetStream: TStream;
+    function GetStream: TRESTFile;
     function ProcedureCalled: String;
 
     procedure Proc;
@@ -152,15 +168,14 @@ type
     procedure ProcPointer(Value: Pointer);
     procedure ProcProcedure(Value: TProc);
     procedure ProcSet(Value: TMyEnumeratorSet);
-    [ParamInBody]
-    procedure ProcStream(Stream: TStream);
-    procedure ProcStreamArray(Stream: TArray<TStream>);
+    procedure ProcStream(Stream: TRESTFile);
+    procedure ProcStreamArray(Stream: TArray<TRESTFile>);
+    procedure ProcStreamTwoParam(File1, File2: TRESTFile);
     procedure ProcString(Value: ShortString);
     procedure ProcUString(Value: UnicodeString);
     procedure ProcVariant(Value: Variant);
     procedure ProcWChar(Value: Char);
     procedure ProcWString(Value: WideString);
-    [ParamInBody]
     procedure ProcedureWithParamsInBody(Param1: String; Param2: Integer);
     procedure ProcedureWithOutAttribute(Param1: String; Param2: Integer);
   end;
@@ -169,11 +184,11 @@ type
   private
     FMyClass: TMyClass;
     FProcedureCalled: String;
-    FStream: TStream;
+    FStream: TRESTFile;
 
     function FuncClass: TMyClass;
     function FuncInteger: Integer;
-    function GetStream: TStream;
+    function GetStream: TRESTFile;
     function ProcedureCalled: String;
 
     procedure Proc;
@@ -193,8 +208,9 @@ type
     procedure ProcPointer(Value: Pointer);
     procedure ProcProcedure(Value: TProc);
     procedure ProcSet(Value: TMyEnumeratorSet);
-    procedure ProcStream(Stream: TStream);
-    procedure ProcStreamArray(Stream: TArray<TStream>);
+    procedure ProcStream(Stream: TRESTFile);
+    procedure ProcStreamArray(Stream: TArray<TRESTFile>);
+    procedure ProcStreamTwoParam(File1, File2: TRESTFile);
     procedure ProcString(Value: ShortString);
     procedure ProcUString(Value: UnicodeString);
     procedure ProcVariant(Value: Variant);
@@ -219,7 +235,7 @@ type
 
 implementation
 
-uses System.NetEncoding, Winapi.WinInet, REST.Types, Delphi.Rest.JSON.Serializer;
+uses System.NetEncoding, Winapi.WinInet, Delphi.Rest.JSON.Serializer, System.Net.Mime, web.ReqFiles;
 
 { TRestServerServiceTest }
 
@@ -244,17 +260,9 @@ end;
 
 procedure TRestServerServiceTest.ConvertingParamsAsExpected(ProcedureName, Value: String);
 begin
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock(Format('/IService/%s', [ProcedureName]), CONTENTTYPE_APPLICATION_JSON, EmptyStr, 'Value=' + TNetEncoding.URL.Encode(Value));
   var Response := TWebResponseMock.Create(Request.Instance);
-  var Service: IService := TService.Create;
-
-  var Container := TServiceContainer.Create(Service) as IServiceContainer;
-
-  Request.Setup.WillReturn(Format('/IService/%s', [ProcedureName])).When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  Request.Setup.WillReturn('Value=' + TNetEncoding.URL.Encode(Value)).When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
-
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
 
   Assert.WillNotRaise(
     procedure
@@ -267,17 +275,33 @@ begin
   Response.Free;
 end;
 
-function TRestServerServiceTest.CreateRequestMock(ContentLength: Integer; ContentType: String): TMock<TWebRequestMock>;
+function TRestServerServiceTest.CreateRequestMock(const URL, ContentType, ContentValue, QueryString: String): TMock<TWebRequestMock>;
+begin
+  Result := CreateRequestMock(URL, ContentType, TEncoding.UTF8.GetBytes(ContentValue), QueryString);
+end;
+
+function TRestServerServiceTest.CreateRequestMock(const URL, ContentType: String; const ContentValue: TBytes; const QueryString: String): TMock<TWebRequestMock>;
 begin
   Result := TMock.CreateClass<TWebRequestMock>;
 
   Result.Setup.WillReturn('GET').When.GetStringVariable(It.IsEqualTo(METHOD_INDEX));
 
+  Result.Setup.WillReturn(URL).When.GetStringVariable(It.IsEqualTo(URL_INDEX));
+
   Result.Setup.WillReturn(ContentType).When.GetStringVariable(It.IsEqualTo(CONTENT_TYPE_INDEX));
 
-  Result.Setup.WillReturn(ContentLength).When.GetIntegerVariable(It.IsEqualTo(CONTENT_LENGTH_INDEX));
+  Result.Setup.WillReturn(Length(ContentValue)).When.GetIntegerVariable(It.IsEqualTo(CONTENT_LENGTH_INDEX));
+
+  Result.Setup.WillReturn(QueryString).When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
+
+  Result.Setup.WillReturn(TValue.From(ContentValue)).When.GetRawContent;
 
   Result.Instance.UpdateMethodType;
+end;
+
+function TRestServerServiceTest.CreateRequestMock: TMock<TWebRequestMock>;
+begin
+  Result := CreateRequestMock(EmptyStr, CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
 end;
 
 function TRestServerServiceTest.CreateRestService(Request: TWebRequest; Response: TWebResponse; Container: IServiceContainer): IWebAppServices;
@@ -290,13 +314,9 @@ end;
 
 procedure TRestServerServiceTest.IfDontFindTheProcedureOfRequestMustReturStatusCodeWith404;
 begin
-  var Container := TServiceContainer.Create(TService.Create);
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock('/IService/AnyProcudure', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
-
-  Request.Setup.WillReturn('/IService/AnyProcudure').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
 
   Rest.HandleRequest;
 
@@ -310,10 +330,8 @@ end;
 procedure TRestServerServiceTest.IfNotFoundTheServiceMustReturnHandledToFalse;
 begin
   var Container := TServiceContainer.Create(False);
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock('/IAnotherService/Procedure', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
-
-  Request.Setup.WillReturn('/IAnotherService/Procedure').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
@@ -324,14 +342,27 @@ begin
   Response.Free;
 end;
 
+procedure TRestServerServiceTest.IfTheParamIsInTheQueryFieldsCantTryToLoadTheValueFromContent;
+begin
+  var MyService: IService := TService.Create;
+  var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, 'Value="abc"', 'Value=');
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(MyService));
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual('ProcParamString=', MyService.ProcedureCalled);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
 procedure TRestServerServiceTest.IfTheRequestDontHaveTheProcedureParamMustFillTheStatusCodigoWith404;
 begin
   var Container := TServiceContainer.Create(True);
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock('/IService', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
-
-  Request.Setup.WillReturn('/IService').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
   Rest.HandleRequest;
@@ -345,17 +376,11 @@ end;
 
 procedure TRestServerServiceTest.MustCallTheProcedureWithTheParamValuePassed(ProcedureName, Value: String);
 begin
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock(Format('/IService/%s', [ProcedureName]), CONTENTTYPE_APPLICATION_JSON, EmptyStr, 'Value=' + TNetEncoding.URL.Encode(Value));
   var Response := TWebResponseMock.Create(Request.Instance);
   var Service: IService := TService.Create;
 
-  var Container := TServiceContainer.Create(Service) as IServiceContainer;
-
-  Request.Setup.WillReturn(Format('/IService/%s', [ProcedureName])).When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  Request.Setup.WillReturn('Value=' + TNetEncoding.URL.Encode(Value)).When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
-
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(Service));
 
   Rest.HandleRequest;
 
@@ -369,19 +394,8 @@ end;
 procedure TRestServerServiceTest.MustTryToLoadTheProcedureParamsFromTheURLAndTheBody;
 begin
   var MyService: IService := TService.Create;
-  var RequestBody := TEncoding.UTF8.GetBytes('Param1="abcde"');
-
-  var Request := CreateRequestMock(Length(RequestBody));
+  var Request := CreateRequestMock('/IService/ProcedureWithParamsInBody', CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED, 'Param1="abcde"', 'Param2=1234');
   var Response := TWebResponseMock.Create(Request.Instance);
-
-  Request.Setup.WillReturn('/IService/ProcedureWithParamsInBody').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  Request.Setup.WillReturn('Param2=1234').When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
-
-  Request.Setup.WillReturn('application/json').When.GetStringVariable(It.IsEqualTo(CONTENT_TYPE_INDEX));
-
-  Request.Setup.WillReturn(TValue.From(RequestBody)).When.GetRawContent;
-
   var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(MyService));
 
   Rest.HandleRequest;
@@ -493,10 +507,8 @@ end;
 procedure TRestServerServiceTest.WhenFindTheClassToRespondTheRequestMustReturnHandledToTrue;
 begin
   var Container := TServiceContainer.Create(True);
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock('/IService', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
-
-  Request.Setup.WillReturn('/IService').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
 
   var Rest := CreateRestService(Request.Instance, Response, Container);
 
@@ -509,15 +521,9 @@ end;
 
 procedure TRestServerServiceTest.WhenTheAmountOfRequestParametersIsDiferrentFromTheAmoutOfProcedureParametersMustReturnBadRequest(Params: String);
 begin
-  var Container := TServiceContainer.Create(TService.Create);
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock('/IService/ProcInteger', CONTENTTYPE_APPLICATION_JSON, EmptyStr, Params);
   var Response := TWebResponseMock.Create(Request.Instance);
-
-  Request.Setup.WillReturn('/IService/ProcInteger').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  Request.Setup.WillReturn(Params).When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
-
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
 
   Rest.HandleRequest;
 
@@ -530,16 +536,9 @@ end;
 
 procedure TRestServerServiceTest.WhenTheContentIsABinaryValueCantRaiseAnyError;
 begin
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock('/IService/ProcStream', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
-
-  var Container := TServiceContainer.Create(TService.Create);
-
-  Request.Setup.WillReturn('/IService/ProcStream').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  Request.Setup.WillReturn(EmptyStr).When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
-
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
 
   Assert.WillNotRaise(
     procedure
@@ -555,23 +554,15 @@ end;
 procedure TRestServerServiceTest.WhenTheContentIsABinaryValueMustPassTheValueToTheParamOfTheProcedureCalled;
 begin
   var Content: TBytes := [1,2,3,4,5,6,7,8,9,10];
-  var Service: IService := TService.Create;
-  var Request := CreateRequestMock(Length(Content), 'image/png');
+  var Request := CreateRequestMock('/IService/ProcStream', CONTENTTYPE_IMAGE_PNG, Content, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
+  var Service: IService := TService.Create;
 
-  var Container := TServiceContainer.Create(Service);
-
-  Request.Setup.WillReturn('/IService/ProcStream').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  Request.Setup.WillReturn(EmptyStr).When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
-
-  Request.Setup.WillReturn(TValue.From(Content)).When.GetRawContent;
-
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(Service));
 
   Rest.HandleRequest;
 
-  Assert.AreEqualMemory(Content, (Service.GetStream as TCustomMemoryStream).Memory, Length(Content));
+  Assert.AreEqualMemory(Content, (Service.GetStream.Stream as TCustomMemoryStream).Memory, Length(Content));
 
   Request.Free;
 
@@ -589,7 +580,7 @@ begin
 
   Request.Setup.WillReturn(MethodType).When.GetStringVariable(It.IsEqualTo(METHOD_INDEX));
 
-  Request.Setup.WillReturn('application/json').When.GetStringVariable(It.IsEqualTo(CONTENT_TYPE_INDEX));
+  Request.Setup.WillReturn(CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED).When.GetStringVariable(It.IsEqualTo(CONTENT_TYPE_INDEX));
 
   if ParamInURL then
   begin
@@ -623,19 +614,11 @@ end;
 
 procedure TRestServerServiceTest.WhenTheParamIsATStreamMustLoadTheFileInTheRequest;
 begin
-  var Service: IService := TService.Create;
-  var Request := CreateRequestMock(10, 'image/png');
+  var Request := CreateRequestMock('/IService/ProcStream', CONTENTTYPE_IMAGE_PNG, nil, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
+  var Service: IService := TService.Create;
 
-  var Container := TServiceContainer.Create(Service);
-
-  Request.Setup.WillReturn('/IService/ProcStream').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  Request.Setup.WillReturn(EmptyStr).When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
-
-  Request.Setup.WillReturn(nil).When.GetRawContent;
-
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(Service));
 
   Rest.HandleRequest;
 
@@ -646,17 +629,28 @@ begin
   Response.Free;
 end;
 
+procedure TRestServerServiceTest.WhenTheParamIsEmptyCantRaiseAnyErrorOfConversion;
+begin
+  var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, EmptyStr, 'Value=');
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
+
+  Assert.WillNotRaise(
+    procedure
+    begin
+      Rest.HandleRequest;
+    end);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
 procedure TRestServerServiceTest.WhenThePathHasMoreThenTwoLevelsMustReturn404;
 begin
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock('/IService/Proc/Proc', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
-  var Service: IService := TService.Create;
-
-  var Container := TServiceContainer.Create(Service);
-
-  Request.Setup.WillReturn('/IService/Proc/Proc').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
 
   Rest.HandleRequest;
 
@@ -667,19 +661,100 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheProcedureCalledIsAnArrayOfStreamMustCallTheCorrectProcedure;
+procedure TRestServerServiceTest.WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContent;
 begin
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, '"MyValue"', EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
   var Service: IService := TService.Create;
 
-  var Container := TServiceContainer.Create(Service);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(Service));
 
-  Request.Setup.WillReturn('/IService/ProcStreamArray').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
+  Rest.HandleRequest;
 
-  Request.Setup.WillReturn(EmptyStr).When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
+  Assert.AreEqual('ProcParamString=MyValue', Service.ProcedureCalled);
 
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  Request.Free;
+
+  Response.Free;
+
+  Request := CreateRequestMock('/IService/ProcedureWithOutAttribute', CONTENTTYPE_APPLICATION_JSON, 'Value="abcde"', EmptyStr);
+  Response := TWebResponseMock.Create(Request.Instance);
+  Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(Service));
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(HTTP_STATUS_BAD_REQUEST, Response.StatusCode);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContentIfTheContentIsAJSONValue;
+begin
+  var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JAVASCRIPT, '"MyValue"', EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Service: IService := TService.Create;
+
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(Service));
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(HTTP_STATUS_BAD_REQUEST, Response.StatusCode);
+
+  Request.Free;
+
+  Response.Free;
+
+  Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, '"MyValue"', EmptyStr);
+  Response := TWebResponseMock.Create(Request.Instance);
+  Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(Service));
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(HTTP_STATUS_OK, Response.StatusCode);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContentIfTheContentIsTextPlain;
+begin
+  var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JAVASCRIPT, '"MyValue"', EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Service: IService := TService.Create;
+
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(Service));
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(HTTP_STATUS_BAD_REQUEST, Response.StatusCode);
+
+  Request.Free;
+
+  Response.Free;
+
+  Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_TEXT_PLAIN + ';charset=UTF-8', '"MyValue"', EmptyStr);
+  Response := TWebResponseMock.Create(Request.Instance);
+  Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(Service));
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(HTTP_STATUS_OK, Response.StatusCode);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenTheProcedureCalledIsAnArrayOfStreamMustCallTheCorrectProcedure;
+begin
+  var Request := CreateRequestMock('/IService/ProcStreamArray', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Service: IService := TService.Create;
+
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(Service));
 
   Rest.HandleRequest;
 
@@ -690,19 +765,48 @@ begin
   Response.Free;
 end;
 
+procedure TRestServerServiceTest.WhenTheProcedureHasMoreThenOneFileMustLoadEachFileInTheCorrecParam;
+begin
+  var Content := TMultipartFormData.Create;
+  var MyFile := TStringStream.Create(EmptyStr);
+  var Service: IService := TService.Create;
+
+  var Container := TServiceContainer.Create(Service);
+
+  Content.AddStream('File1', MyFile, 'One.png');
+
+  Content.AddStream('File2', MyFile, 'Two.jpg');
+
+  var ContentBytes := TBytesStream.Create(nil);
+
+  ContentBytes.CopyFrom(Content.Stream, 0);
+
+  var Request := CreateRequestMock('/IService/ProcStreamTwoParam', Content.MimeTypeHeader, ContentBytes.Bytes, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, Container);
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual('ProcStreamTwoParam=File1=One.png,File2=Two.jpg', Service.ProcedureCalled);
+
+  Response.Free;
+
+  Request.Free;
+
+  MyFile.Free;
+
+  Content.Free;
+
+  ContentBytes.Free;
+end;
+
 procedure TRestServerServiceTest.WhenTheProcedureHaveParamMustCallWithTheParamOfTheRequest;
 begin
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock('/IService/ProcParam', CONTENTTYPE_APPLICATION_JSON, EmptyStr, 'Value=123');
   var Response := TWebResponseMock.Create(Request.Instance);
   var Service: IService := TService.Create;
 
-  var Container := TServiceContainer.Create(Service) as IServiceContainer;
-
-  Request.Setup.WillReturn('/IService/ProcParam').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  Request.Setup.WillReturn('Value=123').When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
-
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(Service));
 
   Rest.HandleRequest;
 
@@ -715,18 +819,8 @@ end;
 
 procedure TRestServerServiceTest.WhenTheProcedureOfTheRequestIsMarkedWithParamInBodyMustLoadTheParamsValuesFromBody;
 begin
-  var RequestBody := TEncoding.UTF8.GetBytes('Param1="abcde"&Param2=1234');
-
-  var Request := CreateRequestMock(Length(RequestBody));
+  var Request := CreateRequestMock('/IService/ProcedureWithParamsInBody', CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED, 'Param1="abcde"&Param2=1234', EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
-
-  Request.Setup.WillReturn('/IService/ProcedureWithParamsInBody').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  Request.Setup.WillReturn(EmptyStr).When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
-
-  Request.Setup.WillReturn('application/json').When.GetStringVariable(It.IsEqualTo(CONTENT_TYPE_INDEX));
-
-  Request.Setup.WillReturn(TValue.From(RequestBody)).When.GetRawContent;
 
   Request.Expect.Once.When.GetRawContent;
 
@@ -743,15 +837,9 @@ end;
 
 procedure TRestServerServiceTest.WhenTheRequestCallAFunctionAndTheReturnIsAClassMustReturnTheJSONAsSpected;
 begin
-  var Container := TServiceContainer.Create(TService.Create);
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock('/IService/FuncClass', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
-
-  Request.Setup.WillReturn('/IService/FuncClass').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  Request.Setup.WillReturn(EmptyStr).When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
-
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
 
   Rest.HandleRequest;
 
@@ -764,15 +852,9 @@ end;
 
 procedure TRestServerServiceTest.WhenTheRequestedFunctionAsAReturnMustFillTheContentTypeWithApplicationJSON;
 begin
-  var Container := TServiceContainer.Create(TService.Create);
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock('/IService/FuncInteger', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
-
-  Request.Setup.WillReturn('/IService/FuncInteger').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  Request.Setup.WillReturn(EmptyStr).When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
-
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
 
   Rest.HandleRequest;
 
@@ -785,17 +867,9 @@ end;
 
 procedure TRestServerServiceTest.WhenTheRequestExecuteAsExpectedTheStatusCode200;
 begin
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock('IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, EmptyStr, 'Value="Abc"');
   var Response := TWebResponseMock.Create(Request.Instance);
-  var Service: IService := TService.Create;
-
-  var Container := TServiceContainer.Create(Service) as IServiceContainer;
-
-  Request.Setup.WillReturn('IService/ProcParamString').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  Request.Setup.WillReturn('Value="Abc"').When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
-
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
 
   Rest.HandleRequest;
 
@@ -808,15 +882,9 @@ end;
 
 procedure TRestServerServiceTest.WhenTheRequestExecutionWasSucessfullyMustReturnTheJSONResult;
 begin
-  var Container := TServiceContainer.Create(TService.Create);
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock('/IService/FuncInteger', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
-
-  Request.Setup.WillReturn('/IService/FuncInteger').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  Request.Setup.WillReturn(EmptyStr).When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
-
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
 
   Rest.HandleRequest;
 
@@ -829,13 +897,12 @@ end;
 
 procedure TRestServerServiceTest.WhenTheRequestIsAFileTheRequestMustReturnFalse;
 begin
-  var Container := TServiceContainer.Create(TService.Create);
   var Request := CreateRequestMock;
   var Response := TWebResponseMock.Create(Request.Instance);
 
   Request.Setup.WillReturn('IService/ProcParamString/File.file').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
 
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
 
   Assert.IsFalse(Rest.HandleRequest);
 
@@ -846,18 +913,10 @@ end;
 
 procedure TRestServerServiceTest.WhenTheRequestIsCorrectMustCallTheProcedureRequested;
 begin
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock('/IService/Proc', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
-  var Service := TService.Create;
-  var ServiceI: IService := Service;
-
-  var Container := TServiceContainer.Create(ServiceI);
-
-  Request.Setup.WillReturn('/IService/Proc').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  Request.Setup.WillReturn(EmptyStr).When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
-
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Service: IService := TService.Create;
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(Service));
 
   Rest.HandleRequest;
 
@@ -870,13 +929,12 @@ end;
 
 procedure TRestServerServiceTest.WhenTheRequestIsForAProcedureCantRaiseErrorOfSerialization;
 begin
-  var Container := TServiceContainer.Create(TService.Create);
   var Request := CreateRequestMock;
   var Response := TWebResponseMock.Create(Request.Instance);
 
   Request.Setup.WillReturn('/IService/ProcInteger?Value=1234').When.GetStringVariable(It.IsEqualTo(URL_INDEX));
 
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
 
   Assert.WillNotRaise(
     procedure
@@ -907,23 +965,78 @@ end;
 
 procedure TRestServerServiceTest.WhenTheTypeIsInvalidMustRaiseAnError(ProcedureName: String);
 begin
-  var Request := CreateRequestMock;
+  var Request := CreateRequestMock(Format('/IService/%s', [ProcedureName]), CONTENTTYPE_APPLICATION_JSON, EmptyStr, 'Value=123');
   var Response := TWebResponseMock.Create(Request.Instance);
-  var Service: IService := TService.Create;
-
-  var Container := TServiceContainer.Create(Service);
-
-  Request.Setup.WillReturn(Format('/IService/%s', [ProcedureName])).When.GetStringVariable(It.IsEqualTo(URL_INDEX));
-
-  Request.Setup.WillReturn('Value=123').When.GetStringVariable(It.IsEqualTo(QUERY_INDEX));
-
-  var Rest := CreateRestService(Request.Instance, Response, Container);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
 
   Assert.WillRaise(
     procedure
     begin
       Rest.HandleRequest;
     end, EInvalidParameterType);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenTryToLoadAParamFromTheContentMustLoadOnlyIfTheContentTypeIsFormURLEncoded;
+begin
+  var MyService: IService := TService.Create;
+  var Request := CreateRequestMock('/IService/ProcString', CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED, 'Value="abcde"', EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(MyService));
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual('ProcString=''abcde''', MyService.ProcedureCalled);
+
+  Request.Free;
+
+  Response.Free;
+
+  Request := CreateRequestMock('/IService/ProcString', CONTENTTYPE_APPLICATION_JAVASCRIPT, 'Value="abcde"', EmptyStr);
+  Response := TWebResponseMock.Create(Request.Instance);
+  Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(MyService));
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(HTTP_STATUS_BAD_REQUEST, Response.StatusCode);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenTryToLoadAParamFromTheContentMustLoadOnlyIfTheContentTypeIsMultiPartFormData;
+begin
+  var Content :=
+    '--MyMarker'#13#10 +
+    'Content-Disposition: form-data; name="Value"'#13#10 +
+    #13#10 +
+    '"MyValue"'#13#10 +
+    '--MyMarker--'#13#10;
+
+  var MyService: IService := TService.Create;
+  var Request := CreateRequestMock('/IService/ProcString', CONTENTTYPE_MULTIPART_FORM_DATA + '; boundary=MyMarker', Content, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(MyService));
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual('ProcString=''MyValue''', MyService.ProcedureCalled);
+
+  Request.Free;
+
+  Response.Free;
+
+  Request := CreateRequestMock('/IService/ProcString', CONTENTTYPE_APPLICATION_JAVASCRIPT, 'Value="abcde"', EmptyStr);
+  Response := TWebResponseMock.Create(Request.Instance);
+  Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(MyService));
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(HTTP_STATUS_BAD_REQUEST, Response.StatusCode);
 
   Request.Free;
 
@@ -977,7 +1090,7 @@ begin
   Result := 123456;
 end;
 
-function TService.GetStream: TStream;
+function TService.GetStream: TRESTFile;
 begin
   Result := FStream;
 end;
@@ -1067,7 +1180,7 @@ end;
 
 procedure TService.ProcParamString(Param: String);
 begin
-
+  FProcedureCalled := Format('%s=%s', ['ProcParamString', Param]);
 end;
 
 procedure TService.ProcPointer(Value: Pointer);
@@ -1085,15 +1198,20 @@ begin
   FProcedureCalled := Format('ProcSet=%d', [PByte(@Value)^]);
 end;
 
-procedure TService.ProcStream(Stream: TStream);
+procedure TService.ProcStream(Stream: TRESTFile);
 begin
   FProcedureCalled := 'ProcStream';
   FStream := Stream;
 end;
 
-procedure TService.ProcStreamArray(Stream: TArray<TStream>);
+procedure TService.ProcStreamArray(Stream: TArray<TRESTFile>);
 begin
   FProcedureCalled := 'ProcStreamArray';
+end;
+
+procedure TService.ProcStreamTwoParam(File1, File2: TRESTFile);
+begin
+  FProcedureCalled := Format('ProcStreamTwoParam=File1=%s,File2=%s', [File1.FileName, File2.FileName]);
 end;
 
 procedure TService.ProcString(Value: ShortString);

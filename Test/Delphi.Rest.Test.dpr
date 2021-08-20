@@ -38,6 +38,8 @@ begin
 
   FastMM_DeleteEventLogFile;
 
+  FastMM_EnterDebugMode;
+
 {$IFDEF TESTINSIGHT}
   TestInsight.DUnitX.RunRegisteredTests;
 {$ELSE}

@@ -80,12 +80,40 @@ end;
 
 function TRestServerService.GetParamValue(const Method: TRttiMethod; const Param: TRttiParameter; var ParamLoaded: Boolean): TValue;
 
-  function GetFiles: TArray<TStream>;
+  function GetFiles: TArray<TRESTFile>;
   begin
     Result := nil;
 
     for var A := 0 to Pred(Request.Files.Count) do
-      Result := Result + [Request.Files[A].Stream];
+      if (Param.Name = Request.Files[A].FieldName) or Request.Files[A].FieldName.IsEmpty then
+        Result := Result + [Request.Files[A]];
+  end;
+
+  function GetParamValue(Fields: TStrings; var ParamValue: String): Boolean;
+  begin
+    var ParamIndex := Fields.IndexOfName(Param.Name);
+    Result := ParamIndex > -1;
+
+    if Result then
+      ParamValue := Fields.ValueFromIndex[ParamIndex];
+  end;
+
+  function CanGetContentFields: Boolean;
+  begin
+    Result := (Request.ContentType = CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED) or Request.ContentType.StartsWith(CONTENTTYPE_MULTIPART_FORM_DATA);
+  end;
+
+  function CanLoadParamFromContent: Boolean;
+  begin
+    Result := (Request.ContentType = CONTENTTYPE_APPLICATION_JSON) or Request.ContentType.StartsWith(CONTENTTYPE_TEXT_PLAIN);
+  end;
+
+  function GetParamValueFromContent(var ParamValue: String): Boolean;
+  begin
+    Result := (Length(Method.GetParameters) = 1) and CanLoadParamFromContent;
+
+    if Result then
+      ParamValue := Request.Content;
   end;
 
 begin
@@ -101,34 +129,34 @@ begin
     tkVariant: raise EInvalidParameterType.Create('The param type is invalid!');
 
     tkClass:
-      if Param.ParamType.AsInstance.MetaclassType = TStream then
+      if Param.ParamType.AsInstance.MetaclassType = TRESTFile then
       begin
-        ParamLoaded := Request.Files.Count = 1;
+        var Files := GetFiles;
+
+        ParamLoaded := Length(Files) = 1;
 
         if ParamLoaded then
-          Result := TValue.From(Request.Files[0].Stream);
+          Result := TValue.From(Files[0]);
 
         Exit;
       end;
+
     tkDynArray:
     begin
       var ArrayType := TRttiDynamicArrayType(Param.ParamType).ElementType;
 
-      ParamLoaded := ArrayType.IsInstance and (ArrayType.AsInstance.MetaclassType = TStream);
+      ParamLoaded := ArrayType.IsInstance and (ArrayType.AsInstance.MetaclassType = TRESTFile);
 
       if ParamLoaded then
         Exit(TValue.From(GetFiles));
     end;
   end;
 
-  var ParamValue := Request.QueryFields.Values[Param.Name];
+  var ParamValue: String;
 
-  if ParamValue.IsEmpty then
-    ParamValue := Request.ContentFields.Values[Param.Name];
+  ParamLoaded := GetParamValue(Request.QueryFields, ParamValue) or CanGetContentFields and GetParamValue(Request.ContentFields, ParamValue) or GetParamValueFromContent(ParamValue);
 
-  ParamLoaded := not ParamValue.IsEmpty;
-
-  if ParamLoaded then
+  if ParamLoaded and not ParamValue.IsEmpty then
     Result := Serializer.Deserialize(ParamValue, Param.ParamType.Handle);
 end;
 

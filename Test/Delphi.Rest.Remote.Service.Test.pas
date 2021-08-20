@@ -2,7 +2,7 @@ unit Delphi.Rest.Remote.Service.Test;
 
 interface
 
-uses DUnitX.TestFramework, Delphi.Rest.Remote.Service, Delphi.Mock, Delphi.Mock.Intf, Delphi.Rest.Types;
+uses DUnitX.TestFramework, System.Rtti, Delphi.Rest.Remote.Service, Delphi.Mock, Delphi.Mock.Intf, Delphi.Rest.Types;
 
 type
   [TestFixture]
@@ -11,11 +11,14 @@ type
     function CreateMockCommunication: IMock<IRestCommunication>;
     function CreateRequest(const URL: String): TRestRequest; overload;
     function CreateRequest(Method: TRESTMethod; const URL: String): TRestRequest; overload;
-    function CreateRequest(Method: TRESTMethod; const URL, Params: String): TRestRequest; overload;
+    function CreateRequest(Method: TRESTMethod; const URL, Body: String): TRestRequest; overload;
+    function CreateRequest(Method: TRESTMethod; const URL: String; Body: TValue): TRestRequest; overload;
     function CreateRemoteService(const Communication: IRestCommunication): TRemoteService; overload;
     function CreateRemoteService<T: IInterface>(const Communication: IRestCommunication): TRemoteService; overload;
     function CreateRemoteServiceURL(const URL: String; const Communication: IRestCommunication): TRemoteService; overload;
     function CreateRemoteServiceURL<T: IInterface>(const URL: String; const Communication: IRestCommunication): TRemoteService; overload;
+    function GetFormDataValue(FormData: TRESTFormData): String;
+    function CreateRequestFile: TRESTFile;
 
     procedure RegisterLeak<T: IInterface>;
   public
@@ -73,6 +76,26 @@ type
     procedure IfTheProcedureHasntAnAttributeAboutParamMustSendTheParamByTheTypeOfCommand(Method: TRESTMethod; ParamInURL: Boolean);
     [Test]
     procedure WhenTheMethodHasNoAttributesOfParamDefinedMustGetTheAttributeFromInterface;
+    [Test]
+    procedure WhenTheProcedureBeenCalledHasntParametersTheRequestBodyMustBeEmpty;
+    [Test]
+    procedure WhenTheProcedureHasAParameterThatIsAFileMustSendTheFileInTheBodyOfTheRequest;
+    [Test]
+    procedure WhenTheProcedureAsParamsWithFilesTheRequestParamSeparatorMustBeBuildCorrectly;
+    [Test]
+    procedure WhenTheProcedureSendAFileInTheBodyMustLoadTheFileInTheBody;
+    [Test]
+    procedure WhenTheProcedureHasMoreThenOneParamAndSendingInTheBodyTheRequestMustLoadTheFormDataInTheBody;
+    [Test]
+    procedure TheParamsOfAProcedureMustBeSentInFormDataObjectAsExpected;
+    [Test]
+    procedure WhenTheProcedureAsAFileMustLoadTheFormDataValueAsExpected;
+    [Test]
+    procedure WhenTheProcedureAsAnArrayOfFilesMustAddTheFilesToFormDataAsExpected;
+    [Test]
+    procedure WhenTheProcedureIsToSendTheParamsInURLAndHaveAnArrayOfFileParamMustSendTheParamInTheBody;
+    [Test]
+    procedure WhenTheProcedureHasMoreThenOneParamFileParamMustSendTheFilesInTheBodyOfTheRequest;
   end;
 
   IServiceTest = interface(IInvokable)
@@ -92,6 +115,18 @@ type
     procedure TestProcedure;
     procedure TestProcedureWithOneParam(Param: String);
     procedure TestProcedureWithParam(Param1: String; Param2: Integer);
+    [ParamInBody]
+    procedure TestProcedureWithParamInBody(Param1: String; Param2: Integer);
+    procedure TestProcedureWithAnFile(MyFile: TRESTFile);
+    procedure TestProcedureWithFileAndParams(MayParam: Integer; MyFile: TRESTFile; AnotherParam: String);
+    [ParamInBody]
+    procedure TestProcedureFileInTheBody(MyFile: TRESTFile);
+    [ParamInBody]
+    procedure TestProcedureFileAnParamInTheBody(MyParam: String; MyFile: TRESTFile);
+    [ParamInBody]
+    procedure TestProcedureWithArrayFiles(MyFiles: TArray<TRESTFile>);
+    procedure TestProcedureWithArrayFilesInURL(MyFiles: TArray<TRESTFile>);
+    procedure TestProceudreMoreThenOneFileParam(MyFile1: TRESTFile; AnParam: String; MyFile2: TRESTFile);
   end;
 
   [PATCH]
@@ -127,7 +162,7 @@ type
 
 implementation
 
-uses System.SysUtils, System.Rtti, System.Classes, Delphi.Rest.JSON.Serializer, Delphi.Rest.JSON.Serializer.Intf;
+uses System.SysUtils, System.Classes, Delphi.Rest.JSON.Serializer, Delphi.Rest.JSON.Serializer.Intf, Web.ReqFiles;
 
 { TRemoteServiceTest }
 
@@ -164,12 +199,12 @@ begin
   Result := CreateRequest(Method, URL, EmptyStr);
 end;
 
-function TRemoteServiceTest.CreateRequest(Method: TRESTMethod; const URL, Params: String): TRestRequest;
+function TRemoteServiceTest.CreateRequest(Method: TRESTMethod; const URL, Body: String): TRestRequest;
 begin
-  Result := TRestRequest.Create;
-  Result.Method := Method;
-  Result.Params := Params;
-  Result.URL := URL;
+  Result := CreateRequest(Method, URL, TValue.From(Body));
+
+  if Body.IsEmpty then
+    Result.Body := TValue.Empty;
 end;
 
 procedure TRemoteServiceTest.IfTheProcedureHasntAnAttributeAboutParamMustSendTheParamByTheTypeOfCommand(Method: TRESTMethod; ParamInURL: Boolean);
@@ -180,15 +215,15 @@ begin
   var Communication := CreateMockCommunication;
   var Context := TRttiContext.Create;
   var MethodName := 'Test' + COMMAND_NAME[Method];
-  var ParamValue := 'Param=123456';
+  var ParamValue := '123456';
   var Request := CreateRequest(Method, '/ServiceParamsType/' + MethodName);
   var RttiType := Context.GetType(TypeInfo(IServiceParamsType));
   var Service := CreateRemoteService<IServiceParamsType>(Communication.Instance) as IServiceParamsType;
 
   if ParamInURL then
-    Request.URL := Request.URL + '?' + ParamValue
+    Request.URL := Request.URL + '?Param=' + ParamValue
   else
-    Request.Params := ParamValue;
+    Request.Body := ParamValue;
 
   Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
 
@@ -316,6 +351,35 @@ begin
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 
   Request.Free;
+end;
+
+procedure TRemoteServiceTest.TheParamsOfAProcedureMustBeSentInFormDataObjectAsExpected;
+begin
+  var Communication := CreateMockCommunication;
+  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
+
+  Communication.Setup.WillExecute(
+    procedure(Params: TArray<TValue>)
+    begin
+      var FormValue :=
+        '--%0:s'#13#10 +
+        'Content-Disposition: form-data; name="Param1"'#13#10 +
+        #13#10 +
+        '"abc"'#13#10 +
+        '--%0:s'#13#10 +
+        'Content-Disposition: form-data; name="Param2"'#13#10 +
+        #13#10 +
+        '123'#13#10 +
+        '--%0:s--'#13#10;
+
+      var Request := Params[0].AsType<TRestRequest>;
+
+      var FormData := Request.Body.AsType<TRESTFormData>;
+
+      Assert.AreEqual(Format(FormValue, [FormData.Boundary]), GetFormDataValue(FormData));
+    end).When.SendRequest(It.IsAny<TRestRequest>);
+
+  Service.TestProcedureWithParamInBody('abc', 123);
 end;
 
 procedure TRemoteServiceTest.TheURLOfServerCallMustContainTheNameOfInterfacePlusTheProcedureName;
@@ -463,7 +527,7 @@ end;
 procedure TRemoteServiceTest.WhenTheMethodHasNoAttributesOfParamDefinedMustGetTheAttributeFromInterface;
 begin
   var Communication := CreateMockCommunication;
-  var Request := CreateRequest(rmPost, '/ServiceParams/ProcedureWithOutAttribute', 'Param=123');
+  var Request := CreateRequest(rmPost, '/ServiceParams/ProcedureWithOutAttribute', '123');
   var Service := CreateRemoteService<IServiceParams>(Communication.Instance) as IServiceParams;
 
   Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
@@ -475,10 +539,186 @@ begin
   Request.Free;
 end;
 
+procedure TRemoteServiceTest.WhenTheProcedureAsAFileMustLoadTheFormDataValueAsExpected;
+begin
+  var Communication := CreateMockCommunication;
+  var MyFile := CreateRequestFile;
+  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
+
+  Communication.Setup.WillExecute(
+    procedure(Params: TArray<TValue>)
+    begin
+      var FormValue :=
+        '--%0:s'#13#10 +
+        'Content-Disposition: form-data; name="MyParam"'#13#10 +
+        #13#10 +
+        '"MyParam"'#13#10 +
+        '--%0:s'#13#10 +
+        'Content-Disposition: form-data; name="MyFile"; filename="My File.png"'#13#10 +
+        'Content-Type: image/png'#13#10 +
+        #13#10 +
+        'This is my file!'#13#10 +
+        '--%0:s--'#13#10;
+
+      var Request := Params[0].AsType<TRestRequest>;
+
+      var FormData := Request.Body.AsType<TRESTFormData>;
+
+      Assert.AreEqual(Format(FormValue, [FormData.Boundary]), GetFormDataValue(FormData));
+    end).When.SendRequest(It.IsAny<TRestRequest>);
+
+  Service.TestProcedureFileAnParamInTheBody('MyParam', MyFile);
+
+  MyFile.Free;
+end;
+
+procedure TRemoteServiceTest.WhenTheProcedureAsAnArrayOfFilesMustAddTheFilesToFormDataAsExpected;
+begin
+  var Communication := CreateMockCommunication;
+  var MyFile := CreateRequestFile;
+  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
+
+  Communication.Setup.WillExecute(
+    procedure(Params: TArray<TValue>)
+    begin
+      var FormValue :=
+        '--%0:s'#13#10 +
+        'Content-Disposition: form-data; name="MyFiles"; filename="My File.png"'#13#10 +
+        'Content-Type: image/png'#13#10 +
+        #13#10 +
+        'This is my file!'#13#10 +
+        '--%0:s'#13#10 +
+        'Content-Disposition: form-data; name="MyFiles"; filename="My File.png"'#13#10 +
+        'Content-Type: image/png'#13#10 +
+        #13#10 +
+        'This is my file!'#13#10 +
+        '--%0:s'#13#10 +
+        'Content-Disposition: form-data; name="MyFiles"; filename="My File.png"'#13#10 +
+        'Content-Type: image/png'#13#10 +
+        #13#10 +
+        'This is my file!'#13#10 +
+        '--%0:s--'#13#10;
+
+      var Request := Params[0].AsType<TRestRequest>;
+
+      var FormData := Request.Body.AsType<TRESTFormData>;
+
+      Assert.AreEqual(Format(FormValue, [FormData.Boundary]), GetFormDataValue(FormData));
+    end).When.SendRequest(It.IsAny<TRestRequest>);
+
+  Service.TestProcedureWithArrayFiles([MyFile, MyFile, MyFile]);
+
+  MyFile.Free;
+end;
+
+procedure TRemoteServiceTest.WhenTheProcedureAsParamsWithFilesTheRequestParamSeparatorMustBeBuildCorrectly;
+begin
+  var Communication := CreateMockCommunication;
+  var Request: TRestRequest := nil;
+  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
+
+  Communication.Setup.WillExecute(
+    procedure(Params: TArray<TValue>)
+    begin
+      Request := Params[0].AsType<TRestRequest>;
+
+      Assert.AreEqual('/ServiceTest/TestProcedureWithFileAndParams?MayParam=12345&AnotherParam="My File"', Request.URL);
+    end).When.SendRequest(It.IsAny<TRestRequest>);
+
+  Service.TestProcedureWithFileAndParams(12345, nil, 'My File');
+end;
+
+procedure TRemoteServiceTest.WhenTheProcedureBeenCalledHasntParametersTheRequestBodyMustBeEmpty;
+begin
+  var Communication := CreateMockCommunication;
+  var Request := CreateRequest('/ServiceTest/TestProcedure');
+  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
+
+  Request.Body := TValue.Empty;
+
+  Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
+
+  Service.TestProcedure;
+
+  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Request.Free;
+end;
+
+procedure TRemoteServiceTest.WhenTheProcedureHasAParameterThatIsAFileMustSendTheFileInTheBodyOfTheRequest;
+begin
+  var Communication := CreateMockCommunication;
+  var MyFile := CreateRequestFile;
+  var Request: TRestRequest := nil;
+  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
+
+  Communication.Setup.WillExecute(
+    procedure(Params: TArray<TValue>)
+    begin
+      Request := Params[0].AsType<TRestRequest>;
+
+      Assert.AreEqual<TObject>(MyFile, Request.Body.AsObject);
+    end).When.SendRequest(It.IsAny<TRestRequest>);
+
+  Service.TestProcedureWithAnFile(MyFile);
+
+  MyFile.Free;
+end;
+
+procedure TRemoteServiceTest.WhenTheProcedureHasMoreThenOneParamAndSendingInTheBodyTheRequestMustLoadTheFormDataInTheBody;
+begin
+  var Communication := CreateMockCommunication;
+  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
+
+  Communication.Setup.WillExecute(
+    procedure(Params: TArray<TValue>)
+    begin
+      var Request := Params[0].AsType<TRestRequest>;
+
+      Assert.IsTrue(Request.Body.IsType<TRESTFormData>);
+    end).When.SendRequest(It.IsAny<TRestRequest>);
+
+  Service.TestProcedureWithParamInBody('abc', 123);
+end;
+
+procedure TRemoteServiceTest.WhenTheProcedureHasMoreThenOneParamFileParamMustSendTheFilesInTheBodyOfTheRequest;
+begin
+  var Communication := CreateMockCommunication;
+  var MyFile := CreateRequestFile;
+  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
+
+  Communication.Setup.WillExecute(
+    procedure(Params: TArray<TValue>)
+    begin
+      var FormValue :=
+        '--%0:s'#13#10 +
+        'Content-Disposition: form-data; name="MyFile1"; filename="My File.png"'#13#10 +
+        'Content-Type: image/png'#13#10 +
+        #13#10 +
+        'This is my file!'#13#10 +
+        '--%0:s'#13#10 +
+        'Content-Disposition: form-data; name="MyFile2"; filename="My File.png"'#13#10 +
+        'Content-Type: image/png'#13#10 +
+        #13#10 +
+        'This is my file!'#13#10 +
+        '--%0:s--'#13#10;
+
+      var Request := Params[0].AsType<TRestRequest>;
+
+      var FormData := Request.Body.AsType<TRESTFormData>;
+
+      Assert.AreEqual(Format(FormValue, [FormData.Boundary]), GetFormDataValue(FormData));
+    end).When.SendRequest(It.IsAny<TRestRequest>);
+
+  Service.TestProceudreMoreThenOneFileParam(MyFile, 'Param', MyFile);
+
+  MyFile.Free;
+end;
+
 procedure TRemoteServiceTest.WhenTheProcedureHasTheParamInBodyAttributeMustSendTheParamsInTheBodyOfTheRequest;
 begin
   var Communication := CreateMockCommunication;
-  var Request := CreateRequest(rmPost, '/ServiceParams/ParamInBody', 'Param=1234');
+  var Request := CreateRequest(rmPost, '/ServiceParams/ParamInBody', '1234');
   var Service := CreateRemoteService<IServiceParams>(Communication.Instance) as IServiceParams;
 
   Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
@@ -503,6 +743,65 @@ begin
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 
   Request.Free;
+end;
+
+procedure TRemoteServiceTest.WhenTheProcedureIsToSendTheParamsInURLAndHaveAnArrayOfFileParamMustSendTheParamInTheBody;
+begin
+  var Communication := CreateMockCommunication;
+  var MyFile := CreateRequestFile;
+  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
+
+  Communication.Setup.WillExecute(
+    procedure(Params: TArray<TValue>)
+    begin
+      var FormValue :=
+        '--%0:s'#13#10 +
+        'Content-Disposition: form-data; name="MyFiles"; filename="My File.png"'#13#10 +
+        'Content-Type: image/png'#13#10 +
+        #13#10 +
+        'This is my file!'#13#10 +
+        '--%0:s'#13#10 +
+        'Content-Disposition: form-data; name="MyFiles"; filename="My File.png"'#13#10 +
+        'Content-Type: image/png'#13#10 +
+        #13#10 +
+        'This is my file!'#13#10 +
+        '--%0:s'#13#10 +
+        'Content-Disposition: form-data; name="MyFiles"; filename="My File.png"'#13#10 +
+        'Content-Type: image/png'#13#10 +
+        #13#10 +
+        'This is my file!'#13#10 +
+        '--%0:s--'#13#10;
+
+      var Request := Params[0].AsType<TRestRequest>;
+
+      var FormData := Request.Body.AsType<TRESTFormData>;
+
+      Assert.AreEqual(Format(FormValue, [FormData.Boundary]), GetFormDataValue(FormData));
+    end).When.SendRequest(It.IsAny<TRestRequest>);
+
+  Service.TestProcedureWithArrayFilesInURL([MyFile, MyFile, MyFile]);
+
+  MyFile.Free;
+end;
+
+procedure TRemoteServiceTest.WhenTheProcedureSendAFileInTheBodyMustLoadTheFileInTheBody;
+begin
+  var Communication := CreateMockCommunication;
+  var MyFile := CreateRequestFile;
+  var Request: TRestRequest := nil;
+  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
+
+  Communication.Setup.WillExecute(
+    procedure(Params: TArray<TValue>)
+    begin
+      Request := Params[0].AsType<TRestRequest>;
+
+      Assert.AreEqual<TObject>(MyFile, Request.Body.AsObject);
+    end).When.SendRequest(It.IsAny<TRestRequest>);
+
+  Service.TestProcedureFileInTheBody(MyFile);
+
+  MyFile.Free;
 end;
 
 procedure TRemoteServiceTest.WhenThePropertyOnExceptionIsLoadedMustCallTheEventWhenRaiseAnErrorInTheSyncCall;
@@ -570,6 +869,29 @@ begin
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 
   Request.Free;
+end;
+
+function TRemoteServiceTest.CreateRequest(Method: TRESTMethod; const URL: String; Body: TValue): TRestRequest;
+begin
+  Result := TRestRequest.Create;
+  Result.Body := Body;
+  Result.Method := Method;
+  Result.URL := URL;
+end;
+
+function TRemoteServiceTest.CreateRequestFile: TRESTFile;
+const
+  CONTENT: AnsiString = 'This is my file!'#0;
+
+begin
+  Result := TWebRequestFile.Create(EmptyStr, 'My File.png', EmptyStr, @CONTENT[1], 16);
+end;
+
+function TRemoteServiceTest.GetFormDataValue(FormData: TRESTFormData): String;
+begin
+  Result := String(PAnsiChar(TMemoryStream(FormData.Stream).Memory));
+
+  SetLength(Result, FormData.Stream.Size);
 end;
 
 end.
