@@ -172,7 +172,7 @@ begin
       AddFormDataFile(Param, ParamValue.AsType<TRESTFile>)
     else
       FRequest.Body := ParamValue
-  else if ParamValue.IsType<TArray<TRESTFile>>(False) then
+  else if (Param.ParamType is TRttiDynamicArrayType) and (TRttiDynamicArrayType(Param.ParamType).ElementType.Handle = TypeInfo(TRESTFile)) then
     for AFile in ParamValue.AsType<TArray<TRESTFile>> do
       AddFormDataFile(Param, AFile)
   else if ForceLoadFormData then
