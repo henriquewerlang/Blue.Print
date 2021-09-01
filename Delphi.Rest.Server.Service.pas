@@ -9,7 +9,7 @@ type
 
   TOnGetServiceContainer = function: IServiceContainer of object;
 
-  TRestServerService = class(TComponent, IGetWebAppServices, IWebAppServices, IWebExceptionHandler)
+  TRestServerService = class(TComponent, IGetWebAppServices, IWebAppServices, IWebExceptionHandler, IWebDispatcherAccess)
   private
     FActive: Boolean;
     FRequest: TWebRequest;
@@ -36,9 +36,11 @@ type
 
     // IWebExceptionHandler
     procedure HandleException(E: Exception; var Handled: Boolean); virtual;
+
+    // IWebDispatcherAccess
+    function Request: TWebRequest;
+    function Response: TWebResponse;
   public
-    property Request: TWebRequest read FRequest;
-    property Response: TWebResponse read FResponse;
     property Serializer: IRestJsonSerializer read GetSerializer write FSerializer;
     property ServiceContainer: IServiceContainer read GetServiceContainer write FServiceContainer;
   published
@@ -239,6 +241,16 @@ procedure TRestServerService.InitContext(WebModule: TComponent; Request: TWebReq
 begin
   FRequest := Request;
   FResponse := Response;
+end;
+
+function TRestServerService.Request: TWebRequest;
+begin
+  Result := FRequest;
+end;
+
+function TRestServerService.Response: TWebResponse;
+begin
+  Result := FResponse;
 end;
 
 end.
