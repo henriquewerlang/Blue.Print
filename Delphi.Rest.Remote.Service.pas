@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, Delphi.Rest.Types, Delphi.Rest.JSON.Serializer.Intf;
+uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF DCC}System.Net.HTTPClient, {$ENDIF}Delphi.Rest.Types, Delphi.Rest.JSON.Serializer.Intf;
 
 type
   TRestRequest = class
@@ -24,10 +24,20 @@ type
   TRestCommunication = class(TInterfacedObject, IRestCommunication)
   private
     FHeaders: TStringList;
+    {$IFDEF DCC}
+    FConnection: THTTPClient;
+    {$ENDIF}
 
+    {$IFDEF DCC}
+    function GetConnection: THTTPClient;
+    {$ENDIF}
     function SendRequest(const Request: TRestRequest): String;
     {$IFDEF PAS2JS}
     function SendRequestAsync(const Request: TRestRequest): String; async;
+    {$ENDIF}
+
+    {$IFDEF DCC}
+    property Connection: THTTPClient read GetConnection;
     {$ENDIF}
   public
     constructor Create;
@@ -112,18 +122,18 @@ type
     class function GetRemoteServiceFactory: TRemoteServiceFactory; static;
 
     function GetService(&Type: PTypeInfo; const URL: String): TRemoteService; overload;
+    function GetCommunication: IRestCommunication;
+    function GetSerializer: IRestJsonSerializer;
   public
-    constructor Create;
-
     class constructor Create;
 
     class function GetService<I: IInterface>: I; overload;
     class function GetService<I: IInterface>(const URL: String): I; overload;
 
-    property Communication: IRestCommunication read FCommunication write FCommunication;
+    property Communication: IRestCommunication read GetCommunication write FCommunication;
     property Headers: String read FHeaders write FHeaders;
     property OnExecuteException: TProc<Exception, IRestJsonSerializer> read FOnExecuteException write FOnExecuteException;
-    property Serializer: IRestJsonSerializer read FSerializer write FSerializer;
+    property Serializer: IRestJsonSerializer read GetSerializer write FSerializer;
     property URL: String read FURL write FURL;
 
     class property Instance: TRemoteServiceFactory read GetRemoteServiceFactory;
@@ -135,7 +145,7 @@ uses Delphi.Rest.Exceptions,
 {$IFDEF PAS2JS}
   JS, Web, Pas2Js.Rest.JSON.Serializers
 {$ELSE}
-  Delphi.Rest.JSON.Serializer, System.Net.HTTPClient
+  Delphi.Rest.JSON.Serializer
 {$ENDIF};
 
 const
@@ -449,8 +459,22 @@ destructor TRestCommunication.Destroy;
 begin
   FHeaders.Free;
 
+{$IFDEF DCC}
+  FConnection.Free;
+{$ENDIF}
+
   inherited;
 end;
+
+{$IFDEF DCC}
+function TRestCommunication.GetConnection: THTTPClient;
+begin
+  if not Assigned(FConnection) then
+    FConnection := THTTPClient.Create;
+
+  Result := FConnection;
+end;
+{$ENDIF}
 
 function TRestCommunication.SendRequest(const Request: TRestRequest): String;
 {$IFDEF PAS2JS}
@@ -478,29 +502,23 @@ begin
   else
     raise EHTTPStatusError.Create(Connection.status, Connection.ResponseText);
 {$ELSE}
-  var Connection := THTTPClient.Create;
+  var Response: IHTTPResponse;
 
-  try
-    var Response: IHTTPResponse;
+  for var A := 0 to Pred(FHeaders.Count) do
+    Connection.CustomHeaders[FHeaders.Names[A]] := FHeaders.ValueFromIndex[A];
 
-    for var A := 0 to Pred(FHeaders.Count) do
-      Connection.CustomHeaders[FHeaders.Names[A]] := FHeaders.ValueFromIndex[A];
-
-    case Request.Method of
-      rmDelete: Response := Connection.Delete(Request.URL);
-      rmGet: Response := Connection.Get(Request.URL);
-      rmPatch: Response := Connection.Patch(Request.URL);
-      rmPost: Response := Connection.Post(Request.URL, TStream(nil));
-      rmPut: Response := Connection.Put(Request.URL);
-    end;
-
-    Result := Response.ContentAsString(TEncoding.UTF8);
-
-    if Response.StatusCode <> 200 then
-      raise EHTTPStatusError.Create(Response.StatusCode, Result);
-  finally
-    Connection.Free;
+  case Request.Method of
+    rmDelete: Response := Connection.Delete(Request.URL);
+    rmGet: Response := Connection.Get(Request.URL);
+    rmPatch: Response := Connection.Patch(Request.URL);
+    rmPost: Response := Connection.Post(Request.URL, TStream(nil));
+    rmPut: Response := Connection.Put(Request.URL);
   end;
+
+  Result := Response.ContentAsString(TEncoding.UTF8);
+
+  if Response.StatusCode <> 200 then
+    raise EHTTPStatusError.Create(Response.StatusCode, Result);
 {$ENDIF}
 end;
 
@@ -552,15 +570,25 @@ begin
   GRemoteServiceFactory := TRemoteServiceFactory.Create;
 end;
 
-constructor TRemoteServiceFactory.Create;
+function TRemoteServiceFactory.GetCommunication: IRestCommunication;
 begin
-  Communication := TRestCommunication.Create;
-  Serializer := TRestJsonSerializer.Create;
+  if not Assigned(FCommunication) then
+    FCommunication := TRestCommunication.Create;
+
+  Result := FCommunication;
 end;
 
 class function TRemoteServiceFactory.GetRemoteServiceFactory: TRemoteServiceFactory;
 begin
   Result := TRemoteServiceFactory(GRemoteServiceFactory);
+end;
+
+function TRemoteServiceFactory.GetSerializer: IRestJsonSerializer;
+begin
+  if not Assigned(FSerializer) then
+    FSerializer := TRestJsonSerializer.Create;
+
+  Result := FSerializer;
 end;
 
 function TRemoteServiceFactory.GetService(&Type: PTypeInfo; const URL: String): TRemoteService;
