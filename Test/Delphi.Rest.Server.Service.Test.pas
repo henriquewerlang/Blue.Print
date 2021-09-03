@@ -227,7 +227,7 @@ type
     FInstance: IService;
     FReturnValue: Boolean;
 
-    function GetService(const Name: String; out Info: TRttiType; out Instance: TValue): Boolean;
+    function GetService(const Name: String; var Info: TRttiType; var Instance: TValue): Boolean;
   public
     constructor Create(ReturnValue: Boolean); overload;
     constructor Create(const Instance: IService); overload;
@@ -1057,7 +1057,7 @@ begin
   FInstance := Instance;
 end;
 
-function TServiceContainer.GetService(const Name: String; out Info: TRttiType; out Instance: TValue): Boolean;
+function TServiceContainer.GetService(const Name: String; var Info: TRttiType; var Instance: TValue): Boolean;
 begin
   Instance := TValue.From(FInstance);
   Result := FReturnValue;
