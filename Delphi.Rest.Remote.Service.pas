@@ -197,7 +197,6 @@ begin
 
   FContext := TRttiContext.Create;
   FHeaders := TStringList.Create;
-  FRequest := TRestRequest.Create;
   FRttiType := FContext.GetType(TypeInfo) as TRttiInterfaceType;
 end;
 
@@ -259,6 +258,15 @@ end;
 
 procedure TRemoteService.LoadRequest(const Method: TRttiMethod; const Args: TArray<TValue>);
 begin
+  FRequest.Free;
+
+{$IFDEF PAS2JS}
+  FFormData := nil;
+{$ELSE}
+  FreeAndNil(FFormData);
+{$ENDIF}
+
+  FRequest := TRestRequest.Create;
   FRequest.Headers := Headers;
   FRequest.Method := GetComandFromMethod(Method);
 

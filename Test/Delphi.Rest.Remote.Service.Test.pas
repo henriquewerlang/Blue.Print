@@ -96,6 +96,8 @@ type
     procedure WhenTheProcedureIsToSendTheParamsInURLAndHaveAnArrayOfFileParamMustSendTheParamInTheBody;
     [Test]
     procedure WhenTheProcedureHasMoreThenOneParamFileParamMustSendTheFilesInTheBodyOfTheRequest;
+    [Test]
+    procedure WhenSendARequestMoreThenOneTimeMustResetTheRequestBody;
   end;
 
   IServiceTest = interface(IInvokable)
@@ -492,6 +494,42 @@ begin
   Assert.AreEqual('My Value', Client.Header['My Header2']);
 
   Client.Free;
+end;
+
+procedure TRemoteServiceTest.WhenSendARequestMoreThenOneTimeMustResetTheRequestBody;
+begin
+  var Communication := CreateMockCommunication;
+  var MyFile := CreateRequestFile;
+  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
+
+  Communication.Setup.WillExecute(
+    procedure(Params: TArray<TValue>)
+    begin
+      var FormValue :=
+        '--%0:s'#13#10 +
+        'Content-Disposition: form-data; name="MyFile1"; filename="My File.png"'#13#10 +
+        'Content-Type: image/png'#13#10 +
+        #13#10 +
+        'This is my file!'#13#10 +
+        '--%0:s'#13#10 +
+        'Content-Disposition: form-data; name="MyFile2"; filename="My File.png"'#13#10 +
+        'Content-Type: image/png'#13#10 +
+        #13#10 +
+        'This is my file!'#13#10 +
+        '--%0:s--'#13#10;
+
+      var Request := Params[0].AsType<TRestRequest>;
+
+      var FormData := Request.Body.AsType<TRESTFormData>;
+
+      Assert.AreEqual(Format(FormValue, [FormData.Boundary]), GetFormDataValue(FormData));
+    end).When.SendRequest(It.IsAny<TRestRequest>);
+
+  Service.TestProceudreMoreThenOneFileParam(MyFile, 'Param', MyFile);
+
+  Service.TestProceudreMoreThenOneFileParam(MyFile, 'Param', MyFile);
+
+  MyFile.Free;
 end;
 
 procedure TRemoteServiceTest.WhenTheMethodHasMustGetTheAttributeFromTheInterface;
