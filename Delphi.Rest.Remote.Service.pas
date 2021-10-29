@@ -535,32 +535,32 @@ function TRestCommunication.SendRequestAsync(const Request: TRestRequest): Strin
 var
   A: Integer;
 
-  Options: TJSObject;
-
-  RequestHeaders: TJSHTMLHeaders;
+  Options: TJSFetchInit;
 
   Response: TJSResponse;
 
 begin
   FHeaders.Text := Request.Headers;
-  Options := TJSObject.New;
-  RequestHeaders := TJSHTMLHeaders.New;
+  Options := TJSFetchInit.New;
+  Options.Method := COMMAND_NAME[Request.Method];
 
-  for A := 0 to Pred(FHeaders.Count) do
-    RequestHeaders.Append(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
+  if FHeaders.Count > 0 then
+  begin
+    Options.Headers := TJSHTMLHeaders.New;
+
+    for A := 0 to Pred(FHeaders.Count) do
+      Options.Headers.Append(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
+  end;
 
   if not Request.Body.IsEmpty then
-    Options['body'] := Request.Body.AsJSValue;
-
-  Options['headers'] := RequestHeaders;
-  Options['method'] := COMMAND_NAME[Request.Method];
+    Options.Body := Request.Body.AsJSValue;
 
   Response := await(Window.Fetch(Request.URL, Options));
 
-  if Response.Status = 200 then
-    Result := await(Response.Text)
-  else
-    raise EHTTPStatusError.Create(Response.Status, await(Response.Text));
+  Result := await(Response.Text);
+
+  if Response.Status <> 200 then
+    raise EHTTPStatusError.Create(Response.Status, Result);
 end;
 {$ENDIF}
 
