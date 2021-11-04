@@ -7,6 +7,11 @@ uses System.Classes, System.SysUtils, System.Rtti, Web.HTTPApp, Delphi.Rest.Serv
 type
   EInvalidParameterType = class(Exception);
 
+  EServiceContainerNotLoaded = class(Exception)
+  public
+    constructor Create;
+  end;
+
   TOnGetServiceContainer = function: IServiceContainer of object;
 
   TRestServerService = class(TComponent, IGetWebAppServices, IWebAppServices, IWebExceptionHandler, IWebDispatcherAccess)
@@ -175,6 +180,9 @@ begin
   if not Assigned(FServiceContainer) and Assigned(FOnGetServiceContainer) then
     FServiceContainer := FOnGetServiceContainer;
 
+  if not Assigned(FServiceContainer) then
+    raise EServiceContainerNotLoaded.Create;
+
   Result := FServiceContainer;
 end;
 
@@ -253,4 +261,12 @@ begin
   Result := FResponse;
 end;
 
+{ EServiceContainerNotLoaded }
+
+constructor EServiceContainerNotLoaded.Create;
+begin
+  inherited Create('The service container not loaded, load the ServiceContainer property or OnServiceContainer event!');
+end;
+
 end.
+

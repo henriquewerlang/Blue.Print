@@ -134,6 +134,8 @@ type
     procedure WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContentIfTheContentIsTextPlain;
     [Test]
     procedure WhenTheContentIsEmptyMustReturnTheBadRequestStatus;
+    [Test]
+    procedure WhenTheServiceContainerIsNotLoadedMustRaiseAnError;
   end;
 
   TMyEnumerator = (Enum1, Enum2, Enum3, Enum4);
@@ -974,6 +976,23 @@ begin
   var Rest := CreateRestService(Request.Instance, Response);
 
   Assert.IsFalse(Rest.HandleRequest);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenTheServiceContainerIsNotLoadedMustRaiseAnError;
+begin
+  var Request := CreateRequestMock('/IService/ProcString', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, nil);
+
+  Assert.WillRaise(
+    procedure
+    begin
+      Rest.HandleRequest;
+    end, EServiceContainerNotLoaded);
 
   Request.Free;
 
