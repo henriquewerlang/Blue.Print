@@ -156,9 +156,9 @@ begin
 
   var ParamValue: String;
 
-  ParamLoaded := GetParamValue(Request.QueryFields, ParamValue) or CanGetContentFields and GetParamValue(Request.ContentFields, ParamValue) or GetParamValueFromContent(ParamValue);
+  ParamLoaded := (GetParamValue(Request.QueryFields, ParamValue) or CanGetContentFields and GetParamValue(Request.ContentFields, ParamValue) or GetParamValueFromContent(ParamValue)) and not ParamValue.IsEmpty;
 
-  if ParamLoaded and not ParamValue.IsEmpty then
+  if ParamLoaded then
     Result := Serializer.Deserialize(ParamValue, Param.ParamType.Handle);
 end;
 

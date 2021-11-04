@@ -132,6 +132,8 @@ type
     procedure WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContentIfTheContentIsAJSONValue;
     [Test]
     procedure WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContentIfTheContentIsTextPlain;
+    [Test]
+    procedure WhenTheContentIsEmptyMustReturnTheBadRequestStatus;
   end;
 
   TMyEnumerator = (Enum1, Enum2, Enum3, Enum4);
@@ -345,7 +347,7 @@ end;
 procedure TRestServerServiceTest.IfTheParamIsInTheQueryFieldsCantTryToLoadTheValueFromContent;
 begin
   var MyService: IService := TService.Create;
-  var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, 'Value="abc"', 'Value=');
+  var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, 'Value="abc"', 'Value=""');
   var Response := TWebResponseMock.Create(Request.Instance);
   var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(MyService));
 
@@ -563,6 +565,21 @@ begin
   Rest.HandleRequest;
 
   Assert.AreEqualMemory(Content, (Service.GetStream.Stream as TCustomMemoryStream).Memory, Length(Content));
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenTheContentIsEmptyMustReturnTheBadRequestStatus;
+begin
+  var Request := CreateRequestMock('/IService/ProcString', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(HTTP_STATUS_BAD_REQUEST, Response.StatusCode);
 
   Request.Free;
 
