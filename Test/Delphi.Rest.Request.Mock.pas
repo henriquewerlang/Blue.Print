@@ -5,11 +5,13 @@ interface
 uses System.Classes, System.SysUtils, Web.HTTPApp;
 
 type
+  TIntegerVariable = {$IF CompilerVersion >= 35.0}Int64{$ELSE}Integer{$ENDIF};
+
   TWebRequestMock = class(TWebRequest)
   public
     function GetDateVariable(Index: Integer): TDateTime; override;
     function GetFieldByName(const Name: String): String; override;
-    function GetIntegerVariable(Index: Integer): Integer; override;
+    function GetIntegerVariable(Index: Integer): TIntegerVariable; override;
     function GetRawContent: TBytes; override;
     function GetStringVariable(Index: Integer): String; override;
     function ReadClient(var Buffer; Count: Integer): Integer; override;
@@ -32,14 +34,14 @@ type
   protected
     function GetContent: String; override;
     function GetDateVariable(Index: Integer): TDateTime; override;
-    function GetIntegerVariable(Index: Integer): Integer; override;
+    function GetIntegerVariable(Index: Integer): TIntegerVariable; override;
     function GetLogMessage: String; override;
     function GetStatusCode: Integer; override;
     function GetStringVariable(Index: Integer): String; override;
 
     procedure SetContent(const Value: String); override;
     procedure SetDateVariable(Index: Integer; const Value: TDateTime); override;
-    procedure SetIntegerVariable(Index: Integer; Value: Integer); override;
+    procedure SetIntegerVariable(Index: Integer; Value: TIntegerVariable); override;
     procedure SetLogMessage(const Value: String); override;
     procedure SetStatusCode(Value: Integer); override;
     procedure SetStringVariable(Index: Integer; const Value: String); override;
@@ -72,7 +74,7 @@ begin
   Result := EmptyStr;
 end;
 
-function TWebRequestMock.GetIntegerVariable(Index: Integer): Integer;
+function TWebRequestMock.GetIntegerVariable(Index: Integer): TIntegerVariable;
 begin
   Result := 0;
 end;
@@ -134,7 +136,7 @@ begin
   Result := 0;
 end;
 
-function TWebResponseMock.GetIntegerVariable(Index: Integer): Integer;
+function TWebResponseMock.GetIntegerVariable(Index: Integer): TIntegerVariable;
 begin
   Result := FIntegerVariable[Index];
 end;
@@ -191,7 +193,7 @@ begin
 
 end;
 
-procedure TWebResponseMock.SetIntegerVariable(Index, Value: Integer);
+procedure TWebResponseMock.SetIntegerVariable(Index: Integer; Value: TIntegerVariable);
 begin
   FIntegerVariable[Index] := Value;
 end;
