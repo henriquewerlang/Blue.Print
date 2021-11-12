@@ -68,6 +68,15 @@ type
     constructor Create;
   end;
 
+  RemoteNameAttribute = class(TCustomAttribute)
+  private
+    FRemoteName: String;
+  public
+    constructor Create(const RemoteName: String);
+
+    property RemoteName: String read FRemoteName write FRemoteName;
+  end;
+
 implementation
 
 uses System.SysUtils;
@@ -183,31 +192,14 @@ begin
   inherited Create(ptURL);
 end;
 
-{ TRESTFile }
+{ RemoteNameAttribute }
 
-{$IFDEF DCC}
-//constructor TRESTFile.Create(const FileName: String);
-//begin
-//  FFileStream := TFileStream.Create(FileName, fmOpenRead + fmShareDenyWrite);
-//
-//  Create(FileName, FFileStream);
-//end;
-//
-//constructor TRESTFile.Create(const FileName: String; Stream: TStream);
-//begin
-//  inherited Create;
-//
-//  FFileName := FileName;
-//  FStream := Stream;
-//end;
-//
-//destructor TRESTFile.Destroy;
-//begin
-//  FFileStream.Free;
-//
-//  inherited;
-//end;
-{$ENDIF}
+constructor RemoteNameAttribute.Create(const RemoteName: String);
+begin
+  inherited Create;
+
+  FRemoteName := RemoteName;
+end;
 
 end.
 

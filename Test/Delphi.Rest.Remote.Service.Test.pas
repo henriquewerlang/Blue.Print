@@ -98,6 +98,10 @@ type
     procedure WhenTheProcedureHasMoreThenOneParamFileParamMustSendTheFilesInTheBodyOfTheRequest;
     [Test]
     procedure WhenSendARequestMoreThenOneTimeMustResetTheRequestBody;
+    [Test]
+    procedure WhenTheRemoteNameAttributeIsPresentMustChangeTheRemoteNameInTheRequest;
+    [Test]
+    procedure WhenTheProcedureAsNameAttributeMustLoadTheURLWithTheNameInTheAttribute;
   end;
 
   IServiceTest = interface(IInvokable)
@@ -160,6 +164,14 @@ type
     procedure TestPost(Param: Integer);
     [PUT]
     procedure TestPut(Param: Integer);
+  end;
+
+  [RemoteName('AnotherName')]
+  IServiceNamed = interface(IInvokable)
+    ['{2193F044-762D-4B81-BED2-50EEBD7D172F}']
+    procedure Proc;
+    [RemoteName('AnotherName')]
+    procedure WithName;
   end;
 
 implementation
@@ -301,6 +313,8 @@ begin
   RegisterLeak<IServiceTest>;
 
   RegisterLeak<IServiceParamsType>;
+
+  RegisterLeak<IServiceNamed>;
 end;
 
 procedure TRemoteServiceTest.TheFilledHeadersMustKeepTheValues;
@@ -649,6 +663,21 @@ begin
   MyFile.Free;
 end;
 
+procedure TRemoteServiceTest.WhenTheProcedureAsNameAttributeMustLoadTheURLWithTheNameInTheAttribute;
+begin
+  var Communication := CreateMockCommunication;
+  var Request := CreateRequest('/AnotherName/AnotherName');
+  var Service := CreateRemoteService<IServiceNamed>(Communication.Instance) as IServiceNamed;
+
+  Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
+
+  Service.WithName;
+
+  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Request.Free;
+end;
+
 procedure TRemoteServiceTest.WhenTheProcedureAsParamsWithFilesTheRequestParamSeparatorMustBeBuildCorrectly;
 begin
   var Communication := CreateMockCommunication;
@@ -890,6 +919,21 @@ begin
 
       Service.TestProcedureWithOneParam('abcd');
     end, Exception);
+
+  Request.Free;
+end;
+
+procedure TRemoteServiceTest.WhenTheRemoteNameAttributeIsPresentMustChangeTheRemoteNameInTheRequest;
+begin
+  var Communication := CreateMockCommunication;
+  var Request := CreateRequest('/AnotherName/Proc');
+  var Service := CreateRemoteService<IServiceNamed>(Communication.Instance) as IServiceNamed;
+
+  Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
+
+  Service.Proc;
+
+  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 
   Request.Free;
 end;

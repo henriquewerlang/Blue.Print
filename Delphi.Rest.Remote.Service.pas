@@ -63,6 +63,9 @@ type
     function GetHeader(const Index: String): String;
     function GetHeaders: String;
     function GetParamsInURL(const Method: TRttiMethod): Boolean;
+    function GetRemoteNameAttribute(RttiType: TRttiNamedObject; var Name: String): Boolean;
+    function GetRemoteRequestName(RttiType: TRttiNamedObject): String;
+    function GetRemoteRequestServiceName: String;
     function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>): String;
 
     procedure AddFormDataField(const Param: TRttiParameter; const ParamValue: String);
@@ -256,6 +259,34 @@ begin
     Result := FRequest.Method in [rmGet, rmDelete];
 end;
 
+function TRemoteService.GetRemoteNameAttribute(RttiType: TRttiNamedObject; var Name: String): Boolean;
+var
+  CustomAttribute: TCustomAttribute;
+
+begin
+  Name := EmptyStr;
+
+  for CustomAttribute in RttiType.GetAttributes do
+    if CustomAttribute is RemoteNameAttribute then
+      Name := RemoteNameAttribute(CustomAttribute).RemoteName;
+
+  Result := not Name.IsEmpty;
+
+  if not Result then
+    Name := RttiType.Name;
+end;
+
+function TRemoteService.GetRemoteRequestName(RttiType: TRttiNamedObject): String;
+begin
+  GetRemoteNameAttribute(RttiType, Result);
+end;
+
+function TRemoteService.GetRemoteRequestServiceName: String;
+begin
+  if not GetRemoteNameAttribute(RttiType, Result) then
+    Result := Result.Substring(1);
+end;
+
 procedure TRemoteService.LoadRequest(const Method: TRttiMethod; const Args: TArray<TValue>);
 begin
   FRequest.Free;
@@ -339,7 +370,7 @@ procedure TRemoteService.LoadRequestURL(const Method: TRttiMethod; const Args: T
 begin
   LoadRequestParams(Method, Args);
 
-  FRequest.URL := Format('%s/%s/%s', [FURL, FRttiType.Name.Substring(1), Method.Name]) + FRequest.URL;
+  FRequest.URL := Format('%s/%s/%s', [FURL, GetRemoteRequestServiceName, GetRemoteRequestName(Method)]) + FRequest.URL;
 end;
 
 procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
