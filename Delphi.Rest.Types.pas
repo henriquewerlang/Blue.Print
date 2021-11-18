@@ -2,7 +2,7 @@ unit Delphi.Rest.Types;
 
 interface
 
-uses System.Rtti, System.Classes, {$IFDEF PAS2JS}Web{$ELSE}Web.HTTPApp, System.Net.Mime{$ENDIF};
+uses System.Rtti, System.Classes, {$IFDEF PAS2JS}Web{$ELSE}Web.HTTPApp, System.Net.Mime, System.NetEncoding{$ENDIF};
 
 type
   TRESTMethod = (rmDelete, rmGet, rmPatch, rmPost, rmPut);
@@ -15,9 +15,9 @@ type
   private
     FMethod: TRESTMethod;
   public
-    constructor Create(Method: TRESTMethod);
+    constructor Create(const Method: TRESTMethod);
 
-    class function GetMethodType(Method: TRttiMethod; var MethodType: TRESTMethod): Boolean;
+    class function GetMethodType(const Method: TRttiMethod; var MethodType: TRESTMethod): Boolean;
 
     property Method: TRESTMethod read FMethod write FMethod;
   end;
@@ -51,9 +51,9 @@ type
   private
     FParamType: TRESTParamType;
   public
-    constructor Create(ParamType: TRESTParamType);
+    constructor Create(const ParamType: TRESTParamType);
 
-    class function GetParamsInURL(Method: TRttiMethod; var ParamType: TRESTParamType): Boolean;
+    class function GetParamsInURL(const Method: TRttiMethod; var ParamType: TRESTParamType): Boolean;
 
     property ParamType: TRESTParamType read FParamType write FParamType;
   end;
@@ -77,22 +77,58 @@ type
     property RemoteName: String read FRemoteName write FRemoteName;
   end;
 
+  TAuthentication = class(TCustomAttribute)
+  private
+    class function GetHeaderFromAttribute(const RttiType: TRttiObject; var AuthenticationName, AuthenticationValue: String): Boolean;
+  private
+    FName: String;
+  public
+    constructor Create(const Name: String);
+
+    class function LoadHeaders(const Method: TRttiMethod; var AuthenticationName, AuthenticationValue: String): Boolean;
+
+    function LoadHeaderValue: String; virtual;
+
+    property Name: String read FName;
+  end;
+
+  BasicAuthenticationAttribute = class(TAuthentication)
+  private
+    FPassword: String;
+    FUser: String;
+  public
+    constructor Create(const User, Password: String);
+
+    function LoadHeaderValue: String; override;
+  end;
+
 implementation
 
 uses System.SysUtils;
 
+function ConvertToBase64(const Value: String): String;
+begin
+  Result :=
+    {$IFDEF PAS2JS}
+    Window.btoa
+    {$ELSE}
+    TBase64Encoding.Base64String.Encode
+    {$ENDIF}
+      (Value);
+end;
+
 { TRESTMethodAttribute }
 
-constructor TRESTMethodAttribute.Create(Method: TRESTMethod);
+constructor TRESTMethodAttribute.Create(const Method: TRESTMethod);
 begin
   inherited Create;
 
   FMethod := Method;
 end;
 
-class function TRESTMethodAttribute.GetMethodType(Method: TRttiMethod; var MethodType: TRESTMethod): Boolean;
+class function TRESTMethodAttribute.GetMethodType(const Method: TRttiMethod; var MethodType: TRESTMethod): Boolean;
 
-  function GetTypeFromAttributes(RttiType: TRttiObject; var Value: TRESTMethod): Boolean;
+  function GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTMethod): Boolean;
   var
     Attribute: TCustomAttribute;
 
@@ -149,16 +185,16 @@ end;
 
 { TRESTParamAttribute }
 
-constructor TRESTParamAttribute.Create(ParamType: TRESTParamType);
+constructor TRESTParamAttribute.Create(const ParamType: TRESTParamType);
 begin
   inherited Create;
 
   FParamType := ParamType;
 end;
 
-class function TRESTParamAttribute.GetParamsInURL(Method: TRttiMethod; var ParamType: TRESTParamType): Boolean;
+class function TRESTParamAttribute.GetParamsInURL(const Method: TRttiMethod; var ParamType: TRESTParamType): Boolean;
 
-  function GetTypeFromAttributes(RttiType: TRttiObject; var Value: TRESTParamType): Boolean;
+  function GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTParamType): Boolean;
   var
     Attribute: TCustomAttribute;
 
@@ -199,6 +235,58 @@ begin
   inherited Create;
 
   FRemoteName := RemoteName;
+end;
+
+{ TAuthentication }
+
+constructor TAuthentication.Create(const Name: String);
+begin
+  inherited Create;
+
+  FName := Name;
+end;
+
+class function TAuthentication.GetHeaderFromAttribute(const RttiType: TRttiObject; var AuthenticationName, AuthenticationValue: String): Boolean;
+var
+  Attribute: TCustomAttribute;
+
+begin
+  AuthenticationValue := EmptyStr;
+  Result := False;
+
+  for Attribute in RttiType.GetAttributes do
+    if Attribute is TAuthentication then
+    begin
+      AuthenticationName := TAuthentication(Attribute).Name;
+      AuthenticationValue := TAuthentication(Attribute).LoadHeaderValue;
+
+      Exit(True);
+    end;
+end;
+
+class function TAuthentication.LoadHeaders(const Method: TRttiMethod; var AuthenticationName, AuthenticationValue: String): Boolean;
+begin
+  Result := GetHeaderFromAttribute(Method, AuthenticationName, AuthenticationValue) or GetHeaderFromAttribute(Method.Parent, AuthenticationName, AuthenticationValue);
+end;
+
+function TAuthentication.LoadHeaderValue: String;
+begin
+  Result := EmptyStr;
+end;
+
+{ BasicAuthenticationAttribute }
+
+constructor BasicAuthenticationAttribute.Create(const User, Password: String);
+begin
+  inherited Create('Basic');
+
+  FPassword := Password;
+  FUser := User;
+end;
+
+function BasicAuthenticationAttribute.LoadHeaderValue: String;
+begin
+  Result := ConvertToBase64(Format('%s:%s', [FUser, FPassword]));
 end;
 
 end.

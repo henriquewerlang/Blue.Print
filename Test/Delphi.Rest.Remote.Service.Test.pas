@@ -102,6 +102,16 @@ type
     procedure WhenTheRemoteNameAttributeIsPresentMustChangeTheRemoteNameInTheRequest;
     [Test]
     procedure WhenTheProcedureAsNameAttributeMustLoadTheURLWithTheNameInTheAttribute;
+    [Test]
+    procedure WhenTheServiceHasABasicAuthenticationAttributeMustSendTheAuthenticationHeaderInTheRequest;
+    [Test]
+    procedure WhenTheHeaderIsLoadedTheAuthenticationMustBeAppendedToTheHeaders;
+  end;
+
+  [BasicAuthentication('User', 'Password')]
+  IServiceAutenticationTest = interface(IInvokable)
+    ['{C99C50FD-92DF-42FB-A928-5C7BF1566C6F}']
+    procedure Proc;
   end;
 
   IServiceTest = interface(IInvokable)
@@ -388,7 +398,7 @@ begin
         '123'#13#10 +
         '--%0:s--'#13#10;
 
-      var Request := Params[0].AsType<TRestRequest>;
+      var Request := Params[1].AsType<TRestRequest>;
 
       var FormData := Request.Body.AsType<TRESTFormData>;
 
@@ -532,7 +542,7 @@ begin
         'This is my file!'#13#10 +
         '--%0:s--'#13#10;
 
-      var Request := Params[0].AsType<TRestRequest>;
+      var Request := Params[1].AsType<TRestRequest>;
 
       var FormData := Request.Body.AsType<TRESTFormData>;
 
@@ -544,6 +554,24 @@ begin
   Service.TestProceudreMoreThenOneFileParam(MyFile, 'Param', MyFile);
 
   MyFile.Free;
+end;
+
+procedure TRemoteServiceTest.WhenTheHeaderIsLoadedTheAuthenticationMustBeAppendedToTheHeaders;
+begin
+  var Communication := CreateMockCommunication;
+  var Service := CreateRemoteService<IServiceAutenticationTest>(Communication.Instance);
+
+  Service.Header['My Header'] := 'abc';
+
+  Communication.Setup.WillExecute(
+    procedure(Params: TArray<TValue>)
+    begin
+      var Request := Params[1].AsType<TRestRequest>;
+
+      Assert.AreEqual('My Header=abc'#13#10'Authorization=Basic VXNlcjpQYXNzd29yZA=='#13#10, Request.Headers);
+    end).When.SendRequest(It.IsAny<TRestRequest>);
+
+  (Service as IServiceAutenticationTest).Proc;
 end;
 
 procedure TRemoteServiceTest.WhenTheMethodHasMustGetTheAttributeFromTheInterface;
@@ -612,7 +640,7 @@ begin
         'This is my file!'#13#10 +
         '--%0:s--'#13#10;
 
-      var Request := Params[0].AsType<TRestRequest>;
+      var Request := Params[1].AsType<TRestRequest>;
 
       var FormData := Request.Body.AsType<TRESTFormData>;
 
@@ -651,7 +679,7 @@ begin
         'This is my file!'#13#10 +
         '--%0:s--'#13#10;
 
-      var Request := Params[0].AsType<TRestRequest>;
+      var Request := Params[1].AsType<TRestRequest>;
 
       var FormData := Request.Body.AsType<TRESTFormData>;
 
@@ -687,7 +715,7 @@ begin
   Communication.Setup.WillExecute(
     procedure(Params: TArray<TValue>)
     begin
-      Request := Params[0].AsType<TRestRequest>;
+      Request := Params[1].AsType<TRestRequest>;
 
       Assert.AreEqual('/ServiceTest/TestProcedureWithFileAndParams?MayParam=12345&AnotherParam="My File"', Request.URL);
     end).When.SendRequest(It.IsAny<TRestRequest>);
@@ -722,7 +750,7 @@ begin
   Communication.Setup.WillExecute(
     procedure(Params: TArray<TValue>)
     begin
-      Request := Params[0].AsType<TRestRequest>;
+      Request := Params[1].AsType<TRestRequest>;
 
       Assert.AreEqual<TObject>(MyFile, Request.Body.AsObject);
     end).When.SendRequest(It.IsAny<TRestRequest>);
@@ -740,7 +768,7 @@ begin
   Communication.Setup.WillExecute(
     procedure(Params: TArray<TValue>)
     begin
-      var Request := Params[0].AsType<TRestRequest>;
+      var Request := Params[1].AsType<TRestRequest>;
 
       Assert.IsTrue(Request.Body.IsType<TRESTFormData>);
     end).When.SendRequest(It.IsAny<TRestRequest>);
@@ -770,7 +798,7 @@ begin
         'This is my file!'#13#10 +
         '--%0:s--'#13#10;
 
-      var Request := Params[0].AsType<TRestRequest>;
+      var Request := Params[1].AsType<TRestRequest>;
 
       var FormData := Request.Body.AsType<TRESTFormData>;
 
@@ -839,7 +867,7 @@ begin
         'This is my file!'#13#10 +
         '--%0:s--'#13#10;
 
-      var Request := Params[0].AsType<TRestRequest>;
+      var Request := Params[1].AsType<TRestRequest>;
 
       var FormData := Request.Body.AsType<TRESTFormData>;
 
@@ -861,7 +889,7 @@ begin
   Communication.Setup.WillExecute(
     procedure(Params: TArray<TValue>)
     begin
-      Request := Params[0].AsType<TRestRequest>;
+      Request := Params[1].AsType<TRestRequest>;
 
       Assert.AreEqual<TObject>(MyFile, Request.Body.AsObject);
     end).When.SendRequest(It.IsAny<TRestRequest>);
@@ -951,6 +979,22 @@ begin
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 
   Request.Free;
+end;
+
+procedure TRemoteServiceTest.WhenTheServiceHasABasicAuthenticationAttributeMustSendTheAuthenticationHeaderInTheRequest;
+begin
+  var Communication := CreateMockCommunication;
+  var Service := CreateRemoteService<IServiceAutenticationTest>(Communication.Instance) as IServiceAutenticationTest;
+
+  Communication.Setup.WillExecute(
+    procedure(Params: TArray<TValue>)
+    begin
+      var Request := Params[1].AsType<TRestRequest>;
+
+      Assert.AreEqual('Authorization=Basic VXNlcjpQYXNzd29yZA=='#13#10, Request.Headers);
+    end).When.SendRequest(It.IsAny<TRestRequest>);
+
+  Service.Proc;
 end;
 
 function TRemoteServiceTest.CreateRequest(Method: TRESTMethod; const URL: String; Body: TValue): TRestRequest;

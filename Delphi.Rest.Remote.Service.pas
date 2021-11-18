@@ -72,6 +72,8 @@ type
     procedure AddFormDataFile(const Param: TRttiParameter; const AFile: TRESTFile);
     procedure AddParamToTheBody(const Param: TRttiParameter; const ParamValue: TValue; const ForceLoadFormData: Boolean);
     procedure LoadRequest(const Method: TRttiMethod; const Args: TArray<TValue>);
+    procedure LoadRequestAuthentication(const Method: TRttiMethod);
+    procedure LoadRequestHeaders;
     procedure LoadRequestParams(const Method: TRttiMethod; const Args: TArray<TValue>);
     procedure LoadRequestURL(const Method: TRttiMethod; const Args: TArray<TValue>);
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
@@ -298,10 +300,29 @@ begin
 {$ENDIF}
 
   FRequest := TRestRequest.Create;
-  FRequest.Headers := Headers;
   FRequest.Method := GetComandFromMethod(Method);
 
+  LoadRequestAuthentication(Method);
+
   LoadRequestURL(Method, Args);
+
+  LoadRequestHeaders;
+end;
+
+procedure TRemoteService.LoadRequestAuthentication(const Method: TRttiMethod);
+var
+  AuthenticationHeader, AuthenticationName: String;
+
+begin
+  AuthenticationHeader := EmptyStr;
+
+  if TAuthentication.LoadHeaders(Method, AuthenticationName, AuthenticationHeader) then
+    Header['Authorization'] := Format('%s %s', [AuthenticationName, AuthenticationHeader]);
+end;
+
+procedure TRemoteService.LoadRequestHeaders;
+begin
+  FRequest.Headers := Headers;
 end;
 
 procedure TRemoteService.LoadRequestParams(const Method: TRttiMethod; const Args: TArray<TValue>);
