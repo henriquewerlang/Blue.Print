@@ -256,7 +256,7 @@ var
 
 begin
   if TRESTParamAttribute.GetParamsInURL(Method, ParamType) then
-    Result := ParamType = ptURL
+    Result := ParamType = ptQuery
   else
     Result := FRequest.Method in [rmGet, rmDelete];
 end;

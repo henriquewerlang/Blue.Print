@@ -6,7 +6,7 @@ uses System.Rtti, System.Classes, {$IFDEF PAS2JS}Web{$ELSE}Web.HTTPApp, System.N
 
 type
   TRESTMethod = (rmDelete, rmGet, rmPatch, rmPost, rmPut);
-  TRESTParamType = (ptBody, ptURL);
+  TRESTParamType = (ptBody, ptQuery);
 
   TRESTFile = {$IFDEF PAS2JS}TJSHTMLFile{$ELSE}TAbstractWebRequestFile{$ENDIF};
   TRESTFormData = {$IFDEF PAS2JS}TJSFormData{$ELSE}TMultipartFormData{$ENDIF};
@@ -63,7 +63,7 @@ type
     constructor Create;
   end;
 
-  ParamInURL = class(TRESTParamAttribute)
+  ParamInQuery = class(TRESTParamAttribute)
   public
     constructor Create;
   end;
@@ -221,11 +221,11 @@ begin
   inherited Create(ptBody);
 end;
 
-{ ParamInURL }
+{ ParamInQuery }
 
-constructor ParamInURL.Create;
+constructor ParamInQuery.Create;
 begin
-  inherited Create(ptURL);
+  inherited Create(ptQuery);
 end;
 
 { RemoteNameAttribute }

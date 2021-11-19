@@ -15,7 +15,7 @@ type
     [Test]
     procedure WhenTheMethodHasTheAttributeParamInBodyMustReturnParamInBodyType;
     [Test]
-    procedure WhenTheMethodHasTheAttributeParamInURLMustReturnParamInURLType;
+    procedure WhenTheMethodHasTheAttributeParamInQueryMustReturnParamInQueryType;
     [Test]
     procedure WhenTheProcedureHasntAttributeMustReturnTrueIfExistsAnAttributeInTheInterface;
     [Test]
@@ -70,8 +70,8 @@ type
     ['{CF2BB234-0D53-49FB-979D-650DCEF196F2}']
     [ParamInBody]
     procedure ParamInBody;
-    [ParamInURL]
-    procedure ParamInURL;
+    [ParamInQuery]
+    procedure ParamInQuery;
     procedure ProcedureWithOutAttribute;
   end;
 
@@ -139,14 +139,14 @@ begin
   Assert.AreEqual(ptBody, ParamType);
 end;
 
-procedure TRESTParamAttributeTest.WhenTheMethodHasTheAttributeParamInURLMustReturnParamInURLType;
+procedure TRESTParamAttributeTest.WhenTheMethodHasTheAttributeParamInQueryMustReturnParamInQueryType;
 begin
-  var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ParamInURL');
+  var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ParamInQuery');
   var ParamType: TRESTParamType;
 
   TRESTParamAttribute.GetParamsInURL(Method, ParamType);
 
-  Assert.AreEqual(ptURL, ParamType);
+  Assert.AreEqual(ptQuery, ParamType);
 end;
 
 procedure TRESTParamAttributeTest.WhenTheProcedureHasntAttributeMustReturnTheParamTypeFromTheInterface;

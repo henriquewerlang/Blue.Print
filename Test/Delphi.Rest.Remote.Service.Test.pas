@@ -67,13 +67,13 @@ type
     [Test]
     procedure WhenTheProcedureHasTheParamInBodyAttributeMustSendTheParamsInTheBodyOfTheRequest;
     [Test]
-    procedure WhenTheProcedureHasTheParamInURLAttributeMustSendTheParamsInTheURLOfTheRequest;
+    procedure WhenTheProcedureHasTheParamInQueryAttributeMustSendTheParamsInTheURLOfTheRequest;
     [TestCase('DELETE', 'rmDelete,True')]
     [TestCase('GET', 'rmGet,True')]
     [TestCase('PATCH', 'rmPatch,False')]
     [TestCase('POST', 'rmPost,False')]
     [TestCase('PUT', 'rmPut,False')]
-    procedure IfTheProcedureHasntAnAttributeAboutParamMustSendTheParamByTheTypeOfCommand(Method: TRESTMethod; ParamInURL: Boolean);
+    procedure IfTheProcedureHasntAnAttributeAboutParamMustSendTheParamByTheTypeOfCommand(Method: TRESTMethod; ParamInQuery: Boolean);
     [Test]
     procedure WhenTheMethodHasNoAttributesOfParamDefinedMustGetTheAttributeFromInterface;
     [Test]
@@ -157,8 +157,8 @@ type
     ['{CF2BB234-0D53-49FB-979D-650DCEF196F2}']
     [ParamInBody]
     procedure ParamInBody(Param: Integer);
-    [ParamInURL]
-    procedure ParamInURL(Param: Integer);
+    [ParamInQuery]
+    procedure ParamInQuery(Param: Integer);
     procedure ProcedureWithOutAttribute(Param: Integer);
   end;
 
@@ -231,7 +231,7 @@ begin
     Result.Body := TValue.Empty;
 end;
 
-procedure TRemoteServiceTest.IfTheProcedureHasntAnAttributeAboutParamMustSendTheParamByTheTypeOfCommand(Method: TRESTMethod; ParamInURL: Boolean);
+procedure TRemoteServiceTest.IfTheProcedureHasntAnAttributeAboutParamMustSendTheParamByTheTypeOfCommand(Method: TRESTMethod; ParamInQuery: Boolean);
 const
   COMMAND_NAME: array[TRESTMethod] of String = ('Delete', 'Get', 'Patch', 'Post', 'Put');
 
@@ -244,7 +244,7 @@ begin
   var RttiType := Context.GetType(TypeInfo(IServiceParamsType));
   var Service := CreateRemoteService<IServiceParamsType>(Communication.Instance) as IServiceParamsType;
 
-  if ParamInURL then
+  if ParamInQuery then
     Request.URL := Request.URL + '?Param=' + ParamValue
   else
     Request.Body := ParamValue;
@@ -385,7 +385,7 @@ begin
   var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
 
   Communication.Setup.WillExecute(
-    procedure(Params: TArray<TValue>)
+    procedure(const Params: TArray<TValue>)
     begin
       var FormValue :=
         '--%0:s'#13#10 +
@@ -527,7 +527,7 @@ begin
   var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
 
   Communication.Setup.WillExecute(
-    procedure(Params: TArray<TValue>)
+    procedure (const Params: TArray<TValue>)
     begin
       var FormValue :=
         '--%0:s'#13#10 +
@@ -564,7 +564,7 @@ begin
   Service.Header['My Header'] := 'abc';
 
   Communication.Setup.WillExecute(
-    procedure(Params: TArray<TValue>)
+    procedure (const Params: TArray<TValue>)
     begin
       var Request := Params[1].AsType<TRestRequest>;
 
@@ -626,7 +626,7 @@ begin
   var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
 
   Communication.Setup.WillExecute(
-    procedure(Params: TArray<TValue>)
+    procedure (const Params: TArray<TValue>)
     begin
       var FormValue :=
         '--%0:s'#13#10 +
@@ -659,7 +659,7 @@ begin
   var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
 
   Communication.Setup.WillExecute(
-    procedure(Params: TArray<TValue>)
+    procedure (const Params: TArray<TValue>)
     begin
       var FormValue :=
         '--%0:s'#13#10 +
@@ -713,7 +713,7 @@ begin
   var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
 
   Communication.Setup.WillExecute(
-    procedure(Params: TArray<TValue>)
+    procedure (const Params: TArray<TValue>)
     begin
       Request := Params[1].AsType<TRestRequest>;
 
@@ -748,7 +748,7 @@ begin
   var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
 
   Communication.Setup.WillExecute(
-    procedure(Params: TArray<TValue>)
+    procedure (const Params: TArray<TValue>)
     begin
       Request := Params[1].AsType<TRestRequest>;
 
@@ -766,7 +766,7 @@ begin
   var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
 
   Communication.Setup.WillExecute(
-    procedure(Params: TArray<TValue>)
+    procedure (const Params: TArray<TValue>)
     begin
       var Request := Params[1].AsType<TRestRequest>;
 
@@ -783,7 +783,7 @@ begin
   var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
 
   Communication.Setup.WillExecute(
-    procedure(Params: TArray<TValue>)
+    procedure (const Params: TArray<TValue>)
     begin
       var FormValue :=
         '--%0:s'#13#10 +
@@ -825,15 +825,15 @@ begin
   Request.Free;
 end;
 
-procedure TRemoteServiceTest.WhenTheProcedureHasTheParamInURLAttributeMustSendTheParamsInTheURLOfTheRequest;
+procedure TRemoteServiceTest.WhenTheProcedureHasTheParamInQueryAttributeMustSendTheParamsInTheURLOfTheRequest;
 begin
   var Communication := CreateMockCommunication;
-  var Request := CreateRequest(rmPost, '/ServiceParams/ParamInURL?Param=1234');
+  var Request := CreateRequest(rmPost, '/ServiceParams/ParamInQuery?Param=1234');
   var Service := CreateRemoteService<IServiceParams>(Communication.Instance) as IServiceParams;
 
   Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
 
-  Service.ParamInURL(1234);
+  Service.ParamInQuery(1234);
 
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 
@@ -847,7 +847,7 @@ begin
   var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
 
   Communication.Setup.WillExecute(
-    procedure(Params: TArray<TValue>)
+    procedure (const Params: TArray<TValue>)
     begin
       var FormValue :=
         '--%0:s'#13#10 +
@@ -887,7 +887,7 @@ begin
   var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
 
   Communication.Setup.WillExecute(
-    procedure(Params: TArray<TValue>)
+    procedure (const Params: TArray<TValue>)
     begin
       Request := Params[1].AsType<TRestRequest>;
 
@@ -987,7 +987,7 @@ begin
   var Service := CreateRemoteService<IServiceAutenticationTest>(Communication.Instance) as IServiceAutenticationTest;
 
   Communication.Setup.WillExecute(
-    procedure(Params: TArray<TValue>)
+    procedure (const Params: TArray<TValue>)
     begin
       var Request := Params[1].AsType<TRestRequest>;
 
