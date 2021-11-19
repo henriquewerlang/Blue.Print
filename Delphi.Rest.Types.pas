@@ -121,7 +121,7 @@ begin
     {$IFDEF PAS2JS}
     Window.btoa
     {$ELSE}
-    TBase64Encoding.Base64String.Encode
+    TBase64Encoding.Base64.Encode
     {$ENDIF}
       (Value);
 end;
