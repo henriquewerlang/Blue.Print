@@ -12,7 +12,7 @@ type
     constructor Create;
   end;
 
-  TOnGetServiceContainer = function: IServiceContainer of object;
+  TOnGetServiceContainer = TFunc<IServiceContainer>;
 
   TRestServerService = class(TComponent, IGetWebAppServices, IWebAppServices, IWebExceptionHandler, IWebDispatcherAccess)
   private
