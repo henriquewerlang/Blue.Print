@@ -20,6 +20,8 @@ type
     procedure WhenTheProcedureHasntAttributeMustReturnTrueIfExistsAnAttributeInTheInterface;
     [Test]
     procedure WhenTheProcedureHasntAttributeMustReturnTheParamTypeFromTheInterface;
+    [Test]
+    procedure WhenTheMethodHasTheAttributeParamInPathMustReturnParamInPathType;
   end;
 
   [TestFixture]
@@ -72,6 +74,8 @@ type
     procedure ParamInBody;
     [ParamInQuery]
     procedure ParamInQuery;
+    [ParamInPath]
+    procedure ParamInPath;
     procedure ProcedureWithOutAttribute;
   end;
 
@@ -116,7 +120,7 @@ begin
   var Method := TRttiContext.Create.GetType(TypeInfo(IContractWithOutAttributes)).GetMethod('Proc');
   var ParamType: TRESTParamType;
 
-  Assert.IsFalse(TRESTParamAttribute.GetParamsInURL(Method, ParamType));
+  Assert.IsFalse(TRESTParamAttribute.GetParamAtrributeType(Method, ParamType));
 end;
 
 procedure TRESTParamAttributeTest.SetupFixture;
@@ -134,9 +138,19 @@ begin
   var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ParamInBody');
   var ParamType: TRESTParamType;
 
-  TRESTParamAttribute.GetParamsInURL(Method, ParamType);
+  TRESTParamAttribute.GetParamAtrributeType(Method, ParamType);
 
   Assert.AreEqual(ptBody, ParamType);
+end;
+
+procedure TRESTParamAttributeTest.WhenTheMethodHasTheAttributeParamInPathMustReturnParamInPathType;
+begin
+  var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ParamInPath');
+  var ParamType: TRESTParamType;
+
+  TRESTParamAttribute.GetParamAtrributeType(Method, ParamType);
+
+  Assert.AreEqual(ptPath, ParamType);
 end;
 
 procedure TRESTParamAttributeTest.WhenTheMethodHasTheAttributeParamInQueryMustReturnParamInQueryType;
@@ -144,7 +158,7 @@ begin
   var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ParamInQuery');
   var ParamType: TRESTParamType;
 
-  TRESTParamAttribute.GetParamsInURL(Method, ParamType);
+  TRESTParamAttribute.GetParamAtrributeType(Method, ParamType);
 
   Assert.AreEqual(ptQuery, ParamType);
 end;
@@ -154,7 +168,7 @@ begin
   var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ProcedureWithOutAttribute');
   var ParamType: TRESTParamType;
 
-  TRESTParamAttribute.GetParamsInURL(Method, ParamType);
+  TRESTParamAttribute.GetParamAtrributeType(Method, ParamType);
 
   Assert.AreEqual(ptBody, ParamType);
 end;
@@ -164,7 +178,7 @@ begin
   var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ProcedureWithOutAttribute');
   var ParamType: TRESTParamType;
 
-  Assert.IsTrue(TRESTParamAttribute.GetParamsInURL(Method, ParamType));
+  Assert.IsTrue(TRESTParamAttribute.GetParamAtrributeType(Method, ParamType));
 end;
 
 { TRESTMethodAttributeTest }

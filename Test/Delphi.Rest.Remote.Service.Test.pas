@@ -68,6 +68,8 @@ type
     procedure WhenTheProcedureHasTheParamInBodyAttributeMustSendTheParamsInTheBodyOfTheRequest;
     [Test]
     procedure WhenTheProcedureHasTheParamInQueryAttributeMustSendTheParamsInTheURLOfTheRequest;
+    [Test]
+    procedure WhenTheProcedureHasTheParamInPathAttributeMustSendTheParamsInTheURLPathOfTheRequest;
     [TestCase('DELETE', 'rmDelete,True')]
     [TestCase('GET', 'rmGet,True')]
     [TestCase('PATCH', 'rmPatch,False')]
@@ -159,6 +161,8 @@ type
     procedure ParamInBody(Param: Integer);
     [ParamInQuery]
     procedure ParamInQuery(Param: Integer);
+    [ParamInPath]
+    procedure ParamInPath(Param1, Param2: Integer);
     procedure ProcedureWithOutAttribute(Param: Integer);
   end;
 
@@ -819,6 +823,21 @@ begin
   Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
 
   Service.ParamInBody(1234);
+
+  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Request.Free;
+end;
+
+procedure TRemoteServiceTest.WhenTheProcedureHasTheParamInPathAttributeMustSendTheParamsInTheURLPathOfTheRequest;
+begin
+  var Communication := CreateMockCommunication;
+  var Request := CreateRequest(rmPost, '/ServiceParams/ParamInPath/123/456');
+  var Service := CreateRemoteService<IServiceParams>(Communication.Instance) as IServiceParams;
+
+  Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
+
+  Service.ParamInPath(123, 456);
 
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 

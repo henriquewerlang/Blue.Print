@@ -6,7 +6,7 @@ uses System.Rtti, System.Classes, {$IFDEF PAS2JS}Web{$ELSE}Web.HTTPApp, System.N
 
 type
   TRESTMethod = (rmDelete, rmGet, rmPatch, rmPost, rmPut);
-  TRESTParamType = (ptBody, ptQuery);
+  TRESTParamType = (ptBody, ptQuery, ptPath);
 
   TRESTFile = {$IFDEF PAS2JS}TJSHTMLFile{$ELSE}TAbstractWebRequestFile{$ENDIF};
   TRESTFormData = {$IFDEF PAS2JS}TJSFormData{$ELSE}TMultipartFormData{$ENDIF};
@@ -14,6 +14,8 @@ type
   TRESTMethodAttribute = class(TCustomAttribute)
   private
     FMethod: TRESTMethod;
+
+    class function GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTMethod): Boolean;
   public
     constructor Create(const Method: TRESTMethod);
 
@@ -50,10 +52,12 @@ type
   TRESTParamAttribute = class(TCustomAttribute)
   private
     FParamType: TRESTParamType;
+
+    class function GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTParamType): Boolean;
   public
     constructor Create(const ParamType: TRESTParamType);
 
-    class function GetParamsInURL(const Method: TRttiMethod; var ParamType: TRESTParamType): Boolean;
+    class function GetParamAtrributeType(const Method: TRttiMethod; var ParamType: TRESTParamType): Boolean;
 
     property ParamType: TRESTParamType read FParamType write FParamType;
   end;
@@ -64,6 +68,11 @@ type
   end;
 
   ParamInQuery = class(TRESTParamAttribute)
+  public
+    constructor Create;
+  end;
+
+  ParamInPath = class(TRESTParamAttribute)
   public
     constructor Create;
   end;
@@ -127,25 +136,24 @@ begin
 end;
 
 class function TRESTMethodAttribute.GetMethodType(const Method: TRttiMethod; var MethodType: TRESTMethod): Boolean;
-
-  function GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTMethod): Boolean;
-  var
-    Attribute: TCustomAttribute;
-
-  begin
-    Result := False;
-
-    for Attribute in RttiType.GetAttributes do
-      if Attribute is TRESTMethodAttribute then
-      begin
-        Value := TRESTMethodAttribute(Attribute).Method;
-
-        Exit(True);
-      end;
-  end;
-
 begin
   Result := GetTypeFromAttributes(Method, MethodType) or GetTypeFromAttributes(Method.Parent, MethodType);
+end;
+
+class function TRESTMethodAttribute.GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTMethod): Boolean;
+var
+  Attribute: TCustomAttribute;
+
+begin
+  Result := False;
+
+  for Attribute in RttiType.GetAttributes do
+    if Attribute is TRESTMethodAttribute then
+    begin
+      Value := TRESTMethodAttribute(Attribute).Method;
+
+      Exit(True);
+    end;
 end;
 
 { POSTAttribute }
@@ -192,26 +200,25 @@ begin
   FParamType := ParamType;
 end;
 
-class function TRESTParamAttribute.GetParamsInURL(const Method: TRttiMethod; var ParamType: TRESTParamType): Boolean;
-
-  function GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTParamType): Boolean;
-  var
-    Attribute: TCustomAttribute;
-
-  begin
-    Result := False;
-
-    for Attribute in RttiType.GetAttributes do
-      if Attribute is TRESTParamAttribute then
-      begin
-        Value := TRESTParamAttribute(Attribute).ParamType;
-
-        Exit(True);
-      end;
-  end;
-
+class function TRESTParamAttribute.GetParamAtrributeType(const Method: TRttiMethod; var ParamType: TRESTParamType): Boolean;
 begin
   Result := GetTypeFromAttributes(Method, ParamType) or GetTypeFromAttributes(Method.Parent, ParamType);
+end;
+
+class function TRESTParamAttribute.GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTParamType): Boolean;
+var
+  Attribute: TCustomAttribute;
+
+begin
+  Result := False;
+
+  for Attribute in RttiType.GetAttributes do
+    if Attribute is TRESTParamAttribute then
+    begin
+      Value := TRESTParamAttribute(Attribute).ParamType;
+
+      Exit(True);
+    end;
 end;
 
 { ParamInBody }
@@ -226,6 +233,13 @@ end;
 constructor ParamInQuery.Create;
 begin
   inherited Create(ptQuery);
+end;
+
+{ ParamInPath }
+
+constructor ParamInPath.Create;
+begin
+  inherited Create(ptPath);
 end;
 
 { RemoteNameAttribute }
