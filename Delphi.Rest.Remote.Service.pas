@@ -57,12 +57,13 @@ type
     FHeaders: TStringList;
     FFormData: TRESTFormData;
 
+    function CheckForceFormData(Method: TRttiMethod): Boolean;
     function Deserialize(const JSON: String; RttiType: TRttiType): TValue;
     function GetComandFromMethod(const Method: TRttiMethod): TRESTMethod;
     function GetFormData: TRESTFormData;
     function GetHeader(const Index: String): String;
     function GetHeaders: String;
-    function GetParamsType(const Method: TRttiMethod): TRESTParamType;
+    function GetParameterType(const Parameter: TRttiParameter): TRESTParamType;
     function GetRemoteNameAttribute(RttiType: TRttiNamedObject; var Name: String): Boolean;
     function GetRemoteRequestName(RttiType: TRttiNamedObject): String;
     function GetRemoteRequestServiceName: String;
@@ -173,7 +174,8 @@ begin
 {$IFDEF PAS2JS}
   FormData.Append(Param.Name, AFile);
 {$ELSE}
-  FormData.AddStream(Param.Name, AFile.Stream, AFile.FileName);
+  if Assigned(AFile) then
+    FormData.AddStream(Param.Name, AFile.Stream, AFile.FileName);
 {$ENDIF}
 end;
 
@@ -194,6 +196,22 @@ begin
     AddFormDataField(Param, Serializer.Serialize(ParamValue))
   else
     FRequest.Body := TValue.From(Serializer.Serialize(ParamValue));
+end;
+
+function TRemoteService.CheckForceFormData(Method: TRttiMethod): Boolean;
+var
+  Parameter: TRttiParameter;
+
+  BodyParamCount: Integer;
+
+begin
+  BodyParamCount := 0;
+
+  for Parameter in Method.GetParameters do
+    if GetParameterType(Parameter) = ptBody then
+      Inc(BodyParamCount);
+
+  Result := BodyParamCount > 1;
 end;
 
 constructor TRemoteService.Create(TypeInfo: PTypeInfo);
@@ -250,13 +268,13 @@ begin
   Result := FHeaders.Text;
 end;
 
-function TRemoteService.GetParamsType(const Method: TRttiMethod): TRESTParamType;
+function TRemoteService.GetParameterType(const Parameter: TRttiParameter): TRESTParamType;
 begin
-  if not TRESTParamAttribute.GetParamAtrributeType(Method, Result) then
-    if FRequest.Method in [rmGet, rmDelete] then
-      Result := ptQuery
+  if not TRESTParamAttribute.GetParamAtrributeType(Parameter, Result) then
+    if (FRequest.Method in [rmPatch, rmPost, rmPut]) or (Parameter.ParamType.Handle = TypeInfo(TRESTFile)) or (Parameter.ParamType.Handle = TypeInfo(TArray<TRESTFile>)) then
+      Result := ptBody
     else
-      Result := ptBody;
+      Result := ptQuery;
 end;
 
 function TRemoteService.GetRemoteNameAttribute(RttiType: TRttiNamedObject; var Name: String): Boolean;
@@ -325,74 +343,53 @@ end;
 
 procedure TRemoteService.LoadRequestParams(const Method: TRttiMethod; const Args: TArray<TValue>);
 var
+  A: Integer;
+
   Params: TArray<TRttiParameter>;
 
   ParamType: TRESTParamType;
-
-  function ForceFormDataInParams: Boolean;
-  var
-    ParamValue: TValue;
-
-    FileInParam: Boolean;
-
-  begin
-    FileInParam := False;
-    Result := (ParamType = ptBody) and (Length(Params) > 1);
-
-    if not Result then
-      for ParamValue in Args do
-      begin
-        Result := Result or ParamValue.IsType<TRESTFile>(False) and FileInParam;
-
-        FileInParam := FileInParam or ParamValue.IsType<TRESTFile>(False);
-      end;
-  end;
-
-var
-  A: Integer;
 
   ParamValue: TValue;
 
   ForceFormData: Boolean;
 
-  ParamsValues: TStringList;
+  PathValues, QueryValues: TStringList;
 
 begin
+  ForceFormData := CheckForceFormData(Method);
   Params := Method.GetParameters;
-  ParamsValues := TStringList.Create;
-  ParamsValues.QuoteChar := #0;
-  ParamType := GetParamsType(Method);
-
-  ForceFormData := ForceFormDataInParams;
+  PathValues := TStringList.Create;
+  PathValues.Delimiter := '/';
+  PathValues.QuoteChar := #0;
+  QueryValues := TStringList.Create;
+  QueryValues.Delimiter := '&';
+  QueryValues.QuoteChar := #0;
 
   for A := Low(Params) to High(Params) do
   begin
+    ParamType := GetParameterType(Params[A]);
     ParamValue := Args[COMPILER_OFFSET + A];
 
-    if (ParamType = ptBody) or ParamValue.IsType<TRESTFile>(False) or ParamValue.IsType<TArray<TRESTFile>>(False) then
+    if ParamType = ptBody then
       AddParamToTheBody(Params[A], ParamValue, ForceFormData)
     else if ParamType = ptQuery then
-      ParamsValues.AddPair(Params[A].Name, Serializer.Serialize(ParamValue))
+      QueryValues.AddPair(Params[A].Name, Serializer.Serialize(ParamValue))
     else
-      ParamsValues.Add(Serializer.Serialize(ParamValue));
+      PathValues.Add(ParamValue.ToString);
   end;
 
   if Assigned(FFormData) then
     FRequest.Body := TValue.From(FormData);
 
-  if ParamsValues.Count > 0 then
-    if ParamType = ptQuery then
-    begin
-      ParamsValues.Delimiter := '&';
-      FRequest.URL := '?' + ParamsValues.DelimitedText;
-    end
-    else
-    begin
-      ParamsValues.Delimiter := '/';
-      FRequest.URL := '/' + ParamsValues.DelimitedText;
-    end;
+  if PathValues.Count > 0 then
+    FRequest.URL := '/' + PathValues.DelimitedText;
 
-  ParamsValues.Free;
+  if QueryValues.Count > 0 then
+    FRequest.URL := FRequest.URL + '?' + QueryValues.DelimitedText;
+
+  PathValues.Free;
+
+  QueryValues.Free;
 end;
 
 procedure TRemoteService.LoadRequestURL(const Method: TRttiMethod; const Args: TArray<TValue>);

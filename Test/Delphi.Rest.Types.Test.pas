@@ -13,15 +13,23 @@ type
     [Test]
     procedure IfTheInterfaceHasntAnyAttributeMustReturnFalseInTheFunction;
     [Test]
-    procedure WhenTheMethodHasTheAttributeParamInBodyMustReturnParamInBodyType;
+    procedure WhenTheMethodHasTheAttributeParameterInBodyMustReturnParameterInBodyType;
     [Test]
-    procedure WhenTheMethodHasTheAttributeParamInQueryMustReturnParamInQueryType;
+    procedure WhenTheMethodHasTheAttributeParameterInQueryMustReturnParameterInQueryType;
     [Test]
     procedure WhenTheProcedureHasntAttributeMustReturnTrueIfExistsAnAttributeInTheInterface;
     [Test]
     procedure WhenTheProcedureHasntAttributeMustReturnTheParamTypeFromTheInterface;
     [Test]
-    procedure WhenTheMethodHasTheAttributeParamInPathMustReturnParamInPathType;
+    procedure WhenTheMethodHasTheAttributeParameterInPathMustReturnParameterInPathType;
+    [Test]
+    procedure IfTheParamHasntParamTypeAttributeTheFunctionGetParamTypeMustReturnFalse;
+    [Test]
+    procedure WhenTheParamOfTheProcedureHasTheParamTypeAttributeMustReturnTheTypeFromTheParam;
+    [Test]
+    procedure IfTheParamHasntTheParamTypeAttributeButTheMethodHasMustReturnTrueInTheGetParamFunction;
+    [Test]
+    procedure IfTheParamHasntTheParamTypeAttributeButTheMethodHasMustReturnTheTypeOfMethodInTheGetParamFunction;
   end;
 
   [TestFixture]
@@ -65,18 +73,23 @@ type
   IContractWithOutAttributes = interface(IInvokable)
     ['{1C952251-1DFC-4C36-BA63-FC9D7CC7F7E8}']
     procedure Proc;
+    procedure ProcWithParameter(AParam: Integer);
   end;
 
-  [ParamInBody]
+  [ParameterInBody]
   IContractTest = interface(IInvokable)
     ['{CF2BB234-0D53-49FB-979D-650DCEF196F2}']
-    [ParamInBody]
-    procedure ParamInBody;
-    [ParamInQuery]
-    procedure ParamInQuery;
-    [ParamInPath]
-    procedure ParamInPath;
-    procedure ProcedureWithOutAttribute;
+    [ParameterInBody]
+    procedure ParameterInBody(AParam: Integer);
+    [ParameterInPath]
+    procedure ParameterInPath(AParam: Integer);
+    [ParameterInQuery]
+    procedure ParameterInQuery(AParam: Integer);
+    [ParameterInQuery]
+    procedure ParamWithBodyAttribute([ParameterInPath]Param: String);
+    procedure ProcedureWithOutAttribute(AParam: Integer);
+    [ParameterInQuery]
+    procedure ProcedureWithParameter(Param: Integer);
   end;
 
   [POST]
@@ -113,54 +126,100 @@ implementation
 
 uses System.Rtti, System.SysUtils, System.NetEncoding;
 
-{ TRESTParamAttributeTest }
-
-procedure TRESTParamAttributeTest.IfTheInterfaceHasntAnyAttributeMustReturnFalseInTheFunction;
+procedure LoadAttributes(TypeInfo: Pointer);
 begin
-  var Method := TRttiContext.Create.GetType(TypeInfo(IContractWithOutAttributes)).GetMethod('Proc');
-  var ParamType: TRESTParamType;
-
-  Assert.IsFalse(TRESTParamAttribute.GetParamAtrributeType(Method, ParamType));
-end;
-
-procedure TRESTParamAttributeTest.SetupFixture;
-begin
-  for var Method in TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethods do
+  for var Method in TRttiContext.Create.GetType(TypeInfo).GetMethods do
   begin
     Method.GetAttributes;
 
     Method.Parent.GetAttributes;
+
+    for var Parameter in Method.GetParameters do
+      Parameter.GetAttributes;
   end;
 end;
 
-procedure TRESTParamAttributeTest.WhenTheMethodHasTheAttributeParamInBodyMustReturnParamInBodyType;
+{ TRESTParamAttributeTest }
+
+procedure TRESTParamAttributeTest.IfTheInterfaceHasntAnyAttributeMustReturnFalseInTheFunction;
 begin
-  var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ParamInBody');
+  var Method := TRttiContext.Create.GetType(TypeInfo(IContractWithOutAttributes)).GetMethod('ProcWithParameter');
   var ParamType: TRESTParamType;
 
-  TRESTParamAttribute.GetParamAtrributeType(Method, ParamType);
+  Assert.IsFalse(TRESTParamAttribute.GetParamAtrributeType(Method.GetParameters[0], ParamType));
+end;
+
+procedure TRESTParamAttributeTest.IfTheParamHasntParamTypeAttributeTheFunctionGetParamTypeMustReturnFalse;
+begin
+  var Method := TRttiContext.Create.GetType(TypeInfo(IContractWithOutAttributes)).GetMethod('ProcWithParameter');
+  var ParamType: TRESTParamType;
+
+  Assert.IsFalse(TRESTParamAttribute.GetParamAtrributeType(Method.GetParameters[0], ParamType));
+end;
+
+procedure TRESTParamAttributeTest.IfTheParamHasntTheParamTypeAttributeButTheMethodHasMustReturnTheTypeOfMethodInTheGetParamFunction;
+begin
+  var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ProcedureWithParameter');
+  var ParamType: TRESTParamType;
+
+  TRESTParamAttribute.GetParamAtrributeType(Method.GetParameters[0], ParamType);
+
+  Assert.AreEqual(ptQuery, ParamType);
+end;
+
+procedure TRESTParamAttributeTest.IfTheParamHasntTheParamTypeAttributeButTheMethodHasMustReturnTrueInTheGetParamFunction;
+begin
+  var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ProcedureWithParameter');
+  var ParamType: TRESTParamType;
+
+  Assert.IsTrue(TRESTParamAttribute.GetParamAtrributeType(Method.GetParameters[0], ParamType));
+end;
+
+procedure TRESTParamAttributeTest.SetupFixture;
+begin
+  LoadAttributes(TypeInfo(IContractTest));
+
+  LoadAttributes(TypeInfo(IContractWithOutAttributes));
+end;
+
+procedure TRESTParamAttributeTest.WhenTheMethodHasTheAttributeParameterInBodyMustReturnParameterInBodyType;
+begin
+  var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ParameterInBody');
+  var ParamType: TRESTParamType;
+
+  TRESTParamAttribute.GetParamAtrributeType(Method.GetParameters[0], ParamType);
 
   Assert.AreEqual(ptBody, ParamType);
 end;
 
-procedure TRESTParamAttributeTest.WhenTheMethodHasTheAttributeParamInPathMustReturnParamInPathType;
+procedure TRESTParamAttributeTest.WhenTheMethodHasTheAttributeParameterInPathMustReturnParameterInPathType;
 begin
-  var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ParamInPath');
+  var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ParameterInPath');
   var ParamType: TRESTParamType;
 
-  TRESTParamAttribute.GetParamAtrributeType(Method, ParamType);
+  TRESTParamAttribute.GetParamAtrributeType(Method.GetParameters[0], ParamType);
 
   Assert.AreEqual(ptPath, ParamType);
 end;
 
-procedure TRESTParamAttributeTest.WhenTheMethodHasTheAttributeParamInQueryMustReturnParamInQueryType;
+procedure TRESTParamAttributeTest.WhenTheMethodHasTheAttributeParameterInQueryMustReturnParameterInQueryType;
 begin
-  var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ParamInQuery');
+  var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ParameterInQuery');
   var ParamType: TRESTParamType;
 
-  TRESTParamAttribute.GetParamAtrributeType(Method, ParamType);
+  TRESTParamAttribute.GetParamAtrributeType(Method.GetParameters[0], ParamType);
 
   Assert.AreEqual(ptQuery, ParamType);
+end;
+
+procedure TRESTParamAttributeTest.WhenTheParamOfTheProcedureHasTheParamTypeAttributeMustReturnTheTypeFromTheParam;
+begin
+  var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ParamWithBodyAttribute');
+  var ParamType: TRESTParamType;
+
+  TRESTParamAttribute.GetParamAtrributeType(Method.GetParameters[0], ParamType);
+
+  Assert.AreEqual(ptPath, ParamType);
 end;
 
 procedure TRESTParamAttributeTest.WhenTheProcedureHasntAttributeMustReturnTheParamTypeFromTheInterface;
@@ -168,7 +227,7 @@ begin
   var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ProcedureWithOutAttribute');
   var ParamType: TRESTParamType;
 
-  TRESTParamAttribute.GetParamAtrributeType(Method, ParamType);
+  TRESTParamAttribute.GetParamAtrributeType(Method.GetParameters[0], ParamType);
 
   Assert.AreEqual(ptBody, ParamType);
 end;
@@ -178,7 +237,7 @@ begin
   var Method := TRttiContext.Create.GetType(TypeInfo(IContractTest)).GetMethod('ProcedureWithOutAttribute');
   var ParamType: TRESTParamType;
 
-  Assert.IsTrue(TRESTParamAttribute.GetParamAtrributeType(Method, ParamType));
+  Assert.IsTrue(TRESTParamAttribute.GetParamAtrributeType(Method.GetParameters[0], ParamType));
 end;
 
 { TRESTMethodAttributeTest }
@@ -253,17 +312,6 @@ begin
 end;
 
 procedure TAuthenticationTest.SetupFixture;
-
-  procedure LoadAttributes(TypeInfo: Pointer);
-  begin
-    for var Method in TRttiContext.Create.GetType(TypeInfo).GetMethods do
-    begin
-      Method.GetAttributes;
-
-      Method.Parent.GetAttributes;
-    end;
-  end;
-
 begin
   LoadAttributes(TypeInfo(IBasicAuthenticationService));
 

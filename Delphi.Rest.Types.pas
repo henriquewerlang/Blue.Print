@@ -53,26 +53,26 @@ type
   private
     FParamType: TRESTParamType;
 
-    class function GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTParamType): Boolean;
+    class function GetTypeFromAttributes(const RttiType: TRttiObject; var ParamType: TRESTParamType): Boolean;
   public
     constructor Create(const ParamType: TRESTParamType);
 
-    class function GetParamAtrributeType(const Method: TRttiMethod; var ParamType: TRESTParamType): Boolean;
+    class function GetParamAtrributeType(const Parameter: TRttiParameter; var ParamType: TRESTParamType): Boolean;
 
     property ParamType: TRESTParamType read FParamType write FParamType;
   end;
 
-  ParamInBody = class(TRESTParamAttribute)
+  ParameterInBody = class(TRESTParamAttribute)
   public
     constructor Create;
   end;
 
-  ParamInQuery = class(TRESTParamAttribute)
+  ParameterInQuery = class(TRESTParamAttribute)
   public
     constructor Create;
   end;
 
-  ParamInPath = class(TRESTParamAttribute)
+  ParameterInPath = class(TRESTParamAttribute)
   public
     constructor Create;
   end;
@@ -200,12 +200,12 @@ begin
   FParamType := ParamType;
 end;
 
-class function TRESTParamAttribute.GetParamAtrributeType(const Method: TRttiMethod; var ParamType: TRESTParamType): Boolean;
+class function TRESTParamAttribute.GetParamAtrributeType(const Parameter: TRttiParameter; var ParamType: TRESTParamType): Boolean;
 begin
-  Result := GetTypeFromAttributes(Method, ParamType) or GetTypeFromAttributes(Method.Parent, ParamType);
+  Result := GetTypeFromAttributes(Parameter, ParamType);
 end;
 
-class function TRESTParamAttribute.GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTParamType): Boolean;
+class function TRESTParamAttribute.GetTypeFromAttributes(const RttiType: TRttiObject; var ParamType: TRESTParamType): Boolean;
 var
   Attribute: TCustomAttribute;
 
@@ -215,29 +215,32 @@ begin
   for Attribute in RttiType.GetAttributes do
     if Attribute is TRESTParamAttribute then
     begin
-      Value := TRESTParamAttribute(Attribute).ParamType;
+      ParamType := TRESTParamAttribute(Attribute).ParamType;
 
       Exit(True);
     end;
+
+  if Assigned(RttiType.Parent) then
+    Result := GetTypeFromAttributes(RttiType.Parent, ParamType);
 end;
 
-{ ParamInBody }
+{ ParameterInBody }
 
-constructor ParamInBody.Create;
+constructor ParameterInBody.Create;
 begin
   inherited Create(ptBody);
 end;
 
-{ ParamInQuery }
+{ ParameterInQuery }
 
-constructor ParamInQuery.Create;
+constructor ParameterInQuery.Create;
 begin
   inherited Create(ptQuery);
 end;
 
-{ ParamInPath }
+{ ParameterInPath }
 
-constructor ParamInPath.Create;
+constructor ParameterInPath.Create;
 begin
   inherited Create(ptPath);
 end;

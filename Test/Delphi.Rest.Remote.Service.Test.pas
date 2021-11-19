@@ -65,17 +65,17 @@ type
     [Test]
     procedure WhenTheMethodHasMustGetTheAttributeFromTheInterface;
     [Test]
-    procedure WhenTheProcedureHasTheParamInBodyAttributeMustSendTheParamsInTheBodyOfTheRequest;
+    procedure WhenTheProcedureHasTheParameterInBodyAttributeMustSendTheParamsInTheBodyOfTheRequest;
     [Test]
-    procedure WhenTheProcedureHasTheParamInQueryAttributeMustSendTheParamsInTheURLOfTheRequest;
+    procedure WhenTheProcedureHasTheParameterInQueryAttributeMustSendTheParamsInTheURLOfTheRequest;
     [Test]
-    procedure WhenTheProcedureHasTheParamInPathAttributeMustSendTheParamsInTheURLPathOfTheRequest;
+    procedure WhenTheProcedureHasTheParameterInPathAttributeMustSendTheParamsInTheURLPathOfTheRequest;
     [TestCase('DELETE', 'rmDelete,True')]
     [TestCase('GET', 'rmGet,True')]
     [TestCase('PATCH', 'rmPatch,False')]
     [TestCase('POST', 'rmPost,False')]
     [TestCase('PUT', 'rmPut,False')]
-    procedure IfTheProcedureHasntAnAttributeAboutParamMustSendTheParamByTheTypeOfCommand(Method: TRESTMethod; ParamInQuery: Boolean);
+    procedure IfTheProcedureHasntAnAttributeAboutParamMustSendTheParamByTheTypeOfCommand(Method: TRESTMethod; ParameterInQuery: Boolean);
     [Test]
     procedure WhenTheMethodHasNoAttributesOfParamDefinedMustGetTheAttributeFromInterface;
     [Test]
@@ -108,6 +108,16 @@ type
     procedure WhenTheServiceHasABasicAuthenticationAttributeMustSendTheAuthenticationHeaderInTheRequest;
     [Test]
     procedure WhenTheHeaderIsLoadedTheAuthenticationMustBeAppendedToTheHeaders;
+    [Test]
+    procedure IfTheParameterHasThePathParameterTypeAttributeMustSendTheRequestRespectingThisType;
+    [Test]
+    procedure IfTheParameterHasTheQueryParameterTypeAttributeMustSendTheRequestRespectingThisType;
+    [Test]
+    procedure IfTheParameterHasTheBodyParameterTypeAttributeMustSendTheRequestRespectingThisType;
+    [Test]
+    procedure WhenSendAnFileAndTheFileIsNotFilledCantRaiseAnyError;
+    [Test]
+    procedure WhenMixTheParameterTypeAttributeMustLoadTheRequestHasExpected;
   end;
 
   [BasicAuthentication('User', 'Password')]
@@ -133,15 +143,15 @@ type
     procedure TestProcedure;
     procedure TestProcedureWithOneParam(Param: String);
     procedure TestProcedureWithParam(Param1: String; Param2: Integer);
-    [ParamInBody]
-    procedure TestProcedureWithParamInBody(Param1: String; Param2: Integer);
+    [ParameterInBody]
+    procedure TestProcedureWithParameterInBody(Param1: String; Param2: Integer);
     procedure TestProcedureWithAnFile(MyFile: TRESTFile);
     procedure TestProcedureWithFileAndParams(MayParam: Integer; MyFile: TRESTFile; AnotherParam: String);
-    [ParamInBody]
+    [ParameterInBody]
     procedure TestProcedureFileInTheBody(MyFile: TRESTFile);
-    [ParamInBody]
+    [ParameterInBody]
     procedure TestProcedureFileAnParamInTheBody(MyParam: String; MyFile: TRESTFile);
-    [ParamInBody]
+    [ParameterInBody]
     procedure TestProcedureWithArrayFiles(MyFiles: TArray<TRESTFile>);
     procedure TestProcedureWithArrayFilesInURL(MyFiles: TArray<TRESTFile>);
     procedure TestProceudreMoreThenOneFileParam(MyFile1: TRESTFile; AnParam: String; MyFile2: TRESTFile);
@@ -153,16 +163,23 @@ type
     procedure TestProcedure;
   end;
 
-  [ParamInBody]
+  [ParameterInBody]
   [POST]
   IServiceParams = interface(IInvokable)
     ['{CF2BB234-0D53-49FB-979D-650DCEF196F2}']
-    [ParamInBody]
-    procedure ParamInBody(Param: Integer);
-    [ParamInQuery]
-    procedure ParamInQuery(Param: Integer);
-    [ParamInPath]
-    procedure ParamInPath(Param1, Param2: Integer);
+    [ParameterInBody]
+    procedure ParameterInBody(Param: Integer);
+    [ParameterInQuery]
+    procedure ParameterInQuery(Param: Integer);
+    [ParameterInPath]
+    procedure ParameterInPath(Param1, Param2: Integer);
+    [ParameterInQuery]
+    procedure ParameterWithBodyAttribute([ParameterInBody]Param: String);
+    [ParameterInBody]
+    procedure ParameterWithQueryAttribute([ParameterInQuery]Param: String);
+    [ParameterInQuery]
+    procedure ParamWithPathAttribute([ParameterInPath]Param: String);
+    procedure ProcedureWithMixParamTypeAttribute([ParameterInQuery]Param1, [ParameterInBody]Param2, [ParameterInPath]Param3: Integer);
     procedure ProcedureWithOutAttribute(Param: Integer);
   end;
 
@@ -235,7 +252,56 @@ begin
     Result.Body := TValue.Empty;
 end;
 
-procedure TRemoteServiceTest.IfTheProcedureHasntAnAttributeAboutParamMustSendTheParamByTheTypeOfCommand(Method: TRESTMethod; ParamInQuery: Boolean);
+procedure TRemoteServiceTest.IfTheParameterHasTheBodyParameterTypeAttributeMustSendTheRequestRespectingThisType;
+begin
+  var Communication := CreateMockCommunication;
+  var Request := CreateRequest(rmPost, '/ServiceParams/ParameterWithBodyAttribute');
+  var Service := CreateRemoteService<IServiceParams>(Communication.Instance) as IServiceParams;
+
+  Communication.Setup.WillExecute(
+    procedure(const Params: TArray<TValue>)
+    begin
+      var Request := Params[1].AsType<TRestRequest>;
+
+      Assert.AreEqual('"abc"', Request.Body.AsString);
+    end).When.SendRequest(It.IsAny<TRestRequest>);
+
+  Service.ParameterWithBodyAttribute('abc');
+
+  Request.Free;
+end;
+
+procedure TRemoteServiceTest.IfTheParameterHasThePathParameterTypeAttributeMustSendTheRequestRespectingThisType;
+begin
+  var Communication := CreateMockCommunication;
+  var Request := CreateRequest(rmPost, '/ServiceParams/ParamWithPathAttribute/abc');
+  var Service := CreateRemoteService<IServiceParams>(Communication.Instance) as IServiceParams;
+
+  Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
+
+  Service.ParamWithPathAttribute('abc');
+
+  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Request.Free;
+end;
+
+procedure TRemoteServiceTest.IfTheParameterHasTheQueryParameterTypeAttributeMustSendTheRequestRespectingThisType;
+begin
+  var Communication := CreateMockCommunication;
+  var Request := CreateRequest(rmPost, '/ServiceParams/ParameterWithQueryAttribute?Param="abc"');
+  var Service := CreateRemoteService<IServiceParams>(Communication.Instance) as IServiceParams;
+
+  Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
+
+  Service.ParameterWithQueryAttribute('abc');
+
+  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Request.Free;
+end;
+
+procedure TRemoteServiceTest.IfTheProcedureHasntAnAttributeAboutParamMustSendTheParamByTheTypeOfCommand(Method: TRESTMethod; ParameterInQuery: Boolean);
 const
   COMMAND_NAME: array[TRESTMethod] of String = ('Delete', 'Get', 'Patch', 'Post', 'Put');
 
@@ -248,7 +314,7 @@ begin
   var RttiType := Context.GetType(TypeInfo(IServiceParamsType));
   var Service := CreateRemoteService<IServiceParamsType>(Communication.Instance) as IServiceParamsType;
 
-  if ParamInQuery then
+  if ParameterInQuery then
     Request.URL := Request.URL + '?Param=' + ParamValue
   else
     Request.Body := ParamValue;
@@ -279,7 +345,12 @@ begin
   RttiType.GetAttributes;
 
   for var Method in RttiType.GetMethods do
+  begin
     Method.GetAttributes;
+
+    for var Parameter in Method.GetParameters do
+      Parameter.GetAttributes;
+  end;
 end;
 
 procedure TRemoteServiceTest.SendingARequestWithOneParamMustPutTheParamSeparatorInTheURLAndTheNameAndValueParam;
@@ -409,7 +480,7 @@ begin
       Assert.AreEqual(Format(FormValue, [FormData.Boundary]), GetFormDataValue(FormData));
     end).When.SendRequest(It.IsAny<TRestRequest>);
 
-  Service.TestProcedureWithParamInBody('abc', 123);
+  Service.TestProcedureWithParameterInBody('abc', 123);
 end;
 
 procedure TRemoteServiceTest.TheURLOfServerCallMustContainTheNameOfInterfacePlusTheProcedureName;
@@ -522,6 +593,41 @@ begin
   Assert.AreEqual('My Value', Client.Header['My Header2']);
 
   Client.Free;
+end;
+
+procedure TRemoteServiceTest.WhenMixTheParameterTypeAttributeMustLoadTheRequestHasExpected;
+begin
+  var Communication := CreateMockCommunication;
+  var Request := CreateRequest(rmPost, '/ServiceParams/ProcedureWithMixParamTypeAttribute/789?Param1=123');
+  var Service := CreateRemoteService<IServiceParams>(Communication.Instance) as IServiceParams;
+
+  Communication.Setup.WillExecute(
+    procedure(const Params: TArray<TValue>)
+    begin
+      var Request := Params[1].AsType<TRestRequest>;
+
+      Assert.AreEqual('/ServiceParams/ProcedureWithMixParamTypeAttribute/789?Param1=123', Request.URL);
+      Assert.AreEqual('456', Request.Body.AsString);
+    end).When.SendRequest(It.IsAny<TRestRequest>);
+
+  Service.ProcedureWithMixParamTypeAttribute(123, 456, 789);
+
+  Request.Free;
+end;
+
+procedure TRemoteServiceTest.WhenSendAnFileAndTheFileIsNotFilledCantRaiseAnyError;
+begin
+  var Communication := CreateMockCommunication;
+  var Request: TRestRequest := nil;
+  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
+
+  Communication.Expect.Once.When.SendRequest(It.IsAny<TRestRequest>);
+
+  Assert.WillNotRaise(
+    procedure
+    begin
+      Service.TestProcedureWithFileAndParams(12345, nil, 'My File');
+    end);
 end;
 
 procedure TRemoteServiceTest.WhenSendARequestMoreThenOneTimeMustResetTheRequestBody;
@@ -777,7 +883,7 @@ begin
       Assert.IsTrue(Request.Body.IsType<TRESTFormData>);
     end).When.SendRequest(It.IsAny<TRestRequest>);
 
-  Service.TestProcedureWithParamInBody('abc', 123);
+  Service.TestProcedureWithParameterInBody('abc', 123);
 end;
 
 procedure TRemoteServiceTest.WhenTheProcedureHasMoreThenOneParamFileParamMustSendTheFilesInTheBodyOfTheRequest;
@@ -814,45 +920,45 @@ begin
   MyFile.Free;
 end;
 
-procedure TRemoteServiceTest.WhenTheProcedureHasTheParamInBodyAttributeMustSendTheParamsInTheBodyOfTheRequest;
+procedure TRemoteServiceTest.WhenTheProcedureHasTheParameterInBodyAttributeMustSendTheParamsInTheBodyOfTheRequest;
 begin
   var Communication := CreateMockCommunication;
-  var Request := CreateRequest(rmPost, '/ServiceParams/ParamInBody', '1234');
+  var Request := CreateRequest(rmPost, '/ServiceParams/ParameterInBody', '1234');
   var Service := CreateRemoteService<IServiceParams>(Communication.Instance) as IServiceParams;
 
   Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
 
-  Service.ParamInBody(1234);
+  Service.ParameterInBody(1234);
 
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 
   Request.Free;
 end;
 
-procedure TRemoteServiceTest.WhenTheProcedureHasTheParamInPathAttributeMustSendTheParamsInTheURLPathOfTheRequest;
+procedure TRemoteServiceTest.WhenTheProcedureHasTheParameterInPathAttributeMustSendTheParamsInTheURLPathOfTheRequest;
 begin
   var Communication := CreateMockCommunication;
-  var Request := CreateRequest(rmPost, '/ServiceParams/ParamInPath/123/456');
+  var Request := CreateRequest(rmPost, '/ServiceParams/ParameterInPath/123/456');
   var Service := CreateRemoteService<IServiceParams>(Communication.Instance) as IServiceParams;
 
   Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
 
-  Service.ParamInPath(123, 456);
+  Service.ParameterInPath(123, 456);
 
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 
   Request.Free;
 end;
 
-procedure TRemoteServiceTest.WhenTheProcedureHasTheParamInQueryAttributeMustSendTheParamsInTheURLOfTheRequest;
+procedure TRemoteServiceTest.WhenTheProcedureHasTheParameterInQueryAttributeMustSendTheParamsInTheURLOfTheRequest;
 begin
   var Communication := CreateMockCommunication;
-  var Request := CreateRequest(rmPost, '/ServiceParams/ParamInQuery?Param=1234');
+  var Request := CreateRequest(rmPost, '/ServiceParams/ParameterInQuery?Param=1234');
   var Service := CreateRemoteService<IServiceParams>(Communication.Instance) as IServiceParams;
 
   Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
 
-  Service.ParamInQuery(1234);
+  Service.ParameterInQuery(1234);
 
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 
