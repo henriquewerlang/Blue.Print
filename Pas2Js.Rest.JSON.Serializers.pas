@@ -47,7 +47,7 @@ function TRestJsonSerializer.CreateObject(RttiType: TRttiType): TObject;
 begin
 {$IFDEF PAS2JS}
   asm
-    Result = Object.create(RttiType.FTypeInfo.class);
+    Result = Object.create(RttiType.FHandle.class);
     Result.$init();
   end;
 {$ENDIF}
