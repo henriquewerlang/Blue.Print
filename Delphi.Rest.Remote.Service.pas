@@ -151,7 +151,7 @@ uses Delphi.Rest.Exceptions,
 {$IFDEF PAS2JS}
   JS, Web, Pas2Js.Rest.JSON.Serializers
 {$ELSE}
-  Delphi.Rest.JSON.Serializer
+  Delphi.Rest.JSON.Serializer, System.Net.Mime, Web.HTTPApp, System.NetConsts
 {$ENDIF};
 
 const
@@ -548,6 +548,29 @@ var
 
   A: Integer;
 
+{$ELSE}
+
+  function LoadContentStream: TStream;
+  begin
+    Result := nil;
+
+    if not Request.Body.IsEmpty then
+      if Request.Body.IsType<String> then
+        Result := TStringStream.Create(Request.Body.AsString, TEncoding.UTF8)
+      else if Request.Body.IsType<TMultipartFormData> then
+      begin
+        var Content := Request.Body.AsType<TMultipartFormData>;
+
+        Connection.CustomHeaders[sContentType] := Content.MimeTypeHeader;
+        Result := Content.Stream;
+      end
+      else if Request.Body.IsType<TAbstractWebRequestFile> then
+        Result := TFileStream.Create(Request.Body.AsType<TAbstractWebRequestFile>.FileName, fmOpenRead or fmShareDenyWrite);
+  end;
+
+const
+  HTTP_METHOD: array[TRESTMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT');
+
 {$ENDIF}
 begin
   FHeaders.Text := Request.Headers;
@@ -567,23 +590,23 @@ begin
   else
     raise EHTTPStatusError.Create(Connection.status, Connection.ResponseText);
 {$ELSE}
-  var Response: IHTTPResponse;
+  var Content: TStream := nil;
 
-  for var A := 0 to Pred(FHeaders.Count) do
-    Connection.CustomHeaders[FHeaders.Names[A]] := FHeaders.ValueFromIndex[A];
+  try
+    Content := LoadContentStream;
 
-  case Request.Method of
-    rmDelete: Response := Connection.Delete(Request.URL);
-    rmGet: Response := Connection.Get(Request.URL);
-    rmPatch: Response := Connection.Patch(Request.URL);
-    rmPost: Response := Connection.Post(Request.URL, TStream(nil));
-    rmPut: Response := Connection.Put(Request.URL);
+    for var A := 0 to Pred(FHeaders.Count) do
+      Connection.CustomHeaders[FHeaders.Names[A]] := FHeaders.ValueFromIndex[A];
+
+    var Response := Connection.Execute(HTTP_METHOD[Request.Method], Request.URL, Content) as IHTTPResponse;
+
+    Result := Response.ContentAsString(TEncoding.UTF8);
+
+    if Response.StatusCode <> 200 then
+      raise EHTTPStatusError.Create(Response.StatusCode, Result);
+  finally
+    Content.Free;
   end;
-
-  Result := Response.ContentAsString(TEncoding.UTF8);
-
-  if Response.StatusCode <> 200 then
-    raise EHTTPStatusError.Create(Response.StatusCode, Result);
 {$ENDIF}
 end;
 
