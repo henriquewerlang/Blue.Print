@@ -68,5 +68,9 @@ __recovery/
 # Boss dependency manager vendor folder https://github.com/HashLoad/boss
 modules/
 
+# Devexpress
+*.skincfg
+
+# Project ignore
 TestInsightSettings.ini
 bin
