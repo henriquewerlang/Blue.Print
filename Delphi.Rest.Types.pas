@@ -15,36 +15,36 @@ type
   private
     FMethod: TRESTMethod;
 
-    class function GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTMethod): Boolean;
-  public
     constructor Create(const Method: TRESTMethod);
 
+    class function GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTMethod): Boolean;
+  public
     class function GetMethodType(const Method: TRttiMethod; var MethodType: TRESTMethod): Boolean;
 
     property Method: TRESTMethod read FMethod write FMethod;
   end;
 
-  DELETEAttribute = class(TRESTMethodAttribute)
+  DeleteAttribute = class(TRESTMethodAttribute)
   public
     constructor Create;
   end;
 
-  GETAttribute = class(TRESTMethodAttribute)
+  GetAttribute = class(TRESTMethodAttribute)
   public
     constructor Create;
   end;
 
-  PATCHAttribute = class(TRESTMethodAttribute)
+  PatchAttribute = class(TRESTMethodAttribute)
   public
     constructor Create;
   end;
 
-  POSTAttribute = class(TRESTMethodAttribute)
+  PostAttribute = class(TRESTMethodAttribute)
   public
     constructor Create;
   end;
 
-  PUTAttribute = class(TRESTMethodAttribute)
+  PutAttribute = class(TRESTMethodAttribute)
   public
     constructor Create;
   end;
@@ -53,10 +53,10 @@ type
   private
     FParamType: TRESTParamType;
 
-    class function GetTypeFromAttributes(const RttiType: TRttiObject; var ParamType: TRESTParamType): Boolean;
-  public
     constructor Create(const ParamType: TRESTParamType);
 
+    class function GetTypeFromAttributes(const RttiType: TRttiObject; var ParamType: TRESTParamType): Boolean;
+  public
     class function GetParamAtrributeType(const Parameter: TRttiParameter; var ParamType: TRESTParamType): Boolean;
 
     property ParamType: TRESTParamType read FParamType write FParamType;
@@ -91,9 +91,9 @@ type
     class function GetHeaderFromAttribute(const RttiType: TRttiObject; var AuthenticationName, AuthenticationValue: String): Boolean;
   private
     FName: String;
-  public
-    constructor Create(const Name: String);
 
+    constructor Create(const Name: String);
+  public
     class function LoadHeaders(const Method: TRttiMethod; var AuthenticationName, AuthenticationValue: String): Boolean;
 
     function LoadHeaderValue: String; virtual;
