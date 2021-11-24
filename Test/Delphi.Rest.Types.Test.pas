@@ -319,14 +319,14 @@ begin
 
   LoadAttributes(TypeInfo(IContractMethodType));
 
-  TBase64Encoding.Base64String.Encode('User Name;Password');
+  TBase64Encoding.Base64.Encode('User Name;Password');
 end;
 
 procedure TAuthenticationTest.TheBasicAuthenticationAttributeMustReturnTheUserNameAndPasswordInBase64;
 begin
   var Attribute := BasicAuthenticationAttribute.Create('User Name', 'Password');
 
-  Assert.AreEqual(TBase64Encoding.Base64String.Encode('User Name:Password'), Attribute.LoadHeaderValue);
+  Assert.AreEqual(TBase64Encoding.Base64.Encode('User Name:Password'), Attribute.LoadHeaderValue);
 
   Attribute.Free;
 end;
@@ -359,7 +359,7 @@ begin
 
   TAuthentication.LoadHeaders(Method, AuthenticationName, AuthenticationValue);
 
-  Assert.AreEqual(TBase64Encoding.Base64String.Encode('Another User:Another Password'), AuthenticationValue);
+  Assert.AreEqual(TBase64Encoding.Base64.Encode('Another User:Another Password'), AuthenticationValue);
 end;
 
 end.
