@@ -45,12 +45,7 @@ end;
 
 function TRestJsonSerializer.CreateObject(RttiType: TRttiType): TObject;
 begin
-{$IFDEF PAS2JS}
-  asm
-    Result = Object.create(RttiType.FHandle.class);
-    Result.$init();
-  end;
-{$ENDIF}
+  Result := RttiType.AsInstance.MetaClassType.Create;
 end;
 
 function TRestJsonSerializer.CreateRecord(RttiType: TRttiType): TJSObject;
@@ -142,7 +137,7 @@ begin
   else
   begin
     CurrentObject := CreateObject(RttiType);
-    Result := TValue.FromJSValue(CurrentObject);
+    Result := TValue.From(CurrentObject);
 
     DeserializeProperties(TJSObject(CurrentObject), RttiType, JSON);
   end;
