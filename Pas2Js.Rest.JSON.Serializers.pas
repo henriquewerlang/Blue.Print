@@ -124,7 +124,7 @@ begin
   else if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
     Result := TValue.From(RFC3339ToDateTime(String(JSON)))
   else
-    Result := TValue.FromJSValue(JSON);
+    TValue.Make(JSON, RttiType.Handle, Result);
 end;
 
 function TRestJsonSerializer.DeserializeObject(const JSON: JSValue; RttiType: TRttiType): TValue;
@@ -188,7 +188,7 @@ begin
       Value := DeserializeObjectProperty(Value, KeyType, JSONObject[Key]);
 
       if Assigned(Prop) then
-        Prop.SetValue(Instance, Value)
+        SetJSValueProp(Instance, Prop.PropertyTypeInfo, Value.AsJSValue)
       else if Assigned(Field) then
         Field.SetValue(Instance, Value);
     end
