@@ -111,7 +111,7 @@ end;
 
 function TRestJsonSerializer.DeserializeJSON(const JSON: JSValue; RttiType: TRttiType): TValue;
 begin
-  if RttiType.IsInstance  then
+  if RttiType.IsInstance then
     Result := DeserializeObject(JSON, RttiType)
   else if RttiType.IsRecord then
     Result := DeserializeRecord(JSON, RttiType)
