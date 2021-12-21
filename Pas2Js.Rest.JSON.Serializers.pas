@@ -19,7 +19,7 @@ type
     function DeserializeEnumerator(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeJSON(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeObject(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
-    function DeserializeObjectProperty(const Value: TValue; RttiType: TRttiType; const JSON: JSValue): TValue; virtual;
+    function DeserializeObjectProperty(const PropertyValue: TValue; RttiType: TRttiType; const JSON: JSValue): TValue; virtual;
     function DeserializeRecord(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function SerializeArray(const Value: TValue; RttiType: TRttiDynamicArrayType): JSValue; virtual;
     function SerializeJSON(const Value: TValue; RttiType: TRttiType): JSValue; virtual;
@@ -143,7 +143,7 @@ begin
   end;
 end;
 
-function TRestJsonSerializer.DeserializeObjectProperty(const Value: TValue; RttiType: TRttiType; const JSON: JSValue): TValue;
+function TRestJsonSerializer.DeserializeObjectProperty(const PropertyValue: TValue; RttiType: TRttiType; const JSON: JSValue): TValue;
 begin
   Result := DeserializeJSON(JSON, RttiType);
 end;
