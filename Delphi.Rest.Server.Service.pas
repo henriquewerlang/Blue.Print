@@ -202,47 +202,43 @@ end;
 
 function TRestServerService.HandleRequest: Boolean;
 begin
+  var ServiceInfo: TRttiType;
+  var Instance: TValue;
   var URL := Request.URL;
 
-  Result := ExtractFileExt(URL).IsEmpty;
+  var Params := URL.Split(['/'], TStringSplitOptions.ExcludeEmpty);
+
+  Result := ExtractFileExt(URL).IsEmpty and (Length(Params) > 0) and ServiceContainer.GetService(Params[0], ServiceInfo, Instance);
 
   if Result then
-  begin
-    var Info: TRttiType := nil;
-    var Instance := TValue.Empty;
-    var Params := URL.Split(['/'], TStringSplitOptions.ExcludeEmpty);
-    Result := (Length(Params) > 0) and ServiceContainer.GetService(Params[0], Info, Instance);
+    if Length(Params) = 2 then
+    begin
+      var Method := ServiceInfo.GetMethod(Params[1]);
 
-    if Result then
-      if Length(Params) = 2 then
+      if Assigned(Method) then
       begin
-        var Method := Info.GetMethod(Params[1]);
+        var ProcParams: TArray<TValue>;
 
-        if Assigned(Method) then
+        if GetParams(Method, ProcParams) then
         begin
-          var ProcParams: TArray<TValue>;
+          var Return := Method.Invoke(Instance, ProcParams);
 
-          if GetParams(Method, ProcParams) then
+          if Assigned(Method.ReturnType) then
           begin
-            var Return := Method.Invoke(Instance, ProcParams);
+            Response.Content := Serializer.Serialize(Return);
+            Response.ContentType := CONTENTTYPE_APPLICATION_JSON;
+          end;
 
-            if Assigned(Method.ReturnType) then
-            begin
-              Response.Content := Serializer.Serialize(Return);
-              Response.ContentType := CONTENTTYPE_APPLICATION_JSON;
-            end;
-
-            Response.StatusCode := HTTP_STATUS_OK;
-          end
-          else
-            Response.StatusCode := HTTP_STATUS_BAD_REQUEST;
+          Response.StatusCode := HTTP_STATUS_OK;
         end
         else
-          Response.StatusCode := HTTP_STATUS_NOT_FOUND;
+          Response.StatusCode := HTTP_STATUS_BAD_REQUEST;
       end
       else
         Response.StatusCode := HTTP_STATUS_NOT_FOUND;
-  end;
+    end
+    else
+      Response.StatusCode := HTTP_STATUS_NOT_FOUND;
 end;
 
 procedure TRestServerService.InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);

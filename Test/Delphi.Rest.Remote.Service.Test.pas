@@ -618,7 +618,6 @@ end;
 procedure TRemoteServiceTest.WhenSendAnFileAndTheFileIsNotFilledCantRaiseAnyError;
 begin
   var Communication := CreateMockCommunication;
-  var Request: TRestRequest := nil;
   var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
 
   Communication.Expect.Once.When.SendRequest(It.IsAny<TRestRequest>);

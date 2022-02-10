@@ -12,9 +12,9 @@ type
     FRestService: TRestServerService;
 
     function CreateRestService(Request: TWebRequest; Response: TWebResponse; Container: IServiceContainer = nil): IWebAppServices;
-    function CreateRequestMock: TMock<TWebRequestMock>; overload;
-    function CreateRequestMock(const URL, ContentType, ContentValue, QueryString: String): TMock<TWebRequestMock>; overload;
-    function CreateRequestMock(const URL, ContentType: String; const ContentValue: TBytes; const QueryString: String): TMock<TWebRequestMock>; overload;
+    function CreateRequestMock: TMockClass<TWebRequestMock>; overload;
+    function CreateRequestMock(const URL, ContentType, ContentValue, QueryString: String): TMockClass<TWebRequestMock>; overload;
+    function CreateRequestMock(const URL, ContentType: String; const ContentValue: TBytes; const QueryString: String): TMockClass<TWebRequestMock>; overload;
   public
     [Setup]
     procedure Setup;
@@ -279,12 +279,12 @@ begin
   Response.Free;
 end;
 
-function TRestServerServiceTest.CreateRequestMock(const URL, ContentType, ContentValue, QueryString: String): TMock<TWebRequestMock>;
+function TRestServerServiceTest.CreateRequestMock(const URL, ContentType, ContentValue, QueryString: String): TMockClass<TWebRequestMock>;
 begin
   Result := CreateRequestMock(URL, ContentType, TEncoding.UTF8.GetBytes(ContentValue), QueryString);
 end;
 
-function TRestServerServiceTest.CreateRequestMock(const URL, ContentType: String; const ContentValue: TBytes; const QueryString: String): TMock<TWebRequestMock>;
+function TRestServerServiceTest.CreateRequestMock(const URL, ContentType: String; const ContentValue: TBytes; const QueryString: String): TMockClass<TWebRequestMock>;
 begin
   Result := TMock.CreateClass<TWebRequestMock>;
 
@@ -303,7 +303,7 @@ begin
   Result.Instance.UpdateMethodType;
 end;
 
-function TRestServerServiceTest.CreateRequestMock: TMock<TWebRequestMock>;
+function TRestServerServiceTest.CreateRequestMock: TMockClass<TWebRequestMock>;
 begin
   Result := CreateRequestMock(EmptyStr, CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
 end;
