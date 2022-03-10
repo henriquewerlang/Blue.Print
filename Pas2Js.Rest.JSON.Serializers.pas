@@ -12,7 +12,7 @@ type
   protected
     FContext: TRttiContext;
 
-    function CreateObject(RttiType: TRttiType): TObject; virtual;
+    function CreateObject(const JSON: JSValue; RttiType: TRttiType): TObject; virtual;
     function CreateRecord(RttiType: TRttiType): TJSObject; virtual;
     function DeserializeArray(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeClassRef(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
@@ -43,7 +43,7 @@ begin
   FContext := TRTTIContext.Create;
 end;
 
-function TRestJsonSerializer.CreateObject(RttiType: TRttiType): TObject;
+function TRestJsonSerializer.CreateObject(const JSON: JSValue; RttiType: TRttiType): TObject;
 begin
   Result := RttiType.AsInstance.MetaClassType.Create;
 end;
@@ -136,7 +136,7 @@ begin
     Result := TValue.Empty
   else
   begin
-    CurrentObject := CreateObject(RttiType);
+    CurrentObject := CreateObject(JSON, RttiType);
     Result := TValue.From(CurrentObject);
 
     DeserializeProperties(TJSObject(CurrentObject), RttiType, JSON);
