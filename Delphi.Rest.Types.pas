@@ -111,9 +111,16 @@ type
     function LoadHeaderValue: String; override;
   end;
 
+function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
+
 implementation
 
 uses System.SysUtils;
+
+function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
+begin
+  Result := TypeKind in [{$IFDEF DCC}tkAnsiChar, tkAnsiString, tkLString, tkWString, tkUString, tkWChar, {$ENDIF}tkChar, tkString];
+end;
 
 function ConvertToBase64(const Value: String): String;
 begin

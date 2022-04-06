@@ -45,33 +45,33 @@ type
     [TestCase('Procedure', 'ProcProcedure')]
     [TestCase('Variant', 'ProcVariant')]
     procedure WhenTheTypeIsInvalidMustRaiseAnError(ProcedureName: String);
-    [TestCase('Array', 'ProcArray;[''abc'', ''zzz'']', ';')]
-    [TestCase('Char', 'ProcChar,''S''')]
+    [TestCase('Array', 'ProcArray;["abc", "zzz"]', ';')]
+    [TestCase('Char', 'ProcChar,S')]
     [TestCase('Class', 'ProcClass,{"Value": 1234}')]
     [TestCase('Enum', 'ProcEnum,2')]
     [TestCase('Float', 'ProcFloat,123.456')]
     [TestCase('Int64', 'ProcInt64,123456789012')]
     [TestCase('Integer', 'ProcInteger,1234')]
-    [TestCase('LString', 'ProcLString,''abcd''')]
+    [TestCase('LString', 'ProcLString,abcd')]
     [TestCase('Set', 'ProcSet;13', ';')]
-    [TestCase('String', 'ProcString,''abcd''')]
-    [TestCase('UString', 'ProcUString,''abcd''')]
-    [TestCase('WChar', 'ProcWChar,''W''')]
-    [TestCase('WString', 'ProcWString,''abcd''')]
+    [TestCase('String', 'ProcString,abcd')]
+    [TestCase('UString', 'ProcUString,abcd')]
+    [TestCase('WChar', 'ProcWChar,W')]
+    [TestCase('WString', 'ProcWString,abcd')]
     procedure MustCallTheProcedureWithTheParamValuePassed(ProcedureName, Value: String);
-    [TestCase('Array', 'ProcArray;[''abc'', ''zzz'']', ';')]
-    [TestCase('Char', 'ProcChar,''S''')]
+    [TestCase('Array', 'ProcArray;["abc", "zzz"]', ';')]
+    [TestCase('Char', 'ProcChar,S')]
     [TestCase('Class', 'ProcClass,{"Value": 1234}')]
     [TestCase('Enum', 'ProcEnum,2')]
     [TestCase('Float', 'ProcFloat,123.456')]
     [TestCase('Int64', 'ProcInt64,123456789012')]
     [TestCase('Integer', 'ProcInteger,1234')]
-    [TestCase('LString', 'ProcLString,''abcd''')]
+    [TestCase('LString', 'ProcLString,abcd')]
     [TestCase('Set', 'ProcSet;13', ';')]
-    [TestCase('String', 'ProcString,''abcd''')]
-    [TestCase('UString', 'ProcUString,''abcd''')]
-    [TestCase('WChar', 'ProcWChar,''W''')]
-    [TestCase('WString', 'ProcWString,''abcd''')]
+    [TestCase('String', 'ProcString,abcd')]
+    [TestCase('UString', 'ProcUString,abcd')]
+    [TestCase('WChar', 'ProcWChar,W')]
+    [TestCase('WString', 'ProcWString,abcd')]
     procedure ConvertingParamsAsExpected(ProcedureName, Value: String);
     [TestCase('More then', 'Param1=123&Param2=123&Param3=123')]
     [TestCase('Less then', '')]
@@ -349,7 +349,7 @@ end;
 procedure TRestServerServiceTest.IfTheParamIsInTheQueryFieldsCantTryToLoadTheValueFromContent;
 begin
   var MyService: IService := TService.Create;
-  var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, 'Value="abc"', 'Value=""');
+  var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, 'Value=abc', 'Value=');
   var Response := TWebResponseMock.Create(Request.Instance);
   var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(MyService));
 
@@ -398,7 +398,7 @@ end;
 procedure TRestServerServiceTest.MustTryToLoadTheProcedureParamsFromTheURLAndTheBody;
 begin
   var MyService: IService := TService.Create;
-  var Request := CreateRequestMock('/IService/ProcedureWithParamsInBody', CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED, 'Param1="abcde"', 'Param2=1234');
+  var Request := CreateRequestMock('/IService/ProcedureWithParamsInBody', CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED, 'Param1=abcde', 'Param2=1234');
   var Response := TWebResponseMock.Create(Request.Instance);
   var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(MyService));
 
@@ -590,7 +590,7 @@ end;
 
 procedure TRestServerServiceTest.WhenTheContractHasntAnyAttributeOfParamTypeMustLoadTheParamsByProcedureType(MethodType: String; ParamInURL: Boolean);
 begin
-  var Params := 'Param1="abcde"&Param2=1234';
+  var Params := 'Param1=abcde&Param2=1234';
   var Request := TMock.CreateClass<TWebRequestMock>;
   var RequestBody := TEncoding.UTF8.GetBytes(Params);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -682,7 +682,7 @@ end;
 
 procedure TRestServerServiceTest.WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContent;
 begin
-  var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, '"MyValue"', EmptyStr);
+  var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, 'MyValue', EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
   var Service: IService := TService.Create;
 
@@ -696,7 +696,7 @@ begin
 
   Response.Free;
 
-  Request := CreateRequestMock('/IService/ProcedureWithOutAttribute', CONTENTTYPE_APPLICATION_JSON, 'Value="abcde"', EmptyStr);
+  Request := CreateRequestMock('/IService/ProcedureWithOutAttribute', CONTENTTYPE_APPLICATION_JSON, 'Value=abcde', EmptyStr);
   Response := TWebResponseMock.Create(Request.Instance);
   Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(Service));
 
@@ -711,7 +711,7 @@ end;
 
 procedure TRestServerServiceTest.WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContentIfTheContentIsAJSONValue;
 begin
-  var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JAVASCRIPT, '"MyValue"', EmptyStr);
+  var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JAVASCRIPT, 'MyValue', EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
   var Service: IService := TService.Create;
 
@@ -725,7 +725,7 @@ begin
 
   Response.Free;
 
-  Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, '"MyValue"', EmptyStr);
+  Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, 'MyValue', EmptyStr);
   Response := TWebResponseMock.Create(Request.Instance);
   Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(Service));
 
@@ -740,7 +740,7 @@ end;
 
 procedure TRestServerServiceTest.WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContentIfTheContentIsTextPlain;
 begin
-  var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JAVASCRIPT, '"MyValue"', EmptyStr);
+  var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JAVASCRIPT, 'MyValue', EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
   var Service: IService := TService.Create;
 
@@ -754,7 +754,7 @@ begin
 
   Response.Free;
 
-  Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_TEXT_PLAIN + ';charset=UTF-8', '"MyValue"', EmptyStr);
+  Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_TEXT_PLAIN + ';charset=UTF-8', 'MyValue', EmptyStr);
   Response := TWebResponseMock.Create(Request.Instance);
   Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(Service));
 
@@ -838,7 +838,7 @@ end;
 
 procedure TRestServerServiceTest.WhenTheProcedureOfTheRequestIsMarkedWithParamInBodyMustLoadTheParamsValuesFromBody;
 begin
-  var Request := CreateRequestMock('/IService/ProcedureWithParamsInBody', CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED, 'Param1="abcde"&Param2=1234', EmptyStr);
+  var Request := CreateRequestMock('/IService/ProcedureWithParamsInBody', CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED, 'Param1=abcde&Param2=1234', EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
 
   Request.Expect.Once.When.GetRawContent;
@@ -886,7 +886,7 @@ end;
 
 procedure TRestServerServiceTest.WhenTheRequestExecuteAsExpectedTheStatusCode200;
 begin
-  var Request := CreateRequestMock('IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, EmptyStr, 'Value="Abc"');
+  var Request := CreateRequestMock('IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, EmptyStr, 'Value=Abc');
   var Response := TWebResponseMock.Create(Request.Instance);
   var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
 
@@ -1019,19 +1019,19 @@ end;
 procedure TRestServerServiceTest.WhenTryToLoadAParamFromTheContentMustLoadOnlyIfTheContentTypeIsFormURLEncoded;
 begin
   var MyService: IService := TService.Create;
-  var Request := CreateRequestMock('/IService/ProcString', CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED, 'Value="abcde"', EmptyStr);
+  var Request := CreateRequestMock('/IService/ProcString', CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED, 'Value=abcde', EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
   var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(MyService));
 
   Rest.HandleRequest;
 
-  Assert.AreEqual('ProcString=''abcde''', MyService.ProcedureCalled);
+  Assert.AreEqual('ProcString=abcde', MyService.ProcedureCalled);
 
   Request.Free;
 
   Response.Free;
 
-  Request := CreateRequestMock('/IService/ProcString', CONTENTTYPE_APPLICATION_JAVASCRIPT, 'Value="abcde"', EmptyStr);
+  Request := CreateRequestMock('/IService/ProcString', CONTENTTYPE_APPLICATION_JAVASCRIPT, 'Value=abcde', EmptyStr);
   Response := TWebResponseMock.Create(Request.Instance);
   Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(MyService));
 
@@ -1050,7 +1050,7 @@ begin
     '--MyMarker'#13#10 +
     'Content-Disposition: form-data; name="Value"'#13#10 +
     #13#10 +
-    '"MyValue"'#13#10 +
+    'MyValue'#13#10 +
     '--MyMarker--'#13#10;
 
   var MyService: IService := TService.Create;
@@ -1060,13 +1060,13 @@ begin
 
   Rest.HandleRequest;
 
-  Assert.AreEqual('ProcString=''MyValue''', MyService.ProcedureCalled);
+  Assert.AreEqual('ProcString=MyValue', MyService.ProcedureCalled);
 
   Request.Free;
 
   Response.Free;
 
-  Request := CreateRequestMock('/IService/ProcString', CONTENTTYPE_APPLICATION_JAVASCRIPT, 'Value="abcde"', EmptyStr);
+  Request := CreateRequestMock('/IService/ProcString', CONTENTTYPE_APPLICATION_JAVASCRIPT, 'Value=abcde', EmptyStr);
   Response := TWebResponseMock.Create(Request.Instance);
   Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(MyService));
 
@@ -1139,12 +1139,12 @@ end;
 procedure TService.ProcArray(Value: TArray<String>);
 begin
   if Length(Value) > 0 then
-    FProcedureCalled := Format('ProcArray=[''%s'', ''%s'']', [Value[0], Value[1]]);
+    FProcedureCalled := Format('ProcArray=["%s", "%s"]', [Value[0], Value[1]]);
 end;
 
 procedure TService.ProcChar(Value: AnsiChar);
 begin
-  FProcedureCalled := Format('ProcChar=''%s''', [Value]);
+  FProcedureCalled := Format('ProcChar=%s', [Value]);
 end;
 
 procedure TService.ProcClass(Value: TMyClass);
@@ -1201,7 +1201,7 @@ end;
 
 procedure TService.ProcLString(Value: AnsiString);
 begin
-  FProcedureCalled := Format('ProcLString=''%s''', [Value]);
+  FProcedureCalled := Format('ProcLString=%s', [Value]);
 end;
 
 procedure TService.ProcMethod(Value: TNotifyEvent);
@@ -1252,12 +1252,12 @@ end;
 
 procedure TService.ProcString(Value: ShortString);
 begin
-  FProcedureCalled := Format('ProcString=''%s''', [Value]);
+  FProcedureCalled := Format('ProcString=%s', [Value]);
 end;
 
 procedure TService.ProcUString(Value: UnicodeString);
 begin
-  FProcedureCalled := Format('ProcUString=''%s''', [Value]);
+  FProcedureCalled := Format('ProcUString=%s', [Value]);
 end;
 
 procedure TService.ProcVariant(Value: Variant);
@@ -1267,12 +1267,12 @@ end;
 
 procedure TService.ProcWChar(Value: Char);
 begin
-  FProcedureCalled := Format('ProcWChar=''%s''', [Value]);
+  FProcedureCalled := Format('ProcWChar=%s', [Value]);
 end;
 
 procedure TService.ProcWString(Value: WideString);
 begin
-  FProcedureCalled := Format('ProcWString=''%s''', [Value]);
+  FProcedureCalled := Format('ProcWString=%s', [Value]);
 end;
 
 end.

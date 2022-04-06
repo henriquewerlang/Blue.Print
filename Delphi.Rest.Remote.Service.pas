@@ -59,6 +59,7 @@ type
 
     function CheckForceFormData(Method: TRttiMethod): Boolean;
     function Deserialize(const JSON: String; RttiType: TRttiType): TValue;
+    function EncodeParamValue(const ParamValue: TValue): String;
     function GetComandFromMethod(const Method: TRttiMethod): TRESTMethod;
     function GetFormData: TRESTFormData;
     function GetHeader(const Index: String): String;
@@ -193,9 +194,9 @@ begin
     for AFile in ParamValue.AsType<TArray<TRESTFile>> do
       AddFormDataFile(Param, AFile)
   else if ForceLoadFormData then
-    AddFormDataField(Param, Serializer.Serialize(ParamValue))
+    AddFormDataField(Param, EncodeParamValue(ParamValue))
   else
-    FRequest.Body := TValue.From(Serializer.Serialize(ParamValue));
+    FRequest.Body := TValue.From(EncodeParamValue(ParamValue));
 end;
 
 function TRemoteService.CheckForceFormData(Method: TRttiMethod): Boolean;
@@ -242,6 +243,14 @@ begin
 {$ENDIF}
 
   inherited;
+end;
+
+function TRemoteService.EncodeParamValue(const ParamValue: TValue): String;
+begin
+  if IsTypeKindString(ParamValue.Kind) then
+    Result := ParamValue.AsString
+  else
+    Result := Serializer.Serialize(ParamValue);
 end;
 
 function TRemoteService.GetComandFromMethod(const Method: TRttiMethod): TRESTMethod;
@@ -373,7 +382,7 @@ begin
     if ParamType = ptBody then
       AddParamToTheBody(Params[A], ParamValue, ForceFormData)
     else if ParamType = ptQuery then
-      QueryValues.AddPair(Params[A].Name, Serializer.Serialize(ParamValue))
+      QueryValues.AddPair(Params[A].Name, EncodeParamValue(ParamValue))
     else
       PathValues.Add(ParamValue.ToString);
   end;

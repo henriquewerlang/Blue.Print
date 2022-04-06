@@ -117,10 +117,8 @@ function TRestServerService.GetParamValue(const Method: TRttiMethod; const Param
 
   function GetParamValueFromContent(var ParamValue: String): Boolean;
   begin
-    Result := (Length(Method.GetParameters) = 1) and CanLoadParamFromContent;
-
-    if Result then
-      ParamValue := Request.Content;
+    ParamValue := Request.Content;
+    Result := not ParamValue.IsEmpty and (Length(Method.GetParameters) = 1) and CanLoadParamFromContent;
   end;
 
 begin
@@ -161,10 +159,15 @@ begin
 
   var ParamValue: String;
 
-  ParamLoaded := (GetParamValue(Request.QueryFields, ParamValue) or CanGetContentFields and GetParamValue(Request.ContentFields, ParamValue) or GetParamValueFromContent(ParamValue)) and not ParamValue.IsEmpty;
+  ParamLoaded := (GetParamValue(Request.QueryFields, ParamValue) or CanGetContentFields and GetParamValue(Request.ContentFields, ParamValue) or GetParamValueFromContent(ParamValue));
 
   if ParamLoaded then
-    Result := Serializer.Deserialize(ParamValue, Param.ParamType.Handle);
+    if IsTypeKindString(Param.ParamType.TypeKind) then
+      Result := ParamValue
+    else if ParamValue.IsEmpty then
+      ParamLoaded := False
+    else
+      Result := Serializer.Deserialize(ParamValue, Param.ParamType.Handle);
 end;
 
 function TRestServerService.GetSerializer: IRestJsonSerializer;

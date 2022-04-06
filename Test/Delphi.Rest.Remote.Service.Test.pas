@@ -263,7 +263,7 @@ begin
     begin
       var Request := Params[1].AsType<TRestRequest>;
 
-      Assert.AreEqual('"abc"', Request.Body.AsString);
+      Assert.AreEqual('abc', Request.Body.AsString);
     end).When.SendRequest(It.IsAny<TRestRequest>);
 
   Service.ParameterWithBodyAttribute('abc');
@@ -289,7 +289,7 @@ end;
 procedure TRemoteServiceTest.IfTheParameterHasTheQueryParameterTypeAttributeMustSendTheRequestRespectingThisType;
 begin
   var Communication := CreateMockCommunication;
-  var Request := CreateRequest(rmPost, '/ServiceParams/ParameterWithQueryAttribute?Param="abc"');
+  var Request := CreateRequest(rmPost, '/ServiceParams/ParameterWithQueryAttribute?Param=abc');
   var Service := CreateRemoteService<IServiceParams>(Communication.Instance) as IServiceParams;
 
   Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
@@ -356,7 +356,7 @@ end;
 procedure TRemoteServiceTest.SendingARequestWithOneParamMustPutTheParamSeparatorInTheURLAndTheNameAndValueParam;
 begin
   var Communication := CreateMockCommunication;
-  var Request := CreateRequest('/ServiceTest/TestProcedureWithOneParam?Param="abcd"');
+  var Request := CreateRequest('/ServiceTest/TestProcedureWithOneParam?Param=abcd');
   var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
 
   Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
@@ -416,7 +416,7 @@ end;
 procedure TRemoteServiceTest.TheHeadersFilledMustBeLoadedInTheCommunicationInterface;
 begin
   var Communication := TMock.CreateInterface<IRestCommunication>;
-  var Request := CreateRequest('/ServiceTest/TestProcedureWithOneParam?Param="abcd"');
+  var Request := CreateRequest('/ServiceTest/TestProcedureWithOneParam?Param=abcd');
   Request.Headers := 'My Header=abc'#13#10;
 
   var Client := CreateRemoteService(Communication.Instance);
@@ -466,7 +466,7 @@ begin
         '--%0:s'#13#10 +
         'Content-Disposition: form-data; name="Param1"'#13#10 +
         #13#10 +
-        '"abc"'#13#10 +
+        'abc'#13#10 +
         '--%0:s'#13#10 +
         'Content-Disposition: form-data; name="Param2"'#13#10 +
         #13#10 +
@@ -516,7 +516,7 @@ end;
 procedure TRemoteServiceTest.WhenCallAFunctionMustConvertTheFunctionParamsInTheGetURL;
 begin
   var Communication := CreateMockCommunication;
-  var Request := CreateRequest('/ServiceTest/TestProcedureWithParam?Param1="abc"&Param2=123');
+  var Request := CreateRequest('/ServiceTest/TestProcedureWithParam?Param1=abc&Param2=123');
   var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
 
   Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
@@ -544,7 +544,7 @@ end;
 procedure TRemoteServiceTest.WhenCallSendRequestMustSendABodyInParams;
 begin
   var Communication := CreateMockCommunication;
-  var Request := CreateRequest('/ServiceTest/TestProcedureWithParam?Param1="String"&Param2=1234');
+  var Request := CreateRequest('/ServiceTest/TestProcedureWithParam?Param1=String&Param2=1234');
   var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
 
   Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
@@ -741,7 +741,7 @@ begin
         '--%0:s'#13#10 +
         'Content-Disposition: form-data; name="MyParam"'#13#10 +
         #13#10 +
-        '"MyParam"'#13#10 +
+        'MyParam'#13#10 +
         '--%0:s'#13#10 +
         'Content-Disposition: form-data; name="MyFile"; filename="My File.png"'#13#10 +
         'Content-Type: image/png'#13#10 +
@@ -826,7 +826,7 @@ begin
     begin
       Request := Params[1].AsType<TRestRequest>;
 
-      Assert.AreEqual('/ServiceTest/TestProcedureWithFileAndParams?MayParam=12345&AnotherParam="My File"', Request.URL);
+      Assert.AreEqual('/ServiceTest/TestProcedureWithFileAndParams?MayParam=12345&AnotherParam=My File', Request.URL);
     end).When.SendRequest(It.IsAny<TRestRequest>);
 
   Service.TestProcedureWithFileAndParams(12345, nil, 'My File');
@@ -1026,7 +1026,7 @@ end;
 procedure TRemoteServiceTest.WhenThePropertyOnExceptionIsLoadedMustCallTheEventWhenRaiseAnErrorInTheSyncCall;
 begin
   var Communication := CreateMockCommunication;
-  var Request := CreateRequest('/ServiceTest/TestProcedureWithOneParam?Param="abcd"');
+  var Request := CreateRequest('/ServiceTest/TestProcedureWithOneParam?Param=abcd');
 
   var ExcetionCalled := False;
   var Client := CreateRemoteService(Communication.Instance);
@@ -1055,7 +1055,7 @@ end;
 
 procedure TRemoteServiceTest.WhenThePropertyOnExceptionIsNotLoadedMustCallTheEventWhenRaiseAnErrorInTheSyncCall;
 begin
-  var Request := CreateRequest('/ServiceTest/TestProcedureWithOneParam?Param="abcd"');
+  var Request := CreateRequest('/ServiceTest/TestProcedureWithOneParam?Param=abcd');
 
   Assert.WillRaise(
     procedure
@@ -1093,7 +1093,7 @@ end;
 procedure TRemoteServiceTest.WhenTheRequestHasMoreThenOneParameterMustSepareteThenWithTheSeparetorChar;
 begin
   var Communication := CreateMockCommunication;
-  var Request := CreateRequest('/ServiceTest/TestProcedureWithParam?Param1="abcd"&Param2=1234');
+  var Request := CreateRequest('/ServiceTest/TestProcedureWithParam?Param1=abcd&Param2=1234');
   var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
 
   Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
