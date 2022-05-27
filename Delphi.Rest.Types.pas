@@ -2,49 +2,51 @@ unit Delphi.Rest.Types;
 
 interface
 
-uses System.Rtti, System.Classes, {$IFDEF PAS2JS}Web{$ELSE}Web.HTTPApp, System.Net.Mime, System.NetEncoding{$ENDIF};
+uses System.Rtti, System.Classes, {$IFDEF PAS2JS}Web{$ELSE}REST.Types, Web.HTTPApp, System.Net.Mime, System.NetEncoding{$ENDIF};
 
 type
-  TRESTMethod = (rmDelete, rmGet, rmPatch, rmPost, rmPut);
+  {$IFDEF PAS2JS}
+  TRESTRequestMethod = (rmDelete, rmGet, rmPatch, rmPost, rmPut);
+  {$ENDIF}
   TRESTParamType = (ptBody, ptQuery, ptPath);
 
   TRESTFile = {$IFDEF PAS2JS}TJSHTMLFile{$ELSE}TAbstractWebRequestFile{$ENDIF};
   TRESTFormData = {$IFDEF PAS2JS}TJSFormData{$ELSE}TMultipartFormData{$ENDIF};
 
-  TRESTMethodAttribute = class(TCustomAttribute)
+  TRESTRequestMethodAttribute = class(TCustomAttribute)
   private
-    FMethod: TRESTMethod;
+    FMethod: TRESTRequestMethod;
 
-    constructor Create(const Method: TRESTMethod);
+    constructor Create(const Method: TRESTRequestMethod);
 
-    class function GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTMethod): Boolean;
+    class function GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTRequestMethod): Boolean;
   public
-    class function GetMethodType(const Method: TRttiMethod; var MethodType: TRESTMethod): Boolean;
+    class function GetMethodType(const Method: TRttiMethod; var MethodType: TRESTRequestMethod): Boolean;
 
-    property Method: TRESTMethod read FMethod write FMethod;
+    property Method: TRESTRequestMethod read FMethod write FMethod;
   end;
 
-  DeleteAttribute = class(TRESTMethodAttribute)
-  public
-    constructor Create;
-  end;
-
-  GetAttribute = class(TRESTMethodAttribute)
+  DeleteAttribute = class(TRESTRequestMethodAttribute)
   public
     constructor Create;
   end;
 
-  PatchAttribute = class(TRESTMethodAttribute)
+  GetAttribute = class(TRESTRequestMethodAttribute)
   public
     constructor Create;
   end;
 
-  PostAttribute = class(TRESTMethodAttribute)
+  PatchAttribute = class(TRESTRequestMethodAttribute)
   public
     constructor Create;
   end;
 
-  PutAttribute = class(TRESTMethodAttribute)
+  PostAttribute = class(TRESTRequestMethodAttribute)
+  public
+    constructor Create;
+  end;
+
+  PutAttribute = class(TRESTRequestMethodAttribute)
   public
     constructor Create;
   end;
@@ -133,21 +135,21 @@ begin
       (Value);
 end;
 
-{ TRESTMethodAttribute }
+{ TRESTRequestMethodAttribute }
 
-constructor TRESTMethodAttribute.Create(const Method: TRESTMethod);
+constructor TRESTRequestMethodAttribute.Create(const Method: TRESTRequestMethod);
 begin
   inherited Create;
 
   FMethod := Method;
 end;
 
-class function TRESTMethodAttribute.GetMethodType(const Method: TRttiMethod; var MethodType: TRESTMethod): Boolean;
+class function TRESTRequestMethodAttribute.GetMethodType(const Method: TRttiMethod; var MethodType: TRESTRequestMethod): Boolean;
 begin
   Result := GetTypeFromAttributes(Method, MethodType) or GetTypeFromAttributes(Method.Parent, MethodType);
 end;
 
-class function TRESTMethodAttribute.GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTMethod): Boolean;
+class function TRESTRequestMethodAttribute.GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTRequestMethod): Boolean;
 var
   Attribute: TCustomAttribute;
 
@@ -155,9 +157,9 @@ begin
   Result := False;
 
   for Attribute in RttiType.GetAttributes do
-    if Attribute is TRESTMethodAttribute then
+    if Attribute is TRESTRequestMethodAttribute then
     begin
-      Value := TRESTMethodAttribute(Attribute).Method;
+      Value := TRESTRequestMethodAttribute(Attribute).Method;
 
       Exit(True);
     end;

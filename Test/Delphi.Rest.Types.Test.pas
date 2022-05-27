@@ -2,7 +2,7 @@ unit Delphi.Rest.Types.Test;
 
 interface
 
-uses DUnitX.TestFramework, Delphi.Rest.Types;
+uses DUnitX.TestFramework, Delphi.Rest.Types, Rest.Types;
 
 type
   [TestFixture]
@@ -44,7 +44,7 @@ type
     [TestCase('PATCH', 'rmPatch')]
     [TestCase('POST', 'rmPost')]
     [TestCase('PUT', 'rmPut')]
-    procedure WhenGetTheTypeOfMethodMustReturnAsExpected(MethodToCompare: TRESTMethod);
+    procedure WhenGetTheTypeOfMethodMustReturnAsExpected(MethodToCompare: TRESTRequestMethod);
     [Test]
     procedure WhenTheProcedureHasntAttributeMustReturnTrueIfTheClassHasTheAttribute;
     [Test]
@@ -245,9 +245,9 @@ end;
 procedure TRESTMethodAttributeTest.IfTheMethodHasntAttributeMustReturnFalseInTheFunction;
 begin
   var Method := TRttiContext.Create.GetType(TypeInfo(IContractWithOutAttributes)).GetMethod('Proc');
-  var MethodType: TRESTMethod;
+  var MethodType: TRESTRequestMethod;
 
-  Assert.IsFalse(TRESTMethodAttribute.GetMethodType(Method, MethodType));
+  Assert.IsFalse(TRESTRequestMethodAttribute.GetMethodType(Method, MethodType));
 end;
 
 procedure TRESTMethodAttributeTest.SetupFixture;
@@ -260,15 +260,15 @@ begin
   end;
 end;
 
-procedure TRESTMethodAttributeTest.WhenGetTheTypeOfMethodMustReturnAsExpected(MethodToCompare: TRESTMethod);
+procedure TRESTMethodAttributeTest.WhenGetTheTypeOfMethodMustReturnAsExpected(MethodToCompare: TRESTRequestMethod);
 const
-  COMMAND_NAME: array[TRESTMethod] of String = ('Delete', 'Get', 'Patch', 'Post', 'Put');
+  COMMAND_NAME: array[TRESTRequestMethod] of String = ('Delete', 'Get', 'Patch', 'Post', 'Put');
 
 begin
   var Method := TRttiContext.Create.GetType(TypeInfo(IContractMethodType)).GetMethod(COMMAND_NAME[MethodToCompare]);
-  var MethodType: TRESTMethod;
+  var MethodType: TRESTRequestMethod;
 
-  TRESTMethodAttribute.GetMethodType(Method, MethodType);
+  TRESTRequestMethodAttribute.GetMethodType(Method, MethodType);
 
   Assert.AreEqual(MethodToCompare, MethodType);
 end;
@@ -276,9 +276,9 @@ end;
 procedure TRESTMethodAttributeTest.WhenTheProcedureHasntAttributeMustReturnTheTypeFromTheClassAttribute;
 begin
   var Method := TRttiContext.Create.GetType(TypeInfo(IContractMethodType)).GetMethod('ProcedureWithOutAttribute');
-  var MethodType: TRESTMethod;
+  var MethodType: TRESTRequestMethod;
 
-  TRESTMethodAttribute.GetMethodType(Method, MethodType);
+  TRESTRequestMethodAttribute.GetMethodType(Method, MethodType);
 
   Assert.AreEqual(rmPost, MethodType);
 end;
@@ -286,9 +286,9 @@ end;
 procedure TRESTMethodAttributeTest.WhenTheProcedureHasntAttributeMustReturnTrueIfTheClassHasTheAttribute;
 begin
   var Method := TRttiContext.Create.GetType(TypeInfo(IContractMethodType)).GetMethod('ProcedureWithOutAttribute');
-  var MethodType: TRESTMethod;
+  var MethodType: TRESTRequestMethod;
 
-  Assert.IsTrue(TRESTMethodAttribute.GetMethodType(Method, MethodType));
+  Assert.IsTrue(TRESTRequestMethodAttribute.GetMethodType(Method, MethodType));
 end;
 
 { TAuthenticationTest }

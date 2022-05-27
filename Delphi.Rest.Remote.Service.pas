@@ -2,14 +2,15 @@
 
 interface
 
-uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF DCC}System.Net.HTTPClient, {$ENDIF}Delphi.Rest.Types, Delphi.Rest.JSON.Serializer.Intf;
+uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF DCC}System.Net.HTTPClient, Rest.Types, {$ENDIF}Delphi.Rest.Types,
+  Delphi.Rest.JSON.Serializer.Intf;
 
 type
   TRestRequest = class
   public
     Body: TValue;
     Headers: String;
-    Method: TRESTMethod;
+    Method: TRESTRequestMethod;
     URL: String;
   end;
 
@@ -60,7 +61,7 @@ type
     function CheckForceFormData(Method: TRttiMethod): Boolean;
     function Deserialize(const JSON: String; RttiType: TRttiType): TValue;
     function EncodeParamValue(const ParamValue: TValue): String;
-    function GetComandFromMethod(const Method: TRttiMethod): TRESTMethod;
+    function GetComandFromMethod(const Method: TRttiMethod): TRESTRequestMethod;
     function GetFormData: TRESTFormData;
     function GetHeader(const Index: String): String;
     function GetHeaders: String;
@@ -156,7 +157,7 @@ uses Delphi.Rest.Exceptions,
 {$ENDIF};
 
 const
-  COMMAND_NAME: array[TRESTMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT');
+  COMMAND_NAME: array[TRESTRequestMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT');
   COMPILER_OFFSET = 1;
 
 { TRemoteService }
@@ -253,9 +254,9 @@ begin
     Result := Serializer.Serialize(ParamValue);
 end;
 
-function TRemoteService.GetComandFromMethod(const Method: TRttiMethod): TRESTMethod;
+function TRemoteService.GetComandFromMethod(const Method: TRttiMethod): TRESTRequestMethod;
 begin
-  if not TRESTMethodAttribute.GetMethodType(Method, Result) then
+  if not TRESTRequestMethodAttribute.GetMethodType(Method, Result) then
     Result := rmGet;
 end;
 
@@ -578,7 +579,7 @@ var
   end;
 
 const
-  HTTP_METHOD: array[TRESTMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT');
+  HTTP_METHOD: array[TRESTRequestMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT');
 
 {$ENDIF}
 begin
@@ -603,6 +604,7 @@ begin
 
   try
     Content := LoadContentStream;
+    Connection.ContentType := CONTENTTYPE_APPLICATION_JSON;
 
     for var A := 0 to Pred(FHeaders.Count) do
       Connection.CustomHeaders[FHeaders.Names[A]] := FHeaders.ValueFromIndex[A];

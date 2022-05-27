@@ -2,7 +2,7 @@ unit Delphi.Rest.Remote.Service.Test;
 
 interface
 
-uses DUnitX.TestFramework, System.Rtti, Delphi.Rest.Remote.Service, Delphi.Mock, Delphi.Mock.Intf, Delphi.Rest.Types;
+uses DUnitX.TestFramework, System.Rtti, Delphi.Rest.Remote.Service, Delphi.Mock, Delphi.Mock.Intf, Delphi.Rest.Types, Rest.Types;
 
 type
   [TestFixture]
@@ -10,9 +10,9 @@ type
   private
     function CreateMockCommunication: IMock<IRestCommunication>;
     function CreateRequest(const URL: String): TRestRequest; overload;
-    function CreateRequest(Method: TRESTMethod; const URL: String): TRestRequest; overload;
-    function CreateRequest(Method: TRESTMethod; const URL, Body: String): TRestRequest; overload;
-    function CreateRequest(Method: TRESTMethod; const URL: String; Body: TValue): TRestRequest; overload;
+    function CreateRequest(Method: TRESTRequestMethod; const URL: String): TRestRequest; overload;
+    function CreateRequest(Method: TRESTRequestMethod; const URL, Body: String): TRestRequest; overload;
+    function CreateRequest(Method: TRESTRequestMethod; const URL: String; Body: TValue): TRestRequest; overload;
     function CreateRemoteService(const Communication: IRestCommunication): TRemoteService; overload;
     function CreateRemoteService<T: IInterface>(const Communication: IRestCommunication): TRemoteService; overload;
     function CreateRemoteServiceURL(const URL: String; const Communication: IRestCommunication): TRemoteService; overload;
@@ -59,7 +59,7 @@ type
     [TestCase('PATCH', 'rmPatch')]
     [TestCase('POST', 'rmPost')]
     [TestCase('PUT', 'rmPut')]
-    procedure TheHTTPMethodMustFollowTheAnotationOfTheProcedure(MethodToCompare: TRESTMethod);
+    procedure TheHTTPMethodMustFollowTheAnotationOfTheProcedure(MethodToCompare: TRESTRequestMethod);
     [Test]
     procedure WhenTheMethodHasNoAttributesHaveToUseTheGetMethod;
     [Test]
@@ -75,7 +75,7 @@ type
     [TestCase('PATCH', 'rmPatch,False')]
     [TestCase('POST', 'rmPost,False')]
     [TestCase('PUT', 'rmPut,False')]
-    procedure IfTheProcedureHasntAnAttributeAboutParamMustSendTheParamByTheTypeOfCommand(Method: TRESTMethod; ParameterInQuery: Boolean);
+    procedure IfTheProcedureHasntAnAttributeAboutParamMustSendTheParamByTheTypeOfCommand(Method: TRESTRequestMethod; ParameterInQuery: Boolean);
     [Test]
     procedure WhenTheMethodHasNoAttributesOfParamDefinedMustGetTheAttributeFromInterface;
     [Test]
@@ -239,12 +239,12 @@ begin
   Result.URL := URL;
 end;
 
-function TRemoteServiceTest.CreateRequest(Method: TRESTMethod; const URL: String): TRestRequest;
+function TRemoteServiceTest.CreateRequest(Method: TRESTRequestMethod; const URL: String): TRestRequest;
 begin
   Result := CreateRequest(Method, URL, EmptyStr);
 end;
 
-function TRemoteServiceTest.CreateRequest(Method: TRESTMethod; const URL, Body: String): TRestRequest;
+function TRemoteServiceTest.CreateRequest(Method: TRESTRequestMethod; const URL, Body: String): TRestRequest;
 begin
   Result := CreateRequest(Method, URL, TValue.From(Body));
 
@@ -301,9 +301,9 @@ begin
   Request.Free;
 end;
 
-procedure TRemoteServiceTest.IfTheProcedureHasntAnAttributeAboutParamMustSendTheParamByTheTypeOfCommand(Method: TRESTMethod; ParameterInQuery: Boolean);
+procedure TRemoteServiceTest.IfTheProcedureHasntAnAttributeAboutParamMustSendTheParamByTheTypeOfCommand(Method: TRESTRequestMethod; ParameterInQuery: Boolean);
 const
-  COMMAND_NAME: array[TRESTMethod] of String = ('Delete', 'Get', 'Patch', 'Post', 'Put');
+  COMMAND_NAME: array[TRESTRequestMethod] of String = ('Delete', 'Get', 'Patch', 'Post', 'Put');
 
 begin
   var Communication := CreateMockCommunication;
@@ -433,9 +433,9 @@ begin
   Request.Free;
 end;
 
-procedure TRemoteServiceTest.TheHTTPMethodMustFollowTheAnotationOfTheProcedure(MethodToCompare: TRESTMethod);
+procedure TRemoteServiceTest.TheHTTPMethodMustFollowTheAnotationOfTheProcedure(MethodToCompare: TRESTRequestMethod);
 const
-  COMMAND_NAME: array[TRESTMethod] of String = ('Delete', 'Get', 'Patch', 'Post', 'Put');
+  COMMAND_NAME: array[TRESTRequestMethod] of String = ('Delete', 'Get', 'Patch', 'Post', 'Put');
 
 begin
   var Communication := CreateMockCommunication;
@@ -1121,7 +1121,7 @@ begin
   Service.Proc;
 end;
 
-function TRemoteServiceTest.CreateRequest(Method: TRESTMethod; const URL: String; Body: TValue): TRestRequest;
+function TRemoteServiceTest.CreateRequest(Method: TRESTRequestMethod; const URL: String; Body: TValue): TRestRequest;
 begin
   Result := TRestRequest.Create;
   Result.Body := Body;
