@@ -151,7 +151,7 @@ implementation
 
 uses Delphi.Rest.Exceptions,
 {$IFDEF PAS2JS}
-  JS, Web, Pas2Js.Rest.JSON.Serializers
+  JS, Web, WebOrWorker, Pas2Js.Rest.JSON.Serializers
 {$ELSE}
   Delphi.Rest.JSON.Serializer, System.Net.Mime, Web.HTTPApp, System.NetConsts
 {$ENDIF};
