@@ -157,7 +157,6 @@ uses Delphi.Rest.Exceptions,
 {$ENDIF};
 
 const
-  COMMAND_NAME: array[TRESTRequestMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT');
   COMPILER_OFFSET = 1;
 
 { TRemoteService }
@@ -578,9 +577,6 @@ var
         Result := TFileStream.Create(Request.Body.AsType<TAbstractWebRequestFile>.FileName, fmOpenRead or fmShareDenyWrite);
   end;
 
-const
-  HTTP_METHOD: array[TRESTRequestMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT');
-
 {$ENDIF}
 begin
   FHeaders.Text := Request.Headers;
@@ -588,7 +584,7 @@ begin
 {$IFDEF PAS2JS}
   Connection := TJSXMLHttpRequest.New;
 
-  Connection.Open(COMMAND_NAME[Request.Method], Request.URL, False);
+  Connection.Open(RESTRequestMethodToString(Request.Method), Request.URL, False);
 
   for A := 0 to Pred(FHeaders.Count) do
     Connection.setRequestHeader(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
@@ -609,7 +605,7 @@ begin
     for var A := 0 to Pred(FHeaders.Count) do
       Connection.CustomHeaders[FHeaders.Names[A]] := FHeaders.ValueFromIndex[A];
 
-    var Response := Connection.Execute(HTTP_METHOD[Request.Method], Request.URL, Content) as IHTTPResponse;
+    var Response := Connection.Execute(RESTRequestMethodToString(Request.Method), Request.URL, Content) as IHTTPResponse;
 
     Result := Response.ContentAsString(TEncoding.UTF8);
 
@@ -633,7 +629,7 @@ var
 begin
   FHeaders.Text := Request.Headers;
   Options := TJSFetchInit.New;
-  Options.Method := COMMAND_NAME[Request.Method];
+  Options.Method := RESTRequestMethodToString(Request.Method);
 
   if FHeaders.Count > 0 then
   begin

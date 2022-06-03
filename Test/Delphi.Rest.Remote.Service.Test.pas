@@ -131,15 +131,15 @@ type
     function TestFunction: Integer;
 
     [DELETE]
-    procedure TestDelete;
+    procedure TestDELETE;
     [GET]
-    procedure TestGet;
+    procedure TestGET;
     [PATCH]
-    procedure TestPatch;
+    procedure TestPATCH;
     [POST]
-    procedure TestPost;
+    procedure TestPOST;
     [PUT]
-    procedure TestPut;
+    procedure TestPUT;
     procedure TestProcedure;
     procedure TestProcedureWithOneParam(Param: String);
     procedure TestProcedureWithParam(Param1: String; Param2: Integer);
@@ -186,15 +186,15 @@ type
   IServiceParamsType = interface(IInvokable)
     ['{AC1EF798-4269-4887-B7DF-0D6C3132C3FA}']
     [DELETE]
-    procedure TestDelete(Param: Integer);
+    procedure TestDELETE(Param: Integer);
     [GET]
-    procedure TestGet(Param: Integer);
+    procedure TestGET(Param: Integer);
     [PATCH]
-    procedure TestPatch(Param: Integer);
+    procedure TestPATCH(Param: Integer);
     [POST]
-    procedure TestPost(Param: Integer);
+    procedure TestPOST(Param: Integer);
     [PUT]
-    procedure TestPut(Param: Integer);
+    procedure TestPUT(Param: Integer);
   end;
 
   [RemoteName('AnotherName')]
@@ -302,13 +302,10 @@ begin
 end;
 
 procedure TRemoteServiceTest.IfTheProcedureHasntAnAttributeAboutParamMustSendTheParamByTheTypeOfCommand(Method: TRESTRequestMethod; ParameterInQuery: Boolean);
-const
-  COMMAND_NAME: array[TRESTRequestMethod] of String = ('Delete', 'Get', 'Patch', 'Post', 'Put');
-
 begin
   var Communication := CreateMockCommunication;
   var Context := TRttiContext.Create;
-  var MethodName := 'Test' + COMMAND_NAME[Method];
+  var MethodName := 'Test' + RESTRequestMethodToString(Method);
   var ParamValue := '123456';
   var Request := CreateRequest(Method, '/ServiceParamsType/' + MethodName);
   var RttiType := Context.GetType(TypeInfo(IServiceParamsType));
@@ -434,13 +431,10 @@ begin
 end;
 
 procedure TRemoteServiceTest.TheHTTPMethodMustFollowTheAnotationOfTheProcedure(MethodToCompare: TRESTRequestMethod);
-const
-  COMMAND_NAME: array[TRESTRequestMethod] of String = ('Delete', 'Get', 'Patch', 'Post', 'Put');
-
 begin
   var Communication := CreateMockCommunication;
   var Context := TRttiContext.Create;
-  var MethodName := 'Test' + COMMAND_NAME[MethodToCompare];
+  var MethodName := 'Test' + RESTRequestMethodToString(MethodToCompare);
   var Request := CreateRequest(MethodToCompare, '/ServiceTest/' + MethodName);
   var RttiType := Context.GetType(TypeInfo(IServiceTest));
   var Service := CreateRemoteService(Communication.Instance) as IServiceTest;

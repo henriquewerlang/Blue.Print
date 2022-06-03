@@ -114,10 +114,33 @@ type
   end;
 
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
+{$IFDEF PAS2JS}
+function RESTRequestMethodToString(const AMethod: TRESTRequestMethod): string;
+{$ENDIF}
 
 implementation
 
 uses System.SysUtils;
+
+{$IFDEF PAS2JS}
+function RESTRequestMethodToString(const AMethod: TRESTRequestMethod): string;
+begin
+  case AMethod of
+    TRESTRequestMethod.rmPOST:
+      result := 'POST';
+    TRESTRequestMethod.rmPUT:
+      result := 'PUT';
+    TRESTRequestMethod.rmGET:
+      result := 'GET';
+    TRESTRequestMethod.rmDELETE:
+      result := 'DELETE';
+    TRESTRequestMethod.rmPATCH:
+      result := 'PATCH'
+  else
+    result := Format('RESTRequestMethod2String - unknown Method: %d', [integer(AMethod)]);
+  end;
+end;
+{$ENDIF}
 
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
 begin

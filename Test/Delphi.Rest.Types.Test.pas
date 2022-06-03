@@ -261,11 +261,8 @@ begin
 end;
 
 procedure TRESTMethodAttributeTest.WhenGetTheTypeOfMethodMustReturnAsExpected(MethodToCompare: TRESTRequestMethod);
-const
-  COMMAND_NAME: array[TRESTRequestMethod] of String = ('Delete', 'Get', 'Patch', 'Post', 'Put');
-
 begin
-  var Method := TRttiContext.Create.GetType(TypeInfo(IContractMethodType)).GetMethod(COMMAND_NAME[MethodToCompare]);
+  var Method := TRttiContext.Create.GetType(TypeInfo(IContractMethodType)).GetMethod(RESTRequestMethodToString(MethodToCompare));
   var MethodType: TRESTRequestMethod;
 
   TRESTRequestMethodAttribute.GetMethodType(Method, MethodType);
