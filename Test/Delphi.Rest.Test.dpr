@@ -15,7 +15,12 @@ uses
   Delphi.Rest.Types in '..\Delphi.Rest.Types.pas',
   Delphi.Rest.Types.Test in 'Delphi.Rest.Types.Test.pas',
   Delphi.Rest.Content.Parser.Test in 'Delphi.Rest.Content.Parser.Test.pas',
-  Delphi.Rest.Request.Mock in 'Delphi.Rest.Request.Mock.pas';
+  Delphi.Rest.Request.Mock in 'Delphi.Rest.Request.Mock.pas',
+  Delphi.Rest.Service.Container in '..\Delphi.Rest.Service.Container.pas',
+  Delphi.Rest.JSON.Serializer.Intf in '..\Delphi.Rest.JSON.Serializer.Intf.pas',
+  Delphi.Rest.JSON.Serializer in '..\Delphi.Rest.JSON.Serializer.pas',
+  Delphi.Rest.Content.Parser in '..\Delphi.Rest.Content.Parser.pas',
+  Delphi.Rest.Exceptions in '..\Delphi.Rest.Exceptions.pas';
 
 begin
   FastMM_OutputDebugStringEvents := [];
