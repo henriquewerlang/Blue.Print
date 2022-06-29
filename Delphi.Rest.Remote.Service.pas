@@ -153,7 +153,7 @@ uses Delphi.Rest.Exceptions,
 {$IFDEF PAS2JS}
   JS, Web, WebOrWorker, Pas2Js.Rest.JSON.Serializers
 {$ELSE}
-  Delphi.Rest.JSON.Serializer, System.Net.Mime, Web.HTTPApp, System.NetConsts
+  System.Net.Mime, System.NetConsts, System.Net.URLClient, Delphi.Rest.JSON.Serializer, Web.HTTPApp
 {$ENDIF};
 
 const
