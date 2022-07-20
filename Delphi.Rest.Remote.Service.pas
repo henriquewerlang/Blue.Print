@@ -594,7 +594,7 @@ begin
   if Connection.Status = 200 then
     Result := Connection.ResponseText
   else
-    raise EHTTPStatusError.Create(Connection.status, Connection.ResponseText);
+    raise EHTTPStatusError.Create(Connection.status, Request.URL, Connection.ResponseText);
 {$ELSE}
   var Content: TStream := nil;
 
@@ -610,7 +610,7 @@ begin
     Result := Response.ContentAsString(TEncoding.UTF8);
 
     if Response.StatusCode <> 200 then
-      raise EHTTPStatusError.Create(Response.StatusCode, Result);
+      raise EHTTPStatusError.Create(Response.StatusCode, Request.URL, Result);
   finally
     Content.Free;
   end;
@@ -647,7 +647,7 @@ begin
   Result := await(Response.Text);
 
   if Response.Status <> 200 then
-    raise EHTTPStatusError.Create(Response.Status, Result);
+    raise EHTTPStatusError.Create(Response.Status, Request.URL, Result);
 end;
 {$ENDIF}
 
