@@ -601,6 +601,8 @@ begin
   try
     Content := LoadContentStream;
     Connection.ContentType := CONTENTTYPE_APPLICATION_JSON;
+    Connection.ResponseTimeout := -1;
+    Connection.SendTimeout := -1;
 
     for var A := 0 to Pred(FHeaders.Count) do
       Connection.CustomHeaders[FHeaders.Names[A]] := FHeaders.ValueFromIndex[A];
