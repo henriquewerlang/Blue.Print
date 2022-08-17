@@ -1,4 +1,4 @@
-unit Pas2Js.Rest.JSON.Serializers;
+﻿unit Pas2Js.Rest.JSON.Serializers;
 
 interface
 
@@ -19,7 +19,7 @@ type
     function DeserializeEnumerator(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeJSON(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeObject(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
-    function DeserializeObjectProperty(const PropertyValue: TValue; RttiType: TRttiType; const JSON: JSValue): TValue; virtual;
+    function DeserializeObjectProperty(const PropertyValue: TValue; const Member: TRttiMember; const RttiType: TRttiType; const JSON: JSValue): TValue; virtual;
     function DeserializeRecord(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function SerializeArray(const Value: TValue; RttiType: TRttiDynamicArrayType): JSValue; virtual;
     function SerializeJSON(const Value: TValue; RttiType: TRttiType): JSValue; virtual;
@@ -143,7 +143,7 @@ begin
   end;
 end;
 
-function TRestJsonSerializer.DeserializeObjectProperty(const PropertyValue: TValue; RttiType: TRttiType; const JSON: JSValue): TValue;
+function TRestJsonSerializer.DeserializeObjectProperty(const PropertyValue: TValue; const Member: TRttiMember; const RttiType: TRttiType; const JSON: JSValue): TValue;
 begin
   Result := DeserializeJSON(JSON, RttiType);
 end;
@@ -158,34 +158,38 @@ var
 
   Field: TRttiField;
 
-  Value: TValue;
+  Member: TRttiMember;
 
-  KeyType: TRttiType;
+  MemberType: TRttiType;
+
+  Value: TValue;
 
 begin
   for Key in TJSObject.Keys(JSONObject) do
   begin
-    Field := RttiType.GetField('F' + Key);
-    KeyType := nil;
     Prop := RttiType.GetProperty(Key);
-
-    if not Assigned(Field) then
-      Field := RttiType.GetField(Key);
 
     if Assigned(Prop) then
     begin
-      KeyType := Prop.PropertyType;
+      Member := Prop;
+      MemberType := Prop.PropertyType;
       Value := Prop.GetValue(Instance);
     end
-    else if Assigned(Field) then
+    else
     begin
-      KeyType := Field.FieldType;
-      Value := Field.GetValue(Instance);
+      Field := RttiType.GetField(Key);
+
+      if Assigned(Field) then
+      begin
+        Member := Field;
+        MemberType := Field.FieldType;
+        Value := Field.GetValue(Instance);
+      end;
     end;
 
-    if Assigned(KeyType) then
+    if Assigned(Member) then
     begin
-      Value := DeserializeObjectProperty(Value, KeyType, JSONObject[Key]);
+      Value := DeserializeObjectProperty(Value, Member, MemberType, JSONObject[Key]);
 
       if Assigned(Prop) then
         SetJSValueProp(Instance, Prop.PropertyTypeInfo, Value.AsJSValue)
