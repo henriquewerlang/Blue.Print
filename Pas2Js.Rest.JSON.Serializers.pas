@@ -83,10 +83,15 @@ var
   Values: TArray<TValue>;
 
 begin
-  SetLength(Values, JSONArray.Length);
+  if Assigned(JSONArray) then
+  begin
+    SetLength(Values, JSONArray.Length);
 
-  for A := 0 to Pred(JSONArray.Length) do
-    Values[A] := DeserializeJSON(JSONArray[A], RttiArrayType.ElementType);
+    for A := 0 to Pred(JSONArray.Length) do
+      Values[A] := DeserializeJSON(JSONArray[A], RttiArrayType.ElementType);
+  end
+  else
+    Values := nil;
 
   Result := TValue.FromArray(RttiArrayType.Handle, Values);
 end;
