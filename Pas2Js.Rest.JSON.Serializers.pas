@@ -189,7 +189,9 @@ begin
         Member := Field;
         MemberType := Field.FieldType;
         Value := Field.GetValue(Instance);
-      end;
+      end
+      else
+        Member := nil;
     end;
 
     if Assigned(Member) then
@@ -201,7 +203,7 @@ begin
       else if Assigned(Field) then
         Field.SetValue(Instance, Value);
     end
-    else if Instance.hasOwnProperty('f' + Key) then
+    else if &in('f' + Key, Instance) then
       Instance['f' + Key] := JSONObject[Key];
   end;
 end;
