@@ -203,7 +203,7 @@ begin
       else if Assigned(Field) then
         Field.SetValue(Instance, Value);
     end
-    else if &in('f' + Key, Instance) then
+    else if jsIn('f' + Key, Instance) then
       Instance['f' + Key] := JSONObject[Key];
   end;
 end;
