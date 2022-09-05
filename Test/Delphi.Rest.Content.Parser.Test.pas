@@ -1,4 +1,4 @@
-unit Delphi.Rest.Content.Parser.Test;
+﻿unit Delphi.Rest.Content.Parser.Test;
 
 interface
 

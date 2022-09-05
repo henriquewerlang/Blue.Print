@@ -1,4 +1,4 @@
-unit Delphi.Rest.Exceptions;
+﻿unit Delphi.Rest.Exceptions;
 
 interface
 

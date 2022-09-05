@@ -1,4 +1,4 @@
-unit Delphi.Rest.JSON.Serializer.Intf;
+﻿unit Delphi.Rest.JSON.Serializer.Intf;
 
 interface
 
