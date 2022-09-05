@@ -21,10 +21,10 @@ type
 
   TRestCommunication = class(TInterfacedObject, IRestCommunication)
   private
-    FHeaders: TStringList;
     {$IFDEF DCC}
     FConnection: THTTPClient;
     {$ENDIF}
+    FHeaders: TStringList;
 
     {$IFDEF DCC}
     function GetConnection: THTTPClient;
@@ -42,17 +42,17 @@ type
 
   TRemoteService = class(TVirtualInterface)
   private
-    FContext: TRttiContext;
-    FRttiType: TRttiInterfaceType;
-    FURL: String;
-    FSerializer: IRestJsonSerializer;
     FCommunication: IRestCommunication;
+    FContext: TRttiContext;
+    FFormData: TRESTFormData;
+    FHeaders: TStringList;
     FOnExecuteException: TProc<Exception, IRestJsonSerializer>;
     FRequest: TRestRequest;
-    FHeaders: TStringList;
-    FFormData: TRESTFormData;
+    FRttiType: TRttiInterfaceType;
+    FSerializer: IRestJsonSerializer;
+    FURL: String;
 
-    function CheckForceFormData(Method: TRttiMethod): Boolean;
+    function CheckForceFormData(const Method: TRttiMethod): Boolean;
     function Deserialize(const JSON: String; RttiType: TRttiType): TValue;
     function EncodeParamValue(const ParamValue: TValue): String;
     function GetComandFromMethod(const Method: TRttiMethod): TRESTRequestMethod;
@@ -60,8 +60,8 @@ type
     function GetHeader(const Index: String): String;
     function GetHeaders: String;
     function GetParameterType(const Parameter: TRttiParameter): TRESTParamType;
-    function GetRemoteNameAttribute(RttiType: TRttiNamedObject; var Name: String): Boolean;
-    function GetRemoteRequestName(RttiType: TRttiNamedObject): String;
+    function GetRemoteNameAttribute(const RttiType: TRttiNamedObject; var Name: String): Boolean;
+    function GetRemoteRequestName(const RttiType: TRttiNamedObject): String;
     function GetRemoteRequestServiceName: String;
     function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>): String;
 
@@ -84,7 +84,7 @@ type
 
     property FormData: TRESTFormData read GetFormData;
   public
-    constructor Create(TypeInfo: PTypeInfo);
+    constructor Create(const TypeInfo: PTypeInfo);
 
     destructor Destroy; override;
 
@@ -97,40 +97,33 @@ type
     property URL: String read FURL write FURL;
   end;
 
-  TRemoteServiceTyped<T: IInterface> = class(TRemoteService)
-  public
-    constructor Create;
-  end;
-
   IRemoteServiceFactory = interface
-    function GetService(&Type: PTypeInfo; const URL: String): TRemoteService;
+    function GetService(const &Type: PTypeInfo; const URL: String): TRemoteService;
   end;
 
   TRemoteServiceFactory = class(TInterfacedObject, IRemoteServiceFactory)
   private
     class var GRemoteServiceFactory: IRemoteServiceFactory;
   private
-    FHeaders: String;
-    FSerializer: IRestJsonSerializer;
     FCommunication: IRestCommunication;
+    FHeaders: String;
     FOnExecuteException: TProc<Exception, IRestJsonSerializer>;
+    FSerializerFactory: TFunc<IRestJsonSerializer>;
     FURL: String;
 
     class function GetRemoteServiceFactory: TRemoteServiceFactory; static;
 
-    function GetService(&Type: PTypeInfo; const URL: String): TRemoteService; overload;
     function GetCommunication: IRestCommunication;
-    function GetSerializer: IRestJsonSerializer;
+    function GetService(const &Type: PTypeInfo; const URL: String): TRemoteService; overload;
   public
     class constructor Create;
 
-    class function GetService<I: IInterface>: I; overload;
     class function GetService<I: IInterface>(const URL: String): I; overload;
 
     property Communication: IRestCommunication read GetCommunication write FCommunication;
     property Headers: String read FHeaders write FHeaders;
     property OnExecuteException: TProc<Exception, IRestJsonSerializer> read FOnExecuteException write FOnExecuteException;
-    property Serializer: IRestJsonSerializer read GetSerializer write FSerializer;
+    property SerializerFactory: TFunc<IRestJsonSerializer> read FSerializerFactory write FSerializerFactory;
     property URL: String read FURL write FURL;
 
     class property Instance: TRemoteServiceFactory read GetRemoteServiceFactory;
@@ -188,7 +181,7 @@ begin
     FRequest.Body := TValue.From(EncodeParamValue(ParamValue));
 end;
 
-function TRemoteService.CheckForceFormData(Method: TRttiMethod): Boolean;
+function TRemoteService.CheckForceFormData(const Method: TRttiMethod): Boolean;
 var
   Parameter: TRttiParameter;
 
@@ -204,7 +197,7 @@ begin
   Result := BodyParamCount > 1;
 end;
 
-constructor TRemoteService.Create(TypeInfo: PTypeInfo);
+constructor TRemoteService.Create(const TypeInfo: PTypeInfo);
 begin
   inherited Create(TypeInfo, {$IFDEF PAS2JS}@OnInvokeMethodPas2Js{$ELSE}OnInvokeMethod{$ENDIF});
 
@@ -275,7 +268,7 @@ begin
       Result := ptQuery;
 end;
 
-function TRemoteService.GetRemoteNameAttribute(RttiType: TRttiNamedObject; var Name: String): Boolean;
+function TRemoteService.GetRemoteNameAttribute(const RttiType: TRttiNamedObject; var Name: String): Boolean;
 var
   CustomAttribute: TCustomAttribute;
 
@@ -292,7 +285,7 @@ begin
     Name := RttiType.Name;
 end;
 
-function TRemoteService.GetRemoteRequestName(RttiType: TRttiNamedObject): String;
+function TRemoteService.GetRemoteRequestName(const RttiType: TRttiNamedObject): String;
 begin
   GetRemoteNameAttribute(RttiType, Result);
 end;
@@ -511,7 +504,6 @@ var
   A: Integer;
 
 {$ELSE}
-
   function LoadContentStream: TStream;
   begin
     Result := nil;
@@ -572,18 +564,16 @@ begin
 {$ENDIF}
 end;
 
-{ TRemoteServiceTyped<T> }
-
-constructor TRemoteServiceTyped<T>.Create;
-begin
-  inherited Create(TypeInfo(T));
-end;
-
 { TRemoteServiceFactory }
 
 class constructor TRemoteServiceFactory.Create;
 begin
   GRemoteServiceFactory := TRemoteServiceFactory.Create;
+  TRemoteServiceFactory.Instance.SerializerFactory :=
+    function: IRestJsonSerializer
+    begin
+      Result := TRestJsonSerializer.Create;
+    end;
 end;
 
 function TRemoteServiceFactory.GetCommunication: IRestCommunication;
@@ -599,21 +589,13 @@ begin
   Result := TRemoteServiceFactory(GRemoteServiceFactory);
 end;
 
-function TRemoteServiceFactory.GetSerializer: IRestJsonSerializer;
-begin
-  if not Assigned(FSerializer) then
-    FSerializer := TRestJsonSerializer.Create;
-
-  Result := FSerializer;
-end;
-
-function TRemoteServiceFactory.GetService(&Type: PTypeInfo; const URL: String): TRemoteService;
+function TRemoteServiceFactory.GetService(const &Type: PTypeInfo; const URL: String): TRemoteService;
 begin
   Result := TRemoteService.Create(&Type);
   Result.Communication := Communication;
   Result.Headers := Headers;
   Result.OnExecuteException := OnExecuteException;
-  Result.Serializer := Serializer;
+  Result.Serializer := FSerializerFactory();
   Result.URL := URL;
 end;
 
@@ -625,11 +607,6 @@ begin
   Service := GRemoteServiceFactory.GetService(TypeInfo(I), URL);
 
   Service.QueryInterface(Service.RttiType.GUID, Result);
-end;
-
-class function TRemoteServiceFactory.GetService<I>: I;
-begin
-  Result := Instance.GetService<I>(Instance.URL);
 end;
 
 end.

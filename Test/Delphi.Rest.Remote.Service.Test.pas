@@ -1,4 +1,4 @@
-unit Delphi.Rest.Remote.Service.Test;
+﻿unit Delphi.Rest.Remote.Service.Test;
 
 interface
 
@@ -233,7 +233,7 @@ end;
 
 function TRemoteServiceTest.CreateRemoteServiceURL<T>(const URL: String; const Communication: IRestCommunication): TRemoteService;
 begin
-  Result := TRemoteServiceTyped<T>.Create;
+  Result := TRemoteService.Create(TypeInfo(T));
   Result.Communication := Communication;
   Result.Serializer := TRestJsonSerializer.Create;
   Result.URL := URL;
@@ -401,7 +401,7 @@ end;
 
 procedure TRemoteServiceTest.TheFilledHeadersMustKeepTheValues;
 begin
-  var Client := TRemoteServiceTyped<IServiceTest>.Create;
+  var Client := TRemoteService.Create(TypeInfo(IServiceTest));
 
   Client.Header['My Header'] := 'My Value';
 
@@ -567,7 +567,7 @@ end;
 
 procedure TRemoteServiceTest.WhenFillingAHeaderHasToReturnTheValuesInTheHeadersProperty;
 begin
-  var Client := TRemoteServiceTyped<IServiceTest>.Create;
+  var Client := TRemoteService.Create(TypeInfo(IServiceTest));
 
   Client.Header['My Header'] := 'My Value';
 
@@ -578,7 +578,7 @@ end;
 
 procedure TRemoteServiceTest.WhenFillingThePropertyHeadersHaveToFillThePropertyHeaderWithTheParameterValuesPassed;
 begin
-  var Client := TRemoteServiceTyped<IServiceTest>.Create;
+  var Client := TRemoteService.Create(TypeInfo(IServiceTest));
 
   Client.Headers := 'My Header=My Value'#13#10'My Header2=My Value';
 
