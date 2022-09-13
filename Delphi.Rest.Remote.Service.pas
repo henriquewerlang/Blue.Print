@@ -17,6 +17,9 @@ type
   IRestCommunication = interface
     ['{33BB3249-F044-4BDF-B3E0-EA2378A040C4}']
     function SendRequest(const Request: TRestRequest): String;
+    {$IFDEF PAS2JS}
+    function SendRequestAsync(const Request: TRestRequest): String; async;
+    {$ENDIF}
   end;
 
   TRestCommunication = class(TInterfacedObject, IRestCommunication)
@@ -30,6 +33,9 @@ type
     function GetConnection: THTTPClient;
     {$ENDIF}
     function SendRequest(const Request: TRestRequest): String;
+    {$IFDEF PAS2JS}
+    function SendRequestAsync(const Request: TRestRequest): String; async;
+    {$ENDIF}
 
     {$IFDEF DCC}
     property Connection: THTTPClient read GetConnection;
@@ -68,6 +74,7 @@ type
     procedure AddFormDataField(const Param: TRttiParameter; const ParamValue: String);
     procedure AddFormDataFile(const Param: TRttiParameter; const AFile: TRESTFile);
     procedure AddParamToTheBody(const Param: TRttiParameter; const ParamValue: TValue; const ForceLoadFormData: Boolean);
+    procedure CheckException(const Error: Exception);
     procedure LoadRequest(const Method: TRttiMethod; const Args: TArray<TValue>);
     procedure LoadRequestAuthentication(const Method: TRttiMethod);
     procedure LoadRequestHeaders;
@@ -179,6 +186,14 @@ begin
     AddFormDataField(Param, EncodeParamValue(ParamValue))
   else
     FRequest.Body := TValue.From(EncodeParamValue(ParamValue));
+end;
+
+procedure TRemoteService.CheckException(const Error: Exception);
+begin
+  if Assigned(FOnExecuteException) then
+    OnExecuteException(Error, Serializer)
+  else
+    raise Error;
 end;
 
 function TRemoteService.CheckForceFormData(const Method: TRttiMethod): Boolean;
@@ -396,10 +411,7 @@ begin
     Result := Deserialize(SendRequest(Method, Args), Method.ReturnType);
   except
     on E: Exception do
-      if Assigned(FOnExecuteException) then
-        OnExecuteException(E, Serializer)
-      else
-        raise;
+      CheckException(E);
   end;
 end;
 
@@ -446,23 +458,48 @@ var
 
   Return: TValue;
 
-begin
-  Method := FRttiType.GetMethod(AMethodName);
+  Params: TArray<TValue>;
 
-  if Method.IsAsyncCall then
-    Exit(TJSPromise.New(
-      procedure(Resolve, Reject: TJSPromiseResolver)
-      begin
-        OnInvokeMethod(Method, GenerateParams(Method, Args), Return);
-
-        Resolve(Return.AsJSValue);
-      end))
-  else
+  function InvokeMehod: JSValue;
   begin
-    OnInvokeMethod(Method, GenerateParams(Method, Args), Return);
+    OnInvokeMethod(Method, Params, Return);
 
     Result := Return.AsJSValue;
   end;
+
+  function SendRequestAsync: String; async;
+  begin
+    LoadRequest(Method, Params);
+
+    Result := await(Communication.SendRequestAsync(FRequest));
+  end;
+
+  function InvokeMehodAsync: JSValue; async;
+  var
+    ReturnType: TRttiType;
+
+  begin
+    try
+      ReturnType := Method.ReturnType;
+
+      if Assigned(ReturnType) and ReturnType.IsInstanceExternal and (ReturnType.AsInstanceExternal.ExternalName = 'Promise') then
+        ReturnType := nil;
+
+      Result := Deserialize(await(SendRequestAsync), ReturnType).AsJSValue;
+    except
+      on E: Exception do
+        CheckException(E);
+    end;
+  end;
+
+begin
+  Method := FRttiType.GetMethod(AMethodName);
+  Params := GenerateParams(Method, Args);
+
+  if Method.IsAsyncCall then
+    Result := InvokeMehodAsync
+  else
+    Result := InvokeMehod
 end;
 {$ENDIF}
 
@@ -499,9 +536,9 @@ end;
 function TRestCommunication.SendRequest(const Request: TRestRequest): String;
 {$IFDEF PAS2JS}
 var
-  Connection: TJSXMLHttpRequest;
-
   A: Integer;
+
+  Connection: TJSXMLHttpRequest;
 
 {$ELSE}
   function LoadContentStream: TStream;
@@ -563,6 +600,41 @@ begin
   end;
 {$ENDIF}
 end;
+
+{$IFDEF PAS2JS}
+function TRestCommunication.SendRequestAsync(const Request: TRestRequest): String;
+var
+  A: Integer;
+
+  Options: TJSFetchInit;
+
+  Response: TJSResponse;
+
+begin
+  FHeaders.Text := Request.Headers;
+  Options := TJSFetchInit.New;
+  Options.Method := RESTRequestMethodToString(Request.Method);
+
+  if FHeaders.Count > 0 then
+  begin
+    Options.Headers := TJSHTMLHeaders.New;
+
+    for A := 0 to Pred(FHeaders.Count) do
+      Options.Headers.Append(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
+  end;
+
+  if not Request.Body.IsEmpty then
+    Options.Body := Request.Body.AsJSValue;
+
+  Response := await(Window.Fetch(Request.URL, Options));
+
+  Result := await(Response.Text);
+
+  if Response.Status <> 200 then
+    raise EHTTPStatusError.Create(Response.Status, Request.URL, Result);
+end;
+{$ENDIF}
+
 
 { TRemoteServiceFactory }
 
