@@ -58,7 +58,7 @@ const
   CONTENT_TYPE_INDEX = 15;
   METHOD_INDEX = 0;
   QUERY_INDEX = 3;
-  URL_INDEX = 2;
+  URL_INDEX = 4;
 
 implementation
 

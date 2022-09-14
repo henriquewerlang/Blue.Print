@@ -136,6 +136,8 @@ type
     procedure WhenTheContentIsEmptyMustReturnTheBadRequestStatus;
     [Test]
     procedure WhenTheServiceContainerIsNotLoadedMustRaiseAnError;
+    [Test]
+    procedure WhenTheServiceNameHasDotsInTheNameMustHandleTheRequest;
   end;
 
   TMyEnumerator = (Enum1, Enum2, Enum3, Enum4);
@@ -993,6 +995,19 @@ begin
     begin
       Rest.HandleRequest;
     end, EServiceContainerNotLoaded);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenTheServiceNameHasDotsInTheNameMustHandleTheRequest;
+begin
+  var Request := CreateRequestMock('/IService.My.Another/MyProcedure', CONTENTTYPE_APPLICATION_JSON, EmptyStr, 'Value=123');
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
+
+  Assert.IsTrue(Rest.HandleRequest);
 
   Request.Free;
 

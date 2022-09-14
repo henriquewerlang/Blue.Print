@@ -411,7 +411,7 @@ begin
     Result := Deserialize(SendRequest(Method, Args), Method.ReturnType);
   except
     on E: Exception do
-      CheckException(E);
+      CheckException({$IFDEF PAS2JS}E{$ELSE}AcquireExceptionObject as Exception{$ENDIF});
   end;
 end;
 

@@ -204,14 +204,20 @@ begin
 end;
 
 function TRestServerService.HandleRequest: Boolean;
+var
+  Params: TArray<String>;
+
+  function IsValidRequest: Boolean;
+  begin
+    Result := (Length(Params) > 0) and ExtractFileExt(Params[High(Params)]).IsEmpty;
+  end;
+
 begin
-  var ServiceInfo: TRttiType;
   var Instance: TValue;
-  var URL := Request.URL;
+  Params := Request.PathInfo.Split(['/'], TStringSplitOptions.ExcludeEmpty);
+  var ServiceInfo: TRttiType;
 
-  var Params := URL.Split(['/'], TStringSplitOptions.ExcludeEmpty);
-
-  Result := ExtractFileExt(URL).IsEmpty and (Length(Params) > 0) and ServiceContainer.GetService(Params[0], ServiceInfo, Instance);
+  Result := IsValidRequest and ServiceContainer.GetService(Params[0], ServiceInfo, Instance);
 
   if Result then
     if Length(Params) = 2 then
