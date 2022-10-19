@@ -69,7 +69,6 @@ type
     function GetRemoteNameAttribute(const RttiType: TRttiNamedObject; var Name: String): Boolean;
     function GetRemoteRequestName(const RttiType: TRttiNamedObject): String;
     function GetRemoteRequestServiceName: String;
-    function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>): String;
 
     procedure AddFormDataField(const Param: TRttiParameter; const ParamValue: String);
     procedure AddFormDataFile(const Param: TRttiParameter; const AFile: TRESTFile);
@@ -83,11 +82,6 @@ type
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
     procedure SetHeader(const Index, Value: String);
     procedure SetHeaders(const Value: String);
-
-    {$IFDEF PAS2JS}
-    function GenerateParams(const Method: TRttiMethod; const Args: TJSValueDynArray): TArray<TValue>;
-    function OnInvokeMethodPas2Js(const AMethodName: String; const Args: TJSValueDynArray): JSValue;
-    {$ENDIF}
 
     property FormData: TRESTFormData read GetFormData;
   public
@@ -146,7 +140,7 @@ uses Delphi.Rest.Exceptions,
 {$ENDIF};
 
 const
-  COMPILER_OFFSET = 1;
+  COMPILER_OFFSET = {$IFDEF PAS2JS}0{$ELSE}1{$ENDIF};
 
 { TRemoteService }
 
@@ -214,7 +208,7 @@ end;
 
 constructor TRemoteService.Create(const TypeInfo: PTypeInfo);
 begin
-  inherited Create(TypeInfo, {$IFDEF PAS2JS}@OnInvokeMethodPas2Js{$ELSE}OnInvokeMethod{$ENDIF});
+  inherited Create(TypeInfo, {$IFDEF PAS2JS}@{$ENDIF}OnInvokeMethod);
 
   FContext := TRttiContext.Create;
   FHeaders := TStringList.Create;
@@ -406,73 +400,12 @@ begin
 end;
 
 procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
-begin
-  try
-    Result := Deserialize(SendRequest(Method, Args), Method.ReturnType);
-  except
-    on E: Exception do
-      CheckException(E);
+
+  function SendRequest: String;
+  begin
+    Result := Communication.SendRequest(FRequest);
   end;
-end;
-
-function TRemoteService.SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>): String;
-begin
-  LoadRequest(Method, Args);
-
-  Result := Communication.SendRequest(FRequest);
-end;
-
-procedure TRemoteService.SetHeader(const Index, Value: String);
-begin
-  FHeaders.Values[Index] := Value;
-end;
-
-procedure TRemoteService.SetHeaders(const Value: String);
-begin
-  FHeaders.Text := Value;
-end;
-
 {$IFDEF PAS2JS}
-function TRemoteService.GenerateParams(const Method: TRttiMethod; const Args: TJSValueDynArray): TArray<TValue>;
-var
-  A: Integer;
-
-  Return: TValue;
-
-  Param: TRttiParameter;
-
-  Parameters: TArray<TRttiParameter>;
-
-begin
-  Parameters := Method.GetParameters;
-
-  SetLength(Result, Succ(Length(Args)));
-
-  for A := Low(Args) to High(Args) do
-    TValue.Make(Args[A], Parameters[A].ParamType.Handle, Result[COMPILER_OFFSET + A]);
-end;
-
-function TRemoteService.OnInvokeMethodPas2Js(const AMethodName: String; const Args: TJSValueDynArray): JSValue;
-var
-  Method: TRttiMethod;
-
-  Return: TValue;
-
-  Params: TArray<TValue>;
-
-  function InvokeMehod: JSValue;
-  begin
-    OnInvokeMethod(Method, Params, Return);
-
-    Result := Return.AsJSValue;
-  end;
-
-  function SendRequestAsync: String; async;
-  begin
-    LoadRequest(Method, Params);
-
-    Result := await(Communication.SendRequestAsync(FRequest));
-  end;
 
   function InvokeMehodAsync: JSValue; async;
   var
@@ -485,23 +418,39 @@ var
       if Assigned(ReturnType) and ReturnType.IsInstanceExternal and (ReturnType.AsInstanceExternal.ExternalName = 'Promise') then
         ReturnType := nil;
 
-      Result := Deserialize(await(SendRequestAsync), ReturnType).AsJSValue;
+      Result := Deserialize(await(Communication.SendRequestAsync(FRequest)), ReturnType).AsJSValue;
     except
       on E: Exception do
         CheckException(E);
     end;
   end;
+{$ENDIF}
 
 begin
-  Method := FRttiType.GetMethod(AMethodName);
-  Params := GenerateParams(Method, Args);
+  try
+    LoadRequest(Method, Args);
 
-  if Method.IsAsyncCall then
-    Result := InvokeMehodAsync
-  else
-    Result := InvokeMehod
-end;
+{$IFDEF PAS2JS}
+    if Method.IsAsyncCall then
+      Result := TValue.From(InvokeMehodAsync)
+    else
 {$ENDIF}
+      Result := Deserialize(SendRequest, Method.ReturnType);
+  except
+    on E: Exception do
+      CheckException(E);
+  end;
+end;
+
+procedure TRemoteService.SetHeader(const Index, Value: String);
+begin
+  FHeaders.Values[Index] := Value;
+end;
+
+procedure TRemoteService.SetHeaders(const Value: String);
+begin
+  FHeaders.Text := Value;
+end;
 
 { TRestCommunication }
 
@@ -634,7 +583,6 @@ begin
     raise EHTTPStatusError.Create(Response.Status, Request.URL, Result);
 end;
 {$ENDIF}
-
 
 { TRemoteServiceFactory }
 
