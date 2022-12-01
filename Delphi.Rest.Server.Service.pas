@@ -207,22 +207,42 @@ function TRestServerService.HandleRequest: Boolean;
 var
   Params: TArray<String>;
 
+  Method: TRttiMethod;
+
   function IsValidRequest: Boolean;
   begin
     Result := (Length(Params) > 0) and ExtractFileExt(Params[High(Params)]).IsEmpty;
   end;
 
+  function GetContentType: String;
+  begin
+    var Attribute := Method.GetAttribute<ContentTypeAttribute>;
+
+    if not Assigned(Attribute) then
+      Attribute := Method.Parent.GetAttribute<ContentTypeAttribute>;
+
+    if Assigned(Attribute) then
+    begin
+      Result := Attribute.ContentType;
+
+      if not Attribute.CharSet.IsEmpty then
+        Result := Format('%s; charset=%s', [Result, Attribute.CharSet]);
+    end
+    else
+      Result := CONTENTTYPE_APPLICATION_JSON;
+  end;
+
 begin
-  var Instance: TValue;
+  var Instance := TValue.Empty;
   Params := Request.PathInfo.Split(['/'], TStringSplitOptions.ExcludeEmpty);
-  var ServiceInfo: TRttiType;
+  var ServiceInfo: TRttiType := nil;
 
   Result := IsValidRequest and ServiceContainer.GetService(Params[0], ServiceInfo, Instance);
 
   if Result then
     if Length(Params) = 2 then
     begin
-      var Method := ServiceInfo.GetMethod(Params[1]);
+      Method := ServiceInfo.GetMethod(Params[1]);
 
       if Assigned(Method) then
       begin
@@ -235,7 +255,7 @@ begin
           if Assigned(Method.ReturnType) then
           begin
             Response.Content := Serializer.Serialize(Return);
-            Response.ContentType := CONTENTTYPE_APPLICATION_JSON;
+            Response.ContentType := GetContentType;
           end;
 
           Response.StatusCode := HTTP_STATUS_OK;

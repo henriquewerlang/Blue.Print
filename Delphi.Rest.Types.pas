@@ -113,6 +113,27 @@ type
     function LoadHeaderValue: String; override;
   end;
 
+  ContentTypeAttribute = class(TCustomAttribute)
+  private
+    FContentType: String;
+    FCharSet: String;
+  public
+    constructor Create(const ContentType: String); overload;
+    constructor Create(const ContentType, CharSet: String); overload;
+
+    property CharSet: String read FCharSet;
+    property ContentType: String read FContentType;
+  end;
+
+  AttachmentAttribute = class(ContentTypeAttribute)
+  private
+    FFileName: String;
+  public
+    constructor Create(FileName: String; const ContentType: String); reintroduce;
+
+    property FileName: String read FFileName;
+  end;
+
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
 {$IFDEF PAS2JS}
 function RESTRequestMethodToString(const AMethod: TRESTRequestMethod): string;
@@ -336,6 +357,31 @@ end;
 function BasicAuthenticationAttribute.LoadHeaderValue: String;
 begin
   Result := ConvertToBase64(Format('%s:%s', [FUser, FPassword]));
+end;
+
+{ ContentTypeAttribute }
+
+constructor ContentTypeAttribute.Create(const ContentType: String);
+begin
+  inherited Create;
+
+  FContentType := ContentType;
+end;
+
+constructor ContentTypeAttribute.Create(const ContentType, CharSet: String);
+begin
+  Create(ContentType);
+
+  FCharSet := CharSet;
+end;
+
+{ AttachmentAttribute }
+
+constructor AttachmentAttribute.Create(FileName: String; const ContentType: String);
+begin
+  inherited Create(ContentType);
+
+  FFileName := FileName;
 end;
 
 end.

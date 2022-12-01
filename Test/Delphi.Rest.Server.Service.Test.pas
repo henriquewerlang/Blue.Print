@@ -3,13 +3,72 @@
 interface
 
 uses System.SysUtils, System.Classes, System.Rtti, Web.HTTPApp, DUnitX.TestFramework, Delphi.Rest.Server.Service, Delphi.Rest.Types, Delphi.Rest.Service.Container, Delphi.Mock,
-  Delphi.Mock.Classes, Delphi.Rest.JSON.Serializer.Intf, Delphi.Rest.Request.Mock, REST.Types;
+  Delphi.Mock.Classes, Delphi.Rest.JSON.Serializer.Intf, Delphi.Rest.Request.Mock, REST.Types, Delphi.Mock.Intf;
 
 type
+  TMyEnumerator = (Enum1, Enum2, Enum3, Enum4);
+  TMyEnumeratorSet = set of TMyEnumerator;
+
+  TMyClass = class
+  private
+    FValue: Integer;
+  published
+    property Value: Integer read FValue write FValue;
+  end;
+
+  [ContentType(CONTENTTYPE_APPLICATION_OGG)]
+  IContentService = interface(IInvokable)
+    ['{E43D13E0-B5D6-4EF9-BC4A-A481BCAC0F5C}']
+    [ContentType(CONTENTTYPE_APPLICATION_ATOM_XML, 'MyCharSet')]
+    function MyCharSetFunction: String;
+    [ContentType(CONTENTTYPE_APPLICATION_ATOM_XML)]
+    function MyContentFunction: String;
+    function MyFunction: String;
+  end;
+
+  IService = interface
+    ['{FD524CA4-55CF-4005-B47A-48B220718AA0}']
+    function FuncClass: TMyClass;
+    function FuncInteger: Integer;
+    function GetStream: TRESTFile;
+    function ProcedureCalled: String;
+
+    procedure Proc;
+    procedure ProcArray(Value: TArray<String>);
+    procedure ProcChar(Value: AnsiChar);
+    procedure ProcClass(Value: TMyClass);
+    procedure ProcClassRef(Value: TClass);
+    procedure ProcEnum(Value: TMyEnumerator);
+    procedure ProcFloat(Value: Currency);
+    procedure ProcInt64(Value: Int64);
+    procedure ProcInteger(Value: Integer);
+    procedure ProcInterface(Value: IInterface);
+    procedure ProcLString(Value: AnsiString);
+    procedure ProcMethod(Value: TNotifyEvent);
+    procedure ProcParam(Value: Integer);
+    procedure ProcParamString(Value: String);
+    procedure ProcPointer(Value: Pointer);
+    procedure ProcProcedure(Value: TProc);
+    procedure ProcSet(Value: TMyEnumeratorSet);
+    procedure ProcStream(Stream: TRESTFile);
+    procedure ProcStreamArray(Stream: TArray<TRESTFile>);
+    procedure ProcStreamTwoParam(File1, File2: TRESTFile);
+    procedure ProcString(Value: ShortString);
+    procedure ProcUString(Value: UnicodeString);
+    procedure ProcVariant(Value: Variant);
+    procedure ProcWChar(Value: Char);
+    procedure ProcWString(Value: WideString);
+    procedure ProcedureWithParamsInBody(Param1: String; Param2: Integer);
+    procedure ProcedureWithOutAttribute(Param1: String; Param2: Integer);
+  end;
+
   [TestFixture]
   TRestServerServiceTest = class
   private
+    FContentServiceMock: IMock<IContentService>;
     FRestService: TRestServerService;
+    FServiceMock: IMock<IService>;
+    FServiceContainer: IMock<IServiceContainer>;
 
     function CreateRestService(Request: TWebRequest; Response: TWebResponse; Container: IServiceContainer = nil): IWebAppServices;
     function CreateRequestMock: TMockClass<TWebRequestMock>; overload;
@@ -138,52 +197,14 @@ type
     procedure WhenTheServiceContainerIsNotLoadedMustRaiseAnError;
     [Test]
     procedure WhenTheServiceNameHasDotsInTheNameMustHandleTheRequest;
-  end;
-
-  TMyEnumerator = (Enum1, Enum2, Enum3, Enum4);
-  TMyEnumeratorSet = set of TMyEnumerator;
-
-  TMyClass = class
-  private
-    FValue: Integer;
-  published
-    property Value: Integer read FValue write FValue;
-  end;
-
-  IService = interface
-    ['{FD524CA4-55CF-4005-B47A-48B220718AA0}']
-    function FuncClass: TMyClass;
-    function FuncInteger: Integer;
-    function GetStream: TRESTFile;
-    function ProcedureCalled: String;
-
-    procedure Proc;
-    procedure ProcArray(Value: TArray<String>);
-    procedure ProcChar(Value: AnsiChar);
-    procedure ProcClass(Value: TMyClass);
-    procedure ProcClassRef(Value: TClass);
-    procedure ProcEnum(Value: TMyEnumerator);
-    procedure ProcFloat(Value: Currency);
-    procedure ProcInt64(Value: Int64);
-    procedure ProcInteger(Value: Integer);
-    procedure ProcInterface(Value: IInterface);
-    procedure ProcLString(Value: AnsiString);
-    procedure ProcMethod(Value: TNotifyEvent);
-    procedure ProcParam(Value: Integer);
-    procedure ProcParamString(Value: String);
-    procedure ProcPointer(Value: Pointer);
-    procedure ProcProcedure(Value: TProc);
-    procedure ProcSet(Value: TMyEnumeratorSet);
-    procedure ProcStream(Stream: TRESTFile);
-    procedure ProcStreamArray(Stream: TArray<TRESTFile>);
-    procedure ProcStreamTwoParam(File1, File2: TRESTFile);
-    procedure ProcString(Value: ShortString);
-    procedure ProcUString(Value: UnicodeString);
-    procedure ProcVariant(Value: Variant);
-    procedure ProcWChar(Value: Char);
-    procedure ProcWString(Value: WideString);
-    procedure ProcedureWithParamsInBody(Param1: String; Param2: Integer);
-    procedure ProcedureWithOutAttribute(Param1: String; Param2: Integer);
+    [Test]
+    procedure WhenTheClassHasTheContentTypeAttributeMustReturnThisTypeInTheResponse;
+    [Test]
+    procedure WhenTheMethodHasTheContenteTypeAttributeMustReturnThisTypeInTheResponse;
+    [Test]
+    procedure WhenTheServiceDontHaveTheContentTypeAttributeMustReturnTheApplicationJsonContentByDefault;
+    [Test]
+    procedure IfTheContentTypeAttributeHasACharSetThisMustBeLoadedInTheContentTypeInfo;
   end;
 
   TService = class(TInterfacedObject, IService)
@@ -348,6 +369,21 @@ begin
   Response.Free;
 end;
 
+procedure TRestServerServiceTest.IfTheContentTypeAttributeHasACharSetThisMustBeLoadedInTheContentTypeInfo;
+begin
+  var Request := CreateRequestMock('/IContentService/MyCharSetFunction', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, FServiceContainer.Instance);
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(Format('%s; charset=%s', [CONTENTTYPE_APPLICATION_ATOM_XML, 'MyCharSet']), Response.ContentType);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
 procedure TRestServerServiceTest.IfTheParamIsInTheQueryFieldsCantTryToLoadTheValueFromContent;
 begin
   var MyService: IService := TService.Create;
@@ -434,7 +470,30 @@ end;
 
 procedure TRestServerServiceTest.Setup;
 begin
+  FContentServiceMock := TMock.CreateInterface<IContentService>(True);
   FRestService := TRestServerService.Create(nil);
+  FServiceMock := TMock.CreateInterface<IService>(True);
+  FServiceContainer := TMock.CreateInterface<IServiceContainer>;
+
+  FServiceContainer.Setup.WillExecute(
+    function(const Params: TArray<TValue>): TValue
+    begin
+      var Context := TRttiContext.Create;
+
+      Params[2] := Context.GetType(TypeInfo(IContentService));
+      Params[3] := TValue.From(FContentServiceMock.Instance);
+      Result := True;
+    end).When.GetService(It.IsEqualTo('IContentService'), ItReference<TRttiType>.IsAny.Value, ItReference<TValue>.IsAny.Value);
+
+  FServiceContainer.Setup.WillExecute(
+    function(const Params: TArray<TValue>): TValue
+    begin
+      var Context := TRttiContext.Create;
+
+      Params[2] := Context.GetType(TypeInfo(IService));
+      Params[3] := TValue.From(FServiceMock.Instance);
+      Result := True;
+    end).When.GetService(It.IsEqualTo('IService'), ItReference<TRttiType>.IsAny.Value, ItReference<TValue>.IsAny.Value);
 end;
 
 procedure TRestServerServiceTest.SetupFixture;
@@ -460,6 +519,8 @@ end;
 
 procedure TRestServerServiceTest.TearDown;
 begin
+  FServiceContainer := nil;
+
   FRestService.Free;
 end;
 
@@ -540,6 +601,21 @@ begin
   Response.Free;
 end;
 
+procedure TRestServerServiceTest.WhenTheClassHasTheContentTypeAttributeMustReturnThisTypeInTheResponse;
+begin
+  var Request := CreateRequestMock('/IContentService/MyFunction', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, FServiceContainer.Instance);
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(CONTENTTYPE_APPLICATION_OGG, Response.ContentType);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
 procedure TRestServerServiceTest.WhenTheContentIsABinaryValueCantRaiseAnyError;
 begin
   var Request := CreateRequestMock('/IService/ProcStream', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
@@ -559,7 +635,7 @@ end;
 
 procedure TRestServerServiceTest.WhenTheContentIsABinaryValueMustPassTheValueToTheParamOfTheProcedureCalled;
 begin
-  var Content: TBytes := [1,2,3,4,5,6,7,8,9,10];
+  var Content: TBytes := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   var Request := CreateRequestMock('/IService/ProcStream', CONTENTTYPE_IMAGE_PNG, Content, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
   var Service: IService := TService.Create;
@@ -627,6 +703,21 @@ begin
   Rest.HandleRequest;
 
   Assert.AreEqual(EmptyStr, Request.CheckExpectations);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenTheMethodHasTheContenteTypeAttributeMustReturnThisTypeInTheResponse;
+begin
+  var Request := CreateRequestMock('/IContentService/MyContentFunction', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, FServiceContainer.Instance);
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(CONTENTTYPE_APPLICATION_ATOM_XML, Response.ContentType);
 
   Request.Free;
 
@@ -995,6 +1086,21 @@ begin
     begin
       Rest.HandleRequest;
     end, EServiceContainerNotLoaded);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenTheServiceDontHaveTheContentTypeAttributeMustReturnTheApplicationJsonContentByDefault;
+begin
+  var Request := CreateRequestMock('/IService/FuncInteger', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, FServiceContainer.Instance);
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(CONTENTTYPE_APPLICATION_JSON, Response.ContentType);
 
   Request.Free;
 
