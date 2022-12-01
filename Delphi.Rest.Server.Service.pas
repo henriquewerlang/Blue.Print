@@ -55,7 +55,7 @@ type
 
 implementation
 
-uses System.TypInfo, System.Math, Winapi.WinInet, Rest.Types, Delphi.Rest.JSON.Serializer, Delphi.Rest.Types, Delphi.Rest.Content.Parser;
+uses System.TypInfo, System.Math, Winapi.WinInet, System.NetConsts, Rest.Types, Delphi.Rest.JSON.Serializer, Delphi.Rest.Types, Delphi.Rest.Content.Parser;
 
 { TRestServerService }
 
@@ -232,6 +232,14 @@ var
       Result := CONTENTTYPE_APPLICATION_JSON;
   end;
 
+  procedure CheckContentDisposition;
+  begin
+    var Attribute := Method.GetAttribute<AttachmentAttribute>;
+
+    if Assigned(Attribute) then
+      Response.CustomHeaders.Values[sContentDisposition] := Format('attachment; filename="%s"', [Attribute.FileName]);
+  end;
+
 begin
   var Instance := TValue.Empty;
   Params := Request.PathInfo.Split(['/'], TStringSplitOptions.ExcludeEmpty);
@@ -256,6 +264,8 @@ begin
           begin
             Response.Content := Serializer.Serialize(Return);
             Response.ContentType := GetContentType;
+
+            CheckContentDisposition;
           end;
 
           Response.StatusCode := HTTP_STATUS_OK;

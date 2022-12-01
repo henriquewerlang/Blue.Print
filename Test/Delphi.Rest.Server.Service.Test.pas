@@ -19,6 +19,8 @@ type
   [ContentType(CONTENTTYPE_APPLICATION_OGG)]
   IContentService = interface(IInvokable)
     ['{E43D13E0-B5D6-4EF9-BC4A-A481BCAC0F5C}']
+    [Attachment('MyFile.pas', CONTENTTYPE_APPLICATION_ZIP)]
+    function MyAttachmentFunction: String;
     [ContentType(CONTENTTYPE_APPLICATION_ATOM_XML, 'MyCharSet')]
     function MyCharSetFunction: String;
     [ContentType(CONTENTTYPE_APPLICATION_ATOM_XML)]
@@ -205,6 +207,10 @@ type
     procedure WhenTheServiceDontHaveTheContentTypeAttributeMustReturnTheApplicationJsonContentByDefault;
     [Test]
     procedure IfTheContentTypeAttributeHasACharSetThisMustBeLoadedInTheContentTypeInfo;
+    [Test]
+    procedure WhenAFunctionHaveTheAttachmentAttributeMustReturnTheContentTypeAndContentDispositionInTheHeaderResponse;
+    [Test]
+    procedure IfTheFunctionDoesntHaveTheAttachmentAttributeCantRaiseAnyError;
   end;
 
   TService = class(TInterfacedObject, IService)
@@ -262,7 +268,7 @@ type
 
 implementation
 
-uses System.NetEncoding, Winapi.WinInet, Delphi.Rest.JSON.Serializer, System.Net.Mime, web.ReqFiles;
+uses System.NetEncoding, Winapi.WinInet, Delphi.Rest.JSON.Serializer, System.Net.Mime, System.NetConsts, Web.ReqFiles;
 
 { TRestServerServiceTest }
 
@@ -378,6 +384,23 @@ begin
   Rest.HandleRequest;
 
   Assert.AreEqual(Format('%s; charset=%s', [CONTENTTYPE_APPLICATION_ATOM_XML, 'MyCharSet']), Response.ContentType);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.IfTheFunctionDoesntHaveTheAttachmentAttributeCantRaiseAnyError;
+begin
+  var Request := CreateRequestMock('/IContentService/MyFunction', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, FServiceContainer.Instance);
+
+  Assert.WillNotRaise(
+    procedure
+    begin
+      Rest.HandleRequest;
+    end);
 
   Request.Free;
 
@@ -537,6 +560,22 @@ begin
   Assert.AreEqual('Error', Response.Content);
 
   MyException.Free;
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenAFunctionHaveTheAttachmentAttributeMustReturnTheContentTypeAndContentDispositionInTheHeaderResponse;
+begin
+  var Request := CreateRequestMock('/IContentService/MyAttachmentFunction', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, FServiceContainer.Instance);
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(CONTENTTYPE_APPLICATION_ZIP, Response.ContentType);
+  Assert.AreEqual('attachment; filename="MyFile.pas"', Response.CustomHeaders.Values[sContentDisposition]);
 
   Request.Free;
 
