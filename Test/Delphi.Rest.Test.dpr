@@ -25,7 +25,7 @@ uses
 begin
   FastMM_OutputDebugStringEvents := [];
   FastMM_LogToFileEvents := [mmetUnexpectedMemoryLeakSummary, mmetUnexpectedMemoryLeakDetail];
-  FastMM_MessageBoxEvents := [mmetDebugBlockDoubleFree, mmetDebugBlockReallocOfFreedBlock, mmetVirtualMethodCallOnFreedObject];
+  FastMM_MessageBoxEvents := [];
 
   FastMM_DeleteEventLogFile;
 
