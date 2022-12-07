@@ -118,6 +118,12 @@ type
     procedure WhenSendAnFileAndTheFileIsNotFilledCantRaiseAnyError;
     [Test]
     procedure WhenMixTheParameterTypeAttributeMustLoadTheRequestHasExpected;
+    [Test]
+    procedure WhenTheFunctionOfTheServiceHasTheAttachmentAttributeTheRequestMustMarkTheFileDownloadField;
+    [Test]
+    procedure WhenDownloadAFileCantRaiseAnyErrorInTheExecution;
+    [Test]
+    procedure WhenDownloadingAFileMustCallTheRemoteService;
   end;
 
   [BasicAuthentication('User', 'Password')]
@@ -205,6 +211,12 @@ type
     procedure WithName;
   end;
 
+  IServiceDownload = interface(IInvokable)
+    ['{297F3A0A-3B47-4FD6-ACED-6E4114E9B1A0}']
+    [Attachment('FileName.txt', 'text/plain')]
+    function Download: String;
+  end;
+
 implementation
 
 uses System.SysUtils, System.Classes, Delphi.Rest.JSON.Serializer, Delphi.Rest.JSON.Serializer.Intf, Web.ReqFiles;
@@ -213,7 +225,7 @@ uses System.SysUtils, System.Classes, Delphi.Rest.JSON.Serializer, Delphi.Rest.J
 
 function TRemoteServiceTest.CreateMockCommunication: IMock<IRestCommunication>;
 begin
-  Result := TMock.CreateInterface<IRestCommunication>;
+  Result := TMock.CreateInterface<IRestCommunication>(True);
 end;
 
 function TRemoteServiceTest.CreateRemoteService(const Communication: IRestCommunication): TRemoteService;
@@ -565,6 +577,30 @@ begin
   Request.Free;
 end;
 
+procedure TRemoteServiceTest.WhenDownloadAFileCantRaiseAnyErrorInTheExecution;
+begin
+  var Communication := CreateMockCommunication;
+  var Service := CreateRemoteService<IServiceDownload>(Communication.Instance) as IServiceDownload;
+
+  Assert.WillNotRaise(
+    procedure
+    begin
+      Service.Download;
+    end);
+end;
+
+procedure TRemoteServiceTest.WhenDownloadingAFileMustCallTheRemoteService;
+begin
+  var Communication := CreateMockCommunication;
+  var Service := CreateRemoteService<IServiceDownload>(Communication.Instance) as IServiceDownload;
+
+  Communication.Expect.Once.When.SendRequest(It.IsAny<TRestRequest>);
+
+  Service.Download;
+
+  Assert.CheckExpectation(Communication.CheckExpectations);
+end;
+
 procedure TRemoteServiceTest.WhenFillingAHeaderHasToReturnTheValuesInTheHeadersProperty;
 begin
   var Client := TRemoteService.Create(TypeInfo(IServiceTest));
@@ -657,6 +693,22 @@ begin
   Service.TestProceudreMoreThenOneFileParam(MyFile, 'Param', MyFile);
 
   MyFile.Free;
+end;
+
+procedure TRemoteServiceTest.WhenTheFunctionOfTheServiceHasTheAttachmentAttributeTheRequestMustMarkTheFileDownloadField;
+begin
+  var Communication := CreateMockCommunication;
+  var Service := CreateRemoteService<IServiceDownload>(Communication.Instance) as IServiceDownload;
+
+  Communication.Setup.WillExecute(
+    procedure (const Params: TArray<TValue>)
+    begin
+      var Request := Params[1].AsType<TRestRequest>;
+
+      Assert.IsTrue(Request.FileDownload);
+    end).When.SendRequest(It.IsAny<TRestRequest>);
+
+  Service.Download;
 end;
 
 procedure TRemoteServiceTest.WhenTheHeaderIsLoadedTheAuthenticationMustBeAppendedToTheHeaders;
@@ -1049,22 +1101,21 @@ end;
 
 procedure TRemoteServiceTest.WhenThePropertyOnExceptionIsNotLoadedMustCallTheEventWhenRaiseAnErrorInTheSyncCall;
 begin
+  var Communication := CreateMockCommunication;
   var Request := CreateRequest('/ServiceTest/TestProcedureWithOneParam?Param=abcd');
+  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
+
+  Communication.Setup.WillExecute(
+    procedure
+    begin
+      raise Exception.Create('Error Message');
+    end).When.SendRequest(It.SameFields(Request));
 
   Assert.WillRaise(
     procedure
     begin
-      var Communication := CreateMockCommunication;
-      var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
-
-      Communication.Setup.WillExecute(
-        procedure
-        begin
-          raise Exception.Create('Error Message');
-        end).When.SendRequest(It.SameFields(Request));
-
       Service.TestProcedureWithOneParam('abcd');
-    end, Exception);
+    end);
 
   Request.Free;
 end;

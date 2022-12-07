@@ -9,6 +9,7 @@ type
   TRestRequest = class
   public
     Body: TValue;
+    FileDownload: Boolean;
     Headers: String;
     Method: TRESTRequestMethod;
     URL: String;
@@ -69,6 +70,7 @@ type
     function GetRemoteNameAttribute(const RttiType: TRttiNamedObject; var Name: String): Boolean;
     function GetRemoteRequestName(const RttiType: TRttiNamedObject): String;
     function GetRemoteRequestServiceName: String;
+    function HasAttachment(const Method: TRttiMethod): Boolean;
 
     procedure AddFormDataField(const Param: TRttiParameter; const ParamValue: String);
     procedure AddFormDataFile(const Param: TRttiParameter; const AFile: TRESTFile);
@@ -141,6 +143,24 @@ uses Delphi.Rest.Exceptions,
 
 const
   COMPILER_OFFSET = {$IFDEF PAS2JS}0{$ELSE}1{$ENDIF};
+
+{$IFDEF PAS2JS}
+procedure DownloadFile(const URL: String); async;
+var
+  Anchor: TJSHTMLAnchorElement;
+
+begin
+  Anchor := Document.CreateElement('a') as TJSHTMLAnchorElement;
+  Anchor.HRef := URL;
+  Anchor.Style.cssText := 'display:none';
+
+  Document.Body.AppendChild(Anchor);
+
+  Anchor.Click();
+
+  Document.Body.RemoveChild(Anchor);
+end;
+{$ENDIF}
 
 { TRemoteService }
 
@@ -305,6 +325,22 @@ begin
     Result := Result.Substring(1);
 end;
 
+function TRemoteService.HasAttachment(const Method: TRttiMethod): Boolean;
+{$IFDEF PAS2JS}
+var
+  CustomAttribute: TCustomAttribute;
+
+{$ENDIF}
+begin
+{$IFDEF PAS2JS}
+  for CustomAttribute in Method.GetAttributes do
+    if CustomAttribute is AttachmentAttribute then
+      Exit(True);
+{$ELSE}
+  Result := Method.HasAttribute<AttachmentAttribute>;
+{$ENDIF}
+end;
+
 procedure TRemoteService.LoadRequest(const Method: TRttiMethod; const Args: TArray<TValue>);
 begin
   FRequest.Free;
@@ -316,6 +352,7 @@ begin
 {$ENDIF}
 
   FRequest := TRestRequest.Create;
+  FRequest.FileDownload := HasAttachment(Method);
   FRequest.Method := GetComandFromMethod(Method);
 
   LoadRequestAuthentication(Method);
@@ -430,6 +467,13 @@ begin
   try
     LoadRequest(Method, Args);
 
+    if FRequest.FileDownload then
+    begin
+      Result := TValue.Empty;
+
+      SendRequest;
+    end
+    else
 {$IFDEF PAS2JS}
     if Method.IsAsyncCall then
       Result := TValue.From(InvokeMehodAsync)
@@ -438,7 +482,7 @@ begin
       Result := Deserialize(SendRequest, Method.ReturnType);
   except
     on E: Exception do
-      CheckException(E);
+      CheckException({$IFDEF PAS2JS}E{$ELSE}AcquireExceptionObject as Exception{$ENDIF});
   end;
 end;
 
@@ -513,19 +557,24 @@ begin
   FHeaders.Text := Request.Headers;
 
 {$IFDEF PAS2JS}
-  Connection := TJSXMLHttpRequest.New;
-
-  Connection.Open(RESTRequestMethodToString(Request.Method), Request.URL, False);
-
-  for A := 0 to Pred(FHeaders.Count) do
-    Connection.setRequestHeader(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
-
-  Connection.Send(Request.Body.AsJSValue);
-
-  if Connection.Status = 200 then
-    Result := Connection.ResponseText
+  if Request.FileDownload then
+    DownloadFile(Request.URL)
   else
-    raise EHTTPStatusError.Create(Connection.status, Request.URL, Connection.ResponseText);
+  begin
+    Connection := TJSXMLHttpRequest.New;
+
+    Connection.Open(RESTRequestMethodToString(Request.Method), Request.URL, False);
+
+    for A := 0 to Pred(FHeaders.Count) do
+      Connection.setRequestHeader(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
+
+    Connection.Send(Request.Body.AsJSValue);
+
+    if Connection.Status = 200 then
+      Result := Connection.ResponseText
+    else
+      raise EHTTPStatusError.Create(Connection.status, Request.URL, Connection.ResponseText);
+  end;
 {$ELSE}
   var Content: TStream := nil;
 
@@ -560,27 +609,32 @@ var
   Response: TJSResponse;
 
 begin
-  FHeaders.Text := Request.Headers;
-  Options := TJSFetchInit.New;
-  Options.Method := RESTRequestMethodToString(Request.Method);
-
-  if FHeaders.Count > 0 then
+  if Request.FileDownload then
+    await(DownloadFile(Request.URL))
+  else
   begin
-    Options.Headers := TJSHTMLHeaders.New;
+    FHeaders.Text := Request.Headers;
+    Options := TJSFetchInit.New;
+    Options.Method := RESTRequestMethodToString(Request.Method);
 
-    for A := 0 to Pred(FHeaders.Count) do
-      Options.Headers.Append(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
+    if FHeaders.Count > 0 then
+    begin
+      Options.Headers := TJSHTMLHeaders.New;
+
+      for A := 0 to Pred(FHeaders.Count) do
+        Options.Headers.Append(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
+    end;
+
+    if not Request.Body.IsEmpty then
+      Options.Body := Request.Body.AsJSValue;
+
+    Response := await(Window.Fetch(Request.URL, Options));
+
+    Result := await(Response.Text);
+
+    if Response.Status <> 200 then
+      raise EHTTPStatusError.Create(Response.Status, Request.URL, Result);
   end;
-
-  if not Request.Body.IsEmpty then
-    Options.Body := Request.Body.AsJSValue;
-
-  Response := await(Window.Fetch(Request.URL, Options));
-
-  Result := await(Response.Text);
-
-  if Response.Status <> 200 then
-    raise EHTTPStatusError.Create(Response.Status, Request.URL, Result);
 end;
 {$ENDIF}
 
