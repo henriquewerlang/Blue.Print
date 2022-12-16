@@ -60,9 +60,11 @@ type
     FURL: String;
 
     function CheckForceFormData(const Method: TRttiMethod): Boolean;
+    function CheckParameterIsFile(const Parameter: TRttiParameter): Boolean;
+    function CheckMethodParameterHasFile(const Method: TRttiMethod): Boolean;
     function Deserialize(const JSON: String; RttiType: TRttiType): TValue;
     function EncodeParamValue(const ParamValue: TValue): String;
-    function GetComandFromMethod(const Method: TRttiMethod): TRESTRequestMethod;
+    function GetCommandFromMethod(const Method: TRttiMethod): TRESTRequestMethod;
     function GetFormData: TRESTFormData;
     function GetHeader(const Index: String): String;
     function GetHeaders: String;
@@ -226,6 +228,23 @@ begin
   Result := BodyParamCount > 1;
 end;
 
+function TRemoteService.CheckMethodParameterHasFile(const Method: TRttiMethod): Boolean;
+var
+  Param: TRttiParameter;
+
+begin
+  Result := False;
+
+  for Param in Method.GetParameters do
+    if CheckParameterIsFile(Param) then
+      Exit(True);
+end;
+
+function TRemoteService.CheckParameterIsFile(const Parameter: TRttiParameter): Boolean;
+begin
+  Result := (Parameter.ParamType.Handle = TypeInfo(TRESTFile)) or (Parameter.ParamType.Handle = TypeInfo(TArray<TRESTFile>));
+end;
+
 constructor TRemoteService.Create(const TypeInfo: PTypeInfo);
 begin
   inherited Create(TypeInfo, {$IFDEF PAS2JS}@{$ENDIF}OnInvokeMethod);
@@ -264,10 +283,24 @@ begin
     Result := Serializer.Serialize(ParamValue);
 end;
 
-function TRemoteService.GetComandFromMethod(const Method: TRttiMethod): TRESTRequestMethod;
+function TRemoteService.GetCommandFromMethod(const Method: TRttiMethod): TRESTRequestMethod;
+
+  procedure GetTypeFromAttribute(const RttiType: TRttiObject);
+  var
+    Attribute: TCustomAttribute;
+
+  begin
+    for Attribute in RttiType.GetAttributes do
+      if Attribute is TRESTRequestMethodAttribute then
+        Result := TRESTRequestMethodAttribute(Attribute).Method;
+  end;
+
 begin
-  if not TRESTRequestMethodAttribute.GetMethodType(Method, Result) then
-    Result := rmGet;
+  Result := rmGet;
+
+  GetTypeFromAttribute(Method.Parent);
+
+  GetTypeFromAttribute(Method);
 end;
 
 function TRemoteService.GetFormData: TRESTFormData;
@@ -289,12 +322,29 @@ begin
 end;
 
 function TRemoteService.GetParameterType(const Parameter: TRttiParameter): TRESTParamType;
+
+  procedure GetTypeFromAttribute(const RttiType: TRttiObject);
+  var
+    Attribute: TCustomAttribute;
+
+  begin
+    for Attribute in RttiType.GetAttributes do
+      if Attribute is TRESTParamAttribute then
+        Result := TRESTParamAttribute(Attribute).ParamType;
+  end;
+
 begin
-  if not TRESTParamAttribute.GetParamAtrributeType(Parameter, Result) then
-    if (FRequest.Method in [rmPatch, rmPost, rmPut]) or (Parameter.ParamType.Handle = TypeInfo(TRESTFile)) or (Parameter.ParamType.Handle = TypeInfo(TArray<TRESTFile>)) then
-      Result := ptBody
-    else
-      Result := ptQuery;
+  if FRequest.Method in [rmPatch, rmPost, rmPut] then
+    Result := ptBody
+  else
+    Result := ptQuery;
+
+  GetTypeFromAttribute(Parameter.Parent);
+
+  GetTypeFromAttribute(Parameter);
+
+  if CheckParameterIsFile(Parameter) then
+    Result := ptBody;
 end;
 
 function TRemoteService.GetRemoteNameAttribute(const RttiType: TRttiNamedObject; var Name: String): Boolean;
@@ -353,13 +403,16 @@ begin
 
   FRequest := TRestRequest.Create;
   FRequest.FileDownload := HasAttachment(Method);
-  FRequest.Method := GetComandFromMethod(Method);
+  FRequest.Method := GetCommandFromMethod(Method);
 
   LoadRequestAuthentication(Method);
 
   LoadRequestURL(Method, Args);
 
   LoadRequestHeaders;
+
+  if CheckMethodParameterHasFile(Method) then
+    FRequest.Method := rmPost;
 end;
 
 procedure TRemoteService.LoadRequestAuthentication(const Method: TRttiMethod);

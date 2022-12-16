@@ -83,8 +83,6 @@ type
     [Test]
     procedure WhenTheProcedureHasAParameterThatIsAFileMustSendTheFileInTheBodyOfTheRequest;
     [Test]
-    procedure WhenTheProcedureAsParamsWithFilesTheRequestParamSeparatorMustBeBuildCorrectly;
-    [Test]
     procedure WhenTheProcedureSendAFileInTheBodyMustLoadTheFileInTheBody;
     [Test]
     procedure WhenTheProcedureHasMoreThenOneParamAndSendingInTheBodyTheRequestMustLoadTheFormDataInTheBody;
@@ -124,6 +122,10 @@ type
     procedure WhenDownloadAFileCantRaiseAnyErrorInTheExecution;
     [Test]
     procedure WhenDownloadingAFileMustCallTheRemoteService;
+    [Test]
+    procedure IfTheProcedureHasAFileTheRequestMethodMustBePost;
+    [Test]
+    procedure IfTheProcedureHasAnArrayOfFilesTheRequestMethodMustBePost;
   end;
 
   [BasicAuthentication('User', 'Password')]
@@ -161,6 +163,8 @@ type
     procedure TestProcedureWithArrayFiles(MyFiles: TArray<TRESTFile>);
     procedure TestProcedureWithArrayFilesInURL(MyFiles: TArray<TRESTFile>);
     procedure TestProceudreMoreThenOneFileParam(MyFile1: TRESTFile; AnParam: String; MyFile2: TRESTFile);
+    procedure TestProcedureFileInParam(MyFile: TRESTFile);
+    procedure TestProcedureArrayFileInParam(MyFile: TArray<TRESTFile>);
   end;
 
   [PATCH]
@@ -307,6 +311,40 @@ begin
   Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
 
   Service.ParameterWithQueryAttribute('abc');
+
+  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Request.Free;
+end;
+
+procedure TRemoteServiceTest.IfTheProcedureHasAFileTheRequestMethodMustBePost;
+begin
+  var Communication := CreateMockCommunication;
+  var Context := TRttiContext.Create;
+  var Request := CreateRequest(rmPost, '/ServiceTest/TestProcedureFileInParam');
+  var RttiType := Context.GetType(TypeInfo(IServiceTest));
+  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
+
+  Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
+
+  RttiType.GetMethod('TestProcedureFileInParam').Invoke(TValue.From(Service), [nil]);
+
+  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
+
+  Request.Free;
+end;
+
+procedure TRemoteServiceTest.IfTheProcedureHasAnArrayOfFilesTheRequestMethodMustBePost;
+begin
+  var Communication := CreateMockCommunication;
+  var Context := TRttiContext.Create;
+  var Request := CreateRequest(rmPost, '/ServiceTest/TestProcedureArrayFileInParam');
+  var RttiType := Context.GetType(TypeInfo(IServiceTest));
+  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
+
+  Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
+
+  RttiType.GetMethod('TestProcedureArrayFileInParam').Invoke(TValue.From(Service), [nil]);
 
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 
@@ -859,23 +897,6 @@ begin
   Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 
   Request.Free;
-end;
-
-procedure TRemoteServiceTest.WhenTheProcedureAsParamsWithFilesTheRequestParamSeparatorMustBeBuildCorrectly;
-begin
-  var Communication := CreateMockCommunication;
-  var Request: TRestRequest := nil;
-  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
-
-  Communication.Setup.WillExecute(
-    procedure (const Params: TArray<TValue>)
-    begin
-      Request := Params[1].AsType<TRestRequest>;
-
-      Assert.AreEqual('/ServiceTest/TestProcedureWithFileAndParams?MayParam=12345&AnotherParam=My File', Request.URL);
-    end).When.SendRequest(It.IsAny<TRestRequest>);
-
-  Service.TestProcedureWithFileAndParams(12345, nil, 'My File');
 end;
 
 procedure TRemoteServiceTest.WhenTheProcedureBeenCalledHasntParametersTheRequestBodyMustBeEmpty;

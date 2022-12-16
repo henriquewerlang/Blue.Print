@@ -18,12 +18,8 @@ type
     FMethod: TRESTRequestMethod;
 
     constructor Create(const Method: TRESTRequestMethod);
-
-    class function GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTRequestMethod): Boolean;
   public
-    class function GetMethodType(const Method: TRttiMethod; var MethodType: TRESTRequestMethod): Boolean;
-
-    property Method: TRESTRequestMethod read FMethod write FMethod;
+    property Method: TRESTRequestMethod read FMethod;
   end;
 
   DeleteAttribute = class(TRESTRequestMethodAttribute)
@@ -56,12 +52,8 @@ type
     FParamType: TRESTParamType;
 
     constructor Create(const ParamType: TRESTParamType);
-
-    class function GetTypeFromAttributes(const RttiType: TRttiObject; var ParamType: TRESTParamType): Boolean;
   public
-    class function GetParamAtrributeType(const Parameter: TRttiParameter; var ParamType: TRESTParamType): Boolean;
-
-    property ParamType: TRESTParamType read FParamType write FParamType;
+    property ParamType: TRESTParamType read FParamType;
   end;
 
   ParameterInBody = class(TRESTParamAttribute)
@@ -188,27 +180,6 @@ begin
   FMethod := Method;
 end;
 
-class function TRESTRequestMethodAttribute.GetMethodType(const Method: TRttiMethod; var MethodType: TRESTRequestMethod): Boolean;
-begin
-  Result := GetTypeFromAttributes(Method, MethodType) or GetTypeFromAttributes(Method.Parent, MethodType);
-end;
-
-class function TRESTRequestMethodAttribute.GetTypeFromAttributes(const RttiType: TRttiObject; var Value: TRESTRequestMethod): Boolean;
-var
-  Attribute: TCustomAttribute;
-
-begin
-  Result := False;
-
-  for Attribute in RttiType.GetAttributes do
-    if Attribute is TRESTRequestMethodAttribute then
-    begin
-      Value := TRESTRequestMethodAttribute(Attribute).Method;
-
-      Exit(True);
-    end;
-end;
-
 { POSTAttribute }
 
 constructor POSTAttribute.Create;
@@ -251,30 +222,6 @@ begin
   inherited Create;
 
   FParamType := ParamType;
-end;
-
-class function TRESTParamAttribute.GetParamAtrributeType(const Parameter: TRttiParameter; var ParamType: TRESTParamType): Boolean;
-begin
-  Result := GetTypeFromAttributes(Parameter, ParamType);
-end;
-
-class function TRESTParamAttribute.GetTypeFromAttributes(const RttiType: TRttiObject; var ParamType: TRESTParamType): Boolean;
-var
-  Attribute: TCustomAttribute;
-
-begin
-  Result := False;
-
-  for Attribute in RttiType.GetAttributes do
-    if Attribute is TRESTParamAttribute then
-    begin
-      ParamType := TRESTParamAttribute(Attribute).ParamType;
-
-      Exit(True);
-    end;
-
-  if Assigned(RttiType.Parent) then
-    Result := GetTypeFromAttributes(RttiType.Parent, ParamType);
 end;
 
 { ParameterInBody }
