@@ -10,7 +10,8 @@ type
   {$ENDIF}
   TRESTParamType = (ptBody, ptQuery, ptPath);
 
-  TRESTFile = {$IFDEF PAS2JS}TJSHTMLFile{$ELSE}TAbstractWebRequestFile{$ENDIF};
+  TRESTRequestFile = {$IFDEF PAS2JS}TJSHTMLFile{$ELSE}TAbstractWebRequestFile{$ENDIF};
+  TRESTResponseFile = {$IFDEF PAS2JS}TJSBlob{$ELSE}TStream{$ENDIF};
   TRESTFormData = {$IFDEF PAS2JS}TJSFormData{$ELSE}TMultipartFormData{$ENDIF};
 
   TRESTRequestMethodAttribute = class(TCustomAttribute)

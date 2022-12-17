@@ -3,7 +3,7 @@
 interface
 
 uses System.SysUtils, System.Classes, System.Rtti, Web.HTTPApp, DUnitX.TestFramework, Delphi.Rest.Server.Service, Delphi.Rest.Types, Delphi.Rest.Service.Container, Delphi.Mock,
-  Delphi.Mock.Classes, Delphi.Rest.JSON.Serializer.Intf, Delphi.Rest.Request.Mock, REST.Types, Delphi.Mock.Intf;
+  Delphi.Mock.Classes, Delphi.Rest.JSON.Serializer .Intf, Delphi.Rest.Request.Mock, REST.Types, Delphi.Mock.Intf;
 
 type
   TMyEnumerator = (Enum1, Enum2, Enum3, Enum4);
@@ -32,8 +32,9 @@ type
     ['{FD524CA4-55CF-4005-B47A-48B220718AA0}']
     function FuncClass: TMyClass;
     function FuncInteger: Integer;
-    function GetStream: TRESTFile;
+    function GetStream: TRESTRequestFile;
     function ProcedureCalled: String;
+    function ReturnStream: TRESTResponseFile;
 
     procedure Proc;
     procedure ProcArray(Value: TArray<String>);
@@ -52,9 +53,9 @@ type
     procedure ProcPointer(Value: Pointer);
     procedure ProcProcedure(Value: TProc);
     procedure ProcSet(Value: TMyEnumeratorSet);
-    procedure ProcStream(Stream: TRESTFile);
-    procedure ProcStreamArray(Stream: TArray<TRESTFile>);
-    procedure ProcStreamTwoParam(File1, File2: TRESTFile);
+    procedure ProcStream(Stream: TRESTRequestFile);
+    procedure ProcStreamArray(Stream: TArray<TRESTRequestFile>);
+    procedure ProcStreamTwoParam(File1, File2: TRESTRequestFile);
     procedure ProcString(Value: ShortString);
     procedure ProcUString(Value: UnicodeString);
     procedure ProcVariant(Value: Variant);
@@ -211,18 +212,23 @@ type
     procedure WhenAFunctionHaveTheAttachmentAttributeMustReturnTheContentTypeAndContentDispositionInTheHeaderResponse;
     [Test]
     procedure IfTheFunctionDoesntHaveTheAttachmentAttributeCantRaiseAnyError;
+    [Test]
+    procedure WhenReturnATStreamCantSerializeTheReturn;
+    [Test]
+    procedure WhenTheFunctionReturnATStreamMustLoadItInTheContentStreamInTheReponseClass;
   end;
 
   TService = class(TInterfacedObject, IService)
   private
     FMyClass: TMyClass;
     FProcedureCalled: String;
-    FStream: TRESTFile;
+    FStream: TRESTRequestFile;
 
     function FuncClass: TMyClass;
     function FuncInteger: Integer;
-    function GetStream: TRESTFile;
+    function GetStream: TRESTRequestFile;
     function ProcedureCalled: String;
+    function ReturnStream: TRESTResponseFile;
 
     procedure Proc;
     procedure ProcArray(Value: TArray<String>);
@@ -241,9 +247,9 @@ type
     procedure ProcPointer(Value: Pointer);
     procedure ProcProcedure(Value: TProc);
     procedure ProcSet(Value: TMyEnumeratorSet);
-    procedure ProcStream(Stream: TRESTFile);
-    procedure ProcStreamArray(Stream: TArray<TRESTFile>);
-    procedure ProcStreamTwoParam(File1, File2: TRESTFile);
+    procedure ProcStream(Stream: TRESTRequestFile);
+    procedure ProcStreamArray(Stream: TArray<TRESTRequestFile>);
+    procedure ProcStreamTwoParam(File1, File2: TRESTRequestFile);
     procedure ProcString(Value: ShortString);
     procedure ProcUString(Value: UnicodeString);
     procedure ProcVariant(Value: Variant);
@@ -625,6 +631,26 @@ begin
   Response.Free;
 end;
 
+procedure TRestServerServiceTest.WhenReturnATStreamCantSerializeTheReturn;
+begin
+  var Request := CreateRequestMock('/IService/ReturnStream', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
+  var Serializer := TMock.CreateInterface<IRestJsonSerializer>;
+
+  FRestService.Serializer := Serializer.Instance;
+
+  Serializer.Expect.Never.When.Serialize(It.IsAny<TValue>);
+
+  Rest.HandleRequest;
+
+  Assert.CheckExpectation(Serializer.CheckExpectations);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
 procedure TRestServerServiceTest.WhenTheAmountOfRequestParametersIsDiferrentFromTheAmoutOfProcedureParametersMustReturnBadRequest(Params: String);
 begin
   var Request := CreateRequestMock('/IService/ProcInteger', CONTENTTYPE_APPLICATION_JSON, EmptyStr, Params);
@@ -742,6 +768,21 @@ begin
   Rest.HandleRequest;
 
   Assert.AreEqual(EmptyStr, Request.CheckExpectations);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenTheFunctionReturnATStreamMustLoadItInTheContentStreamInTheReponseClass;
+begin
+  var Request := CreateRequestMock('/IService/ReturnStream', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
+
+  Rest.HandleRequest;
+
+  Assert.IsNotNull(Response.ContentStream);
 
   Request.Free;
 
@@ -1286,7 +1327,7 @@ begin
   Result := 123456;
 end;
 
-function TService.GetStream: TRESTFile;
+function TService.GetStream: TRESTRequestFile;
 begin
   Result := FStream;
 end;
@@ -1394,18 +1435,18 @@ begin
   FProcedureCalled := Format('ProcSet=%d', [PByte(@Value)^]);
 end;
 
-procedure TService.ProcStream(Stream: TRESTFile);
+procedure TService.ProcStream(Stream: TRESTRequestFile);
 begin
   FProcedureCalled := 'ProcStream';
   FStream := Stream;
 end;
 
-procedure TService.ProcStreamArray(Stream: TArray<TRESTFile>);
+procedure TService.ProcStreamArray(Stream: TArray<TRESTRequestFile>);
 begin
   FProcedureCalled := 'ProcStreamArray';
 end;
 
-procedure TService.ProcStreamTwoParam(File1, File2: TRESTFile);
+procedure TService.ProcStreamTwoParam(File1, File2: TRESTRequestFile);
 begin
   FProcedureCalled := Format('ProcStreamTwoParam=File1=%s,File2=%s', [File1.FileName, File2.FileName]);
 end;
@@ -1433,6 +1474,11 @@ end;
 procedure TService.ProcWString(Value: WideString);
 begin
   FProcedureCalled := Format('ProcWString=%s', [Value]);
+end;
+
+function TService.ReturnStream: TRESTResponseFile;
+begin
+  Result := TMemoryStream.Create;
 end;
 
 end.

@@ -87,7 +87,7 @@ end;
 
 function TRestServerService.GetParamValue(const Method: TRttiMethod; const Param: TRttiParameter; var ParamLoaded: Boolean): TValue;
 
-  function GetFiles: TArray<TRESTFile>;
+  function GetFiles: TArray<TRESTRequestFile>;
   begin
     Result := nil;
 
@@ -134,7 +134,7 @@ begin
     tkVariant: raise EInvalidParameterType.Create('The param type is invalid!');
 
     tkClass:
-      if Param.ParamType.AsInstance.MetaclassType = TRESTFile then
+      if Param.ParamType.AsInstance.MetaclassType = TRESTRequestFile then
       begin
         var Files := GetFiles;
 
@@ -150,7 +150,7 @@ begin
     begin
       var ArrayType := TRttiDynamicArrayType(Param.ParamType).ElementType;
 
-      ParamLoaded := ArrayType.IsInstance and (ArrayType.AsInstance.MetaclassType = TRESTFile);
+      ParamLoaded := ArrayType.IsInstance and (ArrayType.AsInstance.MetaclassType = TRESTRequestFile);
 
       if ParamLoaded then
         Exit(TValue.From(GetFiles));
@@ -209,6 +209,8 @@ var
 
   Method: TRttiMethod;
 
+  Return: TValue;
+
   function IsValidRequest: Boolean;
   begin
     Result := (Length(Params) > 0) and ExtractFileExt(Params[High(Params)]).IsEmpty;
@@ -240,6 +242,16 @@ var
       Response.CustomHeaders.Values[sContentDisposition] := Format('attachment; filename="%s"', [Attribute.FileName]);
   end;
 
+  procedure LoadContent;
+  begin
+    Response.ContentType := GetContentType;
+
+    if Return.IsType<TRESTResponseFile> then
+      Response.ContentStream := Return.AsType<TRESTResponseFile>
+    else
+      Response.Content := Serializer.Serialize(Return);
+  end;
+
 begin
   var Instance := TValue.Empty;
   Params := Request.PathInfo.Split(['/'], TStringSplitOptions.ExcludeEmpty);
@@ -258,12 +270,11 @@ begin
 
         if GetParams(Method, ProcParams) then
         begin
-          var Return := Method.Invoke(Instance, ProcParams);
+          Return := Method.Invoke(Instance, ProcParams);
 
           if Assigned(Method.ReturnType) then
           begin
-            Response.Content := Serializer.Serialize(Return);
-            Response.ContentType := GetContentType;
+            LoadContent;
 
             CheckContentDisposition;
           end;

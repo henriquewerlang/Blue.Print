@@ -75,7 +75,7 @@ type
     function HasAttachment(const Method: TRttiMethod): Boolean;
 
     procedure AddFormDataField(const Param: TRttiParameter; const ParamValue: String);
-    procedure AddFormDataFile(const Param: TRttiParameter; const AFile: TRESTFile);
+    procedure AddFormDataFile(const Param: TRttiParameter; const AFile: TRESTRequestFile);
     procedure AddParamToTheBody(const Param: TRttiParameter; const ParamValue: TValue; const ForceLoadFormData: Boolean);
     procedure CheckException(const Error: Exception);
     procedure LoadRequest(const Method: TRttiMethod; const Args: TArray<TValue>);
@@ -175,7 +175,7 @@ begin
 {$ENDIF}
 end;
 
-procedure TRemoteService.AddFormDataFile(const Param: TRttiParameter; const AFile: TRESTFile);
+procedure TRemoteService.AddFormDataFile(const Param: TRttiParameter; const AFile: TRESTRequestFile);
 begin
 {$IFDEF PAS2JS}
   FormData.Append(Param.Name, AFile);
@@ -187,16 +187,16 @@ end;
 
 procedure TRemoteService.AddParamToTheBody(const Param: TRttiParameter; const ParamValue: TValue; const ForceLoadFormData: Boolean);
 var
-  AFile: TRESTFile;
+  AFile: TRESTRequestFile;
 
 begin
-  if ParamValue.IsType<TRESTFile>(False) then
+  if ParamValue.IsType<TRESTRequestFile>(False) then
     if ForceLoadFormData then
-      AddFormDataFile(Param, ParamValue.AsType<TRESTFile>)
+      AddFormDataFile(Param, ParamValue.AsType<TRESTRequestFile>)
     else
       FRequest.Body := ParamValue
-  else if (Param.ParamType is TRttiDynamicArrayType) and (TRttiDynamicArrayType(Param.ParamType).ElementType.Handle = TypeInfo(TRESTFile)) then
-    for AFile in ParamValue.AsType<TArray<TRESTFile>> do
+  else if (Param.ParamType is TRttiDynamicArrayType) and (TRttiDynamicArrayType(Param.ParamType).ElementType.Handle = TypeInfo(TRESTRequestFile)) then
+    for AFile in ParamValue.AsType<TArray<TRESTRequestFile>> do
       AddFormDataFile(Param, AFile)
   else if ForceLoadFormData then
     AddFormDataField(Param, EncodeParamValue(ParamValue))
@@ -242,7 +242,7 @@ end;
 
 function TRemoteService.CheckParameterIsFile(const Parameter: TRttiParameter): Boolean;
 begin
-  Result := (Parameter.ParamType.Handle = TypeInfo(TRESTFile)) or (Parameter.ParamType.Handle = TypeInfo(TArray<TRESTFile>));
+  Result := (Parameter.ParamType.Handle = TypeInfo(TRESTRequestFile)) or (Parameter.ParamType.Handle = TypeInfo(TArray<TRESTRequestFile>));
 end;
 
 constructor TRemoteService.Create(const TypeInfo: PTypeInfo);
@@ -642,10 +642,10 @@ begin
 
     var Response := Connection.Execute(RESTRequestMethodToString(Request.Method), Request.URL, Content) as IHTTPResponse;
 
-    Result := Response.ContentAsString(TEncoding.UTF8);
-
     if Response.StatusCode <> 200 then
       raise EHTTPStatusError.Create(Response.StatusCode, Request.URL, Result);
+
+    Result := Response.ContentAsString(TEncoding.UTF8);
   finally
     Content.Free;
   end;

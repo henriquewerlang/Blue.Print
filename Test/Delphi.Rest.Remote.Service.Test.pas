@@ -18,7 +18,7 @@ type
     function CreateRemoteServiceURL(const URL: String; const Communication: IRestCommunication): TRemoteService; overload;
     function CreateRemoteServiceURL<T: IInterface>(const URL: String; const Communication: IRestCommunication): TRemoteService; overload;
     function GetFormDataValue(FormData: TRESTFormData): String;
-    function CreateRequestFile: TRESTFile;
+    function CreateRequestFile: TRESTRequestFile;
 
     procedure RegisterLeak<T: IInterface>;
   public
@@ -153,18 +153,18 @@ type
     procedure TestProcedureWithParam(Param1: String; Param2: Integer);
     [ParameterInBody]
     procedure TestProcedureWithParameterInBody(Param1: String; Param2: Integer);
-    procedure TestProcedureWithAnFile(MyFile: TRESTFile);
-    procedure TestProcedureWithFileAndParams(MayParam: Integer; MyFile: TRESTFile; AnotherParam: String);
+    procedure TestProcedureWithAnFile(MyFile: TRESTRequestFile);
+    procedure TestProcedureWithFileAndParams(MayParam: Integer; MyFile: TRESTRequestFile; AnotherParam: String);
     [ParameterInBody]
-    procedure TestProcedureFileInTheBody(MyFile: TRESTFile);
+    procedure TestProcedureFileInTheBody(MyFile: TRESTRequestFile);
     [ParameterInBody]
-    procedure TestProcedureFileAnParamInTheBody(MyParam: String; MyFile: TRESTFile);
+    procedure TestProcedureFileAnParamInTheBody(MyParam: String; MyFile: TRESTRequestFile);
     [ParameterInBody]
-    procedure TestProcedureWithArrayFiles(MyFiles: TArray<TRESTFile>);
-    procedure TestProcedureWithArrayFilesInURL(MyFiles: TArray<TRESTFile>);
-    procedure TestProceudreMoreThenOneFileParam(MyFile1: TRESTFile; AnParam: String; MyFile2: TRESTFile);
-    procedure TestProcedureFileInParam(MyFile: TRESTFile);
-    procedure TestProcedureArrayFileInParam(MyFile: TArray<TRESTFile>);
+    procedure TestProcedureWithArrayFiles(MyFiles: TArray<TRESTRequestFile>);
+    procedure TestProcedureWithArrayFilesInURL(MyFiles: TArray<TRESTRequestFile>);
+    procedure TestProceudreMoreThenOneFileParam(MyFile1: TRESTRequestFile; AnParam: String; MyFile2: TRESTRequestFile);
+    procedure TestProcedureFileInParam(MyFile: TRESTRequestFile);
+    procedure TestProcedureArrayFileInParam(MyFile: TArray<TRESTRequestFile>);
   end;
 
   [PATCH]
@@ -1195,7 +1195,7 @@ begin
   Result.URL := URL;
 end;
 
-function TRemoteServiceTest.CreateRequestFile: TRESTFile;
+function TRemoteServiceTest.CreateRequestFile: TRESTRequestFile;
 const
   CONTENT: AnsiString = 'This is my file!'#0;
 
