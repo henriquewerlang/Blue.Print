@@ -209,7 +209,7 @@ begin
   if Assigned(FOnExecuteException) then
     OnExecuteException(Error, Serializer)
   else
-    raise Error;
+    raise {$IFDEF PAS2JS}Error{$ELSE}AcquireExceptionObject as Exception{$ENDIF};
 end;
 
 function TRemoteService.CheckForceFormData(const Method: TRttiMethod): Boolean;
@@ -535,7 +535,7 @@ begin
       Result := Deserialize(SendRequest, Method.ReturnType);
   except
     on E: Exception do
-      CheckException({$IFDEF PAS2JS}E{$ELSE}AcquireExceptionObject as Exception{$ENDIF});
+      CheckException(E);
   end;
 end;
 
