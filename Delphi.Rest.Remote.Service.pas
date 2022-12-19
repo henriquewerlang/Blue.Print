@@ -641,11 +641,10 @@ begin
       Connection.CustomHeaders[FHeaders.Names[A]] := FHeaders.ValueFromIndex[A];
 
     var Response := Connection.Execute(RESTRequestMethodToString(Request.Method), Request.URL, Content) as IHTTPResponse;
+    Result := Response.ContentAsString(TEncoding.UTF8);
 
     if Response.StatusCode <> 200 then
       raise EHTTPStatusError.Create(Response.StatusCode, Request.URL, Result);
-
-    Result := Response.ContentAsString(TEncoding.UTF8);
   finally
     Content.Free;
   end;
