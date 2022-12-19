@@ -246,7 +246,7 @@ var
   begin
     Response.ContentType := GetContentType;
 
-    if Return.IsType<TRESTResponseFile> then
+    if not Return.IsEmpty and Return.IsType<TRESTResponseFile> then
       Response.ContentStream := Return.AsType<TRESTResponseFile>
     else
       Response.Content := Serializer.Serialize(Return);

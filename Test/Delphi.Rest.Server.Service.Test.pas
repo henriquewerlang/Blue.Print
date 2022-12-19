@@ -35,6 +35,7 @@ type
     function GetStream: TRESTRequestFile;
     function ProcedureCalled: String;
     function ReturnStream: TRESTResponseFile;
+    function ReturnStreamNil: TRESTResponseFile;
 
     procedure Proc;
     procedure ProcArray(Value: TArray<String>);
@@ -216,6 +217,8 @@ type
     procedure WhenReturnATStreamCantSerializeTheReturn;
     [Test]
     procedure WhenTheFunctionReturnATStreamMustLoadItInTheContentStreamInTheReponseClass;
+    [Test]
+    procedure WhenTheFunctionReturnANilStreamMustSerializeTheReturn;
   end;
 
   TService = class(TInterfacedObject, IService)
@@ -229,6 +232,7 @@ type
     function GetStream: TRESTRequestFile;
     function ProcedureCalled: String;
     function ReturnStream: TRESTResponseFile;
+    function ReturnStreamNil: TRESTResponseFile;
 
     procedure Proc;
     procedure ProcArray(Value: TArray<String>);
@@ -768,6 +772,26 @@ begin
   Rest.HandleRequest;
 
   Assert.AreEqual(EmptyStr, Request.CheckExpectations);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenTheFunctionReturnANilStreamMustSerializeTheReturn;
+begin
+  var Request := CreateRequestMock('/IService/ReturnStreamNil', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
+  var Serializer := TMock.CreateInterface<IRestJsonSerializer>;
+
+  FRestService.Serializer := Serializer.Instance;
+
+  Serializer.Expect.Once.When.Serialize(It.IsAny<TValue>);
+
+  Rest.HandleRequest;
+
+  Assert.CheckExpectation(Serializer.CheckExpectations);
 
   Request.Free;
 
@@ -1479,6 +1503,11 @@ end;
 function TService.ReturnStream: TRESTResponseFile;
 begin
   Result := TMemoryStream.Create;
+end;
+
+function TService.ReturnStreamNil: TRESTResponseFile;
+begin
+  Result := nil;
 end;
 
 end.
