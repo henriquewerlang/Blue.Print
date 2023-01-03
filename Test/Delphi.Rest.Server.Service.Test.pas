@@ -219,6 +219,10 @@ type
     procedure WhenTheFunctionReturnATStreamMustLoadItInTheContentStreamInTheReponseClass;
     [Test]
     procedure WhenTheFunctionReturnANilStreamMustSerializeTheReturn;
+    [Test]
+    procedure AfterExecuteTheRequestMustSendTheResponseForTheClient;
+    [Test]
+    procedure AfterHandleTheRequestTheFreeContentPropertyMustByFalse;
   end;
 
   TService = class(TInterfacedObject, IService)
@@ -282,6 +286,21 @@ uses System.NetEncoding, Winapi.WinInet, Delphi.Rest.JSON.Serializer, System.Net
 
 { TRestServerServiceTest }
 
+procedure TRestServerServiceTest.AfterExecuteTheRequestMustSendTheResponseForTheClient;
+begin
+  var Request := CreateRequestMock('/IService/Proc', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
+
+  Rest.HandleRequest;
+
+  Assert.IsTrue(Response.Sent);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
 procedure TRestServerServiceTest.AfterHandleTheExceptionMustSendTheResponseForTheClient;
 begin
   var Request := CreateRequestMock;
@@ -295,6 +314,21 @@ begin
   Assert.IsTrue(Response.Sent);
 
   MyException.Free;
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.AfterHandleTheRequestTheFreeContentPropertyMustByFalse;
+begin
+  var Request := CreateRequestMock('/IService/Proc', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
+
+  Rest.HandleRequest;
+
+  Assert.IsFalse(Response.FreeContentStream);
 
   Request.Free;
 

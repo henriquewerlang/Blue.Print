@@ -279,7 +279,10 @@ begin
             CheckContentDisposition;
           end;
 
+          Response.FreeContentStream := False;
           Response.StatusCode := HTTP_STATUS_OK;
+
+          Response.SendResponse;
         end
         else
           Response.StatusCode := HTTP_STATUS_BAD_REQUEST;
