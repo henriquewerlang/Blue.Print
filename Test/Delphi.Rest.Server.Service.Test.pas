@@ -17,6 +17,8 @@ type
   end;
 
   [ContentType(CONTENTTYPE_APPLICATION_OGG)]
+  [Header('My Service Header', 'My Service Value')]
+  [Header('My Service Header 2', 'My Service Value 2')]
   IContentService = interface(IInvokable)
     ['{E43D13E0-B5D6-4EF9-BC4A-A481BCAC0F5C}']
     [Attachment('MyFile.pas', CONTENTTYPE_APPLICATION_ZIP)]
@@ -26,6 +28,11 @@ type
     [ContentType(CONTENTTYPE_APPLICATION_ATOM_XML)]
     function MyContentFunction: String;
     function MyFunction: String;
+
+    [Header('My Header', 'My Value')]
+    [Header('My Header 2', 'My Value 2')]
+    procedure ProcedureWithHeader;
+    procedure MyProcedure;
   end;
 
   IService = interface
@@ -223,6 +230,14 @@ type
     procedure AfterExecuteTheRequestMustSendTheResponseForTheClient;
     [Test]
     procedure AfterHandleTheRequestTheFreeContentPropertyMustByFalse;
+    [Test]
+    procedure WhenAProcedureHasHeaderAttributeMustLoadTheValuesInTheResponse;
+    [Test]
+    procedure TheHeaderAttributeMustLoadTheValuesInTheAttribute;
+    [Test]
+    procedure WhenTheInterfaceHasTheHeaderAttributeMustLoadTheHeadersResponse;
+    [Test]
+    procedure TheHeaderAttributeMustLoadTheValuedOfTheHeaderAttribute;
   end;
 
   TService = class(TInterfacedObject, IService)
@@ -610,6 +625,42 @@ begin
   Response.Free;
 end;
 
+procedure TRestServerServiceTest.TheHeaderAttributeMustLoadTheValuedOfTheHeaderAttribute;
+begin
+  var Request := CreateRequestMock('/IContentService/MyProcedure', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, FServiceContainer.Instance);
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual('My Service Header', Response.CustomHeaders.Names[0]);
+  Assert.AreEqual('My Service Value', Response.CustomHeaders.ValueFromIndex[0]);
+  Assert.AreEqual('My Service Header 2', Response.CustomHeaders.Names[1]);
+  Assert.AreEqual('My Service Value 2', Response.CustomHeaders.ValueFromIndex[1]);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.TheHeaderAttributeMustLoadTheValuesInTheAttribute;
+begin
+  var Request := CreateRequestMock('/IContentService/ProcedureWithHeader', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, FServiceContainer.Instance);
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual('My Header', Response.CustomHeaders.Names[0]);
+  Assert.AreEqual('My Value', Response.CustomHeaders.ValueFromIndex[0]);
+  Assert.AreEqual('My Header 2', Response.CustomHeaders.Names[1]);
+  Assert.AreEqual('My Value 2', Response.CustomHeaders.ValueFromIndex[1]);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
 procedure TRestServerServiceTest.WhenAFunctionHaveTheAttachmentAttributeMustReturnTheContentTypeAndContentDispositionInTheHeaderResponse;
 begin
   var Request := CreateRequestMock('/IContentService/MyAttachmentFunction', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
@@ -639,6 +690,21 @@ begin
   Assert.IsTrue(Handled);
 
   MyException.Free;
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenAProcedureHasHeaderAttributeMustLoadTheValuesInTheResponse;
+begin
+  var Request := CreateRequestMock('/IContentService/ProcedureWithHeader', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, FServiceContainer.Instance);
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(4, Response.CustomHeaders.Count);
 
   Request.Free;
 
@@ -841,6 +907,21 @@ begin
   Rest.HandleRequest;
 
   Assert.IsNotNull(Response.ContentStream);
+
+  Request.Free;
+
+  Response.Free;
+end;
+
+procedure TRestServerServiceTest.WhenTheInterfaceHasTheHeaderAttributeMustLoadTheHeadersResponse;
+begin
+  var Request := CreateRequestMock('/IContentService/MyProcedure', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
+  var Response := TWebResponseMock.Create(Request.Instance);
+  var Rest := CreateRestService(Request.Instance, Response, FServiceContainer.Instance);
+
+  Rest.HandleRequest;
+
+  Assert.AreEqual(2, Response.CustomHeaders.Count);
 
   Request.Free;
 

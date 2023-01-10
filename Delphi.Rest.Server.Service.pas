@@ -252,6 +252,23 @@ var
       Response.Content := Serializer.Serialize(Return);
   end;
 
+  procedure LoadHeaders;
+  begin
+    for var MethodAttribute in Method.GetAttributes do
+      if MethodAttribute is HeaderAttribute then
+      begin
+        var MethodHeader := HeaderAttribute(MethodAttribute);
+        Response.CustomHeaders.Values[MethodHeader.Name] := MethodHeader.Value;
+      end;
+
+    for var ServiceAttribute in Method.Parent.GetAttributes do
+      if ServiceAttribute is HeaderAttribute then
+      begin
+        var ServiceHeader := HeaderAttribute(ServiceAttribute);
+        Response.CustomHeaders.Values[ServiceHeader.Name] := ServiceHeader.Value;
+      end;
+  end;
+
 begin
   var Instance := TValue.Empty;
   Params := Request.PathInfo.Split(['/'], TStringSplitOptions.ExcludeEmpty);
@@ -281,6 +298,8 @@ begin
 
           Response.FreeContentStream := False;
           Response.StatusCode := HTTP_STATUS_OK;
+
+          LoadHeaders;
 
           Response.SendResponse;
         end

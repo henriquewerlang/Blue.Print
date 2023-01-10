@@ -122,39 +122,27 @@ type
   private
     FFileName: String;
   public
-    constructor Create(FileName: String; const ContentType: String); reintroduce;
+    constructor Create(const FileName, ContentType: String); reintroduce;
 
     property FileName: String read FFileName;
   end;
 
+  HeaderAttribute = class(TCustomAttribute)
+  private
+    FName: String;
+    FValue: String;
+  public
+    constructor Create(const Name, Value: String);
+
+    property Name: String read FName;
+    property Value: String read FValue;
+  end;
+
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
-{$IFDEF PAS2JS}
-function RESTRequestMethodToString(const AMethod: TRESTRequestMethod): string;
-{$ENDIF}
 
 implementation
 
 uses System.SysUtils;
-
-{$IFDEF PAS2JS}
-function RESTRequestMethodToString(const AMethod: TRESTRequestMethod): string;
-begin
-  case AMethod of
-    TRESTRequestMethod.rmPOST:
-      result := 'POST';
-    TRESTRequestMethod.rmPUT:
-      result := 'PUT';
-    TRESTRequestMethod.rmGET:
-      result := 'GET';
-    TRESTRequestMethod.rmDELETE:
-      result := 'DELETE';
-    TRESTRequestMethod.rmPATCH:
-      result := 'PATCH'
-  else
-    result := Format('RESTRequestMethod2String - unknown Method: %d', [integer(AMethod)]);
-  end;
-end;
-{$ENDIF}
 
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
 begin
@@ -325,11 +313,21 @@ end;
 
 { AttachmentAttribute }
 
-constructor AttachmentAttribute.Create(FileName: String; const ContentType: String);
+constructor AttachmentAttribute.Create(const FileName, ContentType: String);
 begin
   inherited Create(ContentType);
 
   FFileName := FileName;
+end;
+
+{ HeaderAttribute }
+
+constructor HeaderAttribute.Create(const Name, Value: String);
+begin
+  inherited Create;
+
+  FName := Name;
+  FValue := Value;
 end;
 
 end.

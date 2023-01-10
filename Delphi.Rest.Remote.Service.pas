@@ -147,6 +147,24 @@ const
   COMPILER_OFFSET = {$IFDEF PAS2JS}0{$ELSE}1{$ENDIF};
 
 {$IFDEF PAS2JS}
+function RESTRequestMethodToString(const AMethod: TRESTRequestMethod): String;
+begin
+  case AMethod of
+    TRESTRequestMethod.rmPOST:
+      Result := 'POST';
+    TRESTRequestMethod.rmPUT:
+      Result := 'PUT';
+    TRESTRequestMethod.rmGET:
+      Result := 'GET';
+    TRESTRequestMethod.rmDELETE:
+      Result := 'DELETE';
+    TRESTRequestMethod.rmPATCH:
+      Result := 'PATCH'
+  else
+    Result := Format('RESTRequestMethod2String - unknown Method: %d', [Integer(AMethod)]);
+  end;
+end;
+
 procedure DownloadFile(const URL: String); async;
 var
   Anchor: TJSHTMLAnchorElement;
