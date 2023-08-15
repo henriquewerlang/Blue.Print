@@ -2,8 +2,8 @@
 
 interface
 
-uses System.SysUtils, System.Classes, System.Rtti, Web.HTTPApp, DUnitX.TestFramework, Delphi.Rest.Server.Service, Delphi.Rest.Types, Delphi.Rest.Service.Container, Delphi.Mock,
-  Delphi.Mock.Classes, Delphi.Rest.JSON.Serializer .Intf, Delphi.Rest.Request.Mock, REST.Types, Delphi.Mock.Intf;
+uses System.SysUtils, System.Classes, System.Rtti, Web.HTTPApp, DUnitX.TestFramework, Delphi.Rest.Server.Service, Delphi.Rest.Types, Delphi.Rest.Service.Container, Translucent,
+  Translucent.Classes, Delphi.Rest.JSON.Serializer.Intf, Delphi.Rest.Request.Mock, REST.Types, Translucent.Intf;
 
 type
   TMyEnumerator = (Enum1, Enum2, Enum3, Enum4);

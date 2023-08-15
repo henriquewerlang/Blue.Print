@@ -26,7 +26,7 @@ type
 
 implementation
 
-uses System.Classes, System.Rtti, Delphi.Rest.Content.Parser, Delphi.Rest.Request.Mock, Delphi.Mock;
+uses System.Classes, System.Rtti, Delphi.Rest.Content.Parser, Delphi.Rest.Request.Mock, Translucent;
 
 { TImageContentParserTest }
 

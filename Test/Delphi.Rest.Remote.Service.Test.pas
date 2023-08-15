@@ -2,23 +2,23 @@
 
 interface
 
-uses DUnitX.TestFramework, System.Rtti, Delphi.Rest.Remote.Service, Delphi.Mock, Delphi.Mock.Intf, Delphi.Rest.Types, Rest.Types;
+uses DUnitX.TestFramework, System.Rtti, Delphi.Rest.Remote.Service, Translucent, Translucent.Intf, Delphi.Rest.Types, Rest.Types;
 
 type
   [TestFixture]
   TRemoteServiceTest = class
   private
     function CreateMockCommunication: IMock<IRestCommunication>;
-    function CreateRequest(const URL: String): TRestRequest; overload;
-    function CreateRequest(Method: TRESTRequestMethod; const URL: String): TRestRequest; overload;
-    function CreateRequest(Method: TRESTRequestMethod; const URL, Body: String): TRestRequest; overload;
-    function CreateRequest(Method: TRESTRequestMethod; const URL: String; Body: TValue): TRestRequest; overload;
     function CreateRemoteService(const Communication: IRestCommunication): TRemoteService; overload;
     function CreateRemoteService<T: IInterface>(const Communication: IRestCommunication): TRemoteService; overload;
     function CreateRemoteServiceURL(const URL: String; const Communication: IRestCommunication): TRemoteService; overload;
     function CreateRemoteServiceURL<T: IInterface>(const URL: String; const Communication: IRestCommunication): TRemoteService; overload;
-    function GetFormDataValue(FormData: TRESTFormData): String;
+    function CreateRequest(const URL: String): TRestRequest; overload;
+    function CreateRequest(Method: TRESTRequestMethod; const URL, Body: String): TRestRequest; overload;
+    function CreateRequest(Method: TRESTRequestMethod; const URL: String): TRestRequest; overload;
+    function CreateRequest(Method: TRESTRequestMethod; const URL: String; Body: TValue): TRestRequest; overload;
     function CreateRequestFile: TRESTRequestFile;
+    function GetFormDataValue(FormData: TRESTFormData): String;
 
     procedure RegisterLeak<T: IInterface>;
   public
