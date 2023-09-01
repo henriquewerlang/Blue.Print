@@ -7,12 +7,12 @@ uses System.Rtti, System.TypInfo, System.JSON.Serializers, System.Classes, Syste
 type
   TRestJsonSerializer = class(TInterfacedObject, IRestJsonSerializer)
   private
-    function Deserialize(const AJson: String; TypeInfo: PTypeInfo): TValue; inline;
+    function Deserialize(const AJson: String; const TypeInfo: PTypeInfo): TValue; inline;
     function Serialize(const AValue: TValue): String; inline;
   end;
 
   TJsonSerializerHelper = class helper for TJsonSerializer
-    function Deserialize(const AJson: String; TypeInfo: PTypeInfo): TValue; overload;
+    function Deserialize(const AJson: String; const TypeInfo: PTypeInfo): TValue; overload;
     function Serialize(const AValue: TValue): String; inline;
   end;
 
@@ -20,7 +20,7 @@ implementation
 
 { TRestJsonSerializer }
 
-function TRestJsonSerializer.Deserialize(const AJson: String; TypeInfo: PTypeInfo): TValue;
+function TRestJsonSerializer.Deserialize(const AJson: String; const TypeInfo: PTypeInfo): TValue;
 var
   Serializer: TJsonSerializer;
 
@@ -46,7 +46,7 @@ end;
 
 { TJsonSerializerHelper }
 
-function TJsonSerializerHelper.Deserialize(const AJson: String; TypeInfo: PTypeInfo): TValue;
+function TJsonSerializerHelper.Deserialize(const AJson: String; const TypeInfo: PTypeInfo): TValue;
 var
   LStringReader: TStringReader;
 

@@ -637,7 +637,7 @@ begin
     Connection.Open(RESTRequestMethodToString(Request.Method), Request.URL, False);
 
     for A := 0 to Pred(FHeaders.Count) do
-      Connection.setRequestHeader(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
+      Connection.SetRequestHeader(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
 
     Connection.Send(Request.Body.AsJSValue);
 

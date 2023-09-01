@@ -7,7 +7,7 @@ uses Rtti, JS, TypInfo, Delphi.Rest.JSON.Serializer.Intf;
 type
   TRestJsonSerializer = class(TInterfacedObject, IRestJsonSerializer)
   private
-    function Deserialize(const AJson: String; TypeInfo: PTypeInfo): TValue;
+    function Deserialize(const AJson: String; const TypeInfo: PTypeInfo): TValue;
     function Serialize(const AValue: TValue): String;
   protected
     FContext: TRttiContext;
