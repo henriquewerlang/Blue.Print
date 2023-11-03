@@ -1,4 +1,4 @@
-﻿unit Delphi.Rest.Types;
+﻿unit Blue.Print.Types;
 
 interface
 

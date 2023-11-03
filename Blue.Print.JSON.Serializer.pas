@@ -1,8 +1,8 @@
-﻿unit Delphi.Rest.JSON.Serializer;
+﻿unit Blue.Print.JSON.Serializer;
 
 interface
 
-uses System.Rtti, System.TypInfo, System.JSON.Serializers, System.Classes, System.JSON.Readers, System.JSON.Writers, System.SysUtils, Delphi.Rest.JSON.Serializer.Intf;
+uses System.Rtti, System.TypInfo, System.JSON.Serializers, System.Classes, System.JSON.Readers, System.JSON.Writers, System.SysUtils, Blue.Print.JSON.Serializer.Intf;
 
 type
   TRestJsonSerializer = class(TInterfacedObject, IRestJsonSerializer)

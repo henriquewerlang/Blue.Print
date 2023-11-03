@@ -1,8 +1,8 @@
-unit Delphi.Rest.Types.Test;
+unit Blue.Print.Types.Test;
 
 interface
 
-uses DUnitX.TestFramework, Delphi.Rest.Types, Rest.Types;
+uses DUnitX.TestFramework, Blue.Print.Types, Rest.Types;
 
 type
   [TestFixture]

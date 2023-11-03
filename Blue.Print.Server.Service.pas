@@ -1,8 +1,8 @@
-﻿unit Delphi.Rest.Server.Service;
+﻿unit Blue.Print.Server.Service;
 
 interface
 
-uses System.Classes, System.SysUtils, System.Rtti, Web.HTTPApp, Delphi.Rest.Service.Container, Delphi.Rest.JSON.Serializer.Intf;
+uses System.Classes, System.SysUtils, System.Rtti, Web.HTTPApp, Blue.Print.Service.Container, Blue.Print.JSON.Serializer.Intf;
 
 type
   EInvalidParameterType = class(Exception);
@@ -55,7 +55,7 @@ type
 
 implementation
 
-uses System.TypInfo, System.Math, Winapi.WinInet, System.NetConsts, Rest.Types, Delphi.Rest.JSON.Serializer, Delphi.Rest.Types, Delphi.Rest.Content.Parser;
+uses System.TypInfo, System.Math, Winapi.WinInet, System.NetConsts, Rest.Types, Blue.Print.JSON.Serializer, Blue.Print.Types, Blue.Print.Content.Parser;
 
 { TRestServerService }
 

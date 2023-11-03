@@ -1,4 +1,4 @@
-﻿unit Delphi.Rest.Content.Parser.Test;
+﻿unit Blue.Print.Content.Parser.Test;
 
 interface
 
@@ -26,7 +26,7 @@ type
 
 implementation
 
-uses System.Classes, System.Rtti, Delphi.Rest.Content.Parser, Delphi.Rest.Request.Mock, Translucent;
+uses System.Classes, System.Rtti, Blue.Print.Content.Parser, Blue.Print.Request.Mock, Translucent;
 
 { TImageContentParserTest }
 

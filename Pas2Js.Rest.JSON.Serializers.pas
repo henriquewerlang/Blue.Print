@@ -2,7 +2,7 @@
 
 interface
 
-uses Rtti, JS, TypInfo, Delphi.Rest.JSON.Serializer.Intf;
+uses Rtti, JS, TypInfo, Blue.Print.JSON.Serializer.Intf;
 
 type
   TRestJsonSerializer = class(TInterfacedObject, IRestJsonSerializer)

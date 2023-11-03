@@ -1,9 +1,9 @@
-﻿unit Delphi.Rest.Remote.Service;
+﻿unit Blue.Print.Remote.Service;
 
 interface
 
-uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF DCC}System.Net.HTTPClient, Rest.Types, {$ENDIF}Delphi.Rest.Types,
-  Delphi.Rest.JSON.Serializer.Intf;
+uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF DCC}System.Net.HTTPClient, Rest.Types, {$ENDIF}Blue.Print.Types,
+  Blue.Print.JSON.Serializer.Intf;
 
 type
   TRestRequest = class
@@ -136,11 +136,11 @@ type
 
 implementation
 
-uses Delphi.Rest.Exceptions,
+uses Blue.Print.Exceptions,
 {$IFDEF PAS2JS}
   JS, Web, WebOrWorker, Pas2Js.Rest.JSON.Serializers
 {$ELSE}
-  System.Net.Mime, System.NetConsts, System.Net.URLClient, Delphi.Rest.JSON.Serializer, Web.HTTPApp
+  System.Net.Mime, System.NetConsts, System.Net.URLClient, Blue.Print.JSON.Serializer, Web.HTTPApp
 {$ENDIF};
 
 const

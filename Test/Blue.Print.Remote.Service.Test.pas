@@ -1,8 +1,8 @@
-﻿unit Delphi.Rest.Remote.Service.Test;
+﻿unit Blue.Print.Remote.Service.Test;
 
 interface
 
-uses DUnitX.TestFramework, System.Rtti, Delphi.Rest.Remote.Service, Translucent, Translucent.Intf, Delphi.Rest.Types, Rest.Types;
+uses DUnitX.TestFramework, System.Rtti, Blue.Print.Remote.Service, Translucent, Translucent.Intf, Blue.Print.Types, Rest.Types;
 
 type
   [TestFixture]
@@ -223,7 +223,7 @@ type
 
 implementation
 
-uses System.SysUtils, System.Classes, Delphi.Rest.JSON.Serializer, Delphi.Rest.JSON.Serializer.Intf, Web.ReqFiles;
+uses System.SysUtils, System.Classes, Blue.Print.JSON.Serializer, Blue.Print.JSON.Serializer.Intf, Web.ReqFiles;
 
 { TRemoteServiceTest }
 

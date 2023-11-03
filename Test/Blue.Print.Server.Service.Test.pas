@@ -1,9 +1,9 @@
-﻿unit Delphi.Rest.Server.Service.Test;
+﻿unit Blue.Print.Server.Service.Test;
 
 interface
 
-uses System.SysUtils, System.Classes, System.Rtti, Web.HTTPApp, DUnitX.TestFramework, Delphi.Rest.Server.Service, Delphi.Rest.Types, Delphi.Rest.Service.Container, Translucent,
-  Translucent.Classes, Delphi.Rest.JSON.Serializer.Intf, Delphi.Rest.Request.Mock, REST.Types, Translucent.Intf;
+uses System.SysUtils, System.Classes, System.Rtti, Web.HTTPApp, DUnitX.TestFramework, Blue.Print.Server.Service, Blue.Print.Types, Blue.Print.Service.Container, Translucent,
+  Translucent.Classes, Blue.Print.JSON.Serializer.Intf, Blue.Print.Request.Mock, REST.Types, Translucent.Intf;
 
 type
   TMyEnumerator = (Enum1, Enum2, Enum3, Enum4);
@@ -297,7 +297,7 @@ type
 
 implementation
 
-uses System.NetEncoding, Winapi.WinInet, Delphi.Rest.JSON.Serializer, System.Net.Mime, System.NetConsts, Web.ReqFiles;
+uses System.NetEncoding, Winapi.WinInet, Blue.Print.JSON.Serializer, System.Net.Mime, System.NetConsts, Web.ReqFiles;
 
 { TRestServerServiceTest }
 
