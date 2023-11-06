@@ -3,7 +3,7 @@
 interface
 
 uses System.SysUtils, System.Classes, System.Rtti, Web.HTTPApp, DUnitX.TestFramework, Blue.Print.Server.Service, Blue.Print.Types, Blue.Print.Service.Container, Translucent,
-  Translucent.Classes, Blue.Print.JSON.Serializer.Intf, Blue.Print.Request.Mock, REST.Types, Translucent.Intf;
+  Translucent.Classes, Blue.Print.Request.Mock, REST.Types, Translucent.Intf;
 
 type
   TMyEnumerator = (Enum1, Enum2, Enum3, Enum4);
@@ -297,7 +297,7 @@ type
 
 implementation
 
-uses System.NetEncoding, Winapi.WinInet, Blue.Print.JSON.Serializer, System.Net.Mime, System.NetConsts, Web.ReqFiles;
+uses System.NetEncoding, Winapi.WinInet, Blue.Print.Serializer, System.Net.Mime, System.NetConsts, Web.ReqFiles;
 
 { TRestServerServiceTest }
 
@@ -582,7 +582,7 @@ procedure TRestServerServiceTest.SetupFixture;
 begin
   CreateRequestMock.Free;
 
-  var Serializer: IRestJsonSerializer := TRestJsonSerializer.Create;
+  var Serializer: ISerializer := TBluePrintJsonSerializer.Create;
 
   Serializer.Serialize('abc');
 
@@ -740,7 +740,7 @@ begin
   var Request := CreateRequestMock('/IService/ReturnStream', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
   var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
-  var Serializer := TMock.CreateInterface<IRestJsonSerializer>;
+  var Serializer := TMock.CreateInterface<ISerializer>;
 
   FRestService.Serializer := Serializer.Instance;
 
@@ -883,7 +883,7 @@ begin
   var Request := CreateRequestMock('/IService/ReturnStreamNil', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
   var Rest := CreateRestService(Request.Instance, Response, TServiceContainer.Create(TService.Create));
-  var Serializer := TMock.CreateInterface<IRestJsonSerializer>;
+  var Serializer := TMock.CreateInterface<ISerializer>;
 
   FRestService.Serializer := Serializer.Instance;
 

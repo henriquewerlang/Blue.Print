@@ -2,8 +2,7 @@
 
 interface
 
-uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF DCC}System.Net.HTTPClient, Rest.Types, {$ENDIF}Blue.Print.Types,
-  Blue.Print.JSON.Serializer.Intf;
+uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF DCC}System.Net.HTTPClient, Rest.Types, {$ENDIF}Blue.Print.Types, Blue.Print.Serializer;
 
 type
   TRestRequest = class
@@ -53,10 +52,10 @@ type
     FContext: TRttiContext;
     FFormData: TRESTFormData;
     FHeaders: TStringList;
-    FOnExecuteException: TProc<Exception, IRestJsonSerializer>;
+    FOnExecuteException: TProc<Exception, ISerializer>;
     FRequest: TRestRequest;
     FRttiType: TRttiInterfaceType;
-    FSerializer: IRestJsonSerializer;
+    FSerializer: ISerializer;
     FURL: String;
 
     function CheckForceFormData(const Method: TRttiMethod): Boolean;
@@ -96,9 +95,9 @@ type
     property Communication: IRestCommunication read FCommunication write FCommunication;
     property Header[const Index: String]: String read GetHeader write SetHeader;
     property Headers: String read GetHeaders write SetHeaders;
-    property OnExecuteException: TProc<Exception, IRestJsonSerializer> read FOnExecuteException write FOnExecuteException;
+    property OnExecuteException: TProc<Exception, ISerializer> read FOnExecuteException write FOnExecuteException;
     property RttiType: TRttiInterfaceType read FRttiType;
-    property Serializer: IRestJsonSerializer read FSerializer write FSerializer;
+    property Serializer: ISerializer read FSerializer write FSerializer;
     property URL: String read FURL write FURL;
   end;
 
@@ -112,8 +111,8 @@ type
   private
     FCommunication: IRestCommunication;
     FHeaders: String;
-    FOnExecuteException: TProc<Exception, IRestJsonSerializer>;
-    FSerializerFactory: TFunc<IRestJsonSerializer>;
+    FOnExecuteException: TProc<Exception, ISerializer>;
+    FSerializerFactory: TFunc<ISerializer>;
     FURL: String;
 
     class function GetRemoteServiceFactory: TRemoteServiceFactory; static;
@@ -127,8 +126,8 @@ type
 
     property Communication: IRestCommunication read GetCommunication write FCommunication;
     property Headers: String read FHeaders write FHeaders;
-    property OnExecuteException: TProc<Exception, IRestJsonSerializer> read FOnExecuteException write FOnExecuteException;
-    property SerializerFactory: TFunc<IRestJsonSerializer> read FSerializerFactory write FSerializerFactory;
+    property OnExecuteException: TProc<Exception, ISerializer> read FOnExecuteException write FOnExecuteException;
+    property SerializerFactory: TFunc<ISerializer> read FSerializerFactory write FSerializerFactory;
     property URL: String read FURL write FURL;
 
     class property Instance: TRemoteServiceFactory read GetRemoteServiceFactory;
@@ -136,11 +135,11 @@ type
 
 implementation
 
-uses Blue.Print.Exceptions,
+uses
 {$IFDEF PAS2JS}
   JS, Web, WebOrWorker, Pas2Js.Rest.JSON.Serializers
 {$ELSE}
-  System.Net.Mime, System.NetConsts, System.Net.URLClient, Blue.Print.JSON.Serializer, Web.HTTPApp
+  System.Net.Mime, System.NetConsts, System.Net.URLClient, Web.HTTPApp
 {$ENDIF};
 
 const
@@ -714,9 +713,9 @@ class constructor TRemoteServiceFactory.Create;
 begin
   GRemoteServiceFactory := TRemoteServiceFactory.Create;
   TRemoteServiceFactory.Instance.SerializerFactory :=
-    function: IRestJsonSerializer
+    function: ISerializer
     begin
-      Result := TRestJsonSerializer.Create;
+      Result := TBluePrintJsonSerializer.Create;
     end;
 end;
 

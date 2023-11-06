@@ -223,7 +223,7 @@ type
 
 implementation
 
-uses System.SysUtils, System.Classes, Blue.Print.JSON.Serializer, Blue.Print.JSON.Serializer.Intf, Web.ReqFiles;
+uses System.SysUtils, System.Classes, Blue.Print.Serializer, Web.ReqFiles;
 
 { TRemoteServiceTest }
 
@@ -251,7 +251,7 @@ function TRemoteServiceTest.CreateRemoteServiceURL<T>(const URL: String; const C
 begin
   Result := TRemoteService.Create(TypeInfo(T));
   Result.Communication := Communication;
-  Result.Serializer := TRestJsonSerializer.Create;
+  Result.Serializer := TBluePrintJsonSerializer.Create;
   Result.URL := URL;
 end;
 
@@ -432,7 +432,7 @@ end;
 
 procedure TRemoteServiceTest.SetupFixture;
 begin
-  var Serializer := TRestJsonSerializer.Create as IRestJsonSerializer;
+  var Serializer := TBluePrintJsonSerializer.Create as ISerializer;
 
   Serializer.Serialize('abc');
 
@@ -1099,7 +1099,7 @@ begin
   var Client := CreateRemoteService(Communication.Instance);
   var Service := Client as IServiceTest;
   Client.OnExecuteException :=
-    procedure (E: Exception; Serializer: IRestJsonSerializer)
+    procedure (E: Exception; Serializer: ISerializer)
     begin
       ExcetionCalled := True;
     end;

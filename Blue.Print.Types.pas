@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Rtti, System.Classes, {$IFDEF PAS2JS}Web{$ELSE}REST.Types, Web.HTTPApp, System.Net.Mime, System.NetEncoding{$ENDIF};
+uses System.Rtti, System.Classes, System.SysUtils, {$IFDEF PAS2JS}Web{$ELSE}REST.Types, Web.HTTPApp, System.Net.Mime, System.NetEncoding{$ENDIF};
 
 type
   {$IFDEF PAS2JS}
@@ -13,6 +13,17 @@ type
   TRESTRequestFile = {$IFDEF PAS2JS}TJSHTMLFile{$ELSE}TAbstractWebRequestFile{$ENDIF};
   TRESTResponseFile = {$IFDEF PAS2JS}TJSBlob{$ELSE}TStream{$ENDIF};
   TRESTFormData = {$IFDEF PAS2JS}TJSFormData{$ELSE}TMultipartFormData{$ENDIF};
+
+  EHTTPStatusError = class(Exception)
+  private
+    FStatusCode: Integer;
+    FContent: String;
+  public
+    constructor Create(const StatusCode: Integer; const URL, Content: String);
+
+    property Content: String read FContent;
+    property StatusCode: Integer read FStatusCode;
+  end;
 
   TRESTRequestMethodAttribute = class(TCustomAttribute)
   private
@@ -142,8 +153,6 @@ function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
 
 implementation
 
-uses System.SysUtils;
-
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
 begin
   Result := TypeKind in [{$IFDEF DCC}tkAnsiChar, tkAnsiString, tkLString, tkWString, tkUString, tkWChar, {$ENDIF}tkChar, tkString];
@@ -158,6 +167,16 @@ begin
     TBase64Encoding.Base64.Encode
     {$ENDIF}
       (Value);
+end;
+
+{ EHTTPStatusError }
+
+constructor EHTTPStatusError.Create(const StatusCode: Integer; const URL, Content: String);
+begin
+  inherited CreateFmt('HTTP Error %d for URL %s', [StatusCode, URL]);
+
+  FContent := Content;
+  FStatusCode := StatusCode;
 end;
 
 { TRESTRequestMethodAttribute }

@@ -26,7 +26,7 @@ type
 
 implementation
 
-uses System.Classes, System.Rtti, Blue.Print.Content.Parser, Blue.Print.Request.Mock, Translucent;
+uses System.Classes, System.Rtti, Blue.Print.Server.Service, Blue.Print.Request.Mock, Translucent;
 
 { TImageContentParserTest }
 

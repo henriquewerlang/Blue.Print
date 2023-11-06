@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Classes, System.SysUtils, System.Rtti, Web.HTTPApp, Blue.Print.Service.Container, Blue.Print.JSON.Serializer.Intf;
+uses System.Classes, System.SysUtils, System.Rtti, System.TypInfo, Web.HTTPApp, Web.ReqFiles, Blue.Print.Service.Container, Blue.Print.Serializer;
 
 type
   EInvalidParameterType = class(Exception);
@@ -14,18 +14,33 @@ type
 
   TOnGetServiceContainer = TFunc<IServiceContainer>;
 
+  TImageContentParser = class(TAbstractContentParser)
+  private
+    FContentFiels: TStrings;
+    FFiles: TWebRequestFiles;
+
+    procedure LoadImagem;
+  public
+    destructor Destroy; override;
+
+    class function CanParse(AWebRequest: TWebRequest): Boolean; override;
+
+    function GetContentFields: TStrings; override;
+    function GetFiles: TAbstractWebRequestFiles; override;
+  end;
+
   TRestServerService = class(TComponent, IGetWebAppServices, IWebAppServices, IWebExceptionHandler, IWebDispatcherAccess)
   private
     FActive: Boolean;
     FRequest: TWebRequest;
     FResponse: TWebResponse;
     FServiceContainer: IServiceContainer;
-    FSerializer: IRestJsonSerializer;
+    FSerializer: ISerializer;
     FOnGetServiceContainer: TOnGetServiceContainer;
 
     function GetParams(const Method: TRttiMethod; var ConvertedParams: TArray<TValue>): Boolean;
     function GetParamValue(const Method: TRttiMethod; const Param: TRttiParameter; var ParamLoaded: Boolean): TValue;
-    function GetSerializer: IRestJsonSerializer;
+    function GetSerializer: ISerializer;
     function GetServiceContainer: IServiceContainer;
   protected
     // IGetWebAppServices
@@ -46,7 +61,7 @@ type
     function Request: TWebRequest;
     function Response: TWebResponse;
   public
-    property Serializer: IRestJsonSerializer read GetSerializer write FSerializer;
+    property Serializer: ISerializer read GetSerializer write FSerializer;
     property ServiceContainer: IServiceContainer read GetServiceContainer write FServiceContainer;
   published
     property Active: Boolean read FActive write FActive;
@@ -55,7 +70,7 @@ type
 
 implementation
 
-uses System.TypInfo, System.Math, Winapi.WinInet, System.NetConsts, Rest.Types, Blue.Print.JSON.Serializer, Blue.Print.Types, Blue.Print.Content.Parser;
+uses System.Math, Winapi.WinInet, System.NetConsts, Rest.Types, Blue.Print.Types;
 
 { TRestServerService }
 
@@ -170,10 +185,10 @@ begin
       Result := Serializer.Deserialize(ParamValue, Param.ParamType.Handle);
 end;
 
-function TRestServerService.GetSerializer: IRestJsonSerializer;
+function TRestServerService.GetSerializer: ISerializer;
 begin
   if not Assigned(FSerializer) then
-    FSerializer := TRestJsonSerializer.Create;
+    FSerializer := TBluePrintJsonSerializer.Create;
 
   Result := FSerializer;
 end;
@@ -335,6 +350,50 @@ constructor EServiceContainerNotLoaded.Create;
 begin
   inherited Create('The service container not loaded, load the ServiceContainer property or OnServiceContainer event!');
 end;
+
+{ TImageContentParser }
+
+class function TImageContentParser.CanParse(AWebRequest: TWebRequest): Boolean;
+begin
+  Result := AWebRequest.ContentType.StartsWith('image/');
+end;
+
+destructor TImageContentParser.Destroy;
+begin
+  FFiles.Free;
+
+  FContentFiels.Free;
+
+  inherited;
+end;
+
+function TImageContentParser.GetContentFields: TStrings;
+begin
+  if not Assigned(FContentFiels) then
+    FContentFiels := TStringList.Create;
+
+  Result := FContentFiels;
+end;
+
+function TImageContentParser.GetFiles: TAbstractWebRequestFiles;
+begin
+  if not Assigned(FFiles) then
+  begin
+    FFiles := TWebRequestFiles.Create;
+
+    LoadImagem;
+  end;
+
+  Result := FFiles;
+end;
+
+procedure TImageContentParser.LoadImagem;
+begin
+  FFiles.Add(EmptyStr, EmptyStr, EmptyStr, WebRequest.RawContent, WebRequest.ContentLength);
+end;
+
+initialization
+  RegisterContentParser(TImageContentParser);
 
 end.
 

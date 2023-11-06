@@ -17,10 +17,7 @@ uses
   Blue.Print.Content.Parser.Test in 'Blue.Print.Content.Parser.Test.pas',
   Blue.Print.Request.Mock in 'Blue.Print.Request.Mock.pas',
   Blue.Print.Service.Container in '..\Blue.Print.Service.Container.pas',
-  Blue.Print.JSON.Serializer.Intf in '..\Blue.Print.JSON.Serializer.Intf.pas',
-  Blue.Print.JSON.Serializer in '..\Blue.Print.JSON.Serializer.pas',
-  Blue.Print.Content.Parser in '..\Blue.Print.Content.Parser.pas',
-  Blue.Print.Exceptions in '..\Blue.Print.Exceptions.pas';
+  Blue.Print.Serializer in '..\Blue.Print.Serializer.pas';
 
 begin
   FastMM_OutputDebugStringEvents := [];
