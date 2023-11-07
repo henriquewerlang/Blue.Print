@@ -70,7 +70,7 @@ type
 
 implementation
 
-uses System.Math, Winapi.WinInet, System.NetConsts, Rest.Types, Blue.Print.Types;
+uses System.Math, Winapi.WinInet, System.NetConsts, Blue.Print.Types, Rest.Types;
 
 { TRestServerService }
 
@@ -102,7 +102,7 @@ end;
 
 function TRestServerService.GetParamValue(const Method: TRttiMethod; const Param: TRttiParameter; var ParamLoaded: Boolean): TValue;
 
-  function GetFiles: TArray<TRESTRequestFile>;
+  function GetFiles: TArray<TRequestFile>;
   begin
     Result := nil;
 
@@ -149,7 +149,7 @@ begin
     tkVariant: raise EInvalidParameterType.Create('The param type is invalid!');
 
     tkClass:
-      if Param.ParamType.AsInstance.MetaclassType = TRESTRequestFile then
+      if Param.ParamType.AsInstance.MetaclassType = TRequestFile then
       begin
         var Files := GetFiles;
 
@@ -165,7 +165,7 @@ begin
     begin
       var ArrayType := TRttiDynamicArrayType(Param.ParamType).ElementType;
 
-      ParamLoaded := ArrayType.IsInstance and (ArrayType.AsInstance.MetaclassType = TRESTRequestFile);
+      ParamLoaded := ArrayType.IsInstance and (ArrayType.AsInstance.MetaclassType = TRequestFile);
 
       if ParamLoaded then
         Exit(TValue.From(GetFiles));
@@ -261,8 +261,8 @@ var
   begin
     Response.ContentType := GetContentType;
 
-    if not Return.IsEmpty and Return.IsType<TRESTResponseFile> then
-      Response.ContentStream := Return.AsType<TRESTResponseFile>
+    if not Return.IsEmpty and Return.IsType<TResponseFile> then
+      Response.ContentStream := Return.AsType<TResponseFile>
     else
       Response.Content := Serializer.Serialize(Return);
   end;

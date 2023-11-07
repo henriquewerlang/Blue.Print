@@ -2,7 +2,7 @@ unit Blue.Print.Types.Test;
 
 interface
 
-uses DUnitX.TestFramework, Blue.Print.Types, Rest.Types;
+uses DUnitX.TestFramework, Blue.Print.Types;
 
 type
   [TestFixture]

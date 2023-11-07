@@ -2,8 +2,8 @@
 
 interface
 
-uses System.SysUtils, System.Classes, System.Rtti, Web.HTTPApp, DUnitX.TestFramework, Blue.Print.Server.Service, Blue.Print.Types, Blue.Print.Service.Container, Translucent,
-  Translucent.Classes, Blue.Print.Request.Mock, REST.Types, Translucent.Intf;
+uses System.SysUtils, System.Classes, System.Rtti, Web.HTTPApp, Rest.Types, DUnitX.TestFramework, Blue.Print.Server.Service, Blue.Print.Types, Blue.Print.Service.Container,
+  Translucent, Translucent.Classes, Blue.Print.Request.Mock, Translucent.Intf;
 
 type
   TMyEnumerator = (Enum1, Enum2, Enum3, Enum4);
@@ -39,10 +39,10 @@ type
     ['{FD524CA4-55CF-4005-B47A-48B220718AA0}']
     function FuncClass: TMyClass;
     function FuncInteger: Integer;
-    function GetStream: TRESTRequestFile;
+    function GetStream: TRequestFile;
     function ProcedureCalled: String;
-    function ReturnStream: TRESTResponseFile;
-    function ReturnStreamNil: TRESTResponseFile;
+    function ReturnStream: TResponseFile;
+    function ReturnStreamNil: TResponseFile;
 
     procedure Proc;
     procedure ProcArray(Value: TArray<String>);
@@ -61,9 +61,9 @@ type
     procedure ProcPointer(Value: Pointer);
     procedure ProcProcedure(Value: TProc);
     procedure ProcSet(Value: TMyEnumeratorSet);
-    procedure ProcStream(Stream: TRESTRequestFile);
-    procedure ProcStreamArray(Stream: TArray<TRESTRequestFile>);
-    procedure ProcStreamTwoParam(File1, File2: TRESTRequestFile);
+    procedure ProcStream(Stream: TRequestFile);
+    procedure ProcStreamArray(Stream: TArray<TRequestFile>);
+    procedure ProcStreamTwoParam(File1, File2: TRequestFile);
     procedure ProcString(Value: ShortString);
     procedure ProcUString(Value: UnicodeString);
     procedure ProcVariant(Value: Variant);
@@ -244,14 +244,14 @@ type
   private
     FMyClass: TMyClass;
     FProcedureCalled: String;
-    FStream: TRESTRequestFile;
+    FStream: TRequestFile;
 
     function FuncClass: TMyClass;
     function FuncInteger: Integer;
-    function GetStream: TRESTRequestFile;
+    function GetStream: TRequestFile;
     function ProcedureCalled: String;
-    function ReturnStream: TRESTResponseFile;
-    function ReturnStreamNil: TRESTResponseFile;
+    function ReturnStream: TResponseFile;
+    function ReturnStreamNil: TResponseFile;
 
     procedure Proc;
     procedure ProcArray(Value: TArray<String>);
@@ -270,9 +270,9 @@ type
     procedure ProcPointer(Value: Pointer);
     procedure ProcProcedure(Value: TProc);
     procedure ProcSet(Value: TMyEnumeratorSet);
-    procedure ProcStream(Stream: TRESTRequestFile);
-    procedure ProcStreamArray(Stream: TArray<TRESTRequestFile>);
-    procedure ProcStreamTwoParam(File1, File2: TRESTRequestFile);
+    procedure ProcStream(Stream: TRequestFile);
+    procedure ProcStreamArray(Stream: TArray<TRequestFile>);
+    procedure ProcStreamTwoParam(File1, File2: TRequestFile);
     procedure ProcString(Value: ShortString);
     procedure ProcUString(Value: UnicodeString);
     procedure ProcVariant(Value: Variant);
@@ -1466,7 +1466,7 @@ begin
   Result := 123456;
 end;
 
-function TService.GetStream: TRESTRequestFile;
+function TService.GetStream: TRequestFile;
 begin
   Result := FStream;
 end;
@@ -1574,18 +1574,18 @@ begin
   FProcedureCalled := Format('ProcSet=%d', [PByte(@Value)^]);
 end;
 
-procedure TService.ProcStream(Stream: TRESTRequestFile);
+procedure TService.ProcStream(Stream: TRequestFile);
 begin
   FProcedureCalled := 'ProcStream';
   FStream := Stream;
 end;
 
-procedure TService.ProcStreamArray(Stream: TArray<TRESTRequestFile>);
+procedure TService.ProcStreamArray(Stream: TArray<TRequestFile>);
 begin
   FProcedureCalled := 'ProcStreamArray';
 end;
 
-procedure TService.ProcStreamTwoParam(File1, File2: TRESTRequestFile);
+procedure TService.ProcStreamTwoParam(File1, File2: TRequestFile);
 begin
   FProcedureCalled := Format('ProcStreamTwoParam=File1=%s,File2=%s', [File1.FileName, File2.FileName]);
 end;
@@ -1615,12 +1615,12 @@ begin
   FProcedureCalled := Format('ProcWString=%s', [Value]);
 end;
 
-function TService.ReturnStream: TRESTResponseFile;
+function TService.ReturnStream: TResponseFile;
 begin
   Result := TMemoryStream.Create;
 end;
 
-function TService.ReturnStreamNil: TRESTResponseFile;
+function TService.ReturnStreamNil: TResponseFile;
 begin
   Result := nil;
 end;

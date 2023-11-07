@@ -2,58 +2,54 @@
 
 interface
 
-uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF DCC}System.Net.HTTPClient, Rest.Types, {$ENDIF}Blue.Print.Types, Blue.Print.Serializer;
+uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF DCC}System.Net.HTTPClient, {$ENDIF}Blue.Print.Types, Blue.Print.Serializer;
 
 type
-  TRestRequest = class
-  public
-    Body: TValue;
-    FileDownload: Boolean;
-    Headers: String;
-    Method: TRESTRequestMethod;
-    URL: String;
-  end;
-
-  IRestCommunication = interface
-    ['{33BB3249-F044-4BDF-B3E0-EA2378A040C4}']
-    function SendRequest(const Request: TRestRequest): String;
+  IHTTPCommunication = interface
+    ['{8E39F66A-C72B-4314-80B1-D24F1AF4F247}']
+    function GetHeader(const Name: String): String;
+    function SendRequest: String;
     {$IFDEF PAS2JS}
-    function SendRequestAsync(const Request: TRestRequest): String; async;
+    function SendRequestAsync: String; async;
     {$ENDIF}
+
+    procedure SetHeader(const Name, Value: String);
+
+    property Header[const Name: String]: String read GetHeader write SetHeader;
   end;
 
-  TRestCommunication = class(TInterfacedObject, IRestCommunication)
+  THTTPCommunication = class(TInterfacedObject, IHTTPCommunication)
   private
-    {$IFDEF DCC}
+{$IFDEF DCC}
     FConnection: THTTPClient;
-    {$ENDIF}
-    FHeaders: TStringList;
 
-    {$IFDEF DCC}
-    function GetConnection: THTTPClient;
-    {$ENDIF}
-    function SendRequest(const Request: TRestRequest): String;
-    {$IFDEF PAS2JS}
-    function SendRequestAsync(const Request: TRestRequest): String; async;
-    {$ENDIF}
+    function GetHeader(const Name: String): String;
+    function SendRequest: String;
 
-    {$IFDEF DCC}
-    property Connection: THTTPClient read GetConnection;
-    {$ENDIF}
+    procedure SetHeader(const Name, Value: String);
+
+    property Connection: THTTPClient read FConnection;
   public
     constructor Create;
 
     destructor Destroy; override;
+{$ENDIF}
+{$IFDEF PAS2JS}
+    function GetHeader(const Name: String): String;
+    function SendRequest: String;
+    function SendRequestAsync: String; async;
+
+    procedure SetHeader(const Name, Value: String);
+{$ENDIF}
   end;
 
   TRemoteService = class(TVirtualInterface)
   private
-    FCommunication: IRestCommunication;
+    FCommunication: IHTTPCommunication;
     FContext: TRttiContext;
-    FFormData: TRESTFormData;
+    FFormData: TFormData;
     FHeaders: TStringList;
     FOnExecuteException: TProc<Exception, ISerializer>;
-    FRequest: TRestRequest;
     FRttiType: TRttiInterfaceType;
     FSerializer: ISerializer;
     FURL: String;
@@ -63,36 +59,35 @@ type
     function CheckMethodParameterHasFile(const Method: TRttiMethod): Boolean;
     function Deserialize(const JSON: String; RttiType: TRttiType): TValue;
     function EncodeParamValue(const ParamValue: TValue): String;
-    function GetCommandFromMethod(const Method: TRttiMethod): TRESTRequestMethod;
-    function GetFormData: TRESTFormData;
+    function GetCommandFromMethod(const Method: TRttiMethod): TRequestMethod;
+    function GetFormData: TFormData;
     function GetHeader(const Index: String): String;
     function GetHeaders: String;
-    function GetParameterType(const Parameter: TRttiParameter): TRESTParamType;
+    function GetParameterType(const Parameter: TRttiParameter): TParamType;
     function GetRemoteNameAttribute(const RttiType: TRttiNamedObject; var Name: String): Boolean;
     function GetRemoteRequestName(const RttiType: TRttiNamedObject): String;
     function GetRemoteRequestServiceName: String;
     function HasAttachment(const Method: TRttiMethod): Boolean;
 
     procedure AddFormDataField(const Param: TRttiParameter; const ParamValue: String);
-    procedure AddFormDataFile(const Param: TRttiParameter; const AFile: TRESTRequestFile);
+    procedure AddFormDataFile(const Param: TRttiParameter; const AFile: TRequestFile);
     procedure AddParamToTheBody(const Param: TRttiParameter; const ParamValue: TValue; const ForceLoadFormData: Boolean);
     procedure CheckException(const Error: Exception);
     procedure LoadRequest(const Method: TRttiMethod; const Args: TArray<TValue>);
     procedure LoadRequestAuthentication(const Method: TRttiMethod);
-    procedure LoadRequestHeaders;
     procedure LoadRequestParams(const Method: TRttiMethod; const Args: TArray<TValue>);
     procedure LoadRequestURL(const Method: TRttiMethod; const Args: TArray<TValue>);
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
     procedure SetHeader(const Index, Value: String);
     procedure SetHeaders(const Value: String);
 
-    property FormData: TRESTFormData read GetFormData;
+    property FormData: TFormData read GetFormData;
   public
     constructor Create(const TypeInfo: PTypeInfo);
 
     destructor Destroy; override;
 
-    property Communication: IRestCommunication read FCommunication write FCommunication;
+    property Communication: IHTTPCommunication read FCommunication write FCommunication;
     property Header[const Index: String]: String read GetHeader write SetHeader;
     property Headers: String read GetHeaders write SetHeaders;
     property OnExecuteException: TProc<Exception, ISerializer> read FOnExecuteException write FOnExecuteException;
@@ -101,43 +96,11 @@ type
     property URL: String read FURL write FURL;
   end;
 
-  IRemoteServiceFactory = interface
-    function GetService(const &Type: PTypeInfo; const URL: String): TRemoteService;
-  end;
-
-  TRemoteServiceFactory = class(TInterfacedObject, IRemoteServiceFactory)
-  private
-    class var GRemoteServiceFactory: IRemoteServiceFactory;
-  private
-    FCommunication: IRestCommunication;
-    FHeaders: String;
-    FOnExecuteException: TProc<Exception, ISerializer>;
-    FSerializerFactory: TFunc<ISerializer>;
-    FURL: String;
-
-    class function GetRemoteServiceFactory: TRemoteServiceFactory; static;
-
-    function GetCommunication: IRestCommunication;
-    function GetService(const &Type: PTypeInfo; const URL: String): TRemoteService; overload;
-  public
-    class constructor Create;
-
-    class function GetService<I: IInterface>(const URL: String): I; overload;
-
-    property Communication: IRestCommunication read GetCommunication write FCommunication;
-    property Headers: String read FHeaders write FHeaders;
-    property OnExecuteException: TProc<Exception, ISerializer> read FOnExecuteException write FOnExecuteException;
-    property SerializerFactory: TFunc<ISerializer> read FSerializerFactory write FSerializerFactory;
-    property URL: String read FURL write FURL;
-
-    class property Instance: TRemoteServiceFactory read GetRemoteServiceFactory;
-  end;
-
 implementation
 
 uses
 {$IFDEF PAS2JS}
-  JS, Web, WebOrWorker, Pas2Js.Rest.JSON.Serializers
+  JS, Web, WebOrWorker,
 {$ELSE}
   System.Net.Mime, System.NetConsts, System.Net.URLClient, Web.HTTPApp
 {$ENDIF};
@@ -146,18 +109,18 @@ const
   COMPILER_OFFSET = {$IFDEF PAS2JS}0{$ELSE}1{$ENDIF};
 
 {$IFDEF PAS2JS}
-function RESTRequestMethodToString(const AMethod: TRESTRequestMethod): String;
+function RESTRequestMethodToString(const AMethod: TRequestMethod): String;
 begin
   case AMethod of
-    TRESTRequestMethod.rmPOST:
+    TRequestMethod.rmPOST:
       Result := 'POST';
-    TRESTRequestMethod.rmPUT:
+    TRequestMethod.rmPUT:
       Result := 'PUT';
-    TRESTRequestMethod.rmGET:
+    TRequestMethod.rmGET:
       Result := 'GET';
-    TRESTRequestMethod.rmDELETE:
+    TRequestMethod.rmDELETE:
       Result := 'DELETE';
-    TRESTRequestMethod.rmPATCH:
+    TRequestMethod.rmPATCH:
       Result := 'PATCH'
   else
     Result := Format('RESTRequestMethod2String - unknown Method: %d', [Integer(AMethod)]);
@@ -192,7 +155,7 @@ begin
 {$ENDIF}
 end;
 
-procedure TRemoteService.AddFormDataFile(const Param: TRttiParameter; const AFile: TRESTRequestFile);
+procedure TRemoteService.AddFormDataFile(const Param: TRttiParameter; const AFile: TRequestFile);
 begin
 {$IFDEF PAS2JS}
   FormData.Append(Param.Name, AFile);
@@ -204,21 +167,21 @@ end;
 
 procedure TRemoteService.AddParamToTheBody(const Param: TRttiParameter; const ParamValue: TValue; const ForceLoadFormData: Boolean);
 var
-  AFile: TRESTRequestFile;
+  AFile: TRequestFile;
 
 begin
-  if ParamValue.IsType<TRESTRequestFile>(False) then
-    if ForceLoadFormData then
-      AddFormDataFile(Param, ParamValue.AsType<TRESTRequestFile>)
-    else
-      FRequest.Body := ParamValue
-  else if (Param.ParamType is TRttiDynamicArrayType) and (TRttiDynamicArrayType(Param.ParamType).ElementType.Handle = TypeInfo(TRESTRequestFile)) then
-    for AFile in ParamValue.AsType<TArray<TRESTRequestFile>> do
-      AddFormDataFile(Param, AFile)
-  else if ForceLoadFormData then
-    AddFormDataField(Param, EncodeParamValue(ParamValue))
-  else
-    FRequest.Body := TValue.From(EncodeParamValue(ParamValue));
+//  if ParamValue.IsType<TRequestFile>(False) then
+//    if ForceLoadFormData then
+//      AddFormDataFile(Param, ParamValue.AsType<TRequestFile>)
+//    else
+//      FRequest.Body := ParamValue
+//  else if (Param.ParamType is TRttiDynamicArrayType) and (TRttiDynamicArrayType(Param.ParamType).ElementType.Handle = TypeInfo(TRequestFile)) then
+//    for AFile in ParamValue.AsType<TArray<TRequestFile>> do
+//      AddFormDataFile(Param, AFile)
+//  else if ForceLoadFormData then
+//    AddFormDataField(Param, EncodeParamValue(ParamValue))
+//  else
+//    FRequest.Body := TValue.From(EncodeParamValue(ParamValue));
 end;
 
 procedure TRemoteService.CheckException(const Error: Exception);
@@ -259,7 +222,7 @@ end;
 
 function TRemoteService.CheckParameterIsFile(const Parameter: TRttiParameter): Boolean;
 begin
-  Result := (Parameter.ParamType.Handle = TypeInfo(TRESTRequestFile)) or (Parameter.ParamType.Handle = TypeInfo(TArray<TRESTRequestFile>));
+  Result := (Parameter.ParamType.Handle = TypeInfo(TRequestFile)) or (Parameter.ParamType.Handle = TypeInfo(TArray<TRequestFile>));
 end;
 
 constructor TRemoteService.Create(const TypeInfo: PTypeInfo);
@@ -281,8 +244,6 @@ end;
 
 destructor TRemoteService.Destroy;
 begin
-  FRequest.Free;
-
   FHeaders.Free;
 
 {$IFDEF DCC}
@@ -300,16 +261,17 @@ begin
     Result := Serializer.Serialize(ParamValue);
 end;
 
-function TRemoteService.GetCommandFromMethod(const Method: TRttiMethod): TRESTRequestMethod;
+function TRemoteService.GetCommandFromMethod(const Method: TRttiMethod): TRequestMethod;
 
   procedure GetTypeFromAttribute(const RttiType: TRttiObject);
   var
-    Attribute: TCustomAttribute;
+    RequestMethodAttribute: TRequestMethodAttribute;
 
   begin
-    for Attribute in RttiType.GetAttributes do
-      if Attribute is TRESTRequestMethodAttribute then
-        Result := TRESTRequestMethodAttribute(Attribute).Method;
+    RequestMethodAttribute := RttiType.GetAttribute<TRequestMethodAttribute>;
+
+    if Assigned(RequestMethodAttribute) then
+      Result := RequestMethodAttribute.Method;
   end;
 
 begin
@@ -320,10 +282,10 @@ begin
   GetTypeFromAttribute(Method);
 end;
 
-function TRemoteService.GetFormData: TRESTFormData;
+function TRemoteService.GetFormData: TFormData;
 begin
   if not Assigned(FFormData) then
-    FFormData := TRESTFormData.{$IFDEF PAS2JS}new{$ELSE}Create{$ENDIF};
+    FFormData := TFormData.{$IFDEF PAS2JS}new{$ELSE}Create{$ENDIF};
 
   Result := FFormData;
 end;
@@ -338,23 +300,24 @@ begin
   Result := FHeaders.Text;
 end;
 
-function TRemoteService.GetParameterType(const Parameter: TRttiParameter): TRESTParamType;
+function TRemoteService.GetParameterType(const Parameter: TRttiParameter): TParamType;
 
   procedure GetTypeFromAttribute(const RttiType: TRttiObject);
   var
-    Attribute: TCustomAttribute;
+    Attribute: TParamAttribute;
 
   begin
-    for Attribute in RttiType.GetAttributes do
-      if Attribute is TRESTParamAttribute then
-        Result := TRESTParamAttribute(Attribute).ParamType;
+    Attribute := RttiType.GetAttribute<TParamAttribute>;
+
+    if Assigned(Attribute) then
+      Result := Attribute.ParamType;
   end;
 
 begin
-  if FRequest.Method in [rmPatch, rmPost, rmPut] then
-    Result := ptBody
-  else
-    Result := ptQuery;
+//  if FRequest.Method in [rmPatch, rmPost, rmPut] then
+//    Result := ptBody
+//  else
+//    Result := ptQuery;
 
   GetTypeFromAttribute(Parameter.Parent);
 
@@ -366,14 +329,14 @@ end;
 
 function TRemoteService.GetRemoteNameAttribute(const RttiType: TRttiNamedObject; var Name: String): Boolean;
 var
-  CustomAttribute: TCustomAttribute;
+  RemoteAttribute: RemoteNameAttribute;
 
 begin
   Name := EmptyStr;
+  RemoteAttribute := RttiType.GetAttribute<RemoteNameAttribute>;
 
-  for CustomAttribute in RttiType.GetAttributes do
-    if CustomAttribute is RemoteNameAttribute then
-      Name := RemoteNameAttribute(CustomAttribute).RemoteName;
+  if Assigned(RemoteAttribute) then
+    Name := RemoteAttribute.RemoteName;
 
   Result := not Name.IsEmpty;
 
@@ -393,43 +356,30 @@ begin
 end;
 
 function TRemoteService.HasAttachment(const Method: TRttiMethod): Boolean;
-{$IFDEF PAS2JS}
-var
-  CustomAttribute: TCustomAttribute;
-
-{$ENDIF}
 begin
-{$IFDEF PAS2JS}
-  for CustomAttribute in Method.GetAttributes do
-    if CustomAttribute is AttachmentAttribute then
-      Exit(True);
-{$ELSE}
   Result := Method.HasAttribute<AttachmentAttribute>;
-{$ENDIF}
 end;
 
 procedure TRemoteService.LoadRequest(const Method: TRttiMethod; const Args: TArray<TValue>);
 begin
-  FRequest.Free;
-
 {$IFDEF PAS2JS}
   FFormData := nil;
 {$ELSE}
   FreeAndNil(FFormData);
 {$ENDIF}
 
-  FRequest := TRestRequest.Create;
-  FRequest.FileDownload := HasAttachment(Method);
-  FRequest.Method := GetCommandFromMethod(Method);
+//  FRequest := TRestRequest.Create;
+//  FRequest.FileDownload := HasAttachment(Method);
+//  FRequest.Method := GetCommandFromMethod(Method);
 
   LoadRequestAuthentication(Method);
 
   LoadRequestURL(Method, Args);
 
-  LoadRequestHeaders;
-
-  if CheckMethodParameterHasFile(Method) then
-    FRequest.Method := rmPost;
+//  LoadRequestHeaders;
+//
+//  if CheckMethodParameterHasFile(Method) then
+//    FRequest.Method := rmPost;
 end;
 
 procedure TRemoteService.LoadRequestAuthentication(const Method: TRttiMethod);
@@ -443,18 +393,13 @@ begin
     Header['Authorization'] := Format('%s %s', [AuthenticationName, AuthenticationHeader]);
 end;
 
-procedure TRemoteService.LoadRequestHeaders;
-begin
-  FRequest.Headers := Headers;
-end;
-
 procedure TRemoteService.LoadRequestParams(const Method: TRttiMethod; const Args: TArray<TValue>);
 var
   A: Integer;
 
   Params: TArray<TRttiParameter>;
 
-  ParamType: TRESTParamType;
+  ParamType: TParamType;
 
   ParamValue: TValue;
 
@@ -485,35 +430,30 @@ begin
       PathValues.Add(ParamValue.ToString);
   end;
 
-  if Assigned(FFormData) then
-    FRequest.Body := TValue.From(FormData);
-
-  if PathValues.Count > 0 then
-    FRequest.URL := '/' + PathValues.DelimitedText;
-
-  if QueryValues.Count > 0 then
-    FRequest.URL := FRequest.URL + '?' + QueryValues.DelimitedText;
-
-  PathValues.Free;
-
-  QueryValues.Free;
+//  if Assigned(FFormData) then
+//    FRequest.Body := TValue.From(FormData);
+//
+//  if PathValues.Count > 0 then
+//    FRequest.URL := '/' + PathValues.DelimitedText;
+//
+//  if QueryValues.Count > 0 then
+//    FRequest.URL := FRequest.URL + '?' + QueryValues.DelimitedText;
+//
+//  PathValues.Free;
+//
+//  QueryValues.Free;
 end;
 
 procedure TRemoteService.LoadRequestURL(const Method: TRttiMethod; const Args: TArray<TValue>);
 begin
   LoadRequestParams(Method, Args);
 
-  FRequest.URL := Format('%s/%s/%s%s', [FURL, GetRemoteRequestServiceName, GetRemoteRequestName(Method), FRequest.URL]);
+//  FRequest.URL := Format('%s/%s/%s%s', [FURL, GetRemoteRequestServiceName, GetRemoteRequestName(Method), FRequest.URL]);
 end;
 
 procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 
-  function SendRequest: String;
-  begin
-    Result := Communication.SendRequest(FRequest);
-  end;
 {$IFDEF PAS2JS}
-
   function InvokeMehodAsync: JSValue; async;
   var
     ReturnType: TRttiType;
@@ -537,19 +477,19 @@ begin
   try
     LoadRequest(Method, Args);
 
-    if FRequest.FileDownload then
-    begin
-      Result := TValue.Empty;
-
-      SendRequest;
-    end
-    else
-{$IFDEF PAS2JS}
-    if Method.IsAsyncCall then
-      Result := TValue.From(InvokeMehodAsync)
-    else
-{$ENDIF}
-      Result := Deserialize(SendRequest, Method.ReturnType);
+//    if FRequest.FileDownload then
+//    begin
+//      Result := TValue.Empty;
+//
+//      Communication.SendRequest;
+//    end
+//    else
+//{$IFDEF PAS2JS}
+//    if Method.IsAsyncCall then
+//      Result := TValue.From(InvokeMehodAsync)
+//    else
+//{$ENDIF}
+//      Result := Deserialize(SendRequest, Method.ReturnType);
   except
     on E: Exception do
       CheckException(E);
@@ -566,67 +506,87 @@ begin
   FHeaders.Text := Value;
 end;
 
-{ TRestCommunication }
-
-constructor TRestCommunication.Create;
-begin
-  inherited;
-
-  FHeaders := TStringList.Create;
-end;
-
-destructor TRestCommunication.Destroy;
-begin
-  FHeaders.Free;
+{ THTTPCommunication }
 
 {$IFDEF DCC}
+constructor THTTPCommunication.Create;
+begin
+  FConnection := THTTPClient.Create;
+end;
+
+destructor THTTPCommunication.Destroy;
+begin
   FConnection.Free;
-{$ENDIF}
 
   inherited;
 end;
 
-{$IFDEF DCC}
-function TRestCommunication.GetConnection: THTTPClient;
+function THTTPCommunication.GetHeader(const Name: String): String;
 begin
-  if not Assigned(FConnection) then
-    FConnection := THTTPClient.Create;
 
-  Result := FConnection;
+end;
+
+function THTTPCommunication.SendRequest: String;
+
+//  function LoadContentStream: TStream;
+//  begin
+//    Result := nil;
+//
+//    if not Request.Body.IsEmpty then
+//      if Request.Body.IsType<String> then
+//        Result := TStringStream.Create(Request.Body.AsString, TEncoding.UTF8)
+//      else if Request.Body.IsType<TMultipartFormData> then
+//      begin
+//        var Content := Request.Body.AsType<TMultipartFormData>;
+//
+//        Connection.CustomHeaders[sContentType] := Content.MimeTypeHeader;
+//        Result := Content.Stream;
+//      end
+//      else if Request.Body.IsType<TAbstractWebRequestFile> then
+//        Result := TFileStream.Create(Request.Body.AsType<TAbstractWebRequestFile>.FileName, fmOpenRead or fmShareDenyWrite);
+//  end;
+
+begin
+//  var Content: TStream := nil;
+//
+//  try
+//    Content := LoadContentStream;
+//    Connection.ContentType := CONTENTTYPE_APPLICATION_JSON;
+//    Connection.ResponseTimeout := -1;
+//    Connection.SendTimeout := -1;
+//
+//    for var A := 0 to Pred(FHeaders.Count) do
+//      Connection.CustomHeaders[FHeaders.Names[A]] := FHeaders.ValueFromIndex[A];
+//
+//    var Response := Connection.Execute(RESTRequestMethodToString(Request.Method), Request.URL, Content) as IHTTPResponse;
+//    Result := Response.ContentAsString(TEncoding.UTF8);
+//
+//    if Response.StatusCode <> 200 then
+//      raise EHTTPStatusError.Create(Response.StatusCode, Request.URL, Result);
+//  finally
+//    Content.Free;
+//  end;
+end;
+
+procedure THTTPCommunication.SetHeader(const Name, Value: String);
+begin
+
 end;
 {$ENDIF}
 
-function TRestCommunication.SendRequest(const Request: TRestRequest): String;
 {$IFDEF PAS2JS}
+function THTTPCommunication.GetHeader(const Name: String): String;
+begin
+
+end;
+
+function THTTPCommunication.SendRequest: String;
 var
   A: Integer;
 
   Connection: TJSXMLHttpRequest;
 
-{$ELSE}
-  function LoadContentStream: TStream;
-  begin
-    Result := nil;
-
-    if not Request.Body.IsEmpty then
-      if Request.Body.IsType<String> then
-        Result := TStringStream.Create(Request.Body.AsString, TEncoding.UTF8)
-      else if Request.Body.IsType<TMultipartFormData> then
-      begin
-        var Content := Request.Body.AsType<TMultipartFormData>;
-
-        Connection.CustomHeaders[sContentType] := Content.MimeTypeHeader;
-        Result := Content.Stream;
-      end
-      else if Request.Body.IsType<TAbstractWebRequestFile> then
-        Result := TFileStream.Create(Request.Body.AsType<TAbstractWebRequestFile>.FileName, fmOpenRead or fmShareDenyWrite);
-  end;
-
-{$ENDIF}
 begin
-  FHeaders.Text := Request.Headers;
-
-{$IFDEF PAS2JS}
   if Request.FileDownload then
     DownloadFile(Request.URL)
   else
@@ -640,36 +600,14 @@ begin
 
     Connection.Send(Request.Body.AsJSValue);
 
-    if Connection.Status = 200 then
-      Result := Connection.ResponseText
-    else
+    Result := Connection.ResponseText
+
+    if Connection.Status <> 200 then
       raise EHTTPStatusError.Create(Connection.status, Request.URL, Connection.ResponseText);
   end;
-{$ELSE}
-  var Content: TStream := nil;
-
-  try
-    Content := LoadContentStream;
-    Connection.ContentType := CONTENTTYPE_APPLICATION_JSON;
-    Connection.ResponseTimeout := -1;
-    Connection.SendTimeout := -1;
-
-    for var A := 0 to Pred(FHeaders.Count) do
-      Connection.CustomHeaders[FHeaders.Names[A]] := FHeaders.ValueFromIndex[A];
-
-    var Response := Connection.Execute(RESTRequestMethodToString(Request.Method), Request.URL, Content) as IHTTPResponse;
-    Result := Response.ContentAsString(TEncoding.UTF8);
-
-    if Response.StatusCode <> 200 then
-      raise EHTTPStatusError.Create(Response.StatusCode, Request.URL, Result);
-  finally
-    Content.Free;
-  end;
-{$ENDIF}
 end;
 
-{$IFDEF PAS2JS}
-function TRestCommunication.SendRequestAsync(const Request: TRestRequest): String;
+function THTTPCommunication.SendRequestAsync: String;
 var
   A: Integer;
 
@@ -705,52 +643,12 @@ begin
       raise EHTTPStatusError.Create(Response.Status, Request.URL, Result);
   end;
 end;
+
+procedure THTTPCommunication.SetHeader(const Name, Value: String);
+begin
+
+end;
 {$ENDIF}
-
-{ TRemoteServiceFactory }
-
-class constructor TRemoteServiceFactory.Create;
-begin
-  GRemoteServiceFactory := TRemoteServiceFactory.Create;
-  TRemoteServiceFactory.Instance.SerializerFactory :=
-    function: ISerializer
-    begin
-      Result := TBluePrintJsonSerializer.Create;
-    end;
-end;
-
-function TRemoteServiceFactory.GetCommunication: IRestCommunication;
-begin
-  if not Assigned(FCommunication) then
-    FCommunication := TRestCommunication.Create;
-
-  Result := FCommunication;
-end;
-
-class function TRemoteServiceFactory.GetRemoteServiceFactory: TRemoteServiceFactory;
-begin
-  Result := TRemoteServiceFactory(GRemoteServiceFactory);
-end;
-
-function TRemoteServiceFactory.GetService(const &Type: PTypeInfo; const URL: String): TRemoteService;
-begin
-  Result := TRemoteService.Create(&Type);
-  Result.Communication := Communication;
-  Result.Headers := Headers;
-  Result.OnExecuteException := OnExecuteException;
-  Result.Serializer := FSerializerFactory();
-  Result.URL := URL;
-end;
-
-class function TRemoteServiceFactory.GetService<I>(const URL: String): I;
-var
-  Service: TRemoteService;
-
-begin
-  Service := GRemoteServiceFactory.GetService(TypeInfo(I), URL);
-
-  Service.QueryInterface(Service.RttiType.GUID, Result);
-end;
 
 end.
 

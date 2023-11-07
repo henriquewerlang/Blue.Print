@@ -2,17 +2,15 @@
 
 interface
 
-uses System.Rtti, System.Classes, System.SysUtils, {$IFDEF PAS2JS}Web{$ELSE}REST.Types, Web.HTTPApp, System.Net.Mime, System.NetEncoding{$ENDIF};
+uses System.Rtti, System.Classes, System.SysUtils, {$IFDEF PAS2JS}Web{$ELSE}Web.HTTPApp, System.Net.Mime, System.NetEncoding{$ENDIF};
 
 type
-  {$IFDEF PAS2JS}
-  TRESTRequestMethod = (rmDelete, rmGet, rmPatch, rmPost, rmPut);
-  {$ENDIF}
-  TRESTParamType = (ptBody, ptQuery, ptPath);
+  TRequestMethod = (rmDelete, rmGet, rmPatch, rmPost, rmPut);
+  TParamType = (ptBody, ptQuery, ptPath);
 
-  TRESTRequestFile = {$IFDEF PAS2JS}TJSHTMLFile{$ELSE}TAbstractWebRequestFile{$ENDIF};
-  TRESTResponseFile = {$IFDEF PAS2JS}TJSBlob{$ELSE}TStream{$ENDIF};
-  TRESTFormData = {$IFDEF PAS2JS}TJSFormData{$ELSE}TMultipartFormData{$ENDIF};
+  TRequestFile = {$IFDEF PAS2JS}TJSHTMLFile{$ELSE}TAbstractWebRequestFile{$ENDIF};
+  TResponseFile = {$IFDEF PAS2JS}TJSBlob{$ELSE}TStream{$ENDIF};
+  TFormData = {$IFDEF PAS2JS}TJSFormData{$ELSE}TMultipartFormData{$ENDIF};
 
   EHTTPStatusError = class(Exception)
   private
@@ -25,60 +23,60 @@ type
     property StatusCode: Integer read FStatusCode;
   end;
 
-  TRESTRequestMethodAttribute = class(TCustomAttribute)
+  TRequestMethodAttribute = class(TCustomAttribute)
   private
-    FMethod: TRESTRequestMethod;
+    FMethod: TRequestMethod;
 
-    constructor Create(const Method: TRESTRequestMethod);
+    constructor Create(const Method: TRequestMethod);
   public
-    property Method: TRESTRequestMethod read FMethod;
+    property Method: TRequestMethod read FMethod;
   end;
 
-  DeleteAttribute = class(TRESTRequestMethodAttribute)
-  public
-    constructor Create;
-  end;
-
-  GetAttribute = class(TRESTRequestMethodAttribute)
+  DeleteAttribute = class(TRequestMethodAttribute)
   public
     constructor Create;
   end;
 
-  PatchAttribute = class(TRESTRequestMethodAttribute)
+  GetAttribute = class(TRequestMethodAttribute)
   public
     constructor Create;
   end;
 
-  PostAttribute = class(TRESTRequestMethodAttribute)
+  PatchAttribute = class(TRequestMethodAttribute)
   public
     constructor Create;
   end;
 
-  PutAttribute = class(TRESTRequestMethodAttribute)
+  PostAttribute = class(TRequestMethodAttribute)
   public
     constructor Create;
   end;
 
-  TRESTParamAttribute = class(TCustomAttribute)
+  PutAttribute = class(TRequestMethodAttribute)
+  public
+    constructor Create;
+  end;
+
+  TParamAttribute = class(TCustomAttribute)
   private
-    FParamType: TRESTParamType;
+    FParamType: TParamType;
 
-    constructor Create(const ParamType: TRESTParamType);
+    constructor Create(const ParamType: TParamType);
   public
-    property ParamType: TRESTParamType read FParamType;
+    property ParamType: TParamType read FParamType;
   end;
 
-  ParameterInBody = class(TRESTParamAttribute)
-  public
-    constructor Create;
-  end;
-
-  ParameterInQuery = class(TRESTParamAttribute)
+  ParameterInBody = class(TParamAttribute)
   public
     constructor Create;
   end;
 
-  ParameterInPath = class(TRESTParamAttribute)
+  ParameterInQuery = class(TParamAttribute)
+  public
+    constructor Create;
+  end;
+
+  ParameterInPath = class(TParamAttribute)
   public
     constructor Create;
   end;
@@ -179,9 +177,9 @@ begin
   FStatusCode := StatusCode;
 end;
 
-{ TRESTRequestMethodAttribute }
+{ TRequestMethodAttribute }
 
-constructor TRESTRequestMethodAttribute.Create(const Method: TRESTRequestMethod);
+constructor TRequestMethodAttribute.Create(const Method: TRequestMethod);
 begin
   inherited Create;
 
@@ -223,9 +221,9 @@ begin
   inherited Create(rmPut);
 end;
 
-{ TRESTParamAttribute }
+{ TParamAttribute }
 
-constructor TRESTParamAttribute.Create(const ParamType: TRESTParamType);
+constructor TParamAttribute.Create(const ParamType: TParamType);
 begin
   inherited Create;
 
