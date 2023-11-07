@@ -3,11 +3,8 @@
 {$STRONGLINKTYPES ON}
 
 uses
-  FastMM5 in '..\Externals\FastMM5\FastMM5.pas',
-  System.SysUtils,
   TestInsight.DUnitX,
   DUnitX.TestFramework,
-  DUnitX.MemoryLeakMonitor.FastMM5,
   Blue.Print.Server.Service in '..\Blue.Print.Server.Service.pas',
   Blue.Print.Server.Service.Test in 'Blue.Print.Server.Service.Test.pas',
   Blue.Print.Remote.Service in '..\Blue.Print.Remote.Service.pas',
@@ -20,13 +17,7 @@ uses
   Blue.Print.Serializer in '..\Blue.Print.Serializer.pas';
 
 begin
-  FastMM_OutputDebugStringEvents := [];
-  FastMM_LogToFileEvents := [mmetUnexpectedMemoryLeakSummary, mmetUnexpectedMemoryLeakDetail];
-  FastMM_MessageBoxEvents := [];
-
-  FastMM_DeleteEventLogFile;
-
-  FastMM_EnterDebugMode;
+  ReportMemoryLeaksOnShutdown := True;
 
   TestInsight.DUnitX.RunRegisteredTests;
 end.

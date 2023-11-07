@@ -171,7 +171,6 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="..\Externals\FastMM5\FastMM5.pas"/>
         <DCCReference Include="..\Blue.Print.Server.Service.pas"/>
         <DCCReference Include="Blue.Print.Server.Service.Test.pas"/>
         <DCCReference Include="..\Blue.Print.Remote.Service.pas"/>
