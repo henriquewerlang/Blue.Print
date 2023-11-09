@@ -8,10 +8,13 @@ type
   [TestFixture]
   TRemoteServiceTest = class
   public
-    [SetupFixture]
-    procedure SetupFixture;
-    [Test]
-    procedure WhenCallTheProcedureMustGenerateTheRequestForServer;
+    [Setup]
+    procedure Setup;
+    [TearDown]
+    procedure TearDown;
+//    [Test]
+//    procedure ProcedureName;
+
     [Test]
     procedure TheURLOfServerCallMustContainTheNameOfInterfacePlusTheProcedureName;
     [Test]
@@ -350,11 +353,14 @@ begin
 //  Request.Free;
 end;
 
-procedure TRemoteServiceTest.SetupFixture;
+procedure TRemoteServiceTest.Setup;
 begin
-  var Serializer := TBluePrintJsonSerializer.Create as ISerializer;
 
-  Serializer.Serialize('abc');
+end;
+
+procedure TRemoteServiceTest.TearDown;
+begin
+
 end;
 
 procedure TRemoteServiceTest.TheFilledHeadersMustKeepTheValues;
@@ -508,21 +514,6 @@ begin
 //  Request.Free;
 end;
 
-procedure TRemoteServiceTest.WhenCallTheProcedureMustGenerateTheRequestForServer;
-begin
-//  var Communication := CreateMockCommunication;
-//  var Request := CreateRequest('/ServiceTest/TestProcedure');
-//  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
-//
-//  Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
-//
-//  Service.TestProcedure;
-//
-//  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
-//
-//  Request.Free;
-end;
-
 procedure TRemoteServiceTest.WhenDownloadAFileCantRaiseAnyErrorInTheExecution;
 begin
 //  var Communication := CreateMockCommunication;
@@ -549,26 +540,26 @@ end;
 
 procedure TRemoteServiceTest.WhenFillingAHeaderHasToReturnTheValuesInTheHeadersProperty;
 begin
-  var Client := TRemoteService.Create(TypeInfo(IServiceTest));
-
-  Client.Header['My Header'] := 'My Value';
-
-  Assert.AreEqual('My Header=My Value'#13#10, Client.Headers);
-
-  Client.Free;
+//  var Client := TRemoteService.Create(TypeInfo(IServiceTest));
+//
+//  Client.Header['My Header'] := 'My Value';
+//
+//  Assert.AreEqual('My Header=My Value'#13#10, Client.Headers);
+//
+//  Client.Free;
 end;
 
 procedure TRemoteServiceTest.WhenFillingThePropertyHeadersHaveToFillThePropertyHeaderWithTheParameterValuesPassed;
 begin
-  var Client := TRemoteService.Create(TypeInfo(IServiceTest));
-
-  Client.Headers := 'My Header=My Value'#13#10'My Header2=My Value';
-
-  Assert.AreEqual('My Value', Client.Header['My Header']);
-
-  Assert.AreEqual('My Value', Client.Header['My Header2']);
-
-  Client.Free;
+//  var Client := TRemoteService.Create(TypeInfo(IServiceTest));
+//
+//  Client.Headers := 'My Header=My Value'#13#10'My Header2=My Value';
+//
+//  Assert.AreEqual('My Value', Client.Header['My Header']);
+//
+//  Assert.AreEqual('My Value', Client.Header['My Header2']);
+//
+//  Client.Free;
 end;
 
 procedure TRemoteServiceTest.WhenMixTheParameterTypeAttributeMustLoadTheRequestHasExpected;

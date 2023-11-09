@@ -8,25 +8,31 @@ type
   IHTTPCommunication = interface
     ['{8E39F66A-C72B-4314-80B1-D24F1AF4F247}']
     function GetHeader(const Name: String): String;
+    function GetHost: String;
     function SendRequest: String;
     {$IFDEF PAS2JS}
     function SendRequestAsync: String; async;
     {$ENDIF}
 
     procedure SetHeader(const Name, Value: String);
+    procedure SetHost(const Value: String);
 
     property Header[const Name: String]: String read GetHeader write SetHeader;
+    property Host: String read GetHost write SetHost;
   end;
 
   THTTPCommunication = class(TInterfacedObject, IHTTPCommunication)
   private
 {$IFDEF DCC}
     FConnection: THTTPClient;
+    FHost: String;
 
     function GetHeader(const Name: String): String;
+    function GetHost: String;
     function SendRequest: String;
 
     procedure SetHeader(const Name, Value: String);
+    procedure SetHost(const Value: String);
 
     property Connection: THTTPClient read FConnection;
   public
@@ -49,10 +55,8 @@ type
     FContext: TRttiContext;
     FFormData: TFormData;
     FHeaders: TStringList;
-    FOnExecuteException: TProc<Exception, ISerializer>;
     FRttiType: TRttiInterfaceType;
     FSerializer: ISerializer;
-    FURL: String;
 
     function CheckForceFormData(const Method: TRttiMethod): Boolean;
     function CheckParameterIsFile(const Parameter: TRttiParameter): Boolean;
@@ -62,7 +66,6 @@ type
     function GetCommandFromMethod(const Method: TRttiMethod): TRequestMethod;
     function GetFormData: TFormData;
     function GetHeader(const Index: String): String;
-    function GetHeaders: String;
     function GetParameterType(const Parameter: TRttiParameter): TParamType;
     function GetRemoteNameAttribute(const RttiType: TRttiNamedObject; var Name: String): Boolean;
     function GetRemoteRequestName(const RttiType: TRttiNamedObject): String;
@@ -72,14 +75,12 @@ type
     procedure AddFormDataField(const Param: TRttiParameter; const ParamValue: String);
     procedure AddFormDataFile(const Param: TRttiParameter; const AFile: TRequestFile);
     procedure AddParamToTheBody(const Param: TRttiParameter; const ParamValue: TValue; const ForceLoadFormData: Boolean);
-    procedure CheckException(const Error: Exception);
     procedure LoadRequest(const Method: TRttiMethod; const Args: TArray<TValue>);
     procedure LoadRequestAuthentication(const Method: TRttiMethod);
     procedure LoadRequestParams(const Method: TRttiMethod; const Args: TArray<TValue>);
     procedure LoadRequestURL(const Method: TRttiMethod; const Args: TArray<TValue>);
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
     procedure SetHeader(const Index, Value: String);
-    procedure SetHeaders(const Value: String);
 
     property FormData: TFormData read GetFormData;
   public
@@ -87,13 +88,11 @@ type
 
     destructor Destroy; override;
 
+    class function GetService<T>(const Host: String): T;
+
     property Communication: IHTTPCommunication read FCommunication write FCommunication;
     property Header[const Index: String]: String read GetHeader write SetHeader;
-    property Headers: String read GetHeaders write SetHeaders;
-    property OnExecuteException: TProc<Exception, ISerializer> read FOnExecuteException write FOnExecuteException;
-    property RttiType: TRttiInterfaceType read FRttiType;
     property Serializer: ISerializer read FSerializer write FSerializer;
-    property URL: String read FURL write FURL;
   end;
 
 implementation
@@ -184,14 +183,6 @@ begin
 //    FRequest.Body := TValue.From(EncodeParamValue(ParamValue));
 end;
 
-procedure TRemoteService.CheckException(const Error: Exception);
-begin
-  if Assigned(FOnExecuteException) then
-    OnExecuteException(Error, Serializer)
-  else
-    raise {$IFDEF PAS2JS}Error{$ELSE}AcquireExceptionObject as Exception{$ENDIF};
-end;
-
 function TRemoteService.CheckForceFormData(const Method: TRttiMethod): Boolean;
 var
   Parameter: TRttiParameter;
@@ -231,7 +222,6 @@ begin
 
   FContext := TRttiContext.Create;
   FHeaders := TStringList.Create;
-  FRttiType := FContext.GetType(TypeInfo) as TRttiInterfaceType;
 end;
 
 function TRemoteService.Deserialize(const JSON: String; RttiType: TRttiType): TValue;
@@ -295,11 +285,6 @@ begin
   Result := FHeaders.Values[Index];
 end;
 
-function TRemoteService.GetHeaders: String;
-begin
-  Result := FHeaders.Text;
-end;
-
 function TRemoteService.GetParameterType(const Parameter: TRttiParameter): TParamType;
 
   procedure GetTypeFromAttribute(const RttiType: TRttiObject);
@@ -351,8 +336,13 @@ end;
 
 function TRemoteService.GetRemoteRequestServiceName: String;
 begin
-  if not GetRemoteNameAttribute(RttiType, Result) then
-    Result := Result.Substring(1);
+//  if not GetRemoteNameAttribute(RttiType2, Result) then
+//    Result := Result.Substring(1);
+end;
+
+class function TRemoteService.GetService<T>(const Host: String): T;
+begin
+
 end;
 
 function TRemoteService.HasAttachment(const Method: TRttiMethod): Boolean;
@@ -474,8 +464,7 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
 {$ENDIF}
 
 begin
-  try
-    LoadRequest(Method, Args);
+  LoadRequest(Method, Args);
 
 //    if FRequest.FileDownload then
 //    begin
@@ -490,20 +479,11 @@ begin
 //    else
 //{$ENDIF}
 //      Result := Deserialize(SendRequest, Method.ReturnType);
-  except
-    on E: Exception do
-      CheckException(E);
-  end;
 end;
 
 procedure TRemoteService.SetHeader(const Index, Value: String);
 begin
   FHeaders.Values[Index] := Value;
-end;
-
-procedure TRemoteService.SetHeaders(const Value: String);
-begin
-  FHeaders.Text := Value;
 end;
 
 { THTTPCommunication }
@@ -524,6 +504,11 @@ end;
 function THTTPCommunication.GetHeader(const Name: String): String;
 begin
 
+end;
+
+function THTTPCommunication.GetHost: String;
+begin
+  Result := FHost;
 end;
 
 function THTTPCommunication.SendRequest: String;
@@ -572,6 +557,11 @@ procedure THTTPCommunication.SetHeader(const Name, Value: String);
 begin
 
 end;
+procedure THTTPCommunication.SetHost(const Value: String);
+begin
+  FHost := Value;
+end;
+
 {$ENDIF}
 
 {$IFDEF PAS2JS}

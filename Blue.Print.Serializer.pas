@@ -93,7 +93,7 @@ begin
 
   Result := DeserializeJSON(TJSJSON.Parse(AJson), RttiType);
 {$ELSE}
-  var Serializer := TBluePrintJsonSerializer.Create;
+  var Serializer := TJsonSerializer.Create;
 
   Result := Serializer.Deserialize(AJson, TypeInfo);
 
@@ -267,7 +267,7 @@ begin
   Result := TJSJSON.stringify(SerializeJSON(AValue, RttiType));
 
 {$ELSE}
-  var Serializer := TBluePrintJsonSerializer.Create;
+  var Serializer := TJsonSerializer.Create;
 
   Result := Serializer.Serialize(AValue);
 

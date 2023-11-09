@@ -62,7 +62,7 @@ begin
 
   var Parser := TImageContentParser.Create(Request.Instance);
 
-  ImageFile.LoadFromFile('..\..\..\Resource\Image.png');
+  ImageFile.LoadFromFile('..\..\Resource\Image.png');
 
   Request.Setup.WillReturn(TValue.From(ImageFile.Bytes)).When.RawContent;
 
@@ -84,7 +84,7 @@ begin
 
   var Parser := TImageContentParser.Create(Request.Instance);
 
-  ImageFile.LoadFromFile('..\..\..\Resource\Image.png');
+  ImageFile.LoadFromFile('..\..\Resource\Image.png');
 
   Request.Setup.WillReturn(TValue.From(ImageFile.Bytes)).When.RawContent;
 
