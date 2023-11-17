@@ -4,13 +4,14 @@ interface
 
 uses System.Rtti, System.Classes, System.SysUtils, {$IFDEF PAS2JS}Web{$ELSE}Web.HTTPApp, System.Net.Mime, System.NetEncoding{$ENDIF};
 
-type
-  TRequestMethod = (rmDelete, rmGet, rmPatch, rmPost, rmPut);
-  TParamType = (ptBody, ptQuery, ptPath);
+{$SCOPEDENUMS ON}
 
-  TRequestFile = {$IFDEF PAS2JS}TJSHTMLFile{$ELSE}TAbstractWebRequestFile{$ENDIF};
-  TResponseFile = {$IFDEF PAS2JS}TJSBlob{$ELSE}TStream{$ENDIF};
+type
   TFormData = {$IFDEF PAS2JS}TJSFormData{$ELSE}TMultipartFormData{$ENDIF};
+  TParamType = (Body, Query, Path);
+  TRequestFile = {$IFDEF PAS2JS}TJSHTMLFile{$ELSE}TAbstractWebRequestFile{$ENDIF};
+  TRequestMethod = (Delete, Get, Patch, Post, Put);
+  TResponseFile = {$IFDEF PAS2JS}TJSBlob{$ELSE}TStream{$ENDIF};
 
   EHTTPStatusError = class(Exception)
   private
@@ -190,35 +191,35 @@ end;
 
 constructor POSTAttribute.Create;
 begin
-  inherited Create(rmPost);
+  inherited Create(TRequestMethod.Post);
 end;
 
 { GETAttribute }
 
 constructor GETAttribute.Create;
 begin
-  inherited Create(rmGet);
+  inherited Create(TRequestMethod.Get);
 end;
 
 { DELETEAttribute }
 
 constructor DELETEAttribute.Create;
 begin
-  inherited Create(rmDelete);
+  inherited Create(TRequestMethod.Delete);
 end;
 
 { PATCHAttribute }
 
 constructor PATCHAttribute.Create;
 begin
-  inherited Create(rmPatch);
+  inherited Create(TRequestMethod.Patch);
 end;
 
 { PUTAttribute }
 
 constructor PUTAttribute.Create;
 begin
-  inherited Create(rmPut);
+  inherited Create(TRequestMethod.Put);
 end;
 
 { TParamAttribute }
@@ -234,21 +235,21 @@ end;
 
 constructor ParameterInBody.Create;
 begin
-  inherited Create(ptBody);
+  inherited Create(TParamType.Body);
 end;
 
 { ParameterInQuery }
 
 constructor ParameterInQuery.Create;
 begin
-  inherited Create(ptQuery);
+  inherited Create(TParamType.Query);
 end;
 
 { ParameterInPath }
 
 constructor ParameterInPath.Create;
 begin
-  inherited Create(ptPath);
+  inherited Create(TParamType.Path);
 end;
 
 { RemoteNameAttribute }

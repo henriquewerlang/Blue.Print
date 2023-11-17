@@ -5,28 +5,49 @@ interface
 uses DUnitX.TestFramework, System.Rtti, Blue.Print.Remote.Service, Translucent, Translucent.Intf, Blue.Print.Types;
 
 type
+  TCommunicationMock = class;
+
   [TestFixture]
   TRemoteServiceTest = class
+  private
+    FCommunication: TCommunicationMock;
+    FCommunicationInterface: IHTTPCommunication;
+
+    function CreateRemoteService<T: IInvokable>: TRemoteService;
+    function GetRemoteService<T: IInvokable>(const URL: String): T;
   public
     [Setup]
     procedure Setup;
     [TearDown]
     procedure TearDown;
-//    [Test]
-//    procedure ProcedureName;
+    [Test]
+    procedure WhenCreateServiceMustReturnTheInterfaceFilled;
+    [Test]
+    procedure WhenGetServiceMustReturnTheInterfaceFilled;
+    [Test]
+    procedure WhenCallARemoteServiceMustBuildTheURLAsExpected;
+    [Test]
+    procedure WhenTheInterfaceHasTheRemoteNameMustSendThisNameInTheURLOfTheRequest;
+    [Test]
+    procedure WhenTheProcedureHasTheRemoteNameAttributeMustSendThisNameInTheURLOfThRequest;
+    [TestCase('DELETE', 'TestDelete,Delete')]
+    [TestCase('GET', 'TestGet,Get')]
+    [TestCase('PATCH', 'TestPatch,Patch')]
+    [TestCase('POST', 'TestPost,Post')]
+    [TestCase('PUT', 'TestPut,Put')]
+    procedure TheRequestMethodMustBeTheSameOfTheAttributeOfTheMethod(const MethodName: String; const RequestType: TRequestMethod);
+    [Test]
+    procedure WhenTheMethodDontHaveARequestMethodAttributeTheDefaultMethodMustBePost;
+    [TestCase('PATCH', 'IServicePatch,Patch')]
+    [TestCase('POST', 'IServiceParams,Get')]
+    procedure WhenTheMethodDontHaveARequestMethodAttributeAndTheInterfaceHasTheAttributeMustLoadTheRequestMethodFromTheInterface(const InterfaceName: String; const RequestType: TRequestMethod);
 
     [Test]
-    procedure TheURLOfServerCallMustContainTheNameOfInterfacePlusTheProcedureName;
-    [Test]
     procedure WhenCallSendRequestMustSendABodyInParams;
-    [Test]
-    procedure TheURLPassedInConstructorMustContatWithTheRequestURL;
     [Test]
     procedure WhenCallAFunctionMustReturnTheValueOfFunctionAsSpected;
     [Test]
     procedure WhenCallAFunctionMustConvertTheFunctionParamsInTheGetURL;
-    [Test]
-    procedure SendingARequestWithoutParamsMustLoadTheURLWithoutParamSeparator;
     [Test]
     procedure SendingARequestWithOneParamMustPutTheParamSeparatorInTheURLAndTheNameAndValueParam;
     [Test]
@@ -36,23 +57,13 @@ type
     [Test]
     procedure WhenThePropertyOnExceptionIsNotLoadedMustCallTheEventWhenRaiseAnErrorInTheSyncCall;
     [Test]
-    procedure TheFilledHeadersMustKeepTheValues;
-    [Test]
     procedure WhenFillingAHeaderHasToReturnTheValuesInTheHeadersProperty;
     [Test]
     procedure TheHeadersFilledMustBeLoadedInTheCommunicationInterface;
     [Test]
     procedure WhenFillingThePropertyHeadersHaveToFillThePropertyHeaderWithTheParameterValuesPassed;
-    [TestCase('DELETE', 'rmDelete')]
-    [TestCase('GET', 'rmGet')]
-    [TestCase('PATCH', 'rmPatch')]
-    [TestCase('POST', 'rmPost')]
-    [TestCase('PUT', 'rmPut')]
-    procedure TheHTTPMethodMustFollowTheAnotationOfTheProcedure(MethodToCompare: TRequestMethod);
     [Test]
     procedure WhenTheMethodHasNoAttributesHaveToUseTheGetMethod;
-    [Test]
-    procedure WhenTheMethodHasMustGetTheAttributeFromTheInterface;
     [Test]
     procedure WhenTheProcedureHasTheParameterInBodyAttributeMustSendTheParamsInTheBodyOfTheRequest;
     [Test]
@@ -117,7 +128,23 @@ type
     procedure IfTheProcedureHasAnArrayOfFilesTheRequestMethodMustBePost;
   end;
 
+  TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
+  private
+    FRequestMethod: TRequestMethod;
+    FURL: String;
+
+    function SendRequest: String;
+
+    procedure SetHeader(const Name, Value: String);
+    procedure SetRequestMethod(const Value: TRequestMethod);
+    procedure SetURL(const Value: String);
+  public
+    property RequestMethod: TRequestMethod read FRequestMethod;
+    property URL: String read FURL;
+  end;
+
   [BasicAuthentication('User', 'Password')]
+  [GET]
   IServiceAutenticationTest = interface(IInvokable)
     ['{C99C50FD-92DF-42FB-A928-5C7BF1566C6F}']
     procedure Proc;
@@ -200,7 +227,7 @@ type
   IServiceNamed = interface(IInvokable)
     ['{2193F044-762D-4B81-BED2-50EEBD7D172F}']
     procedure Proc;
-    [RemoteName('AnotherName')]
+    [RemoteName('ProcedureWithAnotherName')]
     procedure WithName;
   end;
 
@@ -215,6 +242,17 @@ implementation
 uses System.SysUtils, System.Classes, Blue.Print.Serializer, Web.ReqFiles;
 
 { TRemoteServiceTest }
+
+function TRemoteServiceTest.CreateRemoteService<T>: TRemoteService;
+begin
+  Result := TRemoteService.Create(TypeInfo(T));
+  Result.Communication := FCommunication;
+end;
+
+function TRemoteServiceTest.GetRemoteService<T>(const URL: String): T;
+begin
+  Result := CreateRemoteService<T>.GetService<T>(URL);
+end;
 
 procedure TRemoteServiceTest.IfTheParameterHasTheBodyParameterTypeAttributeMustSendTheRequestRespectingThisType;
 begin
@@ -338,40 +376,15 @@ begin
 //  Request.Free;
 end;
 
-procedure TRemoteServiceTest.SendingARequestWithoutParamsMustLoadTheURLWithoutParamSeparator;
-begin
-//  var Communication := CreateMockCommunication;
-//  var Request := CreateRequest('/ServiceTest/TestProcedure');
-//  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
-//
-//  Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
-//
-//  Service.TestProcedure;
-//
-//  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
-//
-//  Request.Free;
-end;
-
 procedure TRemoteServiceTest.Setup;
 begin
-
+  FCommunication := TCommunicationMock.Create;
+  FCommunicationInterface := FCommunication;
 end;
 
 procedure TRemoteServiceTest.TearDown;
 begin
-
-end;
-
-procedure TRemoteServiceTest.TheFilledHeadersMustKeepTheValues;
-begin
-  var Client := TRemoteService.Create(TypeInfo(IServiceTest));
-
-  Client.Header['My Header'] := 'My Value';
-
-  Assert.AreEqual('My Value', Client.Header['My Header']);
-
-  Client.Free;
+  FCommunicationInterface := nil;
 end;
 
 procedure TRemoteServiceTest.TheHeadersFilledMustBeLoadedInTheCommunicationInterface;
@@ -388,24 +401,6 @@ begin
 //  Client.Header['My Header'] := 'abc';
 //
 //  Service.TestProcedureWithOneParam('abcd');
-//
-//  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
-//
-//  Request.Free;
-end;
-
-procedure TRemoteServiceTest.TheHTTPMethodMustFollowTheAnotationOfTheProcedure(MethodToCompare: TRequestMethod);
-begin
-//  var Communication := CreateMockCommunication;
-//  var Context := TRttiContext.Create;
-//  var MethodName := 'Test' + RESTRequestMethodToString(MethodToCompare);
-//  var Request := CreateRequest(MethodToCompare, '/ServiceTest/' + MethodName);
-//  var RttiType := Context.GetType(TypeInfo(IServiceTest));
-//  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
-//
-//  Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
-//
-//  RttiType.GetMethod(MethodName).Invoke(TValue.From(Service), []);
 //
 //  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 //
@@ -441,34 +436,16 @@ begin
 //  Service.TestProcedureWithParameterInBody('abc', 123);
 end;
 
-procedure TRemoteServiceTest.TheURLOfServerCallMustContainTheNameOfInterfacePlusTheProcedureName;
+procedure TRemoteServiceTest.TheRequestMethodMustBeTheSameOfTheAttributeOfTheMethod(const MethodName: String; const RequestType: TRequestMethod);
 begin
-//  var Communication := CreateMockCommunication;
-//  var Request := CreateRequest('/ServiceTest/TestProcedure');
-//  var Service := CreateRemoteService(Communication.Instance) as IServiceTest;
-//
-//  Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
-//
-//  Service.TestProcedure;
-//
-//  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
-//
-//  Request.Free;
-end;
+  var Context := TRttiContext.Create;
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
 
-procedure TRemoteServiceTest.TheURLPassedInConstructorMustContatWithTheRequestURL;
-begin
-//  var Communication := CreateMockCommunication;
-//  var Request := CreateRequest(rmGet, 'http://myurl.com/ServiceTest/TestProcedure');
-//  var Service := CreateRemoteServiceURL('http://myurl.com', Communication.Instance) as IServiceTest;
-//
-//  Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
-//
-//  Service.TestProcedure;
-//
-//  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
-//
-//  Request.Free;
+  Context.GetType(TypeInfo(IServiceTest)).GetMethod(MethodName).Invoke(TValue.From(Service), []);
+
+  Assert.AreEqual(RequestType, FCommunication.RequestMethod);
+
+  Context.Free;
 end;
 
 procedure TRemoteServiceTest.WhenCallAFunctionMustConvertTheFunctionParamsInTheGetURL;
@@ -499,6 +476,15 @@ begin
 //  Request.Free;
 end;
 
+procedure TRemoteServiceTest.WhenCallARemoteServiceMustBuildTheURLAsExpected;
+begin
+  var Service := GetRemoteService<IServiceTest>('http://myurl.com/myapi');
+
+  Service.TestProcedure;
+
+  Assert.AreEqual('http://myurl.com/myapi/ServiceTest/TestProcedure', FCommunication.URL);
+end;
+
 procedure TRemoteServiceTest.WhenCallSendRequestMustSendABodyInParams;
 begin
 //  var Communication := CreateMockCommunication;
@@ -512,6 +498,13 @@ begin
 //  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
 //
 //  Request.Free;
+end;
+
+procedure TRemoteServiceTest.WhenCreateServiceMustReturnTheInterfaceFilled;
+begin
+  var Value := TRemoteService.CreateService<IServiceAutenticationTest>(EmptyStr);
+
+  Assert.IsNotNull(Value);
 end;
 
 procedure TRemoteServiceTest.WhenDownloadAFileCantRaiseAnyErrorInTheExecution;
@@ -560,6 +553,13 @@ begin
 //  Assert.AreEqual('My Value', Client.Header['My Header2']);
 //
 //  Client.Free;
+end;
+
+procedure TRemoteServiceTest.WhenGetServiceMustReturnTheInterfaceFilled;
+begin
+  var Value := CreateRemoteService<IServiceAutenticationTest>.GetService<IServiceAutenticationTest>(EmptyStr);
+
+  Assert.IsNotNull(Value);
 end;
 
 procedure TRemoteServiceTest.WhenMixTheParameterTypeAttributeMustLoadTheRequestHasExpected;
@@ -666,19 +666,41 @@ begin
 //  (Service as IServiceAutenticationTest).Proc;
 end;
 
-procedure TRemoteServiceTest.WhenTheMethodHasMustGetTheAttributeFromTheInterface;
+procedure TRemoteServiceTest.WhenTheInterfaceHasTheRemoteNameMustSendThisNameInTheURLOfTheRequest;
 begin
-//  var Communication := CreateMockCommunication;
-//  var Request := CreateRequest(rmPatch, '/ServicePatch/TestProcedure');
-//  var Service := CreateRemoteService<IServicePatch>(Communication.Instance) as IServicePatch;
-//
-//  Communication.Expect.Once.When.SendRequest(It.SameFields(Request));
-//
-//  Service.TestProcedure;
-//
-//  Assert.AreEqual(EmptyStr, Communication.CheckExpectations);
-//
-//  Request.Free;
+  var Service := GetRemoteService<IServiceNamed>(EmptyStr);
+
+  Service.Proc;
+
+  Assert.AreEqual('/AnotherName/Proc', FCommunication.URL);
+end;
+
+procedure TRemoteServiceTest.WhenTheMethodDontHaveARequestMethodAttributeAndTheInterfaceHasTheAttributeMustLoadTheRequestMethodFromTheInterface(const InterfaceName: String;
+  const RequestType: TRequestMethod);
+begin
+  if InterfaceName = 'IServicePatch' then
+  begin
+    var Service := GetRemoteService<IServicePatch>(EmptyStr);
+
+    Service.TestProcedure;
+  end
+  else
+  begin
+    var Service := GetRemoteService<IServiceAutenticationTest>(EmptyStr);
+
+    Service.Proc;
+  end;
+
+  Assert.AreEqual(RequestType, FCommunication.RequestMethod);
+end;
+
+procedure TRemoteServiceTest.WhenTheMethodDontHaveARequestMethodAttributeTheDefaultMethodMustBePost;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.TestProcedure;
+
+  Assert.AreEqual(TRequestMethod.Post, FCommunication.RequestMethod);
 end;
 
 procedure TRemoteServiceTest.WhenTheMethodHasNoAttributesHaveToUseTheGetMethod;
@@ -930,6 +952,15 @@ begin
 //  Request.Free;
 end;
 
+procedure TRemoteServiceTest.WhenTheProcedureHasTheRemoteNameAttributeMustSendThisNameInTheURLOfThRequest;
+begin
+  var Service := GetRemoteService<IServiceNamed>(EmptyStr);
+
+  Service.WithName;
+
+  Assert.AreEqual('/AnotherName/ProcedureWithAnotherName', FCommunication.URL);
+end;
+
 procedure TRemoteServiceTest.WhenTheProcedureIsToSendTheParamsInURLAndHaveAnArrayOfFileParamMustSendTheParamInTheBody;
 begin
 //  var Communication := CreateMockCommunication;
@@ -1084,6 +1115,28 @@ begin
 //    end).When.SendRequest(It.IsAny<TRestRequest>);
 //
 //  Service.Proc;
+end;
+
+{ TCommunicationMock }
+
+function TCommunicationMock.SendRequest: String;
+begin
+
+end;
+
+procedure TCommunicationMock.SetHeader(const Name, Value: String);
+begin
+
+end;
+
+procedure TCommunicationMock.SetRequestMethod(const Value: TRequestMethod);
+begin
+  FRequestMethod := Value;
+end;
+
+procedure TCommunicationMock.SetURL(const Value: String);
+begin
+  FURL := Value;
 end;
 
 end.
