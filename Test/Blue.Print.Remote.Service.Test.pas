@@ -41,6 +41,8 @@ type
     [TestCase('PATCH', 'IServicePatch,Patch')]
     [TestCase('POST', 'IServiceParams,Get')]
     procedure WhenTheMethodDontHaveARequestMethodAttributeAndTheInterfaceHasTheAttributeMustLoadTheRequestMethodFromTheInterface(const InterfaceName: String; const RequestType: TRequestMethod);
+    [Test]
+    procedure AfterLoadingTheRequestMustSendTheRequestToServer;
 
     [Test]
     procedure WhenCallSendRequestMustSendABodyInParams;
@@ -131,6 +133,7 @@ type
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
   private
     FRequestMethod: TRequestMethod;
+    FRequestSended: Boolean;
     FURL: String;
 
     function SendRequest: String;
@@ -140,6 +143,7 @@ type
     procedure SetURL(const Value: String);
   public
     property RequestMethod: TRequestMethod read FRequestMethod;
+    property RequestSended: Boolean read FRequestSended write FRequestSended;
     property URL: String read FURL;
   end;
 
@@ -242,6 +246,15 @@ implementation
 uses System.SysUtils, System.Classes, Blue.Print.Serializer, Web.ReqFiles;
 
 { TRemoteServiceTest }
+
+procedure TRemoteServiceTest.AfterLoadingTheRequestMustSendTheRequestToServer;
+begin
+  var Service := GetRemoteService<IServiceNamed>(EmptyStr);
+
+  Service.Proc;
+
+  Assert.IsTrue(FCommunication.RequestSended);
+end;
 
 function TRemoteServiceTest.CreateRemoteService<T>: TRemoteService;
 begin
@@ -1121,7 +1134,7 @@ end;
 
 function TCommunicationMock.SendRequest: String;
 begin
-
+  RequestSended := True;
 end;
 
 procedure TCommunicationMock.SetHeader(const Name, Value: String);

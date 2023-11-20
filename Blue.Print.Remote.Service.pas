@@ -100,42 +100,6 @@ uses
 const
   COMPILER_OFFSET = {$IFDEF PAS2JS}0{$ELSE}1{$ENDIF};
 
-{$IFDEF PAS2JS}
-function RESTRequestMethodToString(const AMethod: TRequestMethod): String;
-begin
-  case AMethod of
-    TRequestMethod.rmPOST:
-      Result := 'POST';
-    TRequestMethod.rmPUT:
-      Result := 'PUT';
-    TRequestMethod.rmGET:
-      Result := 'GET';
-    TRequestMethod.rmDELETE:
-      Result := 'DELETE';
-    TRequestMethod.rmPATCH:
-      Result := 'PATCH'
-  else
-    Result := Format('RESTRequestMethod2String - unknown Method: %d', [Integer(AMethod)]);
-  end;
-end;
-
-procedure DownloadFile(const URL: String); async;
-var
-  Anchor: TJSHTMLAnchorElement;
-
-begin
-  Anchor := Document.CreateElement('a') as TJSHTMLAnchorElement;
-  Anchor.HRef := URL;
-  Anchor.Style.cssText := 'display:none';
-
-  Document.Body.AppendChild(Anchor);
-
-  Anchor.Click();
-
-  Document.Body.RemoveChild(Anchor);
-end;
-{$ENDIF}
-
 { TRemoteService }
 
 procedure TRemoteService.AddFormDataField(const Param: TRttiParameter; const ParamValue: String);
@@ -481,6 +445,8 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
 begin
   LoadRequest;
 
+  Communication.SendRequest;
+
 //    if FRequest.FileDownload then
 //    begin
 //      Result := TValue.Empty;
@@ -527,6 +493,22 @@ var
   A: Integer;
 
   Connection: TJSXMLHttpRequest;
+
+  procedure DownloadFile(const URL: String); async;
+  var
+    Anchor: TJSHTMLAnchorElement;
+
+  begin
+    Anchor := Document.CreateElement('a') as TJSHTMLAnchorElement;
+    Anchor.HRef := URL;
+    Anchor.Style.cssText := 'display:none';
+
+    Document.Body.AppendChild(Anchor);
+
+    Anchor.Click();
+
+    Document.Body.RemoveChild(Anchor);
+  end;
 {$ENDIF}
 
 //  function LoadContentStream: TStream;
