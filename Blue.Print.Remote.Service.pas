@@ -51,7 +51,6 @@ type
     FContext: TRttiContext;
     FFormData: TFormData;
     FInterfaceType: TRttiInterfaceType;
-    FRttiType: TRttiInterfaceType;
     FSerializer: ISerializer;
 
     function CheckForceFormData(const Method: TRttiMethod): Boolean;
@@ -59,7 +58,6 @@ type
     function CheckMethodParameterHasFile(const Method: TRttiMethod): Boolean;
     function Deserialize(const JSON: String; RttiType: TRttiType): TValue;
     function EncodeParamValue(const ParamValue: TValue): String;
-    function GetCommandFromMethod(const Method: TRttiMethod): TRequestMethod;
     function GetFormData: TFormData;
     function GetParameterType(const Parameter: TRttiParameter): TParamType;
     function HasAttachment(const Method: TRttiMethod): Boolean;
@@ -122,8 +120,8 @@ begin
 end;
 
 procedure TRemoteService.AddParamToTheBody(const Param: TRttiParameter; const ParamValue: TValue; const ForceLoadFormData: Boolean);
-var
-  AFile: TRequestFile;
+//var
+//  AFile: TRequestFile;
 
 begin
 //  if ParamValue.IsType<TRequestFile>(False) then
@@ -141,10 +139,10 @@ begin
 end;
 
 function TRemoteService.CheckForceFormData(const Method: TRttiMethod): Boolean;
-var
-  Parameter: TRttiParameter;
-
-  BodyParamCount: Integer;
+//var
+//  Parameter: TRttiParameter;
+//
+//  BodyParamCount: Integer;
 
 begin
 //  BodyParamCount := 0;
@@ -154,6 +152,7 @@ begin
 //      Inc(BodyParamCount);
 //
 //  Result := BodyParamCount > 1;
+  Result := False;
 end;
 
 function TRemoteService.CheckMethodParameterHasFile(const Method: TRttiMethod): Boolean;
@@ -208,28 +207,7 @@ begin
   if IsTypeKindString(ParamValue.Kind) then
     Result := ParamValue.AsString
   else
-    Result := Serializer.Serialize(ParamValue);
-end;
-
-function TRemoteService.GetCommandFromMethod(const Method: TRttiMethod): TRequestMethod;
-
-  procedure GetTypeFromAttribute(const RttiType: TRttiObject);
-  var
-    RequestMethodAttribute: TRequestMethodAttribute;
-
-  begin
-    RequestMethodAttribute := RttiType.GetAttribute<TRequestMethodAttribute>;
-
-    if Assigned(RequestMethodAttribute) then
-      Result := RequestMethodAttribute.Method;
-  end;
-
-begin
-//  Result := rmGet;
-//
-//  GetTypeFromAttribute(Method.Parent);
-//
-//  GetTypeFromAttribute(Method);
+    Result := Serializer.Serialize(ParamValue.AsObject);
 end;
 
 function TRemoteService.GetFormData: TFormData;
@@ -313,41 +291,41 @@ begin
 end;
 
 procedure TRemoteService.LoadRequestParams(const Method: TRttiMethod; const Args: TArray<TValue>);
-var
-  A: Integer;
-
-  Params: TArray<TRttiParameter>;
-
-  ParamType: TParamType;
-
-  ParamValue: TValue;
-
-  ForceFormData: Boolean;
-
-  PathValues, QueryValues: TStringList;
+//var
+//  A: Integer;
+//
+//  Params: TArray<TRttiParameter>;
+//
+//  ParamType: TParamType;
+//
+//  ParamValue: TValue;
+//
+//  ForceFormData: Boolean;
+//
+//  PathValues, QueryValues: TStringList;
 
 begin
-  ForceFormData := CheckForceFormData(Method);
-  Params := Method.GetParameters;
-  PathValues := TStringList.Create;
-  PathValues.Delimiter := '/';
-  PathValues.QuoteChar := #0;
-  QueryValues := TStringList.Create;
-  QueryValues.Delimiter := '&';
-  QueryValues.QuoteChar := #0;
-
-  for A := Low(Params) to High(Params) do
-  begin
-    ParamType := GetParameterType(Params[A]);
-    ParamValue := Args[COMPILER_OFFSET + A];
-
+//  ForceFormData := CheckForceFormData(Method);
+//  Params := Method.GetParameters;
+//  PathValues := TStringList.Create;
+//  PathValues.Delimiter := '/';
+//  PathValues.QuoteChar := #0;
+//  QueryValues := TStringList.Create;
+//  QueryValues.Delimiter := '&';
+//  QueryValues.QuoteChar := #0;
+//
+//  for A := Low(Params) to High(Params) do
+//  begin
+//    ParamType := GetParameterType(Params[A]);
+//    ParamValue := Args[COMPILER_OFFSET + A];
+//
 //    if ParamType = ptBody then
 //      AddParamToTheBody(Params[A], ParamValue, ForceFormData)
 //    else if ParamType = ptQuery then
 //      QueryValues.AddPair(Params[A].Name, EncodeParamValue(ParamValue))
 //    else
 //      PathValues.Add(ParamValue.ToString);
-  end;
+//  end;
 
 //  if Assigned(FFormData) then
 //    FRequest.Body := TValue.From(FormData);
