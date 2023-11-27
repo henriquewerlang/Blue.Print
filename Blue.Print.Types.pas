@@ -7,8 +7,7 @@ uses System.Rtti, System.Classes, System.SysUtils, {$IFDEF PAS2JS}Web{$ELSE}Web.
 {$SCOPEDENUMS ON}
 
 type
-  TFormData = {$IFDEF PAS2JS}TJSFormData{$ELSE}TMultipartFormData{$ENDIF};
-  TParamType = (Body, Query, Path);
+  TParameterType = (Body, Query, Path);
   TRequestFile = {$IFDEF PAS2JS}TJSHTMLFile{$ELSE}TAbstractWebRequestFile{$ENDIF};
   TRequestMethod = (Delete, Get, Patch, Post, Put);
   TResponseFile = {$IFDEF PAS2JS}TJSBlob{$ELSE}TStream{$ENDIF};
@@ -18,9 +17,8 @@ type
     FStatusCode: Integer;
     FContent: String;
   public
-    constructor Create(const StatusCode: Integer; const URL, Content: String);
+    constructor Create(const StatusCode: Integer; const URL: String);
 
-    property Content: String read FContent;
     property StatusCode: Integer read FStatusCode;
   end;
 
@@ -58,26 +56,26 @@ type
     constructor Create;
   end;
 
-  TParamAttribute = class(TCustomAttribute)
+  TParameterAttribute = class(TCustomAttribute)
   private
-    FParamType: TParamType;
+    FParamType: TParameterType;
 
-    constructor Create(const ParamType: TParamType);
+    constructor Create(const ParamType: TParameterType);
   public
-    property ParamType: TParamType read FParamType;
+    property ParamType: TParameterType read FParamType;
   end;
 
-  ParameterInBody = class(TParamAttribute)
-  public
-    constructor Create;
-  end;
-
-  ParameterInQuery = class(TParamAttribute)
+  Body = class(TParameterAttribute)
   public
     constructor Create;
   end;
 
-  ParameterInPath = class(TParamAttribute)
+  Query = class(TParameterAttribute)
+  public
+    constructor Create;
+  end;
+
+  Path = class(TParameterAttribute)
   public
     constructor Create;
   end;
@@ -170,11 +168,10 @@ end;
 
 { EHTTPStatusError }
 
-constructor EHTTPStatusError.Create(const StatusCode: Integer; const URL, Content: String);
+constructor EHTTPStatusError.Create(const StatusCode: Integer; const URL: String);
 begin
   inherited CreateFmt('HTTP Error %d for URL %s', [StatusCode, URL]);
 
-  FContent := Content;
   FStatusCode := StatusCode;
 end;
 
@@ -222,34 +219,34 @@ begin
   inherited Create(TRequestMethod.Put);
 end;
 
-{ TParamAttribute }
+{ TParameterAttribute }
 
-constructor TParamAttribute.Create(const ParamType: TParamType);
+constructor TParameterAttribute.Create(const ParamType: TParameterType);
 begin
   inherited Create;
 
   FParamType := ParamType;
 end;
 
-{ ParameterInBody }
+{ Body }
 
-constructor ParameterInBody.Create;
+constructor Body.Create;
 begin
-  inherited Create(TParamType.Body);
+  inherited Create(TParameterType.Body);
 end;
 
-{ ParameterInQuery }
+{ Query }
 
-constructor ParameterInQuery.Create;
+constructor Query.Create;
 begin
-  inherited Create(TParamType.Query);
+  inherited Create(TParameterType.Query);
 end;
 
-{ ParameterInPath }
+{ Path }
 
-constructor ParameterInPath.Create;
+constructor Path.Create;
 begin
-  inherited Create(TParamType.Path);
+  inherited Create(TParameterType.Path);
 end;
 
 { RemoteNameAttribute }
