@@ -28,13 +28,15 @@ type
 
     FContext: TRttiContext;
     FInterfaceType: TRttiInterfaceType;
-    FSerializer: ISerializer;
+    FSerializer: array [TSerializerType] of ISerializer;
 
-    function ConvertValue(const Value: TValue): String;
     function EncodeValue(const Value: String): String;
     function GetAttribute<T: TCustomAttribute>(RttiObject: TRttiObject): T;
+    function GetSerializer(&Type: TSerializerType): ISerializer;
+    function GetSerializerType(const Parameter: TRttiParameter): TSerializerType;
 
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
+    procedure SetSerializer(&Type: TSerializerType; const Value: ISerializer);
 
     property InterfaceType: TRttiInterfaceType read FInterfaceType;
   public
@@ -45,7 +47,7 @@ type
     function GetService<T: IInvokable>(const URL: String): T;
 
     property Communication: IHTTPCommunication read FCommunication write FCommunication;
-    property Serializer: ISerializer read FSerializer write FSerializer;
+    property Serializer[&Type: TSerializerType]: ISerializer read GetSerializer write SetSerializer;
   end;
 
 implementation
@@ -62,18 +64,11 @@ const
 
 { TRemoteService }
 
-function TRemoteService.ConvertValue(const Value: TValue): String;
-begin
-  if Value.Kind = tkInteger then
-    Result := Value.AsInt64.ToString
-  else
-    Result := Value.AsString;
-end;
-
 constructor TRemoteService.Create(const TypeInfo: PTypeInfo);
 begin
   inherited Create(TypeInfo, {$IFDEF PAS2JS}@{$ENDIF}OnInvokeMethod);
 
+  FCommunication := THTTPCommunication.Create;
   FContext := TRttiContext.Create;
   FInterfaceType := FContext.GetType(TypeInfo) as TRttiInterfaceType;
 end;
@@ -96,6 +91,30 @@ begin
     Result := RttiObject.GetAttribute<T>;
     RttiObject := RttiObject.Parent;
   until Assigned(Result) or not Assigned(RttiObject);
+end;
+
+function TRemoteService.GetSerializer(&Type: TSerializerType): ISerializer;
+const
+   SERIALIZER_CLASS: array[TSerializerType] of TInterfacedClass = (TBluePrintJsonSerializer, TBluePrintXMLSerializer);
+
+begin
+  if not Assigned(FSerializer[&Type]) then
+    FSerializer[&Type] := SERIALIZER_CLASS[&Type].Create as ISerializer;
+
+  Result := FSerializer[&Type];
+end;
+
+function TRemoteService.GetSerializerType(const Parameter: TRttiParameter): TSerializerType;
+var
+  SerializerType: TSerializerTypeAttribute;
+
+begin
+  SerializerType := GetAttribute<TSerializerTypeAttribute>(Parameter);
+
+  if Assigned(SerializerType) then
+    Result := SerializerType.SerializerType
+  else
+    Result := TSerializerType.JSON;
 end;
 
 function TRemoteService.GetService<T>(const URL: String): T;
@@ -174,78 +193,86 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
 
     if Assigned(ParameterAttribute) then
       Result := ParameterAttribute.ParamType
+    else if Parameter.ParamType.IsInstance then
+      Result := TParameterType.Body
     else
       Result := TParameterType.Query;
   end;
 
-  function LoadParams(const LoadFunction: TFunc<TRttiParameter, TValue, String>; const ParameterSeparator: String; const ParameterType: TParameterType): String;
+  procedure LoadParams(const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType);
   var
     Parameter: TRttiParameter;
 
     ValueIndex: Integer;
 
   begin
-    Result := EmptyStr;
     ValueIndex := COMPILER_OFFSET;
 
     for Parameter in Method.GetParameters do
     begin
       if GetParameterType(Parameter) = ParameterType then
-      begin
-        if not Result.IsEmpty then
-          Result := Result + ParameterSeparator;
-
-        Result := Result + LoadFunction(Parameter, Args[ValueIndex]);
-      end;
+        LoadFunction(Parameter, Args[ValueIndex]);
 
       Inc(ValueIndex);
     end;
   end;
 
   function GetQueryParams: String;
-  begin
-    Result := LoadParams(
-      function(Parameter: TRttiParameter; Value: TValue): String
-      begin
-        Result := Format('%s=%s', [EncodeValue(Parameter.Name), EncodeValue(ConvertValue(Value))]);
-      end, ';', TParameterType.Query);
+  var
+    QueryParams: String;
 
-    if not Result.IsEmpty then
-      Result := '/?' + Result;
+  begin
+    QueryParams := EmptyStr;
+
+    LoadParams(
+      procedure(Parameter: TRttiParameter; Value: TValue)
+      begin
+        if not QueryParams.IsEmpty then
+          QueryParams := QueryParams + ';';
+
+        QueryParams := QueryParams + Format('%s=%s', [EncodeValue(Parameter.Name), EncodeValue(Value.ToString)]);
+      end, TParameterType.Query);
+
+    if not QueryParams.IsEmpty then
+      QueryParams := '/?' + QueryParams;
+
+    Result := QueryParams;
   end;
 
   function GetPathParams: String;
-  begin
-    Result := LoadParams(
-      function(Parameter: TRttiParameter; Value: TValue): String
-      begin
-        Result := EncodeValue(ConvertValue(Value));
-      end, '/', TParameterType.Path);
+  var
+    PathParams: String;
 
-    if not Result.IsEmpty then
-      Result := '/' + Result;
+  begin
+    PathParams := EmptyStr;
+
+    LoadParams(
+      procedure (Parameter: TRttiParameter; Value: TValue)
+      begin
+        PathParams := PathParams + '/' + EncodeValue(Value.ToString);
+      end, TParameterType.Path);
+
+    Result := PathParams;
   end;
 
   function LoadRequestBody: TStream;
   var
-    Body: TStream;
+    Body: TStringStream;
 
   begin
     Body := nil;
 
     LoadParams(
-      function(Parameter: TRttiParameter; Value: TValue): String
-      var
-        ConvertedValue: String;
-
+      procedure (Parameter: TRttiParameter; Value: TValue)
       begin
         if not Assigned(Body) then
-          Body := TStringStream.Create;
+          Body := TStringStream.Create(EmptyStr, TEncoding.UTF8);
 
-        ConvertedValue := ConvertValue(Value);
-
-        Body.Write(ConvertedValue[1], ConvertedValue.Length * SizeOf(Char));
-      end, EmptyStr, TParameterType.Body);
+        if Value.IsObjectInstance then
+          Body.WriteString(Serializer[GetSerializerType(Parameter)].Serialize(Value))
+        else
+          Body.WriteString(Value.ToString);
+      end, TParameterType.Body);
 
     Result := Body;
   end;
@@ -262,6 +289,11 @@ begin
 //    if Method.IsAsyncCall then
 //      Result := TValue.From(InvokeMehodAsync)
 //{$ENDIF}
+end;
+
+procedure TRemoteService.SetSerializer(&Type: TSerializerType; const Value: ISerializer);
+begin
+  FSerializer[&Type] := Value;
 end;
 
 { THTTPCommunication }

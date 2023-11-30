@@ -2,15 +2,9 @@
 
 interface
 
-uses System.Rtti, System.TypInfo, {$IFDEF PAS2JS}JS{$ELSE}System.JSON.Serializers{$ENDIF};
+uses System.Rtti, System.TypInfo, Blue.Print.Types, {$IFDEF PAS2JS}JS{$ELSE}System.JSON.Serializers{$ENDIF};
 
 type
-  ISerializer = interface
-    ['{5848116B-902F-4FF8-BE8F-D53F586C400E}']
-    function Deserialize(const AValue: String; const TypeInfo: PTypeInfo): TValue;
-    function Serialize(const AValue: TValue): String;
-  end;
-
   TBluePrintJsonSerializer = class(TInterfacedObject, ISerializer)
   private
 {$IFDEF PAS2JS}
@@ -48,6 +42,12 @@ type
     function Serialize(const AValue: TValue): String; inline;
   end;
 {$ENDIF}
+
+  TBluePrintXMLSerializer = class(TInterfacedObject, ISerializer)
+  private
+    function Deserialize(const AJson: String; const TypeInfo: PTypeInfo): TValue; inline;
+    function Serialize(const AValue: TValue): String; inline;
+  end;
 
 implementation
 
@@ -382,6 +382,18 @@ begin
   end;
 end;
 {$ENDIF}
+
+{ TBluePrintXMLSerializer }
+
+function TBluePrintXMLSerializer.Deserialize(const AJson: String; const TypeInfo: PTypeInfo): TValue;
+begin
+
+end;
+
+function TBluePrintXMLSerializer.Serialize(const AValue: TValue): String;
+begin
+
+end;
 
 end.
 

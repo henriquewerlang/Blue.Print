@@ -2,7 +2,7 @@
 
 interface
 
-uses DUnitX.TestFramework, System.Rtti, System.Classes, Blue.Print.Remote.Service, Translucent, Translucent.Intf, Blue.Print.Types;
+uses DUnitX.TestFramework, System.Rtti, System.Classes, System.TypInfo, Blue.Print.Remote.Service, Translucent, Translucent.Intf, Blue.Print.Types;
 
 type
   TCommunicationMock = class;
@@ -59,6 +59,12 @@ type
     procedure WhenAParamHasTheBodyAttributeMustLoadTheParamValueInTheBodyOfTheRequest;
     [Test]
     procedure WhenTheRequestDontHaveParamInBodyCantLoadTheBodyRequest;
+    [Test]
+    procedure WhenTheParamOfAnProcedureIsAnObjectMustSendTheValueInTheBodyOfTheRequest;
+    [Test]
+    procedure WhenSendAParamWithXMLAttributeMustSerializeTheObjectAsXMLValue;
+    [Test]
+    procedure WhenNotLoadTheSerializerPropertyMustLoadTheDefaultSerializer;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -72,10 +78,22 @@ type
   public
     destructor Destroy; override;
 
+    function GetBodyAsString: String;
+
     property Body: TStream read FBody;
     property RequestMethod: TRequestMethod read FRequestMethod;
     property RequestSended: Boolean read FRequestSended;
     property URL: String read FURL;
+  end;
+
+  TSerializerMock = class(TInterfacedObject, ISerializer)
+  private
+    FReturnValue: String;
+
+    function Deserialize(const AValue: String; const TypeInfo: PTypeInfo): TValue;
+    function Serialize(const AValue: TValue): String;
+  public
+    constructor Create(const ReturnValue: String);
   end;
 
   [BasicAuthentication('User', 'Password')]
@@ -100,6 +118,8 @@ type
     procedure ParameterInPath([Path]Param1: String; [Path]Param2: Integer);
     [RemoteName('Pãram')]
     procedure ProcedureWithRemoteNameLocaleChars;
+    procedure SendObject(const AObject: TObject);
+    procedure SendObjectXML([XML] const AObject: TObject);
     [DELETE]
     procedure TestDELETE;
     [GET]
@@ -153,6 +173,8 @@ function TRemoteServiceTest.CreateRemoteService<T>: TRemoteService;
 begin
   Result := TRemoteService.Create(TypeInfo(T));
   Result.Communication := FCommunication;
+  Result.Serializer[TSerializerType.JSON] := TSerializerMock.Create('JSON');
+  Result.Serializer[TSerializerType.XML] := TSerializerMock.Create('XML');
 end;
 
 function TRemoteServiceTest.GetRemoteService<T>(const URL: String): T;
@@ -200,7 +222,7 @@ begin
 
   Assert.IsNotNull(FCommunication.Body);
 
-  Assert.AreEqual<Int64>(10, FCommunication.Body.Size);
+  Assert.AreEqual('Value', FCommunication.GetBodyAsString);
 end;
 
 procedure TRemoteServiceTest.WhenCallARemoteServiceMustBuildTheURLAsExpected;
@@ -224,6 +246,23 @@ begin
   var Value := CreateRemoteService<IServiceAutenticationTest>.GetService<IServiceAutenticationTest>(EmptyStr);
 
   Assert.IsNotNull(Value);
+end;
+
+procedure TRemoteServiceTest.WhenNotLoadTheSerializerPropertyMustLoadTheDefaultSerializer;
+begin
+  var Remote := TRemoteService.Create(TypeInfo(IServiceTest));
+
+  Assert.IsNotNull(Remote.Serializer[TSerializerType.JSON]);
+  Assert.IsNotNull(Remote.Serializer[TSerializerType.XML]);
+end;
+
+procedure TRemoteServiceTest.WhenSendAParamWithXMLAttributeMustSerializeTheObjectAsXMLValue;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.SendObjectXML(Self);
+
+  Assert.AreEqual('XML', FCommunication.GetBodyAsString);
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasRemoteNameWithLocaleCharsMustEncodeTheName;
@@ -281,6 +320,15 @@ begin
   Assert.AreEqual('/ServiceTest/ParameterInPath/%C3%A3%C3%A3%C3%A3/123', FCommunication.URL);
 end;
 
+procedure TRemoteServiceTest.WhenTheParamOfAnProcedureIsAnObjectMustSendTheValueInTheBodyOfTheRequest;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.SendObject(Self);
+
+  Assert.AreEqual('JSON', FCommunication.GetBodyAsString);
+end;
+
 procedure TRemoteServiceTest.WhenTheParamValueHasLocaleCharsMustEncodeTheURL;
 begin
   var Service := GetRemoteService<IServiceTest>(EmptyStr);
@@ -335,14 +383,44 @@ begin
   inherited;
 end;
 
+function TCommunicationMock.GetBodyAsString: String;
+begin
+  var Reader := TStreamReader.Create(FBody, TEncoding.UTF8);
+
+  Result := Reader.ReadToEnd;
+
+  Reader.Free;
+end;
+
 function TCommunicationMock.SendRequest(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream;
 begin
   FBody := Body;
+  FRequestMethod := RequestMethod;
   FRequestSended := True;
+  FURL := URL;
   Result := nil;
 
   if Assigned(FBody) then
     FBody.Position := 0;
+end;
+
+{ TSerializerMock }
+
+constructor TSerializerMock.Create(const ReturnValue: String);
+begin
+  inherited Create;
+
+  FReturnValue := ReturnValue;
+end;
+
+function TSerializerMock.Deserialize(const AValue: String; const TypeInfo: PTypeInfo): TValue;
+begin
+
+end;
+
+function TSerializerMock.Serialize(const AValue: TValue): String;
+begin
+  Result := FReturnValue;
 end;
 
 end.

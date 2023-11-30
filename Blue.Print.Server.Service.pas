@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Classes, System.SysUtils, System.Rtti, System.TypInfo, Web.HTTPApp, Web.ReqFiles, Blue.Print.Service.Container, Blue.Print.Serializer;
+uses System.Classes, System.SysUtils, System.Rtti, System.TypInfo, Web.HTTPApp, Web.ReqFiles, Blue.Print.Service.Container, Blue.Print.Types;
 
 type
   EInvalidParameterType = class(Exception);
@@ -70,7 +70,7 @@ type
 
 implementation
 
-uses System.Math, Winapi.WinInet, System.NetConsts, Blue.Print.Types, Rest.Types;
+uses System.Math, Winapi.WinInet, System.NetConsts, Rest.Types, Blue.Print.Serializer;
 
 { TRestServerService }
 
