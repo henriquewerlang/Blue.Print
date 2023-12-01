@@ -11,12 +11,12 @@ type
   TRequestFile = {$IFDEF PAS2JS}TJSHTMLFile{$ELSE}TAbstractWebRequestFile{$ENDIF};
   TRequestMethod = (Delete, Get, Patch, Post, Put);
   TResponseFile = {$IFDEF PAS2JS}TJSBlob{$ELSE}TStream{$ENDIF};
-  TSerializerType = (JSON, XML);
 
-  ISerializer = interface
+  IBluePrintSerializer = interface
     ['{5848116B-902F-4FF8-BE8F-D53F586C400E}']
-    function Deserialize(const AValue: String; const TypeInfo: PTypeInfo): TValue;
-    function Serialize(const AValue: TValue): String;
+    function Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue;
+
+    procedure Serialize(const Value: TValue; const Output: TStream);
   end;
 
   EHTTPStatusError = class(Exception)
@@ -151,25 +151,6 @@ type
 
     property Name: String read FName;
     property Value: String read FValue;
-  end;
-
-  TSerializerTypeAttribute = class(TCustomAttribute)
-  private
-    FSerializerType: TSerializerType;
-  public
-    constructor Create(const SerializerType: TSerializerType);
-
-    property SerializerType: TSerializerType read FSerializerType write FSerializerType;
-  end;
-
-  JSONAttribute = class(TSerializerTypeAttribute)
-  public
-    constructor Create;
-  end;
-
-  XMLAttribute = class(TSerializerTypeAttribute)
-  public
-    constructor Create;
   end;
 
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
@@ -369,29 +350,6 @@ begin
 
   FName := Name;
   FValue := Value;
-end;
-
-{ TSerializerTypeAttribute }
-
-constructor TSerializerTypeAttribute.Create(const SerializerType: TSerializerType);
-begin
-  inherited Create;
-
-  FSerializerType := SerializerType;
-end;
-
-{ JSONAttribute }
-
-constructor JSONAttribute.Create;
-begin
-  inherited Create(TSerializerType.JSON);
-end;
-
-{ XMLAttribute }
-
-constructor XMLAttribute.Create;
-begin
-  inherited Create(TSerializerType.XML);
 end;
 
 end.

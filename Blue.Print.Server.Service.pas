@@ -35,12 +35,12 @@ type
     FRequest: TWebRequest;
     FResponse: TWebResponse;
     FServiceContainer: IServiceContainer;
-    FSerializer: ISerializer;
+    FSerializer: IBluePrintSerializer;
     FOnGetServiceContainer: TOnGetServiceContainer;
 
     function GetParams(const Method: TRttiMethod; var ConvertedParams: TArray<TValue>): Boolean;
     function GetParamValue(const Method: TRttiMethod; const Param: TRttiParameter; var ParamLoaded: Boolean): TValue;
-    function GetSerializer: ISerializer;
+    function GetSerializer: IBluePrintSerializer;
     function GetServiceContainer: IServiceContainer;
   protected
     // IGetWebAppServices
@@ -61,7 +61,7 @@ type
     function Request: TWebRequest;
     function Response: TWebResponse;
   public
-    property Serializer: ISerializer read GetSerializer write FSerializer;
+    property Serializer: IBluePrintSerializer read GetSerializer write FSerializer;
     property ServiceContainer: IServiceContainer read GetServiceContainer write FServiceContainer;
   published
     property Active: Boolean read FActive write FActive;
@@ -181,11 +181,11 @@ begin
       Result := ParamValue
     else if ParamValue.IsEmpty then
       ParamLoaded := False
-    else
-      Result := Serializer.Deserialize(ParamValue, Param.ParamType.Handle);
+//    else
+//      Result := Serializer.Deserialize(ParamValue, Param.ParamType.Handle);
 end;
 
-function TRestServerService.GetSerializer: ISerializer;
+function TRestServerService.GetSerializer: IBluePrintSerializer;
 begin
   if not Assigned(FSerializer) then
     FSerializer := TBluePrintJsonSerializer.Create;
@@ -263,8 +263,8 @@ var
 
     if not Return.IsEmpty and Return.IsType<TResponseFile> then
       Response.ContentStream := Return.AsType<TResponseFile>
-    else
-      Response.Content := Serializer.Serialize(Return);
+//    else
+//      Response.Content := Serializer.Serialize(Return);
   end;
 
   procedure LoadHeaders;

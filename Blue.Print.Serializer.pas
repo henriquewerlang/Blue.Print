@@ -2,17 +2,21 @@
 
 interface
 
-uses System.Rtti, System.TypInfo, Blue.Print.Types, {$IFDEF PAS2JS}JS{$ELSE}System.JSON.Serializers{$ENDIF};
+uses System.Classes, System.Rtti, System.TypInfo, Blue.Print.Types, {$IFDEF PAS2JS}JS{$ELSE}System.JSON.Serializers{$ENDIF};
 
 type
-  TBluePrintJsonSerializer = class(TInterfacedObject, ISerializer)
+  TBluePrintJsonSerializer = class(TInterfacedObject, IBluePrintSerializer)
   private
 {$IFDEF PAS2JS}
     FContext: TRttiContext;
 {$ENDIF}
 
-    function Deserialize(const AJson: String; const TypeInfo: PTypeInfo): TValue; inline;
-    function Serialize(const AValue: TValue): String; inline;
+    function Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue; overload;
+
+    procedure Serialize(const Value: TValue; const Output: TStream); overload;
+
+    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue; overload; inline;
+    function Serialize(const Value: TValue): String; overload; inline;
 {$IFDEF PAS2JS}
   protected
     function CreateObject(const JSON: JSValue; RttiType: TRttiType): TObject; virtual;
@@ -38,20 +42,21 @@ type
 
 {$IFDEF DCC}
   TJsonSerializerHelper = class helper for TJsonSerializer
-    function Deserialize(const AJson: String; const TypeInfo: PTypeInfo): TValue; overload;
-    function Serialize(const AValue: TValue): String; inline;
+    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue; overload;
+    function Serialize(const Value: TValue): String; inline;
   end;
 {$ENDIF}
 
-  TBluePrintXMLSerializer = class(TInterfacedObject, ISerializer)
+  TBluePrintXMLSerializer = class(TInterfacedObject, IBluePrintSerializer)
   private
-    function Deserialize(const AJson: String; const TypeInfo: PTypeInfo): TValue; inline;
-    function Serialize(const AValue: TValue): String; inline;
+    function Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue;
+
+    procedure Serialize(const Value: TValue; const Output: TStream);
   end;
 
 implementation
 
-uses System.Classes, System.SysUtils, System.JSON.Readers, System.JSON.Writers;
+uses System.SysUtils, System.JSON.Readers, System.JSON.Writers;
 
 { TBluePrintJsonSerializer }
 
@@ -81,24 +86,22 @@ begin
 end;
 {$ENDIF}
 
-function TBluePrintJsonSerializer.Deserialize(const AJson: String; const TypeInfo: PTypeInfo): TValue;
-{$IFDEF PAS2JS}
-var
-  RttiType: TRttiType;
-
-{$ENDIF}
+function TBluePrintJsonSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
 begin
 {$IFDEF PAS2JS}
-  RttiType := FContext.GetType(TypeInfo);
-
-  Result := DeserializeJSON(TJSJSON.Parse(AJson), RttiType);
+  Result := DeserializeJSON(TJSJSON.Parse(Value), FContext.GetType(TypeInfo));
 {$ELSE}
   var Serializer := TJsonSerializer.Create;
 
-  Result := Serializer.Deserialize(AJson, TypeInfo);
+  Result := Serializer.Deserialize(Value, TypeInfo);
 
   Serializer.Free;
 {$ENDIF}
+end;
+
+procedure TBluePrintJsonSerializer.Serialize(const Value: TValue; const Output: TStream);
+begin
+
 end;
 
 {$IFDEF PAS2JS}
@@ -255,21 +258,19 @@ begin
 end;
 {$ENDIF}
 
-function TBluePrintJsonSerializer.Serialize(const AValue: TValue): String;
-{$IFDEF PAS2JS}
-var
-  RttiType: TRttiType;
-{$ENDIF}
+function TBluePrintJsonSerializer.Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue;
+begin
+
+end;
+
+function TBluePrintJsonSerializer.Serialize(const Value: TValue): String;
 begin
 {$IFDEF PAS2JS}
-  RttiType := FContext.GetType(AValue.TypeInfo);
-
-  Result := TJSJSON.stringify(SerializeJSON(AValue, RttiType));
-
+  Result := TJSJSON.stringify(SerializeJSON(Value, FContext.GetType(AValue.TypeInfo)));
 {$ELSE}
   var Serializer := TJsonSerializer.Create;
 
-  Result := Serializer.Serialize(AValue);
+  Result := Serializer.Serialize(Value);
 
   Serializer.Free;
 {$ENDIF}
@@ -327,7 +328,7 @@ end;
 {$IFDEF DCC}
 { TJsonSerializerHelper }
 
-function TJsonSerializerHelper.Deserialize(const AJson: String; const TypeInfo: PTypeInfo): TValue;
+function TJsonSerializerHelper.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
 var
   LStringReader: TStringReader;
 
@@ -335,7 +336,7 @@ var
 
 begin
   ContractResolver := TJsonDefaultContractResolver.Create(TJsonMemberSerialization.Public);
-  LStringReader := TStringReader.Create(AJson);
+  LStringReader := TStringReader.Create(Value);
   try
     LJsonReader := TJsonTextReader.Create(LStringReader);
     LJsonReader.DateTimeZoneHandling := DateTimeZoneHandling;
@@ -351,7 +352,7 @@ begin
   end;
 end;
 
-function TJsonSerializerHelper.Serialize(const AValue: TValue): String;
+function TJsonSerializerHelper.Serialize(const Value: TValue): String;
 var
   StringBuilder: TStringBuilder;
   StringWriter: TStringWriter;
@@ -370,7 +371,7 @@ begin
     JsonWriter.Formatting := Formatting;
 
     try
-      InternalSerialize(JsonWriter, AValue);
+      InternalSerialize(JsonWriter, Value);
     finally
       JsonWriter.Free;
     end;
@@ -385,12 +386,12 @@ end;
 
 { TBluePrintXMLSerializer }
 
-function TBluePrintXMLSerializer.Deserialize(const AJson: String; const TypeInfo: PTypeInfo): TValue;
+function TBluePrintXMLSerializer.Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue;
 begin
 
 end;
 
-function TBluePrintXMLSerializer.Serialize(const AValue: TValue): String;
+procedure TBluePrintXMLSerializer.Serialize(const Value: TValue; const Output: TStream);
 begin
 
 end;

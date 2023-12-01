@@ -9,7 +9,7 @@ type
     ['{8E39F66A-C72B-4314-80B1-D24F1AF4F247}']
     function SendRequest(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream;
     {$IFDEF PAS2JS}
-    function SendRequestAsync: String; async;
+    function SendRequestAsync(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream; async;
     {$ENDIF}
   end;
 
@@ -17,7 +17,7 @@ type
   private
     function SendRequest(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream;
 {$IFDEF PAS2JS}
-    function SendRequestAsync: String; async;
+    function SendRequestAsync(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream; async;
 {$ENDIF}
   end;
 
@@ -28,26 +28,22 @@ type
 
     FContext: TRttiContext;
     FInterfaceType: TRttiInterfaceType;
-    FSerializer: array [TSerializerType] of ISerializer;
+    FSerializer: IBluePrintSerializer;
 
     function EncodeValue(const Value: String): String;
     function GetAttribute<T: TCustomAttribute>(RttiObject: TRttiObject): T;
-    function GetSerializer(&Type: TSerializerType): ISerializer;
-    function GetSerializerType(const Parameter: TRttiParameter): TSerializerType;
 
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
-    procedure SetSerializer(&Type: TSerializerType; const Value: ISerializer);
 
     property InterfaceType: TRttiInterfaceType read FInterfaceType;
   public
-    constructor Create(const TypeInfo: PTypeInfo);
+    constructor Create(const TypeInfo: PTypeInfo; const Serializer: IBluePrintSerializer);
 
-    class function CreateService<T: IInvokable>(const URL: String): T;
+    destructor Destroy; override;
 
     function GetService<T: IInvokable>(const URL: String): T;
 
     property Communication: IHTTPCommunication read FCommunication write FCommunication;
-    property Serializer[&Type: TSerializerType]: ISerializer read GetSerializer write SetSerializer;
   end;
 
 implementation
@@ -64,18 +60,21 @@ const
 
 { TRemoteService }
 
-constructor TRemoteService.Create(const TypeInfo: PTypeInfo);
+constructor TRemoteService.Create(const TypeInfo: PTypeInfo; const Serializer: IBluePrintSerializer);
 begin
   inherited Create(TypeInfo, {$IFDEF PAS2JS}@{$ENDIF}OnInvokeMethod);
 
   FCommunication := THTTPCommunication.Create;
   FContext := TRttiContext.Create;
   FInterfaceType := FContext.GetType(TypeInfo) as TRttiInterfaceType;
+  FSerializer := Serializer;
 end;
 
-class function TRemoteService.CreateService<T>(const URL: String): T;
+destructor TRemoteService.Destroy;
 begin
-  Result := TRemoteService.Create(TypeInfo(T)).GetService<T>(URL);
+  FContext.Free;
+
+  inherited;
 end;
 
 function TRemoteService.EncodeValue(const Value: String): String;
@@ -93,30 +92,6 @@ begin
   until Assigned(Result) or not Assigned(RttiObject);
 end;
 
-function TRemoteService.GetSerializer(&Type: TSerializerType): ISerializer;
-const
-   SERIALIZER_CLASS: array[TSerializerType] of TInterfacedClass = (TBluePrintJsonSerializer, TBluePrintXMLSerializer);
-
-begin
-  if not Assigned(FSerializer[&Type]) then
-    FSerializer[&Type] := SERIALIZER_CLASS[&Type].Create as ISerializer;
-
-  Result := FSerializer[&Type];
-end;
-
-function TRemoteService.GetSerializerType(const Parameter: TRttiParameter): TSerializerType;
-var
-  SerializerType: TSerializerTypeAttribute;
-
-begin
-  SerializerType := GetAttribute<TSerializerTypeAttribute>(Parameter);
-
-  if Assigned(SerializerType) then
-    Result := SerializerType.SerializerType
-  else
-    Result := TSerializerType.JSON;
-end;
-
 function TRemoteService.GetService<T>(const URL: String): T;
 begin
   FURL := URL;
@@ -125,26 +100,6 @@ begin
 end;
 
 procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
-
-{$IFDEF PAS2JS}
-  function InvokeMehodAsync: JSValue; async;
-  var
-    ReturnType: TRttiType;
-
-  begin
-    try
-      ReturnType := Method.ReturnType;
-
-      if Assigned(ReturnType) and ReturnType.IsInstanceExternal and (ReturnType.AsInstanceExternal.ExternalName = 'Promise') then
-        ReturnType := nil;
-
-      Result := Deserialize(await(Communication.SendRequestAsync(FRequest)), ReturnType).AsJSValue;
-    except
-      on E: Exception do
-        CheckException(E);
-    end;
-  end;
-{$ENDIF}
 
   function GetRemoteName(const RttiObject: TRttiObject; const DefaultName: String): String;
   var
@@ -257,7 +212,7 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
 
   function LoadRequestBody: TStream;
   var
-    Body: TStringStream;
+    Body: TStream;
 
   begin
     Body := nil;
@@ -266,12 +221,9 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
       procedure (Parameter: TRttiParameter; Value: TValue)
       begin
         if not Assigned(Body) then
-          Body := TStringStream.Create(EmptyStr, TEncoding.UTF8);
+          Body := TMemoryStream.Create;
 
-        if Value.IsObjectInstance then
-          Body.WriteString(Serializer[GetSerializerType(Parameter)].Serialize(Value))
-        else
-          Body.WriteString(Value.ToString);
+        FSerializer.Serialize(Value, Body);
       end, TParameterType.Body);
 
     Result := Body;
@@ -282,18 +234,31 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
     Result := Format('%s/%s/%s%s%s', [FURL, GetRemoteServiceName, GetRemoteMethodName, GetPathParams, GetQueryParams]);
   end;
 
-begin
-  Communication.SendRequest(GetRequestMethod, BuildRequestURL, LoadRequestBody);
+  procedure SendRequest;
+  var
+    Response: TStream;
 
-//{$IFDEF PAS2JS}
-//    if Method.IsAsyncCall then
-//      Result := TValue.From(InvokeMehodAsync)
-//{$ENDIF}
-end;
+  begin
+    Response := Communication.SendRequest(GetRequestMethod, BuildRequestURL, LoadRequestBody);
 
-procedure TRemoteService.SetSerializer(&Type: TSerializerType; const Value: ISerializer);
+    if Assigned(Method.ReturnType) then
+      Result := FSerializer.Deserialize(Response, Result.TypeInfo);
+  end;
+
+{$IFDEF PAS2JS}
+  function SendRequestAsync: TJSPromise;
+  begin
+    Result := TJSPromise.Create...
+  end;
+{$ENDIF}
+
 begin
-  FSerializer[&Type] := Value;
+{$IFDEF PAS2JS}
+    if Method.IsAsyncCall then
+      Result := TValue.From(SendRequestAsync)
+    else
+{$ENDIF}
+  SendRequest;
 end;
 
 { THTTPCommunication }
@@ -358,7 +323,7 @@ begin
 end;
 
 {$IFDEF PAS2JS}
-function THTTPCommunication.SendRequestAsync: String;
+function THTTPCommunication.SendRequestAsync(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream;
 var
   A: Integer;
 
