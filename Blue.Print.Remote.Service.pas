@@ -41,6 +41,9 @@ type
 
     destructor Destroy; override;
 
+    class function CreateService<T: IInvokable>(const URL: String): T; overload;
+    class function CreateService<T: IInvokable>(const URL: String; const Serializer: IBluePrintSerializer): T; overload;
+
     function GetService<T: IInvokable>(const URL: String): T;
 
     property Communication: IHTTPCommunication read FCommunication write FCommunication;
@@ -68,6 +71,21 @@ begin
   FContext := TRttiContext.Create;
   FInterfaceType := FContext.GetType(TypeInfo) as TRttiInterfaceType;
   FSerializer := Serializer;
+end;
+
+class function TRemoteService.CreateService<T>(const URL: String; const Serializer: IBluePrintSerializer): T;
+var
+  ServiceInfo: PTypeInfo;
+
+begin
+  ServiceInfo := TypeInfo(T);
+
+  Supports(TRemoteService.Create(ServiceInfo, Serializer), ServiceInfo.TypeData.GUID, Result);
+end;
+
+class function TRemoteService.CreateService<T>(const URL: String): T;
+begin
+  Result := CreateService<T>(URL);
 end;
 
 destructor TRemoteService.Destroy;
