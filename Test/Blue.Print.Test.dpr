@@ -13,7 +13,6 @@ uses
   Blue.Print.Types.Test in 'Blue.Print.Types.Test.pas',
   Blue.Print.Content.Parser.Test in 'Blue.Print.Content.Parser.Test.pas',
   Blue.Print.Request.Mock in 'Blue.Print.Request.Mock.pas',
-  Blue.Print.Service.Container in '..\Blue.Print.Service.Container.pas',
   Blue.Print.Serializer in '..\Blue.Print.Serializer.pas';
 
 begin

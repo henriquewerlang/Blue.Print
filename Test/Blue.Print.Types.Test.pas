@@ -30,19 +30,19 @@ type
     procedure ProcWithParameter(AParam: Integer);
   end;
 
-  [ParameterInBody]
+  [Body]
   IContractTest = interface(IInvokable)
     ['{CF2BB234-0D53-49FB-979D-650DCEF196F2}']
-    [ParameterInBody]
-    procedure ParameterInBody(AParam: Integer);
-    [ParameterInPath]
+    [Body]
+    procedure Body(AParam: Integer);
+    [Path]
     procedure ParameterInPath(AParam: Integer);
-    [ParameterInQuery]
-    procedure ParameterInQuery(AParam: Integer);
-    [ParameterInQuery]
-    procedure ParamWithBodyAttribute([ParameterInPath]Param: String);
+    [Query]
+    procedure Query(AParam: Integer);
+    [Query]
+    procedure ParamWithBodyAttribute([Path]Param: String);
     procedure ProcedureWithOutAttribute(AParam: Integer);
-    [ParameterInQuery]
+    [Query]
     procedure ProcedureWithParameter(Param: Integer);
   end;
 

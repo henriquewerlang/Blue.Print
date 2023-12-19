@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Classes, System.SysUtils, System.Rtti, System.TypInfo, Web.HTTPApp, Web.ReqFiles, Blue.Print.Service.Container, Blue.Print.Types;
+uses System.Classes, System.SysUtils, System.Rtti, System.TypInfo, Web.HTTPApp, Web.ReqFiles, Blue.Print.Types;
 
 type
   EInvalidParameterType = class(Exception);
@@ -11,8 +11,6 @@ type
   public
     constructor Create;
   end;
-
-  TOnGetServiceContainer = TFunc<IServiceContainer>;
 
   TImageContentParser = class(TAbstractContentParser)
   private
@@ -29,67 +27,62 @@ type
     function GetFiles: TAbstractWebRequestFiles; override;
   end;
 
-  TRestServerService = class(TComponent, IGetWebAppServices, IWebAppServices, IWebExceptionHandler, IWebDispatcherAccess)
+  TBluePrintWebAppService = class(TComponent, IGetWebAppServices, IWebAppServices, IWebExceptionHandler, IWebDispatcherAccess)
   private
     FActive: Boolean;
     FRequest: TWebRequest;
     FResponse: TWebResponse;
-    FServiceContainer: IServiceContainer;
     FSerializer: IBluePrintSerializer;
-    FOnGetServiceContainer: TOnGetServiceContainer;
 
     function GetParams(const Method: TRttiMethod; var ConvertedParams: TArray<TValue>): Boolean;
     function GetParamValue(const Method: TRttiMethod; const Param: TRttiParameter; var ParamLoaded: Boolean): TValue;
     function GetSerializer: IBluePrintSerializer;
-    function GetServiceContainer: IServiceContainer;
   protected
     // IGetWebAppServices
-    function GetWebAppServices: IWebAppServices; virtual;
+    function GetWebAppServices: IWebAppServices;
 
     // IWebAppServices
-    function GetActive: Boolean; virtual;
-    function GetExceptionHandler: TObject; virtual;
-    function HandleRequest: Boolean; virtual;
+    function GetActive: Boolean;
+    function GetExceptionHandler: TObject;
+    function HandleRequest: Boolean;
 
-    procedure FinishContext; virtual;
-    procedure InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse); virtual;
+    procedure FinishContext;
+    procedure InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);
 
     // IWebExceptionHandler
-    procedure HandleException(E: Exception; var Handled: Boolean); virtual;
+    procedure HandleException(E: Exception; var Handled: Boolean);
 
     // IWebDispatcherAccess
     function Request: TWebRequest;
     function Response: TWebResponse;
   public
     property Serializer: IBluePrintSerializer read GetSerializer write FSerializer;
-    property ServiceContainer: IServiceContainer read GetServiceContainer write FServiceContainer;
   published
     property Active: Boolean read FActive write FActive;
-    property OnGetServiceContainer: TOnGetServiceContainer read FOnGetServiceContainer write FOnGetServiceContainer;
   end;
 
 implementation
 
 uses System.Math, Winapi.WinInet, System.NetConsts, Rest.Types, Blue.Print.Serializer;
 
-{ TRestServerService }
+{ TBluePrintWebAppService }
 
-procedure TRestServerService.FinishContext;
+procedure TBluePrintWebAppService.FinishContext;
 begin
 
 end;
 
-function TRestServerService.GetActive: Boolean;
+function TBluePrintWebAppService.GetActive: Boolean;
 begin
   Result := FActive;
 end;
 
-function TRestServerService.GetExceptionHandler: TObject;
+function TBluePrintWebAppService.GetExceptionHandler: TObject;
 begin
   Result := Self;
 end;
 
-function TRestServerService.GetParams(const Method: TRttiMethod; var ConvertedParams: TArray<TValue>): Boolean;
+function TBluePrintWebAppService.GetParams(const Method: TRttiMethod; var ConvertedParams: TArray<TValue>): Boolean;
 begin
   ConvertedParams := [];
   var Parameters := Method.GetParameters;
@@ -100,7 +93,7 @@ begin
     ConvertedParams := ConvertedParams + [GetParamValue(Method, Param, Result)];
 end;
 
-function TRestServerService.GetParamValue(const Method: TRttiMethod; const Param: TRttiParameter; var ParamLoaded: Boolean): TValue;
+function TBluePrintWebAppService.GetParamValue(const Method: TRttiMethod; const Param: TRttiParameter; var ParamLoaded: Boolean): TValue;
 
   function GetFiles: TArray<TRequestFile>;
   begin
@@ -120,7 +113,7 @@ function TRestServerService.GetParamValue(const Method: TRttiMethod; const Param
       ParamValue := Fields.ValueFromIndex[ParamIndex];
   end;
 
-  function CanGetContentFields: Boolean;
+  function CanLoadParamFromContentFields: Boolean;
   begin
     Result := (Request.ContentType = CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED) or Request.ContentType.StartsWith(CONTENTTYPE_MULTIPART_FORM_DATA);
   end;
@@ -174,18 +167,18 @@ begin
 
   var ParamValue: String;
 
-  ParamLoaded := (GetParamValue(Request.QueryFields, ParamValue) or CanGetContentFields and GetParamValue(Request.ContentFields, ParamValue) or GetParamValueFromContent(ParamValue));
+  ParamLoaded := (GetParamValue(Request.QueryFields, ParamValue) or CanLoadParamFromContentFields and GetParamValue(Request.ContentFields, ParamValue) or GetParamValueFromContent(ParamValue));
 
   if ParamLoaded then
     if IsTypeKindString(Param.ParamType.TypeKind) then
       Result := ParamValue
     else if ParamValue.IsEmpty then
       ParamLoaded := False
-//    else
+    else
 //      Result := Serializer.Deserialize(ParamValue, Param.ParamType.Handle);
 end;
 
-function TRestServerService.GetSerializer: IBluePrintSerializer;
+function TBluePrintWebAppService.GetSerializer: IBluePrintSerializer;
 begin
   if not Assigned(FSerializer) then
     FSerializer := TBluePrintJsonSerializer.Create;
@@ -193,23 +186,12 @@ begin
   Result := FSerializer;
 end;
 
-function TRestServerService.GetServiceContainer: IServiceContainer;
-begin
-  if not Assigned(FServiceContainer) and Assigned(FOnGetServiceContainer) then
-    FServiceContainer := FOnGetServiceContainer;
-
-  if not Assigned(FServiceContainer) then
-    raise EServiceContainerNotLoaded.Create;
-
-  Result := FServiceContainer;
-end;
-
-function TRestServerService.GetWebAppServices: IWebAppServices;
+function TBluePrintWebAppService.GetWebAppServices: IWebAppServices;
 begin
   Result := Self;
 end;
 
-procedure TRestServerService.HandleException(E: Exception; var Handled: Boolean);
+procedure TBluePrintWebAppService.HandleException(E: Exception; var Handled: Boolean);
 begin
   Handled := True;
   Response.Content := E.Message;
@@ -218,7 +200,7 @@ begin
   Response.SendResponse;
 end;
 
-function TRestServerService.HandleRequest: Boolean;
+function TBluePrintWebAppService.HandleRequest: Boolean;
 var
   Params: TArray<String>;
 
@@ -289,7 +271,7 @@ begin
   Params := Request.PathInfo.Split(['/'], TStringSplitOptions.ExcludeEmpty);
   var ServiceInfo: TRttiType := nil;
 
-  Result := IsValidRequest and ServiceContainer.GetService(Params[0], ServiceInfo, Instance);
+  Result := IsValidRequest {and ServiceContainer.GetService(Params[0], ServiceInfo, Instance)};
 
   if Result then
     if Length(Params) = 2 then
@@ -328,18 +310,18 @@ begin
       Response.StatusCode := HTTP_STATUS_NOT_FOUND;
 end;
 
-procedure TRestServerService.InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);
+procedure TBluePrintWebAppService.InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);
 begin
   FRequest := Request;
   FResponse := Response;
 end;
 
-function TRestServerService.Request: TWebRequest;
+function TBluePrintWebAppService.Request: TWebRequest;
 begin
   Result := FRequest;
 end;
 
-function TRestServerService.Response: TWebResponse;
+function TBluePrintWebAppService.Response: TWebResponse;
 begin
   Result := FResponse;
 end;

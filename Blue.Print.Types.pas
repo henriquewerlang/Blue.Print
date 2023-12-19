@@ -22,7 +22,6 @@ type
   EHTTPStatusError = class(Exception)
   private
     FStatusCode: Integer;
-    FContent: String;
   public
     constructor Create(const StatusCode: Integer; const URL: String);
 

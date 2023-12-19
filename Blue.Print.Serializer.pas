@@ -14,9 +14,6 @@ type
     function Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue; overload;
 
     procedure Serialize(const Value: TValue; const Output: TStream); overload;
-
-    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue; overload; inline;
-    function Serialize(const Value: TValue): String; overload; inline;
 {$IFDEF PAS2JS}
   protected
     function CreateObject(const JSON: JSValue; RttiType: TRttiType): TObject; virtual;
@@ -40,12 +37,12 @@ type
 {$ENDIF}
   end;
 
-{$IFDEF DCC}
-  TJsonSerializerHelper = class helper for TJsonSerializer
-    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue; overload;
-    function Serialize(const Value: TValue): String; inline;
-  end;
-{$ENDIF}
+//{$IFDEF DCC}
+//  TJsonSerializerHelper = class helper for TJsonSerializer
+//    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue; overload;
+//    function Serialize(const Value: TValue): String; inline;
+//  end;
+//{$ENDIF}
 
   TBluePrintXMLSerializer = class(TInterfacedObject, IBluePrintSerializer)
   private
@@ -86,22 +83,17 @@ begin
 end;
 {$ENDIF}
 
-function TBluePrintJsonSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
-begin
-{$IFDEF PAS2JS}
-  Result := DeserializeJSON(TJSJSON.Parse(Value), FContext.GetType(TypeInfo));
-{$ELSE}
-  var Serializer := TJsonSerializer.Create;
-
-  Result := Serializer.Deserialize(Value, TypeInfo);
-
-  Serializer.Free;
-{$ENDIF}
-end;
-
 procedure TBluePrintJsonSerializer.Serialize(const Value: TValue; const Output: TStream);
 begin
-
+{$IFDEF PAS2JS}
+  Result := TJSJSON.stringify(SerializeJSON(Value, FContext.GetType(AValue.TypeInfo)));
+{$ELSE}
+//  var Serializer := TJsonSerializer.Create;
+//
+//  Result := Serializer.Serialize(Value);
+//
+//  Serializer.Free;
+{$ENDIF}
 end;
 
 {$IFDEF PAS2JS}
@@ -260,19 +252,14 @@ end;
 
 function TBluePrintJsonSerializer.Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue;
 begin
-
-end;
-
-function TBluePrintJsonSerializer.Serialize(const Value: TValue): String;
-begin
 {$IFDEF PAS2JS}
-  Result := TJSJSON.stringify(SerializeJSON(Value, FContext.GetType(AValue.TypeInfo)));
+  Result := DeserializeJSON(TJSJSON.Parse(Value), FContext.GetType(TypeInfo));
 {$ELSE}
-  var Serializer := TJsonSerializer.Create;
-
-  Result := Serializer.Serialize(Value);
-
-  Serializer.Free;
+//  var Serializer := TJsonSerializer.Create;
+//
+//  Result := Serializer.Deserialize(Value, TypeInfo);
+//
+//  Serializer.Free;
 {$ENDIF}
 end;
 
@@ -325,64 +312,64 @@ begin
 end;
 {$ENDIF}
 
-{$IFDEF DCC}
+//{$IFDEF DCC}
 { TJsonSerializerHelper }
 
-function TJsonSerializerHelper.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
-var
-  LStringReader: TStringReader;
-
-  LJsonReader: TJsonTextReader;
-
-begin
-  ContractResolver := TJsonDefaultContractResolver.Create(TJsonMemberSerialization.Public);
-  LStringReader := TStringReader.Create(Value);
-  try
-    LJsonReader := TJsonTextReader.Create(LStringReader);
-    LJsonReader.DateTimeZoneHandling := DateTimeZoneHandling;
-    LJsonReader.DateParseHandling := DateParseHandling;
-    LJsonReader.MaxDepth := MaxDepth;
-    try
-      Result := InternalDeserialize(LJsonReader, TypeInfo);
-    finally
-      LJsonReader.Free;
-    end;
-  finally
-    LStringReader.Free;
-  end;
-end;
-
-function TJsonSerializerHelper.Serialize(const Value: TValue): String;
-var
-  StringBuilder: TStringBuilder;
-  StringWriter: TStringWriter;
-  JsonWriter: TJsonTextWriter;
-
-begin
-  ContractResolver := TJsonDefaultContractResolver.Create(TJsonMemberSerialization.Public);
-  StringBuilder := TStringBuilder.Create($7FFF);
-  StringWriter := TStringWriter.Create(StringBuilder);
-  try
-    JsonWriter := TJsonTextWriter.Create(StringWriter);
-    JsonWriter.FloatFormatHandling := FloatFormatHandling;
-    JsonWriter.DateFormatHandling := DateFormatHandling;
-    JsonWriter.DateTimeZoneHandling := DateTimeZoneHandling;
-    JsonWriter.StringEscapeHandling := StringEscapeHandling;
-    JsonWriter.Formatting := Formatting;
-
-    try
-      InternalSerialize(JsonWriter, Value);
-    finally
-      JsonWriter.Free;
-    end;
-
-    Result := StringBuilder.ToString(True);
-  finally
-    StringWriter.Free;
-    StringBuilder.Free;
-  end;
-end;
-{$ENDIF}
+//function TJsonSerializerHelper.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+//var
+//  LStringReader: TStringReader;
+//
+//  LJsonReader: TJsonTextReader;
+//
+//begin
+//  ContractResolver := TJsonDefaultContractResolver.Create(TJsonMemberSerialization.Public);
+//  LStringReader := TStringReader.Create(Value);
+//  try
+//    LJsonReader := TJsonTextReader.Create(LStringReader);
+//    LJsonReader.DateTimeZoneHandling := DateTimeZoneHandling;
+//    LJsonReader.DateParseHandling := DateParseHandling;
+//    LJsonReader.MaxDepth := MaxDepth;
+//    try
+//      Result := InternalDeserialize(LJsonReader, TypeInfo);
+//    finally
+//      LJsonReader.Free;
+//    end;
+//  finally
+//    LStringReader.Free;
+//  end;
+//end;
+//
+//function TJsonSerializerHelper.Serialize(const Value: TValue): String;
+//var
+//  StringBuilder: TStringBuilder;
+//  StringWriter: TStringWriter;
+//  JsonWriter: TJsonTextWriter;
+//
+//begin
+//  ContractResolver := TJsonDefaultContractResolver.Create(TJsonMemberSerialization.Public);
+//  StringBuilder := TStringBuilder.Create($7FFF);
+//  StringWriter := TStringWriter.Create(StringBuilder);
+//  try
+//    JsonWriter := TJsonTextWriter.Create(StringWriter);
+//    JsonWriter.FloatFormatHandling := FloatFormatHandling;
+//    JsonWriter.DateFormatHandling := DateFormatHandling;
+//    JsonWriter.DateTimeZoneHandling := DateTimeZoneHandling;
+//    JsonWriter.StringEscapeHandling := StringEscapeHandling;
+//    JsonWriter.Formatting := Formatting;
+//
+//    try
+//      InternalSerialize(JsonWriter, Value);
+//    finally
+//      JsonWriter.Free;
+//    end;
+//
+//    Result := StringBuilder.ToString(True);
+//  finally
+//    StringWriter.Free;
+//    StringBuilder.Free;
+//  end;
+//end;
+//{$ENDIF}
 
 { TBluePrintXMLSerializer }
 

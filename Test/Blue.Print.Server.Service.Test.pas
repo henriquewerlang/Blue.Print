@@ -2,8 +2,7 @@
 
 interface
 
-uses System.SysUtils, System.Classes, System.Rtti, Web.HTTPApp, Rest.Types, DUnitX.TestFramework, Blue.Print.Server.Service, Blue.Print.Types, Blue.Print.Service.Container,
-  Translucent, Translucent.Classes, Blue.Print.Request.Mock, Translucent.Intf;
+uses System.SysUtils, System.Classes, System.Rtti, Web.HTTPApp, Rest.Types, DUnitX.TestFramework, Blue.Print.Server.Service, Blue.Print.Types, Translucent, Translucent.Classes, Blue.Print.Request.Mock, Translucent.Intf;
 
 type
   TMyEnumerator = (Enum1, Enum2, Enum3, Enum4);
@@ -74,14 +73,13 @@ type
   end;
 
   [TestFixture]
-  TRestServerServiceTest = class
+  TBluePrintWebAppServiceTest = class
   private
     FContentServiceMock: IMock<IContentService>;
-    FRestService: TRestServerService;
+    FRestService: TBluePrintWebAppService;
     FServiceMock: IMock<IService>;
-    FServiceContainer: IMock<IServiceContainer>;
 
-    function CreateRestService(Request: TWebRequest; Response: TWebResponse; Container: IServiceContainer = nil): IWebAppServices;
+    function CreateRestService(Request: TWebRequest; Response: TWebResponse): IWebAppServices;
     function CreateRequestMock: TMockClass<TWebRequestMock>; overload;
     function CreateRequestMock(const URL, ContentType, ContentValue, QueryString: String): TMockClass<TWebRequestMock>; overload;
     function CreateRequestMock(const URL, ContentType: String; const ContentValue: TBytes; const QueryString: String): TMockClass<TWebRequestMock>; overload;
@@ -284,24 +282,13 @@ type
     destructor Destroy; override;
   end;
 
-  TServiceContainer = class(TInterfacedObject, IServiceContainer)
-  private
-    FInstance: IService;
-    FReturnValue: Boolean;
-
-    function GetService(const Name: String; var Info: TRttiType; var Instance: TValue): Boolean;
-  public
-    constructor Create(ReturnValue: Boolean); overload;
-    constructor Create(const Instance: IService); overload;
-  end;
-
 implementation
 
 uses System.NetEncoding, Winapi.WinInet, Blue.Print.Serializer, System.Net.Mime, System.NetConsts, Web.ReqFiles;
 
-{ TRestServerServiceTest }
+{ TBluePrintWebAppServiceTest }
 
-procedure TRestServerServiceTest.AfterExecuteTheRequestMustSendTheResponseForTheClient;
+procedure TBluePrintWebAppServiceTest.AfterExecuteTheRequestMustSendTheResponseForTheClient;
 begin
   var Request := CreateRequestMock('/IService/Proc', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -316,7 +303,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.AfterHandleTheExceptionMustSendTheResponseForTheClient;
+procedure TBluePrintWebAppServiceTest.AfterHandleTheExceptionMustSendTheResponseForTheClient;
 begin
   var Request := CreateRequestMock;
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -335,7 +322,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.AfterHandleTheRequestTheFreeContentPropertyMustByFalse;
+procedure TBluePrintWebAppServiceTest.AfterHandleTheRequestTheFreeContentPropertyMustByFalse;
 begin
   var Request := CreateRequestMock('/IService/Proc', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -350,7 +337,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.ConvertingParamsAsExpected(ProcedureName, Value: String);
+procedure TBluePrintWebAppServiceTest.ConvertingParamsAsExpected(ProcedureName, Value: String);
 begin
   var Request := CreateRequestMock(Format('/IService/%s', [ProcedureName]), CONTENTTYPE_APPLICATION_JSON, EmptyStr, 'Value=' + TNetEncoding.URL.Encode(Value));
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -367,12 +354,12 @@ begin
   Response.Free;
 end;
 
-function TRestServerServiceTest.CreateRequestMock(const URL, ContentType, ContentValue, QueryString: String): TMockClass<TWebRequestMock>;
+function TBluePrintWebAppServiceTest.CreateRequestMock(const URL, ContentType, ContentValue, QueryString: String): TMockClass<TWebRequestMock>;
 begin
   Result := CreateRequestMock(URL, ContentType, TEncoding.UTF8.GetBytes(ContentValue), QueryString);
 end;
 
-function TRestServerServiceTest.CreateRequestMock(const URL, ContentType: String; const ContentValue: TBytes; const QueryString: String): TMockClass<TWebRequestMock>;
+function TBluePrintWebAppServiceTest.CreateRequestMock(const URL, ContentType: String; const ContentValue: TBytes; const QueryString: String): TMockClass<TWebRequestMock>;
 begin
   Result := TMock.CreateClass<TWebRequestMock>;
 
@@ -391,12 +378,12 @@ begin
   Result.Instance.UpdateMethodType;
 end;
 
-function TRestServerServiceTest.CreateRequestMock: TMockClass<TWebRequestMock>;
+function TBluePrintWebAppServiceTest.CreateRequestMock: TMockClass<TWebRequestMock>;
 begin
   Result := CreateRequestMock(EmptyStr, CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
 end;
 
-function TRestServerServiceTest.CreateRestService(Request: TWebRequest; Response: TWebResponse; Container: IServiceContainer): IWebAppServices;
+function TBluePrintWebAppServiceTest.CreateRestService(Request: TWebRequest; Response: TWebResponse; Container: IServiceContainer): IWebAppServices;
 begin
   FRestService.ServiceContainer := Container;
   Result := FRestService;
@@ -404,7 +391,7 @@ begin
   Result.InitContext(nil, Request, Response);
 end;
 
-procedure TRestServerServiceTest.IfDontFindTheProcedureOfRequestMustReturStatusCodeWith404;
+procedure TBluePrintWebAppServiceTest.IfDontFindTheProcedureOfRequestMustReturStatusCodeWith404;
 begin
   var Request := CreateRequestMock('/IService/AnyProcudure', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -419,7 +406,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.IfNotFoundTheServiceMustReturnHandledToFalse;
+procedure TBluePrintWebAppServiceTest.IfNotFoundTheServiceMustReturnHandledToFalse;
 begin
   var Container := TServiceContainer.Create(False);
   var Request := CreateRequestMock('/IAnotherService/Procedure', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
@@ -434,7 +421,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.IfTheContentTypeAttributeHasACharSetThisMustBeLoadedInTheContentTypeInfo;
+procedure TBluePrintWebAppServiceTest.IfTheContentTypeAttributeHasACharSetThisMustBeLoadedInTheContentTypeInfo;
 begin
   var Request := CreateRequestMock('/IContentService/MyCharSetFunction', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -449,7 +436,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.IfTheFunctionDoesntHaveTheAttachmentAttributeCantRaiseAnyError;
+procedure TBluePrintWebAppServiceTest.IfTheFunctionDoesntHaveTheAttachmentAttributeCantRaiseAnyError;
 begin
   var Request := CreateRequestMock('/IContentService/MyFunction', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -466,7 +453,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.IfTheParamIsInTheQueryFieldsCantTryToLoadTheValueFromContent;
+procedure TBluePrintWebAppServiceTest.IfTheParamIsInTheQueryFieldsCantTryToLoadTheValueFromContent;
 begin
   var MyService: IService := TService.Create;
   var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, 'Value=abc', 'Value=');
@@ -482,7 +469,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.IfTheRequestDontHaveTheProcedureParamMustFillTheStatusCodigoWith404;
+procedure TBluePrintWebAppServiceTest.IfTheRequestDontHaveTheProcedureParamMustFillTheStatusCodigoWith404;
 begin
   var Container := TServiceContainer.Create(True);
   var Request := CreateRequestMock('/IService', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
@@ -498,7 +485,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.MustCallTheProcedureWithTheParamValuePassed(ProcedureName, Value: String);
+procedure TBluePrintWebAppServiceTest.MustCallTheProcedureWithTheParamValuePassed(ProcedureName, Value: String);
 begin
   var Request := CreateRequestMock(Format('/IService/%s', [ProcedureName]), CONTENTTYPE_APPLICATION_JSON, EmptyStr, 'Value=' + TNetEncoding.URL.Encode(Value));
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -515,7 +502,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.MustTryToLoadTheProcedureParamsFromTheURLAndTheBody;
+procedure TBluePrintWebAppServiceTest.MustTryToLoadTheProcedureParamsFromTheURLAndTheBody;
 begin
   var MyService: IService := TService.Create;
   var Request := CreateRequestMock('/IService/ProcedureWithParamsInBody', CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED, 'Param1=abcde', 'Param2=1234');
@@ -531,7 +518,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.OnceTheExceptionIsHandledTheStatusCodeMustBe500;
+procedure TBluePrintWebAppServiceTest.OnceTheExceptionIsHandledTheStatusCodeMustBe500;
 begin
   var Request := CreateRequestMock;
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -550,10 +537,10 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.Setup;
+procedure TBluePrintWebAppServiceTest.Setup;
 begin
   FContentServiceMock := TMock.CreateInterface<IContentService>(True);
-  FRestService := TRestServerService.Create(nil);
+  FRestService := TBluePrintWebAppService.Create(nil);
   FServiceMock := TMock.CreateInterface<IService>(True);
   FServiceContainer := TMock.CreateInterface<IServiceContainer>;
 
@@ -578,19 +565,19 @@ begin
     end).When.GetService(It.IsEqualTo('IService'), ItReference<TRttiType>.IsAny.Value, ItReference<TValue>.IsAny.Value);
 end;
 
-procedure TRestServerServiceTest.SetupFixture;
+procedure TBluePrintWebAppServiceTest.SetupFixture;
 begin
   CreateRequestMock.Free;
 end;
 
-procedure TRestServerServiceTest.TearDown;
+procedure TBluePrintWebAppServiceTest.TearDown;
 begin
   FServiceContainer := nil;
 
   FRestService.Free;
 end;
 
-procedure TRestServerServiceTest.TheExceptionMessageMustBeInTheContentOfTheResponse;
+procedure TBluePrintWebAppServiceTest.TheExceptionMessageMustBeInTheContentOfTheResponse;
 begin
   var Request := CreateRequestMock;
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -609,7 +596,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.TheHeaderAttributeMustLoadTheValuedOfTheHeaderAttribute;
+procedure TBluePrintWebAppServiceTest.TheHeaderAttributeMustLoadTheValuedOfTheHeaderAttribute;
 begin
   var Request := CreateRequestMock('/IContentService/MyProcedure', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -627,7 +614,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.TheHeaderAttributeMustLoadTheValuesInTheAttribute;
+procedure TBluePrintWebAppServiceTest.TheHeaderAttributeMustLoadTheValuesInTheAttribute;
 begin
   var Request := CreateRequestMock('/IContentService/ProcedureWithHeader', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -645,7 +632,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenAFunctionHaveTheAttachmentAttributeMustReturnTheContentTypeAndContentDispositionInTheHeaderResponse;
+procedure TBluePrintWebAppServiceTest.WhenAFunctionHaveTheAttachmentAttributeMustReturnTheContentTypeAndContentDispositionInTheHeaderResponse;
 begin
   var Request := CreateRequestMock('/IContentService/MyAttachmentFunction', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -661,7 +648,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenAnExceptionIsHandledMustReturnTrueInTheHandleParam;
+procedure TBluePrintWebAppServiceTest.WhenAnExceptionIsHandledMustReturnTrueInTheHandleParam;
 begin
   var Request := CreateRequestMock;
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -680,7 +667,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenAProcedureHasHeaderAttributeMustLoadTheValuesInTheResponse;
+procedure TBluePrintWebAppServiceTest.WhenAProcedureHasHeaderAttributeMustLoadTheValuesInTheResponse;
 begin
   var Request := CreateRequestMock('/IContentService/ProcedureWithHeader', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -695,7 +682,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenCalledTheGetExceptionHandlerMustReturnTheExceptionHandler;
+procedure TBluePrintWebAppServiceTest.WhenCalledTheGetExceptionHandlerMustReturnTheExceptionHandler;
 begin
   var Rest := CreateRestService(nil, nil, nil) as IWebAppServices;
 
@@ -704,7 +691,7 @@ begin
   Assert.IsNotNull(Handler);
 end;
 
-procedure TRestServerServiceTest.WhenFindTheClassToRespondTheRequestMustReturnHandledToTrue;
+procedure TBluePrintWebAppServiceTest.WhenFindTheClassToRespondTheRequestMustReturnHandledToTrue;
 begin
   var Container := TServiceContainer.Create(True);
   var Request := CreateRequestMock('/IService', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
@@ -719,7 +706,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenReturnATStreamCantSerializeTheReturn;
+procedure TBluePrintWebAppServiceTest.WhenReturnATStreamCantSerializeTheReturn;
 begin
   var Request := CreateRequestMock('/IService/ReturnStream', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -739,7 +726,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheAmountOfRequestParametersIsDiferrentFromTheAmoutOfProcedureParametersMustReturnBadRequest(Params: String);
+procedure TBluePrintWebAppServiceTest.WhenTheAmountOfRequestParametersIsDiferrentFromTheAmoutOfProcedureParametersMustReturnBadRequest(Params: String);
 begin
   var Request := CreateRequestMock('/IService/ProcInteger', CONTENTTYPE_APPLICATION_JSON, EmptyStr, Params);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -754,7 +741,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheClassHasTheContentTypeAttributeMustReturnThisTypeInTheResponse;
+procedure TBluePrintWebAppServiceTest.WhenTheClassHasTheContentTypeAttributeMustReturnThisTypeInTheResponse;
 begin
   var Request := CreateRequestMock('/IContentService/MyFunction', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -769,7 +756,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheContentIsABinaryValueCantRaiseAnyError;
+procedure TBluePrintWebAppServiceTest.WhenTheContentIsABinaryValueCantRaiseAnyError;
 begin
   var Request := CreateRequestMock('/IService/ProcStream', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -786,7 +773,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheContentIsABinaryValueMustPassTheValueToTheParamOfTheProcedureCalled;
+procedure TBluePrintWebAppServiceTest.WhenTheContentIsABinaryValueMustPassTheValueToTheParamOfTheProcedureCalled;
 begin
   var Content: TBytes := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   var Request := CreateRequestMock('/IService/ProcStream', CONTENTTYPE_IMAGE_PNG, Content, EmptyStr);
@@ -804,7 +791,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheContentIsEmptyMustReturnTheBadRequestStatus;
+procedure TBluePrintWebAppServiceTest.WhenTheContentIsEmptyMustReturnTheBadRequestStatus;
 begin
   var Request := CreateRequestMock('/IService/ProcString', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -819,7 +806,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheContractHasntAnyAttributeOfParamTypeMustLoadTheParamsByProcedureType(MethodType: String; ParamInURL: Boolean);
+procedure TBluePrintWebAppServiceTest.WhenTheContractHasntAnyAttributeOfParamTypeMustLoadTheParamsByProcedureType(MethodType: String; ParamInURL: Boolean);
 begin
   var Params := 'Param1=abcde&Param2=1234';
   var Request := TMock.CreateClass<TWebRequestMock>;
@@ -862,7 +849,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheFunctionReturnANilStreamMustSerializeTheReturn;
+procedure TBluePrintWebAppServiceTest.WhenTheFunctionReturnANilStreamMustSerializeTheReturn;
 begin
   var Request := CreateRequestMock('/IService/ReturnStreamNil', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -882,7 +869,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheFunctionReturnATStreamMustLoadItInTheContentStreamInTheReponseClass;
+procedure TBluePrintWebAppServiceTest.WhenTheFunctionReturnATStreamMustLoadItInTheContentStreamInTheReponseClass;
 begin
   var Request := CreateRequestMock('/IService/ReturnStream', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -897,7 +884,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheInterfaceHasTheHeaderAttributeMustLoadTheHeadersResponse;
+procedure TBluePrintWebAppServiceTest.WhenTheInterfaceHasTheHeaderAttributeMustLoadTheHeadersResponse;
 begin
   var Request := CreateRequestMock('/IContentService/MyProcedure', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -912,7 +899,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheMethodHasTheContenteTypeAttributeMustReturnThisTypeInTheResponse;
+procedure TBluePrintWebAppServiceTest.WhenTheMethodHasTheContenteTypeAttributeMustReturnThisTypeInTheResponse;
 begin
   var Request := CreateRequestMock('/IContentService/MyContentFunction', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -927,7 +914,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheParamIsATStreamMustLoadTheFileInTheRequest;
+procedure TBluePrintWebAppServiceTest.WhenTheParamIsATStreamMustLoadTheFileInTheRequest;
 begin
   var Request := CreateRequestMock('/IService/ProcStream', CONTENTTYPE_IMAGE_PNG, nil, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -944,7 +931,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheParamIsEmptyCantRaiseAnyErrorOfConversion;
+procedure TBluePrintWebAppServiceTest.WhenTheParamIsEmptyCantRaiseAnyErrorOfConversion;
 begin
   var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, EmptyStr, 'Value=');
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -961,7 +948,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenThePathHasMoreThenTwoLevelsMustReturn404;
+procedure TBluePrintWebAppServiceTest.WhenThePathHasMoreThenTwoLevelsMustReturn404;
 begin
   var Request := CreateRequestMock('/IService/Proc/Proc', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -976,7 +963,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContent;
+procedure TBluePrintWebAppServiceTest.WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContent;
 begin
   var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, 'MyValue', EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1005,7 +992,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContentIfTheContentIsAJSONValue;
+procedure TBluePrintWebAppServiceTest.WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContentIfTheContentIsAJSONValue;
 begin
   var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JAVASCRIPT, 'MyValue', EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1034,7 +1021,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContentIfTheContentIsTextPlain;
+procedure TBluePrintWebAppServiceTest.WhenTheProcedureBeenCalledHasASigleParamMustLoadTheParamFromTheContentIfTheContentIsTextPlain;
 begin
   var Request := CreateRequestMock('/IService/ProcParamString', CONTENTTYPE_APPLICATION_JAVASCRIPT, 'MyValue', EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1063,7 +1050,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheProcedureCalledIsAnArrayOfStreamMustCallTheCorrectProcedure;
+procedure TBluePrintWebAppServiceTest.WhenTheProcedureCalledIsAnArrayOfStreamMustCallTheCorrectProcedure;
 begin
   var Request := CreateRequestMock('/IService/ProcStreamArray', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1080,7 +1067,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheProcedureHasMoreThenOneFileMustLoadEachFileInTheCorrecParam;
+procedure TBluePrintWebAppServiceTest.WhenTheProcedureHasMoreThenOneFileMustLoadEachFileInTheCorrecParam;
 begin
   var Content := TMultipartFormData.Create;
   var MyFile := TStringStream.Create(EmptyStr);
@@ -1088,9 +1075,9 @@ begin
 
   var Container := TServiceContainer.Create(Service);
 
-  Content.AddStream('File1', MyFile, 'One.png');
+  Content.AddStream('File1', MyFile, True, 'One.png');
 
-  Content.AddStream('File2', MyFile, 'Two.jpg');
+  Content.AddStream('File2', MyFile, False, 'Two.jpg');
 
   var ContentBytes := TBytesStream.Create(nil);
 
@@ -1108,14 +1095,12 @@ begin
 
   Request.Free;
 
-  MyFile.Free;
-
   Content.Free;
 
   ContentBytes.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheProcedureHaveParamMustCallWithTheParamOfTheRequest;
+procedure TBluePrintWebAppServiceTest.WhenTheProcedureHaveParamMustCallWithTheParamOfTheRequest;
 begin
   var Request := CreateRequestMock('/IService/ProcParam', CONTENTTYPE_APPLICATION_JSON, EmptyStr, 'Value=123');
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1132,7 +1117,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheProcedureOfTheRequestIsMarkedWithParamInBodyMustLoadTheParamsValuesFromBody;
+procedure TBluePrintWebAppServiceTest.WhenTheProcedureOfTheRequestIsMarkedWithParamInBodyMustLoadTheParamsValuesFromBody;
 begin
   var Request := CreateRequestMock('/IService/ProcedureWithParamsInBody', CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED, 'Param1=abcde&Param2=1234', EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1150,7 +1135,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheRequestCallAFunctionAndTheReturnIsAClassMustReturnTheJSONAsSpected;
+procedure TBluePrintWebAppServiceTest.WhenTheRequestCallAFunctionAndTheReturnIsAClassMustReturnTheJSONAsSpected;
 begin
   var Request := CreateRequestMock('/IService/FuncClass', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1165,7 +1150,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheRequestedFunctionAsAReturnMustFillTheContentTypeWithApplicationJSON;
+procedure TBluePrintWebAppServiceTest.WhenTheRequestedFunctionAsAReturnMustFillTheContentTypeWithApplicationJSON;
 begin
   var Request := CreateRequestMock('/IService/FuncInteger', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1180,7 +1165,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheRequestExecuteAsExpectedTheStatusCode200;
+procedure TBluePrintWebAppServiceTest.WhenTheRequestExecuteAsExpectedTheStatusCode200;
 begin
   var Request := CreateRequestMock('IService/ProcParamString', CONTENTTYPE_APPLICATION_JSON, EmptyStr, 'Value=Abc');
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1195,7 +1180,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheRequestExecutionWasSucessfullyMustReturnTheJSONResult;
+procedure TBluePrintWebAppServiceTest.WhenTheRequestExecutionWasSucessfullyMustReturnTheJSONResult;
 begin
   var Request := CreateRequestMock('/IService/FuncInteger', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1210,7 +1195,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheRequestIsAFileTheRequestMustReturnFalse;
+procedure TBluePrintWebAppServiceTest.WhenTheRequestIsAFileTheRequestMustReturnFalse;
 begin
   var Request := CreateRequestMock;
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1226,7 +1211,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheRequestIsCorrectMustCallTheProcedureRequested;
+procedure TBluePrintWebAppServiceTest.WhenTheRequestIsCorrectMustCallTheProcedureRequested;
 begin
   var Request := CreateRequestMock('/IService/Proc', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1242,7 +1227,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheRequestIsForAProcedureCantRaiseErrorOfSerialization;
+procedure TBluePrintWebAppServiceTest.WhenTheRequestIsForAProcedureCantRaiseErrorOfSerialization;
 begin
   var Request := CreateRequestMock;
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1262,7 +1247,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheRequestIsTheRootURLMustReturnHandledToFalse;
+procedure TBluePrintWebAppServiceTest.WhenTheRequestIsTheRootURLMustReturnHandledToFalse;
 begin
   var Request := CreateRequestMock;
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1278,7 +1263,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheServiceContainerIsNotLoadedMustRaiseAnError;
+procedure TBluePrintWebAppServiceTest.WhenTheServiceContainerIsNotLoadedMustRaiseAnError;
 begin
   var Request := CreateRequestMock('/IService/ProcString', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1295,7 +1280,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheServiceDontHaveTheContentTypeAttributeMustReturnTheApplicationJsonContentByDefault;
+procedure TBluePrintWebAppServiceTest.WhenTheServiceDontHaveTheContentTypeAttributeMustReturnTheApplicationJsonContentByDefault;
 begin
   var Request := CreateRequestMock('/IService/FuncInteger', CONTENTTYPE_APPLICATION_JSON, EmptyStr, EmptyStr);
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1310,7 +1295,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheServiceNameHasDotsInTheNameMustHandleTheRequest;
+procedure TBluePrintWebAppServiceTest.WhenTheServiceNameHasDotsInTheNameMustHandleTheRequest;
 begin
   var Request := CreateRequestMock('/IService.My.Another/MyProcedure', CONTENTTYPE_APPLICATION_JSON, EmptyStr, 'Value=123');
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1323,7 +1308,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTheTypeIsInvalidMustRaiseAnError(ProcedureName: String);
+procedure TBluePrintWebAppServiceTest.WhenTheTypeIsInvalidMustRaiseAnError(ProcedureName: String);
 begin
   var Request := CreateRequestMock(Format('/IService/%s', [ProcedureName]), CONTENTTYPE_APPLICATION_JSON, EmptyStr, 'Value=123');
   var Response := TWebResponseMock.Create(Request.Instance);
@@ -1340,7 +1325,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTryToLoadAParamFromTheContentMustLoadOnlyIfTheContentTypeIsFormURLEncoded;
+procedure TBluePrintWebAppServiceTest.WhenTryToLoadAParamFromTheContentMustLoadOnlyIfTheContentTypeIsFormURLEncoded;
 begin
   var MyService: IService := TService.Create;
   var Request := CreateRequestMock('/IService/ProcString', CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED, 'Value=abcde', EmptyStr);
@@ -1368,7 +1353,7 @@ begin
   Response.Free;
 end;
 
-procedure TRestServerServiceTest.WhenTryToLoadAParamFromTheContentMustLoadOnlyIfTheContentTypeIsMultiPartFormData;
+procedure TBluePrintWebAppServiceTest.WhenTryToLoadAParamFromTheContentMustLoadOnlyIfTheContentTypeIsMultiPartFormData;
 begin
   var Content :=
     '--MyMarker'#13#10 +
