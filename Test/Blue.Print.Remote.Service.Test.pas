@@ -2,7 +2,7 @@
 
 interface
 
-uses DUnitX.TestFramework, System.Rtti, System.Classes, System.TypInfo, Blue.Print.Remote.Service, Translucent, Translucent.Intf, Blue.Print.Types;
+uses Test.Insight.Framework, System.Rtti, System.Classes, System.TypInfo, Blue.Print.Remote.Service, Blue.Print.Types;
 
 type
   TCommunicationMock = class;
@@ -14,6 +14,7 @@ type
     FCommunication: TCommunicationMock;
     FCommunicationInterface: IHTTPCommunication;
     FSerializer: TSerializerMock;
+    FSerializerInterface: IBluePrintSerializer;
 
     function CreateRemoteService<T: IInvokable>: TRemoteService;
     function GetRemoteService<T: IInvokable>(const URL: String): T;
@@ -30,16 +31,16 @@ type
     procedure WhenTheInterfaceHasTheRemoteNameMustSendThisNameInTheURLOfTheRequest;
     [Test]
     procedure WhenTheProcedureHasTheRemoteNameAttributeMustSendThisNameInTheURLOfThRequest;
-    [TestCase('DELETE', 'TestDelete,Delete')]
-    [TestCase('GET', 'TestGet,Get')]
-    [TestCase('PATCH', 'TestPatch,Patch')]
-    [TestCase('POST', 'TestPost,Post')]
-    [TestCase('PUT', 'TestPut,Put')]
+    [TestCase('DELETE', 'TestDelete', 'TRequestMethod.Delete')]
+    [TestCase('GET', 'TestGet', 'TRequestMethod.Get')]
+    [TestCase('PATCH', 'TestPatch', 'TRequestMethod.Patch')]
+    [TestCase('POST', 'TestPost', 'TRequestMethod.Post')]
+    [TestCase('PUT', 'TestPut', 'TRequestMethod.Put')]
     procedure TheRequestMethodMustBeTheSameOfTheAttributeOfTheMethod(const MethodName: String; const RequestType: TRequestMethod);
     [Test]
     procedure WhenTheMethodDontHaveARequestMethodAttributeTheDefaultMethodMustBePost;
-    [TestCase('PATCH', 'IServicePatch,Patch')]
-    [TestCase('POST', 'IServiceParams,Get')]
+    [TestCase('PATCH', 'IServicePatch', 'TRequestMethod.Patch')]
+    [TestCase('POST', 'IServiceParams', 'TRequestMethod.Get')]
     procedure WhenTheMethodDontHaveARequestMethodAttributeAndTheInterfaceHasTheAttributeMustLoadTheRequestMethodFromTheInterface(const InterfaceName: String; const RequestType: TRequestMethod);
     [Test]
     procedure AfterLoadingTheRequestMustSendTheRequestToServer;
@@ -194,11 +195,13 @@ begin
   FCommunication := TCommunicationMock.Create;
   FCommunicationInterface := FCommunication;
   FSerializer := TSerializerMock.Create;
+  FSerializerInterface := FSerializer;
 end;
 
 procedure TRemoteServiceTest.TearDown;
 begin
   FCommunicationInterface := nil;
+  FSerializerInterface := nil;
 end;
 
 procedure TRemoteServiceTest.TheParamsOfTheProcedureMustBeLoadedInTheQueryByDefault;
@@ -253,7 +256,7 @@ begin
 
   Service.ParameterInBody('Value');
 
-  Assert.IsNotNull(FCommunication.Body);
+  Assert.IsNotNil(FCommunication.Body);
 
   Assert.AreEqual('Value', FCommunication.GetBodyAsString);
 end;
@@ -280,7 +283,7 @@ procedure TRemoteServiceTest.WhenGetServiceMustReturnTheInterfaceFilled;
 begin
   var Value := CreateRemoteService<IServiceAutenticationTest>.GetService<IServiceAutenticationTest>(EmptyStr);
 
-  Assert.IsNotNull(Value);
+  Assert.IsNotNil(Value);
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasRemoteNameWithLocaleCharsMustEncodeTheName;
@@ -364,7 +367,7 @@ begin
 
   Service.ParameterInBody('Value');
 
-  Assert.IsNotNull(FCommunication.Body);
+  Assert.IsNotNil(FCommunication.Body);
 
   Assert.AreEqual(FSerializer.ReturnValue, FCommunication.GetBodyAsString);
 end;
@@ -402,7 +405,7 @@ begin
 
   Service.TestProcedure;
 
-  Assert.IsNull(FCommunication.Body);
+  Assert.IsNil(FCommunication.Body);
 end;
 
 { TCommunicationMock }

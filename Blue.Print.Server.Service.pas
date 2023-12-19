@@ -7,29 +7,12 @@ uses System.Classes, System.SysUtils, System.Rtti, System.TypInfo, Web.HTTPApp, 
 type
   EInvalidParameterType = class(Exception);
 
-  EServiceContainerNotLoaded = class(Exception)
-  public
-    constructor Create;
-  end;
-
-  TImageContentParser = class(TAbstractContentParser)
-  private
-    FContentFiels: TStrings;
-    FFiles: TWebRequestFiles;
-
-    procedure LoadImagem;
-  public
-    destructor Destroy; override;
-
-    class function CanParse(AWebRequest: TWebRequest): Boolean; override;
-
-    function GetContentFields: TStrings; override;
-    function GetFiles: TAbstractWebRequestFiles; override;
-  end;
+  TFindService = reference to function(const ServiceName: String): TValue;
 
   TBluePrintWebAppService = class(TComponent, IGetWebAppServices, IWebAppServices, IWebExceptionHandler, IWebDispatcherAccess)
   private
     FActive: Boolean;
+    FOnFindService: TFindService;
     FRequest: TWebRequest;
     FResponse: TWebResponse;
     FSerializer: IBluePrintSerializer;
@@ -56,9 +39,27 @@ type
     function Request: TWebRequest;
     function Response: TWebResponse;
   public
+    constructor Create(AOwner: TComponent); override;
+
     property Serializer: IBluePrintSerializer read GetSerializer write FSerializer;
   published
-    property Active: Boolean read FActive write FActive;
+    property Active: Boolean read FActive write FActive default True;
+    property OnFindService: TFindService read FOnFindService write FOnFindService;
+  end;
+
+  TImageContentParser = class(TAbstractContentParser)
+  private
+    FContentFiels: TStrings;
+    FFiles: TWebRequestFiles;
+
+    procedure LoadImagem;
+  public
+    destructor Destroy; override;
+
+    class function CanParse(AWebRequest: TWebRequest): Boolean; override;
+
+    function GetContentFields: TStrings; override;
+    function GetFiles: TAbstractWebRequestFiles; override;
   end;
 
 implementation
@@ -66,6 +67,13 @@ implementation
 uses System.Math, Winapi.WinInet, System.NetConsts, Rest.Types, Blue.Print.Serializer;
 
 { TBluePrintWebAppService }
+
+constructor TBluePrintWebAppService.Create(AOwner: TComponent);
+begin
+  inherited;
+
+  FActive := True;
+end;
 
 procedure TBluePrintWebAppService.FinishContext;
 begin
@@ -210,7 +218,7 @@ var
 
   function IsValidRequest: Boolean;
   begin
-    Result := (Length(Params) > 0) and ExtractFileExt(Params[High(Params)]).IsEmpty;
+    Result := (Length(Params) > 1) and ExtractFileExt(Params[High(Params)]).IsEmpty;
   end;
 
   function GetContentType: String;
@@ -229,14 +237,6 @@ var
     end
     else
       Result := CONTENTTYPE_APPLICATION_JSON;
-  end;
-
-  procedure CheckContentDisposition;
-  begin
-    var Attribute := Method.GetAttribute<AttachmentAttribute>;
-
-    if Assigned(Attribute) then
-      Response.CustomHeaders.Values[sContentDisposition] := Format('attachment; filename="%s"', [Attribute.FileName]);
   end;
 
   procedure LoadContent;
@@ -267,47 +267,37 @@ var
   end;
 
 begin
-  var Instance := TValue.Empty;
   Params := Request.PathInfo.Split(['/'], TStringSplitOptions.ExcludeEmpty);
-  var ServiceInfo: TRttiType := nil;
-
-  Result := IsValidRequest {and ServiceContainer.GetService(Params[0], ServiceInfo, Instance)};
+  Result := IsValidRequest;
 
   if Result then
-    if Length(Params) = 2 then
-    begin
-      Method := ServiceInfo.GetMethod(Params[1]);
-
-      if Assigned(Method) then
-      begin
-        var ProcParams: TArray<TValue>;
-
-        if GetParams(Method, ProcParams) then
-        begin
-          Return := Method.Invoke(Instance, ProcParams);
-
-          if Assigned(Method.ReturnType) then
-          begin
-            LoadContent;
-
-            CheckContentDisposition;
-          end;
-
-          Response.FreeContentStream := False;
-          Response.StatusCode := HTTP_STATUS_OK;
-
-          LoadHeaders;
-
-          Response.SendResponse;
-        end
-        else
-          Response.StatusCode := HTTP_STATUS_BAD_REQUEST;
-      end
-      else
-        Response.StatusCode := HTTP_STATUS_NOT_FOUND;
-    end
-    else
-      Response.StatusCode := HTTP_STATUS_NOT_FOUND;
+  begin
+//    Method := ServiceInfo.GetMethod(Params[1]);
+//
+//    if Assigned(Method) then
+//    begin
+//      var ProcParams: TArray<TValue>;
+//
+//      if GetParams(Method, ProcParams) then
+//      begin
+//        Return := Method.Invoke(Instance, ProcParams);
+//
+//        if Assigned(Method.ReturnType) then
+//          LoadContent;
+//
+//        Response.FreeContentStream := False;
+//        Response.StatusCode := HTTP_STATUS_OK;
+//
+//        LoadHeaders;
+//
+//        Response.SendResponse;
+//      end
+//      else
+//        Response.StatusCode := HTTP_STATUS_BAD_REQUEST;
+//    end
+//    else
+//      Response.StatusCode := HTTP_STATUS_NOT_FOUND;
+  end;
 end;
 
 procedure TBluePrintWebAppService.InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);
@@ -324,13 +314,6 @@ end;
 function TBluePrintWebAppService.Response: TWebResponse;
 begin
   Result := FResponse;
-end;
-
-{ EServiceContainerNotLoaded }
-
-constructor EServiceContainerNotLoaded.Create;
-begin
-  inherited Create('The service container not loaded, load the ServiceContainer property or OnServiceContainer event!');
 end;
 
 { TImageContentParser }

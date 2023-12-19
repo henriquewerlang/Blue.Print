@@ -3,8 +3,7 @@
 {$STRONGLINKTYPES ON}
 
 uses
-  TestInsight.DUnitX,
-  DUnitX.TestFramework,
+  Test.Insight.Framework,
   Blue.Print.Server.Service in '..\Blue.Print.Server.Service.pas',
   Blue.Print.Server.Service.Test in 'Blue.Print.Server.Service.Test.pas',
   Blue.Print.Remote.Service in '..\Blue.Print.Remote.Service.pas',
@@ -18,5 +17,5 @@ uses
 begin
   ReportMemoryLeaksOnShutdown := True;
 
-  TestInsight.DUnitX.RunRegisteredTests;
+  TTestInsightFramework.ExecuteTests;
 end.

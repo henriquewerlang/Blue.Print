@@ -2,13 +2,19 @@ unit Blue.Print.Request.Mock;
 
 interface
 
-uses System.Classes, System.SysUtils, Web.HTTPApp;
+uses System.Classes, System.SysUtils, Web.HTTPApp, System.Generics.Collections;
 
 type
   TIntegerVariable = {$IF CompilerVersion >= 35.0}Int64{$ELSE}Integer{$ENDIF};
 
   TWebRequestMock = class(TWebRequest)
+  private
+    FStringVariables: TDictionary<Integer, String>;
   public
+    constructor Create(const Method, URL: String);
+
+    destructor Destroy; override;
+
     function GetDateVariable(Index: Integer): TDateTime; override;
     function GetFieldByName(const Name: String): String; override;
     function GetIntegerVariable(Index: Integer): TIntegerVariable; override;
@@ -26,11 +32,12 @@ type
 
   TWebResponseMock = class(TWebResponse)
   private
-    FStatusCode: Integer;
     FContent: String;
+    FIntegerVariable: TDictionary<Integer, TIntegerVariable>;
+    FRequest: TWebRequest;
     FSent: Boolean;
-    FIntegerVariable: array[0..200] of Integer;
-    FStringVariable: array[0..200] of String;
+    FStatusCode: Integer;
+    FStringVariables: TDictionary<Integer, String>;
   protected
     function GetContent: String; override;
     function GetDateVariable(Index: Integer): TDateTime; override;
@@ -46,6 +53,10 @@ type
     procedure SetStatusCode(Value: Integer); override;
     procedure SetStringVariable(Index: Integer; const Value: String); override;
   public
+    constructor Create(Request: TWebRequest);
+
+    destructor Destroy; override;
+
     function Sent: Boolean; override;
 
     procedure SendRedirect(const URI: String); override;
@@ -63,6 +74,23 @@ const
 implementation
 
 { TWebRequestMock }
+
+constructor TWebRequestMock.Create(const Method, URL: String);
+begin
+  FStringVariables := TDictionary<Integer, String>.Create;
+
+  FStringVariables.Add(METHOD_INDEX, Method);
+  FStringVariables.Add(URL_INDEX, URL);
+
+  inherited Create;
+end;
+
+destructor TWebRequestMock.Destroy;
+begin
+  FStringVariables.Free;
+
+  inherited;
+end;
 
 function TWebRequestMock.GetDateVariable(Index: Integer): TDateTime;
 begin
@@ -86,7 +114,7 @@ end;
 
 function TWebRequestMock.GetStringVariable(Index: Integer): String;
 begin
-  Result := EmptyStr;
+  Result := FStringVariables[Index];
 end;
 
 function TWebRequestMock.ReadClient(var Buffer; Count: Integer): Integer;
@@ -126,6 +154,20 @@ end;
 
 { TWebResponseMock }
 
+constructor TWebResponseMock.Create(Request: TWebRequest);
+begin
+  inherited;
+
+  FRequest := Request;
+end;
+
+destructor TWebResponseMock.Destroy;
+begin
+  FRequest.Free;
+
+  inherited;
+end;
+
 function TWebResponseMock.GetContent: String;
 begin
   Result := FContent;
@@ -153,7 +195,7 @@ end;
 
 function TWebResponseMock.GetStringVariable(Index: Integer): String;
 begin
-  Result := FStringVariable[Index];
+  Result := FStringVariables[Index];
 end;
 
 procedure TWebResponseMock.SendRedirect(const URI: String);
@@ -211,7 +253,8 @@ end;
 
 procedure TWebResponseMock.SetStringVariable(Index: Integer; const Value: String);
 begin
-  FStringVariable[Index] := Value;
+  FStringVariables[Index] := Value;
 end;
 
 end.
+

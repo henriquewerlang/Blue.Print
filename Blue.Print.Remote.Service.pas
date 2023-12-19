@@ -85,7 +85,7 @@ end;
 
 class function TRemoteService.CreateService<T>(const URL: String): T;
 begin
-  Result := CreateService<T>(URL);
+  Result := CreateService<T>(URL, TBluePrintJsonSerializer.Create);
 end;
 
 destructor TRemoteService.Destroy;
