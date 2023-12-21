@@ -11,7 +11,7 @@ type
   private
     FStringVariables: TDictionary<Integer, String>;
   public
-    constructor Create(const Method, URL: String);
+    constructor Create(const Method, PathInfo: String; const Query: String = '');
 
     destructor Destroy; override;
 
@@ -69,18 +69,21 @@ const
   CONTENT_TYPE_INDEX = 15;
   METHOD_INDEX = 0;
   QUERY_INDEX = 3;
-  URL_INDEX = 4;
+  PATH_INFO_INDEX = 4;
 
 implementation
 
 { TWebRequestMock }
 
-constructor TWebRequestMock.Create(const Method, URL: String);
+constructor TWebRequestMock.Create(const Method, PathInfo, Query: String);
 begin
   FStringVariables := TDictionary<Integer, String>.Create;
 
   FStringVariables.Add(METHOD_INDEX, Method);
-  FStringVariables.Add(URL_INDEX, URL);
+
+  FStringVariables.Add(PATH_INFO_INDEX, PathInfo);
+
+  FStringVariables.Add(QUERY_INDEX, Query);
 
   inherited Create;
 end;
@@ -158,12 +161,18 @@ constructor TWebResponseMock.Create(Request: TWebRequest);
 begin
   inherited;
 
+  FIntegerVariable := TDictionary<Integer, TIntegerVariable>.Create;
   FRequest := Request;
+  FStringVariables := TDictionary<Integer, String>.Create;
 end;
 
 destructor TWebResponseMock.Destroy;
 begin
   FRequest.Free;
+
+  FIntegerVariable.Free;
+
+  FStringVariables.Free;
 
   inherited;
 end;
@@ -237,7 +246,7 @@ end;
 
 procedure TWebResponseMock.SetIntegerVariable(Index: Integer; Value: TIntegerVariable);
 begin
-  FIntegerVariable[Index] := Value;
+  FIntegerVariable.AddOrSetValue(Index, Value);
 end;
 
 procedure TWebResponseMock.SetLogMessage(const Value: String);
@@ -253,7 +262,7 @@ end;
 
 procedure TWebResponseMock.SetStringVariable(Index: Integer; const Value: String);
 begin
-  FStringVariables[Index] := Value;
+  FStringVariables.AddOrSetValue(Index, Value);
 end;
 
 end.

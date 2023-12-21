@@ -16,7 +16,7 @@ type
     ['{5848116B-902F-4FF8-BE8F-D53F586C400E}']
     function Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue;
 
-    procedure Serialize(const Value: TValue; const Output: TStream);
+    procedure Serialize(const Value: TValue; const Stream: TStream);
   end;
 
   EHTTPStatusError = class(Exception)

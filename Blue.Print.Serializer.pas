@@ -13,7 +13,7 @@ type
 
     function Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue; overload;
 
-    procedure Serialize(const Value: TValue; const Output: TStream); overload;
+    procedure Serialize(const Value: TValue; const Stream: TStream); overload;
 {$IFDEF PAS2JS}
   protected
     function CreateObject(const JSON: JSValue; RttiType: TRttiType): TObject; virtual;
@@ -48,7 +48,7 @@ type
   private
     function Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue;
 
-    procedure Serialize(const Value: TValue; const Output: TStream);
+    procedure Serialize(const Value: TValue; const Stream: TStream);
   end;
 
 implementation
@@ -83,7 +83,7 @@ begin
 end;
 {$ENDIF}
 
-procedure TBluePrintJsonSerializer.Serialize(const Value: TValue; const Output: TStream);
+procedure TBluePrintJsonSerializer.Serialize(const Value: TValue; const Stream: TStream);
 begin
 {$IFDEF PAS2JS}
   Result := TJSJSON.stringify(SerializeJSON(Value, FContext.GetType(AValue.TypeInfo)));
@@ -378,7 +378,7 @@ begin
 
 end;
 
-procedure TBluePrintXMLSerializer.Serialize(const Value: TValue; const Output: TStream);
+procedure TBluePrintXMLSerializer.Serialize(const Value: TValue; const Stream: TStream);
 begin
 
 end;

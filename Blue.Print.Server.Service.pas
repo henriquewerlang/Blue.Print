@@ -7,6 +7,30 @@ uses System.Classes, System.SysUtils, System.Rtti, System.TypInfo, Web.HTTPApp, 
 type
   EInvalidParameterType = class(Exception);
 
+  EHTTPError = class(Exception)
+  private
+    FStatusCode: Integer;
+  public
+    constructor Create(const StatusCode: Integer);
+
+    property StatusCode: Integer read FStatusCode write FStatusCode;
+  end;
+
+  EHTTPErrorNotFound = class(EHTTPError)
+  public
+    constructor Create;
+  end;
+
+  EHTTPErrorBadRequest = class(EHTTPError)
+  public
+    constructor Create(const ErrorMessage: String);
+  end;
+
+  EFindServiceError = class(Exception)
+  public
+    constructor Create;
+  end;
+
   TFindService = reference to function(const ServiceName: String): TValue;
 
   TBluePrintWebAppService = class(TComponent, IGetWebAppServices, IWebAppServices, IWebExceptionHandler, IWebDispatcherAccess)
@@ -17,8 +41,7 @@ type
     FResponse: TWebResponse;
     FSerializer: IBluePrintSerializer;
 
-    function GetParams(const Method: TRttiMethod; var ConvertedParams: TArray<TValue>): Boolean;
-    function GetParamValue(const Method: TRttiMethod; const Param: TRttiParameter; var ParamLoaded: Boolean): TValue;
+    function FindService(const ServiceName: String): TValue;
     function GetSerializer: IBluePrintSerializer;
   protected
     // IGetWebAppServices
@@ -64,7 +87,25 @@ type
 
 implementation
 
-uses System.Math, Winapi.WinInet, System.NetConsts, Rest.Types, Blue.Print.Serializer;
+uses System.Math, System.NetConsts, System.Generics.Collections, Blue.Print.Serializer;
+
+const
+  HTTP_STATUS_OK = 200;
+  HTTP_STATUS_BAD_REQUEST = 400;
+  HTTP_STATUS_NOT_FOUND = 404;
+  HTTP_STATUS_SERVER_ERROR = 500;
+
+type
+  TArrayEnumerator<T> = class(TEnumerator<T>)
+  private
+    FCurrent: NativeInt;
+    FValue: TArray<T>;
+  protected
+    function DoGetCurrent: T; override;
+    function DoMoveNext: Boolean; override;
+  public
+    constructor Create(const Value: TArray<T>);
+  end;
 
 { TBluePrintWebAppService }
 
@@ -73,6 +114,14 @@ begin
   inherited;
 
   FActive := True;
+end;
+
+function TBluePrintWebAppService.FindService(const ServiceName: String): TValue;
+begin
+  if Assigned(FOnFindService) then
+    Result := FOnFindService(ServiceName)
+  else
+    raise EFindServiceError.Create;
 end;
 
 procedure TBluePrintWebAppService.FinishContext;
@@ -90,102 +139,6 @@ begin
   Result := Self;
 end;
 
-function TBluePrintWebAppService.GetParams(const Method: TRttiMethod; var ConvertedParams: TArray<TValue>): Boolean;
-begin
-  ConvertedParams := [];
-  var Parameters := Method.GetParameters;
-
-  Result := Length(Parameters) = 0;
-
-  for var Param in Parameters do
-    ConvertedParams := ConvertedParams + [GetParamValue(Method, Param, Result)];
-end;
-
-function TBluePrintWebAppService.GetParamValue(const Method: TRttiMethod; const Param: TRttiParameter; var ParamLoaded: Boolean): TValue;
-
-  function GetFiles: TArray<TRequestFile>;
-  begin
-    Result := nil;
-
-    for var A := 0 to Pred(Request.Files.Count) do
-      if (Param.Name = Request.Files[A].FieldName) or Request.Files[A].FieldName.IsEmpty then
-        Result := Result + [Request.Files[A]];
-  end;
-
-  function GetParamValue(Fields: TStrings; var ParamValue: String): Boolean;
-  begin
-    var ParamIndex := Fields.IndexOfName(Param.Name);
-    Result := ParamIndex > -1;
-
-    if Result then
-      ParamValue := Fields.ValueFromIndex[ParamIndex];
-  end;
-
-  function CanLoadParamFromContentFields: Boolean;
-  begin
-    Result := (Request.ContentType = CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED) or Request.ContentType.StartsWith(CONTENTTYPE_MULTIPART_FORM_DATA);
-  end;
-
-  function CanLoadParamFromContent: Boolean;
-  begin
-    Result := (Request.ContentType = CONTENTTYPE_APPLICATION_JSON) or Request.ContentType.StartsWith(CONTENTTYPE_TEXT_PLAIN);
-  end;
-
-  function GetParamValueFromContent(var ParamValue: String): Boolean;
-  begin
-    ParamValue := Request.Content;
-    Result := not ParamValue.IsEmpty and (Length(Method.GetParameters) = 1) and CanLoadParamFromContent;
-  end;
-
-begin
-  Result := TValue.Empty;
-
-  case Param.ParamType.TypeKind of
-    tkClassRef,
-    tkInterface,
-    tkMethod,
-    tkPointer,
-    tkProcedure,
-    tkUnknown,
-    tkVariant: raise EInvalidParameterType.Create('The param type is invalid!');
-
-    tkClass:
-      if Param.ParamType.AsInstance.MetaclassType = TRequestFile then
-      begin
-        var Files := GetFiles;
-
-        ParamLoaded := Length(Files) = 1;
-
-        if ParamLoaded then
-          Result := TValue.From(Files[0]);
-
-        Exit;
-      end;
-
-    tkDynArray:
-    begin
-      var ArrayType := TRttiDynamicArrayType(Param.ParamType).ElementType;
-
-      ParamLoaded := ArrayType.IsInstance and (ArrayType.AsInstance.MetaclassType = TRequestFile);
-
-      if ParamLoaded then
-        Exit(TValue.From(GetFiles));
-    end;
-  end;
-
-  var ParamValue: String;
-
-  ParamLoaded := (GetParamValue(Request.QueryFields, ParamValue) or CanLoadParamFromContentFields and GetParamValue(Request.ContentFields, ParamValue) or GetParamValueFromContent(ParamValue));
-
-  if ParamLoaded then
-    if IsTypeKindString(Param.ParamType.TypeKind) then
-      Result := ParamValue
-    else if ParamValue.IsEmpty then
-      ParamLoaded := False
-    else
-//      Result := Serializer.Deserialize(ParamValue, Param.ParamType.Handle);
-end;
-
 function TBluePrintWebAppService.GetSerializer: IBluePrintSerializer;
 begin
   if not Assigned(FSerializer) then
@@ -196,7 +149,7 @@ end;
 
 function TBluePrintWebAppService.GetWebAppServices: IWebAppServices;
 begin
-  Result := Self;
+  Result := nil;
 end;
 
 procedure TBluePrintWebAppService.HandleException(E: Exception; var Handled: Boolean);
@@ -209,61 +162,80 @@ begin
 end;
 
 function TBluePrintWebAppService.HandleRequest: Boolean;
+const
+  METHOD_NAME_INDEX = 1;
+  PARAMS_INDEX = 2;
+  SERVICE_NAME_INDEX = 0;
+
 var
   Params: TArray<String>;
 
   Method: TRttiMethod;
-
-  Return: TValue;
 
   function IsValidRequest: Boolean;
   begin
     Result := (Length(Params) > 1) and ExtractFileExt(Params[High(Params)]).IsEmpty;
   end;
 
-  function GetContentType: String;
-  begin
-    var Attribute := Method.GetAttribute<ContentTypeAttribute>;
+  function LoadParams: TArray<TValue>;
+  var
+    Buffer: TStringStream;
 
-    if not Assigned(Attribute) then
-      Attribute := Method.Parent.GetAttribute<ContentTypeAttribute>;
+    Parameters: TList<TRttiParameter>;
 
-    if Assigned(Attribute) then
+    function LoadBuffer(const Value: String): TStringStream;
     begin
-      Result := Attribute.ContentType;
+      Buffer.Size := 0;
 
-      if not Attribute.CharSet.IsEmpty then
-        Result := Format('%s; charset=%s', [Result, Attribute.CharSet]);
-    end
-    else
-      Result := CONTENTTYPE_APPLICATION_JSON;
-  end;
+      Buffer.WriteString(Value);
 
-  procedure LoadContent;
+      Result := Buffer;
+    end;
+
+    procedure LoadParameterValue(const Parameter: TRttiParameter; const Value: String);
+    begin
+      Parameters.Extract(Parameter);
+
+      Result[TArray.IndexOf<TRttiParameter>(Method.GetParameters, Parameter)] := FSerializer.Deserialize(LoadBuffer(Value), Parameter.ParamType.Handle);
+    end;
+
+    function FindParameterByName(const ParameterName: String): TRttiParameter;
+    begin
+      Result := nil;
+
+      for var Parameter in Method.GetParameters do
+        if Parameter.Name = ParameterName then
+          Exit(Parameter);
+    end;
+
+    function GetCurrentParameter: TRttiParameter;
+    begin
+      if Parameters.IsEmpty then
+        raise EHTTPErrorBadRequest.Create('Parameter count exceeded!')
+      else
+        Result := Parameters.First;
+    end;
+
   begin
-    Response.ContentType := GetContentType;
+    Buffer := TStringStream.Create(EmptyStr, TEncoding.Unicode);
+    Parameters := TList<TRttiParameter>.Create(Method.GetParameters);
 
-    if not Return.IsEmpty and Return.IsType<TResponseFile> then
-      Response.ContentStream := Return.AsType<TResponseFile>
-//    else
-//      Response.Content := Serializer.Serialize(Return);
-  end;
+    SetLength(Result, Parameters.Count);
 
-  procedure LoadHeaders;
-  begin
-    for var MethodAttribute in Method.GetAttributes do
-      if MethodAttribute is HeaderAttribute then
-      begin
-        var MethodHeader := HeaderAttribute(MethodAttribute);
-        Response.CustomHeaders.Values[MethodHeader.Name] := MethodHeader.Value;
-      end;
+    try
+      for var A := PARAMS_INDEX to High(Params) do
+        LoadParameterValue(GetCurrentParameter, Params[A]);
 
-    for var ServiceAttribute in Method.Parent.GetAttributes do
-      if ServiceAttribute is HeaderAttribute then
-      begin
-        var ServiceHeader := HeaderAttribute(ServiceAttribute);
-        Response.CustomHeaders.Values[ServiceHeader.Name] := ServiceHeader.Value;
-      end;
+      for var A := 0 to Pred(Request.QueryFields.Count) do
+        LoadParameterValue(FindParameterByName(Request.QueryFields.Names[A]), Request.QueryFields.ValueFromIndex[A]);
+
+      if not Parameters.IsEmpty then
+        raise EHTTPErrorBadRequest.Create('Parameter count mismatch!');
+    finally
+      Buffer.Free;
+
+      Parameters.Free;
+    end;
   end;
 
 begin
@@ -272,31 +244,30 @@ begin
 
   if Result then
   begin
-//    Method := ServiceInfo.GetMethod(Params[1]);
-//
-//    if Assigned(Method) then
-//    begin
-//      var ProcParams: TArray<TValue>;
-//
-//      if GetParams(Method, ProcParams) then
-//      begin
-//        Return := Method.Invoke(Instance, ProcParams);
-//
-//        if Assigned(Method.ReturnType) then
-//          LoadContent;
-//
-//        Response.FreeContentStream := False;
-//        Response.StatusCode := HTTP_STATUS_OK;
-//
-//        LoadHeaders;
-//
-//        Response.SendResponse;
-//      end
-//      else
-//        Response.StatusCode := HTTP_STATUS_BAD_REQUEST;
-//    end
-//    else
-//      Response.StatusCode := HTTP_STATUS_NOT_FOUND;
+    Response.StatusCode := HTTP_STATUS_OK;
+    var Service := FindService(Params[SERVICE_NAME_INDEX]);
+
+    if Service.IsEmpty then
+      raise EHTTPErrorNotFound.Create;
+
+    var Context := TRttiContext.Create;
+    var ServiceType := Context.GetType(Service.TypeInfo);
+
+    Method := ServiceType.GetMethod(Params[METHOD_NAME_INDEX]);
+
+    if not Assigned(Method) then
+      raise EHTTPErrorNotFound.Create;
+
+    var ReturnValue := Method.Invoke(Service, LoadParams);
+
+    if Assigned(Method.ReturnType) then
+    begin
+      Response.ContentStream := TMemoryStream.Create;
+
+      Serializer.Serialize(ReturnValue, Response.ContentStream);
+
+      Response.ContentStream.Position := 0;
+    end;
   end;
 end;
 
@@ -355,6 +326,58 @@ end;
 procedure TImageContentParser.LoadImagem;
 begin
   FFiles.Add(EmptyStr, EmptyStr, EmptyStr, WebRequest.RawContent, WebRequest.ContentLength);
+end;
+
+{ EHTTPError }
+
+constructor EHTTPError.Create(const StatusCode: Integer);
+begin
+  inherited Create('HTTP Error');
+
+  FStatusCode := StatusCode;
+end;
+
+{ EHTTPErrorNotFound }
+
+constructor EHTTPErrorNotFound.Create;
+begin
+  inherited Create(HTTP_STATUS_NOT_FOUND);
+end;
+
+{ EHTTPErrorBadRequest }
+
+constructor EHTTPErrorBadRequest.Create(const ErrorMessage: String);
+begin
+  inherited Create(HTTP_STATUS_BAD_REQUEST);
+
+  Message := ErrorMessage;
+end;
+
+{ TArrayEnumerator<T> }
+
+constructor TArrayEnumerator<T>.Create(const Value: TArray<T>);
+begin
+  FCurrent := -1;
+  FValue := Value;
+end;
+
+function TArrayEnumerator<T>.DoGetCurrent: T;
+begin
+  Result := FValue[FCurrent];
+end;
+
+function TArrayEnumerator<T>.DoMoveNext: Boolean;
+begin
+  Inc(FCurrent);
+
+  Result := FCurrent < Length(FValue);
+end;
+
+{ EFindServiceError }
+
+constructor EFindServiceError.Create;
+begin
+  inherited Create('You must load the OnFindService event and return the instance of the object to treat the request!');
 end;
 
 initialization
