@@ -65,6 +65,8 @@ type
     procedure AfterHandleTheExceptionMustSendTheResponseForTheClient;
     [Test]
     procedure WhenTryToGetTheGetWebAppServicesMustReturnTheCurrentInstanceOfTheService;
+    [Test]
+    procedure WhenTheMethodCalledIsAProcedureMustReturnTheStatusCode204;
   end;
 
   TMyService = class
@@ -279,6 +281,15 @@ begin
     end, EHTTPErrorNotFound);
 end;
 
+procedure TBluePrintWebAppServiceTest.WhenTheMethodCalledIsAProcedureMustReturnTheStatusCode204;
+begin
+  InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/MyService/MyProc')));
+
+  FWebAppServices.HandleRequest;
+
+  Assert.AreEqual<Integer>(204, FRequest.StatusCode);
+end;
+
 procedure TBluePrintWebAppServiceTest.WhenTheRequestDontHaveEnoughParamsMustRaiseABadRequestError;
 begin
   FSerializer.DeserializeValues := ['Value1'];
@@ -335,7 +346,9 @@ end;
 
 procedure TBluePrintWebAppServiceTest.WhenTheRequestIsSuccessfullyExecutedMustReturnTheStatusCode200;
 begin
-  InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/MyService/MyProc')));
+  FSerializer.SerializeValues := ['Value'];
+
+  InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/MyService/MyFunc')));
 
   FWebAppServices.HandleRequest;
 

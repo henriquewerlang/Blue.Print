@@ -92,6 +92,7 @@ uses System.Math, System.NetConsts, System.Generics.Collections, Blue.Print.Seri
 const
   HTTP_STATUS_OK = 200;
   HTTP_STATUS_BAD_REQUEST = 400;
+  HTTP_STATUS_NO_CONTENT = 204;
   HTTP_STATUS_NOT_FOUND = 404;
   HTTP_STATUS_SERVER_ERROR = 500;
 
@@ -244,7 +245,6 @@ begin
 
   if Result then
   begin
-    Response.StatusCode := HTTP_STATUS_OK;
     var Service := FindService(Params[SERVICE_NAME_INDEX]);
 
     if Service.IsEmpty then
@@ -263,11 +263,14 @@ begin
     if Assigned(Method.ReturnType) then
     begin
       Response.ContentStream := TMemoryStream.Create;
+      Response.StatusCode := HTTP_STATUS_OK;
 
       Serializer.Serialize(ReturnValue, Response.ContentStream);
 
       Response.ContentStream.Position := 0;
-    end;
+    end
+    else
+      Response.StatusCode := HTTP_STATUS_NO_CONTENT;
   end;
 end;
 
