@@ -149,7 +149,7 @@ end;
 
 function TBluePrintWebAppService.GetWebAppServices: IWebAppServices;
 begin
-  Result := nil;
+  Result := Self;
 end;
 
 procedure TBluePrintWebAppService.HandleException(E: Exception; var Handled: Boolean);

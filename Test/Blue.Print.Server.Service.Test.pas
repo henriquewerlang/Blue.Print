@@ -63,6 +63,8 @@ type
     procedure TheExceptionMessageMustBeInTheContentOfTheResponse;
     [Test]
     procedure AfterHandleTheExceptionMustSendTheResponseForTheClient;
+    [Test]
+    procedure WhenTryToGetTheGetWebAppServicesMustReturnTheCurrentInstanceOfTheService;
   end;
 
   TMyService = class
@@ -357,6 +359,11 @@ begin
 
   Assert.AreEqual('MyProc2', FMyService.ProcedureCalled);
   Assert.AreEqual('Value1,Value2', FMyService.ParamsOfProcedureCalled);
+end;
+
+procedure TBluePrintWebAppServiceTest.WhenTryToGetTheGetWebAppServicesMustReturnTheCurrentInstanceOfTheService;
+begin
+  Assert.AreEqual<TObject>(FBluePrintService, TObject((FWebAppServices as IGetWebAppServices).GetWebAppServices));
 end;
 
 { TMyService }
