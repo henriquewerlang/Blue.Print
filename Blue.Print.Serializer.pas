@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Classes, System.Rtti, System.TypInfo, Blue.Print.Types, {$IFDEF PAS2JS}JS{$ELSE}System.JSON.Serializers{$ENDIF};
+uses System.Classes, System.Rtti, System.TypInfo, Blue.Print.Types{$IFDEF PAS2JS}, JS{$ENDIF};
 
 type
   TBluePrintJsonSerializer = class(TInterfacedObject, IBluePrintSerializer)
@@ -53,7 +53,7 @@ type
 
 implementation
 
-uses System.SysUtils, System.JSON.Readers, System.JSON.Writers;
+uses System.SysUtils;
 
 { TBluePrintJsonSerializer }
 
@@ -75,18 +75,18 @@ var
   RecordType: TRttiRecordType absolute RttiType;
 
 begin
-  Result := TJSObject(RecordType.RecordTypeInfo.Module[RecordType.Name]);
-
-  asm
-    Result = Object.create(Result);
-  end;
+//  Result := TJSObject(RecordType.RecordTypeInfo.Module[RecordType.Name]);
+//
+//  asm
+//    Result = Object.create(Result);
+//  end;
 end;
 {$ENDIF}
 
 procedure TBluePrintJsonSerializer.Serialize(const Value: TValue; const Stream: TStream);
 begin
 {$IFDEF PAS2JS}
-  Result := TJSJSON.stringify(SerializeJSON(Value, FContext.GetType(AValue.TypeInfo)));
+//  Result := TJSJSON.stringify(SerializeJSON(Value, FContext.GetType(AValue.TypeInfo)));
 {$ELSE}
 //  var Serializer := TJsonSerializer.Create;
 //
@@ -151,8 +151,8 @@ begin
     Result := DeserializeArray(JSON, RttiType)
   else if RttiType is TRttiEnumerationType then
     Result := DeserializeEnumerator(JSON, RttiType)
-  else if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
-    Result := TValue.From(RFC3339ToDateTime(String(JSON)))
+//  else if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
+//    Result := TValue.From(RFC3339ToDateTime(String(JSON)))
   else
     TValue.Make(JSON, RttiType.Handle, Result);
 end;
@@ -253,7 +253,7 @@ end;
 function TBluePrintJsonSerializer.Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue;
 begin
 {$IFDEF PAS2JS}
-  Result := DeserializeJSON(TJSJSON.Parse(Value), FContext.GetType(TypeInfo));
+//  Result := DeserializeJSON(TJSJSON.Parse(Value), FContext.GetType(TypeInfo));
 {$ELSE}
 //  var Serializer := TJsonSerializer.Create;
 //
@@ -285,8 +285,8 @@ begin
     Result := SerializeObject(Value, RttiType.AsInstance)
   else if RttiType is TRttiDynamicArrayType then
     Result := SerializeArray(Value, RttiType as TRttiDynamicArrayType)
-  else if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
-    Result := DateTimeToRFC3339(Value.AsExtended)
+//  else if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
+//    Result := DateTimeToRFC3339(Value.AsExtended)
   else
     Result := Value.AsJSValue;
 end;

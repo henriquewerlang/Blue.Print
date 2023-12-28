@@ -8,17 +8,17 @@ type
   IHTTPCommunication = interface
     ['{8E39F66A-C72B-4314-80B1-D24F1AF4F247}']
     function SendRequest(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream;
-    {$IFDEF PAS2JS}
-    function SendRequestAsync(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream; async;
-    {$ENDIF}
+//    {$IFDEF PAS2JS}
+//    function SendRequestAsync(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream; async;
+//    {$ENDIF}
   end;
 
   THTTPCommunication = class(TInterfacedObject, IHTTPCommunication)
   private
     function SendRequest(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream;
-{$IFDEF PAS2JS}
-    function SendRequestAsync(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream; async;
-{$ENDIF}
+//{$IFDEF PAS2JS}
+//    function SendRequestAsync(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream; async;
+//{$ENDIF}
   end;
 
   TRemoteService = class(TVirtualInterface)
@@ -53,7 +53,7 @@ implementation
 
 uses
 {$IFDEF PAS2JS}
-  JS, Web, WebOrWorker,
+  JS, Web, WebOrWorker
 {$ELSE}
   System.Net.Mime, System.NetConsts, System.Net.URLClient, System.NetEncoding, Web.HTTPApp
 {$ENDIF};
@@ -75,12 +75,11 @@ end;
 
 class function TRemoteService.CreateService<T>(const URL: String; const Serializer: IBluePrintSerializer): T;
 var
-  ServiceInfo: PTypeInfo;
+  RemoteService: TRemoteService;
 
 begin
-  ServiceInfo := TypeInfo(T);
-
-  Supports(TRemoteService.Create(ServiceInfo, Serializer), ServiceInfo.TypeData.GUID, Result);
+  RemoteService := TRemoteService.Create(TypeInfo(T), Serializer);
+  Result := RemoteService.GetService<T>(URL);
 end;
 
 class function TRemoteService.CreateService<T>(const URL: String): T;
@@ -97,9 +96,7 @@ end;
 
 function TRemoteService.EncodeValue(const Value: String): String;
 begin
-  {$IFDEF DCC}
-  Result := TNetEncoding.URL.Encode(Value);
-  {$ENDIF}
+  Result := {$IFDEF PAS2JS}EncodeURIComponent{$ELSE}TNetEncoding.URL.Encode{$ENDIF}(Value);
 end;
 
 function TRemoteService.GetAttribute<T>(RttiObject: TRttiObject): T;
@@ -266,7 +263,7 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
 {$IFDEF PAS2JS}
   function SendRequestAsync: TJSPromise;
   begin
-    Result := TJSPromise.Create...
+//    Result := TJSPromise.Create...
   end;
 {$ENDIF}
 
@@ -310,25 +307,26 @@ var
 
 begin
 {$IFDEF PAS2JS}
-  if Request.FileDownload then
-    DownloadFile(Request.URL)
-  else
-  begin
+//  if Request.FileDownload then
+//    DownloadFile(Request.URL)
+//  else
+//  begin
     Connection := TJSXMLHttpRequest.New;
 
-    Connection.Open(RESTRequestMethodToString(Request.Method), Request.URL, False);
+    Connection.Open(REQUEST_METHOD_NAME[RequestMethod], URL, False);
 
-    for A := 0 to Pred(FHeaders.Count) do
-      Connection.SetRequestHeader(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
+//    for A := 0 to Pred(FHeaders.Count) do
+//      Connection.SetRequestHeader(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
 
-    Connection.Send(Request.Body.AsJSValue);
+    Connection.Send();
 
-    Result := Connection.ResponseText
+//    Result := Connection.ResponseText;
+    Result := nil;
 
     if Connection.Status <> 200 then
-      raise EHTTPStatusError.Create(Connection.status, Request.URL, Connection.ResponseText);
-  end;
-{$ENDIF}
+      raise EHTTPStatusError.Create(Connection.status, URL);
+//  end;
+{$ELSE}
   var Connection := THTTPClient.Create;
   Connection.ResponseTimeout := -1;
   Connection.SendTimeout := -1;
@@ -338,46 +336,47 @@ begin
 
   if Response.StatusCode <> 200 then
     raise EHTTPStatusError.Create(Response.StatusCode, URL);
-end;
-
-{$IFDEF PAS2JS}
-function THTTPCommunication.SendRequestAsync(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream;
-var
-  A: Integer;
-
-  Options: TJSFetchInit;
-
-  Response: TJSResponse;
-
-begin
-  if Request.FileDownload then
-    await(DownloadFile(Request.URL))
-  else
-  begin
-    FHeaders.Text := Request.Headers;
-    Options := TJSFetchInit.New;
-    Options.Method := RESTRequestMethodToString(Request.Method);
-
-    if FHeaders.Count > 0 then
-    begin
-      Options.Headers := TJSHTMLHeaders.New;
-
-      for A := 0 to Pred(FHeaders.Count) do
-        Options.Headers.Append(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
-    end;
-
-    if not Request.Body.IsEmpty then
-      Options.Body := Request.Body.AsJSValue;
-
-    Response := await(Window.Fetch(Request.URL, Options));
-
-    Result := await(Response.Text);
-
-    if Response.Status <> 200 then
-      raise EHTTPStatusError.Create(Response.Status, Request.URL, Result);
-  end;
-end;
 {$ENDIF}
+end;
+
+//{$IFDEF PAS2JS}
+//function THTTPCommunication.SendRequestAsync(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream;
+//var
+//  A: Integer;
+//
+//  Options: TJSFetchInit;
+//
+//  Response: TJSResponse;
+//
+//begin
+//  if Request.FileDownload then
+//    await(DownloadFile(Request.URL))
+//  else
+//  begin
+//    FHeaders.Text := Request.Headers;
+//    Options := TJSFetchInit.New;
+//    Options.Method := RESTRequestMethodToString(Request.Method);
+//
+//    if FHeaders.Count > 0 then
+//    begin
+//      Options.Headers := TJSHTMLHeaders.New;
+//
+//      for A := 0 to Pred(FHeaders.Count) do
+//        Options.Headers.Append(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
+//    end;
+//
+//    if not Request.Body.IsEmpty then
+//      Options.Body := Request.Body.AsJSValue;
+//
+//    Response := await(Window.Fetch(Request.URL, Options));
+//
+//    Result := await(Response.Text);
+//
+//    if Response.Status <> 200 then
+//      raise EHTTPStatusError.Create(Response.Status, Request.URL, Result);
+//  end;
+//end;
+//{$ENDIF}
 
 end.
 
