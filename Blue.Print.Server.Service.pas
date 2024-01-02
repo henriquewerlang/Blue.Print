@@ -190,7 +190,7 @@ var
     begin
       Parameters.Extract(Parameter);
 
-      Result[TArray.IndexOf<TRttiParameter>(Method.GetParameters, Parameter)] := FSerializer.Deserialize(LoadBuffer(Value), Parameter.ParamType.Handle);
+      Result[TArray.IndexOf<TRttiParameter>(Method.GetParameters, Parameter)] := Serializer.Deserialize(LoadBuffer(Value), Parameter.ParamType.Handle);
     end;
 
     function FindParameterByName(const ParameterName: String): TRttiParameter;
