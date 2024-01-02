@@ -210,7 +210,7 @@ begin
 
   Service.TestProcedureWithParam('abc', 123);
 
-  Assert.AreEqual('/ServiceTest/TestProcedureWithParam/?Param1=abc;Param2=123', FCommunication.URL);
+  Assert.AreEqual('/IServiceTest/TestProcedureWithParam/?Param1=abc;Param2=123', FCommunication.URL);
 end;
 
 procedure TRemoteServiceTest.TheRequestMethodMustBeTheSameOfTheAttributeOfTheMethod(const MethodName: String; const RequestType: TRequestMethod);
@@ -276,7 +276,7 @@ begin
 
   Service.TestProcedure;
 
-  Assert.AreEqual('http://myurl.com/myapi/ServiceTest/TestProcedure', FCommunication.URL);
+  Assert.AreEqual('http://myurl.com/myapi/IServiceTest/TestProcedure', FCommunication.URL);
 end;
 
 procedure TRemoteServiceTest.WhenGetServiceMustReturnTheInterfaceFilled;
@@ -338,7 +338,7 @@ begin
 
   Service.ParameterInPath('ããã', 123);
 
-  Assert.AreEqual('/ServiceTest/ParameterInPath/%C3%A3%C3%A3%C3%A3/123', FCommunication.URL);
+  Assert.AreEqual('/IServiceTest/ParameterInPath/%C3%A3%C3%A3%C3%A3/123', FCommunication.URL);
 end;
 
 procedure TRemoteServiceTest.WhenTheParamOfAnProcedureIsAnObjectMustSendTheValueInTheBodyOfTheRequest;
@@ -357,7 +357,7 @@ begin
 
   Service.TestProcedureWithParam('ããã', 123);
 
-  Assert.AreEqual('/ServiceTest/TestProcedureWithParam/?Param1=%C3%A3%C3%A3%C3%A3;Param2=123', FCommunication.URL);
+  Assert.AreEqual('/IServiceTest/TestProcedureWithParam/?Param1=%C3%A3%C3%A3%C3%A3;Param2=123', FCommunication.URL);
 end;
 
 procedure TRemoteServiceTest.WhenTheParameterHasTheBodyAttributeMustSerializeTheValueBeforFillTheBodyValue;
@@ -387,7 +387,7 @@ begin
 
   Service.ProcedureWithRemoteNameLocaleChars;
 
-  Assert.AreEqual('/ServiceTest/P%C3%A3ram', FCommunication.URL);
+  Assert.AreEqual('/IServiceTest/P%C3%A3ram', FCommunication.URL);
 end;
 
 procedure TRemoteServiceTest.WhenTheProcedureHasTheRemoteNameAttributeMustSendThisNameInTheURLOfThRequest;

@@ -133,7 +133,7 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
 
   function GetRemoteServiceName: String;
   begin
-    Result := GetRemoteName(Method.Parent, Method.Parent.Name.Substring(1));
+    Result := GetRemoteName(Method.Parent, Method.Parent.Name);
   end;
 
   function GetRemoteMethodName: String;
