@@ -198,7 +198,7 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
       procedure(Parameter: TRttiParameter; Value: TValue)
       begin
         if not QueryParams.IsEmpty then
-          QueryParams := QueryParams + ';';
+          QueryParams := QueryParams + '&';
 
         QueryParams := QueryParams + Format('%s=%s', [EncodeValue(Parameter.Name), EncodeValue(Value.ToString)]);
       end, TParameterType.Query);
