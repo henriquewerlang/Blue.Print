@@ -305,27 +305,31 @@ var
   end;
 {$ENDIF}
 
+  procedure CheckStatusCode(const StatusCode: Integer; const URL: String);
+  begin
+    if (StatusCode < 200) or (StatusCode > 299) then
+      raise EHTTPStatusError.Create(StatusCode, URL);
+  end;
+
 begin
 {$IFDEF PAS2JS}
 //  if Request.FileDownload then
 //    DownloadFile(Request.URL)
 //  else
 //  begin
-    Connection := TJSXMLHttpRequest.New;
+  Connection := TJSXMLHttpRequest.New;
 
-    Connection.Open(REQUEST_METHOD_NAME[RequestMethod], URL, False);
+  Connection.Open(REQUEST_METHOD_NAME[RequestMethod], URL, False);
 
-//    for A := 0 to Pred(FHeaders.Count) do
-//      Connection.SetRequestHeader(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
+//  for A := 0 to Pred(FHeaders.Count) do
+//    Connection.SetRequestHeader(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
 
-    Connection.Send();
+  Connection.Send();
 
-//    Result := Connection.ResponseText;
-    Result := nil;
+//  Result := Connection.ResponseText;
+  Result := nil;
 
-    if Connection.Status <> 200 then
-      raise EHTTPStatusError.Create(Connection.status, URL);
-//  end;
+  CheckStatusCode(Connection.Status, URL);
 {$ELSE}
   var Connection := THTTPClient.Create;
   Connection.ResponseTimeout := -1;
@@ -334,8 +338,7 @@ begin
   var Response := Connection.Execute(REQUEST_METHOD_NAME[RequestMethod], URL, Body) as IHTTPResponse;
   Result := Response.ContentStream;
 
-  if Response.StatusCode <> 200 then
-    raise EHTTPStatusError.Create(Response.StatusCode, URL);
+  CheckStatusCode(Response.StatusCode, URL);
 {$ENDIF}
 end;
 
