@@ -67,6 +67,10 @@ type
     procedure WhenTryToGetTheGetWebAppServicesMustReturnTheCurrentInstanceOfTheService;
     [Test]
     procedure WhenTheMethodCalledIsAProcedureMustReturnTheStatusCode204;
+    [Test]
+    procedure WhenHandleAHTTPExceptionCanChangeTheStatusCodeFromTheResponse;
+    [Test]
+    procedure WhenIsRaisedANotFoundErrorMustLoadTheStatusCodeOfTheException;
   end;
 
   TMyService = class
@@ -268,6 +272,36 @@ end;
 procedure TBluePrintWebAppServiceTest.WhenGetTheExceptionHandlerMustReturnTheCurrentInstanceOfTheWebService;
 begin
   Assert.AreEqual<TObject>(FBluePrintService, FWebAppServices.ExceptionHandler);
+end;
+
+procedure TBluePrintWebAppServiceTest.WhenHandleAHTTPExceptionCanChangeTheStatusCodeFromTheResponse;
+begin
+  var Handled := False;
+  var Handler := FBluePrintService as IWebExceptionHandler;
+  var MyException := EHTTPStatusError.Create(525);
+
+  InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', EmptyStr)));
+
+  Handler.HandleException(MyException, Handled);
+
+  Assert.AreEqual<Integer>(525, FRequest.StatusCode);
+
+  MyException.Free;
+end;
+
+procedure TBluePrintWebAppServiceTest.WhenIsRaisedANotFoundErrorMustLoadTheStatusCodeOfTheException;
+begin
+  var Handled := False;
+  var Handler := FBluePrintService as IWebExceptionHandler;
+  var MyException := EHTTPErrorNotFound.Create;
+
+  InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', EmptyStr)));
+
+  Handler.HandleException(MyException, Handled);
+
+  Assert.AreEqual<Integer>(404, FRequest.StatusCode);
+
+  MyException.Free;
 end;
 
 procedure TBluePrintWebAppServiceTest.WhenTheMethodCalledDontExistsMustRaiseENotFoundError;

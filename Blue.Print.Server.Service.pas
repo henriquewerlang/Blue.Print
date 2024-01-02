@@ -7,25 +7,6 @@ uses System.Classes, System.SysUtils, System.Rtti, System.TypInfo, Web.HTTPApp, 
 type
   EInvalidParameterType = class(Exception);
 
-  EHTTPError = class(Exception)
-  private
-    FStatusCode: Integer;
-  public
-    constructor Create(const StatusCode: Integer);
-
-    property StatusCode: Integer read FStatusCode write FStatusCode;
-  end;
-
-  EHTTPErrorNotFound = class(EHTTPError)
-  public
-    constructor Create;
-  end;
-
-  EHTTPErrorBadRequest = class(EHTTPError)
-  public
-    constructor Create(const ErrorMessage: String);
-  end;
-
   EFindServiceError = class(Exception)
   public
     constructor Create;
@@ -94,13 +75,6 @@ implementation
 
 uses System.Math, System.NetConsts, System.Generics.Collections, Blue.Print.Serializer;
 
-const
-  HTTP_STATUS_OK = 200;
-  HTTP_STATUS_BAD_REQUEST = 400;
-  HTTP_STATUS_NO_CONTENT = 204;
-  HTTP_STATUS_NOT_FOUND = 404;
-  HTTP_STATUS_SERVER_ERROR = 500;
-
 type
   TArrayEnumerator<T> = class(TEnumerator<T>)
   private
@@ -167,10 +141,16 @@ begin
 end;
 
 procedure TBluePrintWebAppService.HandleException(E: Exception; var Handled: Boolean);
+var
+  HTTPStatusException: EHTTPStatusError absolute E;
+
 begin
   Handled := True;
   Response.Content := E.Message;
-  Response.StatusCode := HTTP_STATUS_SERVER_ERROR;
+  if E is EHTTPStatusError then
+    Response.StatusCode := HTTPStatusException.StatusCode
+  else
+    Response.StatusCode := HTTP_STATUS_SERVER_ERROR;
 
   Response.SendResponse;
 end;
@@ -341,31 +321,6 @@ end;
 procedure TImageContentParser.LoadImagem;
 begin
   FFiles.Add(EmptyStr, EmptyStr, EmptyStr, WebRequest.RawContent, WebRequest.ContentLength);
-end;
-
-{ EHTTPError }
-
-constructor EHTTPError.Create(const StatusCode: Integer);
-begin
-  inherited Create('HTTP Error');
-
-  FStatusCode := StatusCode;
-end;
-
-{ EHTTPErrorNotFound }
-
-constructor EHTTPErrorNotFound.Create;
-begin
-  inherited Create(HTTP_STATUS_NOT_FOUND);
-end;
-
-{ EHTTPErrorBadRequest }
-
-constructor EHTTPErrorBadRequest.Create(const ErrorMessage: String);
-begin
-  inherited Create(HTTP_STATUS_BAD_REQUEST);
-
-  Message := ErrorMessage;
 end;
 
 { TArrayEnumerator<T> }

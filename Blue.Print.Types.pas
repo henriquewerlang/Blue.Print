@@ -23,9 +23,19 @@ type
   private
     FStatusCode: Integer;
   public
-    constructor Create(const StatusCode: Integer; const URL: String);
+    constructor Create(const StatusCode: Integer);
 
-    property StatusCode: Integer read FStatusCode;
+    property StatusCode: Integer read FStatusCode write FStatusCode;
+  end;
+
+  EHTTPErrorNotFound = class(EHTTPStatusError)
+  public
+    constructor Create;
+  end;
+
+  EHTTPErrorBadRequest = class(EHTTPStatusError)
+  public
+    constructor Create(const ErrorMessage: String);
   end;
 
   TRequestMethodAttribute = class(TCustomAttribute)
@@ -154,6 +164,13 @@ type
 
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
 
+const
+  HTTP_STATUS_OK = 200;
+  HTTP_STATUS_BAD_REQUEST = 400;
+  HTTP_STATUS_NO_CONTENT = 204;
+  HTTP_STATUS_NOT_FOUND = 404;
+  HTTP_STATUS_SERVER_ERROR = 500;
+
 implementation
 
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
@@ -174,9 +191,9 @@ end;
 
 { EHTTPStatusError }
 
-constructor EHTTPStatusError.Create(const StatusCode: Integer; const URL: String);
+constructor EHTTPStatusError.Create(const StatusCode: Integer);
 begin
-  inherited CreateFmt('HTTP Error %d for URL %s', [StatusCode, URL]);
+  inherited CreateFmt('HTTP Error %d', [StatusCode]);
 
   FStatusCode := StatusCode;
 end;
@@ -349,6 +366,22 @@ begin
 
   FName := Name;
   FValue := Value;
+end;
+
+{ EHTTPErrorNotFound }
+
+constructor EHTTPErrorNotFound.Create;
+begin
+  inherited Create(HTTP_STATUS_NOT_FOUND);
+end;
+
+{ EHTTPErrorBadRequest }
+
+constructor EHTTPErrorBadRequest.Create(const ErrorMessage: String);
+begin
+  inherited Create(HTTP_STATUS_BAD_REQUEST);
+
+  Message := ErrorMessage;
 end;
 
 end.
