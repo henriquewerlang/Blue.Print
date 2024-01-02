@@ -9,7 +9,12 @@ type
 
   TWebRequestMock = class(TWebRequest)
   private
+    FHeaders: TDictionary<String, String>;
     FStringVariables: TDictionary<Integer, String>;
+
+    function GetHeader(const HeaderName: String): String;
+
+    procedure SetHeader(const HeaderName, Value: String);
   public
     constructor Create(const Method, PathInfo: String; const Query: String = '');
 
@@ -28,6 +33,8 @@ type
     function WriteString(const AString: String): Boolean; override;
 
     procedure UpdateMethodType;
+
+    property Headers[const HeaderName: String]: String read GetHeader write SetHeader;
   end;
 
   TWebResponseMock = class(TWebResponse)
@@ -77,6 +84,7 @@ implementation
 
 constructor TWebRequestMock.Create(const Method, PathInfo, Query: String);
 begin
+  FHeaders := TDictionary<String, String>.Create;
   FStringVariables := TDictionary<Integer, String>.Create;
 
   FStringVariables.Add(METHOD_INDEX, Method);
@@ -90,6 +98,8 @@ end;
 
 destructor TWebRequestMock.Destroy;
 begin
+  FHeaders.Free;
+
   FStringVariables.Free;
 
   inherited;
@@ -103,6 +113,13 @@ end;
 function TWebRequestMock.GetFieldByName(const Name: String): String;
 begin
   Result := EmptyStr;
+
+  FHeaders.TryGetValue(Name, Result);
+end;
+
+function TWebRequestMock.GetHeader(const HeaderName: String): String;
+begin
+  Result := FHeaders[HeaderName];
 end;
 
 function TWebRequestMock.GetIntegerVariable(Index: Integer): TIntegerVariable;
@@ -128,6 +145,11 @@ end;
 function TWebRequestMock.ReadString(Count: Integer): String;
 begin
   Result := EmptyStr;
+end;
+
+procedure TWebRequestMock.SetHeader(const HeaderName, Value: String);
+begin
+  FHeaders.AddOrSetValue(HeaderName, Value);
 end;
 
 function TWebRequestMock.TranslateURI(const URI: String): String;
