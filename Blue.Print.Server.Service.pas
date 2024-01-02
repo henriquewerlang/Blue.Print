@@ -39,6 +39,7 @@ type
     FOnFindService: TFindService;
     FRequest: TWebRequest;
     FResponse: TWebResponse;
+    FRttiContext: TRttiContext;
     FSerializer: IBluePrintSerializer;
 
     function FindService(const ServiceName: String): TValue;
@@ -61,8 +62,12 @@ type
     // IWebDispatcherAccess
     function Request: TWebRequest;
     function Response: TWebResponse;
+
+    property RttiContext: TRttiContext read FRttiContext;
   public
     constructor Create(AOwner: TComponent); override;
+
+    destructor Destroy; override;
 
     property Serializer: IBluePrintSerializer read GetSerializer write FSerializer;
   published
@@ -115,6 +120,14 @@ begin
   inherited;
 
   FActive := True;
+  FRttiContext := TRttiContext.Create;
+end;
+
+destructor TBluePrintWebAppService.Destroy;
+begin
+  FRttiContext.Free;
+
+  inherited;
 end;
 
 function TBluePrintWebAppService.FindService(const ServiceName: String): TValue;
@@ -250,8 +263,7 @@ begin
     if Service.IsEmpty then
       raise EHTTPErrorNotFound.Create;
 
-    var Context := TRttiContext.Create;
-    var ServiceType := Context.GetType(Service.TypeInfo);
+    var ServiceType := RttiContext.GetType(Service.TypeInfo);
 
     Method := ServiceType.GetMethod(Params[METHOD_NAME_INDEX]);
 
