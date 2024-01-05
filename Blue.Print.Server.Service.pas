@@ -75,18 +75,6 @@ implementation
 
 uses System.Math, System.NetConsts, System.Generics.Collections, Blue.Print.Serializer;
 
-type
-  TArrayEnumerator<T> = class(TEnumerator<T>)
-  private
-    FCurrent: NativeInt;
-    FValue: TArray<T>;
-  protected
-    function DoGetCurrent: T; override;
-    function DoMoveNext: Boolean; override;
-  public
-    constructor Create(const Value: TArray<T>);
-  end;
-
 { TBluePrintWebAppService }
 
 constructor TBluePrintWebAppService.Create(AOwner: TComponent);
@@ -321,26 +309,6 @@ end;
 procedure TImageContentParser.LoadImagem;
 begin
   FFiles.Add(EmptyStr, EmptyStr, EmptyStr, WebRequest.RawContent, WebRequest.ContentLength);
-end;
-
-{ TArrayEnumerator<T> }
-
-constructor TArrayEnumerator<T>.Create(const Value: TArray<T>);
-begin
-  FCurrent := -1;
-  FValue := Value;
-end;
-
-function TArrayEnumerator<T>.DoGetCurrent: T;
-begin
-  Result := FValue[FCurrent];
-end;
-
-function TArrayEnumerator<T>.DoMoveNext: Boolean;
-begin
-  Inc(FCurrent);
-
-  Result := FCurrent < Length(FValue);
 end;
 
 { EFindServiceError }
