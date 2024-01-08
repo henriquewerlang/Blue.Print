@@ -68,8 +68,13 @@ implementation
 
 uses System.Classes, System.SysUtils, System.Generics.Collections{$IFDEF DCC}, Xml.XMLDoc{$ENDIF};
 
-{$IFDEF PAS2JS}
 type
+  TValueHelper = record helper for TValue
+  public
+    function ToString(const Format: TFormatSettings): String; overload;
+  end;
+
+{$IFDEF PAS2JS}
   TJSObjectHelper = class helper for TJSObject
   public
     procedure AddPair(const Name: String; const Value: JSValue);
@@ -703,6 +708,27 @@ begin
     else Node.NodeValue := inherited Serialize(Value.AsType<TValue>);
   end;
 {$ENDIF}
+end;
+
+{ TValueHelper }
+
+function TValueHelper.ToString(const Format: TFormatSettings): String;
+begin
+  case TypeInfo^.Kind of
+    tkFloat:
+    begin
+      if TypeInfo = System.TypeInfo(TDate) then
+        Exit(DateToStr(AsExtended, Format))
+      else if TypeInfo = System.TypeInfo(TTime) then
+        Exit(TimeToStr(AsExtended, Format))
+      else if TypeInfo = System.TypeInfo(TDateTime) then
+        Exit(DateTimeToStr(AsExtended, Format))
+      else
+        Exit(FloatToStr(AsExtended, Format));
+    end;
+  end;
+
+  Result := ToString;
 end;
 
 end.

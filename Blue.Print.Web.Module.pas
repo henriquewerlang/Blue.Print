@@ -75,6 +75,35 @@ implementation
 
 uses System.Math, System.NetConsts, System.Generics.Collections, Blue.Print.Serializer;
 
+type
+  TArrayHelper = class helper for TArray
+  public
+    class function IndexOf<T>(const Values: array of T; const Item: T): NativeInt;
+  end;
+
+  TListHelper = class helper for TList<TRttiParameter>
+  public
+    function IsEmpty: Boolean;
+  end;
+
+{ TArrayHelper }
+
+class function TArrayHelper.IndexOf<T>(const Values: array of T; const Item: T): NativeInt;
+begin
+  for var A := Low(Values) to High(Values) do
+    if Values[A] = Item then
+      Exit(A);
+
+  Result := -1;
+end;
+
+{ TListHelper }
+
+function TListHelper.IsEmpty: Boolean;
+begin
+  Result := Count = 0;
+end;
+
 { TBluePrintWebModule }
 
 constructor TBluePrintWebModule.Create(AOwner: TComponent);
