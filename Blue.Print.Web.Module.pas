@@ -213,6 +213,9 @@ var
       for var A := 0 to Pred(Request.QueryFields.Count) do
         LoadParameterValue(FindParameterByName(Request.QueryFields.Names[A]), Request.QueryFields.ValueFromIndex[A]);
 
+      if Request.ContentLength > 0 then
+        LoadParameterValue(Parameters.First, Request.Content);
+
       if not Parameters.IsEmpty then
         raise EHTTPErrorBadRequest.Create('Parameter count mismatch!');
     finally
@@ -224,7 +227,7 @@ var
 
   function GetParameterCount: Integer;
   begin
-    Result := Request.QueryFields.Count + Length(Params) - PARAMS_INDEX;
+    Result := Request.QueryFields.Count + Length(Params) - PARAMS_INDEX + Min(1, Request.ContentLength);
   end;
 
   function FindMethod: TRttiMethod;
@@ -236,7 +239,7 @@ var
     begin
       Result := Method;
 
-      if Length(Method.GetParameters) in [ParameterCount{, Succ(ParameterCount)}] then
+      if Length(Method.GetParameters) = ParameterCount then
         Exit(Method);
     end;
   end;

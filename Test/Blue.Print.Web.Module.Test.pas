@@ -73,6 +73,10 @@ type
     procedure WhenIsRaisedANotFoundErrorMustLoadTheStatusCodeOfTheException;
     [Test]
     procedure WhenTheProcedureHasMoreTheOneVersionMustCheckTheParamCountToCallTheCorrectProcedure;
+    [Test]
+    procedure WhenTheRequestHasABodyMustCallTheProcedureWithOneParam;
+    [Test]
+    procedure WhenTheRequestHasABodyMustLoadTheBodyValueInTheLastParamFromTheMethod;
   end;
 
   TMyService = class
@@ -357,6 +361,34 @@ begin
     begin
       FWebAppServices.HandleRequest;
     end, EHTTPErrorBadRequest);
+end;
+
+procedure TBluePrintWebModuleTest.WhenTheRequestHasABodyMustCallTheProcedureWithOneParam;
+begin
+  FSerializer.DeserializeValues := ['Value1'];
+  var Request := TWebRequestMock.Create('GET', '/MyService/SameName');
+  Request.ContentLength := 25;
+
+  InitContext(TWebResponseMock.Create(Request));
+
+  FWebAppServices.HandleRequest;
+
+  Assert.AreEqual('SameName', FMyService.ProcedureCalled);
+  Assert.AreEqual('Value1', FMyService.ParamsOfProcedureCalled);
+end;
+
+procedure TBluePrintWebModuleTest.WhenTheRequestHasABodyMustLoadTheBodyValueInTheLastParamFromTheMethod;
+begin
+  FSerializer.DeserializeValues := ['Value1', 'Value2'];
+  var Request := TWebRequestMock.Create('GET', '/MyService/SameName/P1');
+  Request.ContentLength := 25;
+
+  InitContext(TWebResponseMock.Create(Request));
+
+  FWebAppServices.HandleRequest;
+
+  Assert.AreEqual('SameName', FMyService.ProcedureCalled);
+  Assert.AreEqual('Value1,Value2', FMyService.ParamsOfProcedureCalled);
 end;
 
 procedure TBluePrintWebModuleTest.WhenTheRequestHasPathParamsMustLoadThisValuesInTheParamsOfTheProcedureCalled;

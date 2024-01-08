@@ -12,13 +12,10 @@ type
     FHeaders: TDictionary<String, String>;
     FStringVariables: TDictionary<Integer, String>;
 
-    function GetBody: String;
     function GetHeader(const HeaderName: String): String;
-    function GetQueryFields: String;
 
-    procedure SetBody(const Value: String);
     procedure SetHeader(const HeaderName, Value: String);
-    procedure SetQueryFields(const Value: String);
+    procedure SetIntegerVariable(const Index: Integer; const Value: TIntegerVariable);
   public
     constructor Create(const Method, PathInfo: String);
 
@@ -36,11 +33,12 @@ type
     function WriteHeaders(StatusCode: Integer; const ReasonString, Headers: String): Boolean; override;
     function WriteString(const AString: String): Boolean; override;
 
+    procedure SetStringVariable(const Index: Integer; const Value: String);
     procedure UpdateMethodType;
 
-    property Body: String read GetBody write SetBody;
+    property ContentLength: TIntegerVariable index 16 read GetIntegerVariable write SetIntegerVariable;
     property Headers[const HeaderName: String]: String read GetHeader write SetHeader;
-    property QueryFields: String read GetQueryFields write SetQueryFields;
+    property QueryFields: String index 3 read GetStringVariable write SetStringVariable;
   end;
 
   TWebResponseMock = class(TWebResponse)
@@ -77,14 +75,12 @@ type
     procedure SendStream(AStream: TStream); override;
   end;
 
+implementation
+
 const
-  CONTENT_LENGTH_INDEX = 16;
   CONTENT_TYPE_INDEX = 15;
   METHOD_INDEX = 0;
-  QUERY_INDEX = 3;
   PATH_INFO_INDEX = 4;
-
-implementation
 
 { TWebRequestMock }
 
@@ -109,11 +105,6 @@ begin
   inherited;
 end;
 
-function TWebRequestMock.GetBody: String;
-begin
-
-end;
-
 function TWebRequestMock.GetDateVariable(Index: Integer): TDateTime;
 begin
   Result := 0;
@@ -133,12 +124,7 @@ end;
 
 function TWebRequestMock.GetIntegerVariable(Index: Integer): TIntegerVariable;
 begin
-  Result := 0;
-end;
-
-function TWebRequestMock.GetQueryFields: String;
-begin
-  FStringVariables.TryGetValue(QUERY_INDEX, Result);
+  Result := StrToInt64Def(GetStringVariable(Index), 0);
 end;
 
 function TWebRequestMock.GetRawContent: TBytes;
@@ -148,7 +134,7 @@ end;
 
 function TWebRequestMock.GetStringVariable(Index: Integer): String;
 begin
-  Result := FStringVariables[Index];
+  FStringVariables.TryGetValue(Index, Result);
 end;
 
 function TWebRequestMock.ReadClient(var Buffer; Count: Integer): Integer;
@@ -161,19 +147,19 @@ begin
   Result := EmptyStr;
 end;
 
-procedure TWebRequestMock.SetBody(const Value: String);
-begin
-
-end;
-
 procedure TWebRequestMock.SetHeader(const HeaderName, Value: String);
 begin
   FHeaders.AddOrSetValue(HeaderName, Value);
 end;
 
-procedure TWebRequestMock.SetQueryFields(const Value: String);
+procedure TWebRequestMock.SetIntegerVariable(const Index: Integer; const Value: TIntegerVariable);
 begin
-  FStringVariables.AddOrSetValue(QUERY_INDEX, Query);
+  FStringVariables.AddOrSetValue(Index, Value.ToString);
+end;
+
+procedure TWebRequestMock.SetStringVariable(const Index: Integer; const Value: String);
+begin
+  FStringVariables.AddOrSetValue(Index, Value);
 end;
 
 function TWebRequestMock.TranslateURI(const URI: String): String;
