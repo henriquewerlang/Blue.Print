@@ -12,11 +12,15 @@ type
     FHeaders: TDictionary<String, String>;
     FStringVariables: TDictionary<Integer, String>;
 
+    function GetBody: String;
     function GetHeader(const HeaderName: String): String;
+    function GetQueryFields: String;
 
+    procedure SetBody(const Value: String);
     procedure SetHeader(const HeaderName, Value: String);
+    procedure SetQueryFields(const Value: String);
   public
-    constructor Create(const Method, PathInfo: String; const Query: String = '');
+    constructor Create(const Method, PathInfo: String);
 
     destructor Destroy; override;
 
@@ -34,7 +38,9 @@ type
 
     procedure UpdateMethodType;
 
+    property Body: String read GetBody write SetBody;
     property Headers[const HeaderName: String]: String read GetHeader write SetHeader;
+    property QueryFields: String read GetQueryFields write SetQueryFields;
   end;
 
   TWebResponseMock = class(TWebResponse)
@@ -82,7 +88,7 @@ implementation
 
 { TWebRequestMock }
 
-constructor TWebRequestMock.Create(const Method, PathInfo, Query: String);
+constructor TWebRequestMock.Create(const Method, PathInfo: String);
 begin
   FHeaders := TDictionary<String, String>.Create;
   FStringVariables := TDictionary<Integer, String>.Create;
@@ -90,8 +96,6 @@ begin
   FStringVariables.Add(METHOD_INDEX, Method);
 
   FStringVariables.Add(PATH_INFO_INDEX, PathInfo);
-
-  FStringVariables.Add(QUERY_INDEX, Query);
 
   inherited Create;
 end;
@@ -103,6 +107,11 @@ begin
   FStringVariables.Free;
 
   inherited;
+end;
+
+function TWebRequestMock.GetBody: String;
+begin
+
 end;
 
 function TWebRequestMock.GetDateVariable(Index: Integer): TDateTime;
@@ -127,6 +136,11 @@ begin
   Result := 0;
 end;
 
+function TWebRequestMock.GetQueryFields: String;
+begin
+  FStringVariables.TryGetValue(QUERY_INDEX, Result);
+end;
+
 function TWebRequestMock.GetRawContent: TBytes;
 begin
   Result := nil;
@@ -147,9 +161,19 @@ begin
   Result := EmptyStr;
 end;
 
+procedure TWebRequestMock.SetBody(const Value: String);
+begin
+
+end;
+
 procedure TWebRequestMock.SetHeader(const HeaderName, Value: String);
 begin
   FHeaders.AddOrSetValue(HeaderName, Value);
+end;
+
+procedure TWebRequestMock.SetQueryFields(const Value: String);
+begin
+  FStringVariables.AddOrSetValue(QUERY_INDEX, Query);
 end;
 
 function TWebRequestMock.TranslateURI(const URI: String): String;

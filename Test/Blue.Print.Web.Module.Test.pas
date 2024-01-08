@@ -71,6 +71,8 @@ type
     procedure WhenHandleAHTTPExceptionCanChangeTheStatusCodeFromTheResponse;
     [Test]
     procedure WhenIsRaisedANotFoundErrorMustLoadTheStatusCodeOfTheException;
+    [Test]
+    procedure WhenTheProcedureHasMoreTheOneVersionMustCheckTheParamCountToCallTheCorrectProcedure;
   end;
 
   TMyService = class
@@ -82,6 +84,10 @@ type
 
     procedure MyProc;
     procedure MyProc2(const Param1, Param2: String);
+    procedure SameName; overload;
+    procedure SameName(const Param1: String); overload;
+    procedure SameName(const Param1, Param2: String); overload;
+    procedure SameName(const Param1, Param2, Param3: String); overload;
 
     property ParamsOfProcedureCalled: String read FParamsOfProcedureCalled write FParamsOfProcedureCalled;
     property ProcedureCalled: String read FProcedureCalled write FProcedureCalled;
@@ -175,8 +181,10 @@ end;
 procedure TBluePrintWebModuleTest.IfTheQueryFieldIsRepeatedMustReplaceTheValueAndDontRaiseAnyError;
 begin
   FSerializer.DeserializeValues := ['Value1', 'Value2', 'Value3', 'Value4'];
+  var Request := TWebRequestMock.Create('GET', '/MyService/MyProc2');
+  Request.QueryFields := 'Param1=V&Param2=V&Param2=V&Param2=V';
 
-  InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/MyService/MyProc2', 'Param1=V&Param2=V&Param2=V&Param2=V')));
+  InitContext(TWebResponseMock.Create(Request));
 
   FWebAppServices.HandleRequest;
 
@@ -324,6 +332,20 @@ begin
   Assert.AreEqual<Integer>(204, FRequest.StatusCode);
 end;
 
+procedure TBluePrintWebModuleTest.WhenTheProcedureHasMoreTheOneVersionMustCheckTheParamCountToCallTheCorrectProcedure;
+begin
+  FSerializer.DeserializeValues := ['Value1', 'Value2'];
+  var Request := TWebRequestMock.Create('GET', '/MyService/SameName');
+  Request.QueryFields := 'Param1=V&Param2=V';
+
+  InitContext(TWebResponseMock.Create(Request));
+
+  FWebAppServices.HandleRequest;
+
+  Assert.AreEqual('SameName', FMyService.ProcedureCalled);
+  Assert.AreEqual('Value1,Value2', FMyService.ParamsOfProcedureCalled);
+end;
+
 procedure TBluePrintWebModuleTest.WhenTheRequestDontHaveEnoughParamsMustRaiseABadRequestError;
 begin
   FSerializer.DeserializeValues := ['Value1'];
@@ -399,8 +421,10 @@ end;
 procedure TBluePrintWebModuleTest.WhenTheRequestSendQueryFieldsMustLoadTheParamValueHasExpected;
 begin
   FSerializer.DeserializeValues := ['Value1', 'Value2'];
+  var Request := TWebRequestMock.Create('GET', '/MyService/MyProc2');
+  Request.QueryFields := 'Param1=V&Param2=V';
 
-  InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/MyService/MyProc2', 'Param1=V&Param2=V')));
+  InitContext(TWebResponseMock.Create(Request));
 
   FWebAppServices.HandleRequest;
 
@@ -430,6 +454,29 @@ procedure TMyService.MyProc2(const Param1, Param2: String);
 begin
   FProcedureCalled := 'MyProc2';
   ParamsOfProcedureCalled := Param1 + ',' + Param2;
+end;
+
+procedure TMyService.SameName;
+begin
+  FProcedureCalled := 'SameName';
+end;
+
+procedure TMyService.SameName(const Param1: String);
+begin
+  FProcedureCalled := 'SameName';
+  ParamsOfProcedureCalled := Param1;
+end;
+
+procedure TMyService.SameName(const Param1, Param2: String);
+begin
+  FProcedureCalled := 'SameName';
+  ParamsOfProcedureCalled := Param1 + ',' + Param2;
+end;
+
+procedure TMyService.SameName(const Param1, Param2, Param3: String);
+begin
+  FProcedureCalled := 'SameName';
+  ParamsOfProcedureCalled := Param1 + ',' + Param2 + ',' + Param3;
 end;
 
 { TSerializerMock }

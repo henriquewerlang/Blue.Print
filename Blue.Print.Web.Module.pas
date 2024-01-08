@@ -150,9 +150,11 @@ const
   SERVICE_NAME_INDEX = 0;
 
 var
+  Method: TRttiMethod;
+
   Params: TArray<String>;
 
-  Method: TRttiMethod;
+  ServiceType: TRttiType;
 
   function IsValidRequest: Boolean;
   begin
@@ -220,6 +222,25 @@ var
     end;
   end;
 
+  function GetParameterCount: Integer;
+  begin
+    Result := Request.QueryFields.Count + Length(Params) - PARAMS_INDEX;
+  end;
+
+  function FindMethod: TRttiMethod;
+  begin
+    var ParameterCount := GetParameterCount;
+    Result := nil;
+
+    for var Method in ServiceType.GetMethods(Params[METHOD_NAME_INDEX]) do
+    begin
+      Result := Method;
+
+      if Length(Method.GetParameters) in [ParameterCount{, Succ(ParameterCount)}] then
+        Exit(Method);
+    end;
+  end;
+
 begin
   Params := Request.PathInfo.Split(['/'], TStringSplitOptions.ExcludeEmpty);
   Result := IsValidRequest;
@@ -231,9 +252,9 @@ begin
     if Service.IsEmpty then
       raise EHTTPErrorNotFound.Create;
 
-    var ServiceType := RttiContext.GetType(Service.TypeInfo);
+    ServiceType := RttiContext.GetType(Service.TypeInfo);
 
-    Method := ServiceType.GetMethod(Params[METHOD_NAME_INDEX]);
+    Method := FindMethod;
 
     if not Assigned(Method) then
       raise EHTTPErrorNotFound.Create;
