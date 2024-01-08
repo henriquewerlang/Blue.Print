@@ -4,8 +4,8 @@
 
 uses
   Test.Insight.Framework,
-  Blue.Print.Server.Service in '..\Blue.Print.Server.Service.pas',
-  Blue.Print.Server.Service.Test in 'Blue.Print.Server.Service.Test.pas',
+  Blue.Print.Web.Module in '..\Blue.Print.Web.Module.pas',
+  Blue.Print.Web.Module.Test in 'Blue.Print.Web.Module.Test.pas',
   Blue.Print.Remote.Service in '..\Blue.Print.Remote.Service.pas',
   Blue.Print.Remote.Service.Test in 'Blue.Print.Remote.Service.Test.pas',
   Blue.Print.Types in '..\Blue.Print.Types.pas',

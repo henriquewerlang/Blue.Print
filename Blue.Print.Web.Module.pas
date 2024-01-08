@@ -1,4 +1,4 @@
-﻿unit Blue.Print.Server.Service;
+﻿unit Blue.Print.Web.Module;
 
 interface
 
@@ -14,7 +14,7 @@ type
 
   TFindService = reference to function(const ServiceName: String): TValue;
 
-  TBluePrintWebAppService = class(TComponent, IGetWebAppServices, IWebAppServices, IWebExceptionHandler, IWebDispatcherAccess)
+  TBluePrintWebModule = class(TComponent, IGetWebAppServices, IWebAppServices, IWebExceptionHandler, IWebDispatcherAccess)
   private
     FActive: Boolean;
     FOnFindService: TFindService;
@@ -75,9 +75,9 @@ implementation
 
 uses System.Math, System.NetConsts, System.Generics.Collections, Blue.Print.Serializer;
 
-{ TBluePrintWebAppService }
+{ TBluePrintWebModule }
 
-constructor TBluePrintWebAppService.Create(AOwner: TComponent);
+constructor TBluePrintWebModule.Create(AOwner: TComponent);
 begin
   inherited;
 
@@ -85,14 +85,14 @@ begin
   FRttiContext := TRttiContext.Create;
 end;
 
-destructor TBluePrintWebAppService.Destroy;
+destructor TBluePrintWebModule.Destroy;
 begin
   FRttiContext.Free;
 
   inherited;
 end;
 
-function TBluePrintWebAppService.FindService(const ServiceName: String): TValue;
+function TBluePrintWebModule.FindService(const ServiceName: String): TValue;
 begin
   if Assigned(FOnFindService) then
     Result := FOnFindService(ServiceName)
@@ -100,22 +100,22 @@ begin
     raise EFindServiceError.Create;
 end;
 
-procedure TBluePrintWebAppService.FinishContext;
+procedure TBluePrintWebModule.FinishContext;
 begin
 
 end;
 
-function TBluePrintWebAppService.GetActive: Boolean;
+function TBluePrintWebModule.GetActive: Boolean;
 begin
   Result := FActive;
 end;
 
-function TBluePrintWebAppService.GetExceptionHandler: TObject;
+function TBluePrintWebModule.GetExceptionHandler: TObject;
 begin
   Result := Self;
 end;
 
-function TBluePrintWebAppService.GetSerializer: IBluePrintSerializer;
+function TBluePrintWebModule.GetSerializer: IBluePrintSerializer;
 begin
   if not Assigned(FSerializer) then
     FSerializer := TBluePrintJsonSerializer.Create;
@@ -123,12 +123,12 @@ begin
   Result := FSerializer;
 end;
 
-function TBluePrintWebAppService.GetWebAppServices: IWebAppServices;
+function TBluePrintWebModule.GetWebAppServices: IWebAppServices;
 begin
   Result := Self;
 end;
 
-procedure TBluePrintWebAppService.HandleException(E: Exception; var Handled: Boolean);
+procedure TBluePrintWebModule.HandleException(E: Exception; var Handled: Boolean);
 var
   HTTPStatusException: EHTTPStatusError absolute E;
 
@@ -143,7 +143,7 @@ begin
   Response.SendResponse;
 end;
 
-function TBluePrintWebAppService.HandleRequest: Boolean;
+function TBluePrintWebModule.HandleRequest: Boolean;
 const
   METHOD_NAME_INDEX = 1;
   PARAMS_INDEX = 2;
@@ -254,18 +254,18 @@ begin
   end;
 end;
 
-procedure TBluePrintWebAppService.InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);
+procedure TBluePrintWebModule.InitContext(WebModule: TComponent; Request: TWebRequest; Response: TWebResponse);
 begin
   FRequest := Request;
   FResponse := Response;
 end;
 
-function TBluePrintWebAppService.Request: TWebRequest;
+function TBluePrintWebModule.Request: TWebRequest;
 begin
   Result := FRequest;
 end;
 
-function TBluePrintWebAppService.Response: TWebResponse;
+function TBluePrintWebModule.Response: TWebResponse;
 begin
   Result := FResponse;
 end;

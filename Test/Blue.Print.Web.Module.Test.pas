@@ -1,17 +1,17 @@
-﻿unit Blue.Print.Server.Service.Test;
+﻿unit Blue.Print.Web.Module.Test;
 
 interface
 
-uses System.Classes, System.Rtti, System.TypInfo, System.Generics.Collections, Test.Insight.Framework, Blue.Print.Server.Service, Web.HTTPApp, Blue.Print.Types;
+uses System.Classes, System.Rtti, System.TypInfo, System.Generics.Collections, Test.Insight.Framework, Blue.Print.Web.Module, Web.HTTPApp, Blue.Print.Types;
 
 type
   TMyService = class;
   TSerializerMock = class;
 
   [TestFixture]
-  TBluePrintWebAppServiceTest = class
+  TBluePrintWebModuleTest = class
   private
-    FBluePrintService: TBluePrintWebAppService;
+    FBluePrintWebModule: TBluePrintWebModule;
     FMyService: TMyService;
     FRequest: TWebResponse;
     FSerializer: TSerializerMock;
@@ -110,12 +110,12 @@ implementation
 
 uses System.SysUtils, Blue.Print.Request.Mock;
 
-{ TBluePrintWebAppServiceTest }
+{ TBluePrintWebModuleTest }
 
-procedure TBluePrintWebAppServiceTest.AfterHandleTheExceptionMustSendTheResponseForTheClient;
+procedure TBluePrintWebModuleTest.AfterHandleTheExceptionMustSendTheResponseForTheClient;
 begin
   var Handled := False;
-  var Handler := FBluePrintService as IWebExceptionHandler;
+  var Handler := FBluePrintWebModule as IWebExceptionHandler;
   var MyException := Exception.Create('Error');
 
   InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', EmptyStr)));
@@ -127,7 +127,7 @@ begin
   MyException.Free;
 end;
 
-function TBluePrintWebAppServiceTest.FindService(const ServiceName: String): TValue;
+function TBluePrintWebModuleTest.FindService(const ServiceName: String): TValue;
 begin
   if ServiceName = 'MyService' then
     Result := FMyService
@@ -135,9 +135,9 @@ begin
     Result := TValue.Empty;
 end;
 
-procedure TBluePrintWebAppServiceTest.IfTheEventOnFindServiceIsntLoadedMustRaiseAnError;
+procedure TBluePrintWebModuleTest.IfTheEventOnFindServiceIsntLoadedMustRaiseAnError;
 begin
-  FBluePrintService.OnFindService := nil;
+  FBluePrintWebModule.OnFindService := nil;
 
   InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/MyService/MyProc')));
 
@@ -148,7 +148,7 @@ begin
     end, EFindServiceError);
 end;
 
-procedure TBluePrintWebAppServiceTest.IfTheMethodCallIsAFunctionMustLoadTheContentWithTheValueReturnedByTheFunction;
+procedure TBluePrintWebModuleTest.IfTheMethodCallIsAFunctionMustLoadTheContentWithTheValueReturnedByTheFunction;
 begin
   FSerializer.SerializeValues := ['abc'];
 
@@ -163,7 +163,7 @@ begin
   StreamReader.Free;
 end;
 
-procedure TBluePrintWebAppServiceTest.IfTheMethodIsFoundMustCallTheProcedure;
+procedure TBluePrintWebModuleTest.IfTheMethodIsFoundMustCallTheProcedure;
 begin
   InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/MyService/MyProc')));
 
@@ -172,7 +172,7 @@ begin
   Assert.AreEqual('MyProc', FMyService.ProcedureCalled);
 end;
 
-procedure TBluePrintWebAppServiceTest.IfTheQueryFieldIsRepeatedMustReplaceTheValueAndDontRaiseAnyError;
+procedure TBluePrintWebModuleTest.IfTheQueryFieldIsRepeatedMustReplaceTheValueAndDontRaiseAnyError;
 begin
   FSerializer.DeserializeValues := ['Value1', 'Value2', 'Value3', 'Value4'];
 
@@ -184,17 +184,17 @@ begin
   Assert.AreEqual('Value1,Value4', FMyService.ParamsOfProcedureCalled);
 end;
 
-procedure TBluePrintWebAppServiceTest.InitContext(const Request: TWebResponse);
+procedure TBluePrintWebModuleTest.InitContext(const Request: TWebResponse);
 begin
   FRequest := Request;
 
-  FWebAppServices.InitContext(FBluePrintService, FRequest.HTTPRequest, FRequest);
+  FWebAppServices.InitContext(FBluePrintWebModule, FRequest.HTTPRequest, FRequest);
 end;
 
-procedure TBluePrintWebAppServiceTest.OnceTheExceptionIsHandledTheStatusCodeMustBe500;
+procedure TBluePrintWebModuleTest.OnceTheExceptionIsHandledTheStatusCodeMustBe500;
 begin
   var Handled := False;
-  var Handler := FBluePrintService as IWebExceptionHandler;
+  var Handler := FBluePrintWebModule as IWebExceptionHandler;
   var MyException := Exception.Create('Error');
 
   InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', EmptyStr)));
@@ -206,32 +206,32 @@ begin
   MyException.Free;
 end;
 
-procedure TBluePrintWebAppServiceTest.Setup;
+procedure TBluePrintWebModuleTest.Setup;
 begin
-  FBluePrintService := TBluePrintWebAppService.Create(nil);
-  FBluePrintService.OnFindService := FindService;
+  FBluePrintWebModule := TBluePrintWebModule.Create(nil);
+  FBluePrintWebModule.OnFindService := FindService;
   FMyService := TMyService.Create;
   FSerializer := TSerializerMock.Create;
-  FWebAppServices := FBluePrintService;
+  FWebAppServices := FBluePrintWebModule;
 
-  FBluePrintService.Serializer := FSerializer;
+  FBluePrintWebModule.Serializer := FSerializer;
 end;
 
-procedure TBluePrintWebAppServiceTest.TearDown;
+procedure TBluePrintWebModuleTest.TearDown;
 begin
   FWebAppServices := nil;
 
-  FBluePrintService.Free;
+  FBluePrintWebModule.Free;
 
   FMyService.Free;
 
   FreeAndNil(FRequest);
 end;
 
-procedure TBluePrintWebAppServiceTest.TheExceptionMessageMustBeInTheContentOfTheResponse;
+procedure TBluePrintWebModuleTest.TheExceptionMessageMustBeInTheContentOfTheResponse;
 begin
   var Handled := False;
-  var Handler := FBluePrintService as IWebExceptionHandler;
+  var Handler := FBluePrintWebModule as IWebExceptionHandler;
   var MyException := Exception.Create('Error');
 
   InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', EmptyStr)));
@@ -243,10 +243,10 @@ begin
   MyException.Free;
 end;
 
-procedure TBluePrintWebAppServiceTest.WhenAnExceptionIsHandledMustReturnTrueInTheHandleParam;
+procedure TBluePrintWebModuleTest.WhenAnExceptionIsHandledMustReturnTrueInTheHandleParam;
 begin
   var Handled := False;
-  var Handler := FBluePrintService as IWebExceptionHandler;
+  var Handler := FBluePrintWebModule as IWebExceptionHandler;
   var MyException := Exception.Create('Error');
 
   InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', EmptyStr)));
@@ -258,7 +258,7 @@ begin
   MyException.Free;
 end;
 
-procedure TBluePrintWebAppServiceTest.WhenDontFindTheServiceMustRaiseENotFoundError;
+procedure TBluePrintWebModuleTest.WhenDontFindTheServiceMustRaiseENotFoundError;
 begin
   InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/NotService/MyProc')));
 
@@ -269,15 +269,15 @@ begin
     end, EHTTPErrorNotFound);
 end;
 
-procedure TBluePrintWebAppServiceTest.WhenGetTheExceptionHandlerMustReturnTheCurrentInstanceOfTheWebService;
+procedure TBluePrintWebModuleTest.WhenGetTheExceptionHandlerMustReturnTheCurrentInstanceOfTheWebService;
 begin
-  Assert.AreEqual<TObject>(FBluePrintService, FWebAppServices.ExceptionHandler);
+  Assert.AreEqual<TObject>(FBluePrintWebModule, FWebAppServices.ExceptionHandler);
 end;
 
-procedure TBluePrintWebAppServiceTest.WhenHandleAHTTPExceptionCanChangeTheStatusCodeFromTheResponse;
+procedure TBluePrintWebModuleTest.WhenHandleAHTTPExceptionCanChangeTheStatusCodeFromTheResponse;
 begin
   var Handled := False;
-  var Handler := FBluePrintService as IWebExceptionHandler;
+  var Handler := FBluePrintWebModule as IWebExceptionHandler;
   var MyException := EHTTPStatusError.Create(525);
 
   InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', EmptyStr)));
@@ -289,10 +289,10 @@ begin
   MyException.Free;
 end;
 
-procedure TBluePrintWebAppServiceTest.WhenIsRaisedANotFoundErrorMustLoadTheStatusCodeOfTheException;
+procedure TBluePrintWebModuleTest.WhenIsRaisedANotFoundErrorMustLoadTheStatusCodeOfTheException;
 begin
   var Handled := False;
-  var Handler := FBluePrintService as IWebExceptionHandler;
+  var Handler := FBluePrintWebModule as IWebExceptionHandler;
   var MyException := EHTTPErrorNotFound.Create;
 
   InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', EmptyStr)));
@@ -304,7 +304,7 @@ begin
   MyException.Free;
 end;
 
-procedure TBluePrintWebAppServiceTest.WhenTheMethodCalledDontExistsMustRaiseENotFoundError;
+procedure TBluePrintWebModuleTest.WhenTheMethodCalledDontExistsMustRaiseENotFoundError;
 begin
   InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/MyService/NoProc')));
 
@@ -315,7 +315,7 @@ begin
     end, EHTTPErrorNotFound);
 end;
 
-procedure TBluePrintWebAppServiceTest.WhenTheMethodCalledIsAProcedureMustReturnTheStatusCode204;
+procedure TBluePrintWebModuleTest.WhenTheMethodCalledIsAProcedureMustReturnTheStatusCode204;
 begin
   InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/MyService/MyProc')));
 
@@ -324,7 +324,7 @@ begin
   Assert.AreEqual<Integer>(204, FRequest.StatusCode);
 end;
 
-procedure TBluePrintWebAppServiceTest.WhenTheRequestDontHaveEnoughParamsMustRaiseABadRequestError;
+procedure TBluePrintWebModuleTest.WhenTheRequestDontHaveEnoughParamsMustRaiseABadRequestError;
 begin
   FSerializer.DeserializeValues := ['Value1'];
 
@@ -337,7 +337,7 @@ begin
     end, EHTTPErrorBadRequest);
 end;
 
-procedure TBluePrintWebAppServiceTest.WhenTheRequestHasPathParamsMustLoadThisValuesInTheParamsOfTheProcedureCalled;
+procedure TBluePrintWebModuleTest.WhenTheRequestHasPathParamsMustLoadThisValuesInTheParamsOfTheProcedureCalled;
 begin
   FSerializer.DeserializeValues := ['Value1', 'Value2'];
 
@@ -349,7 +349,7 @@ begin
   Assert.AreEqual('Value1,Value2', FMyService.ParamsOfProcedureCalled);
 end;
 
-procedure TBluePrintWebAppServiceTest.WhenTheRequestHasTooMuchParamsMustRaiseABadRequestError;
+procedure TBluePrintWebModuleTest.WhenTheRequestHasTooMuchParamsMustRaiseABadRequestError;
 begin
   FSerializer.DeserializeValues := ['Value1', 'Value2'];
 
@@ -362,7 +362,7 @@ begin
     end, EHTTPErrorBadRequest);
 end;
 
-procedure TBluePrintWebAppServiceTest.WhenTheRequestHasTwoOrMoreParamsTheHandlerMustReturnTrue;
+procedure TBluePrintWebModuleTest.WhenTheRequestHasTwoOrMoreParamsTheHandlerMustReturnTrue;
 begin
   FSerializer.DeserializeValues := ['MyParam', 'MyParam'];
 
@@ -371,14 +371,14 @@ begin
   Assert.IsTrue(FWebAppServices.HandleRequest);
 end;
 
-procedure TBluePrintWebAppServiceTest.WhenTheRequestIsAFileTheRequestMustReturnFalse;
+procedure TBluePrintWebModuleTest.WhenTheRequestIsAFileTheRequestMustReturnFalse;
 begin
   InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/AFile.file')));
 
   Assert.IsFalse(FWebAppServices.HandleRequest);
 end;
 
-procedure TBluePrintWebAppServiceTest.WhenTheRequestIsSuccessfullyExecutedMustReturnTheStatusCode200;
+procedure TBluePrintWebModuleTest.WhenTheRequestIsSuccessfullyExecutedMustReturnTheStatusCode200;
 begin
   FSerializer.SerializeValues := ['Value'];
 
@@ -389,14 +389,14 @@ begin
   Assert.AreEqual<Integer>(200, FRequest.StatusCode);
 end;
 
-procedure TBluePrintWebAppServiceTest.WhenTheRequestIsTheRootURLMustReturnHandledToFalse;
+procedure TBluePrintWebModuleTest.WhenTheRequestIsTheRootURLMustReturnHandledToFalse;
 begin
   InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/')));
 
   Assert.IsFalse(FWebAppServices.HandleRequest);
 end;
 
-procedure TBluePrintWebAppServiceTest.WhenTheRequestSendQueryFieldsMustLoadTheParamValueHasExpected;
+procedure TBluePrintWebModuleTest.WhenTheRequestSendQueryFieldsMustLoadTheParamValueHasExpected;
 begin
   FSerializer.DeserializeValues := ['Value1', 'Value2'];
 
@@ -408,9 +408,9 @@ begin
   Assert.AreEqual('Value1,Value2', FMyService.ParamsOfProcedureCalled);
 end;
 
-procedure TBluePrintWebAppServiceTest.WhenTryToGetTheGetWebAppServicesMustReturnTheCurrentInstanceOfTheService;
+procedure TBluePrintWebModuleTest.WhenTryToGetTheGetWebAppServicesMustReturnTheCurrentInstanceOfTheService;
 begin
-  Assert.AreEqual<TObject>(FBluePrintService, TObject((FWebAppServices as IGetWebAppServices).GetWebAppServices));
+  Assert.AreEqual<TObject>(FBluePrintWebModule, TObject((FWebAppServices as IGetWebAppServices).GetWebAppServices));
 end;
 
 { TMyService }
