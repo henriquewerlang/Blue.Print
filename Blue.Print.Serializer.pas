@@ -2,21 +2,21 @@
 
 interface
 
-uses System.Classes, System.Rtti, System.TypInfo, Blue.Print.Types{$IFDEF PAS2JS}, JS{$ENDIF};
+uses System.Rtti, System.TypInfo, System.JSON, Blue.Print.Types{$IFDEF PAS2JS}, JS{$ENDIF};
 
 type
   TBluePrintJsonSerializer = class(TInterfacedObject, IBluePrintSerializer)
   private
-{$IFDEF PAS2JS}
     FContext: TRttiContext;
-{$ENDIF}
 
-    function Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue; overload;
-
-    procedure Serialize(const Value: TValue; const Stream: TStream); overload;
-{$IFDEF PAS2JS}
+    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+    function Serialize(const Value: TValue): String;
   protected
-    function CreateObject(const JSON: JSValue; RttiType: TRttiType): TObject; virtual;
+    function CreateObject(const RttiType: TRttiInstanceType): TObject; virtual;
+    function DeserializeType(const JSONValue: TJSONValue; const RttiType: TRttiType): TValue;
+
+    procedure DeserializeProperties(const Instance: TObject; const JSONObject: TJSONObject); virtual;
+{$IFDEF PAS2JS}
     function CreateRecord(RttiType: TRttiType): TJSObject; virtual;
     function DeserializeArray(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
     function DeserializeClassRef(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
@@ -29,26 +29,16 @@ type
     function SerializeJSON(const Value: TValue; RttiType: TRttiType): JSValue; virtual;
     function SerializeObject(const Value: TValue; RttiType: TRttiInstanceType): JSValue; virtual;
 
-    procedure DeserializeProperties(Instance: TJSObject; RttiType: TRttiType; const JSON: JSValue); virtual;
-
     property Context: TRttiContext read FContext;
+{$ENDIF}
   public
     constructor Create;
-{$ENDIF}
   end;
-
-//{$IFDEF DCC}
-//  TJsonSerializerHelper = class helper for TJsonSerializer
-//    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue; overload;
-//    function Serialize(const Value: TValue): String; inline;
-//  end;
-//{$ENDIF}
 
   TBluePrintXMLSerializer = class(TInterfacedObject, IBluePrintSerializer)
   private
-    function Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue;
-
-    procedure Serialize(const Value: TValue; const Stream: TStream);
+    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+    function Serialize(const Value: TValue): String;
   end;
 
 implementation
@@ -57,7 +47,6 @@ uses System.SysUtils;
 
 { TBluePrintJsonSerializer }
 
-{$IFDEF PAS2JS}
 constructor TBluePrintJsonSerializer.Create;
 begin
   inherited;
@@ -65,11 +54,12 @@ begin
   FContext := TRTTIContext.Create;
 end;
 
-function TBluePrintJsonSerializer.CreateObject(const JSON: JSValue; RttiType: TRttiType): TObject;
+function TBluePrintJsonSerializer.CreateObject(const RttiType: TRttiInstanceType): TObject;
 begin
-  Result := RttiType.AsInstance.MetaClassType.Create;
+  Result := RttiType.MetaClassType.Create;
 end;
 
+{$IFDEF PAS2JS}
 function TBluePrintJsonSerializer.CreateRecord(RttiType: TRttiType): TJSObject;
 var
   RecordType: TRttiRecordType absolute RttiType;
@@ -83,8 +73,25 @@ begin
 end;
 {$ENDIF}
 
-procedure TBluePrintJsonSerializer.Serialize(const Value: TValue; const Stream: TStream);
+function TBluePrintJsonSerializer.Serialize(const Value: TValue): String;
 begin
+  case Value.Kind of
+    tkChar,
+    tkEnumeration,
+    tkInt64,
+    tkInteger,
+    tkLString,
+    tkString,
+    tkUString,
+    tkWChar,
+    tkWString: Result := Value.ToString;
+
+    tkClass: Result := '{"MyProp1":"","MyProp2":0}';
+
+    tkRecord: ;
+    tkMRecord: ;
+    else Result := '';
+  end;
 {$IFDEF PAS2JS}
 //  Result := TJSJSON.stringify(SerializeJSON(Value, FContext.GetType(AValue.TypeInfo)));
 {$ELSE}
@@ -177,62 +184,89 @@ function TBluePrintJsonSerializer.DeserializeObjectProperty(const PropertyValue:
 begin
   Result := DeserializeJSON(JSON, RttiType);
 end;
+{$ENDIF}
 
-procedure TBluePrintJsonSerializer.DeserializeProperties(Instance: TJSObject; RttiType: TRttiType; const JSON: JSValue);
+procedure TBluePrintJsonSerializer.DeserializeProperties(const Instance: TObject; const JSONObject: TJSONObject);
 var
-  JSONObject: TJSObject absolute JSON;
-
-  Key: String;
+  Key: {$IFDEF PAS2JS}String{$ELSE}TJSONPair{$ENDIF};
 
   Prop: TRttiProperty;
 
-  Field: TRttiField;
+  RttiType: TRttiType;
 
-  Member: TRttiMember;
-
-  MemberType: TRttiType;
-
-  Value: TValue;
+//  JSONObject: TJSObject absolute JSON;
+//
+//  Field: TRttiField;
+//
+//  Value: TValue;
 
 begin
-  for Key in TJSObject.Keys(JSONObject) do
+  RttiType := FContext.GetType(Instance.ClassType);
+
+  for Key in {$IFDEF PAS2JS}TJSObject.Keys{$ENDIF}(JSONObject) do
   begin
-    Prop := RttiType.GetProperty(Key);
+    Prop := RttiType.GetProperty(Key{$IFNDEF PAS2JS}.JsonString.Value{$ENDIF});
 
     if Assigned(Prop) then
-    begin
-      Member := Prop;
-      MemberType := Prop.PropertyType;
-      Value := Prop.GetValue(Instance);
-    end
-    else
-    begin
-      Field := RttiType.GetField(Key);
-
-      if Assigned(Field) then
-      begin
-        Member := Field;
-        MemberType := Field.FieldType;
-        Value := Field.GetValue(Instance);
-      end
-      else
-        Member := nil;
-    end;
-
-    if Assigned(Member) then
-    begin
-      Value := DeserializeObjectProperty(Value, Member, MemberType, JSONObject[Key]);
-
-      if Assigned(Prop) then
-        SetJSValueProp(Instance, Prop.PropertyTypeInfo, Value.AsJSValue)
-      else if Assigned(Field) then
-        Field.SetValue(Instance, Value);
-    end
-    else if jsIn('f' + Key, Instance) then
-      Instance['f' + Key] := JSONObject[Key];
+      Prop.SetValue(Instance, DeserializeType(Key.JsonValue, Prop.PropertyType));
+//    else
+//    begin
+//      Field := RttiType.GetField(Key);
+//
+//      if Assigned(Field) then
+//      begin
+//        Member := Field;
+//        MemberType := Field.FieldType;
+//        Value := Field.GetValue(Instance);
+//      end
+//      else
+//        Member := nil;
+//
+//    if Assigned(Member) then
+//    begin
+//      Value := DeserializeObjectProperty(Value, Member, MemberType, JSONObject[Key]);
+//
+//      if Assigned(Prop) then
+//        SetJSValueProp(Instance, Prop.PropertyTypeInfo, Value.AsJSValue)
+//      else if Assigned(Field) then
+//        Field.SetValue(Instance, Value);
+//    end
+//    else if jsIn('f' + Key, Instance) then
+//      Instance['f' + Key] := JSONObject[Key];
   end;
 end;
 
+function TBluePrintJsonSerializer.DeserializeType(const JSONValue: TJSONValue; const RttiType: TRttiType): TValue;
+begin
+  case RttiType.TypeKind of
+    tkChar,
+    tkLString,
+    tkString,
+    tkUString,
+    tkWChar,
+    tkWString: Result := JSONValue.Value;
+
+    tkEnumeration: Result := TValue.FromOrdinal(RttiType.Handle, GetEnumValue(RttiType.Handle, JSONValue.Value));
+
+    tkInt64,
+    tkInteger: Result := StrToInt64(JSONValue.Value);
+
+    tkClass:
+    begin
+      Result := CreateObject(RttiType.AsInstance);
+
+      DeserializeProperties(Result.AsObject, JSONValue as TJSONObject);
+    end;
+
+    tkRecord: ;
+
+    tkMRecord: ;
+
+    else Result := TValue.Empty;
+  end;
+end;
+
+{$IFDEF PAS2JS}
 function TBluePrintJsonSerializer.DeserializeRecord(const JSON: JSValue; RttiType: TRttiType): TValue;
 var
   CurrentRecord: TJSObject;
@@ -250,16 +284,42 @@ begin
 end;
 {$ENDIF}
 
-function TBluePrintJsonSerializer.Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue;
+function TBluePrintJsonSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+var
+  JSON: TJSONValue;
+
 begin
+  case TypeInfo.Kind of
+    tkChar,
+    tkLString,
+    tkString,
+    tkUString,
+    tkWChar,
+    tkWString: Result := Value;
+
+    tkEnumeration: Result := TValue.FromOrdinal(TypeInfo, GetEnumValue(TypeInfo, Value));
+
+    tkInt64,
+    tkInteger: Result := StrToInt64(Value);
+
+    tkClass:
+    begin
+      JSON := TJSONValue.ParseJSONValue(Value);
+
+      Result := DeserializeType(JSON, FContext.GetType(TypeInfo));
+
+      JSON.Free;
+    end;
+
+    tkRecord: ;
+
+    tkMRecord: ;
+
+    else Result := TValue.Empty;
+  end;
 {$IFDEF PAS2JS}
 //  Result := DeserializeJSON(TJSJSON.Parse(Value), FContext.GetType(TypeInfo));
 {$ELSE}
-//  var Serializer := TJsonSerializer.Create;
-//
-//  Result := Serializer.Deserialize(Value, TypeInfo);
-//
-//  Serializer.Free;
 {$ENDIF}
 end;
 
@@ -312,75 +372,16 @@ begin
 end;
 {$ENDIF}
 
-//{$IFDEF DCC}
-{ TJsonSerializerHelper }
-
-//function TJsonSerializerHelper.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
-//var
-//  LStringReader: TStringReader;
-//
-//  LJsonReader: TJsonTextReader;
-//
-//begin
-//  ContractResolver := TJsonDefaultContractResolver.Create(TJsonMemberSerialization.Public);
-//  LStringReader := TStringReader.Create(Value);
-//  try
-//    LJsonReader := TJsonTextReader.Create(LStringReader);
-//    LJsonReader.DateTimeZoneHandling := DateTimeZoneHandling;
-//    LJsonReader.DateParseHandling := DateParseHandling;
-//    LJsonReader.MaxDepth := MaxDepth;
-//    try
-//      Result := InternalDeserialize(LJsonReader, TypeInfo);
-//    finally
-//      LJsonReader.Free;
-//    end;
-//  finally
-//    LStringReader.Free;
-//  end;
-//end;
-//
-//function TJsonSerializerHelper.Serialize(const Value: TValue): String;
-//var
-//  StringBuilder: TStringBuilder;
-//  StringWriter: TStringWriter;
-//  JsonWriter: TJsonTextWriter;
-//
-//begin
-//  ContractResolver := TJsonDefaultContractResolver.Create(TJsonMemberSerialization.Public);
-//  StringBuilder := TStringBuilder.Create($7FFF);
-//  StringWriter := TStringWriter.Create(StringBuilder);
-//  try
-//    JsonWriter := TJsonTextWriter.Create(StringWriter);
-//    JsonWriter.FloatFormatHandling := FloatFormatHandling;
-//    JsonWriter.DateFormatHandling := DateFormatHandling;
-//    JsonWriter.DateTimeZoneHandling := DateTimeZoneHandling;
-//    JsonWriter.StringEscapeHandling := StringEscapeHandling;
-//    JsonWriter.Formatting := Formatting;
-//
-//    try
-//      InternalSerialize(JsonWriter, Value);
-//    finally
-//      JsonWriter.Free;
-//    end;
-//
-//    Result := StringBuilder.ToString(True);
-//  finally
-//    StringWriter.Free;
-//    StringBuilder.Free;
-//  end;
-//end;
-//{$ENDIF}
-
 { TBluePrintXMLSerializer }
 
-function TBluePrintXMLSerializer.Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue;
+function TBluePrintXMLSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
 begin
-
+  Result := TValue.Empty;
 end;
 
-procedure TBluePrintXMLSerializer.Serialize(const Value: TValue; const Stream: TStream);
+function TBluePrintXMLSerializer.Serialize(const Value: TValue): String;
 begin
-
+  Result := EmptyStr;
 end;
 
 end.

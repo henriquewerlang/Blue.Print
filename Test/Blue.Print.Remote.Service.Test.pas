@@ -80,7 +80,7 @@ type
     FResponse: TStream;
     FURL: String;
 
-    function SendRequest(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream;
+    function SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String): String;
   public
     destructor Destroy; override;
 
@@ -99,9 +99,8 @@ type
     FDeserializeCalled: Boolean;
     FReturnValue: String;
 
-    function Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue;
-
-    procedure Serialize(const Value: TValue; const Output: TStream);
+    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+    function Serialize(const Value: TValue): String;
   public
     property DeserializeCalled: Boolean read FDeserializeCalled;
     property ReturnValue: String read FReturnValue write FReturnValue;
@@ -428,16 +427,15 @@ begin
   Reader.Free;
 end;
 
-function TCommunicationMock.SendRequest(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream;
+function TCommunicationMock.SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String): String;
 begin
-  FBody := Body;
   FRequestMethod := RequestMethod;
   FRequestSended := True;
   FURL := URL;
-  Result := nil;
+  Result := EmptyStr;;
 
-  if Assigned(FBody) then
-    FBody.Position := 0;
+  if not Body.IsEmpty then
+    FBody := TStringStream.Create(Body);
 end;
 
 procedure TCommunicationMock.SetResponseValue(const Value: String);
@@ -447,19 +445,15 @@ end;
 
 { TSerializerMock }
 
-function TSerializerMock.Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue;
+function TSerializerMock.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
 begin
   FDeserializeCalled := True;
   Result := FReturnValue;
 end;
 
-procedure TSerializerMock.Serialize(const Value: TValue; const Output: TStream);
+function TSerializerMock.Serialize(const Value: TValue): String;
 begin
-  var Writer := TStreamWriter.Create(Output);
-
-  Writer.Write(FReturnValue);
-
-  Writer.Free;
+  Result := FReturnValue;
 end;
 
 end.

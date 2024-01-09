@@ -160,6 +160,7 @@
         <DCCReference Include="Blue.Print.Content.Parser.Test.pas"/>
         <DCCReference Include="Blue.Print.Request.Mock.pas"/>
         <DCCReference Include="..\Blue.Print.Serializer.pas"/>
+        <DCCReference Include="Blue.Print.Serializer.Test.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

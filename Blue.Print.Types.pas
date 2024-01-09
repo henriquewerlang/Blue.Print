@@ -14,9 +14,8 @@ type
 
   IBluePrintSerializer = interface
     ['{5848116B-902F-4FF8-BE8F-D53F586C400E}']
-    function Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue;
-
-    procedure Serialize(const Value: TValue; const Stream: TStream);
+    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+    function Serialize(const Value: TValue): String;
   end;
 
   EHTTPStatusError = class(Exception)

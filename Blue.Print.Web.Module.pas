@@ -163,24 +163,13 @@ var
 
   function LoadParams: TArray<TValue>;
   var
-    Buffer: TStringStream;
-
     Parameters: TList<TRttiParameter>;
-
-    function LoadBuffer(const Value: String): TStringStream;
-    begin
-      Buffer.Size := 0;
-
-      Buffer.WriteString(Value);
-
-      Result := Buffer;
-    end;
 
     procedure LoadParameterValue(const Parameter: TRttiParameter; const Value: String);
     begin
       Parameters.Extract(Parameter);
 
-      Result[TArray.IndexOf<TRttiParameter>(Method.GetParameters, Parameter)] := Serializer.Deserialize(LoadBuffer(Value), Parameter.ParamType.Handle);
+      Result[TArray.IndexOf<TRttiParameter>(Method.GetParameters, Parameter)] := Serializer.Deserialize(Value, Parameter.ParamType.Handle);
     end;
 
     function FindParameterByName(const ParameterName: String): TRttiParameter;
@@ -201,7 +190,6 @@ var
     end;
 
   begin
-    Buffer := TStringStream.Create(EmptyStr, TEncoding.Unicode);
     Parameters := TList<TRttiParameter>.Create(Method.GetParameters);
 
     SetLength(Result, Parameters.Count);
@@ -219,8 +207,6 @@ var
       if not Parameters.IsEmpty then
         raise EHTTPErrorBadRequest.Create('Parameter count mismatch!');
     finally
-      Buffer.Free;
-
       Parameters.Free;
     end;
   end;
@@ -266,12 +252,8 @@ begin
 
     if Assigned(Method.ReturnType) then
     begin
-      Response.ContentStream := TMemoryStream.Create;
+      Response.Content := Serializer.Serialize(ReturnValue);
       Response.StatusCode := HTTP_STATUS_OK;
-
-      Serializer.Serialize(ReturnValue, Response.ContentStream);
-
-      Response.ContentStream.Position := 0;
     end
     else
       Response.StatusCode := HTTP_STATUS_NO_CONTENT;

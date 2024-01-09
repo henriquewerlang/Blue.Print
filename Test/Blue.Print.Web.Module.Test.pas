@@ -102,9 +102,9 @@ type
     FDeserializeValues: TList<TValue>;
     FSerializeValues: TList<TValue>;
 
-    function Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue;
+    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+    function Serialize(const Value: TValue): String;
 
-    procedure Serialize(const Value: TValue; const Stream: TStream);
     procedure SetDeserializeValues(const Value: TArray<TValue>);
     procedure SetSerializeValues(const Value: TArray<TValue>);
   public
@@ -166,11 +166,7 @@ begin
 
   FWebAppServices.HandleRequest;
 
-  var StreamReader := TStreamReader.Create(FRequest.ContentStream);
-
-  Assert.AreEqual('abc', StreamReader.ReadLine);
-
-  StreamReader.Free;
+  Assert.AreEqual('abc', FRequest.Content);
 end;
 
 procedure TBluePrintWebModuleTest.IfTheMethodIsFoundMustCallTheProcedure;
@@ -519,7 +515,7 @@ begin
   FSerializeValues := TList<TValue>.Create;
 end;
 
-function TSerializerMock.Deserialize(const Value: TStream; const TypeInfo: PTypeInfo): TValue;
+function TSerializerMock.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
 begin
   Result := FDeserializeValues.ExtractAt(0);
 end;
@@ -533,13 +529,9 @@ begin
   inherited;
 end;
 
-procedure TSerializerMock.Serialize(const Value: TValue; const Stream: TStream);
+function TSerializerMock.Serialize(const Value: TValue): String;
 begin
-  var StreamWriter := TStreamWriter.Create(Stream);
-
-  StreamWriter.Write(FSerializeValues.ExtractAt(0).ToString);
-
-  StreamWriter.Free;
+  Result := FSerializeValues.ExtractAt(0).ToString;
 end;
 
 procedure TSerializerMock.SetDeserializeValues(const Value: TArray<TValue>);

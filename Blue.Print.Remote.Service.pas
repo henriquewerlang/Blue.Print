@@ -7,17 +7,17 @@ uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes,
 type
   IHTTPCommunication = interface
     ['{8E39F66A-C72B-4314-80B1-D24F1AF4F247}']
-    function SendRequest(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream;
+    function SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String): String;
 //    {$IFDEF PAS2JS}
-//    function SendRequestAsync(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream; async;
+//    function SendRequestAsync(const RequestMethod: TRequestMethod; const URL, Body: String): String; async;
 //    {$ENDIF}
   end;
 
   THTTPCommunication = class(TInterfacedObject, IHTTPCommunication)
   private
-    function SendRequest(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream;
+    function SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String): String;
 //{$IFDEF PAS2JS}
-//    function SendRequestAsync(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream; async;
+//    function SendRequestAsync(const RequestMethod: TRequestMethod; const URL, Body: String): String; async;
 //{$ENDIF}
   end;
 
@@ -225,20 +225,17 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
     Result := PathParams;
   end;
 
-  function LoadRequestBody: TStream;
+  function LoadRequestBody: String;
   var
-    Body: TStream;
+    Body: String;
 
   begin
-    Body := nil;
+    Body := EmptyStr;
 
     LoadParams(
       procedure (Parameter: TRttiParameter; Value: TValue)
       begin
-        if not Assigned(Body) then
-          Body := TMemoryStream.Create;
-
-        FSerializer.Serialize(Value, Body);
+        Body := FSerializer.Serialize(Value);
       end, TParameterType.Body);
 
     Result := Body;
@@ -251,7 +248,7 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
 
   procedure SendRequest;
   var
-    Response: TStream;
+    Response: String;
 
   begin
     Response := Communication.SendRequest(GetRequestMethod, BuildRequestURL, LoadRequestBody);
@@ -278,7 +275,7 @@ end;
 
 { THTTPCommunication }
 
-function THTTPCommunication.SendRequest(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream;
+function THTTPCommunication.SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String): String;
 const
   REQUEST_METHOD_NAME: array[TRequestMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT');
 
@@ -331,12 +328,15 @@ begin
 
   CheckStatusCode(Connection.Status, URL);
 {$ELSE}
+  var BodyStream := TStringStream.Create(Body, TEncoding.UTF8);
   var Connection := THTTPClient.Create;
   Connection.ResponseTimeout := -1;
   Connection.SendTimeout := -1;
 
-  var Response := Connection.Execute(REQUEST_METHOD_NAME[RequestMethod], URL, Body) as IHTTPResponse;
-  Result := Response.ContentStream;
+  var Response := Connection.Execute(REQUEST_METHOD_NAME[RequestMethod], URL, BodyStream) as IHTTPResponse;
+  Result := Response.ContentAsString;
+
+  BodyStream.Free;
 
   CheckStatusCode(Response.StatusCode, URL);
 {$ENDIF}

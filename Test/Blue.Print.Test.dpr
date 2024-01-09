@@ -12,7 +12,8 @@ uses
   Blue.Print.Types.Test in 'Blue.Print.Types.Test.pas',
   Blue.Print.Content.Parser.Test in 'Blue.Print.Content.Parser.Test.pas',
   Blue.Print.Request.Mock in 'Blue.Print.Request.Mock.pas',
-  Blue.Print.Serializer in '..\Blue.Print.Serializer.pas';
+  Blue.Print.Serializer in '..\Blue.Print.Serializer.pas',
+  Blue.Print.Serializer.Test in 'Blue.Print.Serializer.Test.pas';
 
 begin
   ReportMemoryLeaksOnShutdown := True;
