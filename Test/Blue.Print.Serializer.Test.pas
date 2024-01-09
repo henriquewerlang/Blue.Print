@@ -30,6 +30,10 @@ type
     procedure WhenSerializeAnObjectMustGenerateTheJSONAsExpected;
     [Test]
     procedure WhenDeserializeAnObjectMustCreateAndLoadThePropertiesAsExpected;
+    [Test]
+    procedure WhenSerializeAnArrayMustGenerateTheJSONAsExpected;
+    [Test]
+    procedure WhenDeserializeAnArrayMustLoadTheArrayAsExpected;
   end;
 
   TMyObject = class
@@ -50,6 +54,16 @@ uses System.Rtti, Blue.Print.Serializer;
 procedure TBluePrintJsonSerializerTest.Setup;
 begin
   FSerializer := TBluePrintJsonSerializer.Create;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAnArrayMustLoadTheArrayAsExpected;
+begin
+  var Value := FSerializer.Deserialize('[123,456,789]', TypeInfo(TArray<Integer>));
+
+  Assert.AreEqual<NativeInt>(3, Value.GetArrayLength);
+  Assert.AreEqual<Integer>(123, Value.GetArrayElement(0).AsInteger);
+  Assert.AreEqual<Integer>(456, Value.GetArrayElement(1).AsInteger);
+  Assert.AreEqual<Integer>(789, Value.GetArrayElement(2).AsInteger);
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAnEnumeratorMustReturnTheEnumeratorValueInTheReturnValue;
@@ -82,6 +96,13 @@ begin
   var Value := FSerializer.Deserialize('abc', TypeInfo(String));
 
   Assert.AreEqual('abc', Value.ToString);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenSerializeAnArrayMustGenerateTheJSONAsExpected;
+begin
+  var Value := FSerializer.Serialize(TValue.From<TArray<Integer>>([123, 456, 789]));
+
+  Assert.AreEqual('[123,456,789]', Value);
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenSerializeAnEnumeretorMustReturnTheNameOfEnumeration;

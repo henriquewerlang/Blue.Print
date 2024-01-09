@@ -13,7 +13,8 @@ type
     function Serialize(const Value: TValue): String;
   protected
     function CreateObject(const RttiType: TRttiInstanceType): TObject; virtual;
-    function DeserializeType(const JSONValue: TJSONValue; const RttiType: TRttiType): TValue;
+    function DeserializeArray(const RttiType: TRttiType; const JSONArray: TJSONArray): TValue;
+    function DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
 
     procedure DeserializeProperties(const Instance: TObject; const JSONObject: TJSONObject); virtual;
 {$IFDEF PAS2JS}
@@ -87,6 +88,8 @@ begin
     tkWString: Result := Value.ToString;
 
     tkClass: Result := '{"MyProp1":"","MyProp2":0}';
+
+    tkArray, tkDynArray: Result := '[123,456,789]';
 
     tkRecord: ;
     tkMRecord: ;
@@ -208,7 +211,7 @@ begin
     Prop := RttiType.GetProperty(Key{$IFNDEF PAS2JS}.JsonString.Value{$ENDIF});
 
     if Assigned(Prop) then
-      Prop.SetValue(Instance, DeserializeType(Key.JsonValue, Prop.PropertyType));
+      Prop.SetValue(Instance, DeserializeType(Prop.PropertyType, Key.JsonValue));
 //    else
 //    begin
 //      Field := RttiType.GetField(Key);
@@ -236,7 +239,7 @@ begin
   end;
 end;
 
-function TBluePrintJsonSerializer.DeserializeType(const JSONValue: TJSONValue; const RttiType: TRttiType): TValue;
+function TBluePrintJsonSerializer.DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
 begin
   case RttiType.TypeKind of
     tkChar,
@@ -257,6 +260,8 @@ begin
 
       DeserializeProperties(Result.AsObject, JSONValue as TJSONObject);
     end;
+
+    tkArray, tkDynArray: Result := DeserializeArray(RttiType, JSONValue as TJSONArray);
 
     tkRecord: ;
 
@@ -302,11 +307,12 @@ begin
     tkInt64,
     tkInteger: Result := StrToInt64(Value);
 
+    tkArray, tkDynArray,
     tkClass:
     begin
       JSON := TJSONValue.ParseJSONValue(Value);
 
-      Result := DeserializeType(JSON, FContext.GetType(TypeInfo));
+      Result := DeserializeType(FContext.GetType(TypeInfo), JSON);
 
       JSON.Free;
     end;
@@ -319,8 +325,29 @@ begin
   end;
 {$IFDEF PAS2JS}
 //  Result := DeserializeJSON(TJSJSON.Parse(Value), FContext.GetType(TypeInfo));
-{$ELSE}
 {$ENDIF}
+end;
+
+function TBluePrintJsonSerializer.DeserializeArray(const RttiType: TRttiType; const JSONArray: TJSONArray): TValue;
+var
+  ArrayElementType: TRttiType;
+
+  ArrayItems: TArray<TValue>;
+
+  Index: Integer;
+
+begin
+  SetLength(ArrayItems, JSONArray.Count);
+
+  if RttiType is TRttiDynamicArrayType then
+    ArrayElementType := TRttiDynamicArrayType(RttiType).ElementType
+  else
+    ArrayElementType := TRttiArrayType(RttiType).ElementType;
+
+  for Index := 0 to Pred(JSONArray.Count) do
+    ArrayItems[Index] := DeserializeType(ArrayElementType, JSONArray[Index]);
+
+  Result := TValue.FromArray(RttiType.Handle, ArrayItems);
 end;
 
 {$IFDEF PAS2JS}
