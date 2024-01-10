@@ -40,9 +40,13 @@ type
   private
     FMyProp1: String;
     FMyProp2: Integer;
+    FMyProp3: Double;
+    FMyProp4: TMyEnum;
   public
     property MyProp1: String read FMyProp1 write FMyProp1;
     property MyProp2: Integer read FMyProp2 write FMyProp2;
+    property MyProp3: Double read FMyProp3 write FMyProp3;
+    property MyProp4: TMyEnum read FMyProp4 write FMyProp4;
   end;
 
 implementation
@@ -82,11 +86,13 @@ end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAnObjectMustCreateAndLoadThePropertiesAsExpected;
 begin
-  var Value := FSerializer.Deserialize('{"MyProp1":"abc","MyProp2":123}', TypeInfo(TMyObject)).AsType<TMyObject>;
+  var Value := FSerializer.Deserialize('{"MyProp1":"abc","MyProp2":123,"MyProp3":123.456,"MyProp4":"MyValue"}', TypeInfo(TMyObject)).AsType<TMyObject>;
 
   Assert.IsNotNil(Value);
   Assert.AreEqual('abc', Value.MyProp1);
   Assert.AreEqual<Integer>(123, Value.MyProp2);
+  Assert.AreEqual<Double>(123.456, Value.MyProp3);
+  Assert.AreEqual(MyValue, Value.MyProp4);
 
   Value.Free;
 end;
@@ -122,9 +128,12 @@ end;
 procedure TBluePrintJsonSerializerTest.WhenSerializeAnObjectMustGenerateTheJSONAsExpected;
 begin
   var MyObject := TMyObject.Create;
+  MyObject.MyProp1 := 'abc';
+  MyObject.MyProp2 := 123;
+  MyObject.MyProp3 := 123.456;
   var Value := FSerializer.Serialize(MyObject);
 
-  Assert.AreEqual('{"MyProp1":"","MyProp2":0}', Value);
+  Assert.AreEqual('{"MyProp1":"abc","MyProp2":123,"MyProp3":123.456,"MyProp4":"MyValue"}', Value);
 
   MyObject.Free;
 end;
@@ -137,3 +146,4 @@ begin
 end;
 
 end.
+
