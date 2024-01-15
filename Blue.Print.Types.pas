@@ -7,6 +7,9 @@ uses System.Rtti, System.Classes, System.SysUtils, System.TypInfo, {$IFDEF PAS2J
 {$SCOPEDENUMS ON}
 
 type
+{$IFDEF PAS2JS}
+  PTypeInfo = TTypeInfo;
+{$ENDIF}
   TParameterType = (Body, Query, Path);
   TRequestFile = {$IFDEF PAS2JS}TJSHTMLFile{$ELSE}TAbstractWebRequestFile{$ENDIF};
   TRequestMethod = (Delete, Get, Patch, Post, Put);

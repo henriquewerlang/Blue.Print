@@ -323,8 +323,7 @@ begin
 
   Connection.Send();
 
-//  Result := Connection.ResponseText;
-  Result := nil;
+  Result := Connection.ResponseText;
 
   CheckStatusCode(Connection.Status, URL);
 {$ELSE}
