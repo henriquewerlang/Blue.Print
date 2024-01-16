@@ -305,7 +305,7 @@ var
   procedure CheckStatusCode(const StatusCode: Integer; const URL: String);
   begin
     if (StatusCode < 200) or (StatusCode > 299) then
-      raise EHTTPStatusError.Create(StatusCode);
+      raise EHTTPStatusError.Create(StatusCode, Result);
   end;
 
 begin

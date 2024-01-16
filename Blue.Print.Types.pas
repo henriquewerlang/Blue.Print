@@ -25,7 +25,8 @@ type
   private
     FStatusCode: Integer;
   public
-    constructor Create(const StatusCode: Integer);
+    constructor Create(const StatusCode: Integer); overload;
+    constructor Create(const StatusCode: Integer; const Message: String); overload;
 
     property StatusCode: Integer read FStatusCode write FStatusCode;
   end;
@@ -195,7 +196,12 @@ end;
 
 constructor EHTTPStatusError.Create(const StatusCode: Integer);
 begin
-  inherited CreateFmt('HTTP Error %d', [StatusCode]);
+  Create(StatusCode, Format('HTTP Error %d', [StatusCode]));
+end;
+
+constructor EHTTPStatusError.Create(const StatusCode: Integer; const Message: String);
+begin
+  inherited Create(Message);
 
   FStatusCode := StatusCode;
 end;
@@ -381,9 +387,7 @@ end;
 
 constructor EHTTPErrorBadRequest.Create(const ErrorMessage: String);
 begin
-  inherited Create(HTTP_STATUS_BAD_REQUEST);
-
-  Message := ErrorMessage;
+  inherited Create(HTTP_STATUS_BAD_REQUEST, ErrorMessage);
 end;
 
 end.
