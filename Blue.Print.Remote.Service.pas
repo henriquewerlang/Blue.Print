@@ -255,7 +255,7 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
     Response := Communication.SendRequest(GetRequestMethod, BuildRequestURL, LoadRequestBody);
 
     if Assigned(Method.ReturnType) then
-      Result := FSerializer.Deserialize(Response, Result.TypeInfo);
+      Result := FSerializer.Deserialize(Response, Method.ReturnType.Handle);
   end;
 
 {$IFDEF PAS2JS}

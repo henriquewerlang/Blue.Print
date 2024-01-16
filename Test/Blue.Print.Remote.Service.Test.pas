@@ -97,13 +97,13 @@ type
   TSerializerMock = class(TInterfacedObject, IBluePrintSerializer)
   private
     FDeserializeCalled: Boolean;
-    FReturnValue: String;
+    FReturnValue: TValue;
 
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function Serialize(const Value: TValue): String;
   public
     property DeserializeCalled: Boolean read FDeserializeCalled;
-    property ReturnValue: String read FReturnValue write FReturnValue;
+    property ReturnValue: TValue read FReturnValue write FReturnValue;
   end;
 
   [BasicAuthentication('User', 'Password')]
@@ -233,7 +233,7 @@ begin
 
   var ReturnValue := Service.TestFunction;
 
-  Assert.AreEqual(FSerializer.ReturnValue, ReturnValue);
+  Assert.AreEqual(FSerializer.ReturnValue.AsString, ReturnValue);
 end;
 
 procedure TRemoteServiceTest.WhenAFunctionIsCalledMustReturnTheValueOfTheCalledFunctionToTheCaller;
@@ -368,7 +368,7 @@ begin
 
   Assert.IsNotNil(FCommunication.Body);
 
-  Assert.AreEqual(FSerializer.ReturnValue, FCommunication.GetBodyAsString);
+  Assert.AreEqual(FSerializer.ReturnValue.AsString, FCommunication.GetBodyAsString);
 end;
 
 procedure TRemoteServiceTest.WhenTheParamHasLocaleCharsMustEncodeTheName;
@@ -449,11 +449,14 @@ function TSerializerMock.Deserialize(const Value: String; const TypeInfo: PTypeI
 begin
   FDeserializeCalled := True;
   Result := FReturnValue;
+
+  if FReturnValue.TypeInfo <> TypeInfo then
+    raise Exception.Create('Types mismatch!');
 end;
 
 function TSerializerMock.Serialize(const Value: TValue): String;
 begin
-  Result := FReturnValue;
+  Result := FReturnValue.AsString;
 end;
 
 end.
