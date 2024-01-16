@@ -38,6 +38,10 @@ type
     procedure WhenSerializeARecordMustGenerateTheJSONAsExpected;
     [Test]
     procedure WhenDeserializeARecordMustLoadTheRecordsFieldsAsExpected;
+    [Test]
+    procedure WhenSerializeAClassReferenceMustGenerateTheFullQualifiedNameOfTheClass;
+    [Test]
+    procedure WhenDeserializeAClassReferenceMustLocateTheClassTypeByNameAndLoadTheValueAsExpected;
   end;
 
   TMyObject = class
@@ -70,6 +74,13 @@ uses System.Rtti, Blue.Print.Serializer;
 procedure TBluePrintJsonSerializerTest.Setup;
 begin
   FSerializer := TBluePrintJsonSerializer.Create;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassReferenceMustLocateTheClassTypeByNameAndLoadTheValueAsExpected;
+begin
+  var Value := FSerializer.Deserialize('"Blue.Print.Serializer.Test.TMyObject"', TypeInfo(TClass));
+
+  Assert.AreEqual<TClass>(TMyObject, Value.AsClass);
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAnArrayMustLoadTheArrayAsExpected;
@@ -126,6 +137,14 @@ begin
   var Value := FSerializer.Deserialize('abc', TypeInfo(String));
 
   Assert.AreEqual('abc', Value.ToString);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenSerializeAClassReferenceMustGenerateTheFullQualifiedNameOfTheClass;
+begin
+  var ClassValue: TClass := TMyObject;
+  var Value := FSerializer.Serialize(TValue.From(ClassValue));
+
+  Assert.AreEqual('"Blue.Print.Serializer.Test.TMyObject"', Value);
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenSerializeAnArrayMustGenerateTheJSONAsExpected;

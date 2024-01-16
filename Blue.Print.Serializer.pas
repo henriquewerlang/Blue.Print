@@ -19,6 +19,7 @@ type
     FContext: TRttiContext;
 
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+    function GetJSONValue(const JSONValue: TJSONValue): String; inline;
     function Serialize(const Value: TValue): String;
   protected
     function CreateObject(const RttiType: TRttiInstanceType): TObject;
@@ -31,16 +32,6 @@ type
     procedure DeserializeProperties(const Instance: TObject; const JSONObject: TJSONObject);
     procedure SerializeFields(const Instance: TValue; const JSONObject: TJSONObject);
     procedure SerializeProperties(const Instance: TObject; const JSONObject: TJSONObject);
-
-//    function CreateRecord(RttiType: TRttiType): TJSObject; virtual;
-//    function DeserializeClassRef(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
-//    function DeserializeEnumerator(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
-//    function DeserializeJSON(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
-//    function DeserializeObject(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
-//    function DeserializeObjectProperty(const PropertyValue: TValue; const Member: TRttiMember; const RttiType: TRttiType; const JSON: JSValue): TValue; virtual;
-//    function DeserializeRecord(const JSON: JSValue; RttiType: TRttiType): TValue; virtual;
-//    function SerializeJSON(const Value: TValue; RttiType: TRttiType): JSValue; virtual;
-//    function SerializeObject(const Value: TValue; RttiType: TRttiInstanceType): JSValue; virtual;
   public
     constructor Create;
   end;
@@ -96,18 +87,6 @@ begin
   Result := RttiType.MetaClassType.Create;
 end;
 
-//function TBluePrintJsonSerializer.CreateRecord(RttiType: TRttiType): TJSObject;
-//var
-//  RecordType: TRttiRecordType absolute RttiType;
-//
-//begin
-//  Result := TJSObject(RecordType.RecordTypeInfo.Module[RecordType.Name]);
-//
-//  asm
-//    Result = Object.create(Result);
-//  end;
-//end;
-
 function TBluePrintJsonSerializer.Serialize(const Value: TValue): String;
 var
   JSON: TJSONValue;
@@ -131,6 +110,7 @@ begin
 {$ENDIF}
     tkArray,
     tkClass,
+    tkClassRef,
     tkDynArray,
     tkRecord:
     begin
@@ -225,6 +205,8 @@ begin
 {$ENDIF}
     tkInteger: Result := TJSONNumber.{$IFDEF PAS2JS}New{$ELSE}Create{$ENDIF}(Value.{$IFDEF PAS2JS}AsInteger{$ELSE}AsInt64{$ENDIF});
 
+    tkClassRef: Result := SerializeType(TValue.From(Value.AsClass.QualifiedClassName));
+
     tkClass:
     begin
       Result := CreateJSONObject;
@@ -245,19 +227,6 @@ begin
     end;
   end;
 end;
-
-//function TBluePrintJsonSerializer.DeserializeClassRef(const JSON: JSValue; RttiType: TRttiType): TValue;
-//var
-//  ClassRefType: TRttiInstanceType;
-//
-//begin
-//  ClassRefType := FContext.FindType(String(JSON)) as TRttiInstanceType;
-//
-//  if Assigned(ClassRefType) then
-//    Result := TValue.From(ClassRefType.MetaclassType)
-//  else
-//    Result := TValue.Empty;
-//end;
 
 procedure TBluePrintJsonSerializer.DeserializeProperties(const Instance: TObject; const JSONObject: TJSONObject);
 var
@@ -289,9 +258,9 @@ begin
     tkWString,
 {$ENDIF}
     tkChar,
-    tkString: Result := TValue.From(JSONValue{$IFDEF DCC}.Value{$ENDIF});
+    tkString: Result := TValue.From(GetJSONValue(JSONValue));
 
-    tkEnumeration: Result := TValue.FromOrdinal(RttiType.Handle, GetEnumValue(RttiType.Handle, String(JSONValue{$IFDEF DCC}.Value{$ENDIF})));
+    tkEnumeration: Result := TValue.FromOrdinal(RttiType.Handle, GetEnumValue(RttiType.Handle, GetJSONValue(JSONValue)));
 
     tkFloat: Result := {$IFDEF PAS2JS}TValue.From(JSONValue){$ELSE}(JSONValue as TJSONNumber).AsDouble{$ENDIF};
 //  Conversão de data e hora
@@ -302,6 +271,8 @@ begin
     tkInt64: Result := (JSONValue as TJSONNumber).AsInt64;
 {$ENDIF}
     tkInteger: Result := {$IFDEF PAS2JS}TValue.From(JSONValue){$ELSE}(JSONValue as TJSONNumber).AsInt{$ENDIF};
+
+    tkClassRef: Result := TValue.From((FContext.FindType(GetJSONValue(JSONValue)) as TRttiInstanceType).MetaclassType);
 
     tkClass:
     begin
@@ -326,21 +297,10 @@ begin
   end;
 end;
 
-//function TBluePrintJsonSerializer.DeserializeRecord(const JSON: JSValue; RttiType: TRttiType): TValue;
-//var
-//  CurrentRecord: TJSObject;
-//
-//begin
-//  if JSON = NULL then
-//    Result := TValue.Empty
-//  else
-//  begin
-//    CurrentRecord := CreateRecord(RttiType);
-//    Result := TValue.From(TObject(CurrentRecord));
-//
-//    DeserializeProperties(CurrentRecord, RttiType, JSON);
-//  end;
-//end;
+function TBluePrintJsonSerializer.GetJSONValue(const JSONValue: TJSONValue): String;
+begin
+  Result := String(JSONValue{$IFDEF DCC}.Value{$ENDIF});
+end;
 
 function TBluePrintJsonSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
 var
@@ -369,6 +329,7 @@ begin
 {$ENDIF}
     tkArray,
     tkClass,
+    tkClassRef,
     tkDynArray,
     tkRecord:
     begin
