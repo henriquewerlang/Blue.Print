@@ -5,7 +5,7 @@ interface
 uses Test.Insight.Framework, Blue.Print.Types;
 
 type
-  TMyEnum = (MyValue);
+  TMyEnum = (MyValue, MyValue2);
 
   [TestFixture]
   TBluePrintJsonSerializerTest = class
@@ -34,6 +34,10 @@ type
     procedure WhenSerializeAnArrayMustGenerateTheJSONAsExpected;
     [Test]
     procedure WhenDeserializeAnArrayMustLoadTheArrayAsExpected;
+    [Test]
+    procedure WhenSerializeARecordMustGenerateTheJSONAsExpected;
+    [Test]
+    procedure WhenDeserializeARecordMustLoadTheRecordsFieldsAsExpected;
   end;
 
   TMyObject = class
@@ -47,6 +51,14 @@ type
     property MyProp2: Integer read FMyProp2 write FMyProp2;
     property MyProp3: Double read FMyProp3 write FMyProp3;
     property MyProp4: TMyEnum read FMyProp4 write FMyProp4;
+  end;
+
+  TMyRecord = record
+  public
+    MyField1: String;
+    MyField2: Integer;
+    MyField3: Double;
+    MyField4: TMyEnum;
   end;
 
 implementation
@@ -97,6 +109,18 @@ begin
   Value.Free;
 end;
 
+procedure TBluePrintJsonSerializerTest.WhenDeserializeARecordMustLoadTheRecordsFieldsAsExpected;
+begin
+  var MyRecord: TMyRecord;
+
+  var Value := FSerializer.Deserialize('{"MyField1":"abc","MyField2":123,"MyField3":123.456,"MyField4":"MyValue2"}', TypeInfo(TMyRecord)).AsType<TMyRecord>;
+
+  Assert.AreEqual('abc', Value.MyField1);
+  Assert.AreEqual<Integer>(123, Value.MyField2);
+  Assert.AreEqual<Double>(123.456, Value.MyField3);
+  Assert.AreEqual(MyValue2, Value.MyField4);
+end;
+
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAStringMustReturnTheStringInTheReturnValue;
 begin
   var Value := FSerializer.Deserialize('abc', TypeInfo(String));
@@ -136,6 +160,18 @@ begin
   Assert.AreEqual('{"MyProp1":"abc","MyProp2":123,"MyProp3":123.456,"MyProp4":"MyValue"}', Value);
 
   MyObject.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenSerializeARecordMustGenerateTheJSONAsExpected;
+begin
+  var MyRecord: TMyRecord;
+  MyRecord.MyField1 := 'abc';
+  MyRecord.MyField2 := 123;
+  MyRecord.MyField3 := 123.456;
+  MyRecord.MyField4 := MyValue;
+  var Value := FSerializer.Serialize(TValue.From(MyRecord));
+
+  Assert.AreEqual('{"MyField1":"abc","MyField2":123,"MyField3":123.456,"MyField4":"MyValue"}', Value);
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenSerializeAStringMustReturnTheStringInTheReturnValue;

@@ -21,13 +21,15 @@ type
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function Serialize(const Value: TValue): String;
   protected
-    function CreateObject(const RttiType: TRttiInstanceType): TObject; virtual;
+    function CreateObject(const RttiType: TRttiInstanceType): TObject;
     function DeserializeArray(const RttiType: TRttiType; const JSONArray: TJSONArray): TValue;
     function DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
     function SerializeArray(const Value: TValue): TJSONArray;
     function SerializeType(const Value: TValue): TJSONValue;
 
-    procedure DeserializeProperties(const Instance: TObject; const JSONObject: TJSONObject); virtual;
+    procedure DeserializeFields(const Instance: TValue; const JSONObject: TJSONObject);
+    procedure DeserializeProperties(const Instance: TObject; const JSONObject: TJSONObject);
+    procedure SerializeFields(const Instance: TValue; const JSONObject: TJSONObject);
     procedure SerializeProperties(const Instance: TObject; const JSONObject: TJSONObject);
 
 //    function CreateRecord(RttiType: TRttiType): TJSObject; virtual;
@@ -124,8 +126,13 @@ begin
     tkInteger,
     tkString: Result := Value.ToString;
 
-    tkArray, tkDynArray,
-    tkClass:
+{$IFDEF DCC}
+    tkMRecord,
+{$ENDIF}
+    tkArray,
+    tkClass,
+    tkDynArray,
+    tkRecord:
     begin
       JSON := SerializeType(Value);
 
@@ -141,12 +148,7 @@ begin
       JSON := nil;
 {$ENDIF}
     end;
-
-    tkRecord: ;
-{$IFDEF DCC}
-    tkMRecord: ;
-{$ENDIF}
-    else Result := '';
+    else Result := EmptyStr;
   end;
 end;
 
@@ -159,6 +161,19 @@ begin
 
   for A := 0 to Pred(Value.GetArrayLength) do
     Result.AddElement(SerializeType(Value.GetArrayElement(A)));
+end;
+
+procedure TBluePrintJsonSerializer.SerializeFields(const Instance: TValue; const JSONObject: TJSONObject);
+var
+  Field: TRttiField;
+
+  RttiType: TRttiType;
+
+begin
+  RttiType := FContext.GetType(Instance.TypeInfo);
+
+  for Field in RttiType.GetFields do
+    JSONObject.AddPair(Field.Name, SerializeType(Field.GetValue(Instance.GetReferenceToRawData)));
 end;
 
 procedure TBluePrintJsonSerializer.SerializeProperties(const Instance: TObject; const JSONObject: TJSONObject);
@@ -175,6 +190,12 @@ begin
 end;
 
 function TBluePrintJsonSerializer.SerializeType(const Value: TValue): TJSONValue;
+
+  function CreateJSONObject: TJSONObject;
+  begin
+    Result := TJSONObject.{$IFDEF PAS2JS}New{$ELSE}Create{$ENDIF};
+  end;
+
 var
   RttiType: TRttiType;
 
@@ -206,17 +227,22 @@ begin
 
     tkClass:
     begin
-      Result := TJSONObject.{$IFDEF PAS2JS}New{$ELSE}Create{$ENDIF};
+      Result := CreateJSONObject;
 
       SerializeProperties(Value.AsObject, TJSONObject(Result));
     end;
 
     tkArray, tkDynArray: Result := SerializeArray(Value);
 
-    tkRecord: ;
 {$IFDEF DCC}
-    tkMRecord: ;
+    tkMRecord,
 {$ENDIF}
+    tkRecord:
+    begin
+      Result := CreateJSONObject;
+
+      SerializeFields(Value, TJSONObject(Result));
+    end;
   end;
 end;
 
@@ -241,12 +267,6 @@ var
 
   RttiType: TRttiType;
 
-//  JSONObject: TJSObject absolute JSON;
-//
-//  Field: TRttiField;
-//
-//  Value: TValue;
-
 begin
   RttiType := FContext.GetType(Instance.ClassType);
 
@@ -256,30 +276,6 @@ begin
 
     if Assigned(Prop) then
       Prop.SetValue(Instance, DeserializeType(Prop.PropertyType, {$IFDEF PAS2JS}JSONObject[Key]{$ELSE}Key.JsonValue{$ENDIF}));
-//    else
-//    begin
-//      Field := RttiType.GetField(Key);
-//
-//      if Assigned(Field) then
-//      begin
-//        Member := Field;
-//        MemberType := Field.FieldType;
-//        Value := Field.GetValue(Instance);
-//      end
-//      else
-//        Member := nil;
-//
-//    if Assigned(Member) then
-//    begin
-//      Value := DeserializeObjectProperty(Value, Member, MemberType, JSONObject[Key]);
-//
-//      if Assigned(Prop) then
-//        SetJSValueProp(Instance, Prop.PropertyTypeInfo, Value.AsJSValue)
-//      else if Assigned(Field) then
-//        Field.SetValue(Instance, Value);
-//    end
-//    else if jsIn('f' + Key, Instance) then
-//      Instance['f' + Key] := JSONObject[Key];
   end;
 end;
 
@@ -316,11 +312,15 @@ begin
 
     tkArray, tkDynArray: Result := DeserializeArray(RttiType, TJSONArray(JSONValue));
 
-    tkRecord: ;
-
 {$IFDEF DCC}
-    tkMRecord: ;
+    tkMRecord,
 {$ENDIF}
+    tkRecord:
+    begin
+      TValue.Make(nil, RttiType.Handle, Result);
+
+      DeserializeFields(Result, TJSONObject(JSONValue));
+    end;
 
     else Result := TValue.Empty;
   end;
@@ -364,8 +364,13 @@ begin
 {$ENDIF}
     tkInteger: Result := TValue.From(StrToInt64(Value));
 
-    tkArray, tkDynArray,
-    tkClass:
+{$IFDEF DCC}
+    tkMRecord,
+{$ENDIF}
+    tkArray,
+    tkClass,
+    tkDynArray,
+    tkRecord:
     begin
       JSON := {$IFDEF PAS2JS}TJSJSON.Parse{$ELSE}TJSONValue.ParseJSONValue{$ENDIF}(Value);
 
@@ -377,12 +382,6 @@ begin
       JSON.Free;
 {$ENDIF}
     end;
-
-    tkRecord: ;
-
-{$IFDEF DCC}
-    tkMRecord: ;
-{$ENDIF}
 
     else Result := TValue.Empty;
   end;
@@ -411,6 +410,24 @@ begin
     ArrayItems[Index] := DeserializeType(ArrayElementType, JSONArray[Index]);
 
   Result := TValue.FromArray(RttiType.Handle, ArrayItems);
+end;
+
+procedure TBluePrintJsonSerializer.DeserializeFields(const Instance: TValue; const JSONObject: TJSONObject);
+var
+  Field: TRttiField;
+  Key: {$IFDEF PAS2JS}String{$ELSE}TJSONPair{$ENDIF};
+  RttiType: TRttiType;
+
+begin
+  RttiType := FContext.GetType(Instance.TypeInfo);
+
+  for Key in {$IFDEF PAS2JS}TJSObject.Keys{$ENDIF}(JSONObject) do
+  begin
+    Field := RttiType.GetField(Key{$IFDEF DCC}.JsonString.Value{$ENDIF});
+
+    if Assigned(Field) then
+      Field.SetValue(Instance.GetReferenceToRawData, DeserializeType(Field.FieldType, {$IFDEF PAS2JS}JSONObject[Key]{$ELSE}Key.JsonValue{$ENDIF}));
+  end;
 end;
 
 { TBluePrintXMLSerializer }
