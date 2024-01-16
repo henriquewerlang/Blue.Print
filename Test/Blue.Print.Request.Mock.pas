@@ -17,7 +17,7 @@ type
     procedure SetHeader(const HeaderName, Value: String);
     procedure SetIntegerVariable(const Index: Integer; const Value: TIntegerVariable);
   public
-    constructor Create(const Method, PathInfo: String);
+    constructor Create(const MethodName, Path: String);
 
     destructor Destroy; override;
 
@@ -38,6 +38,8 @@ type
 
     property ContentLength: TIntegerVariable index 16 read GetIntegerVariable write SetIntegerVariable;
     property Headers[const HeaderName: String]: String read GetHeader write SetHeader;
+    property Method: string index 0 read GetStringVariable write SetStringVariable;
+    property PathInfo: String index 4 read GetStringVariable write SetStringVariable;
     property QueryFields: String index 3 read GetStringVariable write SetStringVariable;
   end;
 
@@ -77,21 +79,14 @@ type
 
 implementation
 
-const
-  CONTENT_TYPE_INDEX = 15;
-  METHOD_INDEX = 0;
-  PATH_INFO_INDEX = 4;
-
 { TWebRequestMock }
 
-constructor TWebRequestMock.Create(const Method, PathInfo: String);
+constructor TWebRequestMock.Create(const MethodName, Path: String);
 begin
   FHeaders := TDictionary<String, String>.Create;
   FStringVariables := TDictionary<Integer, String>.Create;
-
-  FStringVariables.Add(METHOD_INDEX, Method);
-
-  FStringVariables.Add(PATH_INFO_INDEX, PathInfo);
+  Method := MethodName;
+  PathInfo := Path;
 
   inherited Create;
 end;

@@ -135,6 +135,7 @@ var
 begin
   Handled := True;
   Response.Content := E.Message;
+
   if E is EHTTPStatusError then
     Response.StatusCode := HTTPStatusException.StatusCode
   else
