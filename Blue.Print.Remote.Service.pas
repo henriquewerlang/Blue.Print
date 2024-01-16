@@ -32,10 +32,11 @@ type
 
     function EncodeValue(const Value: String): String;
     function GetAttribute<T: TCustomAttribute>(RttiObject: TRttiObject): T;
-
-    procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
+  protected
+    procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue); virtual;
 
     property InterfaceType: TRttiInterfaceType read FInterfaceType;
+    property Serializer: IBluePrintSerializer read FSerializer write FSerializer;
   public
     constructor Create(const TypeInfo: PTypeInfo; const Serializer: IBluePrintSerializer);
 
