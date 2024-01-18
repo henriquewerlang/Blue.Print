@@ -42,6 +42,10 @@ type
     procedure WhenSerializeAClassReferenceMustGenerateTheFullQualifiedNameOfTheClass;
     [Test]
     procedure WhenDeserializeAClassReferenceMustLocateTheClassTypeByNameAndLoadTheValueAsExpected;
+    [Test]
+    procedure WhenSerializeAClassWithAPropertyWithAnObjectAndTheObjectIsNilMustGenerateTheJSONWithNullValue;
+    [Test]
+    procedure WhenDeserializeAClassWithAPropertyWithAnObjectAndTheJSONValueIsNullCantCreateTheObjectProperty;
   end;
 
   TMyObject = class
@@ -55,6 +59,13 @@ type
     property MyProp2: Integer read FMyProp2 write FMyProp2;
     property MyProp3: Double read FMyProp3 write FMyProp3;
     property MyProp4: TMyEnum read FMyProp4 write FMyProp4;
+  end;
+
+  TMyObjectParent = class
+  private
+    FMyObject: TMyObject;
+  public
+    property MyObject: TMyObject read FMyObject write FMyObject;
   end;
 
   TMyRecord = record
@@ -81,6 +92,15 @@ begin
   var Value := FSerializer.Deserialize('"Blue.Print.Serializer.Test.TMyObject"', TypeInfo(TClass));
 
   Assert.AreEqual<TClass>(TMyObject, Value.AsClass);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithAPropertyWithAnObjectAndTheJSONValueIsNullCantCreateTheObjectProperty;
+begin
+  var Value := FSerializer.Deserialize('{"MyObject":null}', TypeInfo(TMyObjectParent));
+
+  Assert.IsNil(Value.AsType<TMyObjectParent>.MyObject);
+
+  Value.AsObject.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAnArrayMustLoadTheArrayAsExpected;
@@ -145,6 +165,16 @@ begin
   var Value := FSerializer.Serialize(TValue.From(ClassValue));
 
   Assert.AreEqual('"Blue.Print.Serializer.Test.TMyObject"', Value);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenSerializeAClassWithAPropertyWithAnObjectAndTheObjectIsNilMustGenerateTheJSONWithNullValue;
+begin
+  var MyObject := TMyObjectParent.Create;
+  var Value := FSerializer.Serialize(MyObject);
+
+  Assert.AreEqual('{"MyObject":null}', Value);
+
+  MyObject.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenSerializeAnArrayMustGenerateTheJSONAsExpected;

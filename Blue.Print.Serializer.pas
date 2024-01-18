@@ -208,11 +208,14 @@ begin
     tkClassRef: Result := SerializeType(TValue.From(Value.AsClass.QualifiedClassName));
 
     tkClass:
-    begin
-      Result := CreateJSONObject;
+      if Value.IsEmpty then
+        Result := TJSONNull.Create
+      else
+      begin
+        Result := CreateJSONObject;
 
-      SerializeProperties(Value.AsObject, TJSONObject(Result));
-    end;
+        SerializeProperties(Value.AsObject, TJSONObject(Result));
+      end;
 
     tkArray, tkDynArray: Result := SerializeArray(Value);
 
@@ -275,11 +278,12 @@ begin
     tkClassRef: Result := TValue.From((FContext.FindType(GetJSONValue(JSONValue)) as TRttiInstanceType).MetaclassType);
 
     tkClass:
-    begin
-      Result := TValue.From(CreateObject(RttiType.AsInstance));
+      if not JSONValue.Null then
+      begin
+        Result := TValue.From(CreateObject(RttiType.AsInstance));
 
-      DeserializeProperties(Result.AsObject, TJSONObject(JSONValue));
-    end;
+        DeserializeProperties(Result.AsObject, TJSONObject(JSONValue));
+      end;
 
     tkArray, tkDynArray: Result := DeserializeArray(RttiType, TJSONArray(JSONValue));
 
