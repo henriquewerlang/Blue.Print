@@ -36,12 +36,6 @@ type
     constructor Create;
   end;
 
-  TBluePrintXMLSerializer = class(TInterfacedObject, IBluePrintSerializer)
-  private
-    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
-    function Serialize(const Value: TValue): String;
-  end;
-
 implementation
 
 uses System.SysUtils, System.Generics.Collections;
@@ -393,18 +387,6 @@ begin
     if Assigned(Field) then
       Field.SetValue(Instance.GetReferenceToRawData, DeserializeType(Field.FieldType, {$IFDEF PAS2JS}JSONObject[Key]{$ELSE}Key.JsonValue{$ENDIF}));
   end;
-end;
-
-{ TBluePrintXMLSerializer }
-
-function TBluePrintXMLSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
-begin
-  Result := TValue.Empty;
-end;
-
-function TBluePrintXMLSerializer.Serialize(const Value: TValue): String;
-begin
-  Result := EmptyStr;
 end;
 
 end.
