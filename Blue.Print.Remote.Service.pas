@@ -130,6 +130,9 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
       Result := DefaultName;
 
     Result := EncodeValue(Result);
+
+    if not Result.IsEmpty then
+      Result := '/' + Result;
   end;
 
   function GetRemoteServiceName: String;
@@ -244,7 +247,7 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
 
   function BuildRequestURL: String;
   begin
-    Result := Format('%s/%s/%s%s%s', [FURL, GetRemoteServiceName, GetRemoteMethodName, GetPathParams, GetQueryParams]);
+    Result := Format('%s%s%s%s%s', [FURL, GetRemoteServiceName, GetRemoteMethodName, GetPathParams, GetQueryParams]);
   end;
 
   procedure SendRequest;

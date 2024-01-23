@@ -70,6 +70,10 @@ type
     procedure WhenAFunctionIsCalledMustDeserializeTheValueBeforeReturingTheValueForTheCaller;
     [Test]
     procedure WhenCallAnProcedureCanNotDeserializeTheReturningValue;
+    [Test]
+    procedure WhenTheRemoteNameAttributeInTheInterfaceIsEmptyCantPutTheBackslashInTheURL;
+    [Test]
+    procedure WhenTheRemoteNameAttributeInTheMethodIsEmptyCantPutTheBackslashInTheURL;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -155,12 +159,14 @@ type
     procedure Proc;
     [RemoteName('ProcedureWithAnotherName')]
     procedure WithName;
+    [RemoteName('')]
+    procedure WithoutRemoteName;
   end;
 
-  IServiceDownload = interface(IInvokable)
-    ['{297F3A0A-3B47-4FD6-ACED-6E4114E9B1A0}']
-    [Attachment('FileName.txt', 'text/plain')]
-    function Download: String;
+  [RemoteName('')]
+  IEmptyServiceName = interface(IInvokable)
+    ['{C79A8BD0-165A-4F59-8BE5-49BA0BCFFF5E}']
+    procedure MyProc;
   end;
 
 implementation
@@ -396,6 +402,24 @@ begin
   Service.WithName;
 
   Assert.AreEqual('/AnotherName/ProcedureWithAnotherName', FCommunication.URL);
+end;
+
+procedure TRemoteServiceTest.WhenTheRemoteNameAttributeInTheInterfaceIsEmptyCantPutTheBackslashInTheURL;
+begin
+  var Service := GetRemoteService<IEmptyServiceName>(EmptyStr);
+
+  Service.MyProc;
+
+  Assert.AreEqual('/MyProc', FCommunication.URL);
+end;
+
+procedure TRemoteServiceTest.WhenTheRemoteNameAttributeInTheMethodIsEmptyCantPutTheBackslashInTheURL;
+begin
+  var Service := GetRemoteService<IServiceNamed>(EmptyStr);
+
+  Service.WithoutRemoteName;
+
+  Assert.AreEqual('/AnotherName', FCommunication.URL);
 end;
 
 procedure TRemoteServiceTest.WhenTheRequestDontHaveParamInBodyCantLoadTheBodyRequest;
