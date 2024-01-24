@@ -61,6 +61,7 @@ type
     function GetRequestMethod(const Method: TRttiMethod): TRequestMethod;
     function GetPathParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function GetQueryParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
+    function GetSerializer: IBluePrintSerializer;
     function GetSOAPActionName(const Method: TRttiMethod): String;
     function IsSOAPRequest: Boolean;
     function LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
@@ -72,7 +73,6 @@ type
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue); virtual;
 
     property InterfaceType: TRttiInterfaceType read FInterfaceType;
-    property Serializer: IBluePrintSerializer read FSerializer write FSerializer;
   public
     constructor Create(const TypeInfo: PTypeInfo; const Serializer: IBluePrintSerializer);
 
@@ -84,6 +84,7 @@ type
     function GetService<T: IInvokable>(const URL: String): T;
 
     property Communication: IHTTPCommunication read FCommunication write FCommunication;
+    property Serializer: IBluePrintSerializer read GetSerializer write FSerializer;
   end;
 
 implementation
@@ -246,6 +247,17 @@ begin
     Result := RequestMethod.Method
   else
     Result := TRequestMethod.Post;
+end;
+
+function TRemoteService.GetSerializer: IBluePrintSerializer;
+begin
+  if not Assigned(FSerializer) then
+    if IsSOAPRequest then
+      FSerializer := TBluePrintXMLSerializer.Create
+    else
+      FSerializer := TBluePrintJsonSerializer.Create;
+
+  Result := FSerializer;
 end;
 
 function TRemoteService.GetService<T>(const URL: String): T;

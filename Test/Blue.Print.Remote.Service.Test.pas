@@ -86,6 +86,12 @@ type
     procedure WhenTheInterfaceHasTheSOAPServiceAttributeTheMethodCallCantBeLoadedInTheURLPath;
     [Test]
     procedure WhenSendASOAPRequestMustSerializeTheSOAPEnvelopInTheRequest;
+    [Test]
+    procedure WhenTheInterfaceHasTheSOAPServiceAttributeTheDefaultSerializerMustBeTheXMLSerializer;
+    [Test]
+    procedure WhenTheInterfaceHasntTheSOAPServiceAttributeTheDefaultSerializerMustBeTheJSONSerializer;
+    [Test]
+    procedure WhenCreateTheRemoteClassTheSerializerInTheParamsCantBeReplacedByAnotherSerializer;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -323,6 +329,15 @@ begin
   Assert.AreEqual('http://myurl.com/myapi/IServiceTest/TestProcedure', FCommunication.URL);
 end;
 
+procedure TRemoteServiceTest.WhenCreateTheRemoteClassTheSerializerInTheParamsCantBeReplacedByAnotherSerializer;
+begin
+  var RemoteClass := TRemoteService.Create(TypeInfo(IServiceNamed), TSerializerMock.Create);
+
+  Assert.AreEqual<TClass>(TSerializerMock, TObject(RemoteClass.Serializer).ClassType);
+
+  RemoteClass.Free;
+end;
+
 procedure TRemoteServiceTest.WhenGetServiceMustReturnTheInterfaceFilled;
 begin
   var Value := CreateRemoteService<IServiceAutenticationTest>.GetService<IServiceAutenticationTest>(EmptyStr);
@@ -337,6 +352,15 @@ begin
   Service.SoapBodyMethod('Value');
 
   Assert.AreEqual<PTypeInfo>(TypeInfo(TSOAPEnvelop), FSerializer.SerializeValue.TypeInfo);
+end;
+
+procedure TRemoteServiceTest.WhenTheInterfaceHasntTheSOAPServiceAttributeTheDefaultSerializerMustBeTheJSONSerializer;
+begin
+  var RemoteClass := TRemoteService.Create(TypeInfo(IServiceNamed), nil);
+
+  Assert.AreEqual<TClass>(TBluePrintJsonSerializer, TObject(RemoteClass.Serializer).ClassType);
+
+  RemoteClass.Free;
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasRemoteNameWithLocaleCharsMustEncodeTheName;
@@ -364,6 +388,15 @@ begin
   Service.SoapMethod;
 
   Assert.AreEqual('application/soap', FCommunication.Header['Content-Type']);
+end;
+
+procedure TRemoteServiceTest.WhenTheInterfaceHasTheSOAPServiceAttributeTheDefaultSerializerMustBeTheXMLSerializer;
+begin
+  var RemoteClass := TRemoteService.Create(TypeInfo(ISOAPService), nil);
+
+  Assert.AreEqual<TClass>(TBluePrintXMLSerializer, TObject(RemoteClass.Serializer).ClassType);
+
+  RemoteClass.Free;
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasTheSOAPServiceAttributeTheMethodCallCantBeLoadedInTheURLPath;
