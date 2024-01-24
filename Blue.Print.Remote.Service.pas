@@ -11,14 +11,26 @@ type
 //    {$IFDEF PAS2JS}
 //    function SendRequestAsync(const RequestMethod: TRequestMethod; const URL, Body: String): String; async;
 //    {$ENDIF}
+
+    procedure SetHeader(const HeaderName, Value: String);
+
+    property Header[const HeaderName: String]: String write SetHeader;
   end;
 
   THTTPCommunication = class(TInterfacedObject, IHTTPCommunication)
   private
+    FConnection: {$IFDEF PAS2JS}TJSXMLHttpRequest{$ELSE}THTTPClient{$ENDIF};
+
     function SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String): String;
 //{$IFDEF PAS2JS}
 //    function SendRequestAsync(const RequestMethod: TRequestMethod; const URL, Body: String): String; async;
 //{$ENDIF}
+
+    procedure SetHeader(const HeaderName, Value: String);
+  public
+    constructor Create;
+
+    destructor Destroy; override;
   end;
 
   TRemoteService = class(TVirtualInterface)
@@ -61,6 +73,8 @@ uses
 
 const
   COMPILER_OFFSET = {$IFDEF PAS2JS}0{$ELSE}1{$ENDIF};
+  CONTENT_TYPE_HEADER = 'Content-Type';
+  SOAP_ACTION_HEADER = 'SOAPAction';
 
 { TRemoteService }
 
@@ -173,6 +187,11 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
       Result := TParameterType.Query;
   end;
 
+  function GetSOAPActionName: String;
+  begin
+    Result := Method.Name;
+  end;
+
   procedure LoadParams(const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType);
   var
     Parameter: TRttiParameter;
@@ -247,7 +266,16 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
 
   function BuildRequestURL: String;
   begin
-    Result := Format('%s%s%s%s%s', [FURL, GetRemoteServiceName, GetRemoteMethodName, GetPathParams, GetQueryParams]);
+    Result := FURL + GetRemoteServiceName + GetRemoteMethodName + GetPathParams + GetQueryParams;
+  end;
+
+  procedure LoadSOAPInformation;
+  begin
+    if Assigned(GetAttribute<SoapServiceAttribute>(FInterfaceType)) then
+    begin
+      Communication.Header[CONTENT_TYPE_HEADER] := 'application/soap';
+      Communication.Header[SOAP_ACTION_HEADER] := GetSOAPActionName;
+    end;
   end;
 
   procedure SendRequest;
@@ -255,6 +283,8 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
     Response: String;
 
   begin
+    LoadSOAPInformation;
+
     Response := Communication.SendRequest(GetRequestMethod, BuildRequestURL, LoadRequestBody);
 
     if Assigned(Method.ReturnType) then
@@ -278,6 +308,22 @@ begin
 end;
 
 { THTTPCommunication }
+
+constructor THTTPCommunication.Create;
+begin
+  FConnection := {$IFDEF PAS2JS}TJSXMLHttpRequest.New{$ELSE}THTTPClient.Create{$ENDIF};
+end;
+
+destructor THTTPCommunication.Destroy;
+begin
+  {$IFDEF PAS2JS}
+  FConnection := nil
+  {$ELSE}
+  FConnection.Free;
+  {$ENDIF};
+
+  inherited;
+end;
 
 function THTTPCommunication.SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String): String;
 const
@@ -318,25 +364,23 @@ begin
 //    DownloadFile(Request.URL)
 //  else
 //  begin
-  Connection := TJSXMLHttpRequest.New;
 
-  Connection.Open(REQUEST_METHOD_NAME[RequestMethod], URL, False);
+  FConnection.Open(REQUEST_METHOD_NAME[RequestMethod], URL, False);
 
 //  for A := 0 to Pred(FHeaders.Count) do
 //    Connection.SetRequestHeader(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
 
-  Connection.Send();
+  FConnection.Send();
 
-  Result := Connection.ResponseText;
+  Result := FConnection.ResponseText;
 
-  CheckStatusCode(Connection.Status, URL);
+  CheckStatusCode(FConnection.Status, URL);
 {$ELSE}
   var BodyStream := TStringStream.Create(Body, TEncoding.UTF8);
-  var Connection := THTTPClient.Create;
-  Connection.ResponseTimeout := -1;
-  Connection.SendTimeout := -1;
+  FConnection.ResponseTimeout := -1;
+  FConnection.SendTimeout := -1;
 
-  var Response := Connection.Execute(REQUEST_METHOD_NAME[RequestMethod], URL, BodyStream) as IHTTPResponse;
+  var Response := FConnection.Execute(REQUEST_METHOD_NAME[RequestMethod], URL, BodyStream) as IHTTPResponse;
   Result := Response.ContentAsString;
 
   BodyStream.Free;
@@ -383,6 +427,11 @@ end;
 //  end;
 //end;
 //{$ENDIF}
+
+procedure THTTPCommunication.SetHeader(const HeaderName, Value: String);
+begin
+
+end;
 
 end.
 

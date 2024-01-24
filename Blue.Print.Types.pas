@@ -75,6 +75,18 @@ type
     constructor Create;
   end;
 
+  SoapServiceAttribute = class(TCustomAttribute)
+  end;
+
+  SoapActionAttribute = class(TCustomAttribute)
+  private
+    FActionName: String;
+  public
+    constructor Create(const ActionName: String);
+
+    property ActionName: String read FActionName write FActionName;
+  end;
+
   TParameterAttribute = class(TCustomAttribute)
   private
     FParamType: TParameterType;
@@ -388,6 +400,13 @@ end;
 constructor EHTTPErrorBadRequest.Create(const ErrorMessage: String);
 begin
   inherited Create(HTTP_STATUS_BAD_REQUEST, ErrorMessage);
+end;
+
+{ SoapActionAttribute }
+
+constructor SoapActionAttribute.Create(const ActionName: String);
+begin
+
 end;
 
 end.

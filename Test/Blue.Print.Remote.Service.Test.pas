@@ -2,7 +2,7 @@
 
 interface
 
-uses Test.Insight.Framework, System.Rtti, System.Classes, System.TypInfo, Blue.Print.Remote.Service, Blue.Print.Types;
+uses System.Rtti, System.Classes, System.TypInfo, System.Generics.Collections, Test.Insight.Framework, Blue.Print.Remote.Service, Blue.Print.Types;
 
 type
   TCommunicationMock = class;
@@ -74,18 +74,30 @@ type
     procedure WhenTheRemoteNameAttributeInTheInterfaceIsEmptyCantPutTheBackslashInTheURL;
     [Test]
     procedure WhenTheRemoteNameAttributeInTheMethodIsEmptyCantPutTheBackslashInTheURL;
+    [Test]
+    procedure WhenTheInterfaceHasTheSoapServiceAttributeTheMethodNameMustBeLoadedInTheSoapActionHeader;
+    [Test]
+    procedure TheSoapActionHeaderMustBeLoadedOnlyIfTheSoapServiceAttributeIsLoadedInTheInterface;
+    [Test]
+    procedure WhenTheInterfaceHasTheSoapServiceAttributeMustLoadTheContentTypeHeaderWithTheSoapContentTypeValue;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
   private
     FBody: TStream;
+    FHeaders: TDictionary<String, String>;
     FRequestMethod: TRequestMethod;
     FRequestSended: Boolean;
     FResponse: TStream;
     FURL: String;
 
+    function GetHeader(const HeaderName: String): String;
     function SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String): String;
+
+    procedure SetHeader(const HeaderName, Value: String);
   public
+    constructor Create;
+
     destructor Destroy; override;
 
     function GetBodyAsString: String;
@@ -93,6 +105,7 @@ type
     procedure SetResponseValue(const Value: String);
 
     property Body: TStream read FBody;
+    property Header[const HeaderName: String]: String read GetHeader write SetHeader;
     property RequestMethod: TRequestMethod read FRequestMethod;
     property RequestSended: Boolean read FRequestSended;
     property URL: String read FURL;
@@ -169,6 +182,12 @@ type
     procedure MyProc;
   end;
 
+  [SoapService]
+  ISOAPService = interface(IInvokable)
+    ['{29F73745-0A70-4C1A-9617-45A8711D7173}']
+    procedure SoapMethod;
+  end;
+
 implementation
 
 uses System.SysUtils, Blue.Print.Serializer, Web.ReqFiles;
@@ -228,6 +247,15 @@ begin
   Assert.AreEqual(RequestType, FCommunication.RequestMethod);
 
   Context.Free;
+end;
+
+procedure TRemoteServiceTest.TheSoapActionHeaderMustBeLoadedOnlyIfTheSoapServiceAttributeIsLoadedInTheInterface;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.TestProcedure;
+
+  Assert.AreEqual(EmptyStr, FCommunication.Header['SOAPAction']);
 end;
 
 procedure TRemoteServiceTest.WhenAFunctionIsCalledMustDeserializeTheValueBeforeReturingTheValueForTheCaller;
@@ -307,6 +335,24 @@ begin
   Service.Proc;
 
   Assert.AreEqual('/AnotherName/Proc', FCommunication.URL);
+end;
+
+procedure TRemoteServiceTest.WhenTheInterfaceHasTheSoapServiceAttributeMustLoadTheContentTypeHeaderWithTheSoapContentTypeValue;
+begin
+  var Service := GetRemoteService<ISOAPService>(EmptyStr);
+
+  Service.SoapMethod;
+
+  Assert.AreEqual('application/soap', FCommunication.Header['Content-Type']);
+end;
+
+procedure TRemoteServiceTest.WhenTheInterfaceHasTheSoapServiceAttributeTheMethodNameMustBeLoadedInTheSoapActionHeader;
+begin
+  var Service := GetRemoteService<ISOAPService>(EmptyStr);
+
+  Service.SoapMethod;
+
+  Assert.AreEqual('SoapMethod', FCommunication.Header['SOAPAction']);
 end;
 
 procedure TRemoteServiceTest.WhenTheMethodDontHaveARequestMethodAttributeAndTheInterfaceHasTheAttributeMustLoadTheRequestMethodFromTheInterface(const InterfaceName: String;
@@ -433,9 +479,16 @@ end;
 
 { TCommunicationMock }
 
+constructor TCommunicationMock.Create;
+begin
+  FHeaders := TDictionary<String, String>.Create;
+end;
+
 destructor TCommunicationMock.Destroy;
 begin
   FBody.Free;
+
+  FHeaders.Free;
 
   FResponse.Free;
 
@@ -451,6 +504,13 @@ begin
   Reader.Free;
 end;
 
+function TCommunicationMock.GetHeader(const HeaderName: String): String;
+begin
+  Result := EmptyStr;
+
+  FHeaders.TryGetValue(HeaderName, Result);
+end;
+
 function TCommunicationMock.SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String): String;
 begin
   FRequestMethod := RequestMethod;
@@ -460,6 +520,11 @@ begin
 
   if not Body.IsEmpty then
     FBody := TStringStream.Create(Body);
+end;
+
+procedure TCommunicationMock.SetHeader(const HeaderName, Value: String);
+begin
+  FHeaders.AddOrSetValue(HeaderName, Value);
 end;
 
 procedure TCommunicationMock.SetResponseValue(const Value: String);
