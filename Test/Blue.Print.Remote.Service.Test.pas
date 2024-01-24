@@ -80,6 +80,12 @@ type
     procedure TheSoapActionHeaderMustBeLoadedOnlyIfTheSoapServiceAttributeIsLoadedInTheInterface;
     [Test]
     procedure WhenTheInterfaceHasTheSoapServiceAttributeMustLoadTheContentTypeHeaderWithTheSoapContentTypeValue;
+    [Test]
+    procedure WhenTheMethodHasTheSOAPActionAttributeMustLoadTheHeaderWithTheAttributeName;
+    [Test]
+    procedure WhenTheInterfaceHasTheSOAPServiceAttributeTheMethodCallCantBeLoadedInTheURLPath;
+    [Test]
+    procedure WhenSendASOAPRequestMustSerializeTheSOAPEnvelopInTheRequest;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -115,12 +121,14 @@ type
   private
     FDeserializeCalled: Boolean;
     FReturnValue: TValue;
+    FSerializeValue: TValue;
 
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function Serialize(const Value: TValue): String;
   public
     property DeserializeCalled: Boolean read FDeserializeCalled;
     property ReturnValue: TValue read FReturnValue write FReturnValue;
+    property SerializeValue: TValue read FSerializeValue;
   end;
 
   [BasicAuthentication('User', 'Password')]
@@ -185,7 +193,10 @@ type
   [SoapService]
   ISOAPService = interface(IInvokable)
     ['{29F73745-0A70-4C1A-9617-45A8711D7173}']
+    procedure SoapBodyMethod(const [Body] Body: String);
     procedure SoapMethod;
+    [SoapAction('MyAction')]
+    procedure SoapNamedMethod;
   end;
 
 implementation
@@ -319,6 +330,15 @@ begin
   Assert.IsNotNil(Value);
 end;
 
+procedure TRemoteServiceTest.WhenSendASOAPRequestMustSerializeTheSOAPEnvelopInTheRequest;
+begin
+  var Service := GetRemoteService<ISOAPService>('Host');
+
+  Service.SoapBodyMethod('Value');
+
+  Assert.AreEqual<PTypeInfo>(TypeInfo(TSOAPEnvelop), FSerializer.SerializeValue.TypeInfo);
+end;
+
 procedure TRemoteServiceTest.WhenTheInterfaceHasRemoteNameWithLocaleCharsMustEncodeTheName;
 begin
   var Service := GetRemoteService<ILocaleCharsService>(EmptyStr);
@@ -344,6 +364,15 @@ begin
   Service.SoapMethod;
 
   Assert.AreEqual('application/soap', FCommunication.Header['Content-Type']);
+end;
+
+procedure TRemoteServiceTest.WhenTheInterfaceHasTheSOAPServiceAttributeTheMethodCallCantBeLoadedInTheURLPath;
+begin
+  var Service := GetRemoteService<ISOAPService>('Host');
+
+  Service.SoapMethod;
+
+  Assert.AreEqual('Host/ISOAPService', FCommunication.URL);
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasTheSoapServiceAttributeTheMethodNameMustBeLoadedInTheSoapActionHeader;
@@ -381,6 +410,15 @@ begin
   Service.TestProcedure;
 
   Assert.AreEqual(TRequestMethod.Post, FCommunication.RequestMethod);
+end;
+
+procedure TRemoteServiceTest.WhenTheMethodHasTheSOAPActionAttributeMustLoadTheHeaderWithTheAttributeName;
+begin
+  var Service := GetRemoteService<ISOAPService>(EmptyStr);
+
+  Service.SoapNamedMethod;
+
+  Assert.AreEqual('MyAction', FCommunication.Header['SOAPAction']);
 end;
 
 procedure TRemoteServiceTest.WhenTheParamHasThePathAttributeTheValueOfTheParamMustBeLoadedInTheURLOfTheRequest;
@@ -545,6 +583,7 @@ end;
 
 function TSerializerMock.Serialize(const Value: TValue): String;
 begin
+  FSerializeValue := Value;
   Result := FReturnValue.AsString;
 end;
 

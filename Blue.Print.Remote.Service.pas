@@ -33,6 +33,15 @@ type
     destructor Destroy; override;
   end;
 
+  [NodeName('SOAP-ENV:Envelope')]
+  TSOAPEnvelop = record
+  public
+    [NodeName('SOAP-ENV:Body')]
+    SOAPBody: TValue;
+
+    constructor Create(const Body: TValue);
+  end;
+
   TRemoteService = class(TVirtualInterface)
   private
     FCommunication: IHTTPCommunication;
@@ -42,8 +51,23 @@ type
     FInterfaceType: TRttiInterfaceType;
     FSerializer: IBluePrintSerializer;
 
+    function BuildRequestURL(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function EncodeValue(const Value: String): String;
     function GetAttribute<T: TCustomAttribute>(RttiObject: TRttiObject): T;
+    function GetParameterType(const Parameter: TRttiParameter): TParameterType;
+    function GetRemoteMethodName(const Method: TRttiMethod): String;
+    function GetRemoteName(const RttiObject: TRttiObject; const DefaultName: String): String;
+    function GetRemoteServiceName(const Method: TRttiMethod): String;
+    function GetRequestMethod(const Method: TRttiMethod): TRequestMethod;
+    function GetPathParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
+    function GetQueryParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
+    function GetSOAPActionName(const Method: TRttiMethod): String;
+    function IsSOAPRequest: Boolean;
+    function LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
+    function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>): TValue;
+
+    procedure LoadParams(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
+    procedure LoadSOAPInformation(const Method: TRttiMethod);
   protected
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue); virtual;
 
@@ -77,6 +101,11 @@ const
   SOAP_ACTION_HEADER = 'SOAPAction';
 
 { TRemoteService }
+
+function TRemoteService.BuildRequestURL(const Method: TRttiMethod; const Args: TArray<TValue>): String;
+begin
+  Result := FURL + GetRemoteServiceName(Method) + GetRemoteMethodName(Method) + GetPathParams(Method, Args) + GetQueryParams(Method, Args);
+end;
 
 constructor TRemoteService.Create(const TypeInfo: PTypeInfo; const Serializer: IBluePrintSerializer);
 begin
@@ -122,6 +151,103 @@ begin
   until Assigned(Result) or not Assigned(RttiObject);
 end;
 
+function TRemoteService.GetParameterType(const Parameter: TRttiParameter): TParameterType;
+var
+  ParameterAttribute: TParameterAttribute;
+
+begin
+  ParameterAttribute := GetAttribute<TParameterAttribute>(Parameter);
+
+  if Assigned(ParameterAttribute) then
+    Result := ParameterAttribute.ParamType
+  else if Parameter.ParamType.IsInstance then
+    Result := TParameterType.Body
+  else
+    Result := TParameterType.Query;
+end;
+
+function TRemoteService.GetPathParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
+var
+  PathParams: String;
+
+begin
+  PathParams := EmptyStr;
+
+  LoadParams(Method,
+    procedure (Parameter: TRttiParameter; Value: TValue)
+    begin
+      PathParams := PathParams + '/' + EncodeValue(Value.ToString);
+    end, TParameterType.Path, Args);
+
+  Result := PathParams;
+end;
+
+function TRemoteService.GetQueryParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
+var
+  QueryParams: String;
+
+begin
+  QueryParams := EmptyStr;
+
+  LoadParams(Method,
+    procedure(Parameter: TRttiParameter; Value: TValue)
+    begin
+      if not QueryParams.IsEmpty then
+        QueryParams := QueryParams + '&';
+
+      QueryParams := QueryParams + Format('%s=%s', [EncodeValue(Parameter.Name), EncodeValue(Value.ToString)]);
+    end, TParameterType.Query, Args);
+
+  if not QueryParams.IsEmpty then
+    QueryParams := '/?' + QueryParams;
+
+  Result := QueryParams;
+end;
+
+function TRemoteService.GetRemoteMethodName(const Method: TRttiMethod): String;
+begin
+  if IsSOAPRequest then
+    Result := EmptyStr
+  else
+    Result := GetRemoteName(Method, Method.Name);
+end;
+
+function TRemoteService.GetRemoteName(const RttiObject: TRttiObject; const DefaultName: String): String;
+var
+  RemoteName: RemoteNameAttribute;
+
+begin
+  RemoteName := RttiObject.GetAttribute<RemoteNameAttribute>;
+
+  if Assigned(RemoteName) then
+    Result := RemoteName.RemoteName
+  else
+    Result := DefaultName;
+
+  Result := EncodeValue(Result);
+
+  if not Result.IsEmpty then
+    Result := '/' + Result;
+end;
+
+function TRemoteService.GetRemoteServiceName(const Method: TRttiMethod): String;
+begin
+  Result := GetRemoteName(Method.Parent, Method.Parent.Name);
+end;
+
+function TRemoteService.GetRequestMethod(const Method: TRttiMethod): TRequestMethod;
+var
+  RequestMethod: TRequestMethodAttribute;
+
+begin
+  RequestMethod := GetAttribute<TRequestMethodAttribute>(Method);
+
+  if Assigned(RequestMethod) then
+    Result := RequestMethod.Method
+  else
+    Result := TRequestMethod.Post;
+end;
+
 function TRemoteService.GetService<T>(const URL: String): T;
 begin
   FURL := URL;
@@ -129,168 +255,71 @@ begin
   QueryInterface(InterfaceType.GUID, Result);
 end;
 
-procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
+function TRemoteService.GetSOAPActionName(const Method: TRttiMethod): String;
+var
+  SOAPAction: SoapActionAttribute;
 
-  function GetRemoteName(const RttiObject: TRttiObject; const DefaultName: String): String;
-  var
-    RemoteName: RemoteNameAttribute;
+begin
+  SOAPAction := GetAttribute<SoapActionAttribute>(Method);
 
-  begin
-    RemoteName := RttiObject.GetAttribute<RemoteNameAttribute>;
-
-    if Assigned(RemoteName) then
-      Result := RemoteName.RemoteName
-    else
-      Result := DefaultName;
-
-    Result := EncodeValue(Result);
-
-    if not Result.IsEmpty then
-      Result := '/' + Result;
-  end;
-
-  function GetRemoteServiceName: String;
-  begin
-    Result := GetRemoteName(Method.Parent, Method.Parent.Name);
-  end;
-
-  function GetRemoteMethodName: String;
-  begin
-    Result := GetRemoteName(Method, Method.Name);
-  end;
-
-  function GetRequestMethod: TRequestMethod;
-  var
-    RequestMethod: TRequestMethodAttribute;
-
-  begin
-    RequestMethod := GetAttribute<TRequestMethodAttribute>(Method);
-
-    if Assigned(RequestMethod) then
-      Result := RequestMethod.Method
-    else
-      Result := TRequestMethod.Post;
-  end;
-
-  function GetParameterType(const Parameter: TRttiParameter): TParameterType;
-  var
-    ParameterAttribute: TParameterAttribute;
-
-  begin
-    ParameterAttribute := GetAttribute<TParameterAttribute>(Parameter);
-
-    if Assigned(ParameterAttribute) then
-      Result := ParameterAttribute.ParamType
-    else if Parameter.ParamType.IsInstance then
-      Result := TParameterType.Body
-    else
-      Result := TParameterType.Query;
-  end;
-
-  function GetSOAPActionName: String;
-  begin
+  if Assigned(SOAPAction) then
+    Result := SOAPAction.ActionName
+  else
     Result := Method.Name;
-  end;
+end;
 
-  procedure LoadParams(const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType);
-  var
-    Parameter: TRttiParameter;
+function TRemoteService.IsSOAPRequest: Boolean;
+begin
+  Result := Assigned(GetAttribute<SoapServiceAttribute>(FInterfaceType));
+end;
 
-    ValueIndex: Integer;
+procedure TRemoteService.LoadParams(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
+var
+  Parameter: TRttiParameter;
 
+  ValueIndex: Integer;
+
+begin
+  ValueIndex := COMPILER_OFFSET;
+
+  for Parameter in Method.GetParameters do
   begin
-    ValueIndex := COMPILER_OFFSET;
+    if GetParameterType(Parameter) = ParameterType then
+      LoadFunction(Parameter, Args[ValueIndex]);
 
-    for Parameter in Method.GetParameters do
+    Inc(ValueIndex);
+  end;
+end;
+
+function TRemoteService.LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
+var
+  Body: String;
+
+begin
+  Body := EmptyStr;
+
+  LoadParams(Method,
+    procedure(Parameter: TRttiParameter; Value: TValue)
     begin
-      if GetParameterType(Parameter) = ParameterType then
-        LoadFunction(Parameter, Args[ValueIndex]);
-
-      Inc(ValueIndex);
-    end;
-  end;
-
-  function GetQueryParams: String;
-  var
-    QueryParams: String;
-
-  begin
-    QueryParams := EmptyStr;
-
-    LoadParams(
-      procedure(Parameter: TRttiParameter; Value: TValue)
-      begin
-        if not QueryParams.IsEmpty then
-          QueryParams := QueryParams + '&';
-
-        QueryParams := QueryParams + Format('%s=%s', [EncodeValue(Parameter.Name), EncodeValue(Value.ToString)]);
-      end, TParameterType.Query);
-
-    if not QueryParams.IsEmpty then
-      QueryParams := '/?' + QueryParams;
-
-    Result := QueryParams;
-  end;
-
-  function GetPathParams: String;
-  var
-    PathParams: String;
-
-  begin
-    PathParams := EmptyStr;
-
-    LoadParams(
-      procedure (Parameter: TRttiParameter; Value: TValue)
-      begin
-        PathParams := PathParams + '/' + EncodeValue(Value.ToString);
-      end, TParameterType.Path);
-
-    Result := PathParams;
-  end;
-
-  function LoadRequestBody: String;
-  var
-    Body: String;
-
-  begin
-    Body := EmptyStr;
-
-    LoadParams(
-      procedure (Parameter: TRttiParameter; Value: TValue)
-      begin
+      if IsSOAPRequest then
+        Body := FSerializer.Serialize(TValue.From(TSOAPEnvelop.Create(Value)))
+      else
         Body := FSerializer.Serialize(Value);
-      end, TParameterType.Body);
+    end, TParameterType.Body, Args);
 
-    Result := Body;
-  end;
+  Result := Body;
+end;
 
-  function BuildRequestURL: String;
+procedure TRemoteService.LoadSOAPInformation;
+begin
+  if IsSOAPRequest then
   begin
-    Result := FURL + GetRemoteServiceName + GetRemoteMethodName + GetPathParams + GetQueryParams;
+    Communication.Header[CONTENT_TYPE_HEADER] := 'application/soap';
+    Communication.Header[SOAP_ACTION_HEADER] := GetSOAPActionName(Method);
   end;
+end;
 
-  procedure LoadSOAPInformation;
-  begin
-    if Assigned(GetAttribute<SoapServiceAttribute>(FInterfaceType)) then
-    begin
-      Communication.Header[CONTENT_TYPE_HEADER] := 'application/soap';
-      Communication.Header[SOAP_ACTION_HEADER] := GetSOAPActionName;
-    end;
-  end;
-
-  procedure SendRequest;
-  var
-    Response: String;
-
-  begin
-    LoadSOAPInformation;
-
-    Response := Communication.SendRequest(GetRequestMethod, BuildRequestURL, LoadRequestBody);
-
-    if Assigned(Method.ReturnType) then
-      Result := FSerializer.Deserialize(Response, Method.ReturnType.Handle);
-  end;
-
+procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
 {$IFDEF PAS2JS}
   function SendRequestAsync: TJSPromise;
   begin
@@ -304,7 +333,20 @@ begin
       Result := TValue.From(SendRequestAsync)
     else
 {$ENDIF}
-  SendRequest;
+  Result := SendRequest(Method, Args);
+end;
+
+function TRemoteService.SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>): TValue;
+var
+  Response: String;
+
+begin
+  LoadSOAPInformation(Method);
+
+  Response := Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBody(Method, Args));
+
+  if Assigned(Method.ReturnType) then
+    Result := FSerializer.Deserialize(Response, Method.ReturnType.Handle);
 end;
 
 { THTTPCommunication }
@@ -431,6 +473,13 @@ end;
 procedure THTTPCommunication.SetHeader(const HeaderName, Value: String);
 begin
 
+end;
+
+{ TSOAPEnvelop }
+
+constructor TSOAPEnvelop.Create(const Body: TValue);
+begin
+  SOAPBody := Body;
 end;
 
 end.

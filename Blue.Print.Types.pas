@@ -87,6 +87,15 @@ type
     property ActionName: String read FActionName write FActionName;
   end;
 
+  NodeNameAttribute = class(TCustomAttribute)
+  private
+    FNodeName: String;
+  public
+    constructor Create(const NodeName: String);
+
+    property NodeName: String read FNodeName write FNodeName;
+  end;
+
   TParameterAttribute = class(TCustomAttribute)
   private
     FParamType: TParameterType;
@@ -406,7 +415,18 @@ end;
 
 constructor SoapActionAttribute.Create(const ActionName: String);
 begin
+  inherited Create;
 
+  FActionName := ActionName;
+end;
+
+{ NodeNameAttribute }
+
+constructor NodeNameAttribute.Create(const NodeName: String);
+begin
+  inherited Create;
+
+  FNodeName := NodeName;
 end;
 
 end.
