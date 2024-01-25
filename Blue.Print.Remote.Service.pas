@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF DCC}System.Net.HTTPClient, {$ENDIF}Blue.Print.Types, Blue.Print.Serializer;
+uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF PAS2JS}JS, Web, WebOrWorker, {$ELSE}System.Net.HTTPClient, {$ENDIF}Blue.Print.Types, Blue.Print.Serializer;
 
 type
   IHTTPCommunication = interface
@@ -89,12 +89,9 @@ type
 
 implementation
 
-uses
-{$IFDEF PAS2JS}
-  JS, Web, WebOrWorker
-{$ELSE}
-  System.Net.Mime, System.NetConsts, System.Net.URLClient, System.NetEncoding, Web.HTTPApp
-{$ENDIF};
+{$IFDEF DCC}
+uses System.Net.Mime, System.NetConsts, System.Net.URLClient, System.NetEncoding, Web.HTTPApp;
+{$ENDIF}
 
 const
   COMPILER_OFFSET = {$IFDEF PAS2JS}0{$ELSE}1{$ENDIF};
@@ -322,7 +319,7 @@ begin
   Result := Body;
 end;
 
-procedure TRemoteService.LoadSOAPInformation;
+procedure TRemoteService.LoadSOAPInformation(const Method: TRttiMethod);
 begin
   if IsSOAPRequest then
   begin
@@ -335,7 +332,11 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
 {$IFDEF PAS2JS}
   function SendRequestAsync: TJSPromise;
   begin
-//    Result := TJSPromise.Create...
+    Result := TJSPromise.New(
+      procedure (Resolve: TProc<TValue>)
+      begin
+        Resolve(SendRequest(Method, Args));
+      end);
   end;
 {$ENDIF}
 

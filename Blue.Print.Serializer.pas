@@ -209,7 +209,7 @@ begin
 
     tkClass:
       if Value.IsEmpty then
-        Result := TJSONNull.Create
+        Result := {$IFDEF PAS2JS}NULL{$ELSE}TJSONNull.Create{$ENDIF}
       else
       begin
         Result := CreateJSONObject;
@@ -278,7 +278,7 @@ begin
     tkClassRef: Result := TValue.From((FContext.FindType(GetJSONValue(JSONValue)) as TRttiInstanceType).MetaclassType);
 
     tkClass:
-      if not JSONValue.Null then
+      if {$IFDEF PAS2JS}JSONValue <> NULL{$ELSE}not JSONValue.Null{$ENDIF} then
       begin
         Result := TValue.From(CreateObject(RttiType.AsInstance));
 
