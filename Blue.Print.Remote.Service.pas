@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF PAS2JS}JS, Web, WebOrWorker, {$ELSE}System.Net.HTTPClient, {$ENDIF}Blue.Print.Types, Blue.Print.Serializer;
+uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF PAS2JS}JS, Web, WebOrWorker{$ELSE}System.Net.HTTPClient{$ENDIF}, Blue.Print.Types, Blue.Print.Serializer;
 
 type
   IHTTPCommunication = interface

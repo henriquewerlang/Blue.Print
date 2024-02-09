@@ -156,7 +156,6 @@
         <DCCReference Include="..\Blue.Print.Remote.Service.pas"/>
         <DCCReference Include="Blue.Print.Remote.Service.Test.pas"/>
         <DCCReference Include="..\Blue.Print.Types.pas"/>
-        <DCCReference Include="Blue.Print.Types.Test.pas"/>
         <DCCReference Include="Blue.Print.Content.Parser.Test.pas"/>
         <DCCReference Include="Blue.Print.Request.Mock.pas"/>
         <DCCReference Include="..\Blue.Print.Serializer.pas"/>

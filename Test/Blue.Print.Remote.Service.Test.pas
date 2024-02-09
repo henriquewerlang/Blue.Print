@@ -137,13 +137,6 @@ type
     property SerializeValue: TValue read FSerializeValue;
   end;
 
-  [BasicAuthentication('User', 'Password')]
-  [GET]
-  IServiceAutenticationTest = interface(IInvokable)
-    ['{C99C50FD-92DF-42FB-A928-5C7BF1566C6F}']
-    procedure Proc;
-  end;
-
   [RemoteName('Serviçe')]
   ILocaleCharsService = interface(IInvokable)
     ['{04EA0C43-7C73-4ED1-A2B6-8B1E64ABC149}']
@@ -340,7 +333,7 @@ end;
 
 procedure TRemoteServiceTest.WhenGetServiceMustReturnTheInterfaceFilled;
 begin
-  var Value := CreateRemoteService<IServiceAutenticationTest>.GetService<IServiceAutenticationTest>(EmptyStr);
+  var Value := CreateRemoteService<IServiceNamed>.GetService<IServiceNamed>(EmptyStr);
 
   Assert.IsNotNil(Value);
 end;
@@ -428,7 +421,7 @@ begin
   end
   else
   begin
-    var Service := GetRemoteService<IServiceAutenticationTest>(EmptyStr);
+    var Service := GetRemoteService<IServiceNamed>(EmptyStr);
 
     Service.Proc;
   end;

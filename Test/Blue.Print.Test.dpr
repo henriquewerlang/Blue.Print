@@ -9,7 +9,6 @@ uses
   Blue.Print.Remote.Service in '..\Blue.Print.Remote.Service.pas',
   Blue.Print.Remote.Service.Test in 'Blue.Print.Remote.Service.Test.pas',
   Blue.Print.Types in '..\Blue.Print.Types.pas',
-  Blue.Print.Types.Test in 'Blue.Print.Types.Test.pas',
   Blue.Print.Content.Parser.Test in 'Blue.Print.Content.Parser.Test.pas',
   Blue.Print.Request.Mock in 'Blue.Print.Request.Mock.pas',
   Blue.Print.Serializer in '..\Blue.Print.Serializer.pas',

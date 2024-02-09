@@ -129,31 +129,6 @@ type
     property RemoteName: String read FRemoteName write FRemoteName;
   end;
 
-  TAuthentication = class(TCustomAttribute)
-  private
-    class function GetHeaderFromAttribute(const RttiType: TRttiObject; var AuthenticationName, AuthenticationValue: String): Boolean;
-  private
-    FName: String;
-
-    constructor Create(const Name: String);
-  public
-    class function LoadHeaders(const Method: TRttiMethod; var AuthenticationName, AuthenticationValue: String): Boolean;
-
-    function LoadHeaderValue: String; virtual;
-
-    property Name: String read FName;
-  end;
-
-  BasicAuthenticationAttribute = class(TAuthentication)
-  private
-    FPassword: String;
-    FUser: String;
-  public
-    constructor Create(const User, Password: String);
-
-    function LoadHeaderValue: String; override;
-  end;
-
   ContentTypeAttribute = class(TCustomAttribute)
   private
     FContentType: String;
@@ -308,58 +283,6 @@ begin
   inherited Create;
 
   FRemoteName := RemoteName;
-end;
-
-{ TAuthentication }
-
-constructor TAuthentication.Create(const Name: String);
-begin
-  inherited Create;
-
-  FName := Name;
-end;
-
-class function TAuthentication.GetHeaderFromAttribute(const RttiType: TRttiObject; var AuthenticationName, AuthenticationValue: String): Boolean;
-var
-  Attribute: TCustomAttribute;
-
-begin
-  AuthenticationValue := EmptyStr;
-  Result := False;
-
-  for Attribute in RttiType.GetAttributes do
-    if Attribute is TAuthentication then
-    begin
-      AuthenticationName := TAuthentication(Attribute).Name;
-      AuthenticationValue := TAuthentication(Attribute).LoadHeaderValue;
-
-      Exit(True);
-    end;
-end;
-
-class function TAuthentication.LoadHeaders(const Method: TRttiMethod; var AuthenticationName, AuthenticationValue: String): Boolean;
-begin
-  Result := GetHeaderFromAttribute(Method, AuthenticationName, AuthenticationValue) or GetHeaderFromAttribute(Method.Parent, AuthenticationName, AuthenticationValue);
-end;
-
-function TAuthentication.LoadHeaderValue: String;
-begin
-  Result := EmptyStr;
-end;
-
-{ BasicAuthenticationAttribute }
-
-constructor BasicAuthenticationAttribute.Create(const User, Password: String);
-begin
-  inherited Create('Basic');
-
-  FPassword := Password;
-  FUser := User;
-end;
-
-function BasicAuthenticationAttribute.LoadHeaderValue: String;
-begin
-  Result := ConvertToBase64(Format('%s:%s', [FUser, FPassword]));
 end;
 
 { ContentTypeAttribute }
