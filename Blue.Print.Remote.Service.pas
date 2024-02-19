@@ -68,7 +68,7 @@ type
     function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>): TValue;
 
     procedure LoadParams(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
-    procedure LoadSOAPInformation(const Method: TRttiMethod);
+    procedure LoadRequestHeaders(const Method: TRttiMethod);
   protected
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue); virtual;
 
@@ -319,13 +319,18 @@ begin
   Result := Body;
 end;
 
-procedure TRemoteService.LoadSOAPInformation(const Method: TRttiMethod);
+procedure TRemoteService.LoadRequestHeaders(const Method: TRttiMethod);
+var
+  ContentType: ContentTypeAttribute;
+
 begin
+  ContentType := GetAttribute<ContentTypeAttribute>(Method);
+
   if IsSOAPRequest then
-  begin
-    Communication.Header[CONTENT_TYPE_HEADER] := 'application/soap';
     Communication.Header[SOAP_ACTION_HEADER] := GetSOAPActionName(Method);
-  end;
+
+  if Assigned(ContentType) then
+    Communication.Header[CONTENT_TYPE_HEADER] := ContentType.ContentType;
 end;
 
 procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
@@ -354,7 +359,7 @@ var
   Response: String;
 
 begin
-  LoadSOAPInformation(Method);
+  LoadRequestHeaders(Method);
 
   Response := Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBody(Method, Args));
 
@@ -485,7 +490,7 @@ end;
 
 procedure THTTPCommunication.SetHeader(const HeaderName, Value: String);
 begin
-
+  FConnection.CustomHeaders[HeaderName] := Value;
 end;
 
 { TSOAPEnvelop }

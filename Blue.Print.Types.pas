@@ -75,18 +75,6 @@ type
     constructor Create;
   end;
 
-  SoapServiceAttribute = class(TCustomAttribute)
-  end;
-
-  SoapActionAttribute = class(TCustomAttribute)
-  private
-    FActionName: String;
-  public
-    constructor Create(const ActionName: String);
-
-    property ActionName: String read FActionName write FActionName;
-  end;
-
   NodeNameAttribute = class(TCustomAttribute)
   private
     FNodeName: String;
@@ -159,6 +147,20 @@ type
 
     property Name: String read FName;
     property Value: String read FValue;
+  end;
+
+  SoapServiceAttribute = class(ContentTypeAttribute)
+  public
+    constructor Create;
+  end;
+
+  SoapActionAttribute = class(TCustomAttribute)
+  private
+    FActionName: String;
+  public
+    constructor Create(const ActionName: String);
+
+    property ActionName: String read FActionName write FActionName;
   end;
 
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
@@ -350,6 +352,13 @@ begin
   inherited Create;
 
   FNodeName := NodeName;
+end;
+
+{ SoapServiceAttribute }
+
+constructor SoapServiceAttribute.Create;
+begin
+  inherited Create('application/soap');
 end;
 
 end.

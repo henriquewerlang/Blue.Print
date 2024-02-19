@@ -92,6 +92,8 @@ type
     procedure WhenTheInterfaceHasntTheSOAPServiceAttributeTheDefaultSerializerMustBeTheJSONSerializer;
     [Test]
     procedure WhenCreateTheRemoteClassTheSerializerInTheParamsCantBeReplacedByAnotherSerializer;
+    [Test]
+    procedure WhenTheProcedureHasTheContentTypeAttributeMustFillTheHeaderInTheRequest;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -148,6 +150,8 @@ type
     ['{61DCD8A8-AD02-4EA3-AFC7-8425F7B12D6B}']
     function TestFunction: String;
 
+    [ContentType('MyContent-Type')]
+    procedure FillContentType;
     procedure ParameterInBody([Body]Param1: String);
     procedure ParameterInPath([Path]Param1: String; [Path]Param2: Integer);
     [RemoteName('Pãram')]
@@ -503,6 +507,15 @@ begin
   Service.ProcedureWithRemoteNameLocaleChars;
 
   Assert.AreEqual('/IServiceTest/P%C3%A3ram', FCommunication.URL);
+end;
+
+procedure TRemoteServiceTest.WhenTheProcedureHasTheContentTypeAttributeMustFillTheHeaderInTheRequest;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.FillContentType;
+
+  Assert.AreEqual('MyContent-Type', FCommunication.Header['Content-Type']);
 end;
 
 procedure TRemoteServiceTest.WhenTheProcedureHasTheRemoteNameAttributeMustSendThisNameInTheURLOfThRequest;
