@@ -163,6 +163,8 @@ type
     property ActionName: String read FActionName write FActionName;
   end;
 
+  AuthorizationAttribute = class(TCustomAttribute);
+
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
 
 const

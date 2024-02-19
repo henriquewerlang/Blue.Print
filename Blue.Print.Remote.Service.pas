@@ -67,6 +67,8 @@ type
     function LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>): TValue;
 
+    procedure ForEachParam(const Method: TRttiMethod; const Args: TArray<TValue>; const Proc: TProc<TRttiParameter, TValue>);
+    procedure LoadAuthorization(const Method: TRttiMethod; const Args: TArray<TValue>);
     procedure LoadParams(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
     procedure LoadRequestHeaders(const Method: TRttiMethod);
   protected
@@ -94,6 +96,7 @@ uses System.Net.Mime, System.NetConsts, System.Net.URLClient, System.NetEncoding
 {$ENDIF}
 
 const
+  AUTHORIZATION_HEADER = 'Authorization';
   COMPILER_OFFSET = {$IFDEF PAS2JS}0{$ELSE}1{$ENDIF};
   CONTENT_TYPE_HEADER = 'Content-Type';
   SOAP_ACTION_HEADER = 'SOAPAction';
@@ -139,6 +142,23 @@ end;
 function TRemoteService.EncodeValue(const Value: String): String;
 begin
   Result := {$IFDEF PAS2JS}EncodeURIComponent{$ELSE}TNetEncoding.URL.Encode{$ENDIF}(Value);
+end;
+
+procedure TRemoteService.ForEachParam(const Method: TRttiMethod; const Args: TArray<TValue>; const Proc: TProc<TRttiParameter, TValue>);
+var
+  Parameter: TRttiParameter;
+
+  ValueIndex: Integer;
+
+begin
+  ValueIndex := COMPILER_OFFSET;
+
+  for Parameter in Method.GetParameters do
+  begin
+    Proc(Parameter, Args[ValueIndex]);
+
+    Inc(ValueIndex);
+  end;
 end;
 
 function TRemoteService.GetAttribute<T>(RttiObject: TRttiObject): T;
@@ -282,22 +302,29 @@ begin
   Result := Assigned(GetAttribute<SoapServiceAttribute>(FInterfaceType));
 end;
 
-procedure TRemoteService.LoadParams(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
-var
-  Parameter: TRttiParameter;
-
-  ValueIndex: Integer;
-
+procedure TRemoteService.LoadAuthorization(const Method: TRttiMethod; const Args: TArray<TValue>);
 begin
-  ValueIndex := COMPILER_OFFSET;
+   ForEachParam(Method, Args,
+    procedure (Parameter: TRttiParameter; Value: TValue)
+    var
+      Authorization: AuthorizationAttribute;
 
-  for Parameter in Method.GetParameters do
-  begin
-    if GetParameterType(Parameter) = ParameterType then
-      LoadFunction(Parameter, Args[ValueIndex]);
+    begin
+      Authorization := GetAttribute<AuthorizationAttribute>(Parameter);
 
-    Inc(ValueIndex);
-  end;
+      if Assigned(Authorization) then
+        Communication.Header[AUTHORIZATION_HEADER] := Value.ToString;
+    end);
+end;
+
+procedure TRemoteService.LoadParams(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
+begin
+  ForEachParam(Method, Args,
+    procedure (Parameter: TRttiParameter; Value: TValue)
+    begin
+      if GetParameterType(Parameter) = ParameterType then
+        LoadFunction(Parameter, Value);
+    end);
 end;
 
 function TRemoteService.LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
@@ -360,6 +387,8 @@ var
 
 begin
   LoadRequestHeaders(Method);
+
+  LoadAuthorization(Method, Args);
 
   Response := Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBody(Method, Args));
 

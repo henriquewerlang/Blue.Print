@@ -94,6 +94,8 @@ type
     procedure WhenCreateTheRemoteClassTheSerializerInTheParamsCantBeReplacedByAnotherSerializer;
     [Test]
     procedure WhenTheProcedureHasTheContentTypeAttributeMustFillTheHeaderInTheRequest;
+    [Test]
+    procedure WhenTheParamOfAProcedureHasTheAuthorizationAttributeMustLoadTheAuthorizationHeaderWithTheParamValue;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -150,6 +152,7 @@ type
     ['{61DCD8A8-AD02-4EA3-AFC7-8425F7B12D6B}']
     function TestFunction: String;
 
+    procedure AuthorizationProcedure([Authorization]const AuthorizationValue: String);
     [ContentType('MyContent-Type')]
     procedure FillContentType;
     procedure ParameterInBody([Body]Param1: String);
@@ -468,6 +471,15 @@ begin
   Service.SendObject(Self);
 
   Assert.AreEqual('JSON', FCommunication.GetBodyAsString);
+end;
+
+procedure TRemoteServiceTest.WhenTheParamOfAProcedureHasTheAuthorizationAttributeMustLoadTheAuthorizationHeaderWithTheParamValue;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.AuthorizationProcedure('My Value');
+
+  Assert.AreEqual('My Value', FCommunication.Header['Authorization']);
 end;
 
 procedure TRemoteServiceTest.WhenTheParamValueHasLocaleCharsMustEncodeTheURL;
