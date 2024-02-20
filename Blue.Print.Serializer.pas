@@ -14,7 +14,13 @@ type
   TJSONValue = JSValue;
 {$ENDIF}
 
-  TBluePrintJsonSerializer = class(TInterfacedObject, IBluePrintSerializer)
+  TBluePrintSerializer = class(TInterfacedObject)
+  private
+    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+    function Serialize(const Value: TValue): String;
+  end;
+
+  TBluePrintJsonSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
   private
     FContext: TRttiContext;
 
@@ -36,7 +42,7 @@ type
     constructor Create;
   end;
 
-  TBluePrintXMLSerializer = class(TInterfacedObject, IBluePrintSerializer)
+  TBluePrintXMLSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
   private
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function Serialize(const Value: TValue): String;
@@ -73,6 +79,49 @@ begin
 end;
 {$ENDIF}
 
+{ TBluePrintSerializer }
+
+function TBluePrintSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+begin
+  case TypeInfo.Kind of
+{$IFDEF DCC}
+    tkLString,
+    tkUString,
+    tkWChar,
+    tkWString,
+{$ENDIF}
+    tkChar,
+    tkString: Result := TValue.From(Value);
+
+    tkEnumeration: Result := TValue.FromOrdinal(TypeInfo, GetEnumValue(TypeInfo, Value));
+
+{$IFDEF DCC}
+    tkInt64,
+{$ENDIF}
+    tkInteger: Result := TValue.From(StrToInt64(Value));
+    else Result := TValue.Empty;
+  end;
+end;
+
+function TBluePrintSerializer.Serialize(const Value: TValue): String;
+begin
+  case Value.Kind of
+{$IFDEF DCC}
+    tkInt64,
+    tkLString,
+    tkUString,
+    tkWChar,
+    tkWString,
+{$ENDIF}
+    tkChar,
+    tkEnumeration,
+    tkInteger,
+    tkString: Result := Value.ToString;
+
+    else Result := EmptyStr;
+  end;
+end;
+
 { TBluePrintJsonSerializer }
 
 constructor TBluePrintJsonSerializer.Create;
@@ -93,18 +142,6 @@ var
 
 begin
   case Value.Kind of
-{$IFDEF DCC}
-    tkInt64,
-    tkLString,
-    tkUString,
-    tkWChar,
-    tkWString,
-{$ENDIF}
-    tkChar,
-    tkEnumeration,
-    tkInteger,
-    tkString: Result := Value.ToString;
-
 {$IFDEF DCC}
     tkMRecord,
 {$ENDIF}
@@ -128,7 +165,7 @@ begin
       JSON := nil;
 {$ENDIF}
     end;
-    else Result := EmptyStr;
+    else Result := inherited;
   end;
 end;
 
@@ -313,22 +350,6 @@ var
 begin
   case TypeInfo.Kind of
 {$IFDEF DCC}
-    tkLString,
-    tkUString,
-    tkWChar,
-    tkWString,
-{$ENDIF}
-    tkChar,
-    tkString: Result := TValue.From(Value);
-
-    tkEnumeration: Result := TValue.FromOrdinal(TypeInfo, GetEnumValue(TypeInfo, Value));
-
-{$IFDEF DCC}
-    tkInt64,
-{$ENDIF}
-    tkInteger: Result := TValue.From(StrToInt64(Value));
-
-{$IFDEF DCC}
     tkMRecord,
 {$ENDIF}
     tkArray,
@@ -348,7 +369,7 @@ begin
 {$ENDIF}
     end;
 
-    else Result := TValue.Empty;
+    else Result := inherited;
   end;
 end;
 
@@ -399,12 +420,12 @@ end;
 
 function TBluePrintXMLSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
 begin
-
+  Result := inherited;
 end;
 
 function TBluePrintXMLSerializer.Serialize(const Value: TValue): String;
 begin
-
+  Result := inherited;
 end;
 
 end.
