@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF PAS2JS}JS, Web, WebOrWorker{$ELSE}System.Net.HTTPClient{$ENDIF}, Blue.Print.Types, Blue.Print.Serializer;
+uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF PAS2JS}JSApi.JS, BrowserAPI.Web, BrowserAPI.WebOrWorker{$ELSE}System.Net.HTTPClient{$ENDIF}, Blue.Print.Types, Blue.Print.Serializer;
 
 type
   IHTTPCommunication = interface
@@ -519,7 +519,11 @@ end;
 
 procedure THTTPCommunication.SetHeader(const HeaderName, Value: String);
 begin
+  {$IFDEF PAS2JS}
+  FConnection.setRequestHeader(HeaderName, Value);
+  {$ELSE}
   FConnection.CustomHeaders[HeaderName] := Value;
+  {$ENDIF}
 end;
 
 { TSOAPEnvelop }

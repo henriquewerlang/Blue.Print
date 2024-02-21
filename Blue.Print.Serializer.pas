@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Rtti, System.TypInfo, Blue.Print.Types, {$IFDEF PAS2JS}JS{$ELSE}System.JSON{$ENDIF};
+uses System.Rtti, System.TypInfo, Blue.Print.Types, {$IFDEF PAS2JS}JSApi.JS{$ELSE}System.JSON{$ENDIF};
 
 type
 {$IFDEF PAS2JS}
