@@ -57,7 +57,7 @@ type
     function GetParameterType(const Parameter: TRttiParameter): TParameterType;
     function GetRemoteMethodName(const Method: TRttiMethod): String;
     function GetRemoteName(const RttiObject: TRttiObject; const DefaultName: String): String;
-    function GetRemoteServiceName(const Method: TRttiMethod): String;
+    function GetRemoteServiceName: String;
     function GetRequestMethod(const Method: TRttiMethod): TRequestMethod;
     function GetPathParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function GetQueryParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
@@ -105,7 +105,7 @@ const
 
 function TRemoteService.BuildRequestURL(const Method: TRttiMethod; const Args: TArray<TValue>): String;
 begin
-  Result := FURL + GetRemoteServiceName(Method) + GetRemoteMethodName(Method) + GetPathParams(Method, Args) + GetQueryParams(Method, Args);
+  Result := FURL + GetRemoteServiceName + GetRemoteMethodName(Method) + GetPathParams(Method, Args) + GetQueryParams(Method, Args);
 end;
 
 constructor TRemoteService.Create(const TypeInfo: PTypeInfo; const Serializer: IBluePrintSerializer);
@@ -248,9 +248,9 @@ begin
     Result := '/' + Result;
 end;
 
-function TRemoteService.GetRemoteServiceName(const Method: TRttiMethod): String;
+function TRemoteService.GetRemoteServiceName: String;
 begin
-  Result := GetRemoteName(Method.Parent, Method.Parent.Name);
+  Result := GetRemoteName(InterfaceType, InterfaceType.Name);
 end;
 
 function TRemoteService.GetRequestMethod(const Method: TRttiMethod): TRequestMethod;

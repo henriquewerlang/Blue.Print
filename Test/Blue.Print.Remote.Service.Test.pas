@@ -96,6 +96,8 @@ type
     procedure WhenTheProcedureHasTheContentTypeAttributeMustFillTheHeaderInTheRequest;
     [Test]
     procedure WhenTheParamOfAProcedureHasTheAuthorizationAttributeMustLoadTheAuthorizationHeaderWithTheParamValue;
+    [Test]
+    procedure WhenInterfaceIsInheritedFromAnotherInterfaceMustSendTheBasePathWithTheNameOfTheHighInterface;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -172,6 +174,11 @@ type
     procedure TestPUT;
     procedure TestProcedure;
     procedure TestProcedureWithParam(Param1: String; Param2: Integer);
+  end;
+
+  IInheritedServiceTest = interface(IServiceTest)
+    ['{C33D5E2F-D84C-46C9-82FC-DA339FFEAC4E}']
+    procedure MyProcedure;
   end;
 
   [PATCH]
@@ -343,6 +350,15 @@ begin
   var Value := CreateRemoteService<IServiceNamed>.GetService<IServiceNamed>(EmptyStr);
 
   Assert.IsNotNil(Value);
+end;
+
+procedure TRemoteServiceTest.WhenInterfaceIsInheritedFromAnotherInterfaceMustSendTheBasePathWithTheNameOfTheHighInterface;
+begin
+  var Service := GetRemoteService<IInheritedServiceTest>(EmptyStr);
+
+  Service.TestProcedure;
+
+  Assert.AreEqual('/IInheritedServiceTest/TestProcedure', FCommunication.URL);
 end;
 
 procedure TRemoteServiceTest.WhenSendASOAPRequestMustSerializeTheSOAPEnvelopInTheRequest;
