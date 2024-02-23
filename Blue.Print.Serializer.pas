@@ -30,6 +30,7 @@ type
   protected
     function CreateObject(const RttiType: TRttiInstanceType): TObject;
     function DeserializeArray(const RttiType: TRttiType; const JSONArray: TJSONArray): TValue;
+    function DeserializeClassReference(const JSONValue: TJSONValue): TValue;
     function DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
     function SerializeArray(const Value: TValue): TJSONArray;
     function SerializeType(const Value: TValue): TJSONValue;
@@ -306,7 +307,7 @@ begin
 {$ENDIF}
     tkInteger: Result := {$IFDEF PAS2JS}TValue.From(JSONValue){$ELSE}(JSONValue as TJSONNumber).AsInt{$ENDIF};
 
-    tkClassRef: Result := TValue.From((FContext.FindType(GetJSONValue(JSONValue)) as TRttiInstanceType).MetaclassType);
+    tkClassRef: Result := DeserializeClassReference(JSONValue);
 
     tkClass:
       if {$IFDEF PAS2JS}JSONValue <> NULL{$ELSE}not JSONValue.Null{$ENDIF} then
@@ -390,6 +391,19 @@ begin
     ArrayItems[Index] := DeserializeType(ArrayElementType, JSONArray[Index]);
 
   Result := TValue.FromArray(RttiType.Handle, ArrayItems);
+end;
+
+function TBluePrintJsonSerializer.DeserializeClassReference(const JSONValue: TJSONValue): TValue;
+var
+  RttiType: TRttiInstanceType;
+
+begin
+  RttiType := FContext.FindType(GetJSONValue(JSONValue)) as TRttiInstanceType;
+
+  if Assigned(RttiType) then
+    Result := TValue.From(RttiType.MetaclassType)
+  else
+    Result := TValue.Empty;
 end;
 
 procedure TBluePrintJsonSerializer.DeserializeFields(const Instance: TValue; const JSONObject: TJSONObject);
