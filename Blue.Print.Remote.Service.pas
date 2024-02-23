@@ -449,17 +449,9 @@ var
 
 begin
 {$IFDEF PAS2JS}
-//  if Request.FileDownload then
-//    DownloadFile(Request.URL)
-//  else
-//  begin
-
   FConnection.Open(REQUEST_METHOD_NAME[RequestMethod], URL, False);
 
-//  for A := 0 to Pred(FHeaders.Count) do
-//    Connection.SetRequestHeader(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
-
-  FConnection.Send();
+  FConnection.Send(Body);
 
   Result := FConnection.ResponseText;
 
