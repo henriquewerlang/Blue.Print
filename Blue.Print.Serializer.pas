@@ -153,16 +153,10 @@ begin
     begin
       JSON := SerializeType(Value);
 
-{$IFDEF DCC}
-      Result := JSON.ToJSON;
-{$ELSE}
-      TJSJSON.stringify(JSON);
-{$ENDIF}
+      Result := {$IFDEF DCC}JSON.ToJSON{$ELSE}TJSJSON.stringify(JSON){$ENDIF};
 
 {$IFDEF DCC}
       JSON.Free;
-{$ELSE}
-      JSON := nil;
 {$ENDIF}
     end;
     else Result := inherited;
