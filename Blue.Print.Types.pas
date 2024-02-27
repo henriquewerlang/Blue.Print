@@ -150,8 +150,12 @@ type
   end;
 
   SoapServiceAttribute = class(ContentTypeAttribute)
+  private
+    FBaseAction: String;
   public
-    constructor Create;
+    constructor Create(const BaseAction: String);
+
+    property BaseAction: String read FBaseAction;
   end;
 
   SoapActionAttribute = class(TCustomAttribute)
@@ -358,9 +362,11 @@ end;
 
 { SoapServiceAttribute }
 
-constructor SoapServiceAttribute.Create;
+constructor SoapServiceAttribute.Create(const BaseAction: String);
 begin
   inherited Create('application/soap');
+
+  FBaseAction := BaseAction;
 end;
 
 end.

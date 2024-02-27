@@ -289,12 +289,13 @@ var
   SOAPAction: SoapActionAttribute;
 
 begin
+  Result := GetAttribute<SoapServiceAttribute>(FInterfaceType).BaseAction + '/' ;
   SOAPAction := GetAttribute<SoapActionAttribute>(Method);
 
   if Assigned(SOAPAction) then
-    Result := SOAPAction.ActionName
+    Result := Result + SOAPAction.ActionName
   else
-    Result := Method.Name;
+    Result := Result + Method.Name;
 end;
 
 function TRemoteService.IsSOAPRequest: Boolean;

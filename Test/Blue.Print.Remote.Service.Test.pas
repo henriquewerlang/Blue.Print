@@ -98,6 +98,8 @@ type
     procedure WhenTheParamOfAProcedureHasTheAuthorizationAttributeMustLoadTheAuthorizationHeaderWithTheParamValue;
     [Test]
     procedure WhenInterfaceIsInheritedFromAnotherInterfaceMustSendTheBasePathWithTheNameOfTheHighInterface;
+    [Test]
+    procedure WhenTheInterfaceHasTheSoapServiceAttributeMustConcatTheBaseServiceNameInTheSOAPActionHeader;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -203,7 +205,7 @@ type
     procedure MyProc;
   end;
 
-  [SoapService]
+  [SoapService('MyService')]
   ISOAPService = interface(IInvokable)
     ['{29F73745-0A70-4C1A-9617-45A8711D7173}']
     procedure SoapBodyMethod(const [Body] Body: String);
@@ -397,6 +399,15 @@ begin
   Assert.AreEqual('/AnotherName/Proc', FCommunication.URL);
 end;
 
+procedure TRemoteServiceTest.WhenTheInterfaceHasTheSoapServiceAttributeMustConcatTheBaseServiceNameInTheSOAPActionHeader;
+begin
+  var Service := GetRemoteService<ISOAPService>(EmptyStr);
+
+  Service.SoapNamedMethod;
+
+  Assert.AreEqual('MyService/MyAction', FCommunication.Header['SOAPAction']);
+end;
+
 procedure TRemoteServiceTest.WhenTheInterfaceHasTheSoapServiceAttributeMustLoadTheContentTypeHeaderWithTheSoapContentTypeValue;
 begin
   var Service := GetRemoteService<ISOAPService>(EmptyStr);
@@ -430,7 +441,7 @@ begin
 
   Service.SoapMethod;
 
-  Assert.AreEqual('SoapMethod', FCommunication.Header['SOAPAction']);
+  Assert.AreEqual('MyService/SoapMethod', FCommunication.Header['SOAPAction']);
 end;
 
 procedure TRemoteServiceTest.WhenTheMethodDontHaveARequestMethodAttributeAndTheInterfaceHasTheAttributeMustLoadTheRequestMethodFromTheInterface(const InterfaceName: String;
@@ -467,7 +478,7 @@ begin
 
   Service.SoapNamedMethod;
 
-  Assert.AreEqual('MyAction', FCommunication.Header['SOAPAction']);
+  Assert.AreEqual('MyService/MyAction', FCommunication.Header['SOAPAction']);
 end;
 
 procedure TRemoteServiceTest.WhenTheParamHasThePathAttributeTheValueOfTheParamMustBeLoadedInTheURLOfTheRequest;
