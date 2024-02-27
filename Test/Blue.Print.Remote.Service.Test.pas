@@ -414,7 +414,7 @@ begin
 
   Service.SoapMethod;
 
-  Assert.AreEqual('application/soap', FCommunication.Header['Content-Type']);
+  Assert.AreEqual('text/xml', FCommunication.Header['Content-Type']);
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasTheSOAPServiceAttributeTheDefaultSerializerMustBeTheXMLSerializer;

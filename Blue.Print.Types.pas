@@ -364,7 +364,7 @@ end;
 
 constructor SoapServiceAttribute.Create(const BaseAction: String);
 begin
-  inherited Create('application/soap');
+  inherited Create('text/xml');
 
   FBaseAction := BaseAction;
 end;
