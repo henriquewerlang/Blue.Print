@@ -185,7 +185,8 @@ begin
   RttiType := FContext.GetType(Instance.TypeInfo);
 
   for Field in RttiType.GetFields do
-    JSONObject.AddPair(Field.Name, SerializeType(Field.GetValue(Instance.GetReferenceToRawData)));
+    if Field.Visibility in [mvPublic, mvPublished] then
+      JSONObject.AddPair(Field.Name, SerializeType(Field.GetValue(Instance.GetReferenceToRawData)));
 end;
 
 procedure TBluePrintJsonSerializer.SerializeProperties(const Instance: TObject; const JSONObject: TJSONObject);

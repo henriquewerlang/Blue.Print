@@ -54,6 +54,8 @@ type
     procedure WhenDeserializeAClassReferenceAndTheTypeIsntFoundCantRaiseError;
     [Test]
     procedure WhenDeserializeAClassReferenceAndTheTypeIsntFoundMustReturnTheValueEmpty;
+    [Test]
+    procedure OnlyPublicFieldsCanBeSerializedInTheRecordType;
   end;
 
   [TestFixture]
@@ -89,6 +91,14 @@ type
     MyField2: Integer;
     MyField3: Double;
     MyField4: TMyEnum;
+  end;
+
+  TMyPrivateRecord = record
+  private
+    FMyPrivateField: String;
+  public
+    MyPublicField: String;
+    property MyPrivateField: String read FMyPrivateField write FMyPrivateField;
   end;
 
 implementation
@@ -140,6 +150,17 @@ begin
 end;
 
 { TBluePrintJsonSerializerTest }
+
+procedure TBluePrintJsonSerializerTest.OnlyPublicFieldsCanBeSerializedInTheRecordType;
+begin
+  var MyRecord: TMyPrivateRecord;
+  MyRecord.MyPublicField := 'abc';
+  MyRecord.MyPrivateField := 'def';
+
+  var Value := FSerializer.Serialize(TValue.From(MyRecord));
+
+  Assert.AreEqual('{"MyPublicField":"abc"}', Value);
+end;
 
 procedure TBluePrintJsonSerializerTest.Setup;
 begin
