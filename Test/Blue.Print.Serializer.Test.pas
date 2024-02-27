@@ -2,7 +2,7 @@
 
 interface
 
-uses Test.Insight.Framework, Blue.Print.Types, Blue.Print.Serializer;
+uses System.Rtti, Test.Insight.Framework, Blue.Print.Types, Blue.Print.Serializer;
 
 type
   TMyEnum = (MyValue, MyValue2);
@@ -56,6 +56,8 @@ type
     procedure WhenDeserializeAClassReferenceAndTheTypeIsntFoundMustReturnTheValueEmpty;
     [Test]
     procedure OnlyPublicFieldsCanBeSerializedInTheRecordType;
+    [Test]
+    procedure WhenTheValueTypeIsATValueRecordMustSerializeThenInternalValueOfThisType;
   end;
 
   [TestFixture]
@@ -101,9 +103,14 @@ type
     property MyPrivateField: String read FMyPrivateField write FMyPrivateField;
   end;
 
-implementation
+  TMyTValueClass = class
+  private
+    FValue: TValue;
+  public
+    property Value: TValue read FValue write FValue;
+  end;
 
-uses System.Rtti;
+implementation
 
 { TBluePrintSerializerTest }
 
@@ -282,6 +289,16 @@ begin
   var Value := FSerializer.Serialize(TValue.From(MyRecord));
 
   Assert.AreEqual('{"MyField1":"abc","MyField2":123,"MyField3":123.456,"MyField4":"MyValue"}', Value);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenTheValueTypeIsATValueRecordMustSerializeThenInternalValueOfThisType;
+begin
+  var MyObject := TMyTValueClass.Create;
+  MyObject.Value := 'abc';
+
+  var Value := FSerializer.Serialize(MyObject);
+
+  Assert.AreEqual('{"Value":"abc"}', Value);
 end;
 
 { TBluePrintXMLSerializerTest }

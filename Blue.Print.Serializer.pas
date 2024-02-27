@@ -257,9 +257,14 @@ begin
 {$ENDIF}
     tkRecord:
     begin
-      Result := CreateJSONObject;
+      if Value.TypeInfo = TypeInfo(TValue) then
+        Result := SerializeType(Value.AsType<TValue>)
+      else
+      begin
+        Result := CreateJSONObject;
 
-      SerializeFields(Value, TJSONObject(Result));
+        SerializeFields(Value, TJSONObject(Result));
+      end;
     end;
   end;
 end;
