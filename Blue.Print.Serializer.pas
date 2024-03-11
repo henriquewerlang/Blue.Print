@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Rtti, System.TypInfo, Blue.Print.Types, {$IFDEF PAS2JS}JSApi.JS{$ELSE}System.JSON{$ENDIF};
+uses System.Rtti, System.TypInfo, Blue.Print.Types, {$IFDEF PAS2JS}JSApi.JS{$ELSE}System.JSON, Xml.XMLIntf{$ENDIF};
 
 type
 {$IFDEF PAS2JS}
@@ -45,13 +45,21 @@ type
 
   TBluePrintXMLSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
   private
+    FContext: TRttiContext;
+
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function Serialize(const Value: TValue): String;
+  protected
+    procedure SerializeFields(const Instance: TValue; const Node: IXMLNode);
+    procedure SerializeProperties(const Instance: TObject; const Node: IXMLNode);
+    procedure SerializeType(const Value: TValue; const Node: IXMLNode);
+  public
+    constructor Create;
   end;
 
 implementation
 
-uses System.SysUtils, System.Generics.Collections;
+uses System.SysUtils, System.Generics.Collections{$IFDEF DCC}, Xml.XMLDoc{$ENDIF};
 
 {$IFDEF PAS2JS}
 type
@@ -116,8 +124,9 @@ begin
 {$ENDIF}
     tkChar,
     tkEnumeration,
+    tkFloat,
     tkInteger,
-    tkString: Result := Value.ToString;
+    tkString: Result := Value.ToString(TFormatSettings.Invariant);
 
     else Result := EmptyStr;
   end;
@@ -432,14 +441,116 @@ end;
 
 { TBluePrintXMLSerializer }
 
+constructor TBluePrintXMLSerializer.Create;
+begin
+  FContext := TRttiContext.Create;
+end;
+
 function TBluePrintXMLSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
 begin
   Result := inherited;
 end;
 
 function TBluePrintXMLSerializer.Serialize(const Value: TValue): String;
+var
+  Document: IXMLNode;
+  DocumentName: String;
+  XML: IXMLDocument;
+
 begin
-  Result := inherited;
+  case Value.Kind of
+{$IFDEF DCC}
+    tkMRecord,
+{$ENDIF}
+    tkRecord,
+    tkClass:
+    begin
+      XML := TXMLDocument.Create(nil);
+      XML.Active := True;
+
+      if Value.TypeInfo = TypeInfo(TSOAPBody) then
+        DocumentName := Value.AsType<TSOAPBody>.DocumentName
+      else
+        DocumentName := 'Document';
+
+      Document := XML.AddChild(DocumentName);
+
+      SerializeType(Value, Document);
+
+      XML.SaveToXML(Result);
+    end;
+    else Result := inherited;
+  end;
+end;
+
+procedure TBluePrintXMLSerializer.SerializeFields(const Instance: TValue; const Node: IXMLNode);
+var
+  Field: TRttiField;
+  RttiType: TRttiType;
+
+  function GetFieldName: String;
+//  var
+//    NodeName: NodeNameAttribute;
+//
+  begin
+//    NodeName := Field.GetAttribute<NodeNameAttribute>;
+//
+//    if Assigned(NodeName) then
+//      Result := NodeName.NodeName
+//    else
+      Result := Field.Name;
+  end;
+
+begin
+  RttiType := FContext.GetType(Instance.TypeInfo);
+
+  for Field in RttiType.GetFields do
+    SerializeType(Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetFieldName));
+end;
+
+procedure TBluePrintXMLSerializer.SerializeProperties(const Instance: TObject; const Node: IXMLNode);
+var
+  &Property: TRttiProperty;
+  RttiType: TRttiType;
+
+  function GetPropertyName: String;
+  var
+    NodeName: NodeNameAttribute;
+
+  begin
+    NodeName := &Property.GetAttribute<NodeNameAttribute>;
+
+    if Assigned(NodeName) then
+      Result := NodeName.NodeName
+    else
+      Result := &Property.Name;
+  end;
+
+begin
+  RttiType := FContext.GetType(Instance.ClassType);
+
+  for &Property in RttiType.GetProperties do
+    SerializeType(&Property.GetValue(Instance), Node.AddChild(GetPropertyName));
+end;
+
+procedure TBluePrintXMLSerializer.SerializeType(const Value: TValue; const Node: IXMLNode);
+begin
+  case Value.Kind of
+{$IFDEF DCC}
+    tkMRecord,
+{$ENDIF}
+    tkRecord:
+    begin
+      if Value.TypeInfo = TypeInfo(TSOAPBody) then
+        SerializeType(Value.AsType<TSOAPBody>.Body, Node)
+      else if Value.TypeInfo = TypeInfo(TValue) then
+        SerializeType(Value.AsType<TValue>, Node)
+      else
+        SerializeFields(Value, Node);
+    end;
+    tkClass: SerializeProperties(Value.AsObject, Node);
+    else Node.NodeValue := inherited Serialize(Value.AsType<TValue>);
+  end;
 end;
 
 end.

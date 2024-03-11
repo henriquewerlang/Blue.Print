@@ -169,6 +169,21 @@ type
 
   AuthorizationAttribute = class(TCustomAttribute);
 
+  TSOAPBody = record
+  public
+    DocumentName: String;
+    Body: TValue;
+  end;
+
+  [NodeName('SOAP-ENV:Envelope')]
+  TSOAPEnvelop = record
+  public
+    [NodeName('SOAP-ENV:Body')]
+    SOAPBody: TSOAPBody;
+
+    constructor Create(const DocumentName: String; const Body: TValue);
+  end;
+
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
 
 const
@@ -367,6 +382,14 @@ begin
   inherited Create('text/xml');
 
   FBaseAction := BaseAction;
+end;
+
+{ TSOAPEnvelop }
+
+constructor TSOAPEnvelop.Create(const DocumentName: String; const Body: TValue);
+begin
+  SOAPBody.DocumentName := DocumentName;
+  SOAPBody.Body := Body;
 end;
 
 end.

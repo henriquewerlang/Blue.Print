@@ -23,6 +23,8 @@ type
     procedure WhenDeserializeAnIntegerMustReturnTheIntegerValueInTheReturnValue;
     [Test]
     procedure WhenDeserializeAnEnumeratorMustReturnTheEnumeratorValueInTheReturnValue;
+    [Test]
+    procedure WhenSerializeAnFloatNumberMustReturnTheStringAsExpected;
   end;
 
   [TestFixture]
@@ -65,6 +67,18 @@ type
   public
     [Setup]
     procedure Setup;
+    [Test]
+    procedure WhenSerializarAnObjectMustGenerateTheXMLAsExpected;
+    [Test]
+    procedure WhenThePropertyHasTheNodeNameAttributeMustGenerateTheXMLWithTheNameInTheAttribute;
+    [Test]
+    procedure WhenSerializeAnRecordMustLoadAllFieldsFromTheRecordAsExpected;
+    [Test]
+    procedure WhenSerializeATValueRecordMustSerializeTheValueFromTheRecord;
+    [Test]
+    procedure WhenSerializeASOAPBodyTheDocumentNameMustBeTheNameOfTheSOAPBodyType;
+    [Test]
+    procedure WhenSerializeAnObjectWithAnotherObjectMustGenerateTheXMLAsExpected;
   end;
 
   TMyObject = class
@@ -78,6 +92,14 @@ type
     property MyProp2: Integer read FMyProp2 write FMyProp2;
     property MyProp3: Double read FMyProp3 write FMyProp3;
     property MyProp4: TMyEnum read FMyProp4 write FMyProp4;
+  end;
+
+  TMyClassWithNode = class
+  private
+    FMyProperty: String;
+  public
+    [NodeName('MyNode')]
+    property MyProperty: String read FMyProperty write FMyProperty;
   end;
 
   TMyObjectParent = class
@@ -140,6 +162,13 @@ begin
   var Value := FSerializer.Serialize(TValue.From(MyValue));
 
   Assert.AreEqual('MyValue', Value);
+end;
+
+procedure TBluePrintSerializerTest.WhenSerializeAnFloatNumberMustReturnTheStringAsExpected;
+begin
+  var Value := FSerializer.Serialize(123.456);
+
+  Assert.AreEqual('123.456', Value);
 end;
 
 procedure TBluePrintSerializerTest.WhenSerializeAnIntegerMustReturnTheValueConvertedInString;
@@ -306,6 +335,66 @@ end;
 procedure TBluePrintXMLSerializerTest.Setup;
 begin
   FSerializer := TBluePrintXMLSerializer.Create;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenSerializarAnObjectMustGenerateTheXMLAsExpected;
+begin
+  var MyObject := TMyObject.Create;
+  MyObject.MyProp1 := 'abc';
+  MyObject.MyProp2 := 123;
+  MyObject.MyProp3 := 123.456;
+  var Value := FSerializer.Serialize(MyObject);
+
+  Assert.AreEqual('<Document><MyProp1>abc</MyProp1><MyProp2>123</MyProp2><MyProp3>123.456</MyProp3><MyProp4>MyValue</MyProp4></Document>'#13#10, Value);
+
+  MyObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenSerializeAnObjectWithAnotherObjectMustGenerateTheXMLAsExpected;
+begin
+  var MyObject := TMyObjectParent.Create;
+  MyObject.MyObject := TMyObject.Create;
+
+  Assert.AreEqual('<Document><MyObject><MyProp1></MyProp1><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></Document>'#13#10, FSerializer.Serialize(MyObject));
+
+  MyObject.MyObject.Free;
+
+  MyObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenSerializeAnRecordMustLoadAllFieldsFromTheRecordAsExpected;
+begin
+  var MyRecord: TMyRecord;
+  MyRecord.MyField1 := 'abc';
+  MyRecord.MyField2 := 123;
+  MyRecord.MyField3 := 123.456;
+  var Value := FSerializer.Serialize(TValue.From(MyRecord));
+
+  Assert.AreEqual('<Document><MyField1>abc</MyField1><MyField2>123</MyField2><MyField3>123.456</MyField3><MyField4>MyValue</MyField4></Document>'#13#10, Value);
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenSerializeASOAPBodyTheDocumentNameMustBeTheNameOfTheSOAPBodyType;
+begin
+  var SOAPBody: TSOAPBody;
+  SOAPBody.DocumentName := 'MyDocument';
+  SOAPBody.Body := 'abc';
+
+  Assert.AreEqual('<MyDocument>abc</MyDocument>'#13#10, FSerializer.Serialize(TValue.From(SOAPBody)));
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenSerializeATValueRecordMustSerializeTheValueFromTheRecord;
+begin
+  var Value: TValue := 'abc';
+
+  Assert.AreEqual('<Document>abc</Document>'#13#10, FSerializer.Serialize(TValue.From(Value)));
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheNodeNameAttributeMustGenerateTheXMLWithTheNameInTheAttribute;
+begin
+  var MyObject := TMyClassWithNode.Create;
+  MyObject.MyProperty := 'abc';
+
+  Assert.AreEqual('<Document><MyNode>abc</MyNode></Document>'#13#10, FSerializer.Serialize(MyObject));
 end;
 
 end.

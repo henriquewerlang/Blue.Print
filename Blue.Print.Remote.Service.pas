@@ -33,15 +33,6 @@ type
     destructor Destroy; override;
   end;
 
-  [NodeName('SOAP-ENV:Envelope')]
-  TSOAPEnvelop = record
-  public
-    [NodeName('SOAP-ENV:Body')]
-    SOAPBody: TValue;
-
-    constructor Create(const Body: TValue);
-  end;
-
   TRemoteService = class(TVirtualInterface)
   private
     FCommunication: IHTTPCommunication;
@@ -80,8 +71,7 @@ type
 
     destructor Destroy; override;
 
-    class function CreateService<T: IInvokable>(const URL: String): T; overload;
-    class function CreateService<T: IInvokable>(const URL: String; const Serializer: IBluePrintSerializer): T; overload;
+    class function CreateService<T: IInvokable>(const URL: String; const Serializer: IBluePrintSerializer = nil): T;
 
     function GetService<T: IInvokable>(const URL: String): T;
 
@@ -125,11 +115,6 @@ var
 begin
   RemoteService := TRemoteService.Create(TypeInfo(T), Serializer);
   Result := RemoteService.GetService<T>(URL);
-end;
-
-class function TRemoteService.CreateService<T>(const URL: String): T;
-begin
-  Result := CreateService<T>(URL, TBluePrintJsonSerializer.Create);
 end;
 
 destructor TRemoteService.Destroy;
@@ -339,9 +324,9 @@ begin
     procedure(Parameter: TRttiParameter; Value: TValue)
     begin
       if IsSOAPRequest then
-        Body := FSerializer.Serialize(TValue.From(TSOAPEnvelop.Create(Value)))
-      else
-        Body := FSerializer.Serialize(Value);
+        Value := TValue.From(TSOAPEnvelop.Create(Parameter.Name, Value));
+
+      Body := Serializer.Serialize(Value);
     end, TParameterType.Body, Args);
 
   Result := Body;
@@ -394,7 +379,7 @@ begin
   Response := Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBody(Method, Args));
 
   if Assigned(Method.ReturnType) then
-    Result := FSerializer.Deserialize(Response, Method.ReturnType.Handle);
+    Result := Serializer.Deserialize(Response, Method.ReturnType.Handle);
 end;
 
 { THTTPCommunication }
@@ -517,13 +502,6 @@ begin
   {$ELSE}
   FConnection.CustomHeaders[HeaderName] := Value;
   {$ENDIF}
-end;
-
-{ TSOAPEnvelop }
-
-constructor TSOAPEnvelop.Create(const Body: TValue);
-begin
-  SOAPBody := Body;
 end;
 
 end.
