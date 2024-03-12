@@ -454,8 +454,20 @@ end;
 function TBluePrintXMLSerializer.Serialize(const Value: TValue): String;
 var
   Document: IXMLNode;
-  DocumentName: String;
   XML: IXMLDocument;
+
+  function GetDocumentName: String;
+  var
+    NodeName: NodeNameAttribute;
+
+  begin
+    NodeName := FContext.GetType(Value.TypeInfo).GetAttribute<NodeNameAttribute>;
+
+    if Assigned(NodeName) then
+      Result := NodeName.NodeName
+    else
+      Result := 'Document';
+  end;
 
 begin
   case Value.Kind of
@@ -468,12 +480,7 @@ begin
       XML := TXMLDocument.Create(nil);
       XML.Active := True;
 
-      if Value.TypeInfo = TypeInfo(TSOAPBody) then
-        DocumentName := Value.AsType<TSOAPBody>.DocumentName
-      else
-        DocumentName := 'Document';
-
-      Document := XML.AddChild(DocumentName);
+      Document := XML.AddChild(GetDocumentName);
 
       SerializeType(Value, Document);
 
@@ -489,15 +496,15 @@ var
   RttiType: TRttiType;
 
   function GetFieldName: String;
-//  var
-//    NodeName: NodeNameAttribute;
-//
+  var
+    NodeName: NodeNameAttribute;
+
   begin
-//    NodeName := Field.GetAttribute<NodeNameAttribute>;
-//
-//    if Assigned(NodeName) then
-//      Result := NodeName.NodeName
-//    else
+    NodeName := Field.GetAttribute<NodeNameAttribute>;
+
+    if Assigned(NodeName) then
+      Result := NodeName.NodeName
+    else
       Result := Field.Name;
   end;
 
@@ -542,7 +549,7 @@ begin
     tkRecord:
     begin
       if Value.TypeInfo = TypeInfo(TSOAPBody) then
-        SerializeType(Value.AsType<TSOAPBody>.Body, Node)
+        SerializeType(Value.AsType<TSOAPBody>.Body, Node.AddChild(Value.AsType<TSOAPBody>.DocumentName, EmptyStr))
       else if Value.TypeInfo = TypeInfo(TValue) then
         SerializeType(Value.AsType<TValue>, Node)
       else

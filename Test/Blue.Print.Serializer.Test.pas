@@ -79,6 +79,10 @@ type
     procedure WhenSerializeASOAPBodyTheDocumentNameMustBeTheNameOfTheSOAPBodyType;
     [Test]
     procedure WhenSerializeAnObjectWithAnotherObjectMustGenerateTheXMLAsExpected;
+    [Test]
+    procedure WhenTheRecordFieldHaveTheNodeNameAttributeMustSerializeTheRecordAsExpected;
+    [Test]
+    procedure WhenTheClassHasTheNodeNameAttributeTheDocumentMustBeChangedToTheNameInTheAttribute;
   end;
 
   TMyObject = class
@@ -99,6 +103,14 @@ type
     FMyProperty: String;
   public
     [NodeName('MyNode')]
+    property MyProperty: String read FMyProperty write FMyProperty;
+  end;
+
+  [NodeName('MyDocument')]
+  TMyClassWithNodeNameAttribute = class
+  private
+    FMyProperty: String;
+  public
     property MyProperty: String read FMyProperty write FMyProperty;
   end;
 
@@ -123,6 +135,12 @@ type
   public
     MyPublicField: String;
     property MyPrivateField: String read FMyPrivateField write FMyPrivateField;
+  end;
+
+  TMyRecordWithAttribute = record
+  public
+    [NodeName('AnotherName')]
+    MyField: String;
   end;
 
   TMyTValueClass = class
@@ -375,11 +393,9 @@ end;
 
 procedure TBluePrintXMLSerializerTest.WhenSerializeASOAPBodyTheDocumentNameMustBeTheNameOfTheSOAPBodyType;
 begin
-  var SOAPBody: TSOAPBody;
-  SOAPBody.DocumentName := 'MyDocument';
-  SOAPBody.Body := 'abc';
+  var SOAPRequest := TSOAPEnvelop.Create('MyDocument', 'abc');
 
-  Assert.AreEqual('<MyDocument>abc</MyDocument>'#13#10, FSerializer.Serialize(TValue.From(SOAPBody)));
+  Assert.AreEqual('<SOAP-ENV:Envelope><SOAP-ENV:Body><MyDocument>abc</MyDocument></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPRequest)));
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenSerializeATValueRecordMustSerializeTheValueFromTheRecord;
@@ -389,12 +405,28 @@ begin
   Assert.AreEqual('<Document>abc</Document>'#13#10, FSerializer.Serialize(TValue.From(Value)));
 end;
 
+procedure TBluePrintXMLSerializerTest.WhenTheClassHasTheNodeNameAttributeTheDocumentMustBeChangedToTheNameInTheAttribute;
+begin
+  var MyClass := TMyClassWithNodeNameAttribute.Create;
+  MyClass.MyProperty := 'abc';
+
+  Assert.AreEqual('<MyDocument><MyProperty>abc</MyProperty></MyDocument>'#13#10, FSerializer.Serialize(MyClass));
+end;
+
 procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheNodeNameAttributeMustGenerateTheXMLWithTheNameInTheAttribute;
 begin
   var MyObject := TMyClassWithNode.Create;
   MyObject.MyProperty := 'abc';
 
   Assert.AreEqual('<Document><MyNode>abc</MyNode></Document>'#13#10, FSerializer.Serialize(MyObject));
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenTheRecordFieldHaveTheNodeNameAttributeMustSerializeTheRecordAsExpected;
+begin
+  var MyRecord: TMyRecordWithAttribute;
+  MyRecord.MyField := 'abc';
+
+  Assert.AreEqual('<Document><AnotherName>abc</AnotherName></Document>'#13#10, FSerializer.Serialize(TValue.From(MyRecord)));
 end;
 
 end.

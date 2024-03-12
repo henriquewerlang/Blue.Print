@@ -175,16 +175,11 @@ type
     Body: TValue;
   end;
 
+  [NodeName('SOAP-ENV:Envelope')]
   TSOAPEnvelop = record
   public
     [NodeName('SOAP-ENV:Body')]
     SOAPBody: TSOAPBody;
-  end;
-
-  TSOAPRequest = record
-  public
-    [NodeName('SOAP-ENV:Envelope')]
-    SOAPEnvelop: TSOAPEnvelop;
 
     constructor Create(const DocumentName: String; const Body: TValue);
   end;
@@ -389,12 +384,12 @@ begin
   FBaseAction := BaseAction;
 end;
 
-{ TSOAPRequest }
+{ TSOAPEnvelop }
 
-constructor TSOAPRequest.Create(const DocumentName: String; const Body: TValue);
+constructor TSOAPEnvelop.Create(const DocumentName: String; const Body: TValue);
 begin
-  SOAPEnvelop.SOAPBody.DocumentName := DocumentName;
-  SOAPEnvelop.SOAPBody.Body := Body;
+  SOAPBody.DocumentName := DocumentName;
+  SOAPBody.Body := Body;
 end;
 
 end.

@@ -369,7 +369,7 @@ begin
 
   Service.SoapBodyMethod('Value');
 
-  Assert.AreEqual<PTypeInfo>(TypeInfo(TSOAPRequest), FSerializer.SerializeValue.TypeInfo);
+  Assert.AreEqual<PTypeInfo>(TypeInfo(TSOAPEnvelop), FSerializer.SerializeValue.TypeInfo);
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasntTheSOAPServiceAttributeTheDefaultSerializerMustBeTheJSONSerializer;
