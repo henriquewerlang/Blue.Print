@@ -83,6 +83,8 @@ type
     procedure WhenTheRecordFieldHaveTheNodeNameAttributeMustSerializeTheRecordAsExpected;
     [Test]
     procedure WhenTheClassHasTheNodeNameAttributeTheDocumentMustBeChangedToTheNameInTheAttribute;
+    [Test]
+    procedure WhenTheClassHasTheXMLAttributeMustLoadThisInfoTheTheNodeAsExpected;
   end;
 
   TMyObject = class
@@ -108,6 +110,14 @@ type
 
   [NodeName('MyDocument')]
   TMyClassWithNodeNameAttribute = class
+  private
+    FMyProperty: String;
+  public
+    property MyProperty: String read FMyProperty write FMyProperty;
+  end;
+
+  [XMLAttribute('MyAttribute', 'MyValue')]
+  TMyClassWithXMLAttribute = class
   private
     FMyProperty: String;
   public
@@ -411,6 +421,14 @@ begin
   MyClass.MyProperty := 'abc';
 
   Assert.AreEqual('<MyDocument><MyProperty>abc</MyProperty></MyDocument>'#13#10, FSerializer.Serialize(MyClass));
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenTheClassHasTheXMLAttributeMustLoadThisInfoTheTheNodeAsExpected;
+begin
+  var MyObject := TMyClassWithXMLAttribute.Create;
+  MyObject.MyProperty := 'abc';
+
+  Assert.AreEqual('<Document MyAttribute="MyValue"><MyProperty>abc</MyProperty></Document>'#13#10, FSerializer.Serialize(MyObject));
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheNodeNameAttributeMustGenerateTheXMLWithTheNameInTheAttribute;

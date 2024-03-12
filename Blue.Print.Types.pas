@@ -84,6 +84,17 @@ type
     property NodeName: String read FNodeName write FNodeName;
   end;
 
+  XMLAttributeAttribute = class(TCustomAttribute)
+  private
+    FAttributeName: String;
+    FAttributeValue: String;
+  public
+    constructor Create(const AttributeName, AttributeValue: String);
+
+    property AttributeName: String read FAttributeName write FAttributeName;
+    property AttributeValue: String read FAttributeValue write FAttributeValue;
+  end;
+
   TParameterAttribute = class(TCustomAttribute)
   private
     FParamType: TParameterType;
@@ -176,6 +187,7 @@ type
   end;
 
   [NodeName('SOAP-ENV:Envelope')]
+  [XMLAttribute('xmlns:SOAP-ENV', 'http://schemas.xmlsoap.org/soap/envelope/')]
   TSOAPEnvelop = record
   public
     [NodeName('SOAP-ENV:Body')]
@@ -390,6 +402,14 @@ constructor TSOAPEnvelop.Create(const DocumentName: String; const Body: TValue);
 begin
   SOAPBody.DocumentName := DocumentName;
   SOAPBody.Body := Body;
+end;
+
+{ XMLAttributeAttribute }
+
+constructor XMLAttributeAttribute.Create(const AttributeName, AttributeValue: String);
+begin
+  FAttributeName := AttributeName;
+  FAttributeValue := AttributeValue;
 end;
 
 end.

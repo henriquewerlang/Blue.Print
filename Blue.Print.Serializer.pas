@@ -453,7 +453,7 @@ end;
 
 function TBluePrintXMLSerializer.Serialize(const Value: TValue): String;
 var
-  Document: IXMLNode;
+  ValueType: TRttiType;
   XML: IXMLDocument;
 
   function GetDocumentName: String;
@@ -461,12 +461,24 @@ var
     NodeName: NodeNameAttribute;
 
   begin
-    NodeName := FContext.GetType(Value.TypeInfo).GetAttribute<NodeNameAttribute>;
+    NodeName := ValueType.GetAttribute<NodeNameAttribute>;
 
     if Assigned(NodeName) then
       Result := NodeName.NodeName
     else
       Result := 'Document';
+  end;
+
+  function LoadAttributes(const Node: IXMLNode): IXMLNode;
+  var
+    XMLAttribute: XMLAttributeAttribute;
+
+  begin
+    Result := Node;
+    XMLAttribute := ValueType.GetAttribute<XMLAttributeAttribute>;
+
+    if Assigned(XMLAttribute) then
+      Result.Attributes[XMLAttribute.AttributeName] := XMLAttribute.AttributeValue;
   end;
 
 begin
@@ -477,12 +489,11 @@ begin
     tkRecord,
     tkClass:
     begin
+      ValueType := FContext.GetType(Value.TypeInfo);
       XML := TXMLDocument.Create(nil);
       XML.Active := True;
 
-      Document := XML.AddChild(GetDocumentName);
-
-      SerializeType(Value, Document);
+      SerializeType(Value, LoadAttributes(XML.AddChild(GetDocumentName)));
 
       XML.SaveToXML(Result);
     end;
