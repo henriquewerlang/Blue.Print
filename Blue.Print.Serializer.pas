@@ -2,10 +2,12 @@
 
 interface
 
-uses System.Rtti, System.TypInfo, Blue.Print.Types, {$IFDEF PAS2JS}JSApi.JS{$ELSE}System.JSON, Xml.XMLIntf{$ENDIF};
+uses System.Rtti, System.TypInfo, Blue.Print.Types, {$IFDEF PAS2JS}BrowserApi.Web, JSApi.JS{$ELSE}System.JSON, Xml.XMLIntf{$ENDIF};
 
 type
 {$IFDEF PAS2JS}
+  IXMLDocument = TJSXMLDocument;
+  IXMLNode = TJSNode;
   PTypeInfo = TTypeInfo;
   TJSONArray = TJSArray;
   TJSONNumber = TJSNumber;
@@ -477,8 +479,10 @@ var
     Result := Node;
     XMLAttribute := ValueType.GetAttribute<XMLAttributeAttribute>;
 
+{$IFDEF DCC}
     if Assigned(XMLAttribute) then
       Result.Attributes[XMLAttribute.AttributeName] := XMLAttribute.AttributeValue;
+{$ENDIF}
   end;
 
 begin
@@ -489,6 +493,7 @@ begin
     tkRecord,
     tkClass:
     begin
+{$IFDEF DCC}
       ValueType := FContext.GetType(Value.TypeInfo);
       XML := TXMLDocument.Create(nil);
       XML.Active := True;
@@ -496,6 +501,7 @@ begin
       SerializeType(Value, LoadAttributes(XML.AddChild(GetDocumentName)));
 
       XML.SaveToXML(Result);
+{$ENDIF}
     end;
     else Result := inherited;
   end;
@@ -522,8 +528,10 @@ var
 begin
   RttiType := FContext.GetType(Instance.TypeInfo);
 
+{$IFDEF DCC}
   for Field in RttiType.GetFields do
     SerializeType(Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetFieldName));
+{$ENDIF}
 end;
 
 procedure TBluePrintXMLSerializer.SerializeProperties(const Instance: TObject; const Node: IXMLNode);
@@ -547,8 +555,10 @@ var
 begin
   RttiType := FContext.GetType(Instance.ClassType);
 
+{$IFDEF DCC}
   for &Property in RttiType.GetProperties do
     SerializeType(&Property.GetValue(Instance), Node.AddChild(GetPropertyName));
+{$ENDIF}
 end;
 
 procedure TBluePrintXMLSerializer.SerializeType(const Value: TValue; const Node: IXMLNode);
@@ -559,12 +569,14 @@ begin
 {$ENDIF}
     tkRecord:
     begin
+{$IFDEF DCC}
       if Value.TypeInfo = TypeInfo(TSOAPBody) then
         SerializeType(Value.AsType<TSOAPBody>.Body, Node.AddChild(Value.AsType<TSOAPBody>.DocumentName, EmptyStr))
       else if Value.TypeInfo = TypeInfo(TValue) then
         SerializeType(Value.AsType<TValue>, Node)
       else
         SerializeFields(Value, Node);
+{$ENDIF}
     end;
     tkClass: SerializeProperties(Value.AsObject, Node);
     else Node.NodeValue := inherited Serialize(Value.AsType<TValue>);
