@@ -93,6 +93,8 @@ type
     procedure WhenTheMethodHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
     [Test]
     procedure WhenTheParameterHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
+    [Test]
+    procedure WhenThePropertyHasTheStoredPropertyTheValueMustBeSerializedOnlyIfThisPropertyIsTrue;
   end;
 
   TMyObject = class
@@ -166,6 +168,16 @@ type
     FValue: TValue;
   public
     property Value: TValue read FValue write FValue;
+  end;
+
+  TMyClassWithStoredProperty = class
+  private
+    FMyProperty: Integer;
+    FMyPropertyStored: Boolean;
+  protected
+    property MyPropertyStored: Boolean read FMyPropertyStored write FMyPropertyStored;
+  published
+    property MyProperty: Integer read FMyProperty write FMyProperty stored FMyPropertyStored;
   end;
 
   ISOAPService = interface(IInvokable)
@@ -372,6 +384,8 @@ begin
   var Value := FSerializer.Serialize(MyObject);
 
   Assert.AreEqual('{"Value":"abc"}', Value);
+
+  MyObject.Free;
 end;
 
 { TBluePrintXMLSerializerTest }
@@ -455,6 +469,8 @@ begin
 
   Assert.AreEqual('<?xml version="1.0"?>'#13#10'<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SOAP-ENV:Body><MyMethod><MyParam>abc</MyParam></MyMethod></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPRequest)));
+
+  RttiContext.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenSerializeATValueRecordMustSerializeTheValueFromTheRecord;
@@ -470,6 +486,8 @@ begin
   MyClass.MyProperty := 'abc';
 
   Assert.AreEqual('<?xml version="1.0"?>'#13#10'<MyDocument><MyProperty>abc</MyProperty></MyDocument>'#13#10, FSerializer.Serialize(MyClass));
+
+  MyClass.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenTheClassHasTheXMLAttributeMustLoadThisInfoTheTheNodeAsExpected;
@@ -478,6 +496,8 @@ begin
   MyObject.MyProperty := 'abc';
 
   Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document MyAttribute="MyValue"><MyProperty>abc</MyProperty></Document>'#13#10, FSerializer.Serialize(MyObject));
+
+  MyObject.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenTheMethodHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
@@ -490,6 +510,8 @@ begin
 
   Assert.AreEqual('<?xml version="1.0"?>'#13#10'<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SOAP-ENV:Body><MyMethodWithAttribute MyAttribute="MyValue"><MyParam>abc</MyParam></MyMethodWithAttribute></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPRequest)));
+
+  RttiContext.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenTheParameterHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
@@ -502,6 +524,8 @@ begin
 
   Assert.AreEqual('<?xml version="1.0"?>'#13#10'<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SOAP-ENV:Body><MyMethodWithParamAttribute><MyParam MyAttribute="MyValue">abc</MyParam></MyMethodWithParamAttribute></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPRequest)));
+
+  RttiContext.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheNodeNameAttributeMustGenerateTheXMLWithTheNameInTheAttribute;
@@ -510,6 +534,18 @@ begin
   MyObject.MyProperty := 'abc';
 
   Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><MyNode>abc</MyNode></Document>'#13#10, FSerializer.Serialize(MyObject));
+
+  MyObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheStoredPropertyTheValueMustBeSerializedOnlyIfThisPropertyIsTrue;
+begin
+  var MyObject := TMyClassWithStoredProperty.Create;
+  MyObject.MyProperty := 123;
+
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document/>'#13#10, FSerializer.Serialize(MyObject));
+
+  MyObject.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenTheRecordFieldHaveTheNodeNameAttributeMustSerializeTheRecordAsExpected;

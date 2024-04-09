@@ -681,7 +681,8 @@ begin
 
 {$IFDEF DCC}
   for &Property in RttiType.GetProperties do
-    SerializeType(&Property.GetValue(Instance), Node.AddChild(GetPropertyName));
+    if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).PropInfo) then
+      SerializeType(&Property.GetValue(Instance), Node.AddChild(GetPropertyName));
 {$ENDIF}
 end;
 
