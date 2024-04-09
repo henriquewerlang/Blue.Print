@@ -85,6 +85,14 @@ type
     procedure WhenTheClassHasTheNodeNameAttributeTheDocumentMustBeChangedToTheNameInTheAttribute;
     [Test]
     procedure WhenTheClassHasTheXMLAttributeMustLoadThisInfoTheTheNodeAsExpected;
+    [Test]
+    procedure WhenDeserializeAnObjectMustLoadThePropertiesAsExpected;
+    [Test]
+    procedure WhenDeserializeASOAPObjectMustLoadTheObjectAsExpected;
+    [Test]
+    procedure WhenTheMethodHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
+    [Test]
+    procedure WhenTheParameterHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
   end;
 
   TMyObject = class
@@ -158,6 +166,14 @@ type
     FValue: TValue;
   public
     property Value: TValue read FValue write FValue;
+  end;
+
+  ISOAPService = interface(IInvokable)
+    ['{BBBBC6F3-1730-40F4-A1B1-CC7CA6F08F5D}']
+    procedure MyMethod(const MyParam: Integer);
+    [XMLAttribute('MyAttribute', 'MyValue')]
+    procedure MyMethodWithAttribute(const MyParam: Integer);
+    procedure MyMethodWithParamAttribute([XMLAttribute('MyAttribute', 'MyValue')]const MyParam: Integer);
   end;
 
 implementation
@@ -365,6 +381,34 @@ begin
   FSerializer := TBluePrintXMLSerializer.Create;
 end;
 
+procedure TBluePrintXMLSerializerTest.WhenDeserializeAnObjectMustLoadThePropertiesAsExpected;
+begin
+  var Value := FSerializer.Deserialize('<Document><MyProp1>abc</MyProp1><MyProp2>123</MyProp2><MyProp3>123.456</MyProp3><MyProp4>MyValue2</MyProp4></Document>', TypeInfo(TMyObject)).AsType<TMyObject>;
+
+  Assert.IsNotNil(Value);
+  Assert.AreEqual('abc', Value.MyProp1);
+  Assert.AreEqual<Integer>(123, Value.MyProp2);
+  Assert.AreEqual<Double>(123.456, Value.MyProp3);
+  Assert.AreEqual(MyValue2, Value.MyProp4);
+
+  Value.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenDeserializeASOAPObjectMustLoadTheObjectAsExpected;
+begin
+  var Value := FSerializer.Deserialize(
+    '<?xml version="1.0"?>'#13#10'<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><Document><MyProp1>abc</MyProp1><MyProp2>123</MyProp2><MyProp3>123.456</MyProp3><MyProp4>MyValue2</MyProp4></Document></soap:Body></soap:Envelope>',
+    TypeInfo(TMyObject)).AsType<TMyObject>;
+
+  Assert.IsNotNil(Value);
+  Assert.AreEqual('abc', Value.MyProp1);
+  Assert.AreEqual<Integer>(123, Value.MyProp2);
+  Assert.AreEqual<Double>(123.456, Value.MyProp3);
+  Assert.AreEqual(MyValue2, Value.MyProp4);
+
+  Value.Free;
+end;
+
 procedure TBluePrintXMLSerializerTest.WhenSerializarAnObjectMustGenerateTheXMLAsExpected;
 begin
   var MyObject := TMyObject.Create;
@@ -373,7 +417,7 @@ begin
   MyObject.MyProp3 := 123.456;
   var Value := FSerializer.Serialize(MyObject);
 
-  Assert.AreEqual('<Document><MyProp1>abc</MyProp1><MyProp2>123</MyProp2><MyProp3>123.456</MyProp3><MyProp4>MyValue</MyProp4></Document>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><MyProp1>abc</MyProp1><MyProp2>123</MyProp2><MyProp3>123.456</MyProp3><MyProp4>MyValue</MyProp4></Document>'#13#10, Value);
 
   MyObject.Free;
 end;
@@ -383,7 +427,7 @@ begin
   var MyObject := TMyObjectParent.Create;
   MyObject.MyObject := TMyObject.Create;
 
-  Assert.AreEqual('<Document><MyObject><MyProp1></MyProp1><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></Document>'#13#10, FSerializer.Serialize(MyObject));
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><MyObject><MyProp1></MyProp1><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></Document>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.MyObject.Free;
 
@@ -398,21 +442,26 @@ begin
   MyRecord.MyField3 := 123.456;
   var Value := FSerializer.Serialize(TValue.From(MyRecord));
 
-  Assert.AreEqual('<Document><MyField1>abc</MyField1><MyField2>123</MyField2><MyField3>123.456</MyField3><MyField4>MyValue</MyField4></Document>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><MyField1>abc</MyField1><MyField2>123</MyField2><MyField3>123.456</MyField3><MyField4>MyValue</MyField4></Document>'#13#10, Value);
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenSerializeASOAPBodyTheDocumentNameMustBeTheNameOfTheSOAPBodyType;
 begin
-  var SOAPRequest := TSOAPEnvelop.Create('MyDocument', 'abc');
+  var RttiContext := TRttiContext.Create;
+  var RttiInterface := RttiContext.GetType(TypeInfo(ISOAPService));
 
-  Assert.AreEqual('<SOAP-ENV:Envelope><SOAP-ENV:Body><MyDocument>abc</MyDocument></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPRequest)));
+  var RttiMethod := RttiInterface.GetMethod('MyMethod');
+  var SOAPRequest := TSOAPEnvelop.Create(RttiMethod, RttiMethod.GetParameters[0], 'abc');
+
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SOAP-ENV:Body><MyMethod><MyParam>abc</MyParam></MyMethod></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
+    FSerializer.Serialize(TValue.From(SOAPRequest)));
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenSerializeATValueRecordMustSerializeTheValueFromTheRecord;
 begin
   var Value: TValue := 'abc';
 
-  Assert.AreEqual('<Document>abc</Document>'#13#10, FSerializer.Serialize(TValue.From(Value)));
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document>abc</Document>'#13#10, FSerializer.Serialize(TValue.From(Value)));
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenTheClassHasTheNodeNameAttributeTheDocumentMustBeChangedToTheNameInTheAttribute;
@@ -420,7 +469,7 @@ begin
   var MyClass := TMyClassWithNodeNameAttribute.Create;
   MyClass.MyProperty := 'abc';
 
-  Assert.AreEqual('<MyDocument><MyProperty>abc</MyProperty></MyDocument>'#13#10, FSerializer.Serialize(MyClass));
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<MyDocument><MyProperty>abc</MyProperty></MyDocument>'#13#10, FSerializer.Serialize(MyClass));
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenTheClassHasTheXMLAttributeMustLoadThisInfoTheTheNodeAsExpected;
@@ -428,7 +477,31 @@ begin
   var MyObject := TMyClassWithXMLAttribute.Create;
   MyObject.MyProperty := 'abc';
 
-  Assert.AreEqual('<Document MyAttribute="MyValue"><MyProperty>abc</MyProperty></Document>'#13#10, FSerializer.Serialize(MyObject));
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document MyAttribute="MyValue"><MyProperty>abc</MyProperty></Document>'#13#10, FSerializer.Serialize(MyObject));
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenTheMethodHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
+begin
+  var RttiContext := TRttiContext.Create;
+  var RttiInterface := RttiContext.GetType(TypeInfo(ISOAPService));
+
+  var RttiMethod := RttiInterface.GetMethod('MyMethodWithAttribute');
+  var SOAPRequest := TSOAPEnvelop.Create(RttiMethod, RttiMethod.GetParameters[0], 'abc');
+
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SOAP-ENV:Body><MyMethodWithAttribute MyAttribute="MyValue"><MyParam>abc</MyParam></MyMethodWithAttribute></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
+    FSerializer.Serialize(TValue.From(SOAPRequest)));
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenTheParameterHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
+begin
+  var RttiContext := TRttiContext.Create;
+  var RttiInterface := RttiContext.GetType(TypeInfo(ISOAPService));
+
+  var RttiMethod := RttiInterface.GetMethod('MyMethodWithParamAttribute');
+  var SOAPRequest := TSOAPEnvelop.Create(RttiMethod, RttiMethod.GetParameters[0], 'abc');
+
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SOAP-ENV:Body><MyMethodWithParamAttribute><MyParam MyAttribute="MyValue">abc</MyParam></MyMethodWithParamAttribute></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
+    FSerializer.Serialize(TValue.From(SOAPRequest)));
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheNodeNameAttributeMustGenerateTheXMLWithTheNameInTheAttribute;
@@ -436,7 +509,7 @@ begin
   var MyObject := TMyClassWithNode.Create;
   MyObject.MyProperty := 'abc';
 
-  Assert.AreEqual('<Document><MyNode>abc</MyNode></Document>'#13#10, FSerializer.Serialize(MyObject));
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><MyNode>abc</MyNode></Document>'#13#10, FSerializer.Serialize(MyObject));
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenTheRecordFieldHaveTheNodeNameAttributeMustSerializeTheRecordAsExpected;
@@ -444,7 +517,7 @@ begin
   var MyRecord: TMyRecordWithAttribute;
   MyRecord.MyField := 'abc';
 
-  Assert.AreEqual('<Document><AnotherName>abc</AnotherName></Document>'#13#10, FSerializer.Serialize(TValue.From(MyRecord)));
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><AnotherName>abc</AnotherName></Document>'#13#10, FSerializer.Serialize(TValue.From(MyRecord)));
 end;
 
 end.

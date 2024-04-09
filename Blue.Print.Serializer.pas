@@ -20,6 +20,8 @@ type
   private
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function Serialize(const Value: TValue): String;
+  protected
+    function CreateObject(const RttiType: TRttiInstanceType): TObject;
   end;
 
   TBluePrintJsonSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
@@ -30,7 +32,6 @@ type
     function GetJSONValue(const JSONValue: TJSONValue): String; inline;
     function Serialize(const Value: TValue): String;
   protected
-    function CreateObject(const RttiType: TRttiInstanceType): TObject;
     function DeserializeArray(const RttiType: TRttiType; const JSONArray: TJSONArray): TValue;
     function DeserializeClassReference(const JSONValue: TJSONValue): TValue;
     function DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
@@ -50,8 +51,12 @@ type
     FContext: TRttiContext;
 
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+    function LoadAttributes(const RttiObject: TRttiObject; const Node: IXMLNode): IXMLNode;
     function Serialize(const Value: TValue): String;
   protected
+    function DeserializeType(const RttiType: TRttiType; const Node: IXMLNode): TValue;
+
+    procedure DeserializeProperties(const Instance: TObject; const Node: IXMLNode);
     procedure SerializeFields(const Instance: TValue; const Node: IXMLNode);
     procedure SerializeProperties(const Instance: TObject; const Node: IXMLNode);
     procedure SerializeType(const Value: TValue; const Node: IXMLNode);
@@ -61,7 +66,7 @@ type
 
 implementation
 
-uses System.SysUtils, System.Generics.Collections{$IFDEF DCC}, Xml.XMLDoc{$ENDIF};
+uses System.Classes, System.SysUtils, System.Generics.Collections{$IFDEF DCC}, Xml.XMLDoc{$ENDIF};
 
 {$IFDEF PAS2JS}
 type
@@ -91,6 +96,11 @@ end;
 {$ENDIF}
 
 { TBluePrintSerializer }
+
+function TBluePrintSerializer.CreateObject(const RttiType: TRttiInstanceType): TObject;
+begin
+  Result := RttiType.MetaClassType.Create;
+end;
 
 function TBluePrintSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
 begin
@@ -141,11 +151,6 @@ begin
   inherited;
 
   FContext := TRTTIContext.Create;
-end;
-
-function TBluePrintJsonSerializer.CreateObject(const RttiType: TRttiInstanceType): TObject;
-begin
-  Result := RttiType.MetaClassType.Create;
 end;
 
 function TBluePrintJsonSerializer.Serialize(const Value: TValue): String;
@@ -449,14 +454,140 @@ begin
 end;
 
 function TBluePrintXMLSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+var
+  XML: IXMLDocument;
+
 begin
-  Result := inherited;
+  case TypeInfo.Kind of
+{$IFDEF DCC}
+    tkMRecord,
+{$ENDIF}
+    tkArray,
+    tkClass,
+    tkClassRef,
+    tkDynArray,
+    tkRecord:
+    begin
+{$IFDEF DCC}
+      XML := TXMLDocument.Create(nil);
+      XML.Active := True;
+
+      XML.LoadFromXML(Value);
+
+      var XMLNode := XML.DocumentElement;
+
+      if XMLNode.NodeName = 'soap:Envelope' then
+      begin
+        XMLNode := XMLNode.ChildNodes.FindNode('soap:Body');
+
+        XMLNode := XMLNode.ChildNodes.First;
+      end;
+
+      Result := DeserializeType(FContext.GetType(TypeInfo), XMLNode);
+{$ENDIF}
+    end;
+
+    else Result := inherited;
+  end;
+end;
+
+procedure TBluePrintXMLSerializer.DeserializeProperties(const Instance: TObject; const Node: IXMLNode);
+{$IFDEF DCC}
+var
+  ChildNode: IXMLNode;
+  Prop: TRttiProperty;
+  RttiType: TRttiType;
+{$ENDIF}
+
+begin
+{$IFDEF DCC}
+  ChildNode := Node.ChildNodes.First;
+  RttiType := FContext.GetType(Instance.ClassType);
+
+  while Assigned(ChildNode) do
+  begin
+    Prop := RttiType.GetProperty(ChildNode.NodeName);
+
+    if Assigned(Prop) then
+      Prop.SetValue(Instance, DeserializeType(Prop.PropertyType, ChildNode));
+
+    ChildNode := ChildNode.NextSibling;
+  end;
+{$ENDIF}
+end;
+
+function TBluePrintXMLSerializer.DeserializeType(const RttiType: TRttiType; const Node: IXMLNode): TValue;
+begin
+  case RttiType.TypeKind of
+{$IFDEF DCC}
+    tkLString,
+    tkUString,
+    tkWChar,
+    tkWString,
+{$ENDIF}
+    tkChar,
+    tkString: Result := TValue.From(Node.Text);
+
+    tkEnumeration: Result := TValue.FromOrdinal(RttiType.Handle, GetEnumValue(RttiType.Handle, Node.Text));
+
+    tkFloat: Result := {$IFDEF PAS2JS}0{$ELSE}StrToFloat(Node.Text, TFormatSettings.Invariant){$ENDIF};
+//  Conversão de data e hora
+//  if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
+//    Result := TValue.From(RFC3339ToDateTime(String(JSON)))
+
+{$IFDEF DCC}
+    tkInt64: Result := StrToInt64(Node.Text);
+{$ENDIF}
+    tkInteger: Result := {$IFDEF PAS2JS}0{$ELSE}StrToInt(Node.Text){$ENDIF};
+
+//    tkClassRef: Result := DeserializeClassReference(JSONValue);
+
+    tkClass:
+      if Assigned(Node) then
+      begin
+        Result := TValue.From(CreateObject(RttiType.AsInstance));
+
+        DeserializeProperties(Result.AsObject, Node);
+      end;
+
+//    tkArray, tkDynArray: Result := DeserializeArray(RttiType, TJSONArray(JSONValue));
+
+{$IFDEF DCC}
+    tkMRecord,
+{$ENDIF}
+    tkRecord:
+    begin
+      TValue.Make(nil, RttiType.Handle, Result);
+
+//      DeserializeFields(Result, Node);
+    end;
+
+    else Result := TValue.Empty;
+  end;
+end;
+
+function TBluePrintXMLSerializer.LoadAttributes(const RttiObject: TRttiObject; const Node: IXMLNode): IXMLNode;
+var
+  Attribute: TCustomAttribute;
+
+begin
+  Result := Node;
+
+{$IFDEF DCC}
+  for Attribute in RttiObject.GetAttributes do
+    if Attribute is XMLAttributeAttribute then
+    begin
+      var XMLAttribute := Attribute as XMLAttributeAttribute;
+
+      Result.Attributes[XMLAttribute.AttributeName] := XMLAttribute.AttributeValue;
+    end;
+{$ENDIF}
 end;
 
 function TBluePrintXMLSerializer.Serialize(const Value: TValue): String;
 var
   ValueType: TRttiType;
-  XML: IXMLDocument;
+  XMLDocument: IXMLDocument;
 
   function GetDocumentName: String;
   var
@@ -471,20 +602,6 @@ var
       Result := 'Document';
   end;
 
-  function LoadAttributes(const Node: IXMLNode): IXMLNode;
-  var
-    XMLAttribute: XMLAttributeAttribute;
-
-  begin
-    Result := Node;
-    XMLAttribute := ValueType.GetAttribute<XMLAttributeAttribute>;
-
-{$IFDEF DCC}
-    if Assigned(XMLAttribute) then
-      Result.Attributes[XMLAttribute.AttributeName] := XMLAttribute.AttributeValue;
-{$ENDIF}
-  end;
-
 begin
   case Value.Kind of
 {$IFDEF DCC}
@@ -495,12 +612,19 @@ begin
     begin
 {$IFDEF DCC}
       ValueType := FContext.GetType(Value.TypeInfo);
-      XML := TXMLDocument.Create(nil);
-      XML.Active := True;
+      XMLDocument := TXMLDocument.Create(nil);
+      XMLDocument.Active := True;
+      XMLDocument.Version := '1.0';
 
-      SerializeType(Value, LoadAttributes(XML.AddChild(GetDocumentName)));
+      SerializeType(Value, LoadAttributes(ValueType, XMLDocument.AddChild(GetDocumentName)));
 
-      XML.SaveToXML(Result);
+      var XML := TStringStream.Create;
+
+      XMLDocument.SaveToStream(XML);
+
+      Result := XML.DataString;
+
+      XML.Free;
 {$ENDIF}
     end;
     else Result := inherited;
@@ -571,7 +695,11 @@ begin
     begin
 {$IFDEF DCC}
       if Value.TypeInfo = TypeInfo(TSOAPBody) then
-        SerializeType(Value.AsType<TSOAPBody>.Body, Node.AddChild(Value.AsType<TSOAPBody>.DocumentName, EmptyStr))
+      begin
+        var SOAPBody := Value.AsType<TSOAPBody>;
+
+        SerializeType(Value.AsType<TSOAPBody>.Body, LoadAttributes(SOAPBody.Parameter, LoadAttributes(SOAPBody.Method, Node.AddChild(SOAPBody.Method.Name, EmptyStr)).AddChild(SOAPBody.Parameter.Name, EmptyStr)));
+      end
       else if Value.TypeInfo = TypeInfo(TValue) then
         SerializeType(Value.AsType<TValue>, Node)
       else

@@ -182,18 +182,21 @@ type
 
   TSOAPBody = record
   public
-    DocumentName: String;
     Body: TValue;
+    Method: TRttiMethod;
+    Parameter: TRttiParameter;
   end;
 
   [NodeName('SOAP-ENV:Envelope')]
   [XMLAttribute('xmlns:SOAP-ENV', 'http://schemas.xmlsoap.org/soap/envelope/')]
+  [XMLAttribute('xmlns:xsd', 'http://www.w3.org/2001/XMLSchema')]
+  [XMLAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance')]
   TSOAPEnvelop = record
   public
     [NodeName('SOAP-ENV:Body')]
     SOAPBody: TSOAPBody;
 
-    constructor Create(const DocumentName: String; const Body: TValue);
+    constructor Create(const Method: TRttiMethod; const Parameter: TRttiParameter; const Body: TValue);
   end;
 
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
@@ -398,10 +401,11 @@ end;
 
 { TSOAPEnvelop }
 
-constructor TSOAPEnvelop.Create(const DocumentName: String; const Body: TValue);
+constructor TSOAPEnvelop.Create(const Method: TRttiMethod; const Parameter: TRttiParameter; const Body: TValue);
 begin
-  SOAPBody.DocumentName := DocumentName;
   SOAPBody.Body := Body;
+  SOAPBody.Method := Method;
+  SOAPBody.Parameter := Parameter;
 end;
 
 { XMLAttributeAttribute }
