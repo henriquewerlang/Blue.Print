@@ -351,9 +351,9 @@ procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<
   function SendRequestAsync: TJSPromise;
   begin
     Result := TJSPromise.New(
-      procedure (Resolve: TProc<TValue>)
+      procedure (Resolve: TProc<JSValue>)
       begin
-        Resolve(SendRequest(Method, Args));
+        Resolve(SendRequest(Method, Args).AsJSValue);
       end);
   end;
 {$ENDIF}
