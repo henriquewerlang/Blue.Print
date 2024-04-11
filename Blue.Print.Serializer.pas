@@ -454,10 +454,13 @@ begin
 end;
 
 function TBluePrintXMLSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+{$IFDEF DCC}
 var
   XML: IXMLDocument;
 
+{$ENDIF}
 begin
+{$IFDEF DCC}
   case TypeInfo.Kind of
 {$IFDEF DCC}
     tkMRecord,
@@ -468,7 +471,6 @@ begin
     tkDynArray,
     tkRecord:
     begin
-{$IFDEF DCC}
       XML := TXMLDocument.Create(nil);
       XML.Active := True;
 
@@ -484,11 +486,11 @@ begin
       end;
 
       Result := DeserializeType(FContext.GetType(TypeInfo), XMLNode);
-{$ENDIF}
     end;
 
     else Result := inherited;
   end;
+{$ENDIF}
 end;
 
 procedure TBluePrintXMLSerializer.DeserializeProperties(const Instance: TObject; const Node: IXMLNode);
@@ -518,6 +520,7 @@ end;
 
 function TBluePrintXMLSerializer.DeserializeType(const RttiType: TRttiType; const Node: IXMLNode): TValue;
 begin
+{$IFDEF DCC}
   case RttiType.TypeKind of
 {$IFDEF DCC}
     tkLString,
@@ -530,7 +533,7 @@ begin
 
     tkEnumeration: Result := TValue.FromOrdinal(RttiType.Handle, GetEnumValue(RttiType.Handle, Node.Text));
 
-    tkFloat: Result := {$IFDEF PAS2JS}0{$ELSE}StrToFloat(Node.Text, TFormatSettings.Invariant){$ENDIF};
+    tkFloat: Result := StrToFloat(Node.Text, TFormatSettings.Invariant);
 //  Conversão de data e hora
 //  if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
 //    Result := TValue.From(RFC3339ToDateTime(String(JSON)))
@@ -538,7 +541,7 @@ begin
 {$IFDEF DCC}
     tkInt64: Result := StrToInt64(Node.Text);
 {$ENDIF}
-    tkInteger: Result := {$IFDEF PAS2JS}0{$ELSE}StrToInt(Node.Text){$ENDIF};
+    tkInteger: Result := StrToInt(Node.Text);
 
 //    tkClassRef: Result := DeserializeClassReference(JSONValue);
 
@@ -564,16 +567,19 @@ begin
 
     else Result := TValue.Empty;
   end;
+{$ENDIF}
 end;
 
 function TBluePrintXMLSerializer.LoadAttributes(const RttiObject: TRttiObject; const Node: IXMLNode): IXMLNode;
+{$IFDEF DCC}
 var
   Attribute: TCustomAttribute;
 
+{$ENDIF}
 begin
+{$IFDEF DCC}
   Result := Node;
 
-{$IFDEF DCC}
   for Attribute in RttiObject.GetAttributes do
     if Attribute is XMLAttributeAttribute then
     begin
@@ -585,6 +591,7 @@ begin
 end;
 
 function TBluePrintXMLSerializer.Serialize(const Value: TValue): String;
+{$IFDEF DCC}
 var
   ValueType: TRttiType;
   XMLDocument: IXMLDocument;
@@ -601,8 +608,10 @@ var
     else
       Result := 'Document';
   end;
+{$ENDIF}
 
 begin
+{$IFDEF DCC}
   case Value.Kind of
 {$IFDEF DCC}
     tkMRecord,
@@ -610,7 +619,6 @@ begin
     tkRecord,
     tkClass:
     begin
-{$IFDEF DCC}
       ValueType := FContext.GetType(Value.TypeInfo);
       XMLDocument := TXMLDocument.Create(nil);
       XMLDocument.Active := True;
@@ -625,13 +633,14 @@ begin
       Result := XML.DataString;
 
       XML.Free;
-{$ENDIF}
     end;
     else Result := inherited;
   end;
+{$ENDIF}
 end;
 
 procedure TBluePrintXMLSerializer.SerializeFields(const Instance: TValue; const Node: IXMLNode);
+{$IFDEF DCC}
 var
   Field: TRttiField;
   RttiType: TRttiType;
@@ -649,16 +658,18 @@ var
       Result := Field.Name;
   end;
 
+{$ENDIF}
 begin
+{$IFDEF DCC}
   RttiType := FContext.GetType(Instance.TypeInfo);
 
-{$IFDEF DCC}
   for Field in RttiType.GetFields do
     SerializeType(Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetFieldName));
 {$ENDIF}
 end;
 
 procedure TBluePrintXMLSerializer.SerializeProperties(const Instance: TObject; const Node: IXMLNode);
+{$IFDEF DCC}
 var
   &Property: TRttiProperty;
   RttiType: TRttiType;
@@ -676,10 +687,11 @@ var
       Result := &Property.Name;
   end;
 
+{$ENDIF}
 begin
+{$IFDEF DCC}
   RttiType := FContext.GetType(Instance.ClassType);
 
-{$IFDEF DCC}
   for &Property in RttiType.GetProperties do
     if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).PropInfo) then
       SerializeType(&Property.GetValue(Instance), Node.AddChild(GetPropertyName));
@@ -688,13 +700,13 @@ end;
 
 procedure TBluePrintXMLSerializer.SerializeType(const Value: TValue; const Node: IXMLNode);
 begin
+{$IFDEF DCC}
   case Value.Kind of
 {$IFDEF DCC}
     tkMRecord,
 {$ENDIF}
     tkRecord:
     begin
-{$IFDEF DCC}
       if Value.TypeInfo = TypeInfo(TSOAPBody) then
       begin
         var SOAPBody := Value.AsType<TSOAPBody>;
@@ -705,11 +717,11 @@ begin
         SerializeType(Value.AsType<TValue>, Node)
       else
         SerializeFields(Value, Node);
-{$ENDIF}
     end;
     tkClass: SerializeProperties(Value.AsObject, Node);
     else Node.NodeValue := inherited Serialize(Value.AsType<TValue>);
   end;
+{$ENDIF}
 end;
 
 end.
