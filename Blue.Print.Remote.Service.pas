@@ -7,11 +7,7 @@ uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes,
 type
   IHTTPCommunication = interface
     ['{8E39F66A-C72B-4314-80B1-D24F1AF4F247}']
-    function SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String): String;
-//    {$IFDEF PAS2JS}
-//    function SendRequestAsync(const RequestMethod: TRequestMethod; const URL, Body: String): String; async;
-//    {$ENDIF}
-
+    procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>);
     procedure SetHeader(const HeaderName, Value: String);
 
     property Header[const HeaderName: String]: String write SetHeader;
@@ -21,11 +17,7 @@ type
   private
     FConnection: {$IFDEF PAS2JS}TJSXMLHttpRequest{$ELSE}THTTPClient{$ENDIF};
 
-    function SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String): String;
-//{$IFDEF PAS2JS}
-//    function SendRequestAsync(const RequestMethod: TRequestMethod; const URL, Body: String): String; async;
-//{$ENDIF}
-
+    procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>);
     procedure SetHeader(const HeaderName, Value: String);
   public
     constructor Create;
@@ -56,7 +48,7 @@ type
     function GetSOAPActionName(const Method: TRttiMethod): String;
     function IsSOAPRequest: Boolean;
     function LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
-    function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>): TValue;
+    function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>; const AsyncRequest: Boolean; const ReturnEvent: TProc<TValue>): TValue;
 
     procedure ForEachParam(const Method: TRttiMethod; const Args: TArray<TValue>; const Proc: TProc<TRttiParameter, TValue>);
     procedure LoadAuthorization(const Method: TRttiMethod; const Args: TArray<TValue>);
@@ -347,13 +339,20 @@ begin
 end;
 
 procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
+var
+  ReturnValue: TValue;
+
 {$IFDEF PAS2JS}
   function SendRequestAsync: TJSPromise;
   begin
     Result := TJSPromise.New(
       procedure (Resolve: TProc<JSValue>)
       begin
-        Resolve(SendRequest(Method, Args).AsJSValue);
+        SendRequest(Method, Args, True,
+          procedure (Value: TValue)
+          begin
+            Resolve(Value.AsJSValue);
+          end);
       end);
   end;
 {$ENDIF}
@@ -364,22 +363,31 @@ begin
       Result := TValue.From(SendRequestAsync)
     else
 {$ENDIF}
-  Result := SendRequest(Method, Args);
+  begin
+    SendRequest(Method, Args, False,
+      procedure (Value: TValue)
+      begin
+        ReturnValue := Value;
+      end);
+
+    Result := ReturnValue;
+  end;
 end;
 
-function TRemoteService.SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>): TValue;
-var
-  Response: String;
-
+function TRemoteService.SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>; const AsyncRequest: Boolean; const ReturnEvent: TProc<TValue>): TValue;
 begin
   LoadRequestHeaders(Method);
 
   LoadAuthorization(Method, Args);
 
-  Response := Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBody(Method, Args));
-
-  if Assigned(Method.ReturnType) then
-    Result := Serializer.Deserialize(Response, Method.ReturnType.Handle);
+  Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBody(Method, Args), AsyncRequest,
+    procedure(Content: String)
+    begin
+      if Assigned(Method.ReturnType) then
+        ReturnEvent(Serializer.Deserialize(Content, Method.ReturnType.Handle))
+      else
+        ReturnEvent(TValue.Empty);
+    end);
 end;
 
 { THTTPCommunication }
@@ -400,14 +408,16 @@ begin
   inherited;
 end;
 
-function THTTPCommunication.SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String): String;
+procedure THTTPCommunication.SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>);
 const
   REQUEST_METHOD_NAME: array[TRequestMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT');
+
+var
+  Content: String;
 
 {$IFDEF PAS2JS}
 var
   A: Integer;
-
   Connection: TJSXMLHttpRequest;
 
   procedure DownloadFile(const URL: String); async;
@@ -427,73 +437,42 @@ var
   end;
 {$ENDIF}
 
-  procedure CheckStatusCode(const StatusCode: Integer; const URL: String);
+  procedure CheckStatusCode(const StatusCode: Integer);
   begin
     if (StatusCode < 200) or (StatusCode > 299) then
-      raise EHTTPStatusError.Create(StatusCode, Result);
+      raise EHTTPStatusError.Create(StatusCode, Content);
   end;
 
 begin
 {$IFDEF PAS2JS}
-  FConnection.Open(REQUEST_METHOD_NAME[RequestMethod], URL, False);
+  FConnection.OnLoadEnd :=
+    function(Event : TJSProgressEvent) : Boolean
+    begin
+      Content := FConnection.ResponseText;
+
+      CheckStatusCode(FConnection.Status);
+
+      CompleteEvent(Content);
+    end;
+
+  FConnection.Open(REQUEST_METHOD_NAME[RequestMethod], URL, AsyncRequest);
 
   FConnection.Send(Body);
-
-  Result := FConnection.ResponseText;
-
-  CheckStatusCode(FConnection.Status, URL);
 {$ELSE}
   var BodyStream := TStringStream.Create(Body, TEncoding.UTF8);
   FConnection.ResponseTimeout := -1;
   FConnection.SendTimeout := -1;
-
   var Response := FConnection.Execute(REQUEST_METHOD_NAME[RequestMethod], URL, BodyStream) as IHTTPResponse;
-  Result := Response.ContentAsString;
+
+  Content := Response.ContentAsString;
 
   BodyStream.Free;
 
-  CheckStatusCode(Response.StatusCode, URL);
+  CheckStatusCode(Response.StatusCode);
+
+  CompleteEvent(Content);
 {$ENDIF}
 end;
-
-//{$IFDEF PAS2JS}
-//function THTTPCommunication.SendRequestAsync(const RequestMethod: TRequestMethod; const URL: String; const Body: TStream): TStream;
-//var
-//  A: Integer;
-//
-//  Options: TJSFetchInit;
-//
-//  Response: TJSResponse;
-//
-//begin
-//  if Request.FileDownload then
-//    await(DownloadFile(Request.URL))
-//  else
-//  begin
-//    FHeaders.Text := Request.Headers;
-//    Options := TJSFetchInit.New;
-//    Options.Method := RESTRequestMethodToString(Request.Method);
-//
-//    if FHeaders.Count > 0 then
-//    begin
-//      Options.Headers := TJSHTMLHeaders.New;
-//
-//      for A := 0 to Pred(FHeaders.Count) do
-//        Options.Headers.Append(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
-//    end;
-//
-//    if not Request.Body.IsEmpty then
-//      Options.Body := Request.Body.AsJSValue;
-//
-//    Response := await(Window.Fetch(Request.URL, Options));
-//
-//    Result := await(Response.Text);
-//
-//    if Response.Status <> 200 then
-//      raise EHTTPStatusError.Create(Response.Status, Request.URL, Result);
-//  end;
-//end;
-//{$ENDIF}
 
 procedure THTTPCommunication.SetHeader(const HeaderName, Value: String);
 begin

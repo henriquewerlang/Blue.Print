@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Rtti, System.Classes, System.TypInfo, System.Generics.Collections, Test.Insight.Framework, Blue.Print.Remote.Service, Blue.Print.Types;
+uses System.Rtti, System.Classes, System.TypInfo, System.Generics.Collections, System.SysUtils, Test.Insight.Framework, Blue.Print.Remote.Service, Blue.Print.Types;
 
 type
   TCommunicationMock = class;
@@ -108,12 +108,12 @@ type
     FHeaders: TDictionary<String, String>;
     FRequestMethod: TRequestMethod;
     FRequestSended: Boolean;
-    FResponse: TStream;
+    FResponseValue: String;
     FURL: String;
 
     function GetHeader(const HeaderName: String): String;
-    function SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String): String;
 
+    procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>);
     procedure SetHeader(const HeaderName, Value: String);
   public
     constructor Create;
@@ -122,10 +122,9 @@ type
 
     function GetBodyAsString: String;
 
-    procedure SetResponseValue(const Value: String);
-
     property Body: TStream read FBody;
     property Header[const HeaderName: String]: String read GetHeader write SetHeader;
+    property ResponseValue: String read FResponseValue write FResponseValue;
     property RequestMethod: TRequestMethod read FRequestMethod;
     property RequestSended: Boolean read FRequestSended;
     property URL: String read FURL;
@@ -216,7 +215,7 @@ type
 
 implementation
 
-uses System.SysUtils, Blue.Print.Serializer, Web.ReqFiles;
+uses Blue.Print.Serializer, Web.ReqFiles;
 
 { TRemoteServiceTest }
 
@@ -289,7 +288,7 @@ begin
   FSerializer.ReturnValue := 'Serializer';
   var Service := GetRemoteService<IServiceTest>(EmptyStr);
 
-  FCommunication.SetResponseValue('abc');
+  FCommunication.ResponseValue := 'abc';
 
   var ReturnValue := Service.TestFunction;
 
@@ -301,7 +300,7 @@ begin
   FSerializer.ReturnValue := 'abc';
   var Service := GetRemoteService<IServiceTest>(EmptyStr);
 
-  FCommunication.SetResponseValue('abc');
+  FCommunication.ResponseValue := 'abc';
 
   var ReturnValue := Service.TestFunction;
 
@@ -606,8 +605,6 @@ begin
 
   FHeaders.Free;
 
-  FResponse.Free;
-
   inherited;
 end;
 
@@ -627,25 +624,21 @@ begin
   FHeaders.TryGetValue(HeaderName, Result);
 end;
 
-function TCommunicationMock.SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String): String;
+procedure TCommunicationMock.SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>);
 begin
   FRequestMethod := RequestMethod;
   FRequestSended := True;
   FURL := URL;
-  Result := EmptyStr;;
 
   if not Body.IsEmpty then
     FBody := TStringStream.Create(Body);
+
+  CompleteEvent(ResponseValue);
 end;
 
 procedure TCommunicationMock.SetHeader(const HeaderName, Value: String);
 begin
   FHeaders.AddOrSetValue(HeaderName, Value);
-end;
-
-procedure TCommunicationMock.SetResponseValue(const Value: String);
-begin
-  FResponse := TStringStream.Create(Value, TEncoding.UTF8);
 end;
 
 { TSerializerMock }
