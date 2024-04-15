@@ -100,6 +100,8 @@ type
     procedure WhenInterfaceIsInheritedFromAnotherInterfaceMustSendTheBasePathWithTheNameOfTheHighInterface;
     [Test]
     procedure WhenTheInterfaceHasTheSoapServiceAttributeMustConcatTheBaseServiceNameInTheSOAPActionHeader;
+    [Test]
+    procedure WhenTheMethodHasTheAuthorizationAttributeThisValueCanBeLoadedInTheURLOfTheRequest;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -469,6 +471,15 @@ begin
   Service.TestProcedure;
 
   Assert.AreEqual(TRequestMethod.Post, FCommunication.RequestMethod);
+end;
+
+procedure TRemoteServiceTest.WhenTheMethodHasTheAuthorizationAttributeThisValueCanBeLoadedInTheURLOfTheRequest;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.AuthorizationProcedure('My Value');
+
+  Assert.AreEqual('/IServiceTest/AuthorizationProcedure', FCommunication.URL);
 end;
 
 procedure TRemoteServiceTest.WhenTheMethodHasTheSOAPActionAttributeMustLoadTheHeaderWithTheAttributeName;

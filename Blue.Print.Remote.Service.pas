@@ -300,7 +300,7 @@ begin
   ForEachParam(Method, Args,
     procedure (Parameter: TRttiParameter; Value: TValue)
     begin
-      if GetParameterType(Parameter) = ParameterType then
+      if (Parameter.GetAttribute<AuthorizationAttribute> = nil) and (GetParameterType(Parameter) = ParameterType) then
         LoadFunction(Parameter, Value);
     end);
 end;
