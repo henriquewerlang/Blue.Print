@@ -115,7 +115,7 @@ type
 
     function GetHeader(const HeaderName: String): String;
 
-    procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>);
+    procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
     procedure SetHeader(const HeaderName, Value: String);
   public
     constructor Create;
@@ -635,7 +635,7 @@ begin
   FHeaders.TryGetValue(HeaderName, Result);
 end;
 
-procedure TCommunicationMock.SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>);
+procedure TCommunicationMock.SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
 begin
   FRequestMethod := RequestMethod;
   FRequestSended := True;
