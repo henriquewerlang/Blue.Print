@@ -33,15 +33,15 @@ type
     function Serialize(const Value: TValue): String;
   protected
     function DeserializeArray(const RttiType: TRttiType; const JSONArray: TJSONArray): TValue;
-    function DeserializeClassReference(const JSONValue: TJSONValue): TValue;
+    function DeserializeClassReference(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
     function DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
-    function SerializeArray(const Value: TValue): TJSONArray;
-    function SerializeType(const Value: TValue): TJSONValue;
+    function SerializeArray(const RttiType: TRttiType; const Value: TValue): TJSONArray;
+    function SerializeType(const RttiType: TRttiType; Value: TValue): TJSONValue;
 
-    procedure DeserializeFields(const Instance: TValue; const JSONObject: TJSONObject);
-    procedure DeserializeProperties(const Instance: TObject; const JSONObject: TJSONObject);
-    procedure SerializeFields(const Instance: TValue; const JSONObject: TJSONObject);
-    procedure SerializeProperties(const Instance: TObject; const JSONObject: TJSONObject);
+    procedure DeserializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
+    procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
+    procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
+    procedure SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
   public
     constructor Create;
   end;
@@ -56,10 +56,10 @@ type
   protected
     function DeserializeType(const RttiType: TRttiType; const Node: IXMLNode): TValue;
 
-    procedure DeserializeProperties(const Instance: TObject; const Node: IXMLNode);
-    procedure SerializeFields(const Instance: TValue; const Node: IXMLNode);
-    procedure SerializeProperties(const Instance: TObject; const Node: IXMLNode);
-    procedure SerializeType(const Value: TValue; const Node: IXMLNode);
+    procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
+    procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode);
+    procedure SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
+    procedure SerializeType(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode);
   public
     constructor Create;
   end;
@@ -168,7 +168,7 @@ begin
     tkDynArray,
     tkRecord:
     begin
-      JSON := SerializeType(Value);
+      JSON := SerializeType(FContext.GetType(Value.TypeInfo), Value);
 
       Result := {$IFDEF DCC}JSON.ToJSON{$ELSE}TJSJSON.stringify(JSON){$ENDIF};
 
@@ -180,57 +180,50 @@ begin
   end;
 end;
 
-function TBluePrintJsonSerializer.SerializeArray(const Value: TValue): TJSONArray;
+function TBluePrintJsonSerializer.SerializeArray(const RttiType: TRttiType; const Value: TValue): TJSONArray;
 var
   A: NativeInt;
+  ElementValue: TValue;
 
 begin
   Result := TJSONArray.{$IFDEF PAS2JS}New{$ELSE}Create{$ENDIF};
 
   for A := 0 to Pred(Value.GetArrayLength) do
-    Result.AddElement(SerializeType(Value.GetArrayElement(A)));
+  begin
+    ElementValue := Value.GetArrayElement(A);
+
+    Result.AddElement(SerializeType(FContext.GetType(ElementValue.TypeInfo), ElementValue));
+  end;
 end;
 
-procedure TBluePrintJsonSerializer.SerializeFields(const Instance: TValue; const JSONObject: TJSONObject);
+procedure TBluePrintJsonSerializer.SerializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
 var
   Field: TRttiField;
 
-  RttiType: TRttiType;
-
 begin
-  RttiType := FContext.GetType(Instance.TypeInfo);
-
   for Field in RttiType.GetFields do
     if Field.Visibility in [mvPublic, mvPublished] then
-      JSONObject.AddPair(Field.Name, SerializeType(Field.GetValue(Instance.GetReferenceToRawData)));
+      JSONObject.AddPair(Field.Name, SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData)));
 end;
 
-procedure TBluePrintJsonSerializer.SerializeProperties(const Instance: TObject; const JSONObject: TJSONObject);
+procedure TBluePrintJsonSerializer.SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
 var
   &Property: TRttiProperty;
 
-  RttiType: TRttiType;
-
 begin
-  RttiType := FContext.GetType(Instance.ClassType);
-
   for &Property in RttiType.GetProperties do
-    JSONObject.AddPair(&Property.Name, SerializeType(&Property.GetValue(Instance)));
+    JSONObject.AddPair(&Property.Name, SerializeType(&Property.PropertyType, &Property.GetValue(Instance)));
 end;
 
-function TBluePrintJsonSerializer.SerializeType(const Value: TValue): TJSONValue;
+function TBluePrintJsonSerializer.SerializeType(const RttiType: TRttiType; Value: TValue): TJSONValue;
 
   function CreateJSONObject: TJSONObject;
   begin
     Result := TJSONObject.{$IFDEF PAS2JS}New{$ELSE}Create{$ENDIF};
   end;
 
-var
-  RttiType: TRttiType;
-
 begin
   Result := nil;
-  RttiType := FContext.GetType(Value.TypeInfo);
 
   case RttiType.TypeKind of
 {$IFDEF DCC}
@@ -254,7 +247,7 @@ begin
 {$ENDIF}
     tkInteger: Result := TJSONNumber.{$IFDEF PAS2JS}New{$ELSE}Create{$ENDIF}(Value.{$IFDEF PAS2JS}AsInteger{$ELSE}AsInt64{$ENDIF});
 
-    tkClassRef: Result := SerializeType(TValue.From(Value.AsClass.QualifiedClassName));
+    tkClassRef: Result := SerializeType(FContext.GetType(TypeInfo(String)), TValue.From(Value.AsClass.QualifiedClassName));
 
     tkClass:
       if Value.IsEmpty then
@@ -263,10 +256,10 @@ begin
       begin
         Result := CreateJSONObject;
 
-        SerializeProperties(Value.AsObject, TJSONObject(Result));
+        SerializeProperties(RttiType, Value.AsObject, TJSONObject(Result));
       end;
 
-    tkArray, tkDynArray: Result := SerializeArray(Value);
+    tkArray, tkDynArray: Result := SerializeArray(RttiType, Value);
 
 {$IFDEF DCC}
     tkMRecord,
@@ -274,28 +267,27 @@ begin
     tkRecord:
     begin
       if Value.TypeInfo = TypeInfo(TValue) then
-        Result := SerializeType(Value.AsType<TValue>)
+      begin
+        Value := Value.AsType<TValue>;
+
+        Result := SerializeType(FContext.GetType(Value.TypeInfo), Value)
+      end
       else
       begin
         Result := CreateJSONObject;
 
-        SerializeFields(Value, TJSONObject(Result));
+        SerializeFields(RttiType, Value, TJSONObject(Result));
       end;
     end;
   end;
 end;
 
-procedure TBluePrintJsonSerializer.DeserializeProperties(const Instance: TObject; const JSONObject: TJSONObject);
+procedure TBluePrintJsonSerializer.DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
 var
   Key: {$IFDEF PAS2JS}String{$ELSE}TJSONPair{$ENDIF};
-
   Prop: TRttiProperty;
 
-  RttiType: TRttiType;
-
 begin
-  RttiType := FContext.GetType(Instance.ClassType);
-
   for Key in {$IFDEF PAS2JS}TJSObject.Keys{$ENDIF}(JSONObject) do
   begin
     Prop := RttiType.GetProperty(Key{$IFDEF DCC}.JsonString.Value{$ENDIF});
@@ -329,14 +321,14 @@ begin
 {$ENDIF}
     tkInteger: Result := {$IFDEF PAS2JS}TValue.From(JSONValue){$ELSE}(JSONValue as TJSONNumber).AsInt{$ENDIF};
 
-    tkClassRef: Result := DeserializeClassReference(JSONValue);
+    tkClassRef: Result := DeserializeClassReference(RttiType, JSONValue);
 
     tkClass:
       if {$IFDEF PAS2JS}JSONValue <> NULL{$ELSE}not JSONValue.Null{$ENDIF} then
       begin
         Result := TValue.From(CreateObject(RttiType.AsInstance));
 
-        DeserializeProperties(Result.AsObject, TJSONObject(JSONValue));
+        DeserializeProperties(RttiType, Result.AsObject, TJSONObject(JSONValue));
       end;
 
     tkArray, tkDynArray: Result := DeserializeArray(RttiType, TJSONArray(JSONValue));
@@ -348,7 +340,7 @@ begin
     begin
       TValue.Make(nil, RttiType.Handle, Result);
 
-      DeserializeFields(Result, TJSONObject(JSONValue));
+      DeserializeFields(RttiType, Result, TJSONObject(JSONValue));
     end;
 
     else Result := TValue.Empty;
@@ -415,28 +407,25 @@ begin
   Result := TValue.FromArray(RttiType.Handle, ArrayItems);
 end;
 
-function TBluePrintJsonSerializer.DeserializeClassReference(const JSONValue: TJSONValue): TValue;
+function TBluePrintJsonSerializer.DeserializeClassReference(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
 var
-  RttiType: TRttiInstanceType;
+  ClassReferenceType: TRttiInstanceType;
 
 begin
-  RttiType := FContext.FindType(GetJSONValue(JSONValue)) as TRttiInstanceType;
+  ClassReferenceType := FContext.FindType(GetJSONValue(JSONValue)) as TRttiInstanceType;
 
-  if Assigned(RttiType) then
-    Result := TValue.From(RttiType.MetaclassType)
+  if Assigned(ClassReferenceType) then
+    Result := TValue.From(ClassReferenceType.MetaclassType)
   else
     Result := TValue.Empty;
 end;
 
-procedure TBluePrintJsonSerializer.DeserializeFields(const Instance: TValue; const JSONObject: TJSONObject);
+procedure TBluePrintJsonSerializer.DeserializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
 var
   Field: TRttiField;
   Key: {$IFDEF PAS2JS}String{$ELSE}TJSONPair{$ENDIF};
-  RttiType: TRttiType;
 
 begin
-  RttiType := FContext.GetType(Instance.TypeInfo);
-
   for Key in {$IFDEF PAS2JS}TJSObject.Keys{$ENDIF}(JSONObject) do
   begin
     Field := RttiType.GetField(Key{$IFDEF DCC}.JsonString.Value{$ENDIF});
@@ -493,18 +482,16 @@ begin
 {$ENDIF}
 end;
 
-procedure TBluePrintXMLSerializer.DeserializeProperties(const Instance: TObject; const Node: IXMLNode);
+procedure TBluePrintXMLSerializer.DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
 {$IFDEF DCC}
 var
   ChildNode: IXMLNode;
   Prop: TRttiProperty;
-  RttiType: TRttiType;
 {$ENDIF}
 
 begin
 {$IFDEF DCC}
   ChildNode := Node.ChildNodes.First;
-  RttiType := FContext.GetType(Instance.ClassType);
 
   while Assigned(ChildNode) do
   begin
@@ -550,7 +537,7 @@ begin
       begin
         Result := TValue.From(CreateObject(RttiType.AsInstance));
 
-        DeserializeProperties(Result.AsObject, Node);
+        DeserializeProperties(RttiType, Result.AsObject, Node);
       end;
 
 //    tkArray, tkDynArray: Result := DeserializeArray(RttiType, TJSONArray(JSONValue));
@@ -624,7 +611,7 @@ begin
       XMLDocument.Active := True;
       XMLDocument.Version := '1.0';
 
-      SerializeType(Value, LoadAttributes(ValueType, XMLDocument.AddChild(GetDocumentName)));
+      SerializeType(ValueType, Value, LoadAttributes(ValueType, XMLDocument.AddChild(GetDocumentName)));
 
       var XML := TStringStream.Create;
 
@@ -639,11 +626,10 @@ begin
 {$ENDIF}
 end;
 
-procedure TBluePrintXMLSerializer.SerializeFields(const Instance: TValue; const Node: IXMLNode);
+procedure TBluePrintXMLSerializer.SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode);
 {$IFDEF DCC}
 var
   Field: TRttiField;
-  RttiType: TRttiType;
 
   function GetFieldName: String;
   var
@@ -661,18 +647,15 @@ var
 {$ENDIF}
 begin
 {$IFDEF DCC}
-  RttiType := FContext.GetType(Instance.TypeInfo);
-
   for Field in RttiType.GetFields do
-    SerializeType(Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetFieldName));
+    SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetFieldName));
 {$ENDIF}
 end;
 
-procedure TBluePrintXMLSerializer.SerializeProperties(const Instance: TObject; const Node: IXMLNode);
+procedure TBluePrintXMLSerializer.SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
 {$IFDEF DCC}
 var
   &Property: TRttiProperty;
-  RttiType: TRttiType;
 
   function GetPropertyName: String;
   var
@@ -690,15 +673,13 @@ var
 {$ENDIF}
 begin
 {$IFDEF DCC}
-  RttiType := FContext.GetType(Instance.ClassType);
-
   for &Property in RttiType.GetProperties do
     if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).PropInfo) then
-      SerializeType(&Property.GetValue(Instance), Node.AddChild(GetPropertyName));
+      SerializeType(&Property.PropertyType, &Property.GetValue(Instance), Node.AddChild(GetPropertyName));
 {$ENDIF}
 end;
 
-procedure TBluePrintXMLSerializer.SerializeType(const Value: TValue; const Node: IXMLNode);
+procedure TBluePrintXMLSerializer.SerializeType(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode);
 begin
 {$IFDEF DCC}
   case Value.Kind of
@@ -711,14 +692,14 @@ begin
       begin
         var SOAPBody := Value.AsType<TSOAPBody>;
 
-        SerializeType(Value.AsType<TSOAPBody>.Body, LoadAttributes(SOAPBody.Parameter, LoadAttributes(SOAPBody.Method, Node.AddChild(SOAPBody.Method.Name, EmptyStr)).AddChild(SOAPBody.Parameter.Name, EmptyStr)));
+        SerializeType(FContext.GetType(SOAPBody.Body.TypeInfo), SOAPBody.Body, LoadAttributes(SOAPBody.Parameter, LoadAttributes(SOAPBody.Method, Node.AddChild(SOAPBody.Method.Name, EmptyStr)).AddChild(SOAPBody.Parameter.Name, EmptyStr)));
       end
       else if Value.TypeInfo = TypeInfo(TValue) then
-        SerializeType(Value.AsType<TValue>, Node)
+        SerializeType(FContext.GetType(Value.AsType<TValue>.TypeInfo), Value.AsType<TValue>, Node)
       else
-        SerializeFields(Value, Node);
+        SerializeFields(RttiType, Value, Node);
     end;
-    tkClass: SerializeProperties(Value.AsObject, Node);
+    tkClass: SerializeProperties(RttiType, Value.AsObject, Node);
     else Node.NodeValue := inherited Serialize(Value.AsType<TValue>);
   end;
 {$ENDIF}
