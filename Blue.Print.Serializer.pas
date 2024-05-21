@@ -66,7 +66,7 @@ type
 
 implementation
 
-uses System.Classes, System.SysUtils, System.Generics.Collections{$IFDEF DCC}, Xml.XMLDoc{$ENDIF};
+uses System.Classes, System.SysUtils, System.Generics.Collections, System.DateUtils{$IFDEF DCC}, Xml.XMLDoc{$ENDIF};
 
 {$IFDEF PAS2JS}
 type
@@ -222,6 +222,11 @@ function TBluePrintJsonSerializer.SerializeType(const RttiType: TRttiType; Value
     Result := TJSONObject.{$IFDEF PAS2JS}New{$ELSE}Create{$ENDIF};
   end;
 
+  function NewString(const Value: String): TJSONString;
+  begin
+    Result := TJSONString.{$IFDEF PAS2JS}New{$ELSE}Create{$ENDIF}(Value);
+  end;
+
 begin
   Result := nil;
 
@@ -233,14 +238,17 @@ begin
     tkWString,
 {$ENDIF}
     tkChar,
-    tkString: Result := TJSONString.{$IFDEF PAS2JS}New{$ELSE}Create{$ENDIF}(Value.AsString);
+    tkString: Result := NewString(Value.AsString);
 
-    tkEnumeration: Result := TJSONString.{$IFDEF PAS2JS}New{$ELSE}Create{$ENDIF}(GetEnumName(Value.TypeInfo, Value.AsOrdinal));
+    tkEnumeration: Result := NewString(GetEnumName(Value.TypeInfo, Value.AsOrdinal));
 
-    tkFloat: Result := TJSONNumber.{$IFDEF PAS2JS}New{$ELSE}Create{$ENDIF}(Value.AsExtended);
-//  Conversão de valores data e hora
-//  if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
-//    Result := DateTimeToRFC3339(Value.AsExtended)
+    tkFloat:
+    begin
+      if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
+        Result := NewString(DateToISO8601(Value.AsExtended))
+      else
+        Result := TJSONNumber.{$IFDEF PAS2JS}New{$ELSE}Create{$ENDIF}(Value.AsExtended);
+    end;
 
 {$IFDEF DCC}
     tkInt64,
@@ -311,10 +319,13 @@ begin
 
     tkEnumeration: Result := TValue.FromOrdinal(RttiType.Handle, GetEnumValue(RttiType.Handle, GetJSONValue(JSONValue)));
 
-    tkFloat: Result := {$IFDEF PAS2JS}TValue.From(JSONValue){$ELSE}(JSONValue as TJSONNumber).AsDouble{$ENDIF};
-//  Conversão de data e hora
-//  if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
-//    Result := TValue.From(RFC3339ToDateTime(String(JSON)))
+    tkFloat:
+    begin
+      if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
+        Result := TValue.From(ISO8601ToDate(GetJSONValue(JSONValue)))
+      else
+        Result := {$IFDEF PAS2JS}TValue.From(JSONValue){$ELSE}(JSONValue as TJSONNumber).AsDouble{$ENDIF};
+    end;
 
 {$IFDEF DCC}
     tkInt64: Result := (JSONValue as TJSONNumber).AsInt64;

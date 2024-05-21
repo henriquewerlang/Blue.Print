@@ -60,6 +60,10 @@ type
     procedure OnlyPublicFieldsCanBeSerializedInTheRecordType;
     [Test]
     procedure WhenTheValueTypeIsATValueRecordMustSerializeThenInternalValueOfThisType;
+    [Test]
+    procedure WhenSerializeADateOrTimeMustSerializeTheValueAsExpected;
+    [Test]
+    procedure WhenDeserializeADateOrTimeMustLoadTheFieldsAsExpected;
   end;
 
   [TestFixture]
@@ -180,6 +184,17 @@ type
     property MyProperty: Integer read FMyProperty write FMyProperty stored FMyPropertyStored;
   end;
 
+  TMyDateAndTimeClass = class
+  private
+    FMyDate: TDate;
+    FMyTime: TTime;
+    FMyDateTime: TDateTime;
+  published
+    property MyDate: TDate read FMyDate write FMyDate;
+    property MyTime: TTime read FMyTime write FMyTime;
+    property MyDateTime: TDateTime read FMyDateTime write FMyDateTime;
+  end;
+
   ISOAPService = interface(IInvokable)
     ['{BBBBC6F3-1730-40F4-A1B1-CC7CA6F08F5D}']
     procedure MyMethod(const MyParam: Integer);
@@ -189,6 +204,8 @@ type
   end;
 
 implementation
+
+uses System.SysUtils, System.DateUtils;
 
 { TBluePrintSerializerTest }
 
@@ -291,6 +308,19 @@ begin
   Value.AsObject.Free;
 end;
 
+procedure TBluePrintJsonSerializerTest.WhenDeserializeADateOrTimeMustLoadTheFieldsAsExpected;
+begin
+  var Value := FSerializer.Deserialize('{"MyDate":"2024-05-21T00:00:00.000Z","MyTime":"1899-12-30T01:02:03.000Z","MyDateTime":"2024-05-21T01:02:03.000Z"}', TypeInfo(TMyDateAndTimeClass));
+
+  var MyObject := Value.AsType<TMyDateAndTimeClass>;
+
+  Assert.AreEqual<TDateTime>(EncodeDate(2024, 05, 21), MyObject.MyDate);
+  Assert.AreEqual<TDateTime>(EncodeDateTime(2024, 05, 21, 01, 02, 03, 000), MyObject.MyDateTime);
+  Assert.AreEqual<TDateTime>(EncodeTime(01, 02, 03, 000), MyObject.Mytime);
+
+  MyObject.Free;
+end;
+
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAnArrayMustLoadTheArrayAsExpected;
 begin
   var Value := FSerializer.Deserialize('[123,456,789]', TypeInfo(TArray<Integer>));
@@ -340,6 +370,20 @@ begin
   var Value := FSerializer.Serialize(MyObject);
 
   Assert.AreEqual('{"MyObject":null}', Value);
+
+  MyObject.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenSerializeADateOrTimeMustSerializeTheValueAsExpected;
+begin
+  var MyObject := TMyDateAndTimeClass.Create;
+  MyObject.MyDate := EncodeDate(2024, 05, 21);
+  MyObject.MyDateTime := EncodeDateTime(2024, 05, 21, 01, 02, 03, 000);
+  MyObject.MyTime := EncodeTime(01, 02, 03, 000);
+
+  var Value := FSerializer.Serialize(MyObject);
+
+  Assert.AreEqual('{"MyDate":"2024-05-21T00:00:00.000Z","MyTime":"1899-12-30T01:02:03.000Z","MyDateTime":"2024-05-21T01:02:03.000Z"}', Value);
 
   MyObject.Free;
 end;
