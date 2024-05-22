@@ -141,7 +141,9 @@ type
   TMyObjectParent = class
   private
     FMyObject: TMyObject;
+    FError: String;
   public
+    property Error: String read FError write FError;
     property MyObject: TMyObject read FMyObject write FMyObject;
   end;
 
@@ -301,7 +303,7 @@ end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithAPropertyWithAnObjectAndTheJSONValueIsNullCantCreateTheObjectProperty;
 begin
-  var Value := FSerializer.Deserialize('{"MyObject":null}', TypeInfo(TMyObjectParent));
+  var Value := FSerializer.Deserialize('{"Error":"Error value","MyObject":null}', TypeInfo(TMyObjectParent));
 
   Assert.IsNil(Value.AsType<TMyObjectParent>.MyObject);
 
@@ -369,7 +371,7 @@ begin
   var MyObject := TMyObjectParent.Create;
   var Value := FSerializer.Serialize(MyObject);
 
-  Assert.AreEqual('{"MyObject":null}', Value);
+  Assert.AreEqual('{"Error":"","MyObject":null}', Value);
 
   MyObject.Free;
 end;
@@ -485,7 +487,7 @@ begin
   var MyObject := TMyObjectParent.Create;
   MyObject.MyObject := TMyObject.Create;
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><MyObject><MyProp1></MyProp1><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></Document>'#13#10, FSerializer.Serialize(MyObject));
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><Error></Error><MyObject><MyProp1></MyProp1><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></Document>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.MyObject.Free;
 

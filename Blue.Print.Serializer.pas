@@ -335,7 +335,9 @@ begin
     tkClassRef: Result := DeserializeClassReference(RttiType, JSONValue);
 
     tkClass:
-      if {$IFDEF PAS2JS}JSONValue <> NULL{$ELSE}not JSONValue.Null{$ENDIF} then
+      if {$IFDEF PAS2JS}JSONValue = NULL{$ELSE}JSONValue.Null{$ENDIF} then
+        TValue.Make(nil, RttiType.Handle, Result)
+      else
       begin
         Result := TValue.From(CreateObject(RttiType.AsInstance));
 
