@@ -471,6 +471,8 @@ begin
 
   FConnection.Open(REQUEST_METHOD_NAME[RequestMethod], URL, AsyncRequest);
 
+  FConnection.WithCredentials := True;
+
   FConnection.Send(Body);
 {$ELSE}
   var BodyStream := TStringStream.Create(Body, TEncoding.UTF8);
