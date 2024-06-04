@@ -17,7 +17,7 @@ type
   private
     FConnection: {$IFDEF PAS2JS}TJSXMLHttpRequest{$ELSE}THTTPClient{$ENDIF};
 
-    procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
+    procedure SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
     procedure SetHeader(const HeaderName, Value: String);
   public
     constructor Create;
@@ -422,7 +422,7 @@ begin
   inherited;
 end;
 
-procedure THTTPCommunication.SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
+procedure THTTPCommunication.SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
 const
   REQUEST_METHOD_NAME: array[TRequestMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT');
 
@@ -433,14 +433,16 @@ var
 var
   A: Integer;
   Connection: TJSXMLHttpRequest;
+  NeedPreflight: Boolean;
+  URLInfo: TJSURL;
 
-  procedure DownloadFile(const URL: String); async;
+  procedure DownloadFile(const URLString: String); async;
   var
     Anchor: TJSHTMLAnchorElement;
 
   begin
     Anchor := Document.CreateElement('a') as TJSHTMLAnchorElement;
-    Anchor.HRef := URL;
+    Anchor.HRef := URLString;
     Anchor.Style.cssText := 'display:none';
 
     Document.Body.AppendChild(Anchor);
@@ -461,24 +463,35 @@ var
 
 begin
 {$IFDEF PAS2JS}
+  URLInfo := TJSURL.New(URLString);
+
+  NeedPreflight := URLInfo.HostName <> Window.Location.Host;
+
+  if NeedPreflight then
+  begin
+    FConnection.Open('OPTIONS', URLString, False);
+
+    FConnection.Send;
+  end;
+
   FConnection.OnLoadEnd :=
-    function(Event: TJSProgressEvent) : Boolean
+    function(Event: TJSProgressEvent): Boolean
     begin
       Content := FConnection.ResponseText;
 
       CheckStatusCode(FConnection.Status);
     end;
 
-  FConnection.Open(REQUEST_METHOD_NAME[RequestMethod], URL, AsyncRequest);
+  FConnection.Open(REQUEST_METHOD_NAME[RequestMethod], URLString, AsyncRequest);
 
-  FConnection.WithCredentials := True;
+  FConnection.WithCredentials := not NeedPreflight;
 
   FConnection.Send(Body);
 {$ELSE}
   var BodyStream := TStringStream.Create(Body, TEncoding.UTF8);
   FConnection.ResponseTimeout := -1;
   FConnection.SendTimeout := -1;
-  var Response := FConnection.Execute(REQUEST_METHOD_NAME[RequestMethod], URL, BodyStream) as IHTTPResponse;
+  var Response := FConnection.Execute(REQUEST_METHOD_NAME[RequestMethod], URLString, BodyStream) as IHTTPResponse;
 
   Content := Response.ContentAsString;
 
