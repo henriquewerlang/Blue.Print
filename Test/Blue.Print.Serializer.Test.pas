@@ -25,6 +25,10 @@ type
     procedure WhenDeserializeAnEnumeratorMustReturnTheEnumeratorValueInTheReturnValue;
     [Test]
     procedure WhenSerializeAnFloatNumberMustReturnTheStringAsExpected;
+    [Test]
+    procedure WhenSerializeABooleanValueMustReturnTheValueAsExpected;
+    [Test]
+    procedure WhenDeserializeABooleanValueMustReturnTheValueAsExpected;
   end;
 
   [TestFixture]
@@ -64,6 +68,10 @@ type
     procedure WhenSerializeADateOrTimeMustSerializeTheValueAsExpected;
     [Test]
     procedure WhenDeserializeADateOrTimeMustLoadTheFieldsAsExpected;
+    [Test]
+    procedure WhenSerializeABooleanPropertyMustGenerateTheJSONAsExpected;
+    [Test]
+    procedure WhenDeerializeABooleanPropertyMustLoadThePropetyAsExpected;
   end;
 
   [TestFixture]
@@ -197,6 +205,13 @@ type
     property MyDateTime: TDateTime read FMyDateTime write FMyDateTime;
   end;
 
+  TMyBooleanClass = class
+  private
+    FMyProp: Boolean;
+  published
+    property MyProp: Boolean read FMyProp write FMyProp;
+  end;
+
   ISOAPService = interface(IInvokable)
     ['{BBBBC6F3-1730-40F4-A1B1-CC7CA6F08F5D}']
     procedure MyMethod(const MyParam: Integer);
@@ -210,6 +225,13 @@ implementation
 uses System.SysUtils, System.DateUtils;
 
 { TBluePrintSerializerTest }
+
+procedure TBluePrintSerializerTest.WhenDeserializeABooleanValueMustReturnTheValueAsExpected;
+begin
+  var Value := FSerializer.Deserialize('True', TypeInfo(Boolean));
+
+  Assert.AreEqual(True, Value.AsBoolean);
+end;
 
 procedure TBluePrintSerializerTest.WhenDeserializeAnEnumeratorMustReturnTheEnumeratorValueInTheReturnValue;
 begin
@@ -230,6 +252,13 @@ begin
   var Value := FSerializer.Deserialize('abc', TypeInfo(String));
 
   Assert.AreEqual('abc', Value.ToString);
+end;
+
+procedure TBluePrintSerializerTest.WhenSerializeABooleanValueMustReturnTheValueAsExpected;
+begin
+  var Value := FSerializer.Serialize(TValue.From(True));
+
+  Assert.AreEqual('True', Value);
 end;
 
 procedure TBluePrintSerializerTest.WhenSerializeAnEnumeretorMustReturnTheNameOfEnumeration;
@@ -276,6 +305,17 @@ end;
 procedure TBluePrintJsonSerializerTest.Setup;
 begin
   FSerializer := TBluePrintJsonSerializer.Create;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeerializeABooleanPropertyMustLoadThePropetyAsExpected;
+begin
+  var Value := FSerializer.Deserialize('{"MyProp":true}', TypeInfo(TMyBooleanClass));
+
+  var MyObject := Value.AsType<TMyBooleanClass>;
+
+  Assert.AreEqual(True, MyObject.MyProp);
+
+  MyObject.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassReferenceAndTheTypeIsntFoundCantRaiseError;
@@ -356,6 +396,17 @@ begin
   Assert.AreEqual<Integer>(123, Value.MyField2);
   Assert.AreEqual<Double>(123.456, Value.MyField3);
   Assert.AreEqual(MyValue2, Value.MyField4);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenSerializeABooleanPropertyMustGenerateTheJSONAsExpected;
+begin
+  var MyObject := TMyBooleanClass.Create;
+  MyObject.MyProp := True;
+  var Value := FSerializer.Serialize(MyObject);
+
+  Assert.AreEqual('{"MyProp":true}', Value);
+
+  MyObject.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenSerializeAClassReferenceMustGenerateTheFullQualifiedNameOfTheClass;

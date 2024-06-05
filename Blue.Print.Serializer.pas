@@ -114,6 +114,9 @@ begin
     tkChar,
     tkString: Result := TValue.From(Value);
 
+{$IFDEF PAS2JS}
+    tkBool,
+{$ENDIF}
     tkEnumeration: Result := TValue.FromOrdinal(TypeInfo, GetEnumValue(TypeInfo, Value));
 
 {$IFDEF DCC}
@@ -133,6 +136,8 @@ begin
     tkUString,
     tkWChar,
     tkWString,
+{$ELSE}
+    tkBool,
 {$ENDIF}
     tkChar,
     tkEnumeration,
@@ -240,7 +245,16 @@ begin
     tkChar,
     tkString: Result := NewString(Value.AsString);
 
-    tkEnumeration: Result := NewString(GetEnumName(Value.TypeInfo, Value.AsOrdinal));
+{$IFDEF PAS2JS}
+    tkBool,
+{$ENDIF}
+    tkEnumeration:
+    begin
+      if Value.TypeInfo = TypeInfo(Boolean) then
+        Result := {$IFDEF DCC}TJSONBool.Create{$ENDIF}(Value.AsBoolean)
+      else
+        Result := NewString(GetEnumName(Value.TypeInfo, Value.AsOrdinal));
+    end;
 
     tkFloat:
     begin
@@ -317,6 +331,9 @@ begin
     tkChar,
     tkString: Result := TValue.From(GetJSONValue(JSONValue));
 
+{$IFDEF PAS2JS}
+    tkBool: Result := TValue.From<Boolean>(JSONValue = True);
+{$ENDIF}
     tkEnumeration: Result := TValue.FromOrdinal(RttiType.Handle, GetEnumValue(RttiType.Handle, GetJSONValue(JSONValue)));
 
     tkFloat:
@@ -531,6 +548,9 @@ begin
     tkChar,
     tkString: Result := TValue.From(Node.Text);
 
+{$IFDEF PAS2JS}
+    tkBool,
+{$ENDIF}
     tkEnumeration: Result := TValue.FromOrdinal(RttiType.Handle, GetEnumValue(RttiType.Handle, Node.Text));
 
     tkFloat: Result := StrToFloat(Node.Text, TFormatSettings.Invariant);
