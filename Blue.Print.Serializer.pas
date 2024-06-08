@@ -341,13 +341,13 @@ begin
       if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
         Result := TValue.From(ISO8601ToDate(GetJSONValue(JSONValue)))
       else
-        Result := {$IFDEF PAS2JS}TValue.From(JSONValue){$ELSE}(JSONValue as TJSONNumber).AsDouble{$ENDIF};
+        Result := TValue.From({$IFDEF PAS2JS}Double(JSONValue){$ELSE}(JSONValue as TJSONNumber).AsDouble{$ENDIF});
     end;
 
 {$IFDEF DCC}
     tkInt64: Result := (JSONValue as TJSONNumber).AsInt64;
 {$ENDIF}
-    tkInteger: Result := {$IFDEF PAS2JS}TValue.From(JSONValue){$ELSE}(JSONValue as TJSONNumber).AsInt{$ENDIF};
+    tkInteger: Result := TValue.From({$IFDEF PAS2JS}Integer(JSONValue){$ELSE}(JSONValue as TJSONNumber).AsInt{$ENDIF});
 
     tkClassRef: Result := DeserializeClassReference(RttiType, JSONValue);
 
