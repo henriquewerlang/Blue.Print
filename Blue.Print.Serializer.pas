@@ -21,7 +21,7 @@ type
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function Serialize(const Value: TValue): String;
   protected
-    function CreateObject(const RttiType: TRttiInstanceType): TObject;
+    function CreateObject(const RttiType: TRttiInstanceType): TObject; virtual;
   end;
 
   TBluePrintJsonSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
