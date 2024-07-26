@@ -5,6 +5,13 @@ interface
 uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF PAS2JS}JSApi.JS, BrowserAPI.Web, BrowserAPI.WebOrWorker{$ELSE}System.Net.HTTPClient{$ENDIF}, Blue.Print.Types, Blue.Print.Serializer;
 
 type
+  IAuthorization = interface
+    ['{D5474FD1-CE92-4FCC-AA6E-6E88562A7F55}']
+    procedure SetAuthorizationValue(const Value: String);
+
+    property Value: String write SetAuthorizationValue;
+  end;
+
   IHTTPCommunication = interface
     ['{8E39F66A-C72B-4314-80B1-D24F1AF4F247}']
     procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
@@ -27,7 +34,7 @@ type
     destructor Destroy; override;
   end;
 
-  TRemoteService = class(TVirtualInterface)
+  TRemoteService = class(TVirtualInterface, IAuthorization)
   private
     FCommunication: IHTTPCommunication;
     FURL: String;
@@ -57,6 +64,7 @@ type
     procedure LoadAuthorization(const Method: TRttiMethod; const Args: TArray<TValue>);
     procedure LoadParams(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
     procedure LoadRequestHeaders(const Method: TRttiMethod; const LoadBodyContentType: Boolean);
+    procedure SetAuthorizationValue(const Value: String);
   protected
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue); virtual;
 
@@ -353,8 +361,8 @@ begin
 
   if IsSOAPRequest then
   begin
-    Communication.Header[SOAP_ACTION_HEADER] := GetSOAPActionName(Method);
     Communication.Header[CONTENT_TYPE_HEADER] := CONTENTTYPE_APPLICATION_SOAP_XML;
+    Communication.Header[SOAP_ACTION_HEADER] := GetSOAPActionName(Method);
   end
   else if Assigned(ContentType) then
     Communication.Header[CONTENT_TYPE_HEADER] := ContentType.ContentType
@@ -424,6 +432,11 @@ begin
       else
         ReturnEvent(TValue.Empty);
     end, ErrorEvent);
+end;
+
+procedure TRemoteService.SetAuthorizationValue(const Value: String);
+begin
+  Communication.Header[AUTHORIZATION_HEADER] := Value;
 end;
 
 { THTTPCommunication }
