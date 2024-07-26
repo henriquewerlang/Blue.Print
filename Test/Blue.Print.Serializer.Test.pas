@@ -29,6 +29,8 @@ type
     procedure WhenSerializeABooleanValueMustReturnTheValueAsExpected;
     [Test]
     procedure WhenDeserializeABooleanValueMustReturnTheValueAsExpected;
+    [Test]
+    procedure WhenSerializeASimpleTypeTheContentTypeMustBePlainText;
   end;
 
   [TestFixture]
@@ -71,7 +73,9 @@ type
     [Test]
     procedure WhenSerializeABooleanPropertyMustGenerateTheJSONAsExpected;
     [Test]
-    procedure WhenDeerializeABooleanPropertyMustLoadThePropetyAsExpected;
+    procedure WhenDeserializeABooleanPropertyMustLoadThePropetyAsExpected;
+    [Test]
+    procedure WhenSerializeAComplexTypeMustReturnApplicationJSONInTheContentType;
   end;
 
   [TestFixture]
@@ -107,6 +111,8 @@ type
     procedure WhenTheParameterHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
     [Test]
     procedure WhenThePropertyHasTheStoredPropertyTheValueMustBeSerializedOnlyIfThisPropertyIsTrue;
+    [Test]
+    procedure WhenSerializeAComplexTypeMustReturnApplicationXMLInTheContentType;
   end;
 
   TMyObject = class
@@ -222,7 +228,7 @@ type
 
 implementation
 
-uses System.SysUtils, System.DateUtils;
+uses System.SysUtils, System.DateUtils, REST.Types;
 
 { TBluePrintSerializerTest }
 
@@ -282,6 +288,13 @@ begin
   Assert.AreEqual('123', Value);
 end;
 
+procedure TBluePrintSerializerTest.WhenSerializeASimpleTypeTheContentTypeMustBePlainText;
+begin
+  FSerializer.Serialize('abc');
+
+  Assert.AreEqual(CONTENTTYPE_TEXT_PLAIN, FSerializer.ContentType);
+end;
+
 procedure TBluePrintSerializerTest.WhenSerializeAStringMustReturnTheStringInTheReturnValue;
 begin
   var Value := FSerializer.Serialize('abc');
@@ -307,7 +320,7 @@ begin
   FSerializer := TBluePrintJsonSerializer.Create;
 end;
 
-procedure TBluePrintJsonSerializerTest.WhenDeerializeABooleanPropertyMustLoadThePropetyAsExpected;
+procedure TBluePrintJsonSerializerTest.WhenDeserializeABooleanPropertyMustLoadThePropetyAsExpected;
 begin
   var Value := FSerializer.Deserialize('{"MyProp":true}', TypeInfo(TMyBooleanClass));
 
@@ -427,6 +440,17 @@ begin
   MyObject.Free;
 end;
 
+procedure TBluePrintJsonSerializerTest.WhenSerializeAComplexTypeMustReturnApplicationJSONInTheContentType;
+begin
+  var MyObject := TMyBooleanClass.Create;
+
+  FSerializer.Serialize(MyObject);
+
+  Assert.AreEqual(CONTENTTYPE_APPLICATION_JSON, FSerializer.ContentType);
+
+  MyObject.Free;
+end;
+
 procedure TBluePrintJsonSerializerTest.WhenSerializeADateOrTimeMustSerializeTheValueAsExpected;
 begin
   var MyObject := TMyDateAndTimeClass.Create;
@@ -529,6 +553,17 @@ begin
   var Value := FSerializer.Serialize(MyObject);
 
   Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><MyProp1>abc</MyProp1><MyProp2>123</MyProp2><MyProp3>123.456</MyProp3><MyProp4>MyValue</MyProp4></Document>'#13#10, Value);
+
+  MyObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenSerializeAComplexTypeMustReturnApplicationXMLInTheContentType;
+begin
+  var MyObject := TMyBooleanClass.Create;
+
+  FSerializer.Serialize(MyObject);
+
+  Assert.AreEqual(CONTENTTYPE_APPLICATION_XML, FSerializer.ContentType);
 
   MyObject.Free;
 end;

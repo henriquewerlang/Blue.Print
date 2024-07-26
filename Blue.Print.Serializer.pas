@@ -21,7 +21,10 @@ type
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function Serialize(const Value: TValue): String;
   protected
+    FContentType: String;
+
     function CreateObject(const RttiType: TRttiInstanceType): TObject; virtual;
+    function GetContentType: String;
   end;
 
   TBluePrintJsonSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
@@ -66,7 +69,7 @@ type
 
 implementation
 
-uses System.Classes, System.SysUtils, System.Generics.Collections, System.DateUtils{$IFDEF DCC}, Xml.XMLDoc{$ENDIF};
+uses System.Classes, System.SysUtils, System.Generics.Collections, System.DateUtils{$IFDEF DCC}, Xml.XMLDoc, REST.Types{$ENDIF};
 
 {$IFDEF PAS2JS}
 type
@@ -93,6 +96,11 @@ procedure TJSObjectHelper.AddPair(const Name: String; const Value: JSValue);
 begin
   Self[Name] := Value;
 end;
+
+const
+  CONTENTTYPE_APPLICATION_JSON = 'application/json';
+  CONTENTTYPE_APPLICATION_XML = 'application/xml';
+  CONTENTTYPE_TEXT_PLAIN = 'text/plain';
 {$ENDIF}
 
 { TBluePrintSerializer }
@@ -127,8 +135,15 @@ begin
   end;
 end;
 
+function TBluePrintSerializer.GetContentType: String;
+begin
+  Result := FContentType;
+end;
+
 function TBluePrintSerializer.Serialize(const Value: TValue): String;
 begin
+  FContentType := CONTENTTYPE_TEXT_PLAIN;
+
   case Value.Kind of
 {$IFDEF DCC}
     tkInt64,
@@ -173,6 +188,7 @@ begin
     tkDynArray,
     tkRecord:
     begin
+      FContentType := CONTENTTYPE_APPLICATION_JSON;
       JSON := SerializeType(FContext.GetType(Value.TypeInfo), Value);
 
       Result := {$IFDEF DCC}JSON.ToJSON{$ELSE}TJSJSON.stringify(JSON){$ENDIF};
@@ -650,6 +666,7 @@ begin
 
       XMLDocument.SaveToStream(XML);
 
+      FContentType := CONTENTTYPE_APPLICATION_XML;
       Result := XML.DataString;
 
       XML.Free;

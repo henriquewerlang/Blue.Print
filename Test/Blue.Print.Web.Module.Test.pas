@@ -77,6 +77,8 @@ type
     procedure WhenTheRequestHasABodyMustCallTheProcedureWithOneParam;
     [Test]
     procedure WhenTheRequestHasABodyMustLoadTheBodyValueInTheLastParamFromTheMethod;
+    [Test]
+    procedure WhenReturningARequestMustLoadTheContentTypeFromTheSerializer;
   end;
 
   TMyService = class
@@ -103,6 +105,7 @@ type
     FSerializeValues: TList<TValue>;
 
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+    function GetContentType: String;
     function Serialize(const Value: TValue): String;
 
     procedure SetDeserializeValues(const Value: TArray<TValue>);
@@ -310,6 +313,17 @@ begin
   Assert.AreEqual<Integer>(404, FRequest.StatusCode);
 
   MyException.Free;
+end;
+
+procedure TBluePrintWebModuleTest.WhenReturningARequestMustLoadTheContentTypeFromTheSerializer;
+begin
+  FSerializer.SerializeValues := ['abc'];
+
+  InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/MyService/MyFunc')));
+
+  FWebAppServices.HandleRequest;
+
+  Assert.AreEqual('serializer/type', FRequest.ContentType);
 end;
 
 procedure TBluePrintWebModuleTest.WhenTheMethodCalledDontExistsMustRaiseENotFoundError;
@@ -527,6 +541,11 @@ begin
   FSerializeValues.Free;
 
   inherited;
+end;
+
+function TSerializerMock.GetContentType: String;
+begin
+  Result := 'serializer/type';
 end;
 
 function TSerializerMock.Serialize(const Value: TValue): String;

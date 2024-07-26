@@ -254,6 +254,7 @@ begin
     if Assigned(Method.ReturnType) then
     begin
       Response.Content := Serializer.Serialize(ReturnValue);
+      Response.ContentType := Serializer.ContentType;
       Response.StatusCode := HTTP_STATUS_OK;
     end
     else

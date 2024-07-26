@@ -16,7 +16,9 @@ type
   THTTPCommunication = class(TInterfacedObject, IHTTPCommunication)
   private
     FConnection: {$IFDEF PAS2JS}TJSXMLHttpRequest{$ELSE}THTTPClient{$ENDIF};
+    FHeaders: TStringList;
 
+    procedure LoadHeaders;
     procedure SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
     procedure SetHeader(const HeaderName, Value: String);
   public
@@ -48,12 +50,13 @@ type
     function GetSOAPActionName(const Method: TRttiMethod): String;
     function IsSOAPRequest: Boolean;
     function LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
+    function LoadRequestBodyAndHeaders(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>; const AsyncRequest: Boolean; const ReturnEvent: TProc<TValue>; const ErrorEvent: TProc<Exception>): TValue;
 
     procedure ForEachParam(const Method: TRttiMethod; const Args: TArray<TValue>; const Proc: TProc<TRttiParameter, TValue>);
     procedure LoadAuthorization(const Method: TRttiMethod; const Args: TArray<TValue>);
     procedure LoadParams(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
-    procedure LoadRequestHeaders(const Method: TRttiMethod);
+    procedure LoadRequestHeaders(const Method: TRttiMethod; const LoadBodyContentType: Boolean);
   protected
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue); virtual;
 
@@ -74,7 +77,7 @@ type
 implementation
 
 {$IFDEF DCC}
-uses System.Net.Mime, System.NetConsts, System.Net.URLClient, System.NetEncoding, Web.HTTPApp;
+uses System.Net.Mime, System.NetConsts, System.Net.URLClient, System.NetEncoding, Web.HTTPApp, REST.Types;
 {$ENDIF}
 
 const
@@ -82,6 +85,16 @@ const
   COMPILER_OFFSET = {$IFDEF PAS2JS}0{$ELSE}1{$ENDIF};
   CONTENT_TYPE_HEADER = 'Content-Type';
   SOAP_ACTION_HEADER = 'SOAPAction';
+{$IFDEF PAS2JS}
+  CONTENTTYPE_APPLICATION_SOAP_XML = 'application/soap+xml';
+{$ENDIF}
+
+{$IFDEF DCC}
+procedure ValidateCertificate(const Sender: TObject; const ARequest: TURLRequest; const Certificate: TCertificate; var Accepted: Boolean);
+begin
+  Accepted := True;
+end;
+{$ENDIF}
 
 { TRemoteService }
 
@@ -324,7 +337,14 @@ begin
   Result := Body;
 end;
 
-procedure TRemoteService.LoadRequestHeaders(const Method: TRttiMethod);
+function TRemoteService.LoadRequestBodyAndHeaders(const Method: TRttiMethod; const Args: TArray<TValue>): String;
+begin
+  Result := LoadRequestBody(Method, Args);
+
+  LoadRequestHeaders(Method, not Result.IsEmpty);
+end;
+
+procedure TRemoteService.LoadRequestHeaders(const Method: TRttiMethod; const LoadBodyContentType: Boolean);
 var
   ContentType: ContentTypeAttribute;
 
@@ -332,10 +352,14 @@ begin
   ContentType := GetAttribute<ContentTypeAttribute>(Method);
 
   if IsSOAPRequest then
+  begin
     Communication.Header[SOAP_ACTION_HEADER] := GetSOAPActionName(Method);
-
-  if Assigned(ContentType) then
-    Communication.Header[CONTENT_TYPE_HEADER] := ContentType.ContentType;
+    Communication.Header[CONTENT_TYPE_HEADER] := CONTENTTYPE_APPLICATION_SOAP_XML;
+  end
+  else if Assigned(ContentType) then
+    Communication.Header[CONTENT_TYPE_HEADER] := ContentType.ContentType
+  else if LoadBodyContentType then
+    Communication.Header[CONTENT_TYPE_HEADER] := FSerializer.ContentType;
 end;
 
 procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
@@ -390,11 +414,9 @@ end;
 
 function TRemoteService.SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>; const AsyncRequest: Boolean; const ReturnEvent: TProc<TValue>; const ErrorEvent: TProc<Exception>): TValue;
 begin
-  LoadRequestHeaders(Method);
-
   LoadAuthorization(Method, Args);
 
-  Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBody(Method, Args), AsyncRequest,
+  Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBodyAndHeaders(Method, Args), AsyncRequest,
     procedure(Content: String)
     begin
       if Assigned(Method.ReturnType) then
@@ -408,7 +430,13 @@ end;
 
 constructor THTTPCommunication.Create;
 begin
+  inherited;
+
   FConnection := {$IFDEF PAS2JS}TJSXMLHttpRequest.New{$ELSE}THTTPClient.Create{$ENDIF};
+  {$IFDEF DCC}
+  FConnection.ValidateServerCertificateCallback := ValidateCertificate;
+  {$ENDIF}
+  FHeaders := TStringList.Create;
 end;
 
 destructor THTTPCommunication.Destroy;
@@ -419,23 +447,32 @@ begin
   FConnection.Free;
   {$ENDIF};
 
+  FHeaders.Free;
+
   inherited;
+end;
+
+procedure THTTPCommunication.LoadHeaders;
+var
+  A: Integer;
+
+begin
+  for A := 0 to Pred(FHeaders.Count) do
+    {$IFDEF PAS2JS}
+    FConnection.SetRequestHeader(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
+    {$ELSE}
+    FConnection.CustomHeaders[FHeaders.Names[A]] := FHeaders.ValueFromIndex[A];
+    {$ENDIF}
 end;
 
 procedure THTTPCommunication.SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
 const
-  REQUEST_METHOD_NAME: array[TRequestMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT');
+  REQUEST_METHOD_NAME: array[TRequestMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT', 'OPTIONS');
 
 var
   Content: String;
 
 {$IFDEF PAS2JS}
-var
-  A: Integer;
-  Connection: TJSXMLHttpRequest;
-  NeedPreflight: Boolean;
-  URLInfo: TJSURL;
-
   procedure DownloadFile(const URLString: String); async;
   var
     Anchor: TJSHTMLAnchorElement;
@@ -463,17 +500,6 @@ var
 
 begin
 {$IFDEF PAS2JS}
-  URLInfo := TJSURL.New(URLString);
-
-  NeedPreflight := URLInfo.HostName <> Window.Location.Host;
-
-  if NeedPreflight then
-  begin
-    FConnection.Open('OPTIONS', URLString, False);
-
-    FConnection.Send;
-  end;
-
   FConnection.OnLoadEnd :=
     function(Event: TJSProgressEvent): Boolean
     begin
@@ -484,13 +510,18 @@ begin
 
   FConnection.Open(REQUEST_METHOD_NAME[RequestMethod], URLString, AsyncRequest);
 
-  FConnection.WithCredentials := not NeedPreflight;
+  LoadHeaders;
+
+  FConnection.WithCredentials := TJSURL.New(URLString).HostName <> Window.Location.Host;
 
   FConnection.Send(Body);
 {$ELSE}
   var BodyStream := TStringStream.Create(Body, TEncoding.UTF8);
   FConnection.ResponseTimeout := -1;
   FConnection.SendTimeout := -1;
+
+  LoadHeaders;
+
   var Response := FConnection.Execute(REQUEST_METHOD_NAME[RequestMethod], URLString, BodyStream) as IHTTPResponse;
 
   Content := Response.ContentAsString;
@@ -503,11 +534,7 @@ end;
 
 procedure THTTPCommunication.SetHeader(const HeaderName, Value: String);
 begin
-  {$IFDEF PAS2JS}
-  FConnection.setRequestHeader(HeaderName, Value);
-  {$ELSE}
-  FConnection.CustomHeaders[HeaderName] := Value;
-  {$ENDIF}
+  FHeaders.Values[HeaderName] := Value;
 end;
 
 end.

@@ -102,6 +102,12 @@ type
     procedure WhenTheInterfaceHasTheSoapServiceAttributeMustConcatTheBaseServiceNameInTheSOAPActionHeader;
     [Test]
     procedure WhenTheMethodHasTheAuthorizationAttributeThisValueCanBeLoadedInTheURLOfTheRequest;
+    [Test]
+    procedure WhenTheRequestHasAnBodyParamMustLoadTheContentTypeFromTheSerializerAsExpected;
+    [Test]
+    procedure WhenTheProcedureHasTheContentTypeAttributeMustLoadTheValueFromAttributeNotFromTheSerializer;
+    [Test]
+    procedure WhenCallAProcedureWithoutBodyParamCantLoadTheContentTypeOfTheRequest;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -139,11 +145,19 @@ type
     FSerializeValue: TValue;
 
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+    function GetContentType: String;
     function Serialize(const Value: TValue): String;
   public
     property DeserializeCalled: Boolean read FDeserializeCalled;
     property ReturnValue: TValue read FReturnValue write FReturnValue;
     property SerializeValue: TValue read FSerializeValue;
+  end;
+
+  TMyObject = class
+  private
+    FValue: String;
+  published
+    property Value: String read FValue write FValue;
   end;
 
   [RemoteName('Serviçe')]
@@ -162,6 +176,9 @@ type
     procedure FillContentType;
     procedure ParameterInBody([Body]Param1: String);
     procedure ParameterInPath([Path]Param1: String; [Path]Param2: Integer);
+    procedure ParameterMyObject([Body]Param1: TMyObject);
+    [ContentType('MyContent-Type')]
+    procedure ParameterWithContentType([Body]Param1: TMyObject);
     [RemoteName('Pãram')]
     procedure ProcedureWithRemoteNameLocaleChars;
     procedure SendObject(const AObject: TObject);
@@ -217,7 +234,7 @@ type
 
 implementation
 
-uses Blue.Print.Serializer, Web.ReqFiles;
+uses Blue.Print.Serializer, Web.ReqFiles{$IFDEF DCC}, REST.Types{$ENDIF};
 
 { TRemoteServiceTest }
 
@@ -330,6 +347,15 @@ begin
   Assert.IsFalse(FSerializer.DeserializeCalled);
 end;
 
+procedure TRemoteServiceTest.WhenCallAProcedureWithoutBodyParamCantLoadTheContentTypeOfTheRequest;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.ParameterInPath('', 0);
+
+  Assert.AreEqual(EmptyStr, FCommunication.Header['Content-Type']);
+end;
+
 procedure TRemoteServiceTest.WhenCallARemoteServiceMustBuildTheURLAsExpected;
 begin
   var Service := GetRemoteService<IServiceTest>('http://myurl.com/myapi');
@@ -415,7 +441,7 @@ begin
 
   Service.SoapMethod;
 
-  Assert.AreEqual('text/xml', FCommunication.Header['Content-Type']);
+  Assert.AreEqual(CONTENTTYPE_APPLICATION_SOAP_XML, FCommunication.Header['Content-Type']);
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasTheSOAPServiceAttributeTheDefaultSerializerMustBeTheXMLSerializer;
@@ -567,6 +593,18 @@ begin
   Assert.AreEqual('MyContent-Type', FCommunication.Header['Content-Type']);
 end;
 
+procedure TRemoteServiceTest.WhenTheProcedureHasTheContentTypeAttributeMustLoadTheValueFromAttributeNotFromTheSerializer;
+begin
+  var MyObject := TMyObject.Create;
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.ParameterWithContentType(MyObject);
+
+  Assert.AreEqual('MyContent-Type', FCommunication.Header['Content-Type']);
+
+  MyObject.Free;
+end;
+
 procedure TRemoteServiceTest.WhenTheProcedureHasTheRemoteNameAttributeMustSendThisNameInTheURLOfThRequest;
 begin
   var Service := GetRemoteService<IServiceNamed>(EmptyStr);
@@ -601,6 +639,19 @@ begin
   Service.TestProcedure;
 
   Assert.IsNil(FCommunication.Body);
+end;
+
+procedure TRemoteServiceTest.WhenTheRequestHasAnBodyParamMustLoadTheContentTypeFromTheSerializerAsExpected;
+begin
+  FSerializer.ReturnValue := 'abc';
+  var MyObject := TMyObject.Create;
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.ParameterMyObject(MyObject);
+
+  Assert.AreEqual('serializer/content', FCommunication.Header['Content-Type']);
+
+  MyObject.Free;
 end;
 
 { TCommunicationMock }
@@ -661,6 +712,11 @@ begin
 
   if FReturnValue.TypeInfo <> TypeInfo then
     raise Exception.Create('Types mismatch!');
+end;
+
+function TSerializerMock.GetContentType: String;
+begin
+  Result := 'serializer/content';
 end;
 
 function TSerializerMock.Serialize(const Value: TValue): String;
