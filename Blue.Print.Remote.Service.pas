@@ -525,8 +525,6 @@ begin
 
   LoadHeaders;
 
-  FConnection.WithCredentials := TJSURL.New(URLString).HostName <> Window.Location.Host;
-
   FConnection.Send(Body);
 {$ELSE}
   var BodyStream := TStringStream.Create(Body, TEncoding.UTF8);
