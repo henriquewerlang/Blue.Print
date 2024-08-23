@@ -76,6 +76,8 @@ type
     procedure WhenDeserializeABooleanPropertyMustLoadThePropetyAsExpected;
     [Test]
     procedure WhenSerializeAComplexTypeMustReturnApplicationJSONInTheContentType;
+    [Test]
+    procedure WhenSerializeAPropertyWithStoredOnlyCanSerializeTheValueIfThePropetyIsStored;
   end;
 
   [TestFixture]
@@ -481,6 +483,16 @@ begin
   var Value := FSerializer.Serialize(MyObject);
 
   Assert.AreEqual('{"MyProp1":"abc","MyProp2":123,"MyProp3":123.456,"MyProp4":"MyValue"}', Value);
+
+  MyObject.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenSerializeAPropertyWithStoredOnlyCanSerializeTheValueIfThePropetyIsStored;
+begin
+  var MyObject := TMyClassWithStoredProperty.Create;
+  MyObject.MyProperty := 123;
+
+  Assert.AreEqual('{}', FSerializer.Serialize(MyObject));
 
   MyObject.Free;
 end;

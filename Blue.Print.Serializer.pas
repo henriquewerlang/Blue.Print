@@ -233,7 +233,8 @@ var
 
 begin
   for &Property in RttiType.GetProperties do
-    JSONObject.AddPair(&Property.Name, SerializeType(&Property.PropertyType, &Property.GetValue(Instance)));
+    if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).PropInfo) then
+      JSONObject.AddPair(&Property.Name, SerializeType(&Property.PropertyType, &Property.GetValue(Instance)));
 end;
 
 function TBluePrintJsonSerializer.SerializeType(const RttiType: TRttiType; Value: TValue): TJSONValue;
