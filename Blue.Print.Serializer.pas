@@ -750,7 +750,10 @@ begin
       else
         SerializeFields(RttiType, Value, Node);
     end;
-    tkClass: SerializeProperties(RttiType, Value.AsObject, Node);
+    tkClass:
+      if not Value.IsEmpty then
+        SerializeProperties(RttiType, Value.AsObject, Node);
+
     else Node.NodeValue := inherited Serialize(Value.AsType<TValue>);
   end;
 {$ENDIF}

@@ -115,6 +115,8 @@ type
     procedure WhenThePropertyHasTheStoredPropertyTheValueMustBeSerializedOnlyIfThisPropertyIsTrue;
     [Test]
     procedure WhenSerializeAComplexTypeMustReturnApplicationXMLInTheContentType;
+    [Test]
+    procedure WhenSerializeAnObjectWithANilPropertyCanRaiseError;
   end;
 
   TMyObject = class
@@ -576,6 +578,19 @@ begin
   FSerializer.Serialize(MyObject);
 
   Assert.AreEqual(CONTENTTYPE_APPLICATION_XML, FSerializer.ContentType);
+
+  MyObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenSerializeAnObjectWithANilPropertyCanRaiseError;
+begin
+  var MyObject := TMyObjectParent.Create;
+
+  Assert.WillNotRaise(
+    procedure
+    begin
+      FSerializer.Serialize(MyObject);
+    end);
 
   MyObject.Free;
 end;
