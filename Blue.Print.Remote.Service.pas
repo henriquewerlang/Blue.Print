@@ -2,12 +2,13 @@
 
 interface
 
-uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF PAS2JS}JSApi.JS, BrowserAPI.Web, BrowserAPI.WebOrWorker{$ELSE}System.Net.HTTPClient{$ENDIF}, Blue.Print.Types, Blue.Print.Serializer;
+uses System.Rtti, System.SysUtils, System.Types, System.TypInfo, System.Classes, {$IFDEF PAS2JS}JSApi.JS, BrowserAPI.Web, BrowserAPI.WebOrWorker{$ELSE}System.Net.URLClient, System.Net.HTTPClient{$ENDIF}, Blue.Print.Types, Blue.Print.Serializer;
 
 type
   IAuthorization = interface
     ['{D5474FD1-CE92-4FCC-AA6E-6E88562A7F55}']
     procedure SetAuthorizationValue(const Value: String);
+    procedure SetCertificate(const Value: TStream; const Password: String);
 
     property Value: String write SetAuthorizationValue;
   end;
@@ -15,6 +16,7 @@ type
   IHTTPCommunication = interface
     ['{8E39F66A-C72B-4314-80B1-D24F1AF4F247}']
     procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
+    procedure SetCertificate(const Value: TStream; const Password: String);
     procedure SetHeader(const HeaderName, Value: String);
 
     property Header[const HeaderName: String]: String write SetHeader;
@@ -22,11 +24,17 @@ type
 
   THTTPCommunication = class(TInterfacedObject, IHTTPCommunication)
   private
+    FCertificatePassword: String;
+    FCertificateValue: TStream;
     FConnection: {$IFDEF PAS2JS}TJSXMLHttpRequest{$ELSE}THTTPClient{$ENDIF};
     FHeaders: TStringList;
 
+{$IFDEF DCC}
+    procedure LoadCertificate(const Sender: TObject; const ARequest: TURLRequest; const ACertificateList: TCertificateList; var AnIndex: Integer);
+{$ENDIF}
     procedure LoadHeaders;
     procedure SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
+    procedure SetCertificate(const Value: TStream; const Password: String);
     procedure SetHeader(const HeaderName, Value: String);
   public
     constructor Create;
@@ -37,11 +45,10 @@ type
   TRemoteService = class(TVirtualInterface, IAuthorization)
   private
     FCommunication: IHTTPCommunication;
-    FURL: String;
-
     FContext: TRttiContext;
     FInterfaceType: TRttiInterfaceType;
     FSerializer: IBluePrintSerializer;
+    FURL: String;
 
     function BuildRequestURL(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function EncodeValue(const Value: String): String;
@@ -65,6 +72,7 @@ type
     procedure LoadParams(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
     procedure LoadRequestHeaders(const Method: TRttiMethod; const LoadBodyContentType: Boolean);
     procedure SetAuthorizationValue(const Value: String);
+    procedure SetCertificate(const Value: TStream; const Password: String);
   protected
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue); virtual;
 
@@ -85,14 +93,13 @@ type
 implementation
 
 {$IFDEF DCC}
-uses System.Net.Mime, System.NetConsts, System.Net.URLClient, System.NetEncoding, Web.HTTPApp, REST.Types;
+uses System.Net.Mime, System.NetConsts, System.NetEncoding, Web.HTTPApp, REST.Types;
 {$ENDIF}
 
 const
   AUTHORIZATION_HEADER = 'Authorization';
   COMPILER_OFFSET = {$IFDEF PAS2JS}0{$ELSE}1{$ENDIF};
   CONTENT_TYPE_HEADER = 'Content-Type';
-  SOAP_ACTION_HEADER = 'SOAPAction';
 {$IFDEF PAS2JS}
   CONTENTTYPE_APPLICATION_SOAP_XML = 'application/soap+xml';
 {$ENDIF}
@@ -360,10 +367,7 @@ begin
   ContentType := GetAttribute<ContentTypeAttribute>(Method);
 
   if IsSOAPRequest then
-  begin
-    Communication.Header[CONTENT_TYPE_HEADER] := CONTENTTYPE_APPLICATION_SOAP_XML;
-    Communication.Header[SOAP_ACTION_HEADER] := GetSOAPActionName(Method);
-  end
+    Communication.Header[CONTENT_TYPE_HEADER] := Format('%s;action=%s', [ CONTENTTYPE_APPLICATION_SOAP_XML, GetSOAPActionName(Method)])
   else if Assigned(ContentType) then
     Communication.Header[CONTENT_TYPE_HEADER] := ContentType.ContentType
   else if LoadBodyContentType then
@@ -439,6 +443,11 @@ begin
   Communication.Header[AUTHORIZATION_HEADER] := Value;
 end;
 
+procedure TRemoteService.SetCertificate(const Value: TStream; const Password: String);
+begin
+  Communication.SetCertificate(Value, Password)
+end;
+
 { THTTPCommunication }
 
 constructor THTTPCommunication.Create;
@@ -447,6 +456,7 @@ begin
 
   FConnection := {$IFDEF PAS2JS}TJSXMLHttpRequest.New{$ELSE}THTTPClient.Create{$ENDIF};
   {$IFDEF DCC}
+  FConnection.OnNeedClientCertificate := LoadCertificate;
   FConnection.ValidateServerCertificateCallback := ValidateCertificate;
   {$ENDIF}
   FHeaders := TStringList.Create;
@@ -464,6 +474,15 @@ begin
 
   inherited;
 end;
+
+{$IFDEF DCC}
+procedure THTTPCommunication.LoadCertificate(const Sender: TObject; const ARequest: TURLRequest; const ACertificateList: TCertificateList; var AnIndex: Integer);
+begin
+  var Request: IHTTPRequest := ARequest as THTTPRequest;
+
+  Request.SetClientCertificate(FCertificateValue, FCertificatePassword);
+end;
+{$ENDIF}
 
 procedure THTTPCommunication.LoadHeaders;
 var
@@ -541,6 +560,12 @@ begin
 
   CheckStatusCode(Response.StatusCode);
 {$ENDIF}
+end;
+
+procedure THTTPCommunication.SetCertificate(const Value: TStream; const Password: String);
+begin
+  FCertificatePassword := Password;
+  FCertificateValue := Value;
 end;
 
 procedure THTTPCommunication.SetHeader(const HeaderName, Value: String);

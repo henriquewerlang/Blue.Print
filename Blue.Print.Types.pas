@@ -190,13 +190,13 @@ type
     Parameter: TRttiParameter;
   end;
 
-  [NodeName('SOAP-ENV:Envelope')]
-  [XMLAttribute('xmlns:SOAP-ENV', 'http://schemas.xmlsoap.org/soap/envelope/')]
+  [NodeName('soap:Envelope')]
+  [XMLAttribute('xmlns:soap', 'http://www.w3.org/2003/05/soap-envelope')]
   [XMLAttribute('xmlns:xsd', 'http://www.w3.org/2001/XMLSchema')]
   [XMLAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance')]
   TSOAPEnvelop = record
   public
-    [NodeName('SOAP-ENV:Body')]
+    [NodeName('soap:Body')]
     SOAPBody: TSOAPBody;
 
     constructor Create(const Method: TRttiMethod; const Parameter: TRttiParameter; const Body: TValue);

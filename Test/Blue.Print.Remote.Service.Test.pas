@@ -110,6 +110,10 @@ type
     procedure WhenCallAProcedureWithoutBodyParamCantLoadTheContentTypeOfTheRequest;
     [Test]
     procedure WhenLoadTheAuthorizationInformationMustLoadTheAuthorizationHeaderWithThisValue;
+    [Test]
+    procedure WhenTheInterfaceIsASOAPServiceTheContentTypeMustBeTheSOAPContentType;
+    [Test]
+    procedure TheSOAPContentTypeMustBeAppendedTheActionValue;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -124,6 +128,7 @@ type
     function GetHeader(const HeaderName: String): String;
 
     procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
+    procedure SetCertificate(const Value: TStream; const Password: String);
     procedure SetHeader(const HeaderName, Value: String);
   public
     constructor Create;
@@ -304,6 +309,15 @@ begin
   Assert.AreEqual(EmptyStr, FCommunication.Header['SOAPAction']);
 end;
 
+procedure TRemoteServiceTest.TheSOAPContentTypeMustBeAppendedTheActionValue;
+begin
+  var Service := GetRemoteService<ISOAPService>(EmptyStr);
+
+  Service.SoapNamedMethod;
+
+  Assert.AreEqual('application/soap+xml;action=MyService/MyAction', FCommunication.Header['Content-Type']);
+end;
+
 procedure TRemoteServiceTest.WhenAFunctionIsCalledMustDeserializeTheValueBeforeReturingTheValueForTheCaller;
 begin
   FSerializer.ReturnValue := 'Serializer';
@@ -443,7 +457,7 @@ begin
 
   Service.SoapNamedMethod;
 
-  Assert.AreEqual('MyService/MyAction', FCommunication.Header['SOAPAction']);
+  Assert.AreEqual('application/soap+xml;action=MyService/MyAction', FCommunication.Header['Content-Type']);
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasTheSoapServiceAttributeMustLoadTheContentTypeHeaderWithTheSoapContentTypeValue;
@@ -452,7 +466,7 @@ begin
 
   Service.SoapMethod;
 
-  Assert.AreEqual(CONTENTTYPE_APPLICATION_SOAP_XML, FCommunication.Header['Content-Type']);
+  Assert.StartWith(CONTENTTYPE_APPLICATION_SOAP_XML, FCommunication.Header['Content-Type']);
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasTheSOAPServiceAttributeTheDefaultSerializerMustBeTheXMLSerializer;
@@ -479,7 +493,16 @@ begin
 
   Service.SoapMethod;
 
-  Assert.AreEqual('MyService/SoapMethod', FCommunication.Header['SOAPAction']);
+  Assert.AreEqual('application/soap+xml;action=MyService/SoapMethod', FCommunication.Header['Content-Type']);
+end;
+
+procedure TRemoteServiceTest.WhenTheInterfaceIsASOAPServiceTheContentTypeMustBeTheSOAPContentType;
+begin
+  var Service := GetRemoteService<ISOAPService>(EmptyStr);
+
+  Service.SoapMethod;
+
+  Assert.StartWith('application/soap+xml', FCommunication.Header['Content-Type']);
 end;
 
 procedure TRemoteServiceTest.WhenTheMethodDontHaveARequestMethodAttributeAndTheInterfaceHasTheAttributeMustLoadTheRequestMethodFromTheInterface(const InterfaceName: String;
@@ -525,7 +548,7 @@ begin
 
   Service.SoapNamedMethod;
 
-  Assert.AreEqual('MyService/MyAction', FCommunication.Header['SOAPAction']);
+  Assert.AreEqual('application/soap+xml;action=MyService/MyAction', FCommunication.Header['Content-Type']);
 end;
 
 procedure TRemoteServiceTest.WhenTheParamHasThePathAttributeTheValueOfTheParamMustBeLoadedInTheURLOfTheRequest;
@@ -707,6 +730,11 @@ begin
     FBody := TStringStream.Create(Body);
 
   CompleteEvent(ResponseValue);
+end;
+
+procedure TCommunicationMock.SetCertificate(const Value: TStream; const Password: String);
+begin
+
 end;
 
 procedure TCommunicationMock.SetHeader(const HeaderName, Value: String);

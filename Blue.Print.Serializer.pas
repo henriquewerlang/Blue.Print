@@ -233,7 +233,7 @@ var
 
 begin
   for &Property in RttiType.GetProperties do
-    if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).PropInfo) then
+    if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).{$IFDEF DCC}PropInfo{$ELSE}PropertyTypeInfo{$ENDIF}) then
       JSONObject.AddPair(&Property.Name, SerializeType(&Property.PropertyType, &Property.GetValue(Instance)));
 end;
 
