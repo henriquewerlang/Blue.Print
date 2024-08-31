@@ -681,7 +681,7 @@ begin
       XMLDocument.Active := True;
       XMLDocument.Version := '1.0';
 
-      SerializeType(ValueType, Value, LoadAttributes(ValueType, XMLDocument.AddChild(GetDocumentName)));
+      SerializeType(ValueType, Value, XMLDocument.AddChild(GetDocumentName));
 
       var XML := TStringStream.Create;
 
@@ -768,11 +768,11 @@ begin
       else if Value.TypeInfo = TypeInfo(TValue) then
         SerializeType(FContext.GetType(Value.AsType<TValue>.TypeInfo), Value.AsType<TValue>, Node)
       else
-        SerializeFields(RttiType, Value, Node);
+        SerializeFields(RttiType, Value, LoadAttributes(RttiType, Node));
     end;
     tkClass:
       if not Value.IsEmpty then
-        SerializeProperties(RttiType, Value.AsObject, Node);
+        SerializeProperties(RttiType, Value.AsObject, LoadAttributes(RttiType, Node));
 
     else Node.NodeValue := inherited Serialize(Value.AsType<TValue>);
   end;

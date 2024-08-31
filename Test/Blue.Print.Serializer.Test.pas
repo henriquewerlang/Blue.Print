@@ -117,6 +117,8 @@ type
     procedure WhenSerializeAnObjectWithANilPropertyCanRaiseError;
     [Test]
     procedure WhenSerializeAPropertyWithXMLAttributeMustLoadTheValueAttributeFromPropertyAndNameInTheClassNode;
+    [Test]
+    procedure WhenAClassHasAChildWithXMLAttributeMustLoadTheAttributeAsExpected;
   end;
 
   TMyObject = class
@@ -154,6 +156,13 @@ type
     FMyProperty: String;
   public
     property MyProperty: String read FMyProperty write FMyProperty;
+  end;
+
+  TMyClassWithCildWithXMLAttribute = class
+  private
+    FMyProp: TMyClassWithXMLAttribute;
+  public
+    property MyProp: TMyClassWithXMLAttribute read FMyProp write FMyProp;
   end;
 
   TMyObjectParent = class
@@ -534,6 +543,20 @@ end;
 procedure TBluePrintXMLSerializerTest.Setup;
 begin
   FSerializer := TBluePrintXMLSerializer.Create;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenAClassHasAChildWithXMLAttributeMustLoadTheAttributeAsExpected;
+begin
+  var MyClass := TMyClassWithCildWithXMLAttribute.Create;
+  MyClass.MyProp := TMyClassWithXMLAttribute.Create;
+
+  var Value := FSerializer.Serialize(MyClass);
+
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><MyProp MyAttribute="MyValue"><MyProperty></MyProperty></MyProp></Document>'#13#10, Value);
+
+  MyClass.MyProp.Free;
+
+  MyClass.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenDeserializeAnObjectMustLoadThePropertiesAsExpected;
