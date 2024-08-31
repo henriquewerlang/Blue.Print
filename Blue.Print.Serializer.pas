@@ -55,6 +55,7 @@ type
 
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function LoadAttributes(const RttiObject: TRttiObject; const Node: IXMLNode): IXMLNode;
+    function LoadAttributeValue(const Member: TRttiDataMember; const Instance: TObject; const Node: IXMLNode): Boolean;
     function Serialize(const Value: TValue): String;
   protected
     function DeserializeType(const RttiType: TRttiType; const Node: IXMLNode): TValue;
@@ -622,7 +623,26 @@ begin
     begin
       var XMLAttribute := Attribute as XMLAttributeAttribute;
 
-      Result.Attributes[XMLAttribute.AttributeName] := XMLAttribute.AttributeValue;
+      Node.Attributes[XMLAttribute.AttributeName] := XMLAttribute.AttributeValue;
+    end;
+{$ENDIF}
+end;
+
+function TBluePrintXMLSerializer.LoadAttributeValue(const Member: TRttiDataMember; const Instance: TObject; const Node: IXMLNode): Boolean;
+{$IFDEF DCC}
+var
+  Attribute: TCustomAttribute;
+
+{$ENDIF}
+begin
+{$IFDEF DCC}
+   Result := False;
+
+  for Attribute in Member.GetAttributes do
+    if Attribute is XMLAttributeValueAttribute then
+    begin
+      Node.Attributes[Member.Name] := Member.GetValue(Instance).ToString;
+      Result := True;
     end;
 {$ENDIF}
 end;
@@ -725,7 +745,7 @@ var
 begin
 {$IFDEF DCC}
   for &Property in RttiType.GetProperties do
-    if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).PropInfo) then
+    if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).PropInfo) and not LoadAttributeValue(&Property, Instance, Node) then
       SerializeType(&Property.PropertyType, &Property.GetValue(Instance), Node.AddChild(GetPropertyName));
 {$ENDIF}
 end;
@@ -743,7 +763,7 @@ begin
       begin
         var SOAPBody := Value.AsType<TSOAPBody>;
 
-        SerializeType(FContext.GetType(SOAPBody.Body.TypeInfo), SOAPBody.Body, LoadAttributes(SOAPBody.Parameter, LoadAttributes(SOAPBody.Method, Node.AddChild(SOAPBody.Method.Name, EmptyStr)).AddChild(SOAPBody.Parameter.Name, EmptyStr)));
+        SerializeType(FContext.GetType(SOAPBody.Body.TypeInfo), SOAPBody.Body, LoadAttributes(SOAPBody.Parameter, Node.AddChild(SOAPBody.Parameter.Name, EmptyStr)));
       end
       else if Value.TypeInfo = TypeInfo(TValue) then
         SerializeType(FContext.GetType(Value.AsType<TValue>.TypeInfo), Value.AsType<TValue>, Node)

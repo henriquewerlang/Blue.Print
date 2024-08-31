@@ -108,8 +108,6 @@ type
     [Test]
     procedure WhenDeserializeASOAPObjectMustLoadTheObjectAsExpected;
     [Test]
-    procedure WhenTheMethodHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
-    [Test]
     procedure WhenTheParameterHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
     [Test]
     procedure WhenThePropertyHasTheStoredPropertyTheValueMustBeSerializedOnlyIfThisPropertyIsTrue;
@@ -117,6 +115,8 @@ type
     procedure WhenSerializeAComplexTypeMustReturnApplicationXMLInTheContentType;
     [Test]
     procedure WhenSerializeAnObjectWithANilPropertyCanRaiseError;
+    [Test]
+    procedure WhenSerializeAPropertyWithXMLAttributeMustLoadTheValueAttributeFromPropertyAndNameInTheClassNode;
   end;
 
   TMyObject = class
@@ -222,11 +222,17 @@ type
     property MyProp: Boolean read FMyProp write FMyProp;
   end;
 
+  TMyClassWithPropertyAttribute = class
+  private
+    FMyProp: String;
+  published
+    [XMLAttributeValue]
+    property MyProp: String read FMyProp write FMyProp;
+  end;
+
   ISOAPService = interface(IInvokable)
     ['{BBBBC6F3-1730-40F4-A1B1-CC7CA6F08F5D}']
     procedure MyMethod(const MyParam: Integer);
-    [XMLAttribute('MyAttribute', 'MyValue')]
-    procedure MyMethodWithAttribute(const MyParam: Integer);
     procedure MyMethodWithParamAttribute([XMLAttribute('MyAttribute', 'MyValue')]const MyParam: Integer);
   end;
 
@@ -618,15 +624,27 @@ begin
   Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><MyField1>abc</MyField1><MyField2>123</MyField2><MyField3>123.456</MyField3><MyField4>MyValue</MyField4></Document>'#13#10, Value);
 end;
 
+procedure TBluePrintXMLSerializerTest.WhenSerializeAPropertyWithXMLAttributeMustLoadTheValueAttributeFromPropertyAndNameInTheClassNode;
+begin
+  var MyClass := TMyClassWithPropertyAttribute.Create;
+  MyClass.MyProp := 'MyValue';
+
+  var Value := FSerializer.Serialize(MyClass);
+
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document MyProp="MyValue"/>'#13#10, Value);
+
+  MyClass.Free;
+end;
+
 procedure TBluePrintXMLSerializerTest.WhenSerializeASOAPBodyTheDocumentNameMustBeTheNameOfTheSOAPBodyType;
 begin
   var RttiContext := TRttiContext.Create;
   var RttiInterface := RttiContext.GetType(TypeInfo(ISOAPService));
 
   var RttiMethod := RttiInterface.GetMethod('MyMethod');
-  var SOAPRequest := TSOAPEnvelop.Create(RttiMethod, RttiMethod.GetParameters[0], 'abc');
+  var SOAPRequest := TSOAPEnvelop.Create(RttiMethod.GetParameters[0], 'abc');
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Body><MyMethod><MyParam>abc</MyParam></MyMethod></soap:Body></soap:Envelope>'#13#10,
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Body><MyParam>abc</MyParam></soap:Body></soap:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPRequest)));
 
   RttiContext.Free;
@@ -659,29 +677,15 @@ begin
   MyObject.Free;
 end;
 
-procedure TBluePrintXMLSerializerTest.WhenTheMethodHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
-begin
-  var RttiContext := TRttiContext.Create;
-  var RttiInterface := RttiContext.GetType(TypeInfo(ISOAPService));
-
-  var RttiMethod := RttiInterface.GetMethod('MyMethodWithAttribute');
-  var SOAPRequest := TSOAPEnvelop.Create(RttiMethod, RttiMethod.GetParameters[0], 'abc');
-
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Body><MyMethodWithAttribute MyAttribute="MyValue"><MyParam>abc</MyParam></MyMethodWithAttribute></soap:Body></soap:Envelope>'#13#10,
-    FSerializer.Serialize(TValue.From(SOAPRequest)));
-
-  RttiContext.Free;
-end;
-
 procedure TBluePrintXMLSerializerTest.WhenTheParameterHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
 begin
   var RttiContext := TRttiContext.Create;
   var RttiInterface := RttiContext.GetType(TypeInfo(ISOAPService));
 
   var RttiMethod := RttiInterface.GetMethod('MyMethodWithParamAttribute');
-  var SOAPRequest := TSOAPEnvelop.Create(RttiMethod, RttiMethod.GetParameters[0], 'abc');
+  var SOAPRequest := TSOAPEnvelop.Create(RttiMethod.GetParameters[0], 'abc');
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Body><MyMethodWithParamAttribute><MyParam MyAttribute="MyValue">abc</MyParam></MyMethodWithParamAttribute></soap:Body></soap:Envelope>'#13#10,
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Body><MyParam MyAttribute="MyValue">abc</MyParam></soap:Body></soap:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPRequest)));
 
   RttiContext.Free;

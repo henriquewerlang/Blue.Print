@@ -98,6 +98,9 @@ type
     property AttributeValue: String read FAttributeValue write FAttributeValue;
   end;
 
+  XMLAttributeValueAttribute = class(TCustomAttribute)
+  end;
+
   TParameterAttribute = class(TCustomAttribute)
   private
     FParamType: TParameterType;
@@ -186,7 +189,6 @@ type
   TSOAPBody = record
   public
     Body: TValue;
-    Method: TRttiMethod;
     Parameter: TRttiParameter;
   end;
 
@@ -199,7 +201,7 @@ type
     [NodeName('soap:Body')]
     SOAPBody: TSOAPBody;
 
-    constructor Create(const Method: TRttiMethod; const Parameter: TRttiParameter; const Body: TValue);
+    constructor Create(const Parameter: TRttiParameter; const Body: TValue);
   end;
 
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
@@ -404,10 +406,9 @@ end;
 
 { TSOAPEnvelop }
 
-constructor TSOAPEnvelop.Create(const Method: TRttiMethod; const Parameter: TRttiParameter; const Body: TValue);
+constructor TSOAPEnvelop.Create(const Parameter: TRttiParameter; const Body: TValue);
 begin
   SOAPBody.Body := Body;
-  SOAPBody.Method := Method;
   SOAPBody.Parameter := Parameter;
 end;
 

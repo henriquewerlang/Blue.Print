@@ -344,7 +344,7 @@ begin
     procedure(Parameter: TRttiParameter; Value: TValue)
     begin
       if IsSOAPRequest then
-        Value := TValue.From(TSOAPEnvelop.Create(Method, Parameter, Value));
+        Value := TValue.From(TSOAPEnvelop.Create(Parameter, Value));
 
       Body := Serializer.Serialize(Value);
     end, TParameterType.Body, Args);
