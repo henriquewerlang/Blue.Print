@@ -771,9 +771,12 @@ begin
         SerializeFields(RttiType, Value, LoadAttributes(RttiType, Node));
     end;
     tkClass:
-      if not Value.IsEmpty then
-        SerializeProperties(RttiType, Value.AsObject, LoadAttributes(RttiType, Node));
+    begin
+      LoadAttributes(RttiType, Node);
 
+      if not Value.IsEmpty then
+        SerializeProperties(RttiType, Value.AsObject, Node);
+    end
     else Node.NodeValue := inherited Serialize(Value.AsType<TValue>);
   end;
 {$ENDIF}

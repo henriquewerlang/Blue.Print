@@ -119,6 +119,8 @@ type
     procedure WhenSerializeAPropertyWithXMLAttributeMustLoadTheValueAttributeFromPropertyAndNameInTheClassNode;
     [Test]
     procedure WhenAClassHasAChildWithXMLAttributeMustLoadTheAttributeAsExpected;
+    [Test]
+    procedure EvenTheChildClassPropertyIsEmptyMustLoadTheAttributesAsExpected;
   end;
 
   TMyObject = class
@@ -539,6 +541,17 @@ begin
 end;
 
 { TBluePrintXMLSerializerTest }
+
+procedure TBluePrintXMLSerializerTest.EvenTheChildClassPropertyIsEmptyMustLoadTheAttributesAsExpected;
+begin
+  var MyClass := TMyClassWithCildWithXMLAttribute.Create;
+
+  var Value := FSerializer.Serialize(MyClass);
+
+  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><MyProp MyAttribute="MyValue"/></Document>'#13#10, Value);
+
+  MyClass.Free;
+end;
 
 procedure TBluePrintXMLSerializerTest.Setup;
 begin
