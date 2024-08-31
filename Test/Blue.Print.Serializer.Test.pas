@@ -548,7 +548,7 @@ begin
 
   var Value := FSerializer.Serialize(MyClass);
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><MyProp MyAttribute="MyValue"/></Document>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyProp MyAttribute="MyValue"/></Document>'#13#10, Value);
 
   MyClass.Free;
 end;
@@ -565,7 +565,7 @@ begin
 
   var Value := FSerializer.Serialize(MyClass);
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><MyProp MyAttribute="MyValue"><MyProperty></MyProperty></MyProp></Document>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyProp MyAttribute="MyValue"><MyProperty></MyProperty></MyProp></Document>'#13#10, Value);
 
   MyClass.MyProp.Free;
 
@@ -588,7 +588,7 @@ end;
 procedure TBluePrintXMLSerializerTest.WhenDeserializeASOAPObjectMustLoadTheObjectAsExpected;
 begin
   var Value := FSerializer.Deserialize(
-    '<?xml version="1.0"?>'#13#10'<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"><soap:Body><Document><MyProp1>abc</MyProp1><MyProp2>123</MyProp2><MyProp3>123.456</MyProp3><MyProp4>MyValue2</MyProp4></Document></soap:Body></soap:Envelope>',
+    '<?xml version="1.0" encoding="UTF-8"?>'#13#10'<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"><soap:Body><Document><MyProp1>abc</MyProp1><MyProp2>123</MyProp2><MyProp3>123.456</MyProp3><MyProp4>MyValue2</MyProp4></Document></soap:Body></soap:Envelope>',
     TypeInfo(TMyObject)).AsType<TMyObject>;
 
   Assert.IsNotNil(Value);
@@ -608,7 +608,7 @@ begin
   MyObject.MyProp3 := 123.456;
   var Value := FSerializer.Serialize(MyObject);
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><MyProp1>abc</MyProp1><MyProp2>123</MyProp2><MyProp3>123.456</MyProp3><MyProp4>MyValue</MyProp4></Document>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyProp1>abc</MyProp1><MyProp2>123</MyProp2><MyProp3>123.456</MyProp3><MyProp4>MyValue</MyProp4></Document>'#13#10, Value);
 
   MyObject.Free;
 end;
@@ -642,7 +642,7 @@ begin
   var MyObject := TMyObjectParent.Create;
   MyObject.MyObject := TMyObject.Create;
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><Error></Error><MyObject><MyProp1></MyProp1><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></Document>'#13#10, FSerializer.Serialize(MyObject));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><Error></Error><MyObject><MyProp1></MyProp1><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></Document>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.MyObject.Free;
 
@@ -657,7 +657,7 @@ begin
   MyRecord.MyField3 := 123.456;
   var Value := FSerializer.Serialize(TValue.From(MyRecord));
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><MyField1>abc</MyField1><MyField2>123</MyField2><MyField3>123.456</MyField3><MyField4>MyValue</MyField4></Document>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyField1>abc</MyField1><MyField2>123</MyField2><MyField3>123.456</MyField3><MyField4>MyValue</MyField4></Document>'#13#10, Value);
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenSerializeAPropertyWithXMLAttributeMustLoadTheValueAttributeFromPropertyAndNameInTheClassNode;
@@ -667,7 +667,7 @@ begin
 
   var Value := FSerializer.Serialize(MyClass);
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document MyProp="MyValue"/>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document MyProp="MyValue"/>'#13#10, Value);
 
   MyClass.Free;
 end;
@@ -680,7 +680,7 @@ begin
   var RttiMethod := RttiInterface.GetMethod('MyMethod');
   var SOAPRequest := TSOAPEnvelop.Create(RttiMethod.GetParameters[0], 'abc');
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Body><MyParam>abc</MyParam></soap:Body></soap:Envelope>'#13#10,
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Body><MyParam>abc</MyParam></soap:Body></soap:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPRequest)));
 
   RttiContext.Free;
@@ -690,7 +690,7 @@ procedure TBluePrintXMLSerializerTest.WhenSerializeATValueRecordMustSerializeThe
 begin
   var Value: TValue := 'abc';
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document>abc</Document>'#13#10, FSerializer.Serialize(TValue.From(Value)));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document>abc</Document>'#13#10, FSerializer.Serialize(TValue.From(Value)));
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenTheClassHasTheNodeNameAttributeTheDocumentMustBeChangedToTheNameInTheAttribute;
@@ -698,7 +698,7 @@ begin
   var MyClass := TMyClassWithNodeNameAttribute.Create;
   MyClass.MyProperty := 'abc';
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<MyDocument><MyProperty>abc</MyProperty></MyDocument>'#13#10, FSerializer.Serialize(MyClass));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<MyDocument><MyProperty>abc</MyProperty></MyDocument>'#13#10, FSerializer.Serialize(MyClass));
 
   MyClass.Free;
 end;
@@ -708,7 +708,7 @@ begin
   var MyObject := TMyClassWithXMLAttribute.Create;
   MyObject.MyProperty := 'abc';
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document MyAttribute="MyValue"><MyProperty>abc</MyProperty></Document>'#13#10, FSerializer.Serialize(MyObject));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document MyAttribute="MyValue"><MyProperty>abc</MyProperty></Document>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.Free;
 end;
@@ -721,7 +721,7 @@ begin
   var RttiMethod := RttiInterface.GetMethod('MyMethodWithParamAttribute');
   var SOAPRequest := TSOAPEnvelop.Create(RttiMethod.GetParameters[0], 'abc');
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Body><MyParam MyAttribute="MyValue">abc</MyParam></soap:Body></soap:Envelope>'#13#10,
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Body><MyParam MyAttribute="MyValue">abc</MyParam></soap:Body></soap:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPRequest)));
 
   RttiContext.Free;
@@ -732,7 +732,7 @@ begin
   var MyObject := TMyClassWithNode.Create;
   MyObject.MyProperty := 'abc';
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><MyNode>abc</MyNode></Document>'#13#10, FSerializer.Serialize(MyObject));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyNode>abc</MyNode></Document>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.Free;
 end;
@@ -742,7 +742,7 @@ begin
   var MyObject := TMyClassWithStoredProperty.Create;
   MyObject.MyProperty := 123;
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document/>'#13#10, FSerializer.Serialize(MyObject));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document/>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.Free;
 end;
@@ -752,7 +752,7 @@ begin
   var MyRecord: TMyRecordWithAttribute;
   MyRecord.MyField := 'abc';
 
-  Assert.AreEqual('<?xml version="1.0"?>'#13#10'<Document><AnotherName>abc</AnotherName></Document>'#13#10, FSerializer.Serialize(TValue.From(MyRecord)));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><AnotherName>abc</AnotherName></Document>'#13#10, FSerializer.Serialize(TValue.From(MyRecord)));
 end;
 
 end.

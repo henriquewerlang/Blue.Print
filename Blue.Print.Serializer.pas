@@ -679,6 +679,7 @@ begin
       ValueType := FContext.GetType(Value.TypeInfo);
       XMLDocument := TXMLDocument.Create(nil);
       XMLDocument.Active := True;
+      XMLDocument.Encoding := 'UTF-8';
       XMLDocument.Version := '1.0';
 
       SerializeType(ValueType, Value, XMLDocument.AddChild(GetDocumentName));
