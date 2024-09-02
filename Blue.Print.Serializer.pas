@@ -515,9 +515,9 @@ begin
 
       var XMLNode := XML.DocumentElement;
 
-      if XMLNode.NodeName = 'soap:Envelope' then
+      if XMLNode.NodeName = SOAP_ENVELOP_NODENAME then
       begin
-        XMLNode := XMLNode.ChildNodes.FindNode('soap:Body');
+        XMLNode := XMLNode.ChildNodes.FindNode(SOAP_BODY_NODENAME);
 
         XMLNode := XMLNode.ChildNodes.First;
       end;
