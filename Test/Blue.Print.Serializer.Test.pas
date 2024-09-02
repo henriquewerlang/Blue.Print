@@ -84,6 +84,8 @@ type
     procedure WhenSerializeAComplexTypeMustReturnApplicationJSONInTheContentType;
     [Test]
     procedure WhenSerializeAPropertyWithStoredOnlyCanSerializeTheValueIfThePropetyIsStored;
+    [Test]
+    procedure OnlyPublishedPropertiesCantBeSerialized;
   end;
 
   [TestFixture]
@@ -135,6 +137,8 @@ type
     procedure WhenTheSOAPParamHasTheNamespaceAttributeMustLoadThisNamespaceInTheXML;
     [Test]
     procedure WhenSerializeADateOrTimeValueMustGenerateTheNodesValuesAsExpected;
+    [Test]
+    procedure OnlyPublishedPropertiesCantBeSerialized;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -147,7 +151,7 @@ type
     FMyProp2: Integer;
     FMyProp3: Double;
     FMyProp4: TMyEnum;
-  public
+  published
     property MyProp1: String read FMyProp1 write FMyProp1;
     property MyProp2: Integer read FMyProp2 write FMyProp2;
     property MyProp3: Double read FMyProp3 write FMyProp3;
@@ -157,7 +161,7 @@ type
   TMyClassWithNode = class
   private
     FMyProperty: String;
-  public
+  published
     [NodeName('MyNode')]
     property MyProperty: String read FMyProperty write FMyProperty;
   end;
@@ -166,7 +170,7 @@ type
   TMyClassWithNodeNameAttribute = class
   private
     FMyProperty: String;
-  public
+  published
     property MyProperty: String read FMyProperty write FMyProperty;
   end;
 
@@ -174,14 +178,14 @@ type
   TMyClassWithXMLAttribute = class
   private
     FMyProperty: String;
-  public
+  published
     property MyProperty: String read FMyProperty write FMyProperty;
   end;
 
   TMyClassWithChildWithXMLAttribute = class
   private
     FMyProp: TMyClassWithXMLAttribute;
-  public
+  published
     property MyProp: TMyClassWithXMLAttribute read FMyProp write FMyProp;
   end;
 
@@ -189,7 +193,7 @@ type
   private
     FMyObject: TMyObject;
     FError: String;
-  public
+  published
     property Error: String read FError write FError;
     property MyObject: TMyObject read FMyObject write FMyObject;
   end;
@@ -219,7 +223,7 @@ type
   TMyTValueClass = class
   private
     FValue: TValue;
-  public
+  published
     property Value: TValue read FValue write FValue;
   end;
 
@@ -263,15 +267,31 @@ type
   TMyClassWithNamespace = class
   private
     FMyProp: TMyClassWithChildWithXMLAttribute;
-  public
+  published
     property MyProp: TMyClassWithChildWithXMLAttribute read FMyProp write FMyProp;
   end;
 
   TMyClassWithEnumValues = class
   private
     FMyProp: TMyEnumWithAttribute;
-  public
+  published
     property MyProp: TMyEnumWithAttribute read FMyProp write FMyProp;
+  end;
+
+  TMyPublishedClass = class
+  private
+    FMyPublic: Integer;
+    FMyPublished: Integer;
+    FMyProtected: Integer;
+    FMyPrivate: Integer;
+
+    property MyPrivate: Integer read FMyPrivate write FMyPrivate;
+  protected
+    property MyProtected: Integer read FMyProtected write FMyProtected;
+  public
+    property MyPublic: Integer read FMyPublic write FMyPublic;
+  published
+    property MyPublished: Integer read FMyPublished write FMyPublished;
   end;
 
   ISOAPService = interface(IInvokable)
@@ -389,6 +409,20 @@ begin
   var Value := FSerializer.Serialize(TValue.From(MyRecord));
 
   Assert.AreEqual('{"MyPublicField":"abc"}', Value);
+end;
+
+procedure TBluePrintJsonSerializerTest.OnlyPublishedPropertiesCantBeSerialized;
+begin
+  var MyClass := TMyPublishedClass.Create;
+  MyClass.MyPrivate := 1;
+  MyClass.MyProtected := 2;
+  MyClass.MyPublic := 3;
+  MyClass.MyPublished := 4;
+  var Value := FSerializer.Serialize(MyClass);
+
+  Assert.AreEqual('{"MyPublished":4}', Value);
+
+  MyClass.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.Setup;
@@ -600,10 +634,23 @@ end;
 procedure TBluePrintXMLSerializerTest.EvenTheChildClassPropertyIsEmptyMustLoadTheAttributesAsExpected;
 begin
   var MyClass := TMyClassWithChildWithXMLAttribute.Create;
-
   var Value := FSerializer.Serialize(MyClass);
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyProp MyAttribute="MyValue"/></Document>'#13#10, Value);
+
+  MyClass.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.OnlyPublishedPropertiesCantBeSerialized;
+begin
+  var MyClass := TMyPublishedClass.Create;
+  MyClass.MyPrivate := 1;
+  MyClass.MyProtected := 2;
+  MyClass.MyPublic := 3;
+  MyClass.MyPublished := 4;
+  var Value := FSerializer.Serialize(MyClass);
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyPublished>4</MyPublished></Document>'#13#10, Value);
 
   MyClass.Free;
 end;

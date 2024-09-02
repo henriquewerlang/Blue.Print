@@ -277,7 +277,7 @@ var
 
 begin
   for &Property in RttiType.GetProperties do
-    if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).{$IFDEF DCC}PropInfo{$ELSE}PropertyTypeInfo{$ENDIF}) then
+    if (&Property.Visibility = mvPublished) and System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).{$IFDEF DCC}PropInfo{$ELSE}PropertyTypeInfo{$ENDIF}) then
       JSONObject.AddPair(&Property.Name, SerializeType(&Property.PropertyType, &Property.GetValue(Instance)));
 end;
 
@@ -802,7 +802,7 @@ var
 begin
 {$IFDEF DCC}
   for &Property in RttiType.GetProperties do
-    if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).PropInfo) and not LoadAttributeValue(&Property, Instance, Node) then
+    if (&Property.Visibility = mvPublished) and System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).PropInfo) and not LoadAttributeValue(&Property, Instance, Node) then
       SerializeType(&Property.PropertyType, &Property.GetValue(Instance), Node.AddChild(GetPropertyName, Namespace), Namespace);
 {$ENDIF}
 end;
