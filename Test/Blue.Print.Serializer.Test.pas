@@ -123,6 +123,8 @@ type
     procedure EvenTheChildClassPropertyIsEmptyMustLoadTheAttributesAsExpected;
     [Test]
     procedure WhenAClassHasTheNamespaceAttributeTheChildNodesCantCleanUpTheNameSpace;
+    [Test]
+    procedure WhenDeserializeSOAPObjectMustCheckTheLocalNameFromTheNodeNotTheNodeName;
   end;
 
   TMyObject = class
@@ -616,6 +618,21 @@ procedure TBluePrintXMLSerializerTest.WhenDeserializeASOAPObjectMustLoadTheObjec
 begin
   var Value := FSerializer.Deserialize(
     '<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"><SOAP-ENV:Body><Document><MyProp1>abc</MyProp1><MyProp2>123</MyProp2><MyProp3>123.456</MyProp3><MyProp4>MyValue2</MyProp4></Document></SOAP-ENV:Body></SOAP-ENV:Envelope>',
+    TypeInfo(TMyObject)).AsType<TMyObject>;
+
+  Assert.IsNotNil(Value);
+  Assert.AreEqual('abc', Value.MyProp1);
+  Assert.AreEqual<Integer>(123, Value.MyProp2);
+  Assert.AreEqual<Double>(123.456, Value.MyProp3);
+  Assert.AreEqual(MyValue2, Value.MyProp4);
+
+  Value.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenDeserializeSOAPObjectMustCheckTheLocalNameFromTheNodeNotTheNodeName;
+begin
+  var Value := FSerializer.Deserialize(
+    '<?xml version="1.0" encoding="UTF-8"?>'#13#10'<any:Envelope xmlns:any="http://www.w3.org/2003/05/soap-envelope"><any:Body><Document><MyProp1>abc</MyProp1><MyProp2>123</MyProp2><MyProp3>123.456</MyProp3><MyProp4>MyValue2</MyProp4></Document></any:Body></any:Envelope>',
     TypeInfo(TMyObject)).AsType<TMyObject>;
 
   Assert.IsNotNil(Value);

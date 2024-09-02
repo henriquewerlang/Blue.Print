@@ -500,9 +500,7 @@ var
 begin
 {$IFDEF DCC}
   case TypeInfo.Kind of
-{$IFDEF DCC}
     tkMRecord,
-{$ENDIF}
     tkArray,
     tkClass,
     tkClassRef,
@@ -516,9 +514,12 @@ begin
 
       var XMLNode := XML.DocumentElement;
 
-      if XMLNode.NodeName = SOAP_ENVELOP_NODENAME then
+      if XMLNode.LocalName = 'Envelope' then
       begin
-        XMLNode := XMLNode.ChildNodes.FindNode(SOAP_BODY_NODENAME);
+        XMLNode := XMLNode.ChildNodes.First;
+
+        while XMLNode.LocalName <> 'Body' do
+          XMLNode := XMLNode.NextSibling;
 
         XMLNode := XMLNode.ChildNodes.First;
       end;
