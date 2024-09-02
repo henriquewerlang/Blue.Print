@@ -621,8 +621,8 @@ begin
   Result := EmptyStr;
 
   for Attribute in RttiObject.GetAttributes do
-    if Attribute is XMLNamespace then
-      Exit((Attribute as XMLNamespace).Namespace);
+    if Attribute is XMLNamespaceAttribute then
+      Exit((Attribute as XMLNamespaceAttribute).Namespace);
 {$ENDIF}
 end;
 
@@ -783,7 +783,7 @@ begin
       begin
         var SOAPBody := Value.AsType<TSOAPBody>;
 
-        SerializeType(FContext.GetType(SOAPBody.Body.TypeInfo), SOAPBody.Body, LoadAttributes(SOAPBody.Parameter, Node.AddChild(SOAPBody.Parameter.Name, EmptyStr)), Namespace);
+        SerializeType(FContext.GetType(SOAPBody.Body.TypeInfo), SOAPBody.Body, LoadAttributes(SOAPBody.Parameter, Node.AddChild(SOAPBody.Parameter.Name, GetNamespaceValue(SOAPBody.Parameter))), Namespace);
       end
       else if Value.TypeInfo = TypeInfo(TValue) then
         SerializeType(FContext.GetType(Value.AsType<TValue>.TypeInfo), Value.AsType<TValue>, Node, Namespace)

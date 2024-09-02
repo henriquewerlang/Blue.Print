@@ -125,6 +125,8 @@ type
     procedure WhenAClassHasTheNamespaceAttributeTheChildNodesCantCleanUpTheNameSpace;
     [Test]
     procedure WhenDeserializeSOAPObjectMustCheckTheLocalNameFromTheNodeNotTheNodeName;
+    [Test]
+    procedure WhenTheSOAPParamHasTheNamespaceAttributeMustLoadThisNamespaceInTheXML;
   end;
 
   TMyObject = class
@@ -256,7 +258,8 @@ type
   ISOAPService = interface(IInvokable)
     ['{BBBBC6F3-1730-40F4-A1B1-CC7CA6F08F5D}']
     procedure MyMethod(const MyParam: Integer);
-    procedure MyMethodWithParamAttribute([XMLAttribute('MyAttribute', 'MyValue')]const MyParam: Integer);
+    procedure MyMethodWithParamAttribute([XMLAttribute('MyAttribute', 'MyValue')] const MyParam: Integer);
+    procedure MyMethodWithNamespace([XMLNamespace('MySpace')] const MyParam: TMyBooleanClass);
   end;
 
 implementation
@@ -797,6 +800,20 @@ begin
   MyRecord.MyField := 'abc';
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><AnotherName>abc</AnotherName></Document>'#13#10, FSerializer.Serialize(TValue.From(MyRecord)));
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenTheSOAPParamHasTheNamespaceAttributeMustLoadThisNamespaceInTheXML;
+begin
+  var RttiContext := TRttiContext.Create;
+  var RttiInterface := RttiContext.GetType(TypeInfo(ISOAPService));
+
+  var RttiMethod := RttiInterface.GetMethod('MyMethodWithNamespace');
+  var SOAPRequest := TSOAPEnvelop.Create(RttiMethod.GetParameters[0], nil);
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
+    + '<SOAP-ENV:Body><MyParam xmlns="MySpace"></MyParam></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPRequest)));
+
+  RttiContext.Free;
 end;
 
 end.

@@ -105,7 +105,7 @@ type
   XMLAttributeValueAttribute = class(TCustomAttribute)
   end;
 
-  XMLNamespace = class(TCustomAttribute)
+  XMLNamespaceAttribute = class(TCustomAttribute)
   private
     FNamespace: String;
   public
@@ -433,9 +433,9 @@ begin
   FAttributeValue := AttributeValue;
 end;
 
-{ XMLNamespace }
+{ XMLNamespaceAttribute }
 
-constructor XMLNamespace.Create(const Namespace: String);
+constructor XMLNamespaceAttribute.Create(const Namespace: String);
 begin
   FNamespace := Namespace;
 end;
