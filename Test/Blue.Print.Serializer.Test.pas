@@ -121,6 +121,8 @@ type
     procedure WhenAClassHasAChildWithXMLAttributeMustLoadTheAttributeAsExpected;
     [Test]
     procedure EvenTheChildClassPropertyIsEmptyMustLoadTheAttributesAsExpected;
+    [Test]
+    procedure WhenAClassHasTheNamespaceAttributeTheChildNodesCantCleanUpTheNameSpace;
   end;
 
   TMyObject = class
@@ -160,7 +162,7 @@ type
     property MyProperty: String read FMyProperty write FMyProperty;
   end;
 
-  TMyClassWithCildWithXMLAttribute = class
+  TMyClassWithChildWithXMLAttribute = class
   private
     FMyProp: TMyClassWithXMLAttribute;
   public
@@ -239,6 +241,14 @@ type
   published
     [XMLAttributeValue]
     property MyProp: String read FMyProp write FMyProp;
+  end;
+
+  [XMLNamespace('MyNamespace')]
+  TMyClassWithNamespace = class
+  private
+    FMyProp: TMyClassWithChildWithXMLAttribute;
+  public
+    property MyProp: TMyClassWithChildWithXMLAttribute read FMyProp write FMyProp;
   end;
 
   ISOAPService = interface(IInvokable)
@@ -544,7 +554,7 @@ end;
 
 procedure TBluePrintXMLSerializerTest.EvenTheChildClassPropertyIsEmptyMustLoadTheAttributesAsExpected;
 begin
-  var MyClass := TMyClassWithCildWithXMLAttribute.Create;
+  var MyClass := TMyClassWithChildWithXMLAttribute.Create;
 
   var Value := FSerializer.Serialize(MyClass);
 
@@ -560,12 +570,29 @@ end;
 
 procedure TBluePrintXMLSerializerTest.WhenAClassHasAChildWithXMLAttributeMustLoadTheAttributeAsExpected;
 begin
-  var MyClass := TMyClassWithCildWithXMLAttribute.Create;
+  var MyClass := TMyClassWithChildWithXMLAttribute.Create;
   MyClass.MyProp := TMyClassWithXMLAttribute.Create;
 
   var Value := FSerializer.Serialize(MyClass);
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyProp MyAttribute="MyValue"><MyProperty></MyProperty></MyProp></Document>'#13#10, Value);
+
+  MyClass.MyProp.Free;
+
+  MyClass.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenAClassHasTheNamespaceAttributeTheChildNodesCantCleanUpTheNameSpace;
+begin
+  var MyClass := TMyClassWithNamespace.Create;
+  MyClass.MyProp := TMyClassWithChildWithXMLAttribute.Create;
+  MyClass.MyProp.MyProp := TMyClassWithXMLAttribute.Create;
+
+  var Value := FSerializer.Serialize(MyClass);
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document xmlns="MyNamespace"><MyProp><MyProp MyAttribute="MyValue"><MyProperty></MyProperty></MyProp></MyProp></Document>'#13#10, Value);
+
+  MyClass.MyProp.MyProp.Free;
 
   MyClass.MyProp.Free;
 

@@ -54,6 +54,7 @@ type
     FContext: TRttiContext;
 
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+    function GetNamespaceValue(const RttiObject: TRttiObject): String;
     function LoadAttributes(const RttiObject: TRttiObject; const Node: IXMLNode): IXMLNode;
     function LoadAttributeValue(const Member: TRttiDataMember; const Instance: TObject; const Node: IXMLNode): Boolean;
     function Serialize(const Value: TValue): String;
@@ -61,9 +62,9 @@ type
     function DeserializeType(const RttiType: TRttiType; const Node: IXMLNode): TValue;
 
     procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
-    procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode);
-    procedure SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
-    procedure SerializeType(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode);
+    procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode; const Namespace: String);
+    procedure SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode; const Namespace: String);
+    procedure SerializeType(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace: String);
   public
     constructor Create;
   end;
@@ -608,6 +609,22 @@ begin
 {$ENDIF}
 end;
 
+function TBluePrintXMLSerializer.GetNamespaceValue(const RttiObject: TRttiObject): String;
+{$IFDEF DCC}
+var
+  Attribute: TCustomAttribute;
+
+{$ENDIF}
+begin
+{$IFDEF DCC}
+  Result := EmptyStr;
+
+  for Attribute in RttiObject.GetAttributes do
+    if Attribute is XMLNamespace then
+      Exit((Attribute as XMLNamespace).Namespace);
+{$ENDIF}
+end;
+
 function TBluePrintXMLSerializer.LoadAttributes(const RttiObject: TRttiObject; const Node: IXMLNode): IXMLNode;
 {$IFDEF DCC}
 var
@@ -650,6 +667,7 @@ end;
 function TBluePrintXMLSerializer.Serialize(const Value: TValue): String;
 {$IFDEF DCC}
 var
+  Namespace: String;
   ValueType: TRttiType;
   XMLDocument: IXMLDocument;
 
@@ -670,9 +688,7 @@ var
 begin
 {$IFDEF DCC}
   case Value.Kind of
-{$IFDEF DCC}
     tkMRecord,
-{$ENDIF}
     tkRecord,
     tkClass:
     begin
@@ -682,7 +698,9 @@ begin
       XMLDocument.Encoding := 'UTF-8';
       XMLDocument.Version := '1.0';
 
-      SerializeType(ValueType, Value, XMLDocument.AddChild(GetDocumentName));
+      Namespace := GetNamespaceValue(ValueType);
+
+      SerializeType(ValueType, Value, XMLDocument.AddChild(GetDocumentName, Namespace), Namespace);
 
       var XML := TStringStream.Create;
 
@@ -698,7 +716,7 @@ begin
 {$ENDIF}
 end;
 
-procedure TBluePrintXMLSerializer.SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode);
+procedure TBluePrintXMLSerializer.SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode; const Namespace: String);
 {$IFDEF DCC}
 var
   Field: TRttiField;
@@ -720,11 +738,11 @@ var
 begin
 {$IFDEF DCC}
   for Field in RttiType.GetFields do
-    SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetFieldName));
+    SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetFieldName), Namespace);
 {$ENDIF}
 end;
 
-procedure TBluePrintXMLSerializer.SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
+procedure TBluePrintXMLSerializer.SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode; const Namespace: String);
 {$IFDEF DCC}
 var
   &Property: TRttiProperty;
@@ -747,11 +765,11 @@ begin
 {$IFDEF DCC}
   for &Property in RttiType.GetProperties do
     if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).PropInfo) and not LoadAttributeValue(&Property, Instance, Node) then
-      SerializeType(&Property.PropertyType, &Property.GetValue(Instance), Node.AddChild(GetPropertyName));
+      SerializeType(&Property.PropertyType, &Property.GetValue(Instance), Node.AddChild(GetPropertyName, Namespace), Namespace);
 {$ENDIF}
 end;
 
-procedure TBluePrintXMLSerializer.SerializeType(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode);
+procedure TBluePrintXMLSerializer.SerializeType(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace: String);
 begin
 {$IFDEF DCC}
   case Value.Kind of
@@ -764,19 +782,19 @@ begin
       begin
         var SOAPBody := Value.AsType<TSOAPBody>;
 
-        SerializeType(FContext.GetType(SOAPBody.Body.TypeInfo), SOAPBody.Body, LoadAttributes(SOAPBody.Parameter, Node.AddChild(SOAPBody.Parameter.Name, EmptyStr)));
+        SerializeType(FContext.GetType(SOAPBody.Body.TypeInfo), SOAPBody.Body, LoadAttributes(SOAPBody.Parameter, Node.AddChild(SOAPBody.Parameter.Name, EmptyStr)), Namespace);
       end
       else if Value.TypeInfo = TypeInfo(TValue) then
-        SerializeType(FContext.GetType(Value.AsType<TValue>.TypeInfo), Value.AsType<TValue>, Node)
+        SerializeType(FContext.GetType(Value.AsType<TValue>.TypeInfo), Value.AsType<TValue>, Node, Namespace)
       else
-        SerializeFields(RttiType, Value, LoadAttributes(RttiType, Node));
+        SerializeFields(RttiType, Value, LoadAttributes(RttiType, Node), Namespace);
     end;
     tkClass:
     begin
       LoadAttributes(RttiType, Node);
 
       if not Value.IsEmpty then
-        SerializeProperties(RttiType, Value.AsObject, Node);
+        SerializeProperties(RttiType, Value.AsObject, Node, Namespace);
     end
     else Node.NodeValue := inherited Serialize(Value.AsType<TValue>);
   end;

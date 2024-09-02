@@ -98,11 +98,20 @@ type
   public
     constructor Create(const AttributeName, AttributeValue: String);
 
-    property AttributeName: String read FAttributeName write FAttributeName;
-    property AttributeValue: String read FAttributeValue write FAttributeValue;
+    property AttributeName: String read FAttributeName;
+    property AttributeValue: String read FAttributeValue;
   end;
 
   XMLAttributeValueAttribute = class(TCustomAttribute)
+  end;
+
+  XMLNamespace = class(TCustomAttribute)
+  private
+    FNamespace: String;
+  public
+    constructor Create(const Namespace: String);
+
+    property Namespace: String read FNamespace;
   end;
 
   TParameterAttribute = class(TCustomAttribute)
@@ -185,7 +194,7 @@ type
   public
     constructor Create(const ActionName: String);
 
-    property ActionName: String read FActionName write FActionName;
+    property ActionName: String read FActionName;
   end;
 
   AuthorizationAttribute = class(TCustomAttribute);
@@ -422,6 +431,13 @@ constructor XMLAttributeAttribute.Create(const AttributeName, AttributeValue: St
 begin
   FAttributeName := AttributeName;
   FAttributeValue := AttributeValue;
+end;
+
+{ XMLNamespace }
+
+constructor XMLNamespace.Create(const Namespace: String);
+begin
+  FNamespace := Namespace;
 end;
 
 end.
