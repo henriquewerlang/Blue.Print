@@ -82,6 +82,15 @@ type
     constructor Create;
   end;
 
+  EnumValueAttribute = class(TCustomAttribute)
+  private
+    FNames: TArray<String>;
+  public
+    constructor Create(const Values: String; const ValueSeparator: String = ', ');
+
+    property Names: TArray<String> read FNames;
+  end;
+
   NodeNameAttribute = class(TCustomAttribute)
   private
     FNodeName: String;
@@ -438,6 +447,13 @@ end;
 constructor XMLNamespaceAttribute.Create(const Namespace: String);
 begin
   FNamespace := Namespace;
+end;
+
+{ EnumValueAttribute }
+
+constructor EnumValueAttribute.Create(const Values, ValueSeparator: String);
+begin
+  FNames := Values.Split([ValueSeparator]);
 end;
 
 end.

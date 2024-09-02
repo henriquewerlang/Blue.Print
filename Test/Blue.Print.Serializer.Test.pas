@@ -2,11 +2,11 @@
 
 interface
 
+{$SCOPEDENUMS ON}
+
 uses System.Rtti, Test.Insight.Framework, Blue.Print.Types, Blue.Print.Serializer;
 
 type
-  TMyEnum = (MyValue, MyValue2);
-
   TBluePrintSerializerTest = class
   private
     FSerializer: IBluePrintSerializer;
@@ -31,6 +31,12 @@ type
     procedure WhenDeserializeABooleanValueMustReturnTheValueAsExpected;
     [Test]
     procedure WhenSerializeASimpleTypeTheContentTypeMustBePlainText;
+    [Test]
+    procedure WhenSerializeAnEnumerationWithTheEnumValueAttributeMustSerializeTheValueFromAttribute;
+    [Test]
+    procedure WhenDeserializeAnEnumerationWithTheEnumValueAttributeMustUseTheAttributeNameToReturnTheEnumerationValue;
+    [Test]
+    procedure WhenGetTheCurrentTimezoneMustReturnTheValueAsExpected;
   end;
 
   [TestFixture]
@@ -127,7 +133,13 @@ type
     procedure WhenDeserializeSOAPObjectMustCheckTheLocalNameFromTheNodeNotTheNodeName;
     [Test]
     procedure WhenTheSOAPParamHasTheNamespaceAttributeMustLoadThisNamespaceInTheXML;
+    [Test]
+    procedure WhenSerializeADateOrTimeValueMustGenerateTheNodesValuesAsExpected;
   end;
+
+  TMyEnum = (MyValue, MyValue2);
+  [EnumValue('1, 2, abc')]
+  TMyEnumWithAttribute = (MyValue, MyValue2, MyValue3);
 
   TMyObject = class
   private
@@ -255,6 +267,13 @@ type
     property MyProp: TMyClassWithChildWithXMLAttribute read FMyProp write FMyProp;
   end;
 
+  TMyClassWithEnumValues = class
+  private
+    FMyProp: TMyEnumWithAttribute;
+  public
+    property MyProp: TMyEnumWithAttribute read FMyProp write FMyProp;
+  end;
+
   ISOAPService = interface(IInvokable)
     ['{BBBBC6F3-1730-40F4-A1B1-CC7CA6F08F5D}']
     procedure MyMethod(const MyParam: Integer);
@@ -275,11 +294,18 @@ begin
   Assert.AreEqual(True, Value.AsBoolean);
 end;
 
+procedure TBluePrintSerializerTest.WhenDeserializeAnEnumerationWithTheEnumValueAttributeMustUseTheAttributeNameToReturnTheEnumerationValue;
+begin
+  var Value := FSerializer.Deserialize('abc', TypeInfo(TMyEnumWithAttribute));
+
+  Assert.AreEqual(TMyEnumWithAttribute.MyValue3, Value.AsType<TMyEnumWithAttribute>);
+end;
+
 procedure TBluePrintSerializerTest.WhenDeserializeAnEnumeratorMustReturnTheEnumeratorValueInTheReturnValue;
 begin
   var Value := FSerializer.Deserialize('MyValue', TypeInfo(TMyEnum));
 
-  Assert.AreEqual(MyValue, Value.AsType<TMyEnum>);
+  Assert.AreEqual(TMyEnum.MyValue, Value.AsType<TMyEnum>);
 end;
 
 procedure TBluePrintSerializerTest.WhenDeserializeAnIntegerMustReturnTheIntegerValueInTheReturnValue;
@@ -296,6 +322,13 @@ begin
   Assert.AreEqual('abc', Value.ToString);
 end;
 
+procedure TBluePrintSerializerTest.WhenGetTheCurrentTimezoneMustReturnTheValueAsExpected;
+begin
+  var CurrentTimezone := TTimeZone.Local.Abbreviation.Substring(3) + ':00';
+
+  Assert.AreEqual(CurrentTimezone, TBluePrintSerializer.GetCurrentTimeZone);
+end;
+
 procedure TBluePrintSerializerTest.WhenSerializeABooleanValueMustReturnTheValueAsExpected;
 begin
   var Value := FSerializer.Serialize(TValue.From(True));
@@ -303,9 +336,16 @@ begin
   Assert.AreEqual('True', Value);
 end;
 
+procedure TBluePrintSerializerTest.WhenSerializeAnEnumerationWithTheEnumValueAttributeMustSerializeTheValueFromAttribute;
+begin
+  var Value := FSerializer.Serialize(TValue.From(TMyEnumWithAttribute.MyValue3));
+
+  Assert.AreEqual('abc', Value);
+end;
+
 procedure TBluePrintSerializerTest.WhenSerializeAnEnumeretorMustReturnTheNameOfEnumeration;
 begin
-  var Value := FSerializer.Serialize(TValue.From(MyValue));
+  var Value := FSerializer.Serialize(TValue.From(TMyEnum.MyValue));
 
   Assert.AreEqual('MyValue', Value);
 end;
@@ -430,7 +470,7 @@ begin
   Assert.AreEqual('abc', Value.MyProp1);
   Assert.AreEqual<Integer>(123, Value.MyProp2);
   Assert.AreEqual<Double>(123.456, Value.MyProp3);
-  Assert.AreEqual(MyValue, Value.MyProp4);
+  Assert.AreEqual(TMyEnum.MyValue, Value.MyProp4);
 
   Value.Free;
 end;
@@ -444,7 +484,7 @@ begin
   Assert.AreEqual('abc', Value.MyField1);
   Assert.AreEqual<Integer>(123, Value.MyField2);
   Assert.AreEqual<Double>(123.456, Value.MyField3);
-  Assert.AreEqual(MyValue2, Value.MyField4);
+  Assert.AreEqual(TMyEnum.MyValue2, Value.MyField4);
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenSerializeABooleanPropertyMustGenerateTheJSONAsExpected;
@@ -537,7 +577,7 @@ begin
   MyRecord.MyField1 := 'abc';
   MyRecord.MyField2 := 123;
   MyRecord.MyField3 := 123.456;
-  MyRecord.MyField4 := MyValue;
+  MyRecord.MyField4 := TMyEnum.MyValue;
   var Value := FSerializer.Serialize(TValue.From(MyRecord));
 
   Assert.AreEqual('{"MyField1":"abc","MyField2":123,"MyField3":123.456,"MyField4":"MyValue"}', Value);
@@ -612,7 +652,7 @@ begin
   Assert.AreEqual('abc', Value.MyProp1);
   Assert.AreEqual<Integer>(123, Value.MyProp2);
   Assert.AreEqual<Double>(123.456, Value.MyProp3);
-  Assert.AreEqual(MyValue2, Value.MyProp4);
+  Assert.AreEqual(TMyEnum.MyValue2, Value.MyProp4);
 
   Value.Free;
 end;
@@ -627,7 +667,7 @@ begin
   Assert.AreEqual('abc', Value.MyProp1);
   Assert.AreEqual<Integer>(123, Value.MyProp2);
   Assert.AreEqual<Double>(123.456, Value.MyProp3);
-  Assert.AreEqual(MyValue2, Value.MyProp4);
+  Assert.AreEqual(TMyEnum.MyValue2, Value.MyProp4);
 
   Value.Free;
 end;
@@ -642,7 +682,7 @@ begin
   Assert.AreEqual('abc', Value.MyProp1);
   Assert.AreEqual<Integer>(123, Value.MyProp2);
   Assert.AreEqual<Double>(123.456, Value.MyProp3);
-  Assert.AreEqual(MyValue2, Value.MyProp4);
+  Assert.AreEqual(TMyEnum.MyValue2, Value.MyProp4);
 
   Value.Free;
 end;
@@ -667,6 +707,20 @@ begin
   FSerializer.Serialize(MyObject);
 
   Assert.AreEqual(CONTENTTYPE_APPLICATION_XML, FSerializer.ContentType);
+
+  MyObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenSerializeADateOrTimeValueMustGenerateTheNodesValuesAsExpected;
+begin
+  var MyObject := TMyDateAndTimeClass.Create;
+  MyObject.MyDate := EncodeDate(2024, 05, 21);
+  MyObject.MyDateTime := EncodeDateTime(2024, 05, 21, 01, 02, 03, 000);
+  MyObject.MyTime := EncodeTime(01, 02, 03, 000);
+
+  var Value := FSerializer.Serialize(MyObject);
+
+  Assert.AreEqual(Format('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyDate>2024-05-21</MyDate><MyTime>01:02:03</MyTime><MyDateTime>2024-05-21T01:02:03%s</MyDateTime></Document>'#13#10, [TBluePrintSerializer.GetCurrentTimeZone]), Value);
 
   MyObject.Free;
 end;

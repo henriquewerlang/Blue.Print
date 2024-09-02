@@ -21,16 +21,21 @@ type
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function Serialize(const Value: TValue): String;
   protected
+    FContext: TRttiContext;
     FContentType: String;
 
     function CreateObject(const RttiType: TRttiInstanceType): TObject; virtual;
     function GetContentType: String;
+    function GetEnumerationNames(const TypeInfo: PTypeInfo): TArray<String>;
+    function GetEnumerationValue(const TypeInfo: PTypeInfo; const Value: String): Int64;
+  public
+    constructor Create;
+
+    class function GetCurrentTimeZone: String;
   end;
 
   TBluePrintJsonSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
   private
-    FContext: TRttiContext;
-
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function GetJSONValue(const JSONValue: TJSONValue): String; inline;
     function Serialize(const Value: TValue): String;
@@ -45,14 +50,10 @@ type
     procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
     procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
     procedure SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
-  public
-    constructor Create;
   end;
 
   TBluePrintXMLSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
   private
-    FContext: TRttiContext;
-
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function GetNamespaceValue(const RttiObject: TRttiObject): String;
     function LoadAttributes(const RttiObject: TRttiObject; const Node: IXMLNode): IXMLNode;
@@ -65,8 +66,6 @@ type
     procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode; const Namespace: String);
     procedure SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode; const Namespace: String);
     procedure SerializeType(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace: String);
-  public
-    constructor Create;
   end;
 
 implementation
@@ -107,6 +106,13 @@ const
 
 { TBluePrintSerializer }
 
+constructor TBluePrintSerializer.Create;
+begin
+  inherited;
+
+  FContext := TRTTIContext.Create;
+end;
+
 function TBluePrintSerializer.CreateObject(const RttiType: TRttiInstanceType): TObject;
 begin
   Result := RttiType.MetaClassType.Create;
@@ -127,7 +133,7 @@ begin
 {$IFDEF PAS2JS}
     tkBool,
 {$ENDIF}
-    tkEnumeration: Result := TValue.FromOrdinal(TypeInfo, GetEnumValue(TypeInfo, Value));
+    tkEnumeration: Result := TValue.FromOrdinal(TypeInfo, GetEnumerationValue(TypeInfo, Value));
 
 {$IFDEF DCC}
     tkInt64,
@@ -142,6 +148,47 @@ begin
   Result := FContentType;
 end;
 
+class function TBluePrintSerializer.GetCurrentTimeZone: String;
+begin
+  Result := TTimeZone.Local.Abbreviation.Substring(3);
+
+  if Result.Length < 5 then
+    Result := Result + ':00';
+end;
+
+function TBluePrintSerializer.GetEnumerationNames(const TypeInfo: PTypeInfo): TArray<String>;
+var
+  Attribute: EnumValueAttribute;
+
+  Enumeration: TRttiEnumerationType;
+
+begin
+  Enumeration := TRttiEnumerationType(FContext.GetType(TypeInfo));
+
+  Attribute := Enumeration.GetAttribute<EnumValueAttribute>;
+
+  if Assigned(Attribute) then
+    Result := Attribute.Names
+  else
+    Result := Enumeration.GetNames;
+end;
+
+function TBluePrintSerializer.GetEnumerationValue(const TypeInfo: PTypeInfo; const Value: String): Int64;
+var
+  EnumName: String;
+
+begin
+  Result := -1;
+
+  for EnumName in GetEnumerationNames(TypeInfo) do
+  begin
+    Inc(Result);
+
+    if EnumName = Value then
+      Exit;
+  end
+end;
+
 function TBluePrintSerializer.Serialize(const Value: TValue): String;
 begin
   FContentType := CONTENTTYPE_TEXT_PLAIN;
@@ -153,27 +200,22 @@ begin
     tkUString,
     tkWChar,
     tkWString,
-{$ELSE}
-    tkBool,
 {$ENDIF}
     tkChar,
-    tkEnumeration,
     tkFloat,
     tkInteger,
     tkString: Result := Value.ToString(TFormatSettings.Invariant);
+
+{$IFDEF PAS2JS}
+    tkBool,
+{$ENDIF}
+    tkEnumeration: Result := GetEnumerationNames(Value.TypeInfo)[Value.AsOrdinal];
 
     else Result := EmptyStr;
   end;
 end;
 
 { TBluePrintJsonSerializer }
-
-constructor TBluePrintJsonSerializer.Create;
-begin
-  inherited;
-
-  FContext := TRTTIContext.Create;
-end;
 
 function TBluePrintJsonSerializer.Serialize(const Value: TValue): String;
 var
@@ -272,7 +314,7 @@ begin
       if Value.TypeInfo = TypeInfo(Boolean) then
         Result := {$IFDEF DCC}TJSONBool.Create{$ENDIF}(Value.AsBoolean)
       else
-        Result := NewString(GetEnumName(Value.TypeInfo, Value.AsOrdinal));
+        Result := NewString(inherited Serialize(Value));
     end;
 
     tkFloat:
@@ -486,11 +528,6 @@ end;
 
 { TBluePrintXMLSerializer }
 
-constructor TBluePrintXMLSerializer.Create;
-begin
-  FContext := TRttiContext.Create;
-end;
-
 function TBluePrintXMLSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
 {$IFDEF DCC}
 var
@@ -703,7 +740,7 @@ begin
 
       SerializeType(ValueType, Value, XMLDocument.AddChild(GetDocumentName, Namespace), Namespace);
 
-      var XML := TStringStream.Create;
+      var XML := TStringStream.Create(Emptystr, TEncoding.UTF8);
 
       XMLDocument.SaveToStream(XML);
 
@@ -796,8 +833,19 @@ begin
 
       if not Value.IsEmpty then
         SerializeProperties(RttiType, Value.AsObject, Node, Namespace);
-    end
-    else Node.NodeValue := inherited Serialize(Value.AsType<TValue>);
+    end;
+    tkFloat:
+    begin
+      if RttiType.Handle = TypeInfo(TDateTime) then
+        Node.NodeValue := FormatDateTime('YYYY-MM-DD"T"HH:NN:SS', Value.AsExtended) + TBluePrintSerializer.GetCurrentTimeZone
+      else if RttiType.Handle = TypeInfo(TDate) then
+        Node.NodeValue := FormatDateTime('YYYY-MM-DD', Value.AsExtended)
+      else if RttiType.Handle = TypeInfo(TTime) then
+        Node.NodeValue := FormatDateTime('HH:NN:SS', Value.AsExtended)
+      else
+        Node.NodeValue := inherited Serialize(Value);
+    end;
+    else Node.NodeValue := inherited Serialize(Value);
   end;
 {$ENDIF}
 end;
