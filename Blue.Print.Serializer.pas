@@ -55,7 +55,8 @@ type
   TBluePrintXMLSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
   private
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
-    function GetNamespaceValue(const RttiObject: TRttiObject): String;
+    function GetNodeName(const RttiMember: TRttiMember): String;
+    function GetNamespaceValue(const RttiObject: TRttiObject; const Namespace: String): String;
     function LoadAttributes(const RttiObject: TRttiObject; const Node: IXMLNode): IXMLNode;
     function LoadAttributeValue(const Member: TRttiDataMember; const Instance: TObject; const Node: IXMLNode): Boolean;
     function Serialize(const Value: TValue): String;
@@ -665,7 +666,7 @@ begin
 {$ENDIF}
 end;
 
-function TBluePrintXMLSerializer.GetNamespaceValue(const RttiObject: TRttiObject): String;
+function TBluePrintXMLSerializer.GetNamespaceValue(const RttiObject: TRttiObject; const Namespace: String): String;
 {$IFDEF DCC}
 var
   Attribute: TCustomAttribute;
@@ -673,12 +674,22 @@ var
 {$ENDIF}
 begin
 {$IFDEF DCC}
-  Result := EmptyStr;
+  Result := Namespace;
 
   for Attribute in RttiObject.GetAttributes do
     if Attribute is XMLNamespaceAttribute then
       Exit((Attribute as XMLNamespaceAttribute).Namespace);
 {$ENDIF}
+end;
+
+function TBluePrintXMLSerializer.GetNodeName(const RttiMember: TRttiMember): String;
+begin
+  var NodeNameAttribute := RttiMember.GetAttribute<NodeNameAttribute>;
+
+  if Assigned(NodeNameAttribute) then
+    Result := NodeNameAttribute.NodeName
+  else
+    Result := RttiMember.Name;
 end;
 
 function TBluePrintXMLSerializer.LoadAttributes(const RttiObject: TRttiObject; const Node: IXMLNode): IXMLNode;
@@ -754,9 +765,9 @@ begin
       XMLDocument.Encoding := 'UTF-8';
       XMLDocument.Version := '1.0';
 
-      Namespace := GetNamespaceValue(ValueType);
+      Namespace := GetNamespaceValue(ValueType, EmptyStr);
 
-      SerializeType(ValueType, Value, XMLDocument.AddChild(GetDocumentName, Namespace), Namespace);
+      SerializeType(ValueType, Value, XMLDocument.AddChild(GetDocumentName, Namespace), GetNamespaceValue(ValueType, Namespace));
 
       var XML := TStringStream.Create(Emptystr, TEncoding.UTF8);
 
@@ -791,25 +802,12 @@ procedure TBluePrintXMLSerializer.SerializeFields(const RttiType: TRttiType; con
 {$IFDEF DCC}
 var
   Field: TRttiField;
-
-  function GetFieldName: String;
-  var
-    NodeName: NodeNameAttribute;
-
-  begin
-    NodeName := Field.GetAttribute<NodeNameAttribute>;
-
-    if Assigned(NodeName) then
-      Result := NodeName.NodeName
-    else
-      Result := Field.Name;
-  end;
-
 {$ENDIF}
+
 begin
 {$IFDEF DCC}
   for Field in RttiType.GetFields do
-    SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetFieldName), Namespace);
+    SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetNodeName(Field)), Namespace);
 {$ENDIF}
 end;
 
@@ -817,26 +815,17 @@ procedure TBluePrintXMLSerializer.SerializeProperties(const RttiType: TRttiType;
 {$IFDEF DCC}
 var
   &Property: TRttiProperty;
-
-  function GetPropertyName: String;
-  var
-    NodeName: NodeNameAttribute;
-
-  begin
-    NodeName := &Property.GetAttribute<NodeNameAttribute>;
-
-    if Assigned(NodeName) then
-      Result := NodeName.NodeName
-    else
-      Result := &Property.Name;
-  end;
-
 {$ENDIF}
+
 begin
 {$IFDEF DCC}
   for &Property in RttiType.GetProperties do
     if (&Property.Visibility = mvPublished) and System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).PropInfo) and not LoadAttributeValue(&Property, Instance, Node) then
-      SerializeType(&Property.PropertyType, &Property.GetValue(Instance), Node.AddChild(GetPropertyName, Namespace), Namespace);
+    begin
+      var CurrentNamespace := GetNamespaceValue(&Property.PropertyType, Namespace);
+
+      SerializeType(&Property.PropertyType, &Property.GetValue(Instance), Node.AddChild(GetNodeName(&Property), CurrentNamespace), CurrentNamespace);
+    end;
 {$ENDIF}
 end;
 
@@ -851,20 +840,26 @@ begin
       begin
         var SOAPBody := Value.AsType<TSOAPBody>;
 
-        SerializeType(FContext.GetType(SOAPBody.Body.TypeInfo), SOAPBody.Body, LoadAttributes(SOAPBody.Parameter, Node.AddChild(SOAPBody.Parameter.Name, GetNamespaceValue(SOAPBody.Parameter))), Namespace);
+        SerializeType(FContext.GetType(SOAPBody.Body.TypeInfo), SOAPBody.Body, LoadAttributes(SOAPBody.Parameter, Node.AddChild(SOAPBody.Parameter.Name, GetNamespaceValue(SOAPBody.Parameter, Namespace))), Namespace);
       end
       else if Value.TypeInfo = TypeInfo(TValue) then
         SerializeType(FContext.GetType(Value.AsType<TValue>.TypeInfo), Value.AsType<TValue>, Node, Namespace)
       else
         SerializeFields(RttiType, Value, LoadAttributes(RttiType, Node), Namespace);
     end;
+
     tkClass:
     begin
       LoadAttributes(RttiType, Node);
 
       if not Value.IsEmpty then
-        SerializeProperties(FContext.GetType(Value.AsObject.ClassType), Value.AsObject, Node, Namespace);
+      begin
+        var ClassType := FContext.GetType(Value.AsObject.ClassType);
+
+        SerializeProperties(ClassType, Value.AsObject, Node, GetNamespaceValue(ClassType, Namespace));
+      end;
     end;
+
     tkFloat:
     begin
       if RttiType.Handle = TypeInfo(TDateTime) then
@@ -876,8 +871,10 @@ begin
       else
         Node.NodeValue := inherited Serialize(Value);
     end;
+
     tkDynArray,
     tkArray: SerializeArray(RttiType, Value, Node, Namespace);
+
     else Node.NodeValue := inherited Serialize(Value);
   end;
 {$ENDIF}

@@ -147,6 +147,8 @@ type
     procedure WhenAClassHasAnArrayPropertyMustSerializeTheValuesAsExpected;
     [Test]
     procedure WhenDeserializeAClassWithAnArrayPropertyMustLoadTheClassAsExpected;
+    [Test]
+    procedure WhenAChildClassHasXMLNamespaceAttributeMustLoadTheNamespaceFromThisClass;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -314,6 +316,14 @@ type
     FMyArray: TArray<Integer>;
   published
     property MyArray: TArray<Integer> read FMyArray write FMyArray;
+  end;
+
+  [XMLNamespace('Another')]
+  TMyClassWithNamespaceParent = class
+  private
+    FMyProp: TMyClassWithNamespace;
+  published
+    property MyProp: TMyClassWithNamespace read FMyProp write FMyProp;
   end;
 
   ISOAPService = interface(IInvokable)
@@ -694,6 +704,18 @@ end;
 procedure TBluePrintXMLSerializerTest.Setup;
 begin
   FSerializer := TBluePrintXMLSerializer.Create;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenAChildClassHasXMLNamespaceAttributeMustLoadTheNamespaceFromThisClass;
+begin
+  var MyClass := TMyClassWithNamespaceParent.Create;
+  MyClass.MyProp := TMyClassWithNamespace.Create;
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document xmlns="Another"><MyProp xmlns="MyNamespace"><MyProp/></MyProp></Document>'#13#10, FSerializer.Serialize(MyClass));
+
+  MyClass.MyProp.Free;
+
+  MyClass.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenAClassHasAChildWithXMLAttributeMustLoadTheAttributeAsExpected;
