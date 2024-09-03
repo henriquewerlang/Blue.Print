@@ -60,10 +60,12 @@ type
     function LoadAttributeValue(const Member: TRttiDataMember; const Instance: TObject; const Node: IXMLNode): Boolean;
     function Serialize(const Value: TValue): String;
   protected
+    function DeserializeArray(const RttiType: TRttiType; const Node: IXMLNode): TValue;
     function DeserializeType(const RttiType: TRttiType; const Node: IXMLNode): TValue;
 
     procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
     procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode; const Namespace: String);
+    procedure SerializeArray(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace: String);
     procedure SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode; const Namespace: String);
     procedure SerializeType(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace: String);
   end;
@@ -569,6 +571,27 @@ begin
 {$ENDIF}
 end;
 
+function TBluePrintXMLSerializer.DeserializeArray(const RttiType: TRttiType; const Node: IXMLNode): TValue;
+begin
+{$IFDEF DCC}
+  var ArrayElementType: TRttiType;
+  var ArrayItems: TArray<TValue> := nil;
+  var Count := Node.ParentNode.ChildNodes.Count;
+
+  SetLength(ArrayItems, Count);
+
+  if RttiType is TRttiArrayType then
+    ArrayElementType := TRttiArrayType(RttiType).ElementType
+  else
+    ArrayElementType := TRttiDynamicArrayType(RttiType).ElementType;
+
+  for var Index := 0 to Pred(Count) do
+    ArrayItems[Index] := DeserializeType(ArrayElementType, Node.ParentNode.ChildNodes[Index]);
+
+  Result := TValue.FromArray(RttiType.Handle, ArrayItems);
+{$ENDIF}
+end;
+
 procedure TBluePrintXMLSerializer.DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
 {$IFDEF DCC}
 var
@@ -596,12 +619,10 @@ function TBluePrintXMLSerializer.DeserializeType(const RttiType: TRttiType; cons
 begin
 {$IFDEF DCC}
   case RttiType.TypeKind of
-{$IFDEF DCC}
     tkLString,
     tkUString,
     tkWChar,
     tkWString,
-{$ENDIF}
     tkChar,
     tkString: Result := TValue.From(Node.Text);
 
@@ -615,9 +636,7 @@ begin
 //  if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
 //    Result := TValue.From(RFC3339ToDateTime(String(JSON)))
 
-{$IFDEF DCC}
     tkInt64: Result := StrToInt64(Node.Text);
-{$ENDIF}
     tkInteger: Result := StrToInt(Node.Text);
 
 //    tkClassRef: Result := DeserializeClassReference(JSONValue);
@@ -632,16 +651,15 @@ begin
 
 //    tkArray, tkDynArray: Result := DeserializeArray(RttiType, TJSONArray(JSONValue));
 
-{$IFDEF DCC}
     tkMRecord,
-{$ENDIF}
     tkRecord:
     begin
       TValue.Make(nil, RttiType.Handle, Result);
 
 //      DeserializeFields(Result, Node);
     end;
-
+    tkDynArray,
+    tkArray: Result := DeserializeArray(RttiType, Node);
     else Result := TValue.Empty;
   end;
 {$ENDIF}
@@ -754,6 +772,21 @@ begin
 {$ENDIF}
 end;
 
+procedure TBluePrintXMLSerializer.SerializeArray(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace: String);
+begin
+  var NodeName := Node.NodeName;
+  var ParentNode := Node.ParentNode;
+
+  ParentNode.ChildNodes.Remove(Node);
+
+  for var A := 0 to Pred(Value.GetArrayLength) do
+  begin
+    var ElementValue := Value.GetArrayElement(A);
+
+    SerializeType(FContext.GetType(ElementValue.TypeInfo), ElementValue, ParentNode.AddChild(NodeName, Namespace), Namespace);
+  end;
+end;
+
 procedure TBluePrintXMLSerializer.SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode; const Namespace: String);
 {$IFDEF DCC}
 var
@@ -811,9 +844,7 @@ procedure TBluePrintXMLSerializer.SerializeType(const RttiType: TRttiType; const
 begin
 {$IFDEF DCC}
   case Value.Kind of
-{$IFDEF DCC}
     tkMRecord,
-{$ENDIF}
     tkRecord:
     begin
       if Value.TypeInfo = TypeInfo(TSOAPBody) then
@@ -845,6 +876,8 @@ begin
       else
         Node.NodeValue := inherited Serialize(Value);
     end;
+    tkDynArray,
+    tkArray: SerializeArray(RttiType, Value, Node, Namespace);
     else Node.NodeValue := inherited Serialize(Value);
   end;
 {$ENDIF}

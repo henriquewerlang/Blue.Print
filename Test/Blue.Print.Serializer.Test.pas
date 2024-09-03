@@ -143,6 +143,10 @@ type
     procedure OnlyPublishedPropertiesCantBeSerialized;
     [Test]
     procedure WhenSerializeAPropertyObjectMustLoadThePropertyFromTheObjectTypeAndNotTheProperyType;
+    [Test]
+    procedure WhenAClassHasAnArrayPropertyMustSerializeTheValuesAsExpected;
+    [Test]
+    procedure WhenDeserializeAClassWithAnArrayPropertyMustLoadTheClassAsExpected;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -303,6 +307,13 @@ type
     property MyPublic: Integer read FMyPublic write FMyPublic;
   published
     property MyPublished: Integer read FMyPublished write FMyPublished;
+  end;
+
+  TMyClassWithArray = class
+  private
+    FMyArray: TArray<Integer>;
+  published
+    property MyArray: TArray<Integer> read FMyArray write FMyArray;
   end;
 
   ISOAPService = interface(IInvokable)
@@ -699,6 +710,17 @@ begin
   MyClass.Free;
 end;
 
+procedure TBluePrintXMLSerializerTest.WhenAClassHasAnArrayPropertyMustSerializeTheValuesAsExpected;
+begin
+  var MyClass := TMyClassWithArray.Create;
+  MyClass.MyArray := [1, 2, 3];
+  var Value := FSerializer.Serialize(MyClass);
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyArray>1</MyArray><MyArray>2</MyArray><MyArray>3</MyArray></Document>'#13#10, Value);
+
+  MyClass.Free;
+end;
+
 procedure TBluePrintXMLSerializerTest.WhenAClassHasTheNamespaceAttributeTheChildNodesCantCleanUpTheNameSpace;
 begin
   var MyClass := TMyClassWithNamespace.Create;
@@ -714,6 +736,18 @@ begin
   MyClass.MyProp.Free;
 
   MyClass.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenDeserializeAClassWithAnArrayPropertyMustLoadTheClassAsExpected;
+begin
+  var Value := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyArray>1</MyArray><MyArray>2</MyArray><MyArray>3</MyArray></Document>'#13#10, TypeInfo(TMyClassWithArray)).AsType<TMyClassWithArray>;
+
+  Assert.AreEqual<NativeInt>(3, Length(Value.MyArray));
+  Assert.AreEqual<NativeInt>(1, Value.MyArray[0]);
+  Assert.AreEqual<NativeInt>(2, Value.MyArray[1]);
+  Assert.AreEqual<NativeInt>(3, Value.MyArray[2]);
+
+  Value.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenDeserializeAnObjectMustLoadThePropertiesAsExpected;
