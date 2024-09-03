@@ -824,7 +824,7 @@ begin
     begin
       var CurrentNamespace := GetNamespaceValue(&Property.PropertyType, Namespace);
 
-      SerializeType(&Property.PropertyType, &Property.GetValue(Instance), Node.AddChild(GetNodeName(&Property), CurrentNamespace), CurrentNamespace);
+      SerializeType(&Property.PropertyType, &Property.GetValue(Instance), LoadAttributes(&Property, Node.AddChild(GetNodeName(&Property), CurrentNamespace)), CurrentNamespace);
     end;
 {$ENDIF}
 end;

@@ -149,6 +149,8 @@ type
     procedure WhenDeserializeAClassWithAnArrayPropertyMustLoadTheClassAsExpected;
     [Test]
     procedure WhenAChildClassHasXMLNamespaceAttributeMustLoadTheNamespaceFromThisClass;
+    [Test]
+    procedure WhenThePropertyHasTheNamespaceAttributeMustLoadThisNameSpaceInTheXML;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -324,6 +326,14 @@ type
     FMyProp: TMyClassWithNamespace;
   published
     property MyProp: TMyClassWithNamespace read FMyProp write FMyProp;
+  end;
+
+  TMyClassWithPropertyWithNamespaceAttribute = class
+  private
+    FMyProp: String;
+  published
+    [XMLAttribute('MyAtt', 'MyValue')]
+    property MyProp: String read FMyProp write FMyProp;
   end;
 
   ISOAPService = interface(IInvokable)
@@ -968,6 +978,15 @@ begin
     FSerializer.Serialize(TValue.From(SOAPRequest)));
 
   RttiContext.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheNamespaceAttributeMustLoadThisNameSpaceInTheXML;
+begin
+  var MyClass := TMyClassWithPropertyWithNamespaceAttribute.Create;
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyProp MyAtt="MyValue"></MyProp></Document>'#13#10, FSerializer.Serialize(MyClass));
+
+  MyClass.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheNodeNameAttributeMustGenerateTheXMLWithTheNameInTheAttribute;
