@@ -339,7 +339,7 @@ begin
       begin
         Result := CreateJSONObject;
 
-        SerializeProperties(RttiType, Value.AsObject, TJSONObject(Result));
+        SerializeProperties(FContext.GetType(Value.AsObject.ClassType), Value.AsObject, TJSONObject(Result));
       end;
 
     tkArray, tkDynArray: Result := SerializeArray(RttiType, Value);
@@ -832,7 +832,7 @@ begin
       LoadAttributes(RttiType, Node);
 
       if not Value.IsEmpty then
-        SerializeProperties(RttiType, Value.AsObject, Node, Namespace);
+        SerializeProperties(FContext.GetType(Value.AsObject.ClassType), Value.AsObject, Node, Namespace);
     end;
     tkFloat:
     begin

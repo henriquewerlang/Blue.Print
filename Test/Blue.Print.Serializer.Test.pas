@@ -86,6 +86,8 @@ type
     procedure WhenSerializeAPropertyWithStoredOnlyCanSerializeTheValueIfThePropetyIsStored;
     [Test]
     procedure OnlyPublishedPropertiesCantBeSerialized;
+    [Test]
+    procedure WhenSerializeAPropertyObjectMustLoadThePropertyFromTheObjectTypeAndNotTheProperyType;
   end;
 
   [TestFixture]
@@ -139,6 +141,8 @@ type
     procedure WhenSerializeADateOrTimeValueMustGenerateTheNodesValuesAsExpected;
     [Test]
     procedure OnlyPublishedPropertiesCantBeSerialized;
+    [Test]
+    procedure WhenSerializeAPropertyObjectMustLoadThePropertyFromTheObjectTypeAndNotTheProperyType;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -196,6 +200,13 @@ type
   published
     property Error: String read FError write FError;
     property MyObject: TMyObject read FMyObject write FMyObject;
+  end;
+
+  TMyObjectInherited = class(TMyObject)
+  private
+    FAnother: Integer;
+  published
+    property Another: Integer read FAnother write FAnother;
   end;
 
   TMyRecord = record
@@ -595,6 +606,20 @@ begin
   MyObject.Free;
 end;
 
+procedure TBluePrintJsonSerializerTest.WhenSerializeAPropertyObjectMustLoadThePropertyFromTheObjectTypeAndNotTheProperyType;
+begin
+  var MyClass := TMyObjectParent.Create;
+  MyClass.MyObject := TMyObjectInherited.Create;
+
+  var Value := FSerializer.Serialize(MyClass);
+
+  Assert.AreEqual('{"Error":"","MyObject":{"Another":0,"MyProp1":"","MyProp2":0,"MyProp3":0.0,"MyProp4":"MyValue"}}', FSerializer.Serialize(MyClass));
+
+  MyClass.MyObject.Free;
+
+  MyClass.Free;
+end;
+
 procedure TBluePrintJsonSerializerTest.WhenSerializeAPropertyWithStoredOnlyCanSerializeTheValueIfThePropetyIsStored;
 begin
   var MyObject := TMyClassWithStoredProperty.Create;
@@ -806,6 +831,20 @@ begin
   var Value := FSerializer.Serialize(TValue.From(MyRecord));
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyField1>abc</MyField1><MyField2>123</MyField2><MyField3>123.456</MyField3><MyField4>MyValue</MyField4></Document>'#13#10, Value);
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenSerializeAPropertyObjectMustLoadThePropertyFromTheObjectTypeAndNotTheProperyType;
+begin
+  var MyClass := TMyObjectParent.Create;
+  MyClass.MyObject := TMyObjectInherited.Create;
+
+  var Value := FSerializer.Serialize(MyClass);
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><Error></Error><MyObject><Another>0</Another><MyProp1></MyProp1><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></Document>'#13#10, FSerializer.Serialize(MyClass));
+
+  MyClass.MyObject.Free;
+
+  MyClass.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenSerializeAPropertyWithXMLAttributeMustLoadTheValueAttributeFromPropertyAndNameInTheClassNode;
