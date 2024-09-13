@@ -635,10 +635,17 @@ begin
 {$ENDIF}
     tkEnumeration: Result := GetEnumerationValue(RttiType.Handle, Node.Text);
 
-    tkFloat: Result := StrToFloat(Node.Text, TFormatSettings.Invariant);
-//  Conversão de data e hora
-//  if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
-//    Result := TValue.From(RFC3339ToDateTime(String(JSON)))
+    tkFloat:
+    begin
+      if RttiType.Handle = TypeInfo(TDateTime) then
+        Result := TValue.From(ISO8601ToDate(Node.Text, []))
+      else if RttiType.Handle = TypeInfo(TDate) then
+        Result := TValue.From(ISO8601ToDate(Node.Text))
+      else if RttiType.Handle = TypeInfo(TTime) then
+        Result := TValue.From(StrToTime(Node.Text))
+      else
+        Result := StrToFloat(Node.Text, TFormatSettings.Invariant);
+    end;
 
     tkInt64: Result := StrToInt64(Node.Text);
     tkInteger: Result := StrToInt(Node.Text);

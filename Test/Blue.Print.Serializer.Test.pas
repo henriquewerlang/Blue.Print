@@ -142,6 +142,8 @@ type
     [Test]
     procedure WhenSerializeADateOrTimeValueMustGenerateTheNodesValuesAsExpected;
     [Test]
+    procedure WhenDeserializeADateOrTimeValueMustLoadThePropertiesWithTheExpectedValues;
+    [Test]
     procedure OnlyPublishedPropertiesCantBeSerialized;
     [Test]
     procedure WhenSerializeAPropertyObjectMustLoadThePropertyFromTheObjectTypeAndNotTheProperyType;
@@ -802,6 +804,20 @@ begin
   Assert.AreEqual(TMyEnumWithAttribute.MyValue3, Value.AsType<TMyClassWithEnumValues>.MyProp);
 
   Value.AsObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenDeserializeADateOrTimeValueMustLoadThePropertiesWithTheExpectedValues;
+begin
+  var Value := FSerializer.Deserialize(Format('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyDate>2024-05-21</MyDate><MyTime>01:02:03</MyTime><MyDateTime>2024-05-21T01:02:03%s</MyDateTime></Document>'#13#10,
+    [TBluePrintSerializer.GetCurrentTimeZone]), TypeInfo(TMyDateAndTimeClass));
+
+  var MyObject := Value.AsType<TMyDateAndTimeClass>;
+
+  Assert.IsTrue(MyObject.MyDate = EncodeDate(2024, 05, 21));
+  Assert.IsTrue(MyObject.MyDateTime = EncodeDateTime(2024, 05, 21, 01, 02, 03, 000));
+  Assert.IsTrue(MyObject.MyTime = EncodeTime(01, 02, 03, 000));
+
+  MyObject.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenDeserializeAnObjectMustLoadThePropertiesAsExpected;
