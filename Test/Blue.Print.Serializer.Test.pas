@@ -88,6 +88,8 @@ type
     procedure OnlyPublishedPropertiesCantBeSerialized;
     [Test]
     procedure WhenSerializeAPropertyObjectMustLoadThePropertyFromTheObjectTypeAndNotTheProperyType;
+    [Test]
+    procedure WhenDeserializeAClassWithAnEnumeratorWithEnumValueAttributeMustLoadTheEnumaratorValueAsExpected;
   end;
 
   [TestFixture]
@@ -151,6 +153,8 @@ type
     procedure WhenAChildClassHasXMLNamespaceAttributeMustLoadTheNamespaceFromThisClass;
     [Test]
     procedure WhenThePropertyHasTheNamespaceAttributeMustLoadThisNameSpaceInTheXML;
+    [Test]
+    procedure WhenDeserializeAClassWithAnEnumeratorWithEnumValueAttributeMustLoadTheEnumaratorValueAsExpected;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -506,6 +510,15 @@ begin
   Assert.AreEqual<TClass>(TMyObject, Value.AsClass);
 end;
 
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithAnEnumeratorWithEnumValueAttributeMustLoadTheEnumaratorValueAsExpected;
+begin
+  var Value := FSerializer.Deserialize('{"MyProp":"abc"}', TypeInfo(TMyClassWithEnumValues));
+
+  Assert.AreEqual(TMyEnumWithAttribute.MyValue3, Value.AsType<TMyClassWithEnumValues>.MyProp);
+
+  Value.AsObject.Free;
+end;
+
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithAPropertyWithAnObjectAndTheJSONValueIsNullCantCreateTheObjectProperty;
 begin
   var Value := FSerializer.Deserialize('{"Error":"Error value","MyObject":null}', TypeInfo(TMyObjectParent));
@@ -780,6 +793,15 @@ begin
   Assert.AreEqual<NativeInt>(3, Value.MyArray[2]);
 
   Value.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenDeserializeAClassWithAnEnumeratorWithEnumValueAttributeMustLoadTheEnumaratorValueAsExpected;
+begin
+  var Value := FSerializer.Deserialize('<Document><MyProp>abc</MyProp></Document>', TypeInfo(TMyClassWithEnumValues));
+
+  Assert.AreEqual(TMyEnumWithAttribute.MyValue3, Value.AsType<TMyClassWithEnumValues>.MyProp);
+
+  Value.AsObject.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenDeserializeAnObjectMustLoadThePropertiesAsExpected;

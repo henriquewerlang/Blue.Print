@@ -27,7 +27,7 @@ type
     function CreateObject(const RttiType: TRttiInstanceType): TObject; virtual;
     function GetContentType: String;
     function GetEnumerationNames(const TypeInfo: PTypeInfo): TArray<String>;
-    function GetEnumerationValue(const TypeInfo: PTypeInfo; const Value: String): Int64;
+    function GetEnumerationValue(const TypeInfo: PTypeInfo; const Value: String): TValue;
   public
     constructor Create;
 
@@ -136,7 +136,7 @@ begin
 {$IFDEF PAS2JS}
     tkBool,
 {$ENDIF}
-    tkEnumeration: Result := TValue.FromOrdinal(TypeInfo, GetEnumerationValue(TypeInfo, Value));
+    tkEnumeration: Result := GetEnumerationValue(TypeInfo, Value);
 
 {$IFDEF DCC}
     tkInt64,
@@ -176,20 +176,23 @@ begin
     Result := Enumeration.GetNames;
 end;
 
-function TBluePrintSerializer.GetEnumerationValue(const TypeInfo: PTypeInfo; const Value: String): Int64;
+function TBluePrintSerializer.GetEnumerationValue(const TypeInfo: PTypeInfo; const Value: String): TValue;
 var
+  CurrentValue: Int64;
   EnumName: String;
 
 begin
-  Result := -1;
+  CurrentValue := -1;
 
   for EnumName in GetEnumerationNames(TypeInfo) do
   begin
-    Inc(Result);
+    Inc(CurrentValue);
 
     if EnumName = Value then
-      Exit;
-  end
+      Break;
+  end;
+
+  Result := TValue.FromOrdinal(TypeInfo, CurrentValue);
 end;
 
 function TBluePrintSerializer.Serialize(const Value: TValue): String;
@@ -398,7 +401,7 @@ begin
 {$IFDEF PAS2JS}
     tkBool: Result := TValue.From<Boolean>(JSONValue = True);
 {$ENDIF}
-    tkEnumeration: Result := TValue.FromOrdinal(RttiType.Handle, GetEnumValue(RttiType.Handle, GetJSONValue(JSONValue)));
+    tkEnumeration: Result := GetEnumerationValue(RttiType.Handle, JSONValue.Value);
 
     tkFloat:
     begin
@@ -630,7 +633,7 @@ begin
 {$IFDEF PAS2JS}
     tkBool,
 {$ENDIF}
-    tkEnumeration: Result := TValue.FromOrdinal(RttiType.Handle, GetEnumValue(RttiType.Handle, Node.Text));
+    tkEnumeration: Result := GetEnumerationValue(RttiType.Handle, Node.Text);
 
     tkFloat: Result := StrToFloat(Node.Text, TFormatSettings.Invariant);
 //  Conversão de data e hora
