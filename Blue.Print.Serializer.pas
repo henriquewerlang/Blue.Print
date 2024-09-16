@@ -153,10 +153,12 @@ end;
 
 class function TBluePrintSerializer.GetCurrentTimeZone: String;
 begin
+{$IFDEF DCC}
   Result := TTimeZone.Local.Abbreviation.Substring(3);
 
   if Result.Length < 5 then
     Result := Result + ':00';
+{$ENDIF}
 end;
 
 function TBluePrintSerializer.GetEnumerationNames(const TypeInfo: PTypeInfo): TArray<String>;
@@ -401,7 +403,7 @@ begin
 {$IFDEF PAS2JS}
     tkBool: Result := TValue.From<Boolean>(JSONValue = True);
 {$ENDIF}
-    tkEnumeration: Result := GetEnumerationValue(RttiType.Handle, JSONValue.Value);
+    tkEnumeration: Result := GetEnumerationValue(RttiType.Handle, {$IFDEF PAS2JS}String(JSONValue){$ELSE}JSONValue.Value{$ENDIF});
 
     tkFloat:
     begin
@@ -597,19 +599,13 @@ begin
 end;
 
 procedure TBluePrintXMLSerializer.DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
-{$IFDEF DCC}
-var
-  ChildNode: IXMLNode;
-  Prop: TRttiProperty;
-{$ENDIF}
-
 begin
 {$IFDEF DCC}
-  ChildNode := Node.ChildNodes.First;
+  var ChildNode := Node.ChildNodes.First;
 
   while Assigned(ChildNode) do
   begin
-    Prop := RttiType.GetProperty(ChildNode.NodeName);
+    var Prop := RttiType.GetProperty(ChildNode.NodeName);
 
     if Assigned(Prop) then
       Prop.SetValue(Instance, DeserializeType(Prop.PropertyType, ChildNode));
@@ -677,16 +673,11 @@ begin
 end;
 
 function TBluePrintXMLSerializer.GetNamespaceValue(const RttiObject: TRttiObject; const Namespace: String): String;
-{$IFDEF DCC}
-var
-  Attribute: TCustomAttribute;
-
-{$ENDIF}
 begin
 {$IFDEF DCC}
   Result := Namespace;
 
-  for Attribute in RttiObject.GetAttributes do
+  for var Attribute in RttiObject.GetAttributes do
     if Attribute is XMLNamespaceAttribute then
       Exit((Attribute as XMLNamespaceAttribute).Namespace);
 {$ENDIF}
@@ -694,25 +685,22 @@ end;
 
 function TBluePrintXMLSerializer.GetNodeName(const RttiMember: TRttiMember): String;
 begin
+{$IFDEF DCC}
   var NodeNameAttribute := RttiMember.GetAttribute<NodeNameAttribute>;
 
   if Assigned(NodeNameAttribute) then
     Result := NodeNameAttribute.NodeName
   else
     Result := RttiMember.Name;
+{$ENDIF}
 end;
 
 function TBluePrintXMLSerializer.LoadAttributes(const RttiObject: TRttiObject; const Node: IXMLNode): IXMLNode;
-{$IFDEF DCC}
-var
-  Attribute: TCustomAttribute;
-
-{$ENDIF}
 begin
 {$IFDEF DCC}
   Result := Node;
 
-  for Attribute in RttiObject.GetAttributes do
+  for var Attribute in RttiObject.GetAttributes do
     if Attribute is XMLAttributeAttribute then
     begin
       var XMLAttribute := Attribute as XMLAttributeAttribute;
@@ -723,16 +711,11 @@ begin
 end;
 
 function TBluePrintXMLSerializer.LoadAttributeValue(const Member: TRttiDataMember; const Instance: TObject; const Node: IXMLNode): Boolean;
-{$IFDEF DCC}
-var
-  Attribute: TCustomAttribute;
-
-{$ENDIF}
 begin
 {$IFDEF DCC}
    Result := False;
 
-  for Attribute in Member.GetAttributes do
+  for var Attribute in Member.GetAttributes do
     if Attribute is XMLAttributeValueAttribute then
     begin
       Node.Attributes[Member.Name] := Member.GetValue(Instance).ToString;
@@ -795,6 +778,7 @@ end;
 
 procedure TBluePrintXMLSerializer.SerializeArray(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace: String);
 begin
+{$IFDEF DCC}
   var NodeName := Node.NodeName;
   var ParentNode := Node.ParentNode;
 
@@ -806,30 +790,21 @@ begin
 
     SerializeType(FContext.GetType(ElementValue.TypeInfo), ElementValue, ParentNode.AddChild(NodeName, Namespace), Namespace);
   end;
+{$ENDIF}
 end;
 
 procedure TBluePrintXMLSerializer.SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode; const Namespace: String);
-{$IFDEF DCC}
-var
-  Field: TRttiField;
-{$ENDIF}
-
 begin
 {$IFDEF DCC}
-  for Field in RttiType.GetFields do
+  for var Field in RttiType.GetFields do
     SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetNodeName(Field)), Namespace);
 {$ENDIF}
 end;
 
 procedure TBluePrintXMLSerializer.SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode; const Namespace: String);
-{$IFDEF DCC}
-var
-  &Property: TRttiProperty;
-{$ENDIF}
-
 begin
 {$IFDEF DCC}
-  for &Property in RttiType.GetProperties do
+  for var &Property in RttiType.GetProperties do
     if (&Property.Visibility = mvPublished) and System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).PropInfo) and not LoadAttributeValue(&Property, Instance, Node) then
     begin
       var CurrentNamespace := GetNamespaceValue(&Property.PropertyType, Namespace);
