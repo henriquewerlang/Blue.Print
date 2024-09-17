@@ -44,7 +44,7 @@ type
     function DeserializeClassReference(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
     function DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
     function SerializeArray(const RttiType: TRttiType; const Value: TValue): TJSONArray;
-    function SerializeType(const RttiType: TRttiType; Value: TValue): TJSONValue;
+    function SerializeType(const RttiType: TRttiType; Value: TValue): TJSONValue; virtual;
 
     procedure DeserializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
     procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
