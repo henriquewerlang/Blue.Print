@@ -61,8 +61,8 @@ type
     function LoadAttributeValue(const Member: TRttiDataMember; const Instance: TObject; const Node: IXMLNode): Boolean;
     function Serialize(const Value: TValue): String;
   protected
-    function DeserializeArray(const RttiType: TRttiType; const Node: IXMLNode): TValue;
-    function DeserializeType(const RttiType: TRttiType; const Node: IXMLNode): TValue;
+    function DeserializeArray(const RttiType: TRttiType; var Node: IXMLNode): TValue;
+    function DeserializeType(const RttiType: TRttiType; var Node: IXMLNode): TValue;
 
     procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
     procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode; const Namespace: String);
@@ -577,22 +577,28 @@ begin
 {$ENDIF}
 end;
 
-function TBluePrintXMLSerializer.DeserializeArray(const RttiType: TRttiType; const Node: IXMLNode): TValue;
+function TBluePrintXMLSerializer.DeserializeArray(const RttiType: TRttiType; var Node: IXMLNode): TValue;
 begin
 {$IFDEF DCC}
   var ArrayElementType: TRttiType;
   var ArrayItems: TArray<TValue> := nil;
-  var Count := Node.ParentNode.ChildNodes.Count;
-
-  SetLength(ArrayItems, Count);
+  var NodeName := Node.NodeName;
 
   if RttiType is TRttiArrayType then
     ArrayElementType := TRttiArrayType(RttiType).ElementType
   else
     ArrayElementType := TRttiDynamicArrayType(RttiType).ElementType;
 
-  for var Index := 0 to Pred(Count) do
-    ArrayItems[Index] := DeserializeType(ArrayElementType, Node.ParentNode.ChildNodes[Index]);
+  while Assigned(Node) and (Node.NodeName = NodeName) do
+  begin
+    var Index := Length(ArrayItems);
+
+    SetLength(ArrayItems, Succ(Index));
+
+    ArrayItems[Index] := DeserializeType(ArrayElementType, Node);
+
+    Node := Node.NextSibling;
+  end;
 
   Result := TValue.FromArray(RttiType.Handle, ArrayItems);
 {$ENDIF}
@@ -610,12 +616,13 @@ begin
     if Assigned(Prop) then
       Prop.SetValue(Instance, DeserializeType(Prop.PropertyType, ChildNode));
 
-    ChildNode := ChildNode.NextSibling;
+    if Assigned(ChildNode) then
+      ChildNode := ChildNode.NextSibling;
   end;
 {$ENDIF}
 end;
 
-function TBluePrintXMLSerializer.DeserializeType(const RttiType: TRttiType; const Node: IXMLNode): TValue;
+function TBluePrintXMLSerializer.DeserializeType(const RttiType: TRttiType; var Node: IXMLNode): TValue;
 begin
 {$IFDEF DCC}
   case RttiType.TypeKind of
@@ -655,8 +662,6 @@ begin
 
         DeserializeProperties(RttiType, Result.AsObject, Node);
       end;
-
-//    tkArray, tkDynArray: Result := DeserializeArray(RttiType, TJSONArray(JSONValue));
 
     tkMRecord,
     tkRecord:

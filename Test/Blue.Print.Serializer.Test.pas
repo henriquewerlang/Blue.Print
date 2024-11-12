@@ -157,6 +157,8 @@ type
     procedure WhenDeserializeAClassWithAnEnumeratorWithEnumValueAttributeMustLoadTheEnumaratorValueAsExpected;
     [Test]
     procedure WhenAnObjectPropertyIsNilCantLoadTheNodeInTheResultingXML;
+    [Test]
+    procedure WhenTheClassWithAnArrayPropertyMustStopLoadingTheArrayWhenTheNodeNameChangeTheName;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -324,6 +326,17 @@ type
     FMyArray: TArray<Integer>;
   published
     property MyArray: TArray<Integer> read FMyArray write FMyArray;
+  end;
+
+  TMyClassWithArrayAndMore = class
+  private
+    FMyArray: TArray<Integer>;
+    FProp1: Integer;
+    FProp2: String;
+  published
+    property MyArray: TArray<Integer> read FMyArray write FMyArray;
+    property Prop1: Integer read FProp1 write FProp1;
+    property Prop2: String read FProp2 write FProp2;
   end;
 
   [XMLNamespace('Another')]
@@ -1001,6 +1014,15 @@ begin
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document MyAttribute="MyValue"><MyProperty>abc</MyProperty></Document>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenTheClassWithAnArrayPropertyMustStopLoadingTheArrayWhenTheNodeNameChangeTheName;
+begin
+  var Value := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyArray>1</MyArray><MyArray>2</MyArray><MyArray>3</MyArray><Prop1>123</Prop1></Document>'#13#10, TypeInfo(TMyClassWithArrayAndMore)).AsType<TMyClassWithArrayAndMore>;
+
+  Assert.AreEqual(3, Length(Value.MyArray));
+
+  Value.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenTheParameterHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
