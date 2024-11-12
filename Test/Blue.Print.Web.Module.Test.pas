@@ -212,7 +212,7 @@ begin
 
   Handler.HandleException(MyException, Handled);
 
-  Assert.AreEqual<Integer>(500, FRequest.StatusCode);
+  Assert.AreEqual(500, FRequest.StatusCode);
 
   MyException.Free;
 end;
@@ -282,7 +282,7 @@ end;
 
 procedure TBluePrintWebModuleTest.WhenGetTheExceptionHandlerMustReturnTheCurrentInstanceOfTheWebService;
 begin
-  Assert.AreEqual<TObject>(FBluePrintWebModule, FWebAppServices.ExceptionHandler);
+  Assert.AreEqual(FBluePrintWebModule, FWebAppServices.ExceptionHandler);
 end;
 
 procedure TBluePrintWebModuleTest.WhenHandleAHTTPExceptionCanChangeTheStatusCodeFromTheResponse;
@@ -295,7 +295,7 @@ begin
 
   Handler.HandleException(MyException, Handled);
 
-  Assert.AreEqual<Integer>(525, FRequest.StatusCode);
+  Assert.AreEqual(525, FRequest.StatusCode);
 
   MyException.Free;
 end;
@@ -310,7 +310,7 @@ begin
 
   Handler.HandleException(MyException, Handled);
 
-  Assert.AreEqual<Integer>(404, FRequest.StatusCode);
+  Assert.AreEqual(404, FRequest.StatusCode);
 
   MyException.Free;
 end;
@@ -343,7 +343,7 @@ begin
 
   FWebAppServices.HandleRequest;
 
-  Assert.AreEqual<Integer>(204, FRequest.StatusCode);
+  Assert.AreEqual(204, FRequest.StatusCode);
 end;
 
 procedure TBluePrintWebModuleTest.WhenTheProcedureHasMoreTheOneVersionMustCheckTheParamCountToCallTheCorrectProcedure;
@@ -450,7 +450,7 @@ begin
 
   FWebAppServices.HandleRequest;
 
-  Assert.AreEqual<Integer>(200, FRequest.StatusCode);
+  Assert.AreEqual(200, FRequest.StatusCode);
 end;
 
 procedure TBluePrintWebModuleTest.WhenTheRequestIsTheRootURLMustReturnHandledToFalse;
@@ -476,7 +476,7 @@ end;
 
 procedure TBluePrintWebModuleTest.WhenTryToGetTheGetWebAppServicesMustReturnTheCurrentInstanceOfTheService;
 begin
-  Assert.AreEqual<TObject>(FBluePrintWebModule, TObject((FWebAppServices as IGetWebAppServices).GetWebAppServices));
+  Assert.AreEqual(FBluePrintWebModule, TObject((FWebAppServices as IGetWebAppServices).GetWebAppServices));
 end;
 
 { TMyService }

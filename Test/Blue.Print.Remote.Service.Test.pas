@@ -385,7 +385,7 @@ procedure TRemoteServiceTest.WhenCreateTheRemoteClassTheSerializerInTheParamsCan
 begin
   var RemoteClass := TRemoteService.Create(TypeInfo(IServiceNamed), TSerializerMock.Create);
 
-  Assert.AreEqual<TClass>(TSerializerMock, TObject(RemoteClass.Serializer).ClassType);
+  Assert.AreEqual(TSerializerMock, TObject(RemoteClass.Serializer).ClassType);
 
   RemoteClass.Free;
 end;
@@ -421,14 +421,14 @@ begin
 
   Service.SoapBodyMethod('Value');
 
-  Assert.AreEqual<PTypeInfo>(TypeInfo(TSOAPEnvelop), FSerializer.SerializeValue.TypeInfo);
+  Assert.AreEqual(TypeInfo(TSOAPEnvelop), FSerializer.SerializeValue.TypeInfo);
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasntTheSOAPServiceAttributeTheDefaultSerializerMustBeTheJSONSerializer;
 begin
   var RemoteClass := TRemoteService.Create(TypeInfo(IServiceNamed), nil);
 
-  Assert.AreEqual<TClass>(TBluePrintJsonSerializer, TObject(RemoteClass.Serializer).ClassType);
+  Assert.AreEqual(TBluePrintJsonSerializer, TObject(RemoteClass.Serializer).ClassType);
 
   RemoteClass.Free;
 end;
@@ -473,7 +473,7 @@ procedure TRemoteServiceTest.WhenTheInterfaceHasTheSOAPServiceAttributeTheDefaul
 begin
   var RemoteClass := TRemoteService.Create(TypeInfo(ISOAPService), nil);
 
-  Assert.AreEqual<TClass>(TBluePrintXMLSerializer, TObject(RemoteClass.Serializer).ClassType);
+  Assert.AreEqual(TBluePrintXMLSerializer, TObject(RemoteClass.Serializer).ClassType);
 
   RemoteClass.Free;
 end;

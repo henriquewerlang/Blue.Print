@@ -380,7 +380,7 @@ procedure TBluePrintSerializerTest.WhenDeserializeAnIntegerMustReturnTheIntegerV
 begin
   var Value := FSerializer.Deserialize('123', TypeInfo(Integer));
 
-  Assert.AreEqual<Integer>(123, Value.AsInteger);
+  Assert.AreEqual(123, Value.AsInteger);
 end;
 
 procedure TBluePrintSerializerTest.WhenDeserializeAStringMustReturnTheStringInTheReturnValue;
@@ -509,7 +509,7 @@ procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassReferenceMustLocateT
 begin
   var Value := FSerializer.Deserialize('"Blue.Print.Serializer.Test.TMyObject"', TypeInfo(TClass));
 
-  Assert.AreEqual<TClass>(TMyObject, Value.AsClass);
+  Assert.AreEqual(TMyObject, Value.AsClass);
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithAnEnumeratorWithEnumValueAttributeMustLoadTheEnumaratorValueAsExpected;
@@ -536,9 +536,9 @@ begin
 
   var MyObject := Value.AsType<TMyDateAndTimeClass>;
 
-  Assert.AreEqual<TDateTime>(EncodeDate(2024, 05, 21), MyObject.MyDate);
-  Assert.AreEqual<TDateTime>(EncodeDateTime(2024, 05, 21, 01, 02, 03, 000), MyObject.MyDateTime);
-  Assert.AreEqual<TDateTime>(EncodeTime(01, 02, 03, 000), MyObject.Mytime);
+  Assert.AreEqual(DateToStr(EncodeDate(2024, 05, 21)), DateToStr(MyObject.MyDate));
+  Assert.AreEqual(DateTimeToStr(EncodeDateTime(2024, 05, 21, 01, 02, 03, 000)), DateTimeToStr(MyObject.MyDateTime));
+  Assert.AreEqual(TimeToStr(EncodeTime(01, 02, 03, 000)), TimeToStr(MyObject.Mytime));
 
   MyObject.Free;
 end;
@@ -547,10 +547,10 @@ procedure TBluePrintJsonSerializerTest.WhenDeserializeAnArrayMustLoadTheArrayAsE
 begin
   var Value := FSerializer.Deserialize('[123,456,789]', TypeInfo(TArray<Integer>));
 
-  Assert.AreEqual<NativeInt>(3, Value.GetArrayLength);
-  Assert.AreEqual<Integer>(123, Value.GetArrayElement(0).AsInteger);
-  Assert.AreEqual<Integer>(456, Value.GetArrayElement(1).AsInteger);
-  Assert.AreEqual<Integer>(789, Value.GetArrayElement(2).AsInteger);
+  Assert.AreEqual(3, Value.GetArrayLength);
+  Assert.AreEqual(123, Value.GetArrayElement(0).AsInteger);
+  Assert.AreEqual(456, Value.GetArrayElement(1).AsInteger);
+  Assert.AreEqual(789, Value.GetArrayElement(2).AsInteger);
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAnObjectMustCreateAndLoadThePropertiesAsExpected;
@@ -559,8 +559,8 @@ begin
 
   Assert.IsNotNil(Value);
   Assert.AreEqual('abc', Value.MyProp1);
-  Assert.AreEqual<Integer>(123, Value.MyProp2);
-  Assert.AreEqual<Double>(123.456, Value.MyProp3);
+  Assert.AreEqual(123, Value.MyProp2);
+  Assert.AreEqual(123.456, Value.MyProp3);
   Assert.AreEqual(TMyEnum.MyValue, Value.MyProp4);
 
   Value.Free;
@@ -573,8 +573,8 @@ begin
   var Value := FSerializer.Deserialize('{"MyField1":"abc","MyField2":123,"MyField3":123.456,"MyField4":"MyValue2"}', TypeInfo(TMyRecord)).AsType<TMyRecord>;
 
   Assert.AreEqual('abc', Value.MyField1);
-  Assert.AreEqual<Integer>(123, Value.MyField2);
-  Assert.AreEqual<Double>(123.456, Value.MyField3);
+  Assert.AreEqual(123, Value.MyField2);
+  Assert.AreEqual(123.456, Value.MyField3);
   Assert.AreEqual(TMyEnum.MyValue2, Value.MyField4);
 end;
 
@@ -789,10 +789,10 @@ procedure TBluePrintXMLSerializerTest.WhenDeserializeAClassWithAnArrayPropertyMu
 begin
   var Value := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyArray>1</MyArray><MyArray>2</MyArray><MyArray>3</MyArray></Document>'#13#10, TypeInfo(TMyClassWithArray)).AsType<TMyClassWithArray>;
 
-  Assert.AreEqual<NativeInt>(3, Length(Value.MyArray));
-  Assert.AreEqual<NativeInt>(1, Value.MyArray[0]);
-  Assert.AreEqual<NativeInt>(2, Value.MyArray[1]);
-  Assert.AreEqual<NativeInt>(3, Value.MyArray[2]);
+  Assert.AreEqual(3, Length(Value.MyArray));
+  Assert.AreEqual(1, Value.MyArray[0]);
+  Assert.AreEqual(2, Value.MyArray[1]);
+  Assert.AreEqual(3, Value.MyArray[2]);
 
   Value.Free;
 end;
@@ -826,8 +826,8 @@ begin
 
   Assert.IsNotNil(Value);
   Assert.AreEqual('abc', Value.MyProp1);
-  Assert.AreEqual<Integer>(123, Value.MyProp2);
-  Assert.AreEqual<Double>(123.456, Value.MyProp3);
+  Assert.AreEqual(123, Value.MyProp2);
+  Assert.AreEqual(123.456, Value.MyProp3);
   Assert.AreEqual(TMyEnum.MyValue2, Value.MyProp4);
 
   Value.Free;
@@ -841,8 +841,8 @@ begin
 
   Assert.IsNotNil(Value);
   Assert.AreEqual('abc', Value.MyProp1);
-  Assert.AreEqual<Integer>(123, Value.MyProp2);
-  Assert.AreEqual<Double>(123.456, Value.MyProp3);
+  Assert.AreEqual(123, Value.MyProp2);
+  Assert.AreEqual(123.456, Value.MyProp3);
   Assert.AreEqual(TMyEnum.MyValue2, Value.MyProp4);
 
   Value.Free;
@@ -856,8 +856,8 @@ begin
 
   Assert.IsNotNil(Value);
   Assert.AreEqual('abc', Value.MyProp1);
-  Assert.AreEqual<Integer>(123, Value.MyProp2);
-  Assert.AreEqual<Double>(123.456, Value.MyProp3);
+  Assert.AreEqual(123, Value.MyProp2);
+  Assert.AreEqual(123.456, Value.MyProp3);
   Assert.AreEqual(TMyEnum.MyValue2, Value.MyProp4);
 
   Value.Free;
