@@ -132,8 +132,6 @@ type
     [Test]
     procedure WhenAClassHasAChildWithXMLAttributeMustLoadTheAttributeAsExpected;
     [Test]
-    procedure EvenTheChildClassPropertyIsEmptyMustLoadTheAttributesAsExpected;
-    [Test]
     procedure WhenAClassHasTheNamespaceAttributeTheChildNodesCantCleanUpTheNameSpace;
     [Test]
     procedure WhenDeserializeSOAPObjectMustCheckTheLocalNameFromTheNodeNotTheNodeName;
@@ -157,6 +155,8 @@ type
     procedure WhenThePropertyHasTheNamespaceAttributeMustLoadThisNameSpaceInTheXML;
     [Test]
     procedure WhenDeserializeAClassWithAnEnumeratorWithEnumValueAttributeMustLoadTheEnumaratorValueAsExpected;
+    [Test]
+    procedure WhenAnObjectPropertyIsNilCantLoadTheNodeInTheResultingXML;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -702,16 +702,6 @@ end;
 
 { TBluePrintXMLSerializerTest }
 
-procedure TBluePrintXMLSerializerTest.EvenTheChildClassPropertyIsEmptyMustLoadTheAttributesAsExpected;
-begin
-  var MyClass := TMyClassWithChildWithXMLAttribute.Create;
-  var Value := FSerializer.Serialize(MyClass);
-
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyProp MyAttribute="MyValue"/></Document>'#13#10, Value);
-
-  MyClass.Free;
-end;
-
 procedure TBluePrintXMLSerializerTest.OnlyPublishedPropertiesCantBeSerialized;
 begin
   var MyClass := TMyPublishedClass.Create;
@@ -736,7 +726,7 @@ begin
   var MyClass := TMyClassWithNamespaceParent.Create;
   MyClass.MyProp := TMyClassWithNamespace.Create;
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document xmlns="Another"><MyProp xmlns="MyNamespace"><MyProp/></MyProp></Document>'#13#10, FSerializer.Serialize(MyClass));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document xmlns="Another"><MyProp xmlns="MyNamespace"/></Document>'#13#10, FSerializer.Serialize(MyClass));
 
   MyClass.MyProp.Free;
 
@@ -783,6 +773,15 @@ begin
   MyClass.MyProp.Free;
 
   MyClass.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenAnObjectPropertyIsNilCantLoadTheNodeInTheResultingXML;
+begin
+  var MyObject := TMyObjectParent.Create;
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><Error></Error></Document>'#13#10, FSerializer.Serialize(MyObject));
+
+  MyObject.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenDeserializeAClassWithAnArrayPropertyMustLoadTheClassAsExpected;

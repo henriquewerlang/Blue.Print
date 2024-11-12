@@ -807,9 +807,14 @@ begin
   for var &Property in RttiType.GetProperties do
     if (&Property.Visibility = mvPublished) and System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).PropInfo) and not LoadAttributeValue(&Property, Instance, Node) then
     begin
-      var CurrentNamespace := GetNamespaceValue(&Property.PropertyType, Namespace);
+      var PropertyValue := &Property.GetValue(Instance);
 
-      SerializeType(&Property.PropertyType, &Property.GetValue(Instance), LoadAttributes(&Property, Node.AddChild(GetNodeName(&Property), CurrentNamespace)), CurrentNamespace);
+      if not PropertyValue.IsEmpty then
+      begin
+        var CurrentNamespace := GetNamespaceValue(&Property.PropertyType, Namespace);
+
+        SerializeType(&Property.PropertyType, PropertyValue, LoadAttributes(&Property, Node.AddChild(GetNodeName(&Property), CurrentNamespace)), CurrentNamespace);
+      end;
     end;
 {$ENDIF}
 end;
