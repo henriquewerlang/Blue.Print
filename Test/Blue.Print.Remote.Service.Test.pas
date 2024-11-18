@@ -114,6 +114,10 @@ type
     procedure WhenTheInterfaceIsASOAPServiceTheContentTypeMustBeTheSOAPContentType;
     [Test]
     procedure TheSOAPContentTypeMustBeAppendedTheActionValue;
+    [Test]
+    procedure WhenTheInterfaceHasTheHeaderAttributeMustLoadTheHeaderValueInTheRequest;
+    [Test]
+    procedure WhenTheMethodHasTheHeaderAttributeMustLoadTheHeaderValueInTheRequest;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -174,6 +178,8 @@ type
     procedure Service(const Serviçe: String);
   end;
 
+  [Header('InterfaceHeader', 'Interface Header')]
+  [Header('InterfaceHeader2', 'Interface Header 2')]
   IServiceTest = interface(IInvokable)
     ['{61DCD8A8-AD02-4EA3-AFC7-8425F7B12D6B}']
     function TestFunction: String;
@@ -201,6 +207,9 @@ type
     procedure TestPUT;
     procedure TestProcedure;
     procedure TestProcedureWithParam(Param1: String; Param2: Integer);
+    [Header('MethodHeader', 'Method Header')]
+    [Header('MethodHeader2', 'Method Header 2')]
+    procedure TestHeader;
   end;
 
   IInheritedServiceTest = interface(IServiceTest)
@@ -442,6 +451,16 @@ begin
   Assert.AreEqual('/Servi%C3%A7e/Proc', FCommunication.URL);
 end;
 
+procedure TRemoteServiceTest.WhenTheInterfaceHasTheHeaderAttributeMustLoadTheHeaderValueInTheRequest;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.TestGET;
+
+  Assert.AreEqual('Interface Header', FCommunication.Header['InterfaceHeader']);
+  Assert.AreEqual('Interface Header 2', FCommunication.Header['InterfaceHeader2']);
+end;
+
 procedure TRemoteServiceTest.WhenTheInterfaceHasTheRemoteNameMustSendThisNameInTheURLOfTheRequest;
 begin
   var Service := GetRemoteService<IServiceNamed>(EmptyStr);
@@ -540,6 +559,16 @@ begin
   Service.AuthorizationProcedure('My Value');
 
   Assert.AreEqual('/IServiceTest/AuthorizationProcedure', FCommunication.URL);
+end;
+
+procedure TRemoteServiceTest.WhenTheMethodHasTheHeaderAttributeMustLoadTheHeaderValueInTheRequest;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.TestHeader;
+
+  Assert.AreEqual('Method Header', FCommunication.Header['MethodHeader']);
+  Assert.AreEqual('Method Header 2', FCommunication.Header['MethodHeader2']);
 end;
 
 procedure TRemoteServiceTest.WhenTheMethodHasTheSOAPActionAttributeMustLoadTheHeaderWithTheAttributeName;

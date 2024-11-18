@@ -53,6 +53,7 @@ type
     function BuildRequestURL(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function EncodeValue(const Value: String): String;
     function GetAttribute<T: TCustomAttribute>(RttiObject: TRttiObject): T;
+    function GetAttributes<T: TCustomAttribute>(RttiObject: TRttiObject): TArray<T>;
     function GetParameterType(const Parameter: TRttiParameter): TParameterType;
     function GetRemoteMethodName(const Method: TRttiMethod): String;
     function GetRemoteName(const RttiObject: TRttiObject; const DefaultName: String): String;
@@ -168,10 +169,26 @@ end;
 
 function TRemoteService.GetAttribute<T>(RttiObject: TRttiObject): T;
 begin
-  repeat
-    Result := RttiObject.GetAttribute<T>;
-    RttiObject := RttiObject.Parent;
-  until Assigned(Result) or not Assigned(RttiObject);
+  var Attributes := GetAttributes<T>(RttiObject);
+
+  if Assigned(Attributes) then
+    Result := Attributes[0]
+  else
+    Result := nil;
+end;
+
+function TRemoteService.GetAttributes<T>(RttiObject: TRttiObject): TArray<T>;
+begin
+  Result := nil;
+
+  if Assigned(RttiObject) then
+  begin
+    for var Attribute in RttiObject.GetAttributes do
+      if Attribute is T then
+        Result := Result + [Attribute as T];
+
+    Result := Result + GetAttributes<T>(RttiObject.Parent);
+  end;
 end;
 
 function TRemoteService.GetParameterType(const Parameter: TRttiParameter): TParameterType;
@@ -310,7 +327,7 @@ end;
 
 procedure TRemoteService.LoadAuthorization(const Method: TRttiMethod; const Args: TArray<TValue>);
 begin
-   ForEachParam(Method, Args,
+  ForEachParam(Method, Args,
     procedure (Parameter: TRttiParameter; Value: TValue)
     var
       Authorization: AuthorizationAttribute;
@@ -366,8 +383,11 @@ var
 begin
   ContentType := GetAttribute<ContentTypeAttribute>(Method);
 
+  for var Attribute in GetAttributes<HeaderAttribute>(Method) do
+    Communication.Header[Attribute.Name] := Attribute.Value;
+
   if IsSOAPRequest then
-    Communication.Header[CONTENT_TYPE_HEADER] := Format('%s;action=%s', [ CONTENTTYPE_APPLICATION_SOAP_XML, GetSOAPActionName(Method)])
+    Communication.Header[CONTENT_TYPE_HEADER] := Format('%s;action=%s', [CONTENTTYPE_APPLICATION_SOAP_XML, GetSOAPActionName(Method)])
   else if Assigned(ContentType) then
     Communication.Header[CONTENT_TYPE_HEADER] := ContentType.ContentType
   else if LoadBodyContentType then
