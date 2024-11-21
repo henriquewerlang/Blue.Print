@@ -168,8 +168,11 @@ begin
 end;
 
 function TRemoteService.GetAttribute<T>(RttiObject: TRttiObject): T;
+var
+  Attributes: TArray<T>;
+
 begin
-  var Attributes := GetAttributes<T>(RttiObject);
+  Attributes := GetAttributes<T>(RttiObject);
 
   if Assigned(Attributes) then
     Result := Attributes[0]
@@ -178,12 +181,15 @@ begin
 end;
 
 function TRemoteService.GetAttributes<T>(RttiObject: TRttiObject): TArray<T>;
+var
+  Attribute: TCustomAttribute;
+
 begin
   Result := nil;
 
   if Assigned(RttiObject) then
   begin
-    for var Attribute in RttiObject.GetAttributes do
+    for Attribute in RttiObject.GetAttributes do
       if Attribute is T then
         Result := Result + [Attribute as T];
 
@@ -378,12 +384,13 @@ end;
 
 procedure TRemoteService.LoadRequestHeaders(const Method: TRttiMethod; const LoadBodyContentType: Boolean);
 var
+  Attribute: HeaderAttribute;
   ContentType: ContentTypeAttribute;
 
 begin
   ContentType := GetAttribute<ContentTypeAttribute>(Method);
 
-  for var Attribute in GetAttributes<HeaderAttribute>(Method) do
+  for Attribute in GetAttributes<HeaderAttribute>(Method) do
     Communication.Header[Attribute.Name] := Attribute.Value;
 
   if IsSOAPRequest then
