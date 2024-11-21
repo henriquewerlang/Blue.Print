@@ -159,6 +159,8 @@ type
     procedure WhenAnObjectPropertyIsNilCantLoadTheNodeInTheResultingXML;
     [Test]
     procedure WhenTheClassWithAnArrayPropertyMustStopLoadingTheArrayWhenTheNodeNameChangeTheName;
+    [Test]
+    procedure WhenTryToDeserializeAnEmptyXMLMustRaiseError;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -1088,6 +1090,15 @@ begin
     + '<SOAP-ENV:Body><MyParam xmlns="MySpace"></MyParam></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPRequest)));
 
   RttiContext.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenTryToDeserializeAnEmptyXMLMustRaiseError;
+begin
+  Assert.WillRaise(
+    procedure
+    begin
+      FSerializer.Deserialize(EmptyStr, TypeInfo(TMyClassWithArray));
+    end, EInvalidXMLDocument);
 end;
 
 end.

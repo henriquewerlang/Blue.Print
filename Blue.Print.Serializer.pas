@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Rtti, System.TypInfo, Blue.Print.Types, {$IFDEF PAS2JS}BrowserApi.Web, JSApi.JS{$ELSE}System.JSON, Xml.XMLIntf{$ENDIF};
+uses System.SysUtils, System.Rtti, System.TypInfo, Blue.Print.Types, {$IFDEF PAS2JS}BrowserApi.Web, JSApi.JS{$ELSE}System.JSON, Xml.XMLIntf{$ENDIF};
 
 type
 {$IFDEF PAS2JS}
@@ -15,6 +15,11 @@ type
   TJSONString = TJSString;
   TJSONValue = JSValue;
 {$ENDIF}
+
+  EInvalidXMLDocument = class(Exception)
+  public
+    constructor Create;
+  end;
 
   TBluePrintSerializer = class(TInterfacedObject)
   private
@@ -73,7 +78,7 @@ type
 
 implementation
 
-uses System.Classes, System.SysUtils, System.Generics.Collections, System.DateUtils{$IFDEF DCC}, Xml.XMLDoc, REST.Types{$ENDIF};
+uses System.Classes, System.Generics.Collections, System.DateUtils{$IFDEF DCC}, Xml.XMLDoc, REST.Types{$ENDIF};
 
 {$IFDEF PAS2JS}
 type
@@ -557,19 +562,24 @@ begin
 
       XML.LoadFromXML(Value);
 
-      var XMLNode := XML.DocumentElement;
-
-      if XMLNode.LocalName = 'Envelope' then
+      if Assigned(XML.DocumentElement) then
       begin
-        XMLNode := XMLNode.ChildNodes.First;
+        var XMLNode := XML.DocumentElement;
 
-        while XMLNode.LocalName <> 'Body' do
-          XMLNode := XMLNode.NextSibling;
+        if XMLNode.LocalName = 'Envelope' then
+        begin
+          XMLNode := XMLNode.ChildNodes.First;
 
-        XMLNode := XMLNode.ChildNodes.First;
-      end;
+          while XMLNode.LocalName <> 'Body' do
+            XMLNode := XMLNode.NextSibling;
 
-      Result := DeserializeType(FContext.GetType(TypeInfo), XMLNode);
+          XMLNode := XMLNode.ChildNodes.First;
+        end;
+
+        Result := DeserializeType(FContext.GetType(TypeInfo), XMLNode);
+      end
+      else
+        raise EInvalidXMLDocument.Create;
     end;
 
     else Result := inherited;
@@ -873,6 +883,13 @@ begin
     else Node.NodeValue := inherited Serialize(Value);
   end;
 {$ENDIF}
+end;
+
+{ EInvalidXMLDocument }
+
+constructor EInvalidXMLDocument.Create;
+begin
+  inherited Create('The XML is invalid!');
 end;
 
 end.
