@@ -615,19 +615,34 @@ begin
 end;
 
 procedure TBluePrintXMLSerializer.DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
+{$IFDEF DCC}
+
+  procedure LoadPropertyValue(var Node: IXMLNode);
+  begin
+    var Prop := RttiType.GetProperty(Node.NodeName);
+
+    if Assigned(Prop) then
+      Prop.SetValue(Instance, DeserializeType(Prop.PropertyType, Node));
+  end;
+
+{$ENDIF}
 begin
 {$IFDEF DCC}
   var ChildNode := Node.ChildNodes.First;
 
   while Assigned(ChildNode) do
   begin
-    var Prop := RttiType.GetProperty(ChildNode.NodeName);
-
-    if Assigned(Prop) then
-      Prop.SetValue(Instance, DeserializeType(Prop.PropertyType, ChildNode));
+    LoadPropertyValue(ChildNode);
 
     if Assigned(ChildNode) then
       ChildNode := ChildNode.NextSibling;
+  end;
+
+  for var A := 0 to Pred(Node.AttributeNodes.Count) do
+  begin
+    ChildNode := Node.AttributeNodes[A];
+
+    LoadPropertyValue(ChildNode);
   end;
 {$ENDIF}
 end;

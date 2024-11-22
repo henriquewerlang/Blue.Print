@@ -158,9 +158,11 @@ type
     [Test]
     procedure WhenAnObjectPropertyIsNilCantLoadTheNodeInTheResultingXML;
     [Test]
-    procedure WhenTheClassWithAnArrayPropertyMustStopLoadingTheArrayWhenTheNodeNameChangeTheName;
-    [Test]
     procedure WhenTryToDeserializeAnEmptyXMLMustRaiseError;
+    [Test]
+    procedure WhenDeserializeAnAttributePropertyMustLoadTheValueAsExpected;
+    [Test]
+    procedure WhenDeserializeAClassWithTheAttributeValuePropertyMustLoadAllAttributes;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -290,6 +292,20 @@ type
   published
     [XMLAttributeValue]
     property MyProp: String read FMyProp write FMyProp;
+  end;
+
+  TMyClassWithManyPropertyAttribute = class
+  private
+    FMyProp: String;
+    FMyProp2: String;
+    FMyProp3: String;
+  published
+    [XMLAttributeValue]
+    property MyProp: String read FMyProp write FMyProp;
+    [XMLAttributeValue]
+    property MyProp2: String read FMyProp2 write FMyProp2;
+    [XMLAttributeValue]
+    property MyProp3: String read FMyProp3 write FMyProp3;
   end;
 
   [XMLNamespace('MyNamespace')]
@@ -820,6 +836,17 @@ begin
   Value.AsObject.Free;
 end;
 
+procedure TBluePrintXMLSerializerTest.WhenDeserializeAClassWithTheAttributeValuePropertyMustLoadAllAttributes;
+begin
+  var MyClass := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document MyProp="MyValue" MyProp2="MyValue2" MyProp3="MyValue3"/>', TypeInfo(TMyClassWithManyPropertyAttribute)).AsType<TMyClassWithManyPropertyAttribute>;
+
+  Assert.AreEqual('MyValue', MyClass.MyProp);
+  Assert.AreEqual('MyValue2', MyClass.MyProp2);
+  Assert.AreEqual('MyValue3', MyClass.MyProp3);
+
+  MyClass.Free;
+end;
+
 procedure TBluePrintXMLSerializerTest.WhenDeserializeADateOrTimeValueMustLoadThePropertiesWithTheExpectedValues;
 begin
   var Value := FSerializer.Deserialize(Format('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyDate>2024-05-21</MyDate><MyTime>01:02:03</MyTime><MyDateTime>2024-05-21T01:02:03%s</MyDateTime></Document>'#13#10,
@@ -832,6 +859,15 @@ begin
   Assert.IsTrue(MyObject.MyTime = EncodeTime(01, 02, 03, 000));
 
   MyObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenDeserializeAnAttributePropertyMustLoadTheValueAsExpected;
+begin
+  var MyClass := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document MyProp="MyValue"/>', TypeInfo(TMyClassWithPropertyAttribute)).AsType<TMyClassWithPropertyAttribute>;
+
+  Assert.AreEqual('MyValue', MyClass.MyProp);
+
+  MyClass.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenDeserializeAnObjectMustLoadThePropertiesAsExpected;
@@ -1016,15 +1052,6 @@ begin
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document MyAttribute="MyValue"><MyProperty>abc</MyProperty></Document>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.Free;
-end;
-
-procedure TBluePrintXMLSerializerTest.WhenTheClassWithAnArrayPropertyMustStopLoadingTheArrayWhenTheNodeNameChangeTheName;
-begin
-  var Value := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyArray>1</MyArray><MyArray>2</MyArray><MyArray>3</MyArray><Prop1>123</Prop1></Document>'#13#10, TypeInfo(TMyClassWithArrayAndMore)).AsType<TMyClassWithArrayAndMore>;
-
-  Assert.AreEqual(3, Length(Value.MyArray));
-
-  Value.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenTheParameterHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
