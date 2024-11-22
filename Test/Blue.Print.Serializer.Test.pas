@@ -163,6 +163,8 @@ type
     procedure WhenDeserializeAnAttributePropertyMustLoadTheValueAsExpected;
     [Test]
     procedure WhenDeserializeAClassWithTheAttributeValuePropertyMustLoadAllAttributes;
+    [Test]
+    procedure WhenDeserializeAnArrayMustLoadAllPropertiesAfterItAsExpected;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -859,6 +861,26 @@ begin
   Assert.IsTrue(MyObject.MyTime = EncodeTime(01, 02, 03, 000));
 
   MyObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenDeserializeAnArrayMustLoadAllPropertiesAfterItAsExpected;
+begin
+  var Value := FSerializer.Deserialize(
+    '''
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Document>
+        <MyArray>1</MyArray>
+        <MyArray>2</MyArray>
+        <MyArray>3</MyArray>
+        <Prop1>123</Prop1>
+        <Prop2>abc</Prop2>
+    </Document>
+    ''', TypeInfo(TMyClassWithArrayAndMore)).AsType<TMyClassWithArrayAndMore>;
+
+  Assert.AreEqual(123, Value.Prop1);
+  Assert.AreEqual('abc', Value.Prop2);
+
+  Value.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenDeserializeAnAttributePropertyMustLoadTheValueAsExpected;

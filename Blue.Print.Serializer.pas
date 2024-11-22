@@ -66,8 +66,8 @@ type
     function LoadAttributeValue(const Member: TRttiDataMember; const Instance: TObject; const Node: IXMLNode): Boolean;
     function Serialize(const Value: TValue): String;
   protected
-    function DeserializeArray(const RttiType: TRttiType; var Node: IXMLNode): TValue;
-    function DeserializeType(const RttiType: TRttiType; var Node: IXMLNode): TValue;
+    function DeserializeArray(const RttiType: TRttiType; const Node: IXMLNode): TValue;
+    function DeserializeType(const RttiType: TRttiType; const Node: IXMLNode): TValue;
 
     procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
     procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode; const Namespace: String);
@@ -78,7 +78,7 @@ type
 
 implementation
 
-uses System.Classes, System.Generics.Collections, System.DateUtils{$IFDEF DCC}, Xml.XMLDoc, REST.Types{$ENDIF};
+uses System.Classes, System.Generics.Collections, System.SysConst, System.DateUtils{$IFDEF DCC}, Xml.XMLDoc, REST.Types{$ENDIF};
 
 {$IFDEF PAS2JS}
 type
@@ -111,6 +111,12 @@ const
   CONTENTTYPE_APPLICATION_XML = 'application/xml';
   CONTENTTYPE_TEXT_PLAIN = 'text/plain';
 {$ENDIF}
+
+type
+  TValueHelper = record helper for TValue
+  public
+    procedure SetArrayLength(const Value: NativeInt);
+  end;
 
 { TBluePrintSerializer }
 
@@ -587,42 +593,45 @@ begin
 {$ENDIF}
 end;
 
-function TBluePrintXMLSerializer.DeserializeArray(const RttiType: TRttiType; var Node: IXMLNode): TValue;
+function TBluePrintXMLSerializer.DeserializeArray(const RttiType: TRttiType; const Node: IXMLNode): TValue;
 begin
 {$IFDEF DCC}
   var ArrayElementType: TRttiType;
-  var ArrayItems: TArray<TValue> := nil;
-  var NodeName := Node.NodeName;
 
   if RttiType is TRttiArrayType then
     ArrayElementType := TRttiArrayType(RttiType).ElementType
   else
     ArrayElementType := TRttiDynamicArrayType(RttiType).ElementType;
 
-  while Assigned(Node) and (Node.NodeName = NodeName) do
-  begin
-    var Index := Length(ArrayItems);
-
-    SetLength(ArrayItems, Succ(Index));
-
-    ArrayItems[Index] := DeserializeType(ArrayElementType, Node);
-
-    Node := Node.NextSibling;
-  end;
-
-  Result := TValue.FromArray(RttiType.Handle, ArrayItems);
+  Result := DeserializeType(ArrayElementType, Node);
 {$ENDIF}
 end;
 
 procedure TBluePrintXMLSerializer.DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
 {$IFDEF DCC}
 
-  procedure LoadPropertyValue(var Node: IXMLNode);
+  procedure LoadPropertyValue(const Node: IXMLNode);
   begin
     var Prop := RttiType.GetProperty(Node.NodeName);
 
     if Assigned(Prop) then
-      Prop.SetValue(Instance, DeserializeType(Prop.PropertyType, Node));
+    begin
+      var Value := DeserializeType(Prop.PropertyType, Node);
+
+      if (Prop.PropertyType is TRttiArrayType) or (Prop.PropertyType is TRttiDynamicArrayType) then
+      begin
+        var PropertyValue := Prop.GetValue(Instance);
+        var ValueIndex := PropertyValue.GetArrayLength;
+
+        PropertyValue.SetArrayLength(Succ(ValueIndex));
+
+        PropertyValue.SetArrayElement(ValueIndex, Value);
+
+        Value := PropertyValue;
+      end;
+
+      Prop.SetValue(Instance, Value);
+    end;
   end;
 
 {$ENDIF}
@@ -639,15 +648,11 @@ begin
   end;
 
   for var A := 0 to Pred(Node.AttributeNodes.Count) do
-  begin
-    ChildNode := Node.AttributeNodes[A];
-
-    LoadPropertyValue(ChildNode);
-  end;
+    LoadPropertyValue(Node.AttributeNodes[A]);
 {$ENDIF}
 end;
 
-function TBluePrintXMLSerializer.DeserializeType(const RttiType: TRttiType; var Node: IXMLNode): TValue;
+function TBluePrintXMLSerializer.DeserializeType(const RttiType: TRttiType; const Node: IXMLNode): TValue;
 begin
 {$IFDEF DCC}
   case RttiType.TypeKind of
@@ -905,6 +910,20 @@ end;
 constructor EInvalidXMLDocument.Create;
 begin
   inherited Create('The XML is invalid!');
+end;
+
+{ TValueHelper }
+
+procedure TValueHelper.SetArrayLength(const Value: NativeInt);
+begin
+  if TypeInfo{$IFDEF DCC}^{$ENDIF}.Kind <> tkDynArray then
+    raise EInvalidCast.{$IFDEF PAS2JS}Create(SErrInvalidTypecast){$ELSE}CreateRes(@SInvalidCast){$ENDIF};
+
+{$IFDEF PAS2JS}
+  SetArrayLength(Size);
+{$ELSE}
+  DynArraySetLength(PPointer(GetReferenceToRawData)^, TypeInfo, 1, @Value);
+{$ENDIF}
 end;
 
 end.
