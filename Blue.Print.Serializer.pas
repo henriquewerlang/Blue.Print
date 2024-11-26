@@ -78,7 +78,7 @@ type
 
 implementation
 
-uses System.Classes, System.Generics.Collections, System.SysConst, System.DateUtils{$IFDEF DCC}, Xml.XMLDoc, REST.Types{$ENDIF};
+uses System.Classes, System.Generics.Collections, System.DateUtils, {$IFDEF DCC}System.SysConst, Xml.XMLDoc, REST.Types{$ELSE}System.RTLConsts{$ENDIF};
 
 {$IFDEF PAS2JS}
 type
@@ -920,7 +920,7 @@ begin
     raise EInvalidCast.{$IFDEF PAS2JS}Create(SErrInvalidTypecast){$ELSE}CreateRes(@SInvalidCast){$ENDIF};
 
 {$IFDEF PAS2JS}
-  SetArrayLength(Size);
+  SetArrayLength(Value);
 {$ELSE}
   DynArraySetLength(PPointer(GetReferenceToRawData)^, TypeInfo, 1, @Value);
 {$ENDIF}
