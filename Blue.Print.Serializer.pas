@@ -49,7 +49,7 @@ type
   protected
     function DeserializeArray(const RttiType: TRttiType; const JSONArray: TJSONArray): TValue;
     function DeserializeClassReference(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
-    function DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
+    function DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue; virtual;
     function SerializeArray(const RttiType: TRttiType; const Value: TValue): TJSONArray;
     function SerializeType(const RttiType: TRttiType; Value: TValue): TJSONValue; virtual;
 
