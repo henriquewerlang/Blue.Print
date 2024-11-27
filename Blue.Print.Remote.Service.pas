@@ -175,7 +175,7 @@ begin
   Attributes := GetAttributes<T>(RttiObject);
 
   if Assigned(Attributes) then
-    Result := Attributes[0]
+    Result := Attributes[0] as T
   else
     Result := nil;
 end;
