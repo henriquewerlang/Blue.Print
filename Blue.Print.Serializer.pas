@@ -14,6 +14,8 @@ type
   TJSONObject = TJSObject;
   TJSONString = TJSString;
   TJSONValue = JSValue;
+{$ELSE}
+  TJSONValue = System.JSON.TJSONValue;
 {$ENDIF}
 
   EInvalidXMLDocument = class(Exception)
