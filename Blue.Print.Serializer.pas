@@ -51,7 +51,7 @@ type
     function DeserializeClassReference(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
     function DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue; virtual;
     function SerializeArray(const RttiType: TRttiType; const Value: TValue): TJSONArray;
-    function SerializeType(const RttiType: TRttiType; Value: TValue): TJSONValue; virtual;
+    function SerializeType(const RttiType: TRttiType; const Value: TValue): TJSONValue; virtual;
 
     procedure DeserializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
     procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
@@ -302,7 +302,7 @@ begin
       JSONObject.AddPair(&Property.Name, SerializeType(&Property.PropertyType, &Property.GetValue(Instance)));
 end;
 
-function TBluePrintJsonSerializer.SerializeType(const RttiType: TRttiType; Value: TValue): TJSONValue;
+function TBluePrintJsonSerializer.SerializeType(const RttiType: TRttiType; const Value: TValue): TJSONValue;
 
   function CreateJSONObject: TJSONObject;
   begin
@@ -371,11 +371,7 @@ begin
     tkRecord:
     begin
       if Value.TypeInfo = TypeInfo(TValue) then
-      begin
-        Value := Value.AsType<TValue>;
-
-        Result := SerializeType(FContext.GetType(Value.TypeInfo), Value)
-      end
+        Result := SerializeType(FContext.GetType(Value.AsType<TValue>().TypeInfo), Value.AsType<TValue>())
       else
       begin
         Result := CreateJSONObject;
