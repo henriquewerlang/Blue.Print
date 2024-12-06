@@ -360,7 +360,7 @@ begin
       begin
         Result := CreateJSONObject;
 
-        SerializeProperties(FContext.GetType(Value.AsObject.ClassType), Value.AsObject, TJSONObject(Result));
+        SerializeProperties(FContext.GetType(Value.TypeInfo), Value.AsObject, TJSONObject(Result));
       end;
 
     tkArray, tkDynArray: Result := SerializeArray(RttiType, Value);
@@ -877,7 +877,7 @@ begin
 
       if not Value.IsEmpty then
       begin
-        var ClassType := FContext.GetType(Value.AsObject.ClassType);
+        var ClassType := FContext.GetType(Value.TypeInfo);
 
         SerializeProperties(ClassType, Value.AsObject, Node, GetNamespaceValue(ClassType, Namespace));
       end;
