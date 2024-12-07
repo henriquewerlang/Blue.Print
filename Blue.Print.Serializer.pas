@@ -230,7 +230,7 @@ begin
 {$IFDEF PAS2JS}
     tkBool,
 {$ENDIF}
-    tkEnumeration: Result := GetEnumerationNames(Value.TypeInfo)[Value.AsOrdinal];
+    tkEnumeration: Result := GetEnumerationNames(Value.TypeInfo)[Value.AsOrdinal()];
 
     else Result := EmptyStr;
   end;
