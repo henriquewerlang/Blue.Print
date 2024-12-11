@@ -118,6 +118,8 @@ type
     procedure WhenTheInterfaceHasTheHeaderAttributeMustLoadTheHeaderValueInTheRequest;
     [Test]
     procedure WhenTheMethodHasTheHeaderAttributeMustLoadTheHeaderValueInTheRequest;
+    [Test]
+    procedure WhenFillAHeaderWithTheIHeadersInterfaceMustLoadTheValueInTheHeaderOfTheCommunication;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -397,6 +399,15 @@ begin
   Assert.AreEqual(TSerializerMock, TObject(RemoteClass.Serializer).ClassType);
 
   RemoteClass.Free;
+end;
+
+procedure TRemoteServiceTest.WhenFillAHeaderWithTheIHeadersInterfaceMustLoadTheValueInTheHeaderOfTheCommunication;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr) as IHeaders;
+
+  Service.Header['MyHeader'] := 'My Value';
+
+  Assert.AreEqual('My Value', FCommunication.Header['MyHeader']);
 end;
 
 procedure TRemoteServiceTest.WhenGetServiceMustReturnTheInterfaceFilled;

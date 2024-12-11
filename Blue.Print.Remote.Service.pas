@@ -13,6 +13,13 @@ type
     property Value: String write SetAuthorizationValue;
   end;
 
+  IHeaders = interface
+    ['{A21DC397-0661-4FFE-A4DF-609FE127C1FD}']
+    procedure SetHeader(const HeaderName, Value: String);
+
+    property Header[const HeaderName: String]: String write SetHeader;
+  end;
+
   IHTTPCommunication = interface
     ['{8E39F66A-C72B-4314-80B1-D24F1AF4F247}']
     procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
@@ -42,7 +49,7 @@ type
     destructor Destroy; override;
   end;
 
-  TRemoteService = class(TVirtualInterface, IAuthorization)
+  TRemoteService = class(TVirtualInterface, IAuthorization, IHeaders)
   private
     FCommunication: IHTTPCommunication;
     FContext: TRttiContext;
@@ -74,6 +81,9 @@ type
     procedure LoadRequestHeaders(const Method: TRttiMethod; const LoadBodyContentType: Boolean);
     procedure SetAuthorizationValue(const Value: String);
     procedure SetCertificate(const Value: TStream; const Password: String);
+    procedure SetHeader(const HeaderName, Value: String);
+
+    property Header[const HeaderName: String]: String write SetHeader;
   protected
     procedure OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue); virtual;
 
@@ -342,7 +352,7 @@ begin
       Authorization := GetAttribute<AuthorizationAttribute>(Parameter);
 
       if Assigned(Authorization) then
-        Communication.Header[AUTHORIZATION_HEADER] := Value.ToString;
+        Header[AUTHORIZATION_HEADER] := Value.ToString;
     end);
 end;
 
@@ -391,14 +401,14 @@ begin
   ContentType := GetAttribute<ContentTypeAttribute>(Method);
 
   for Attribute in GetAttributes<HeaderAttribute>(Method) do
-    Communication.Header[Attribute.Name] := Attribute.Value;
+    Header[Attribute.Name] := Attribute.Value;
 
   if IsSOAPRequest then
-    Communication.Header[CONTENT_TYPE_HEADER] := Format('%s;action=%s', [CONTENTTYPE_APPLICATION_SOAP_XML, GetSOAPActionName(Method)])
+    Header[CONTENT_TYPE_HEADER] := Format('%s;action=%s', [CONTENTTYPE_APPLICATION_SOAP_XML, GetSOAPActionName(Method)])
   else if Assigned(ContentType) then
-    Communication.Header[CONTENT_TYPE_HEADER] := ContentType.ContentType
+    Header[CONTENT_TYPE_HEADER] := ContentType.ContentType
   else if LoadBodyContentType then
-    Communication.Header[CONTENT_TYPE_HEADER] := FSerializer.ContentType;
+    Header[CONTENT_TYPE_HEADER] := FSerializer.ContentType;
 end;
 
 procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
@@ -467,12 +477,17 @@ end;
 
 procedure TRemoteService.SetAuthorizationValue(const Value: String);
 begin
-  Communication.Header[AUTHORIZATION_HEADER] := Value;
+  Header[AUTHORIZATION_HEADER] := Value;
 end;
 
 procedure TRemoteService.SetCertificate(const Value: TStream; const Password: String);
 begin
   Communication.SetCertificate(Value, Password)
+end;
+
+procedure TRemoteService.SetHeader(const HeaderName, Value: String);
+begin
+  Communication.Header[HeaderName] := Value;
 end;
 
 { THTTPCommunication }
