@@ -164,13 +164,19 @@ type
   ContentTypeAttribute = class(TCustomAttribute)
   private
     FContentType: String;
+  public
+    constructor Create(const ContentType: String);
+
+    property ContentType: String read FContentType;
+  end;
+
+  CharSetAttribute = class(TCustomAttribute)
+  private
     FCharSet: String;
   public
-    constructor Create(const ContentType: String); overload;
-    constructor Create(const ContentType, CharSet: String); overload;
+    constructor Create(const CharSet: String);
 
-//    property CharSet: String read FCharSet;
-    property ContentType: String read FContentType;
+    property CharSet: String read FCharSet write FCharSet;
   end;
 
   AttachmentAttribute = class(ContentTypeAttribute)
@@ -364,13 +370,6 @@ begin
   FContentType := ContentType;
 end;
 
-constructor ContentTypeAttribute.Create(const ContentType, CharSet: String);
-begin
-  Create(ContentType);
-
-  FCharSet := CharSet;
-end;
-
 { AttachmentAttribute }
 
 constructor AttachmentAttribute.Create(const FileName, ContentType: String);
@@ -466,6 +465,13 @@ end;
 constructor OptionsAttribute.Create;
 begin
   inherited Create(TRequestMethod.Options);
+end;
+
+{ CharSetAttribute }
+
+constructor CharSetAttribute.Create(const CharSet: String);
+begin
+  FCharSet := CharSet;
 end;
 
 end.

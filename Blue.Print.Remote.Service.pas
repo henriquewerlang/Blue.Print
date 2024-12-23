@@ -395,11 +395,14 @@ end;
 procedure TRemoteService.LoadRequestHeaders(const Method: TRttiMethod; const LoadBodyContentType: Boolean);
 var
   Attribute: HeaderAttribute;
+  CharSet: String;
+  CharSetAttr: CharSetAttribute;
   ContentTypeAttr: ContentTypeAttribute;
   ContentTypeText: String;
 
 begin
   ContentTypeAttr := GetAttribute<ContentTypeAttribute>(Method);
+  CharSetAttr := GetAttribute<CharSetAttribute>(Method);
 
   for Attribute in GetAttributes<HeaderAttribute>(Method) do
     Header[Attribute.Name] := Attribute.Value;
@@ -413,7 +416,15 @@ begin
   else
     ContentTypeText := CONTENTTYPE_TEXT_PLAIN;
 
-  Header[CONTENT_TYPE_HEADER] := ContentTypeText + ';charset=utf-8';
+  if Assigned(CharSetAttr) then
+    CharSet := CharSetAttr.CharSet
+  else
+    CharSet := 'utf-8';
+
+  if not CharSet.IsEmpty then
+    CharSet := ';charset=' + CharSet;
+
+  Header[CONTENT_TYPE_HEADER] := ContentTypeText + CharSet;
 end;
 
 procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);

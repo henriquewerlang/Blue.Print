@@ -35,6 +35,7 @@ type
     procedure TheRequestMethodMustBeTheSameOfTheAttributeOfTheMethod;
     [Test]
     procedure WhenTheMethodDontHaveARequestMethodAttributeTheDefaultMethodMustBePost;
+    [Test]
     procedure WhenTheMethodDontHaveARequestMethodAttributeAndTheInterfaceHasTheAttributeMustLoadTheRequestMethodFromTheInterface;
     [Test]
     procedure AfterLoadingTheRequestMustSendTheRequestToServer;
@@ -116,6 +117,10 @@ type
     procedure TheDefaultContentTypeMustBeTextPlain;
     [Test]
     procedure TheDefaultCharSetMustBeUTF8;
+    [Test]
+    procedure WhenTheInterfaceHasTheCharSetAttributeMustLoadTheCharSetInTheContentTypeHeader;
+    [Test]
+    procedure WhenTheCharSetAttributeIsEmptyCantLoadTheCharSetInTheContentHeader;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -237,6 +242,19 @@ type
   IEmptyServiceName = interface(IInvokable)
     ['{C79A8BD0-165A-4F59-8BE5-49BA0BCFFF5E}']
     procedure MyProc;
+  end;
+
+  [CharSet('MyCharSet')]
+  [ContentType('MyContent')]
+  ICharSetService = interface(IInvokable)
+    ['{2364944D-3643-4650-840C-A0237661E7AD}']
+    procedure Execute;
+  end;
+
+  [CharSet('')]
+  ICharSetEmpty = interface(IInvokable)
+    ['{95A575E8-13E7-4604-8FCF-307A288C8E09}']
+    procedure Execute;
   end;
 
   [SoapService('MyService')]
@@ -458,6 +476,15 @@ begin
   Assert.AreEqual(TypeInfo(TSOAPEnvelop), FSerializer.SerializeValue.TypeInfo);
 end;
 
+procedure TRemoteServiceTest.WhenTheCharSetAttributeIsEmptyCantLoadTheCharSetInTheContentHeader;
+begin
+  var Service := GetRemoteService<ICharSetEmpty>(EmptyStr);
+
+  Service.Execute;
+
+  Assert.AreEqual('text/plain', FCommunication.Header['Content-Type']);
+end;
+
 procedure TRemoteServiceTest.WhenTheInterfaceHasntTheSOAPServiceAttributeTheDefaultSerializerMustBeTheJSONSerializer;
 begin
   var RemoteClass := TRemoteService.Create(TypeInfo(IServiceNamed), nil);
@@ -474,6 +501,15 @@ begin
   Service.Proc;
 
   Assert.AreEqual('/Servi%C3%A7e/Proc', FCommunication.URL);
+end;
+
+procedure TRemoteServiceTest.WhenTheInterfaceHasTheCharSetAttributeMustLoadTheCharSetInTheContentTypeHeader;
+begin
+  var Service := GetRemoteService<ICharSetService>(EmptyStr);
+
+  Service.Execute;
+
+  Assert.AreEqual('MyContent;charset=MyCharSet', FCommunication.Header['Content-Type']);
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasTheHeaderAttributeMustLoadTheHeaderValueInTheRequest;
