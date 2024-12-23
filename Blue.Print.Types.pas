@@ -82,6 +82,11 @@ type
     constructor Create;
   end;
 
+  OptionsAttribute = class(TRequestMethodAttribute)
+  public
+    constructor Create;
+  end;
+
   EnumValueAttribute = class(TCustomAttribute)
   private
     FNames: TArray<String>;
@@ -164,7 +169,7 @@ type
     constructor Create(const ContentType: String); overload;
     constructor Create(const ContentType, CharSet: String); overload;
 
-    property CharSet: String read FCharSet;
+//    property CharSet: String read FCharSet;
     property ContentType: String read FContentType;
   end;
 
@@ -454,6 +459,13 @@ end;
 constructor EnumValueAttribute.Create(const Values, ValueSeparator: String);
 begin
   FNames := Values.Split([ValueSeparator]);
+end;
+
+{ OptionsAttribute }
+
+constructor OptionsAttribute.Create;
+begin
+  inherited Create(TRequestMethod.Options);
 end;
 
 end.

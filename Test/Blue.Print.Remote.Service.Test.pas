@@ -31,17 +31,11 @@ type
     procedure WhenTheInterfaceHasTheRemoteNameMustSendThisNameInTheURLOfTheRequest;
     [Test]
     procedure WhenTheProcedureHasTheRemoteNameAttributeMustSendThisNameInTheURLOfThRequest;
-    [TestCase('DELETE', 'TestDelete', 'TRequestMethod.Delete')]
-    [TestCase('GET', 'TestGet', 'TRequestMethod.Get')]
-    [TestCase('PATCH', 'TestPatch', 'TRequestMethod.Patch')]
-    [TestCase('POST', 'TestPost', 'TRequestMethod.Post')]
-    [TestCase('PUT', 'TestPut', 'TRequestMethod.Put')]
-    procedure TheRequestMethodMustBeTheSameOfTheAttributeOfTheMethod(const MethodName: String; const RequestType: TRequestMethod);
+    [Test]
+    procedure TheRequestMethodMustBeTheSameOfTheAttributeOfTheMethod;
     [Test]
     procedure WhenTheMethodDontHaveARequestMethodAttributeTheDefaultMethodMustBePost;
-    [TestCase('PATCH', 'IServicePatch', 'TRequestMethod.Patch')]
-    [TestCase('POST', 'IServiceParams', 'TRequestMethod.Get')]
-    procedure WhenTheMethodDontHaveARequestMethodAttributeAndTheInterfaceHasTheAttributeMustLoadTheRequestMethodFromTheInterface(const InterfaceName: String; const RequestType: TRequestMethod);
+    procedure WhenTheMethodDontHaveARequestMethodAttributeAndTheInterfaceHasTheAttributeMustLoadTheRequestMethodFromTheInterface;
     [Test]
     procedure AfterLoadingTheRequestMustSendTheRequestToServer;
     [Test]
@@ -209,6 +203,8 @@ type
     procedure TestPOST;
     [PUT]
     procedure TestPUT;
+    [OPTIONS]
+    procedure TestOPTIONS;
     procedure TestProcedure;
     procedure TestProcedureWithParam(Param1: String; Param2: Integer);
     [Header('MethodHeader', 'Method Header')]
@@ -319,14 +315,21 @@ begin
   Assert.AreEqual('/IServiceTest/TestProcedureWithParam/?Param1=abc&Param2=123', FCommunication.URL);
 end;
 
-procedure TRemoteServiceTest.TheRequestMethodMustBeTheSameOfTheAttributeOfTheMethod(const MethodName: String; const RequestType: TRequestMethod);
+procedure TRemoteServiceTest.TheRequestMethodMustBeTheSameOfTheAttributeOfTheMethod;
+const
+  METHOD_NAME: array[TRequestMethod] of String = ('TestDelete', 'TestGet', 'TestPatch', 'TestPost', 'TestPut', 'TestOptions');
+
 begin
   var Context := TRttiContext.Create;
-  var Service := GetRemoteService<IServiceTest>(EmptyStr);
 
-  Context.GetType(TypeInfo(IServiceTest)).GetMethod(MethodName).Invoke(TValue.From(Service), []);
+  for var RequestType := Succ(Low(TRequestMethod)) to High(TRequestMethod) do
+  begin
+    var Service := GetRemoteService<IServiceTest>(EmptyStr);
 
-  Assert.AreEqual(RequestType, FCommunication.RequestMethod);
+    Context.GetType(TypeInfo(IServiceTest)).GetMethod(METHOD_NAME[RequestType]).Invoke(TValue.From(Service), []);
+
+    Assert.AreEqual(RequestType, FCommunication.RequestMethod);
+  end;
 
   Context.Free;
 end;
@@ -546,23 +549,13 @@ begin
   Assert.StartWith('application/soap+xml', FCommunication.Header['Content-Type']);
 end;
 
-procedure TRemoteServiceTest.WhenTheMethodDontHaveARequestMethodAttributeAndTheInterfaceHasTheAttributeMustLoadTheRequestMethodFromTheInterface(const InterfaceName: String;
-  const RequestType: TRequestMethod);
+procedure TRemoteServiceTest.WhenTheMethodDontHaveARequestMethodAttributeAndTheInterfaceHasTheAttributeMustLoadTheRequestMethodFromTheInterface;
 begin
-  if InterfaceName = 'IServicePatch' then
-  begin
-    var Service := GetRemoteService<IServicePatch>(EmptyStr);
+  var Service := GetRemoteService<IServicePatch>(EmptyStr);
 
-    Service.TestProcedure;
-  end
-  else
-  begin
-    var Service := GetRemoteService<IServiceNamed>(EmptyStr);
+  Service.TestProcedure;
 
-    Service.Proc;
-  end;
-
-  Assert.AreEqual(RequestType, FCommunication.RequestMethod);
+  Assert.AreEqual(TRequestMethod.Patch, FCommunication.RequestMethod);
 end;
 
 procedure TRemoteServiceTest.WhenTheMethodDontHaveARequestMethodAttributeTheDefaultMethodMustBePost;
