@@ -107,8 +107,6 @@ type
     [Test]
     procedure WhenTheProcedureHasTheContentTypeAttributeMustLoadTheValueFromAttributeNotFromTheSerializer;
     [Test]
-    procedure WhenCallAProcedureWithoutBodyParamCantLoadTheContentTypeOfTheRequest;
-    [Test]
     procedure WhenLoadTheAuthorizationInformationMustLoadTheAuthorizationHeaderWithThisValue;
     [Test]
     procedure WhenTheInterfaceIsASOAPServiceTheContentTypeMustBeTheSOAPContentType;
@@ -120,6 +118,10 @@ type
     procedure WhenTheMethodHasTheHeaderAttributeMustLoadTheHeaderValueInTheRequest;
     [Test]
     procedure WhenFillAHeaderWithTheIHeadersInterfaceMustLoadTheValueInTheHeaderOfTheCommunication;
+    [Test]
+    procedure TheDefaultContentTypeMustBeTextPlain;
+    [Test]
+    procedure TheDefaultCharSetMustBeUTF8;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -290,6 +292,24 @@ begin
   FSerializerInterface := nil;
 end;
 
+procedure TRemoteServiceTest.TheDefaultCharSetMustBeUTF8;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.ParameterInPath('', 0);
+
+  Assert.IsTrue(FCommunication.Header['Content-Type'].EndsWith(';charset=utf-8'));
+end;
+
+procedure TRemoteServiceTest.TheDefaultContentTypeMustBeTextPlain;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.ParameterInPath('', 0);
+
+  Assert.IsTrue(FCommunication.Header['Content-Type'].StartsWith(CONTENTTYPE_TEXT_PLAIN));
+end;
+
 procedure TRemoteServiceTest.TheParamsOfTheProcedureMustBeLoadedInTheQueryByDefault;
 begin
   var Service := GetRemoteService<IServiceTest>(EmptyStr);
@@ -326,7 +346,7 @@ begin
 
   Service.SoapNamedMethod;
 
-  Assert.AreEqual('application/soap+xml;action=MyService/MyAction', FCommunication.Header['Content-Type']);
+  Assert.AreEqual('application/soap+xml;action=MyService/MyAction;charset=utf-8', FCommunication.Header['Content-Type']);
 end;
 
 procedure TRemoteServiceTest.WhenAFunctionIsCalledMustDeserializeTheValueBeforeReturingTheValueForTheCaller;
@@ -372,15 +392,6 @@ begin
   Service.TestProcedure;
 
   Assert.IsFalse(FSerializer.DeserializeCalled);
-end;
-
-procedure TRemoteServiceTest.WhenCallAProcedureWithoutBodyParamCantLoadTheContentTypeOfTheRequest;
-begin
-  var Service := GetRemoteService<IServiceTest>(EmptyStr);
-
-  Service.ParameterInPath('', 0);
-
-  Assert.AreEqual(EmptyStr, FCommunication.Header['Content-Type']);
 end;
 
 procedure TRemoteServiceTest.WhenCallARemoteServiceMustBuildTheURLAsExpected;
@@ -487,7 +498,7 @@ begin
 
   Service.SoapNamedMethod;
 
-  Assert.AreEqual('application/soap+xml;action=MyService/MyAction', FCommunication.Header['Content-Type']);
+  Assert.AreEqual('application/soap+xml;action=MyService/MyAction;charset=utf-8', FCommunication.Header['Content-Type']);
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasTheSoapServiceAttributeMustLoadTheContentTypeHeaderWithTheSoapContentTypeValue;
@@ -523,7 +534,7 @@ begin
 
   Service.SoapMethod;
 
-  Assert.AreEqual('application/soap+xml;action=MyService/SoapMethod', FCommunication.Header['Content-Type']);
+  Assert.AreEqual('application/soap+xml;action=MyService/SoapMethod;charset=utf-8', FCommunication.Header['Content-Type']);
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceIsASOAPServiceTheContentTypeMustBeTheSOAPContentType;
@@ -588,7 +599,7 @@ begin
 
   Service.SoapNamedMethod;
 
-  Assert.AreEqual('application/soap+xml;action=MyService/MyAction', FCommunication.Header['Content-Type']);
+  Assert.AreEqual('application/soap+xml;action=MyService/MyAction;charset=utf-8', FCommunication.Header['Content-Type']);
 end;
 
 procedure TRemoteServiceTest.WhenTheParamHasThePathAttributeTheValueOfTheParamMustBeLoadedInTheURLOfTheRequest;
@@ -664,7 +675,7 @@ begin
 
   Service.FillContentType;
 
-  Assert.AreEqual('MyContent-Type', FCommunication.Header['Content-Type']);
+  Assert.AreEqual('MyContent-Type;charset=utf-8', FCommunication.Header['Content-Type']);
 end;
 
 procedure TRemoteServiceTest.WhenTheProcedureHasTheContentTypeAttributeMustLoadTheValueFromAttributeNotFromTheSerializer;
@@ -674,7 +685,7 @@ begin
 
   Service.ParameterWithContentType(MyObject);
 
-  Assert.AreEqual('MyContent-Type', FCommunication.Header['Content-Type']);
+  Assert.AreEqual('MyContent-Type;charset=utf-8', FCommunication.Header['Content-Type']);
 
   MyObject.Free;
 end;
@@ -723,7 +734,7 @@ begin
 
   Service.ParameterMyObject(MyObject);
 
-  Assert.AreEqual('serializer/content', FCommunication.Header['Content-Type']);
+  Assert.AreEqual('serializer/content;charset=utf-8', FCommunication.Header['Content-Type']);
 
   MyObject.Free;
 end;

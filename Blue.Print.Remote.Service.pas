@@ -395,20 +395,25 @@ end;
 procedure TRemoteService.LoadRequestHeaders(const Method: TRttiMethod; const LoadBodyContentType: Boolean);
 var
   Attribute: HeaderAttribute;
-  ContentType: ContentTypeAttribute;
+  ContentTypeAttr: ContentTypeAttribute;
+  ContentTypeText: String;
 
 begin
-  ContentType := GetAttribute<ContentTypeAttribute>(Method);
+  ContentTypeAttr := GetAttribute<ContentTypeAttribute>(Method);
 
   for Attribute in GetAttributes<HeaderAttribute>(Method) do
     Header[Attribute.Name] := Attribute.Value;
 
   if IsSOAPRequest then
-    Header[CONTENT_TYPE_HEADER] := Format('%s;action=%s', [CONTENTTYPE_APPLICATION_SOAP_XML, GetSOAPActionName(Method)])
-  else if Assigned(ContentType) then
-    Header[CONTENT_TYPE_HEADER] := ContentType.ContentType
+    ContentTypeText := Format('%s;action=%s', [CONTENTTYPE_APPLICATION_SOAP_XML, GetSOAPActionName(Method)])
+  else if Assigned(ContentTypeAttr) then
+    ContentTypeText := ContentTypeAttr.ContentType
   else if LoadBodyContentType then
-    Header[CONTENT_TYPE_HEADER] := FSerializer.ContentType;
+    ContentTypeText := FSerializer.ContentType
+  else
+    ContentTypeText := CONTENTTYPE_TEXT_PLAIN;
+
+  Header[CONTENT_TYPE_HEADER] := ContentTypeText + ';charset=utf-8';
 end;
 
 procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
