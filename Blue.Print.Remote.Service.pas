@@ -113,6 +113,7 @@ const
   CONTENT_TYPE_HEADER = 'Content-Type';
 {$IFDEF PAS2JS}
   CONTENTTYPE_APPLICATION_SOAP_XML = 'application/soap+xml';
+  CONTENTTYPE_TEXT_PLAIN = 'text/plain';
 {$ENDIF}
 
 {$IFDEF DCC}
