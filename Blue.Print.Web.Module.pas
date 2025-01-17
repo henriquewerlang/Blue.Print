@@ -253,8 +253,19 @@ begin
 
     if Assigned(Method.ReturnType) then
     begin
-      Response.Content := Serializer.Serialize(ReturnValue);
-      Response.ContentType := Serializer.ContentType;
+      if Method.ReturnType.IsInstance and Method.ReturnType.AsInstance.MetaclassType.InheritsFrom(TStream) then
+      begin
+        Response.ContentStream := ReturnValue.AsType<TStream>;
+
+        if Response.ContentStream is TBluePrintStream then
+          Response.ContentType := TBluePrintStream(Response.ContentStream).ContentType;
+      end
+      else
+      begin
+        Response.Content := Serializer.Serialize(ReturnValue);
+        Response.ContentType := Serializer.ContentType;
+      end;
+
       Response.StatusCode := HTTP_STATUS_OK;
     end
     else

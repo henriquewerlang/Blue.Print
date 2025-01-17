@@ -13,7 +13,7 @@ type
   private
     FBluePrintWebModule: TBluePrintWebModule;
     FMyService: TMyService;
-    FRequest: TWebResponse;
+    FReponse: TWebResponse;
     FSerializer: TSerializerMock;
     FWebAppServices: IWebAppServices;
 
@@ -79,14 +79,22 @@ type
     procedure WhenTheRequestHasABodyMustLoadTheBodyValueInTheLastParamFromTheMethod;
     [Test]
     procedure WhenReturningARequestMustLoadTheContentTypeFromTheSerializer;
+    [Test]
+    procedure WhenReturningAStreamInAFunctionCantRaiseAnyError;
+    [Test]
+    procedure WhenTheReturnIsAnTStreamClassMustLoadTheContentStreamPropertyInTheWebResponse;
+    [Test]
+    procedure WhenTheReturningStreamIsTheBluePrintStreamMustLoadTheContentValueAsExpected;
   end;
 
   TMyService = class
   private
+    FMyStream: TStream;
     FParamsOfProcedureCalled: String;
     FProcedureCalled: String;
   public
     function MyFunc: String;
+    function MyStream: TStream;
 
     procedure MyProc;
     procedure MyProc2(const Param1, Param2: String);
@@ -135,7 +143,7 @@ begin
 
   Handler.HandleException(MyException, Handled);
 
-  Assert.IsTrue(FRequest.Sent);
+  Assert.IsTrue(FReponse.Sent);
 
   MyException.Free;
 end;
@@ -169,7 +177,7 @@ begin
 
   FWebAppServices.HandleRequest;
 
-  Assert.AreEqual('abc', FRequest.Content);
+  Assert.AreEqual('abc', FReponse.Content);
 end;
 
 procedure TBluePrintWebModuleTest.IfTheMethodIsFoundMustCallTheProcedure;
@@ -197,9 +205,9 @@ end;
 
 procedure TBluePrintWebModuleTest.InitContext(const Request: TWebResponse);
 begin
-  FRequest := Request;
+  FReponse := Request;
 
-  FWebAppServices.InitContext(FBluePrintWebModule, FRequest.HTTPRequest, FRequest);
+  FWebAppServices.InitContext(FBluePrintWebModule, FReponse.HTTPRequest, FReponse);
 end;
 
 procedure TBluePrintWebModuleTest.OnceTheExceptionIsHandledTheStatusCodeMustBe500;
@@ -212,7 +220,7 @@ begin
 
   Handler.HandleException(MyException, Handled);
 
-  Assert.AreEqual(500, FRequest.StatusCode);
+  Assert.AreEqual(500, FReponse.StatusCode);
 
   MyException.Free;
 end;
@@ -236,7 +244,7 @@ begin
 
   FMyService.Free;
 
-  FreeAndNil(FRequest);
+  FreeAndNil(FReponse);
 end;
 
 procedure TBluePrintWebModuleTest.TheExceptionMessageMustBeInTheContentOfTheResponse;
@@ -249,7 +257,7 @@ begin
 
   Handler.HandleException(MyException, Handled);
 
-  Assert.AreEqual('Error', FRequest.Content);
+  Assert.AreEqual('Error', FReponse.Content);
 
   MyException.Free;
 end;
@@ -295,7 +303,7 @@ begin
 
   Handler.HandleException(MyException, Handled);
 
-  Assert.AreEqual(525, FRequest.StatusCode);
+  Assert.AreEqual(525, FReponse.StatusCode);
 
   MyException.Free;
 end;
@@ -310,7 +318,7 @@ begin
 
   Handler.HandleException(MyException, Handled);
 
-  Assert.AreEqual(404, FRequest.StatusCode);
+  Assert.AreEqual(404, FReponse.StatusCode);
 
   MyException.Free;
 end;
@@ -323,7 +331,18 @@ begin
 
   FWebAppServices.HandleRequest;
 
-  Assert.AreEqual('serializer/type', FRequest.ContentType);
+  Assert.AreEqual('serializer/type', FReponse.ContentType);
+end;
+
+procedure TBluePrintWebModuleTest.WhenReturningAStreamInAFunctionCantRaiseAnyError;
+begin
+  InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/MyService/MyStream')));
+
+  Assert.WillNotRaise(
+    procedure
+    begin
+      FWebAppServices.HandleRequest;
+    end);
 end;
 
 procedure TBluePrintWebModuleTest.WhenTheMethodCalledDontExistsMustRaiseENotFoundError;
@@ -343,7 +362,7 @@ begin
 
   FWebAppServices.HandleRequest;
 
-  Assert.AreEqual(204, FRequest.StatusCode);
+  Assert.AreEqual(204, FReponse.StatusCode);
 end;
 
 procedure TBluePrintWebModuleTest.WhenTheProcedureHasMoreTheOneVersionMustCheckTheParamCountToCallTheCorrectProcedure;
@@ -450,7 +469,7 @@ begin
 
   FWebAppServices.HandleRequest;
 
-  Assert.AreEqual(200, FRequest.StatusCode);
+  Assert.AreEqual(200, FReponse.StatusCode);
 end;
 
 procedure TBluePrintWebModuleTest.WhenTheRequestIsTheRootURLMustReturnHandledToFalse;
@@ -472,6 +491,26 @@ begin
 
   Assert.AreEqual('MyProc2', FMyService.ProcedureCalled);
   Assert.AreEqual('Value1,Value2', FMyService.ParamsOfProcedureCalled);
+end;
+
+procedure TBluePrintWebModuleTest.WhenTheReturningStreamIsTheBluePrintStreamMustLoadTheContentValueAsExpected;
+begin
+  FMyService.FMyStream := TBluePrintStream.Create(TMemoryStream.Create, 'MyContentType');
+
+  InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/MyService/MyStream')));
+
+  FWebAppServices.HandleRequest;
+
+  Assert.AreEqual('MyContentType', FReponse.ContentType);
+end;
+
+procedure TBluePrintWebModuleTest.WhenTheReturnIsAnTStreamClassMustLoadTheContentStreamPropertyInTheWebResponse;
+begin
+  InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/MyService/MyStream')));
+
+  FWebAppServices.HandleRequest;
+
+  Assert.AreEqual(FMyService.FMyStream, FReponse.ContentStream);
 end;
 
 procedure TBluePrintWebModuleTest.WhenTryToGetTheGetWebAppServicesMustReturnTheCurrentInstanceOfTheService;
@@ -496,6 +535,14 @@ procedure TMyService.MyProc2(const Param1, Param2: String);
 begin
   FProcedureCalled := 'MyProc2';
   ParamsOfProcedureCalled := Param1 + ',' + Param2;
+end;
+
+function TMyService.MyStream: TStream;
+begin
+  if not Assigned(FMyStream) then
+    FMyStream := TMemoryStream.Create;
+
+  Result := FMyStream;
 end;
 
 procedure TMyService.SameName;

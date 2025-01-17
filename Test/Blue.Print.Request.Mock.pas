@@ -231,7 +231,7 @@ end;
 
 function TWebResponseMock.GetStringVariable(Index: Integer): String;
 begin
-  Result := FStringVariables[Index];
+  FStringVariables.TryGetValue(Index, Result);
 end;
 
 procedure TWebResponseMock.SendRedirect(const URI: String);

@@ -219,6 +219,29 @@ type
 
   AuthorizationAttribute = class(TCustomAttribute);
 
+  TBluePrintStream = class(TStream)
+  private
+    FStream: TStream;
+    FContentType: String;
+  protected
+    function GetSize: {$IFDEF DCC}Int64{$ELSE}NativeInt{$ENDIF}; override;
+  public
+    constructor Create(const Stream: TStream; const ContentType: String);
+
+    destructor Destroy; override;
+
+    {$IFDEF PAS2JS}
+    function Read(Buffer: TBytes; Offset, Count: LongInt): LongInt; override;
+    function Write(const Buffer: TBytes; Offset, Count: LongInt): LongInt; override;
+    {$ELSE}
+    function Read(var Buffer; Count: TNativeCount): TNativeCount; overload; override;
+    function Seek(const Offset: Int64; Origin: TSeekOrigin): Int64; override;
+    function Write(const Buffer; Count: TNativeCount): TNativeCount; overload; override;
+    {$ENDIF}
+
+    property ContentType: String read FContentType;
+  end;
+
   TSOAPBody = record
   public
     Body: TValue;
@@ -442,6 +465,8 @@ end;
 
 constructor XMLAttributeAttribute.Create(const AttributeName, AttributeValue: String);
 begin
+  inherited Create;
+
   FAttributeName := AttributeName;
   FAttributeValue := AttributeValue;
 end;
@@ -450,6 +475,8 @@ end;
 
 constructor XMLNamespaceAttribute.Create(const Namespace: String);
 begin
+  inherited Create;
+
   FNamespace := Namespace;
 end;
 
@@ -457,6 +484,8 @@ end;
 
 constructor EnumValueAttribute.Create(const Values, ValueSeparator: String);
 begin
+  inherited Create;
+
   FNames := Values.Split([ValueSeparator]);
 end;
 
@@ -471,8 +500,59 @@ end;
 
 constructor CharSetAttribute.Create(const CharSet: String);
 begin
+  inherited Create;
+
   FCharSet := CharSet;
 end;
+
+{ TBluePrintStream }
+
+constructor TBluePrintStream.Create(const Stream: TStream; const ContentType: String);
+begin
+  inherited Create;
+
+  FContentType := ContentType;
+  FStream := Stream;
+end;
+
+destructor TBluePrintStream.Destroy;
+begin
+  FStream.Free;
+
+  inherited;
+end;
+
+function TBluePrintStream.GetSize: {$IFDEF DCC}Int64{$ELSE}NativeInt{$ENDIF};
+begin
+  Result := FStream.Size;
+end;
+
+{$IFDEF PAS2JS}
+function TBluePrintStream.Read(Buffer: TBytes; OffSet, Count: LongInt): LongInt;
+begin
+  Result := FStream.Read(Buffer, OffSet, Count);
+end;
+
+function TBluePrintStream.Write(const Buffer: TBytes; OffSet, Count: LongInt): LongInt;
+begin
+  Result := FStream.Write(Buffer, OffSet, Count);
+end;
+{$ELSE}
+function TBluePrintStream.Read(var Buffer; Count: TNativeCount): TNativeCount;
+begin
+  Result := FStream.Read(Buffer, Count);
+end;
+
+function TBluePrintStream.Seek(const Offset: Int64; Origin: TSeekOrigin): Int64;
+begin
+  Result := FStream.Seek(Offset, Origin);
+end;
+
+function TBluePrintStream.Write(const Buffer; Count: TNativeCount): TNativeCount;
+begin
+  Result := FStream.Write(Buffer, Count);
+end;
+{$ENDIF}
 
 end.
 
