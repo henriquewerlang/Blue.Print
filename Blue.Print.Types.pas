@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Rtti, System.Classes, System.SysUtils, System.TypInfo, {$IFDEF PAS2JS}BrowserAPI.Web{$ELSE}Web.HTTPApp, System.Net.Mime, System.NetEncoding{$ENDIF};
+uses System.Rtti, System.Classes, System.SysUtils, System.TypInfo, {$IFDEF PAS2JS}JSApi.JS, BrowserAPI.Web, BrowserApi.WebOrWorker{$ELSE}Web.HTTPApp, System.Net.Mime, System.NetEncoding{$ENDIF};
 
 {$SCOPEDENUMS ON}
 
@@ -221,10 +221,12 @@ type
 
   TBluePrintStream = class(TStream)
   private
-    FStream: TStream;
     FContentType: String;
+    FStream: TStream;
   protected
     function GetSize: {$IFDEF DCC}Int64{$ELSE}NativeInt{$ENDIF}; override;
+
+    procedure SetSize(const NewSize: {$IFDEF DCC}Int64{$ELSE}NativeInt{$ENDIF}); overload; override;
   public
     constructor Create(const Stream: TStream; const ContentType: String);
 
@@ -240,6 +242,23 @@ type
     {$ENDIF}
 
     property ContentType: String read FContentType;
+    property Stream: TStream read FStream;
+  end;
+
+  TBlobStream = class(TStream)
+{$IFDEF PAS2JS}
+  private
+    FBlob: TJSBlob;
+  protected
+    function GetSize: NativeInt; override;
+  public
+    constructor Create(const Blob: TJSBlob);
+
+    function Read(Buffer: TBytes; Offset, Count: LongInt): LongInt; override;
+    function Write(const Buffer: TBytes; Offset, Count: LongInt): LongInt; override;
+
+    property Blob: TJSBlob read FBlob;
+{$ENDIF}
   end;
 
   TSOAPBody = record
@@ -527,6 +546,11 @@ begin
   Result := FStream.Size;
 end;
 
+procedure TBluePrintStream.SetSize(const NewSize: {$IFDEF DCC}Int64{$ELSE}NativeInt{$ENDIF});
+begin
+  FStream.Size := NewSize;
+end;
+
 {$IFDEF PAS2JS}
 function TBluePrintStream.Read(Buffer: TBytes; OffSet, Count: LongInt): LongInt;
 begin
@@ -551,6 +575,32 @@ end;
 function TBluePrintStream.Write(const Buffer; Count: TNativeCount): TNativeCount;
 begin
   Result := FStream.Write(Buffer, Count);
+end;
+{$ENDIF}
+
+{$IFDEF PAS2JS}
+{ TBlobStream }
+
+constructor TBlobStream.Create(const Blob: TJSBlob);
+begin
+  inherited Create;
+
+  FBlob := Blob;
+end;
+
+function TBlobStream.GetSize: NativeInt;
+begin
+  Result := FBlob.Size;
+end;
+
+function TBlobStream.Read(Buffer: TBytes; Offset, Count: LongInt): LongInt;
+begin
+  ReadNotImplemented;
+end;
+
+function TBlobStream.Write(const Buffer: TBytes; Offset, Count: LongInt): LongInt;
+begin
+  WriteNotImplemented;
 end;
 {$ENDIF}
 

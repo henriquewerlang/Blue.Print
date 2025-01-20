@@ -22,7 +22,7 @@ type
 
   IHTTPCommunication = interface
     ['{8E39F66A-C72B-4314-80B1-D24F1AF4F247}']
-    procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
+    procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
     procedure SetCertificate(const Value: TStream; const Password: String);
     procedure SetHeader(const HeaderName, Value: String);
 
@@ -40,7 +40,7 @@ type
     procedure LoadCertificate(const Sender: TObject; const ARequest: TURLRequest; const ACertificateList: TCertificateList; var AnIndex: Integer);
 {$ENDIF}
     procedure LoadHeaders;
-    procedure SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
+    procedure SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
     procedure SetCertificate(const Value: TStream; const Password: String);
     procedure SetHeader(const HeaderName, Value: String);
   public
@@ -482,11 +482,14 @@ function TRemoteService.SendRequest(const Method: TRttiMethod; const Args: TArra
 begin
   LoadAuthorization(Method, Args);
 
-  Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBodyAndHeaders(Method, Args), AsyncRequest,
-    procedure(Content: String)
+  Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBodyAndHeaders(Method, Args), AsyncRequest, Method.ReturnType.IsInstance and (Method.ReturnType.AsInstance.MetaclassType = TStream),
+    procedure(ContentString: String; ContentStream: TStream)
     begin
       if Assigned(Method.ReturnType) then
-        ReturnEvent(Serializer.Deserialize(Content, Method.ReturnType.Handle))
+        if Assigned(ContentStream) then
+          ReturnEvent(TValue.From(ContentStream))
+        else
+          ReturnEvent(Serializer.Deserialize(ContentString, Method.ReturnType.Handle))
       else
         ReturnEvent(TValue.Empty);
     end, ErrorEvent);
@@ -556,12 +559,13 @@ begin
     {$ENDIF}
 end;
 
-procedure THTTPCommunication.SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
+procedure THTTPCommunication.SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
 const
   REQUEST_METHOD_NAME: array[TRequestMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT', 'OPTIONS');
 
 var
-  Content: String;
+  ContentStream: TStream;
+  ContentString: String;
 
 {$IFDEF PAS2JS}
   procedure DownloadFile(const URLString: String); async;
@@ -584,9 +588,9 @@ var
   procedure CheckStatusCode(const StatusCode: Integer);
   begin
     if (StatusCode < 200) or (StatusCode > 299) then
-      ErrorEvent(EHTTPStatusError.Create(StatusCode, Content))
+      ErrorEvent(EHTTPStatusError.Create(StatusCode, ContentString))
     else
-      CompleteEvent(Content);
+      CompleteEvent(ContentString, ContentStream);
   end;
 
 begin
@@ -594,10 +598,16 @@ begin
   FConnection.OnLoadEnd :=
     function(Event: TJSProgressEvent): Boolean
     begin
-      Content := FConnection.ResponseText;
+      if ReturnStream then
+        ContentStream := TBlobStream.Create(TJSBlob(FConnection.Response))
+      else
+        ContentString := FConnection.ResponseText;
 
       CheckStatusCode(FConnection.Status);
     end;
+
+  if ReturnStream then
+    FConnection.ResponseType := 'blob';
 
   FConnection.Open(REQUEST_METHOD_NAME[RequestMethod], URLString, AsyncRequest);
 
@@ -606,6 +616,8 @@ begin
   FConnection.Send(Body);
 {$ELSE}
   var BodyStream := TStringStream.Create(Body, TEncoding.UTF8);
+  ContentStream := nil;
+  ContentString := EmptyStr;
   FConnection.ResponseTimeout := -1;
   FConnection.SendTimeout := -1;
 
@@ -613,7 +625,10 @@ begin
 
   var Response := FConnection.Execute(REQUEST_METHOD_NAME[RequestMethod], URLString, BodyStream) as IHTTPResponse;
 
-  Content := Response.ContentAsString;
+  if ReturnStream then
+    ContentStream := Response.ContentStream
+  else
+    ContentString := Response.ContentAsString;
 
   BodyStream.Free;
 

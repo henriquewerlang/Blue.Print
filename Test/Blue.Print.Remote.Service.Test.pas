@@ -121,6 +121,14 @@ type
     procedure WhenTheInterfaceHasTheCharSetAttributeMustLoadTheCharSetInTheContentTypeHeader;
     [Test]
     procedure WhenTheCharSetAttributeIsEmptyCantLoadTheCharSetInTheContentHeader;
+    [Test]
+    procedure WhenTheFunctionReturnAStreamCantRaiseAnyUnexcpedtedException;
+    [Test]
+    procedure WhenTheFunctionReturnAStreamTheReturnMustBeLoadedWithAValue;
+    [Test]
+    procedure WhenTheFunctionReturnAStreamMustLoadTheReturnValueWithTheBluePrintStream;
+    [Test]
+    procedure TheReturningStreamMustLoadTheResponseStreamValue;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -129,12 +137,13 @@ type
     FHeaders: TDictionary<String, String>;
     FRequestMethod: TRequestMethod;
     FRequestSended: Boolean;
-    FResponseValue: String;
+    FResponseValueString: String;
     FURL: String;
+    FResponseValueStream: TStream;
 
     function GetHeader(const HeaderName: String): String;
 
-    procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
+    procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
     procedure SetCertificate(const Value: TStream; const Password: String);
     procedure SetHeader(const HeaderName, Value: String);
   public
@@ -146,7 +155,8 @@ type
 
     property Body: TStream read FBody;
     property Header[const HeaderName: String]: String read GetHeader write SetHeader;
-    property ResponseValue: String read FResponseValue write FResponseValue;
+    property ResponseValueStream: TStream read FResponseValueStream write FResponseValueStream;
+    property ResponseValueString: String read FResponseValueString write FResponseValueString;
     property RequestMethod: TRequestMethod read FRequestMethod;
     property RequestSended: Boolean read FRequestSended;
     property URL: String read FURL;
@@ -185,6 +195,8 @@ type
   [Header('InterfaceHeader2', 'Interface Header 2')]
   IServiceTest = interface(IInvokable)
     ['{61DCD8A8-AD02-4EA3-AFC7-8425F7B12D6B}']
+
+    function ReturnStream: TStream;
     function TestFunction: String;
 
     procedure AuthorizationProcedure([Authorization]const AuthorizationValue: String);
@@ -352,6 +364,20 @@ begin
   Context.Free;
 end;
 
+procedure TRemoteServiceTest.TheReturningStreamMustLoadTheResponseStreamValue;
+begin
+  var MyStream := TStringStream.Create;
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  FCommunication.ResponseValueStream := MyStream;
+
+  var ReturnValue := Service.ReturnStream;
+
+  Assert.AreEqual(TBluePrintStream(ReturnValue).Stream, MyStream);
+
+  MyStream.Free;
+end;
+
 procedure TRemoteServiceTest.TheSoapActionHeaderMustBeLoadedOnlyIfTheSoapServiceAttributeIsLoadedInTheInterface;
 begin
   var Service := GetRemoteService<IServiceTest>(EmptyStr);
@@ -375,7 +401,7 @@ begin
   FSerializer.ReturnValue := 'Serializer';
   var Service := GetRemoteService<IServiceTest>(EmptyStr);
 
-  FCommunication.ResponseValue := 'abc';
+  FCommunication.ResponseValueString := 'abc';
 
   var ReturnValue := Service.TestFunction;
 
@@ -387,7 +413,7 @@ begin
   FSerializer.ReturnValue := 'abc';
   var Service := GetRemoteService<IServiceTest>(EmptyStr);
 
-  FCommunication.ResponseValue := 'abc';
+  FCommunication.ResponseValueString := 'abc';
 
   var ReturnValue := Service.TestFunction;
 
@@ -483,6 +509,35 @@ begin
   Service.Execute;
 
   Assert.AreEqual('text/plain', FCommunication.Header['Content-Type']);
+end;
+
+procedure TRemoteServiceTest.WhenTheFunctionReturnAStreamCantRaiseAnyUnexcpedtedException;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Assert.WillNotRaise(
+    procedure
+    begin
+      Service.ReturnStream;
+    end);
+end;
+
+procedure TRemoteServiceTest.WhenTheFunctionReturnAStreamMustLoadTheReturnValueWithTheBluePrintStream;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  var ReturnValue := Service.ReturnStream;
+
+  Assert.AreEqual(TBluePrintStream, ReturnValue.ClassType);
+end;
+
+procedure TRemoteServiceTest.WhenTheFunctionReturnAStreamTheReturnMustBeLoadedWithAValue;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  var ReturnValue := Service.ReturnStream;
+
+  Assert.IsNotNil(ReturnValue);
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasntTheSOAPServiceAttributeTheDefaultSerializerMustBeTheJSONSerializer;
@@ -800,7 +855,7 @@ begin
   FHeaders.TryGetValue(HeaderName, Result);
 end;
 
-procedure TCommunicationMock.SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest: Boolean; const CompleteEvent: TProc<String>; const ErrorEvent: TProc<Exception>);
+procedure TCommunicationMock.SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
 begin
   FRequestMethod := RequestMethod;
   FRequestSended := True;
@@ -809,7 +864,7 @@ begin
   if not Body.IsEmpty then
     FBody := TStringStream.Create(Body);
 
-  CompleteEvent(ResponseValue);
+  CompleteEvent(ResponseValueString, FResponseValueStream);
 end;
 
 procedure TCommunicationMock.SetCertificate(const Value: TStream; const Password: String);
