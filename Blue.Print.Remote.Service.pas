@@ -516,8 +516,8 @@ constructor THTTPCommunication.Create;
 begin
   inherited;
 
-  FConnection := {$IFDEF PAS2JS}TJSXMLHttpRequest.New{$ELSE}THTTPClient.Create{$ENDIF};
   {$IFDEF DCC}
+  FConnection := THTTPClient.Create;
   FConnection.OnNeedClientCertificate := LoadCertificate;
   FConnection.ValidateServerCertificateCallback := ValidateCertificate;
   {$ENDIF}
@@ -526,9 +526,7 @@ end;
 
 destructor THTTPCommunication.Destroy;
 begin
-  {$IFDEF PAS2JS}
-  FConnection := nil
-  {$ELSE}
+  {$IFDEF DCC}
   FConnection.Free;
   {$ENDIF};
 
@@ -595,6 +593,7 @@ var
 
 begin
 {$IFDEF PAS2JS}
+  FConnection := TJSXMLHttpRequest.New;
   FConnection.OnLoadEnd :=
     function(Event: TJSProgressEvent): Boolean
     begin
