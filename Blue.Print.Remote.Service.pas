@@ -482,7 +482,8 @@ function TRemoteService.SendRequest(const Method: TRttiMethod; const Args: TArra
 begin
   LoadAuthorization(Method, Args);
 
-  Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBodyAndHeaders(Method, Args), AsyncRequest, Method.ReturnType.IsInstance and (Method.ReturnType.AsInstance.MetaclassType = TStream),
+  Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBodyAndHeaders(Method, Args), AsyncRequest,
+    Assigned(Method.ReturnType) and Method.ReturnType.IsInstance and (Method.ReturnType.AsInstance.MetaclassType = TStream),
     procedure(ContentString: String; ContentStream: TStream)
     begin
       if Assigned(Method.ReturnType) then
