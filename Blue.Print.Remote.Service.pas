@@ -104,7 +104,7 @@ type
 implementation
 
 {$IFDEF DCC}
-uses System.Net.Mime, System.NetConsts, System.NetEncoding, Web.HTTPApp, REST.Types;
+uses System.NetEncoding, REST.Types;
 {$ENDIF}
 
 const
