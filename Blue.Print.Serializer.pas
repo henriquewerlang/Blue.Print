@@ -38,6 +38,8 @@ type
   public
     constructor Create;
 
+    destructor Destroy; override;
+
     class function GetCurrentTimeZone: String;
   end;
 
@@ -157,6 +159,13 @@ begin
     tkInteger: Result := TValue.From(StrToInt64(Value));
     else Result := TValue.Empty;
   end;
+end;
+
+destructor TBluePrintSerializer.Destroy;
+begin
+  FContext.Free;
+
+  inherited;
 end;
 
 function TBluePrintSerializer.GetContentType: String;
