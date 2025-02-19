@@ -33,13 +33,11 @@ type
   private
     FCertificatePassword: String;
     FCertificateValue: TStream;
-    FConnection: {$IFDEF PAS2JS}TJSXMLHttpRequest{$ELSE}THTTPClient{$ENDIF};
     FHeaders: TStringList;
 
 {$IFDEF DCC}
     procedure LoadCertificate(const Sender: TObject; const ARequest: TURLRequest; const ACertificateList: TCertificateList; var AnIndex: Integer);
 {$ENDIF}
-    procedure LoadHeaders;
     procedure SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
     procedure SetCertificate(const Value: TStream; const Password: String);
     procedure SetHeader(const HeaderName, Value: String);
@@ -517,20 +515,11 @@ constructor THTTPCommunication.Create;
 begin
   inherited;
 
-  {$IFDEF DCC}
-  FConnection := THTTPClient.Create;
-  FConnection.OnNeedClientCertificate := LoadCertificate;
-  FConnection.ValidateServerCertificateCallback := ValidateCertificate;
-  {$ENDIF}
   FHeaders := TStringList.Create;
 end;
 
 destructor THTTPCommunication.Destroy;
 begin
-  {$IFDEF DCC}
-  FConnection.Free;
-  {$ENDIF};
-
   FHeaders.Free;
 
   inherited;
@@ -545,24 +534,12 @@ begin
 end;
 {$ENDIF}
 
-procedure THTTPCommunication.LoadHeaders;
-var
-  A: Integer;
-
-begin
-  for A := 0 to Pred(FHeaders.Count) do
-    {$IFDEF PAS2JS}
-    FConnection.SetRequestHeader(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
-    {$ELSE}
-    FConnection.CustomHeaders[FHeaders.Names[A]] := FHeaders.ValueFromIndex[A];
-    {$ENDIF}
-end;
-
 procedure THTTPCommunication.SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
 const
   REQUEST_METHOD_NAME: array[TRequestMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT', 'OPTIONS');
 
 var
+  Connection: {$IFDEF PAS2JS}TJSXMLHttpRequest{$ELSE}THTTPClient{$ENDIF};
   ContentStream: TStream;
   ContentString: String;
 
@@ -574,47 +551,72 @@ var
       CompleteEvent(ContentString, ContentStream);
   end;
 
+  procedure LoadHeaders;
+  var
+    A: Integer;
+
+  begin
+    for A := 0 to Pred(FHeaders.Count) do
+      {$IFDEF PAS2JS}
+      Connection.SetRequestHeader(FHeaders.Names[A], FHeaders.ValueFromIndex[A]);
+      {$ELSE}
+      Connection.CustomHeaders[FHeaders.Names[A]] := FHeaders.ValueFromIndex[A];
+      {$ENDIF}
+  end;
+
 begin
 {$IFDEF PAS2JS}
-  FConnection := TJSXMLHttpRequest.New;
-  FConnection.OnLoadEnd :=
-    function(Event: TJSProgressEvent): Boolean
-    begin
-      if ReturnStream then
-        ContentStream := TBlobStream.Create(TJSBlob(FConnection.Response))
-      else
-        ContentString := FConnection.ResponseText;
+  Connection := TJSXMLHttpRequest.New;
+  Connection.OnLoadEnd :=
+    function (Event: TJSProgressEvent): Boolean
+    var
+      Connection: TJSXMLHttpRequest;
 
-      CheckStatusCode(FConnection.Status);
+    begin
+      Connection := TJSXMLHttpRequest(Event.Target);
+
+      if ReturnStream then
+        ContentStream := TBlobStream.Create(TJSBlob(Connection.Response))
+      else
+        ContentString := Connection.ResponseText;
+
+      CheckStatusCode(Connection.Status);
     end;
 
   if ReturnStream then
-    FConnection.ResponseType := 'blob';
+    Connection.ResponseType := 'blob';
 
-  FConnection.Open(REQUEST_METHOD_NAME[RequestMethod], URLString, AsyncRequest);
+  Connection.Open(REQUEST_METHOD_NAME[RequestMethod], URLString, AsyncRequest);
 
   LoadHeaders;
 
-  FConnection.Send(Body);
+  Connection.Send(Body);
 {$ELSE}
   var BodyStream := TStringStream.Create(Body, TEncoding.UTF8);
   ContentStream := nil;
   ContentString := EmptyStr;
-  FConnection.ResponseTimeout := -1;
-  FConnection.SendTimeout := -1;
+  Connection := THTTPClient.Create;
+  Connection.OnNeedClientCertificate := LoadCertificate;
+  Connection.ValidateServerCertificateCallback := ValidateCertificate;
+  Connection.ResponseTimeout := -1;
+  Connection.SendTimeout := -1;
 
   LoadHeaders;
 
-  var Response := FConnection.Execute(REQUEST_METHOD_NAME[RequestMethod], URLString, BodyStream) as IHTTPResponse;
+  try
+    var Response := Connection.Execute(REQUEST_METHOD_NAME[RequestMethod], URLString, BodyStream) as IHTTPResponse;
 
-  if ReturnStream then
-    ContentStream := Response.ContentStream
-  else
-    ContentString := Response.ContentAsString;
+    if ReturnStream then
+      ContentStream := Response.ContentStream
+    else
+      ContentString := Response.ContentAsString;
 
-  BodyStream.Free;
+    CheckStatusCode(Response.StatusCode);
+  finally
+    BodyStream.Free;
 
-  CheckStatusCode(Response.StatusCode);
+    Connection.Free;
+  end;
 {$ENDIF}
 end;
 
