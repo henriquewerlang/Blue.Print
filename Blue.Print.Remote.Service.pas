@@ -566,24 +566,6 @@ var
   ContentStream: TStream;
   ContentString: String;
 
-{$IFDEF PAS2JS}
-  procedure DownloadFile(const URLString: String); async;
-  var
-    Anchor: TJSHTMLAnchorElement;
-
-  begin
-    Anchor := Document.CreateElement('a') as TJSHTMLAnchorElement;
-    Anchor.HRef := URLString;
-    Anchor.Style.cssText := 'display:none';
-
-    Document.Body.AppendChild(Anchor);
-
-    Anchor.Click();
-
-    Document.Body.RemoveChild(Anchor);
-  end;
-{$ENDIF}
-
   procedure CheckStatusCode(const StatusCode: Integer);
   begin
     if (StatusCode < 200) or (StatusCode > 299) then
