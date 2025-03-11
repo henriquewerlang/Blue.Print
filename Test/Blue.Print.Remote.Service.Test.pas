@@ -122,6 +122,14 @@ type
     [Test]
     procedure WhenTheCharSetAttributeIsEmptyCantLoadTheCharSetInTheContentHeader;
     [Test]
+    procedure WhenFillTheCertificateStreamMustLoadThisCertificateInTheCommunication;
+    [Test]
+    procedure WhenFillTheCertificateStreamMustLoadThePasswordInTheCommunication;
+    [Test]
+    procedure WhenFillTheCertificateFileNameMustLoadThisCertificateInTheCommunication;
+    [Test]
+    procedure WhenFillTheCertificateFileNameMustLoadThePasswordInTheCommunication;
+    [Test]
     procedure WhenTheFunctionReturnAStreamCantRaiseAnyUnexcpedtedException;
     [Test]
     procedure WhenTheFunctionReturnAStreamTheReturnMustBeLoadedWithAValue;
@@ -140,11 +148,15 @@ type
     FResponseValueString: String;
     FURL: String;
     FResponseValueStream: TStream;
+    FCertificateStream: TStream;
+    FCertificateFileName: String;
+    FCertificatePassword: String;
 
     function GetHeader(const HeaderName: String): String;
 
     procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
-    procedure SetCertificate(const Value: TStream; const Password: String);
+    procedure SetCertificate(const FileName, Password: String); overload;
+    procedure SetCertificate(const Value: TStream; const Password: String); overload;
     procedure SetHeader(const HeaderName, Value: String);
   public
     constructor Create;
@@ -154,6 +166,9 @@ type
     function GetBodyAsString: String;
 
     property Body: TStream read FBody;
+    property CertificateFileName: String read FCertificateFileName write FCertificateFileName;
+    property CertificatePassword: String read FCertificatePassword write FCertificatePassword;
+    property CertificateStream: TStream read FCertificateStream write FCertificateStream;
     property Header[const HeaderName: String]: String read GetHeader write SetHeader;
     property ResponseValueStream: TStream read FResponseValueStream write FResponseValueStream;
     property ResponseValueString: String read FResponseValueString write FResponseValueString;
@@ -466,6 +481,45 @@ begin
   Service.Header['MyHeader'] := 'My Value';
 
   Assert.AreEqual('My Value', FCommunication.Header['MyHeader']);
+end;
+
+procedure TRemoteServiceTest.WhenFillTheCertificateFileNameMustLoadThePasswordInTheCommunication;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  (Service as IAuthorization).SetCertificate(EmptyStr, 'Password');
+
+  Assert.AreEqual(FCommunication.CertificatePassword, 'Password');
+end;
+
+procedure TRemoteServiceTest.WhenFillTheCertificateFileNameMustLoadThisCertificateInTheCommunication;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  (Service as IAuthorization).SetCertificate('MyCert.File', EmptyStr);
+
+  Assert.AreEqual(FCommunication.CertificateFileName, 'MyCert.File');
+end;
+
+procedure TRemoteServiceTest.WhenFillTheCertificateStreamMustLoadThePasswordInTheCommunication;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  (Service as IAuthorization).SetCertificate(nil, 'Password');
+
+  Assert.AreEqual(FCommunication.CertificatePassword, 'Password');
+end;
+
+procedure TRemoteServiceTest.WhenFillTheCertificateStreamMustLoadThisCertificateInTheCommunication;
+begin
+  var MyStream := TStringStream.Create;
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  (Service as IAuthorization).SetCertificate(MyStream, EmptyStr);
+
+  Assert.AreEqual(FCommunication.CertificateStream, MyStream);
+
+  MyStream.Free;
 end;
 
 procedure TRemoteServiceTest.WhenGetServiceMustReturnTheInterfaceFilled;
@@ -869,7 +923,14 @@ end;
 
 procedure TCommunicationMock.SetCertificate(const Value: TStream; const Password: String);
 begin
+  FCertificateStream := Value;
+  FCertificatePassword := Password;
+end;
 
+procedure TCommunicationMock.SetCertificate(const FileName, Password: String);
+begin
+  FCertificateFileName := FileName;
+  FCertificatePassword := Password;
 end;
 
 procedure TCommunicationMock.SetHeader(const HeaderName, Value: String);

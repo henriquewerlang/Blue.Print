@@ -8,7 +8,8 @@ type
   IAuthorization = interface
     ['{D5474FD1-CE92-4FCC-AA6E-6E88562A7F55}']
     procedure SetAuthorizationValue(const Value: String);
-    procedure SetCertificate(const Value: TStream; const Password: String);
+    procedure SetCertificate(const FileName, Password: String); overload;
+    procedure SetCertificate(const Value: TStream; const Password: String); overload;
 
     property Value: String write SetAuthorizationValue;
   end;
@@ -23,7 +24,8 @@ type
   IHTTPCommunication = interface
     ['{8E39F66A-C72B-4314-80B1-D24F1AF4F247}']
     procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
-    procedure SetCertificate(const Value: TStream; const Password: String);
+    procedure SetCertificate(const FileName, Password: String); overload;
+    procedure SetCertificate(const Value: TStream; const Password: String); overload;
     procedure SetHeader(const HeaderName, Value: String);
 
     property Header[const HeaderName: String]: String write SetHeader;
@@ -31,6 +33,7 @@ type
 
   THTTPCommunication = class(TInterfacedObject, IHTTPCommunication)
   private
+    FCertificateFileName: String;
     FCertificatePassword: String;
     FCertificateValue: TStream;
     FHeaders: TStringList;
@@ -39,7 +42,8 @@ type
     procedure LoadCertificate(const Sender: TObject; const ARequest: TURLRequest; const ACertificateList: TCertificateList; var AnIndex: Integer);
 {$ENDIF}
     procedure SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
-    procedure SetCertificate(const Value: TStream; const Password: String);
+    procedure SetCertificate(const FileName, Password: String); overload;
+    procedure SetCertificate(const Value: TStream; const Password: String); overload;
     procedure SetHeader(const HeaderName, Value: String);
   public
     constructor Create;
@@ -78,7 +82,8 @@ type
     procedure LoadParams(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
     procedure LoadRequestHeaders(const Method: TRttiMethod; const LoadBodyContentType: Boolean);
     procedure SetAuthorizationValue(const Value: String);
-    procedure SetCertificate(const Value: TStream; const Password: String);
+    procedure SetCertificate(const FileName, Password: String); overload;
+    procedure SetCertificate(const Value: TStream; const Password: String); overload;
     procedure SetHeader(const HeaderName, Value: String);
 
     property Header[const HeaderName: String]: String write SetHeader;
@@ -499,9 +504,14 @@ begin
   Header[AUTHORIZATION_HEADER] := Value;
 end;
 
+procedure TRemoteService.SetCertificate(const FileName, Password: String);
+begin
+  Communication.SetCertificate(FileName, Password);
+end;
+
 procedure TRemoteService.SetCertificate(const Value: TStream; const Password: String);
 begin
-  Communication.SetCertificate(Value, Password)
+  Communication.SetCertificate(Value, Password);
 end;
 
 procedure TRemoteService.SetHeader(const HeaderName, Value: String);
@@ -530,7 +540,10 @@ procedure THTTPCommunication.LoadCertificate(const Sender: TObject; const AReque
 begin
   var Request: IHTTPRequest := ARequest as THTTPRequest;
 
-  Request.SetClientCertificate(FCertificateValue, FCertificatePassword);
+  if FCertificateFileName.IsEmpty then
+    Request.SetClientCertificate(FCertificateValue, FCertificatePassword)
+  else
+    Request.SetClientCertificate(FCertificateFileName, FCertificatePassword);
 end;
 {$ENDIF}
 
@@ -624,6 +637,12 @@ procedure THTTPCommunication.SetCertificate(const Value: TStream; const Password
 begin
   FCertificatePassword := Password;
   FCertificateValue := Value;
+end;
+
+procedure THTTPCommunication.SetCertificate(const FileName, Password: String);
+begin
+  FCertificateFileName := FileName;
+  FCertificatePassword := Password;
 end;
 
 procedure THTTPCommunication.SetHeader(const HeaderName, Value: String);
