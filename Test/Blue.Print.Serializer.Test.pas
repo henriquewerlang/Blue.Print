@@ -165,6 +165,8 @@ type
     procedure WhenDeserializeAClassWithTheAttributeValuePropertyMustLoadAllAttributes;
     [Test]
     procedure WhenDeserializeAnArrayMustLoadAllPropertiesAfterItAsExpected;
+    [Test]
+    procedure WhenThePropertyHasTheXMLValueAttributeMustLoadTheValueFromTheNodeInTheProperty;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -365,6 +367,21 @@ type
     FMyProp: TMyClassWithNamespace;
   published
     property MyProp: TMyClassWithNamespace read FMyProp write FMyProp;
+  end;
+
+  TMyClassWithXMLValueAttribute = class
+  private
+    FValue: String;
+  published
+    [XMLValue]
+    property Value: String read FValue write FValue;
+  end;
+
+  TMyClassWithXMLValueAttributeParent = class
+  private
+    FMyValue: TMyClassWithXMLValueAttribute;
+  published
+    property MyValue: TMyClassWithXMLValueAttribute read FMyValue write FMyValue;
   end;
 
   TMyClassWithPropertyWithNamespaceAttribute = class
@@ -1117,6 +1134,17 @@ begin
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document/>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheXMLValueAttributeMustLoadTheValueFromTheNodeInTheProperty;
+begin
+  var Value := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyValue>MyValue</MyValue></Document>'#13#10, TypeInfo(TMyClassWithXMLValueAttributeParent)).AsType<TMyClassWithXMLValueAttributeParent>;
+
+  Assert.AreEqual(Value.MyValue.Value, 'MyValue');
+
+  Value.MyValue.Free;
+
+  Value.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenTheRecordFieldHaveTheNodeNameAttributeMustSerializeTheRecordAsExpected;

@@ -616,28 +616,44 @@ end;
 
 procedure TBluePrintXMLSerializer.DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
 {$IFDEF DCC}
+const
+  TEXT_NODE_NAME = '#text';
+
+  function FindPropertyValue: TRttiProperty;
+  begin
+    Result := nil;
+
+    for var Prop in RttiType.GetProperties do
+      if Prop.HasAttribute<XMLValueAttribute> then
+        Exit(Prop);
+  end;
 
   procedure LoadPropertyValue(const Node: IXMLNode);
   begin
-    var Prop := RttiType.GetProperty(Node.NodeName);
-
-    if Assigned(Prop) then
+    if Node.NodeName = TEXT_NODE_NAME then
+      FindPropertyValue.SetValue(Instance, TValue.FromVariant(Node.NodeValue))
+    else
     begin
-      var Value := DeserializeType(Prop.PropertyType, Node);
+      var Prop := RttiType.GetProperty(Node.NodeName);
 
-      if (Prop.PropertyType is TRttiArrayType) or (Prop.PropertyType is TRttiDynamicArrayType) then
+      if Assigned(Prop) then
       begin
-        var PropertyValue := Prop.GetValue(Instance);
-        var ValueIndex := PropertyValue.GetArrayLength;
+        var Value := DeserializeType(Prop.PropertyType, Node);
 
-        PropertyValue.SetArrayLength(Succ(ValueIndex));
+        if (Prop.PropertyType is TRttiArrayType) or (Prop.PropertyType is TRttiDynamicArrayType) then
+        begin
+          var PropertyValue := Prop.GetValue(Instance);
+          var ValueIndex := PropertyValue.GetArrayLength;
 
-        PropertyValue.SetArrayElement(ValueIndex, Value);
+          PropertyValue.SetArrayLength(Succ(ValueIndex));
 
-        Value := PropertyValue;
+          PropertyValue.SetArrayElement(ValueIndex, Value);
+
+          Value := PropertyValue;
+        end;
+
+        Prop.SetValue(Instance, Value);
       end;
-
-      Prop.SetValue(Instance, Value);
     end;
   end;
 

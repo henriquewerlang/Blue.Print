@@ -128,6 +128,8 @@ type
     property Namespace: String read FNamespace;
   end;
 
+  XMLValueAttribute = class(TCustomAttribute);
+
   TParameterAttribute = class(TCustomAttribute)
   private
     FParamType: TParameterType;
