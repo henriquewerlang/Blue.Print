@@ -489,11 +489,10 @@ begin
     Assigned(Method.ReturnType) and Method.ReturnType.IsInstance and (Method.ReturnType.AsInstance.MetaclassType = TStream),
     procedure(ContentString: String; ContentStream: TStream)
     begin
-      if Assigned(Method.ReturnType) then
-        if Assigned(ContentStream) then
-          ReturnEvent(TValue.From(ContentStream))
-        else
-          ReturnEvent(Serializer.Deserialize(ContentString, Method.ReturnType.Handle))
+      if Assigned(ContentStream) then
+        ReturnEvent(TValue.From(ContentStream))
+      else if not ContentString.IsEmpty then
+        ReturnEvent(Serializer.Deserialize(ContentString, Method.ReturnType.Handle))
       else
         ReturnEvent(TValue.Empty);
     end, ErrorEvent);

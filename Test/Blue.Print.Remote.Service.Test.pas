@@ -170,7 +170,6 @@ type
     property CertificatePassword: String read FCertificatePassword write FCertificatePassword;
     property CertificateStream: TStream read FCertificateStream write FCertificateStream;
     property Header[const HeaderName: String]: String read GetHeader write SetHeader;
-    property ResponseValueStream: TStream read FResponseValueStream write FResponseValueStream;
     property ResponseValueString: String read FResponseValueString write FResponseValueString;
     property RequestMethod: TRequestMethod read FRequestMethod;
     property RequestSended: Boolean read FRequestSended;
@@ -383,8 +382,6 @@ procedure TRemoteServiceTest.TheReturningStreamMustLoadTheResponseStreamValue;
 begin
   var MyStream := TStringStream.Create;
   var Service := GetRemoteService<IServiceTest>(EmptyStr);
-
-  FCommunication.ResponseValueStream := MyStream;
 
   var ReturnValue := Service.ReturnStream;
 
@@ -881,7 +878,10 @@ end;
 
 constructor TCommunicationMock.Create;
 begin
+  inherited;
+
   FHeaders := TDictionary<String, String>.Create;
+  FResponseValueStream := TMemoryStream.Create;
 end;
 
 destructor TCommunicationMock.Destroy;
@@ -889,6 +889,8 @@ begin
   FBody.Free;
 
   FHeaders.Free;
+
+  FResponseValueStream.Free;
 
   inherited;
 end;
@@ -914,11 +916,15 @@ begin
   FRequestMethod := RequestMethod;
   FRequestSended := True;
   FURL := URL;
+  var Stream: TStream := nil;
+
+  if ReturnStream then
+    Stream := FResponseValueStream;
 
   if not Body.IsEmpty then
     FBody := TStringStream.Create(Body);
 
-  CompleteEvent(ResponseValueString, FResponseValueStream);
+  CompleteEvent(ResponseValueString, Stream);
 end;
 
 procedure TCommunicationMock.SetCertificate(const Value: TStream; const Password: String);
