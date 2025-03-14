@@ -137,6 +137,8 @@ type
     procedure WhenTheFunctionReturnAStreamMustLoadTheReturnValueWithTheBluePrintStream;
     [Test]
     procedure TheReturningStreamMustLoadTheResponseStreamValue;
+    [Test]
+    procedure WhenTheProceduraParamIsAnInterfaceTypeMustLoadTheValueInTheBodyOfTheRequest;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -198,6 +200,21 @@ type
     property Value: String read FValue write FValue;
   end;
 
+  IMyInterfaceType = interface
+    function GetMyValue: String;
+
+    procedure SetMyValue(const Value: String);
+
+    property MyValue: String read GetMyValue write SetMyValue;
+  end;
+
+  TMyInterfaceType = class(TInterfacedObject, IMyInterfaceType)
+  private
+    function GetMyValue: String;
+
+    procedure SetMyValue(const Value: String);
+  end;
+
   [RemoteName('Serviçe')]
   ILocaleCharsService = interface(IInvokable)
     ['{04EA0C43-7C73-4ED1-A2B6-8B1E64ABC149}']
@@ -241,6 +258,7 @@ type
     [Header('MethodHeader', 'Method Header')]
     [Header('MethodHeader2', 'Method Header 2')]
     procedure TestHeader;
+    procedure InterfaceProc(const Value: IMyInterfaceType);
   end;
 
   IInheritedServiceTest = interface(IServiceTest)
@@ -309,7 +327,7 @@ end;
 
 function TRemoteServiceTest.CreateRemoteService<T>: TRemoteService;
 begin
-  Result := TRemoteService.Create(TypeInfo(T), FSerializer);
+  Result := TRemoteService.Create(TypeInfo(T), FSerializerInterface);
   Result.Communication := FCommunication;
 end;
 
@@ -795,6 +813,16 @@ begin
   Assert.AreEqual('/Servi%C3%A7e/Service/?Servi%C3%A7e=abc', FCommunication.URL);
 end;
 
+procedure TRemoteServiceTest.WhenTheProceduraParamIsAnInterfaceTypeMustLoadTheValueInTheBodyOfTheRequest;
+begin
+  FSerializer.ReturnValue := 'Serializer';
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.InterfaceProc(TMyInterfaceType.Create);
+
+  Assert.IsNotNil(FCommunication.Body);
+end;
+
 procedure TRemoteServiceTest.WhenTheProcedureHasRemoteNameWithLocaleCharsMustEncodeTheName;
 begin
   var Service := GetRemoteService<IServiceTest>(EmptyStr);
@@ -964,6 +992,18 @@ function TSerializerMock.Serialize(const Value: TValue): String;
 begin
   FSerializeValue := Value;
   Result := FReturnValue.AsString;
+end;
+
+{ TMyInterfaceType }
+
+function TMyInterfaceType.GetMyValue: String;
+begin
+  Result := '';
+end;
+
+procedure TMyInterfaceType.SetMyValue(const Value: String);
+begin
+
 end;
 
 end.

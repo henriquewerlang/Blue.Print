@@ -220,7 +220,7 @@ begin
 
   if Assigned(ParameterAttribute) then
     Result := ParameterAttribute.ParamType
-  else if Parameter.ParamType.IsInstance then
+  else if Parameter.ParamType.IsInstance or (Parameter.ParamType is TRttiInterfaceType) then
     Result := TParameterType.Body
   else
     Result := TParameterType.Query;
