@@ -281,6 +281,11 @@ type
     constructor Create(const Parameter: TRttiParameter; const Body: TValue);
   end;
 
+  TRttiTypeHelper = class helper for TRttiType
+  public
+    function IsInterface: Boolean;
+  end;
+
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
 
 const
@@ -605,6 +610,13 @@ begin
   WriteNotImplemented;
 end;
 {$ENDIF}
+
+{ TRttiTypeHelper }
+
+function TRttiTypeHelper.IsInterface: Boolean;
+begin
+  Result := Self is TRttiInterfaceType;
+end;
 
 end.
 
