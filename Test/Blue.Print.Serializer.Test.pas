@@ -167,6 +167,8 @@ type
     procedure WhenDeserializeAnArrayMustLoadAllPropertiesAfterItAsExpected;
     [Test]
     procedure WhenThePropertyHasTheXMLValueAttributeMustLoadTheValueFromTheNodeInTheProperty;
+    [Test]
+    procedure WhenSerializeAnIXMLNodeMustReturnTheXMLAsExpected;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -401,7 +403,7 @@ type
 
 implementation
 
-uses System.SysUtils, System.DateUtils, REST.Types;
+uses System.SysUtils, System.DateUtils, REST.Types, Xml.XMLIntf, Xml.XMLDoc;
 
 { TBluePrintSerializerTest }
 
@@ -988,6 +990,14 @@ begin
   Assert.AreEqual(Format('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyDate>2024-05-21</MyDate><MyTime>01:02:03</MyTime><MyDateTime>2024-05-21T01:02:03%s</MyDateTime></Document>'#13#10, [TBluePrintSerializer.GetCurrentTimeZone]), Value);
 
   MyObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenSerializeAnIXMLNodeMustReturnTheXMLAsExpected;
+begin
+  var XML: IXMLDocument := TXMLDocument.Create(nil);
+  XML.LoadFromXML('<XML><Node>123</Node></XML>');
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<XML><Node>123</Node></XML>'#13#10, FSerializer.Serialize(TValue.From(XML.DocumentElement)));
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenSerializeAnObjectWithANilPropertyCanRaiseError;

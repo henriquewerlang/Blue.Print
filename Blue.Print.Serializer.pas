@@ -808,19 +808,29 @@ begin
   case Value.Kind of
     tkMRecord,
     tkRecord,
-    tkClass:
+    tkClass,
+    tkInterface:
     begin
       ValueType := FContext.GetType(Value.TypeInfo);
-      XMLDocument := TXMLDocument.Create(nil);
-      XMLDocument.Active := True;
+
+      if Value.Kind = tkInterface then
+        XMLDocument := Value.AsType<IXMLNode>.OwnerDocument
+      else
+      begin
+        XMLDocument := TXMLDocument.Create(nil);
+        XMLDocument.Active := True;
+      end;
+
+      var XML := TStringStream.Create(Emptystr, TEncoding.UTF8);
       XMLDocument.Encoding := 'UTF-8';
       XMLDocument.Version := '1.0';
 
-      Namespace := GetNamespaceValue(ValueType, EmptyStr);
+      if Value.Kind <> tkInterface then
+      begin
+        Namespace := GetNamespaceValue(ValueType, EmptyStr);
 
-      SerializeType(ValueType, Value, XMLDocument.AddChild(GetDocumentName, Namespace), GetNamespaceValue(ValueType, Namespace));
-
-      var XML := TStringStream.Create(Emptystr, TEncoding.UTF8);
+        SerializeType(ValueType, Value, XMLDocument.AddChild(GetDocumentName, Namespace), GetNamespaceValue(ValueType, Namespace));
+      end;
 
       XMLDocument.SaveToStream(XML);
 
