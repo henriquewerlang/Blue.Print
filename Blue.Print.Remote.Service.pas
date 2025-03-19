@@ -139,7 +139,7 @@ begin
 
   FCommunication := THTTPCommunication.Create;
   FContext := TRttiContext.Create;
-  FInterfaceType := FContext.GetType(TypeInfo) as TRttiInterfaceType;
+  FInterfaceType := FContext.GetType(TypeInfo).AsInterface;
   FSerializer := Serializer;
 end;
 
