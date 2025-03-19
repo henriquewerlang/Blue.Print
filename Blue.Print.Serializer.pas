@@ -555,23 +555,17 @@ end;
 { TBluePrintXMLSerializer }
 
 function TBluePrintXMLSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
-{$IFDEF DCC}
-var
-  XML: IXMLDocument;
-
-{$ENDIF}
 begin
 {$IFDEF DCC}
   case TypeInfo.Kind of
-    tkMRecord,
     tkArray,
     tkClass,
     tkClassRef,
     tkDynArray,
+    tkMRecord,
     tkRecord:
     begin
-      XML := TXMLDocument.Create(nil);
-      XML.Active := True;
+      var XML := NewXMLDocument;
 
       XML.LoadFromXML(Value);
 
@@ -811,8 +805,7 @@ begin
     tkClass:
     begin
       ValueType := FContext.GetType(Value.TypeInfo);
-      XMLDocument := TXMLDocument.Create(nil);
-      XMLDocument.Active := True;
+      XMLDocument := NewXMLDocument;
       XMLDocument.Encoding := 'UTF-8';
       XMLDocument.Version := '1.0';
 
