@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{9B6F449C-6A69-4F5A-A604-6758D5FEBD38}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Blue.Print.Schema.Importer.Application.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Test\Blue.Print.Test.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="Blue_Print_Schema_Importer_Application">
+        <MSBuild Projects="Blue.Print.Schema.Importer.Application.dproj"/>
+    </Target>
+    <Target Name="Blue_Print_Schema_Importer_Application:Clean">
+        <MSBuild Projects="Blue.Print.Schema.Importer.Application.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Blue_Print_Schema_Importer_Application:Make">
+        <MSBuild Projects="Blue.Print.Schema.Importer.Application.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Blue_Print_Test">
+        <MSBuild Projects="Test\Blue.Print.Test.dproj"/>
+    </Target>
+    <Target Name="Blue_Print_Test:Clean">
+        <MSBuild Projects="Test\Blue.Print.Test.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Blue_Print_Test:Make">
+        <MSBuild Projects="Test\Blue.Print.Test.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="Blue_Print_Schema_Importer_Application;Blue_Print_Test"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="Blue_Print_Schema_Importer_Application:Clean;Blue_Print_Test:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="Blue_Print_Schema_Importer_Application:Make;Blue_Print_Test:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
