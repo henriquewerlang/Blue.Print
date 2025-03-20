@@ -8,10 +8,10 @@ type
   TUnitAlias = class
   private
     FFileName: String;
-    FUnitName: String;
+    FName: String;
   public
     property FileName: String read FFileName write FFileName;
-    property UnitName: String read FUnitName write FUnitName;
+    property Name: String read FName write FName;
   end;
 
   TTypeChange = class
@@ -34,10 +34,21 @@ type
 
   TProperty = class
   private
+    FAttributes: TList<String>;
     FName: String;
     FTypeName: String;
+    FOptional: Boolean;
   public
+    constructor Create;
+
+    destructor Destroy; override;
+
+    procedure AddXMLAttributeFixed(const Name, Value: String);
+    procedure AddXMLAttributeValue;
+
+    property Attributes: TList<String> read FAttributes write FAttributes;
     property Name: String read FName write FName;
+    property Optional: Boolean read FOptional write FOptional;
     property TypeName: String read FTypeName write FTypeName;
   end;
 
@@ -108,7 +119,7 @@ type
 
 implementation
 
-uses System.SysUtils, System.Classes, System.IOUtils, XML.xmldom, Blue.Print.Serializer, Blue.Print.Types;
+uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, XML.xmldom, Blue.Print.Serializer, Blue.Print.Types;
 
 { TImporter }
 
@@ -136,6 +147,7 @@ begin
   FBuildInType.Add('decimal', 'Double');
   FBuildInType.Add('dateTime', 'TDateTime');
   FBuildInType.Add('date', 'TDate');
+  FBuildInType.Add('ID', 'String');
   FBuildInType.Add('time', 'TTime');
   FBuildInType.Add('base64Binary', 'String');
   FBuildInType.Add('anyURI', 'String');
@@ -168,27 +180,7 @@ var
     end;
   end;
 
-  function GenerateSchemaClass(const ComplexType: IXMLComplexTypeDef): TClassDefinition;
-  begin
-    Result := TClassDefinition.Create;
-    Result.Name := ComplexType.Name;
-
-    for var A := 0 to Pred(ComplexType.ElementDefs.Count) do
-    begin
-      var Element := ComplexType.ElementDefs[A];
-
-      if Element.DataType.IsComplex and not Assigned(Element.Ref) and not Assigned(Element.AttributeNodes.FindNode('type')) then
-        Result.AddClassType(GenerateSchemaClass(Element.DataType as IXMLComplexTypeDef));
-
-      var &Property := TProperty.Create;
-      &Property.Name := Element.Name;
-      &Property.TypeName := 'T' + Element.DataType.Name;
-
-      Result.AddProperty(&Property);
-    end;
-  end;
-
-  function FindSimpleType(const XSDTypeName: String; var TypeName: String): Boolean;
+  function FindTypeAlias(const XSDTypeName: String; var TypeName: String): Boolean;
   begin
     Result := False;
 
@@ -201,7 +193,7 @@ var
       end;
   end;
 
-  function SimpleBaseType(SimpleType: IXMLSimpleTypeDef): String;
+  function GetBaseType(SimpleType: IXMLTypeDef): String;
   begin
     while Assigned(SimpleType.BaseType) do
       SimpleType := SimpleType.BaseType as IXMLSimpleTypeDef;
@@ -209,19 +201,68 @@ var
     Result := ExtractLocalName(SimpleType.Name);
   end;
 
+  function FindTypeName(&Type: IXMLTypeDef): String;
+  begin
+    Result := GetBaseType(&Type);
+
+    if FBuildInType.ContainsKey(Result) then
+      Result := FBuildInType[Result]
+    else if FindTypeAlias(Result, Result) then
+    else if FChangeType.ContainsKey(Result) then
+      Result := FChangeType[Result]
+    else if &Type.IsComplex then
+      Result := 'T' + Result
+    else
+      Result := 'Undefined; //Type not found ' + &Type.Name
+  end;
+
+  function GenerateSchemaClass(const ComplexType: IXMLComplexTypeDef): TClassDefinition;
+  var
+    ClassDefinition: TClassDefinition absolute Result;
+
+    function AddProperty(const Name: String; const &Type: IXMLTypeDef): TProperty;
+    begin
+      Result := TProperty.Create;
+      Result.Name := Name;
+      Result.TypeName := FindTypeName(&Type);
+
+      ClassDefinition.AddProperty(Result);
+    end;
+
+  begin
+    Result := TClassDefinition.Create;
+    Result.Name := ComplexType.Name;
+
+    for var A := 0 to Pred(ComplexType.ElementDefs.Count) do
+    begin
+      var Element := ComplexType.ElementDefs[A];
+
+      if Element.DataType.IsComplex and not Assigned(Element.Ref) and not Assigned(Element.AttributeNodes.FindNode('type')) then
+        Result.AddClassType(GenerateSchemaClass(Element.DataType as IXMLComplexTypeDef));
+
+      AddProperty(Element.Name, Element.DataType).Optional := (Element.MinOccurs <> NULL) and (Element.MinOccurs <= 0);
+    end;
+
+    for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
+    begin
+      var Attribute := ComplexType.AttributeDefs[A];
+
+      var &Property := AddProperty(Attribute.Name, Attribute.DataType);
+
+      if Attribute.Fixed = NULL then
+        &Property.AddXMLAttributeValue
+      else
+        &Property.AddXMLAttributeFixed(Attribute.Name, Attribute.Fixed);
+
+      &Property.Optional := (Attribute.Use <> NULL) and (Attribute.Use = 'optional');
+    end;
+  end;
+
   function GenerateSimpleType(const SimpleType: IXMLSimpleTypeDef): TTypeAlias;
   begin
     Result := TTypeAlias.Create;
     Result.Name := SimpleType.Name;
-    var TypeName := SimpleBaseType(SimpleType);
-
-    if not FBuildInType.TryGetValue(TypeName, TypeName) and not FindSimpleType(TypeName, TypeName) then
-      TypeName := 'Undefined; //Type not found ' + SimpleType.RestrictionNode.BaseName;
-
-    if FChangeType.ContainsKey(Result.Name) then
-      TypeName := FChangeType[Result.Name];
-
-    Result.TypeName := TypeName;
+    Result.TypeName := FindTypeName(SimpleType);
   end;
 
 begin
@@ -265,7 +306,7 @@ begin
     var Configuration := Serializer.Deserialize(TFile.ReadAllText(FileName), TypeInfo(TConfiguration)).AsType<TConfiguration>;
 
     for var UnitAlias in Configuration.UnitAlias do
-      AddUnitName(UnitAlias.FileName, UnitAlias.UnitName);
+      AddUnitName(UnitAlias.FileName, UnitAlias.Name);
 
     for var TypeChange in Configuration.TypeChange do
       AddChangeType(TypeChange.AliasName, TypeChange.TypeName);
@@ -323,32 +364,74 @@ var
     AddLine(EmptyStr);
   end;
 
-  procedure GenerateClassDeclaration(const Ident: String; const ClassDefinition: TClassDefinition);
+  function GetStoredFunctionName(const &Property: TProperty): String;
   begin
-      AddLine('%sT%s = class', [Ident, ClassDefinition.Name]);
+    Result := Format('Get%sStored', [&Property.Name]);
+  end;
 
-      if not ClassDefinition.Classes.IsEmpty then
+  procedure GenerateClassDeclaration(const Ident: String; const ClassDefinition: TClassDefinition);
+
+    function GetStoredPropertyDeclaration(const &Property: TProperty): String;
+    begin
+      Result := EmptyStr;
+
+      if &Property.Optional then
+        Result := Format(' stored %s', [GetStoredFunctionName(&Property)]);
+    end;
+
+  begin
+    AddLine('%sT%s = class', [Ident, ClassDefinition.Name]);
+
+    if not ClassDefinition.Classes.IsEmpty then
+    begin
+      AddLine('%spublic type', [Ident]);
+
+      for var SubClass in ClassDefinition.Classes do
+        GenerateClassDeclaration(Ident + '  ', SubClass);
+    end;
+
+    if not ClassDefinition.Properties.IsEmpty then
+    begin
+      AddLine('%sprivate', [Ident]);
+
+      for var &Property in ClassDefinition.Properties do
+        AddLine('%s  F%s: %s;', [Ident, &Property.Name, &Property.TypeName]);
+
+      for var &Property in ClassDefinition.Properties do
+        if &Property.Optional then
+          AddLine('%s  function %s: Boolean;', [Ident, GetStoredFunctionName(&Property)]);
+
+      AddLine('%spublic', [Ident]);
+
+      for var &Property in ClassDefinition.Properties do
       begin
-        AddLine('%spublic type', [Ident]);
+        for var Attribute in &Property.Attributes do
+          AddLine('%:s  [%s]', [Ident, Attribute]);
 
-        for var SubClass in ClassDefinition.Classes do
-          GenerateClassDeclaration(Ident + '  ', SubClass);
+        AddLine('%0:s  property %1:s: %2:s read F%1:s write F%1:s%3:s;', [Ident, &Property.Name, &Property.TypeName, GetStoredPropertyDeclaration(&Property)]);
       end;
+    end;
 
-      if not ClassDefinition.Properties.IsEmpty then
-      begin
-        AddLine('%sprivate', [Ident]);
+    AddLine('%send;', [Ident]);
+  end;
 
-        for var &Property in ClassDefinition.Properties do
-          AddLine('%s  F%s: %s;', [Ident, &Property.Name, &Property.TypeName]);
+  function HasOptionalProperty(const ClassDefinition: TClassDefinition): Boolean;
+  begin
+    Result := False;
 
-        AddLine('%spublic', [Ident]);
+    for var &Property in ClassDefinition.Properties do
+      if &Property.Optional then
+        Exit(True);
+  end;
 
-        for var &Property in ClassDefinition.Properties do
-          AddLine('%0:s  property %1:s: %2:s read F%1:s write F%1:s;', [Ident, &Property.Name, &Property.TypeName]);
-      end;
-
-      AddLine('%send;', [Ident]);
+  function GetOptionalValue(const &Property: TProperty): String;
+  begin
+    if &Property.TypeName = 'String' then
+      Result := Format('not F%s.IsEmpty', [&Property.Name])
+    else if &Property.TypeName.StartsWith('T') then
+      Result := Format('Assigned(F%s)', [&Property.Name])
+    else
+      Result := 'False';
   end;
 
 begin
@@ -413,9 +496,29 @@ begin
 
   AddLine;
 
-  AddLine('end.');
+  for var ClassDefinition in Classes do
+    if HasOptionalProperty(ClassDefinition) then
+    begin
+      AddLine('{ %s }', [ClassDefinition.Name]);
 
-  AddLine;
+      AddLine;
+
+      for var &Property in ClassDefinition.Properties do
+        if &Property.Optional then
+        begin
+          AddLine('function %s.%s: Boolean;', [ClassDefinition.Name, GetStoredFunctionName(&Property)]);
+
+          AddLine('begin');
+
+          AddLine('  Result := %s;', [GetOptionalValue(&Property)]);
+
+          AddLine('end;');
+
+          AddLine;
+        end;
+    end;
+
+  AddLine('end.');
 
   UnitDefinition.SaveToFile(Format('.\%s.pas', [Name]));
 end;
@@ -445,6 +548,30 @@ begin
   FClasses.Free;
 
   FProperties.Free;
+
+  inherited;
+end;
+
+{ TProperty }
+
+procedure TProperty.AddXMLAttributeFixed(const Name, Value: String);
+begin
+  Attributes.Add(Format('XMLAttribute(''%s'', ''%s'')', [Name, value]));
+end;
+
+procedure TProperty.AddXMLAttributeValue;
+begin
+  Attributes.Add('XMLAttributeValue');
+end;
+
+constructor TProperty.Create;
+begin
+  FAttributes := TList<String>.Create;
+end;
+
+destructor TProperty.Destroy;
+begin
+  FAttributes.Free;
 
   inherited;
 end;
