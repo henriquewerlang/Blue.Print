@@ -139,17 +139,17 @@ type
     property ParamType: TParameterType read FParamType;
   end;
 
-  Body = class(TParameterAttribute)
+  BodyAttribute = class(TParameterAttribute)
   public
     constructor Create;
   end;
 
-  Query = class(TParameterAttribute)
+  QueryAttribute = class(TParameterAttribute)
   public
     constructor Create;
   end;
 
-  Path = class(TParameterAttribute)
+  PathAttribute = class(TParameterAttribute)
   public
     constructor Create;
   end;
@@ -381,23 +381,23 @@ begin
   FParamType := ParamType;
 end;
 
-{ Body }
+{ BodyAttribute }
 
-constructor Body.Create;
+constructor BodyAttribute.Create;
 begin
   inherited Create(TParameterType.Body);
 end;
 
-{ Query }
+{ QueryAttribute }
 
-constructor Query.Create;
+constructor QueryAttribute.Create;
 begin
   inherited Create(TParameterType.Query);
 end;
 
-{ Path }
+{ PathAttribute }
 
-constructor Path.Create;
+constructor PathAttribute.Create;
 begin
   inherited Create(TParameterType.Path);
 end;
