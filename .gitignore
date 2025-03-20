@@ -75,3 +75,5 @@ modules/
 # Project ignore
 TestInsightSettings.ini
 bin
+Win32
+Win64
