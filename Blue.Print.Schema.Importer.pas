@@ -278,7 +278,9 @@ begin
     Result := TUnit.Create;
 
     if FUnitAlias.ContainsKey(FileName) then
-      SchemaUnit.Name := FUnitAlias[FileName];
+      SchemaUnit.Name := FUnitAlias[FileName]
+    else
+      raise Exception.CreateFmt('Schema file without unit configuration %s!', [ExtractFileName(FileName)]);
 
     FUnits.Add(FileName, SchemaUnit);
 
