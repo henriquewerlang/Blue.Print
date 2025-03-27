@@ -61,6 +61,7 @@ type
     FName: String;
     FClasses: TList<TClassDefinition>;
     FProperties: TList<TProperty>;
+    FParentClass: TClassDefinition;
   public
     constructor Create;
 
@@ -71,6 +72,7 @@ type
 
     property Classes: TList<TClassDefinition> read FClasses;
     property Name: String read FName write FName;
+    property ParentClass: TClassDefinition read FParentClass write FParentClass;
     property Properties: TList<TProperty> read FProperties write FProperties;
   end;
 
@@ -236,19 +238,38 @@ var
       ClassDefinition.AddProperty(Result);
     end;
 
+    procedure GenerateProperties(const ElementDefs: IXMLElementDefs; const AllPropertiesOptionals: Boolean);
+    begin
+      for var A := 0 to Pred(ElementDefs.Count) do
+      begin
+        var Element := ElementDefs[A];
+
+        if Element.DataType.IsComplex and not Assigned(Element.Ref) and not Assigned(Element.AttributeNodes.FindNode('type')) then
+          Result.AddClassType(GenerateSchemaClass(Element.DataType as IXMLComplexTypeDef));
+
+        AddProperty(Element.Name, Element.DataType).Optional := AllPropertiesOptionals or (Element.MinOccurs <> NULL) and (Element.MinOccurs <= 0);
+      end;
+    end;
+
+    procedure CheckCompositor(const ElementCompositors: IXMLElementCompositors);
+    begin
+      for var A := 0 to Pred(ElementCompositors.Count) do
+      begin
+        var Compositor := ElementCompositors[A];
+
+        GenerateProperties(Compositor.ElementDefs, True);
+
+        CheckCompositor(Compositor.Compositors);
+      end;
+    end;
+
   begin
     Result := TClassDefinition.Create;
     Result.Name := ComplexType.Name;
 
-    for var A := 0 to Pred(ComplexType.ElementDefs.Count) do
-    begin
-      var Element := ComplexType.ElementDefs[A];
+    GenerateProperties(ComplexType.ElementDefs, False);
 
-      if Element.DataType.IsComplex and not Assigned(Element.Ref) and not Assigned(Element.AttributeNodes.FindNode('type')) then
-        Result.AddClassType(GenerateSchemaClass(Element.DataType as IXMLComplexTypeDef));
-
-      AddProperty(Element.Name, Element.DataType).Optional := (Element.MinOccurs <> NULL) and (Element.MinOccurs <= 0);
-    end;
+    CheckCompositor(ComplexType.ElementCompositors);
 
     for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
     begin
@@ -381,6 +402,26 @@ var
     Result := Format('Get%sStored', [&Property.Name]);
   end;
 
+  function CheckReservedName(const Name: String): String;
+  const
+    SPECIAL_NAMES: array[0..1] of String = ('type', 'mod');
+
+  begin
+    Result := Name;
+
+    for var SpecialName in SPECIAL_NAMES do
+      if CompareText(Name, SpecialName) = 0 then
+        Exit('&' + Result);
+  end;
+
+  function GetClassName(const ClassDefinition: TClassDefinition): String;
+  begin
+    Result := ClassDefinition.Name;
+
+    if not ClassDefinition.Name.StartsWith('TT') then
+      Result := 'T' + Result;
+  end;
+
   procedure GenerateClassDeclaration(const Ident: String; const ClassDefinition: TClassDefinition);
 
     function GetStoredPropertyDeclaration(const &Property: TProperty): String;
@@ -392,14 +433,19 @@ var
     end;
 
   begin
-    AddLine('%sT%s = class', [Ident, ClassDefinition.Name]);
+    AddLine('%s%s = class', [Ident, GetClassName(ClassDefinition)]);
 
     if not ClassDefinition.Classes.IsEmpty then
     begin
       AddLine('%spublic type', [Ident]);
 
       for var SubClass in ClassDefinition.Classes do
+      begin
         GenerateClassDeclaration(Ident + '  ', SubClass);
+
+        if SubClass <> ClassDefinition.Classes.Last then
+          AddLine;
+      end;
     end;
 
     if not ClassDefinition.Properties.IsEmpty then
@@ -420,7 +466,7 @@ var
         for var Attribute in &Property.Attributes do
           AddLine('%:s  [%s]', [Ident, Attribute]);
 
-        AddLine('%0:s  property %1:s: %2:s read F%1:s write F%1:s%3:s;', [Ident, &Property.Name, &Property.TypeName, GetStoredPropertyDeclaration(&Property)]);
+        AddLine('%0:s  property %1:s: %2:s read F%3:s write F%3:s%4:s;', [Ident, CheckReservedName(&Property.Name), &Property.TypeName, &Property.Name, GetStoredPropertyDeclaration(&Property)]);
       end;
     end;
 
@@ -446,6 +492,46 @@ var
       Result := 'False';
   end;
 
+  procedure GenerateClassImplementation(const ClassDefinition: TClassDefinition);
+
+    function GetClassImplementationName(ClassDefinition: TClassDefinition): String;
+    begin
+      Result := GetClassName(ClassDefinition);
+
+      while Assigned(ClassDefinition.ParentClass) do
+      begin
+        Result := Format('%s.%s', [GetClassName(ClassDefinition.ParentClass), Result]);
+
+        ClassDefinition := ClassDefinition.ParentClass;
+      end;
+    end;
+
+  begin
+    if HasOptionalProperty(ClassDefinition) then
+    begin
+      AddLine('{ %s }', [GetClassImplementationName(ClassDefinition)]);
+
+      AddLine;
+
+      for var &Property in ClassDefinition.Properties do
+        if &Property.Optional then
+        begin
+          AddLine('function %s.%s: Boolean;', [GetClassImplementationName(ClassDefinition), GetStoredFunctionName(&Property)]);
+
+          AddLine('begin');
+
+          AddLine('  Result := %s;', [GetOptionalValue(&Property)]);
+
+          AddLine('end;');
+
+          AddLine;
+        end;
+    end;
+
+    for var SubClassDefinition in ClassDefinition.Classes do
+      GenerateClassImplementation(SubClassDefinition);
+  end;
+
 begin
   UnitDefinition := TStringList.Create;
 
@@ -457,22 +543,16 @@ begin
 
   AddLine;
 
-  if not FUses.IsEmpty then
+  var UsesList := 'Blue.Print.Types';
+
+  for var AUnit in FUses do
   begin
-    var UsesList := EmptyStr;
-
-    for var AUnit in FUses do
-    begin
-      if not UsesList.IsEmpty then
-        UsesList := UsesList + ', ';
-
-      UsesList := UsesList + AUnit.Name;
-    end;
-
-    AddLine('uses %s;', [UsesList]);
-
-    AddLine;
+    UsesList := UsesList + ', ' + AUnit.Name;
   end;
+
+  AddLine('uses %s;', [UsesList]);
+
+  AddLine;
 
   if not FTypeAlias.IsEmpty or not Classes.IsEmpty then
     AddLine('type');
@@ -492,7 +572,7 @@ begin
     AddLine('  // Forward class declaration');
 
     for var AClass in Classes do
-      AddLine('  T%s = class;', [AClass.Name]);
+      AddLine('  %s = class;', [GetClassName(AClass)]);
 
     AddLine;
 
@@ -508,37 +588,24 @@ begin
 
   AddLine;
 
+  AddLine('uses System.SysUtils;');
+
+  AddLine;
+
   for var ClassDefinition in Classes do
-    if HasOptionalProperty(ClassDefinition) then
-    begin
-      AddLine('{ %s }', [ClassDefinition.Name]);
-
-      AddLine;
-
-      for var &Property in ClassDefinition.Properties do
-        if &Property.Optional then
-        begin
-          AddLine('function %s.%s: Boolean;', [ClassDefinition.Name, GetStoredFunctionName(&Property)]);
-
-          AddLine('begin');
-
-          AddLine('  Result := %s;', [GetOptionalValue(&Property)]);
-
-          AddLine('end;');
-
-          AddLine;
-        end;
-    end;
+    GenerateClassImplementation(ClassDefinition);
 
   AddLine('end.');
 
-  UnitDefinition.SaveToFile(Format('%s\%s.pas', [OutputFolder, Name]));
+  UnitDefinition.SaveToFile(Format('%s\%s.pas', [OutputFolder, Name]), TEncoding.UTF8);
 end;
 
 { TClassDefinition }
 
 procedure TClassDefinition.AddClassType(const ClassDefinition: TClassDefinition);
 begin
+  ClassDefinition.ParentClass := Self;
+
   FClasses.Add(ClassDefinition);
 end;
 
