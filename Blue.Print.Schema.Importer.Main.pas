@@ -48,14 +48,6 @@ begin
   begin
     var List := TStringList.Create('"', ';');
 
-    if FindCmdLineSwitch('Alias', AliasCommand) then
-    begin
-      List.DelimitedText := AliasCommand;
-
-      for var A := 0 to Pred(List.Count) do
-        Importer.AddUnitName(List.Names[A], List.ValueFromIndex[A]);
-    end;
-
     if FindCmdLineSwitch('TypeChange', TypeChange) then
     begin
       List.DelimitedText := TypeChange;
@@ -66,8 +58,6 @@ begin
 
     if FindCmdLineSwitch('Config', ConfigFile) then
       Importer.LoadConfig(ConfigFile);
-
-    Importer.Configuration.SchemaFiles := [FileName];
 
     Importer.Import;
   end;
@@ -84,7 +74,7 @@ begin
   Importer.LoadConfig(ConfigurationFile.Text);
 
   if SchemaFileName.Text <> EmptyStr then
-    Importer.Configuration.SchemaFiles := Importer.Configuration.SchemaFiles + [ConfigurationFile.Text];
+    Importer.Configuration.SchemaFolder := ConfigurationFile.Text;
 
   if OutputFolder.Text <> EmptyStr then
     Importer.Configuration.OutputFolder := OutputFolder.Text;

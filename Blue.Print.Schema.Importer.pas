@@ -5,13 +5,15 @@ interface
 uses System.Generics.Collections, Xml.XMLSchema;
 
 type
-  TUnitAlias = class
+  TUnitConfiguration = class
   private
     FFileName: String;
     FName: String;
+    FUnitClassName: String;
   public
     property FileName: String read FFileName write FFileName;
     property Name: String read FName write FName;
+    property UnitClassName: String read FUnitClassName write FUnitClassName;
   end;
 
   TTypeChange = class
@@ -25,15 +27,15 @@ type
 
   TConfiguration = class
   private
-    FUnitAlias: TArray<TUnitAlias>;
+    FUnitConfiguration: TArray<TUnitConfiguration>;
     FTypeChange: TArray<TTypeChange>;
     FOutputFolder: String;
-    FSchemaFiles: TArray<String>;
+    FSchemaFolder: String;
   public
     property OutputFolder: String read FOutputFolder write FOutputFolder;
-    property SchemaFiles: TArray<String> read FSchemaFiles write FSchemaFiles;
+    property SchemaFolder: String read FSchemaFolder write FSchemaFolder;
     property TypeChange: TArray<TTypeChange> read FTypeChange write FTypeChange;
-    property UnitAlias: TArray<TUnitAlias> read FUnitAlias write FUnitAlias;
+    property UnitConfiguration: TArray<TUnitConfiguration> read FUnitConfiguration write FUnitConfiguration;
   end;
 
   TProperty = class
@@ -90,7 +92,7 @@ type
     FClasses: TList<TClassDefinition>;
     FUses: TList<TUnit>;
     FTypeAlias: TList<TTypeAlias>;
-    FName: String;
+    FUnitConfiguration: TUnitConfiguration;
   public
     constructor Create;
 
@@ -101,7 +103,7 @@ type
     procedure GenerateFile(const OutputFolder: String);
 
     property Classes: TList<TClassDefinition> read FClasses write FClasses;
-    property Name: String read FName write FName;
+    property UnitConfiguration: TUnitConfiguration read FUnitConfiguration write FUnitConfiguration;
   end;
 
   TImporter = class
@@ -109,17 +111,15 @@ type
     FBuildInType: TDictionary<String, String>;
     FChangeType: TDictionary<String, String>;
     FUnits: TDictionary<String, TUnit>;
-    FUnitAlias: TDictionary<String, String>;
     FConfiguration: TConfiguration;
 
-    function GenerateUnit(const Definition: IXMLSchemaDef; const FileName: String): TUnit;
+    function GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
   public
     constructor Create;
 
     destructor Destroy; override;
 
     procedure AddChangeType(const AliasName, TypeName: String);
-    procedure AddUnitName(const FileName, UnitName: String);
     procedure Import;
     procedure LoadConfig(const FileName: String);
 
@@ -137,18 +137,12 @@ begin
   FChangeType.Add(AliasName, TypeName);
 end;
 
-procedure TImporter.AddUnitName(const FileName, UnitName: String);
-begin
-  FUnitAlias.Add(FileName, UnitName);
-end;
-
 constructor TImporter.Create;
 begin
   inherited;
 
   FBuildInType := TDictionary<String, String>.Create;
   FChangeType := TDictionary<String, String>.Create;
-  FUnitAlias := TDictionary<String, String>.Create;
   FUnits := TObjectDictionary<String, TUnit>.Create([doOwnsValues]);
 
   FBuildInType.Add('string', 'String');
@@ -168,16 +162,23 @@ begin
 
   FChangeType.Free;
 
-  FUnitAlias.Free;
-
   FUnits.Free;
 
   inherited;
 end;
 
-function TImporter.GenerateUnit(const Definition: IXMLSchemaDef; const FileName: String): TUnit;
+function TImporter.GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
 var
   SchemaUnit: TUnit absolute Result;
+
+  function FindUnitConfiguration(const FileName: String): TUnitConfiguration;
+  begin
+    for var Configuration in Configuration.UnitConfiguration do
+      if Configuration.FileName = FileName then
+        Exit(Configuration);
+
+    raise Exception.CreateFmt('Schema file without unit configuration %s!', [ExtractFileName(FileName)]);
+  end;
 
   procedure ProcessReferences(const List: IXMLSchemaDocRefs);
   begin
@@ -185,7 +186,7 @@ var
     begin
       var Reference := List[A];
 
-      SchemaUnit.AddUses(GenerateUnit(Reference.SchemaRef, Reference.SchemaLocation));
+      SchemaUnit.AddUses(GenerateUnit(Reference.SchemaRef, FindUnitConfiguration(Reference.SchemaLocation)));
     end;
   end;
 
@@ -294,16 +295,12 @@ var
   end;
 
 begin
-  if not FUnits.TryGetValue(FileName, Result) then
+  if not FUnits.TryGetValue(UnitConfiguration.FileName, Result) then
   begin
     Result := TUnit.Create;
+    Result.UnitConfiguration := UnitConfiguration;
 
-    if FUnitAlias.ContainsKey(FileName) then
-      SchemaUnit.Name := FUnitAlias[FileName]
-    else
-      raise Exception.CreateFmt('Schema file without unit configuration %s!', [ExtractFileName(FileName)]);
-
-    FUnits.Add(FileName, SchemaUnit);
+    FUnits.Add(UnitConfiguration.FileName, SchemaUnit);
 
     for var A := 0 to Pred(Definition.ComplexTypes.Count) do
       SchemaUnit.Classes.Add(GenerateSchemaClass(Definition.ComplexTypes[A]));
@@ -319,11 +316,13 @@ end;
 
 procedure TImporter.Import;
 begin
-  for var SchemaFile in Configuration.SchemaFiles do
+  for var UnitConfiguration in Configuration.UnitConfiguration do
   begin
+    var SchemaFile := Format('%s\%s', [Configuration.SchemaFolder, UnitConfiguration.FileName]);
+
     var Schema := LoadXMLSchema(SchemaFile);
 
-    GenerateUnit(Schema.SchemaDef, ExtractFileName(SchemaFile));
+    GenerateUnit(Schema.SchemaDef, UnitConfiguration);
 
     for var SchemaUnit in FUnits.Values do
       SchemaUnit.GenerateFile(Configuration.OutputFolder);
@@ -337,9 +336,6 @@ begin
     var Serializer: IBluePrintSerializer := TBluePrintJsonSerializer.Create;
 
     Configuration := Serializer.Deserialize(TFile.ReadAllText(FileName), TypeInfo(TConfiguration)).AsType<TConfiguration>;
-
-    for var UnitAlias in Configuration.UnitAlias do
-      AddUnitName(UnitAlias.FileName, UnitAlias.Name);
 
     for var TypeChange in Configuration.TypeChange do
       AddChangeType(TypeChange.AliasName, TypeChange.TypeName);
@@ -535,7 +531,7 @@ var
 begin
   UnitDefinition := TStringList.Create;
 
-  AddLine('unit %s;', [Name]);
+  AddLine('unit %s;', [UnitConfiguration.Name]);
 
   AddLine;
 
@@ -547,7 +543,7 @@ begin
 
   for var AUnit in FUses do
   begin
-    UsesList := UsesList + ', ' + AUnit.Name;
+    UsesList := UsesList + ', ' + AUnit.UnitConfiguration.Name;
   end;
 
   AddLine('uses %s;', [UsesList]);
@@ -597,7 +593,7 @@ begin
 
   AddLine('end.');
 
-  UnitDefinition.SaveToFile(Format('%s\%s.pas', [OutputFolder, Name]), TEncoding.UTF8);
+  UnitDefinition.SaveToFile(Format('%s\%s.pas', [OutputFolder, UnitConfiguration.Name]), TEncoding.UTF8);
 end;
 
 { TClassDefinition }
