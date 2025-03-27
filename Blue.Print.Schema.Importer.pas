@@ -27,7 +27,11 @@ type
   private
     FUnitAlias: TArray<TUnitAlias>;
     FTypeChange: TArray<TTypeChange>;
+    FOutputFolder: String;
+    FSchemaFiles: TArray<String>;
   public
+    property OutputFolder: String read FOutputFolder write FOutputFolder;
+    property SchemaFiles: TArray<String> read FSchemaFiles write FSchemaFiles;
     property TypeChange: TArray<TTypeChange> read FTypeChange write FTypeChange;
     property UnitAlias: TArray<TUnitAlias> read FUnitAlias write FUnitAlias;
   end;
@@ -92,7 +96,7 @@ type
 
     procedure AddTypeAlias(const TypeAlias: TTypeAlias);
     procedure AddUses(const SchemaUnit: TUnit);
-    procedure GenerateFile;
+    procedure GenerateFile(const OutputFolder: String);
 
     property Classes: TList<TClassDefinition> read FClasses write FClasses;
     property Name: String read FName write FName;
@@ -104,6 +108,7 @@ type
     FChangeType: TDictionary<String, String>;
     FUnits: TDictionary<String, TUnit>;
     FUnitAlias: TDictionary<String, String>;
+    FConfiguration: TConfiguration;
 
     function GenerateUnit(const Definition: IXMLSchemaDef; const FileName: String): TUnit;
   public
@@ -113,8 +118,10 @@ type
 
     procedure AddChangeType(const AliasName, TypeName: String);
     procedure AddUnitName(const FileName, UnitName: String);
-    procedure Import(const FileName: String);
+    procedure Import;
     procedure LoadConfig(const FileName: String);
+
+    property Configuration: TConfiguration read FConfiguration write FConfiguration;
   end;
 
 implementation
@@ -287,14 +294,17 @@ begin
   end;
 end;
 
-procedure TImporter.Import(const FileName: String);
+procedure TImporter.Import;
 begin
-  var Schema := LoadXMLSchema(FileName);
+  for var SchemaFile in Configuration.SchemaFiles do
+  begin
+    var Schema := LoadXMLSchema(SchemaFile);
 
-  GenerateUnit(Schema.SchemaDef, ExtractFileName(FileName));
+    GenerateUnit(Schema.SchemaDef, ExtractFileName(SchemaFile));
 
-  for var SchemaUnit in FUnits.Values do
-    SchemaUnit.GenerateFile;
+    for var SchemaUnit in FUnits.Values do
+      SchemaUnit.GenerateFile(Configuration.OutputFolder);
+  end;
 end;
 
 procedure TImporter.LoadConfig(const FileName: String);
@@ -303,7 +313,7 @@ begin
   begin
     var Serializer: IBluePrintSerializer := TBluePrintJsonSerializer.Create;
 
-    var Configuration := Serializer.Deserialize(TFile.ReadAllText(FileName), TypeInfo(TConfiguration)).AsType<TConfiguration>;
+    Configuration := Serializer.Deserialize(TFile.ReadAllText(FileName), TypeInfo(TConfiguration)).AsType<TConfiguration>;
 
     for var UnitAlias in Configuration.UnitAlias do
       AddUnitName(UnitAlias.FileName, UnitAlias.Name);
@@ -345,7 +355,7 @@ begin
   inherited;
 end;
 
-procedure TUnit.GenerateFile;
+procedure TUnit.GenerateFile(const OutputFolder: String);
 var
   UnitDefinition: TStringList;
 
@@ -520,7 +530,7 @@ begin
 
   AddLine('end.');
 
-  UnitDefinition.SaveToFile(Format('.\%s.pas', [Name]));
+  UnitDefinition.SaveToFile(Format('%s\%s.pas', [OutputFolder, Name]));
 end;
 
 { TClassDefinition }

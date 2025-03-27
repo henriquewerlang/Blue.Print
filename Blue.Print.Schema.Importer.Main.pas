@@ -9,10 +9,20 @@ type
     SchemaFileName: TEdit;
     lblSchemaFile: TLabel;
     SelectSchemaFile: TButton;
-    OpenSchemaFile: TOpenDialog;
+    OpenSchemaFile: TFileOpenDialog;
     GenerateFiles: TButton;
+    lblConfigurationFile: TLabel;
+    ConfigurationFile: TEdit;
+    SelectConfigurationFile: TButton;
+    OpenConfigurationFile: TFileOpenDialog;
+    lblOutputFolder: TLabel;
+    OutputFolder: TEdit;
+    SelectOutputFolder: TButton;
+    OpenOutputFolder: TFileOpenDialog;
     procedure GenerateFilesClick(Sender: TObject);
     procedure SelectSchemaFileClick(Sender: TObject);
+    procedure SelectConfigurationFileClick(Sender: TObject);
+    procedure SelectOutputFolderClick(Sender: TObject);
   end;
 
   procedure ImportCommandLine;
@@ -57,7 +67,9 @@ begin
     if FindCmdLineSwitch('Config', ConfigFile) then
       Importer.LoadConfig(ConfigFile);
 
-    Importer.Import(FileName);
+    Importer.Configuration.SchemaFiles := [FileName];
+
+    Importer.Import;
   end;
 
   Importer.Free;
@@ -69,9 +81,29 @@ procedure TMain.GenerateFilesClick(Sender: TObject);
 begin
   var Importer := TImporter.Create;
 
-  Importer.Import(SchemaFileName.Text);
+  Importer.LoadConfig(ConfigurationFile.Text);
+
+  if SchemaFileName.Text <> EmptyStr then
+    Importer.Configuration.SchemaFiles := Importer.Configuration.SchemaFiles + [ConfigurationFile.Text];
+
+  if OutputFolder.Text <> EmptyStr then
+    Importer.Configuration.OutputFolder := OutputFolder.Text;
+
+  Importer.Import;
 
   Importer.Free;
+end;
+
+procedure TMain.SelectConfigurationFileClick(Sender: TObject);
+begin
+  if OpenConfigurationFile.Execute then
+    ConfigurationFile.Text := OpenConfigurationFile.FileName;
+end;
+
+procedure TMain.SelectOutputFolderClick(Sender: TObject);
+begin
+  if OpenOutputFolder.Execute then
+    OutputFolder.Text := OpenOutputFolder.FileName;
 end;
 
 procedure TMain.SelectSchemaFileClick(Sender: TObject);
