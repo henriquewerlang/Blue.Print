@@ -65,11 +65,13 @@ type
   TTypeDefinition = class
   private
     FName: String;
+    function GetIsClassDefinition: Boolean;
   protected
     function GetName: String; virtual;
   public
     function ResolveType: TTypeDefinition; virtual;
 
+    property IsClassDefinition: Boolean read GetIsClassDefinition;
     property Name: String read GetName write FName;
   end;
 
@@ -521,6 +523,20 @@ var
     Result := ClassDefinition.Name;
   end;
 
+  function CheckNeedDestructor(const ClassDefinition: TClassDefinition): Boolean;
+  begin
+    Result := False;
+
+    for var &Property in ClassDefinition.Properties do
+      if &Property.TypeName.IsClassDefinition then
+        Exit(True);
+  end;
+
+  function GetPropertyFieldName(const &Property: TProperty): String;
+  begin
+    Result := 'F' + &Property.Name;
+  end;
+
   procedure GenerateClassDeclaration(const Ident: String; const ClassDefinition: TClassDefinition);
 
     function GetStoredPropertyDeclaration(const &Property: TProperty): String;
@@ -560,13 +576,20 @@ var
       AddLine('%sprivate', [Ident]);
 
       for var &Property in ClassDefinition.Properties do
-        AddLine('%s  F%s: %s;', [Ident, &Property.Name, &Property.TypeName.Name]);
+        AddLine('%s  %s: %s;', [Ident, GetPropertyFieldName(&Property), &Property.TypeName.Name]);
 
       for var &Property in ClassDefinition.Properties do
         if &Property.Optional then
           AddLine('%s  function %s: Boolean;', [Ident, GetStoredFunctionName(&Property)]);
 
       AddLine('%spublic', [Ident]);
+
+      if CheckNeedDestructor(ClassDefinition) then
+      begin
+        AddLine('%s  destructor Destroy; override;', [Ident]);
+
+        AddLine;
+      end;
 
       for var &Property in ClassDefinition.Properties do
       begin
@@ -592,9 +615,9 @@ var
   function GetOptionalValue(const &Property: TProperty): String;
   begin
     if &Property.TypeName.Name = 'String' then
-      Result := Format('not F%s.IsEmpty', [&Property.Name])
-    else if &Property.TypeName is TClassDefinition then
-      Result := Format('Assigned(F%s)', [&Property.Name])
+      Result := Format('not %s.IsEmpty', [GetPropertyFieldName(&Property)])
+    else if &Property.TypeName.IsClassDefinition then
+      Result := Format('Assigned(%s)', [GetPropertyFieldName(&Property)])
     else
       Result := 'False';
   end;
@@ -614,11 +637,32 @@ var
     end;
 
   begin
-    if HasOptionalProperty(ClassDefinition) then
+    if HasOptionalProperty(ClassDefinition) or CheckNeedDestructor(ClassDefinition) then
     begin
       AddLine('{ %s }', [GetClassImplementationName(ClassDefinition)]);
 
       AddLine;
+
+      if CheckNeedDestructor(ClassDefinition) then
+      begin
+        AddLine('destructor %s.Destroy;', [GetClassImplementationName(ClassDefinition)]);
+
+        AddLine('begin');
+
+        for var &Property in ClassDefinition.Properties do
+          if &Property.TypeName.IsClassDefinition then
+          begin
+            AddLine('  %s.Free;', [GetPropertyFieldName(&Property)]);
+
+            AddLine;
+          end;
+
+        AddLine('  inherited;');
+
+        AddLine('end;');
+
+        AddLine;
+      end;
 
       for var &Property in ClassDefinition.Properties do
         if &Property.Optional then
@@ -768,10 +812,15 @@ end;
 
 function TProperty.GetOptional: Boolean;
 begin
-  Result := FOptional and not (TypeName.ResolveType is TClassDefinition);
+  Result := FOptional and not TypeName.IsClassDefinition;
 end;
 
 { TTypeDefinition }
+
+function TTypeDefinition.GetIsClassDefinition: Boolean;
+begin
+  Result := ResolveType is TClassDefinition;
+end;
 
 function TTypeDefinition.GetName: String;
 begin
