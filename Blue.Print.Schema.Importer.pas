@@ -367,6 +367,10 @@ var
 
     function AddProperty(const Name: String; const &Type: IXMLTypeDef): TProperty;
     begin
+      for var &Property in ClassDefinition.Properties do
+        if &Property.Name = Name then
+          Exit(&Property);
+
       Result := TProperty.Create;
       Result.Name := Name;
       Result.TypeName := FindTypeName(&Type);
