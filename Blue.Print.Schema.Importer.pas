@@ -619,7 +619,7 @@ var
       Result := GetPropertyFieldName(&Property);
   end;
 
-  function GetPropertyTypeName(const &Property: TProperty): String;
+  function GetTypeName(const &Property: TProperty): String;
   begin
     var TypeName := GetPropertyType(&Property);
 
@@ -627,9 +627,19 @@ var
 
     if TypeName.IsClassDefinition then
       Result := GetClassName(TypeName as TClassDefinition);
+  end;
+
+  function GetPropertyTypeName(const &Property: TProperty): String;
+  begin
+    Result := GetTypeName(&Property);
 
     if &Property.IsArray then
       Result := Format('TArray<%s>', [Result]);
+  end;
+
+  function GetaAddFuntionName(const &Property: TProperty): String;
+  begin
+    Result := 'Add' + &Property.Name;
   end;
 
   procedure GenerateClassDeclaration(const Ident: String; const ClassDefinition: TClassDefinition);
@@ -648,6 +658,15 @@ var
         Result := Format('(%s)', [ClassDefinition.InheritedFrom.Name])
       else
         Result := EmptyStr;
+    end;
+
+    function HasArrayProperty(const ClassDefinition: TClassDefinition): Boolean;
+    begin
+      Result := False;
+
+      for var &Property in ClassDefinition.Properties do
+        if &Property.IsArray then
+          Exit(True);
     end;
 
   begin
@@ -681,11 +700,20 @@ var
         if &Property.Optional then
           AddLine('%s  function %s: Boolean;', [Ident, GetStoredFunctionName(&Property)]);
 
-      if CheckNeedDestructor(ClassDefinition) then
+      if CheckNeedDestructor(ClassDefinition) or HasArrayProperty(ClassDefinition) then
       begin
         AddLine('%spublic', [Ident]);
 
-        AddLine('%s  destructor Destroy; override;', [Ident]);
+        if CheckNeedDestructor(ClassDefinition) then
+          AddLine('%s  destructor Destroy; override;', [Ident]);
+
+
+        if CheckNeedDestructor(ClassDefinition) and HasArrayProperty(ClassDefinition) then
+          AddLine;
+
+        for var &Property in ClassDefinition.Properties do
+          if &Property.IsArray then
+            AddLine('%s  function %s: %s;', [Ident, GetaAddFuntionName(&Property), GetTypeName(&Property)]);
       end;
 
       AddLine('%spublished', [Ident]);
@@ -791,6 +819,25 @@ var
           AddLine;
 
           AddLine('  Result := %s;', [PropertyFieldName]);
+
+          AddLine('end;');
+
+          AddLine;
+        end
+        else if &Property.IsArray then
+        begin
+          var PropertyFieldName := GetPropertyFieldName(&Property);
+          var PropertyTypeName := GetTypeName(&Property);
+
+          AddLine('function %s.%s: %s;', [GetClassImplementationName(ClassDefinition), GetaAddFuntionName(&Property), PropertyTypeName]);
+
+          AddLine('begin');
+
+          AddLine('  Result := %s.Create;', [PropertyTypeName]);
+
+          AddLine;
+
+          AddLine('  %0:s := %0:s + [Result];', [PropertyFieldName]);
 
           AddLine('end;');
 
