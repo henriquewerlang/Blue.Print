@@ -218,6 +218,7 @@ begin
   FXMLBuildInType := TDictionary<String, TTypeDefinition>.Create;
 
   var StringType := AddType('String');
+  AddType('TObject');
 
   FXMLBuildInType.Add('string', StringType);
   FXMLBuildInType.Add('boolean', AddType('Boolean'));
@@ -574,6 +575,9 @@ var
   function GetClassName(const ClassDefinition: TClassDefinition): String;
   begin
     Result := ClassDefinition.Name;
+
+    if Assigned(ClassDefinition.ParentClass) then
+      Result := 'T' + Result.Substring(0, 1).ToUpper + Result.Substring(1);
   end;
 
   function GetPropertyType(const &Property: TProperty): TTypeDefinition;
@@ -609,8 +613,8 @@ var
 
     Result := TypeName.Name;
 
-    if TypeName.IsClassDefinition and (Result = &Property.Name) then
-      Result := 'T' + Result;
+    if TypeName.IsClassDefinition then
+      Result := GetClassName(TypeName as TClassDefinition);
   end;
 
   procedure GenerateClassDeclaration(const Ident: String; const ClassDefinition: TClassDefinition);
