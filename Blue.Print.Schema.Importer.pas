@@ -681,14 +681,14 @@ var
         if &Property.Optional then
           AddLine('%s  function %s: Boolean;', [Ident, GetStoredFunctionName(&Property)]);
 
-      AddLine('%spublic', [Ident]);
-
       if CheckNeedDestructor(ClassDefinition) then
       begin
-        AddLine('%s  destructor Destroy; override;', [Ident]);
+        AddLine('%spublic', [Ident]);
 
-        AddLine;
+        AddLine('%s  destructor Destroy; override;', [Ident]);
       end;
+
+      AddLine('%spublished', [Ident]);
 
       for var &Property in ClassDefinition.Properties do
       begin
