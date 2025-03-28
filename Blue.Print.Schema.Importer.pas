@@ -47,6 +47,8 @@ type
     FName: String;
     FOptional: Boolean;
     FTypeName: TTypeDefinition;
+
+    function GetNeedGetFunction: Boolean;
     function GetOptional: Boolean;
   public
     constructor Create;
@@ -58,6 +60,7 @@ type
 
     property Attributes: TList<String> read FAttributes write FAttributes;
     property Name: String read FName write FName;
+    property NeedGetFunction: Boolean read GetNeedGetFunction;
     property Optional: Boolean read GetOptional write FOptional;
     property TypeName: TTypeDefinition read FTypeName write FTypeName;
   end;
@@ -65,6 +68,7 @@ type
   TTypeDefinition = class
   private
     FName: String;
+
     function GetIsClassDefinition: Boolean;
   protected
     function GetName: String; virtual;
@@ -523,18 +527,36 @@ var
     Result := ClassDefinition.Name;
   end;
 
+  function GetPropertyType(const &Property: TProperty): TTypeDefinition;
+  begin
+    Result := &Property.TypeName.ResolveType;
+  end;
+
   function CheckNeedDestructor(const ClassDefinition: TClassDefinition): Boolean;
   begin
     Result := False;
 
     for var &Property in ClassDefinition.Properties do
-      if &Property.TypeName.IsClassDefinition then
+      if GetPropertyType(&Property).IsClassDefinition then
         Exit(True);
   end;
 
   function GetPropertyFieldName(const &Property: TProperty): String;
   begin
     Result := 'F' + &Property.Name;
+  end;
+
+  function GetPropertyGetFunction(const &Property: TProperty): String;
+  begin
+    if &Property.NeedGetFunction then
+      Result := 'Get' + &Property.Name
+    else
+      Result := GetPropertyFieldName(&Property);
+  end;
+
+  function GetPropertyTypeName(const &Property: TProperty): String;
+  begin
+    Result := GetPropertyType(&Property).Name;
   end;
 
   procedure GenerateClassDeclaration(const Ident: String; const ClassDefinition: TClassDefinition);
@@ -576,7 +598,11 @@ var
       AddLine('%sprivate', [Ident]);
 
       for var &Property in ClassDefinition.Properties do
-        AddLine('%s  %s: %s;', [Ident, GetPropertyFieldName(&Property), &Property.TypeName.Name]);
+        AddLine('%s  %s: %s;', [Ident, GetPropertyFieldName(&Property), GetPropertyTypeName(&Property)]);
+
+      for var &Property in ClassDefinition.Properties do
+        if &Property.NeedGetFunction then
+          AddLine('%s  function %s: %s;', [Ident, GetPropertyGetFunction(&Property), GetPropertyTypeName(&Property)]);
 
       for var &Property in ClassDefinition.Properties do
         if &Property.Optional then
@@ -596,7 +622,7 @@ var
         for var Attribute in &Property.Attributes do
           AddLine('%:s  [%s]', [Ident, Attribute]);
 
-        AddLine('%0:s  property %1:s: %2:s read F%3:s write F%3:s%4:s;', [Ident, CheckReservedName(&Property.Name), &Property.TypeName.Name, &Property.Name, GetStoredPropertyDeclaration(&Property)]);
+        AddLine('%s  property %s: %s read %s write %s%s;', [Ident, CheckReservedName(&Property.Name), GetPropertyTypeName(&Property), GetPropertyGetFunction(&Property), GetPropertyFieldName(&Property), GetStoredPropertyDeclaration(&Property)]);
       end;
     end;
 
@@ -614,9 +640,9 @@ var
 
   function GetOptionalValue(const &Property: TProperty): String;
   begin
-    if &Property.TypeName.Name = 'String' then
+    if GetPropertyTypeName(&Property) = 'String' then
       Result := Format('not %s.IsEmpty', [GetPropertyFieldName(&Property)])
-    else if &Property.TypeName.IsClassDefinition then
+    else if GetPropertyType(&Property).IsClassDefinition then
       Result := Format('Assigned(%s)', [GetPropertyFieldName(&Property)])
     else
       Result := 'False';
@@ -650,7 +676,7 @@ var
         AddLine('begin');
 
         for var &Property in ClassDefinition.Properties do
-          if &Property.TypeName.IsClassDefinition then
+          if GetPropertyType(&Property).IsClassDefinition then
           begin
             AddLine('  %s.Free;', [GetPropertyFieldName(&Property)]);
 
@@ -663,6 +689,29 @@ var
 
         AddLine;
       end;
+
+      for var &Property in ClassDefinition.Properties do
+        if GetPropertyType(&Property).IsClassDefinition then
+        begin
+          var PropertyFieldName := GetPropertyFieldName(&Property);
+          var PropertyTypeName := GetPropertyTypeName(&Property);
+
+          AddLine('function %s.%s: %s;', [GetClassImplementationName(ClassDefinition), GetPropertyGetFunction(&Property), PropertyTypeName]);
+
+          AddLine('begin');
+
+          AddLine('  if not Assigned(%s) then', [PropertyFieldName]);
+
+          AddLine('    %s := %s.Create;', [PropertyFieldName, PropertyTypeName]);
+
+          AddLine;
+
+          AddLine('  Result := %s;', [PropertyFieldName]);
+
+          AddLine('end;');
+
+          AddLine;
+        end;
 
       for var &Property in ClassDefinition.Properties do
         if &Property.Optional then
@@ -808,6 +857,11 @@ begin
   FAttributes.Free;
 
   inherited;
+end;
+
+function TProperty.GetNeedGetFunction: Boolean;
+begin
+  Result := TypeName.IsClassDefinition;
 end;
 
 function TProperty.GetOptional: Boolean;
