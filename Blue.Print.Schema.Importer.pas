@@ -264,7 +264,7 @@ end;
 
 function TImporter.GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
 var
-  SchemaUnit: TUnit absolute Result;
+  UnitDeclaration: TUnit absolute Result;
 
   function FindUnitConfiguration(const FileName: String): TUnitConfiguration;
   begin
@@ -281,7 +281,7 @@ var
     begin
       var Reference := List[A];
 
-      SchemaUnit.AddUses(GenerateUnit(Reference.SchemaRef, FindUnitConfiguration(Reference.SchemaLocation)));
+      UnitDeclaration.AddUses(GenerateUnit(Reference.SchemaRef, FindUnitConfiguration(Reference.SchemaLocation)));
     end;
   end;
 
@@ -312,9 +312,14 @@ var
     end;
   end;
 
+  function IsReferenceType(const Element: IXMLElementDef): Boolean;
+  begin
+    Result := Assigned(Element.Ref) or Assigned(Element.AttributeNodes.FindNode('type'));
+  end;
+
   function CanGenerateClass(const Element: IXMLElementDef): Boolean;
   begin
-    Result := Element.DataType.IsComplex and not Assigned(Element.Ref) and not Assigned(Element.AttributeNodes.FindNode('type'));
+    Result := Element.DataType.IsComplex and not IsReferenceType(Element);
   end;
 
   function GenerateClassDefinition(const ComplexType: IXMLComplexTypeDef): TClassDefinition;
@@ -330,16 +335,39 @@ var
       ClassDefinition.AddProperty(Result);
     end;
 
+    procedure AddPropertyAttribute(const &Property: TProperty; const Attribute: IXMLAttributeDef);
+    begin
+      if Attribute.Fixed = NULL then
+        &Property.AddXMLAttributeValue
+      else
+        &Property.AddXMLAttributeFixed(Attribute.Name, Attribute.Fixed);
+
+      &Property.Optional := (Attribute.Use <> NULL) and (Attribute.Use = 'optional');
+    end;
+
     procedure GenerateProperties(const ElementDefs: IXMLElementDefs; const AllPropertiesOptionals: Boolean);
     begin
       for var A := 0 to Pred(ElementDefs.Count) do
       begin
         var Element := ElementDefs[A];
+        var NewProperty := AddProperty(Element.Name, Element.DataType);
+        NewProperty.Optional := AllPropertiesOptionals or (Element.MinOccurs <> NULL) and (Element.MinOccurs <= 0);
 
         if CanGenerateClass(Element) then
-          Result.AddClassType(GenerateClassDefinition(Element.DataType as IXMLComplexTypeDef));
+        begin
+          var ComplexType := (Element.DataType as IXMLComplexTypeDef);
 
-        AddProperty(Element.Name, Element.DataType).Optional := AllPropertiesOptionals or (Element.MinOccurs <> NULL) and (Element.MinOccurs <= 0);
+          if ComplexType.ElementDefs.Count = 0 then
+            for var B := 0 to Pred(ComplexType.AttributeDefs.Count) do
+            begin
+              var Attribute := ComplexType.AttributeDefs[B];
+
+              AddPropertyAttribute(NewProperty, Attribute);
+              NewProperty.TypeName := FindTypeName(Attribute.DataType);
+            end
+          else
+            Result.AddClassType(GenerateClassDefinition(ComplexType));
+        end;
       end;
     end;
 
@@ -366,15 +394,9 @@ var
     for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
     begin
       var Attribute := ComplexType.AttributeDefs[A];
-
       var &Property := AddProperty(Attribute.Name, Attribute.DataType);
 
-      if Attribute.Fixed = NULL then
-        &Property.AddXMLAttributeValue
-      else
-        &Property.AddXMLAttributeFixed(Attribute.Name, Attribute.Fixed);
-
-      &Property.Optional := (Attribute.Use <> NULL) and (Attribute.Use = 'optional');
+      AddPropertyAttribute(&Property, Attribute);
     end;
   end;
 
@@ -391,14 +413,17 @@ begin
     Result := TUnit.Create;
     Result.UnitConfiguration := UnitConfiguration;
 
-    FUnits.Add(UnitConfiguration.FileName, SchemaUnit);
-
-    for var A := 0 to Pred(Definition.SimpleTypes.Count) do
-      SchemaUnit.AddTypeAlias(GenerateSimpleType(Definition.SimpleTypes[A]));
+    FUnits.Add(UnitConfiguration.FileName, UnitDeclaration);
 
     ProcessReferences(Definition.SchemaIncludes);
 
     ProcessReferences(Definition.SchemaImports);
+
+    for var A := 0 to Pred(Definition.SimpleTypes.Count) do
+      UnitDeclaration.AddTypeAlias(GenerateSimpleType(Definition.SimpleTypes[A]));
+
+    for var A := 0 to Pred(Definition.ComplexTypes.Count) do
+      UnitDeclaration.Classes.Add(GenerateClassDefinition(Definition.ComplexTypes[A]));
 
     for var A := 0 to Pred(Definition.ElementDefs.Count) do
     begin
@@ -409,20 +434,17 @@ begin
         var ClassDefinition := GenerateClassDefinition(Element.DataType as IXMLComplexTypeDef);
         ClassDefinition.Name := UnitConfiguration.UnitClassName;
 
-        SchemaUnit.Classes.Add(ClassDefinition);
+        UnitDeclaration.Classes.Add(ClassDefinition);
       end
-      else if Assigned(Element.AttributeNodes.FindNode('type')) then
+      else if IsReferenceType(Element) then
       begin
         var ClassDefinition := TClassDefinition.Create;
         ClassDefinition.Name := Element.Name;
         ClassDefinition.InheritedFrom := FindTypeName(Element.DataType);
 
-        SchemaUnit.Classes.Add(ClassDefinition);
+        UnitDeclaration.Classes.Add(ClassDefinition);
       end;
     end;
-
-    for var A := 0 to Pred(Definition.ComplexTypes.Count) do
-      SchemaUnit.Classes.Add(GenerateClassDefinition(Definition.ComplexTypes[A]));
   end;
 end;
 
