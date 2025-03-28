@@ -218,18 +218,27 @@ begin
   FXMLBuildInType := TDictionary<String, TTypeDefinition>.Create;
 
   var StringType := AddType('String');
+  var CardinalType := AddType('Cardinal');
+  var IntegerType := AddType('Integer');
+  var Int64Type := AddType('Int64');
   AddType('TObject');
+  AddType('Undefined');
+  var WordType := AddType('Word');
 
-  FXMLBuildInType.Add('string', StringType);
-  FXMLBuildInType.Add('boolean', AddType('Boolean'));
-  FXMLBuildInType.Add('decimal', AddType('Double'));
-  FXMLBuildInType.Add('dateTime', AddType('TDateTime'));
-  FXMLBuildInType.Add('date', AddType('TDate'));
-  FXMLBuildInType.Add('ID', StringType);
-  FXMLBuildInType.Add('time', AddType('TTime'));
-  FXMLBuildInType.Add('base64Binary', StringType);
   FXMLBuildInType.Add('anyURI', StringType);
-  FXMLBuildInType.Add('Undefined', AddType('Undefined'));
+  FXMLBuildInType.Add('base64Binary', StringType);
+  FXMLBuildInType.Add('boolean', AddType('Boolean'));
+  FXMLBuildInType.Add('date', AddType('TDate'));
+  FXMLBuildInType.Add('dateTime', AddType('TDateTime'));
+  FXMLBuildInType.Add('decimal', AddType('Double'));
+  FXMLBuildInType.Add('ID', StringType);
+  FXMLBuildInType.Add('int', IntegerType);
+  FXMLBuildInType.Add('long', Int64Type);
+  FXMLBuildInType.Add('string', StringType);
+  FXMLBuildInType.Add('time', AddType('TTime'));
+  FXMLBuildInType.Add('token', StringType);
+  FXMLBuildInType.Add('unsignedShort', WordType);
+  FXMLBuildInType.Add('unsignedInt', CardinalType);
 end;
 
 destructor TImporter.Destroy;
