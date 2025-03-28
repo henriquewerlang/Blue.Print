@@ -578,7 +578,12 @@ var
 
   function GetPropertyTypeName(const &Property: TProperty): String;
   begin
-    Result := GetPropertyType(&Property).Name;
+    var TypeName := GetPropertyType(&Property);
+
+    Result := TypeName.Name;
+
+    if TypeName.IsClassDefinition and (Result = &Property.Name) then
+      Result := 'T' + Result;
   end;
 
   procedure GenerateClassDeclaration(const Ident: String; const ClassDefinition: TClassDefinition);
