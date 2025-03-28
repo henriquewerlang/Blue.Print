@@ -874,6 +874,10 @@ begin
 
   AddLine;
 
+  AddLine('{$M+}');
+
+  AddLine;
+
   var UsesList := 'Blue.Print.Types';
 
   for var AUnit in FUses do
