@@ -19,7 +19,7 @@ type
     property UnitClassName: String read FUnitClassName write FUnitClassName;
   end;
 
-  TTypeChange = class
+  TTypeChangeConfig = class
   private
     FAliasName: String;
     FTypeName: String;
@@ -31,13 +31,13 @@ type
   TConfiguration = class
   private
     FUnitConfiguration: TArray<TUnitConfiguration>;
-    FTypeChange: TArray<TTypeChange>;
+    FTypeChange: TArray<TTypeChangeConfig>;
     FOutputFolder: String;
     FSchemaFolder: String;
   public
     property OutputFolder: String read FOutputFolder write FOutputFolder;
     property SchemaFolder: String read FSchemaFolder write FSchemaFolder;
-    property TypeChange: TArray<TTypeChange> read FTypeChange write FTypeChange;
+    property TypeChange: TArray<TTypeChangeConfig> read FTypeChange write FTypeChange;
     property UnitConfiguration: TArray<TUnitConfiguration> read FUnitConfiguration write FUnitConfiguration;
   end;
 
@@ -67,16 +67,14 @@ type
 
   TTypeDefinition = class
   private
-    FName: String;
-
     function GetIsClassDefinition: Boolean;
   protected
-    function GetName: String; virtual;
+    FName: String;
   public
     function ResolveType: TTypeDefinition; virtual;
 
     property IsClassDefinition: Boolean read GetIsClassDefinition;
-    property Name: String read GetName write FName;
+    property Name: String read FName write FName;
   end;
 
   TClassDefinition = class(TTypeDefinition)
@@ -99,6 +97,17 @@ type
     property Properties: TList<TProperty> read FProperties write FProperties;
   end;
 
+  TTypeChangeDefinition = class(TTypeDefinition)
+  private
+    FImporter: TImporter;
+    FType: TTypeDefinition;
+    FTypeName: String;
+  public
+    constructor Create(const Importer: TImporter; const AliasName, TypeName: String);
+
+    function ResolveType: TTypeDefinition; override;
+  end;
+
   TTypeAlias = class(TTypeDefinition)
   private
     FTypeName: TTypeDefinition;
@@ -113,8 +122,6 @@ type
     FImporter: TImporter;
     FTypeName: String;
     FType: TTypeDefinition;
-  protected
-    function GetName: String; override;
   public
     constructor Create(const Importer: TImporter; const TypeName: String);
 
@@ -122,8 +129,12 @@ type
   end;
 
   TUndefinedType = class(TTypeDefinition)
+  private
+    FUndefinedType: TTypeDefinition;
   public
     constructor Create(const TypeName: String);
+
+    function ResolveType: TTypeDefinition; override;
   end;
 
   TUnit = class
@@ -149,9 +160,11 @@ type
   TImporter = class
   private
     FBuildInType: TDictionary<String, TTypeDefinition>;
+    FChangeTypes: TDictionary<String, TTypeDefinition>;
+    FConfiguration: TConfiguration;
     FDelayedTypes: TDictionary<String, TTypeDelayed>;
     FUnits: TDictionary<String, TUnit>;
-    FConfiguration: TConfiguration;
+    FXMLBuildInType: TDictionary<String, TTypeDefinition>;
 
     function FindType(const TypeName: String): TTypeDefinition;
     function GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
@@ -175,7 +188,7 @@ uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, XML.xmldo
 
 procedure TImporter.AddChangeType(const AliasName, TypeName: String);
 begin
-//  FChangeType.Add(AliasName, TypeName);
+  FChangeTypes.Add(AliasName, TTypeChangeDefinition.Create(Self, AliasName, TypeName));
 end;
 
 constructor TImporter.Create;
@@ -184,6 +197,8 @@ constructor TImporter.Create;
   begin
     Result := TTypeDefinition.Create;
     Result.Name := TypeName;
+
+    FBuildInType.Add(Result.Name, Result);
   end;
 
   function AddTypeAlias(const Alias: String; TypeName: TTypeDefinition): TTypeAlias;
@@ -197,26 +212,32 @@ begin
   inherited;
 
   FBuildInType := TDictionary<String, TTypeDefinition>.Create;
+  FChangeTypes := TDictionary<String, TTypeDefinition>.Create;
   FDelayedTypes := TDictionary<String, TTypeDelayed>.Create;
   FUnits := TObjectDictionary<String, TUnit>.Create([doOwnsValues]);
+  FXMLBuildInType := TDictionary<String, TTypeDefinition>.Create;
 
   var StringType := AddType('String');
 
-  FBuildInType.Add('string', StringType);
-  FBuildInType.Add('boolean', AddType('Boolean'));
-  FBuildInType.Add('decimal', AddType('Double'));
-  FBuildInType.Add('dateTime', AddType('TDateTime'));
-  FBuildInType.Add('date', AddType('TDate'));
-  FBuildInType.Add('ID', StringType);
-  FBuildInType.Add('time', AddType('TTime'));
-  FBuildInType.Add('base64Binary', StringType);
-  FBuildInType.Add('anyURI', StringType);
-  FBuildInType.Add('Undefined', AddType('Undefined'));
+  FXMLBuildInType.Add('string', StringType);
+  FXMLBuildInType.Add('boolean', AddType('Boolean'));
+  FXMLBuildInType.Add('decimal', AddType('Double'));
+  FXMLBuildInType.Add('dateTime', AddType('TDateTime'));
+  FXMLBuildInType.Add('date', AddType('TDate'));
+  FXMLBuildInType.Add('ID', StringType);
+  FXMLBuildInType.Add('time', AddType('TTime'));
+  FXMLBuildInType.Add('base64Binary', StringType);
+  FXMLBuildInType.Add('anyURI', StringType);
+  FXMLBuildInType.Add('Undefined', AddType('Undefined'));
 end;
 
 destructor TImporter.Destroy;
 begin
+  FXMLBuildInType.Free;
+
   FBuildInType.Free;
+
+  FChangeTypes.Free;
 
   FDelayedTypes.Free;
 
@@ -249,6 +270,9 @@ begin
   if FBuildInType.TryGetValue(TypeName, Result) then
     Exit;
 
+  if FXMLBuildInType.TryGetValue(TypeName, Result) then
+    Exit;
+
   for var UnitDefinition in FUnits.Values do
   begin
     Result := FindInClasses(UnitDefinition.Classes, TypeName);
@@ -260,6 +284,9 @@ begin
       if SimpleType.Name = TypeName then
         Exit(SimpleType);
   end;
+
+  if FChangeTypes.TryGetValue(TypeName, Result) then
+    Exit;
 end;
 
 function TImporter.GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
@@ -793,7 +820,7 @@ begin
     AddLine('  // Forward type alias');
 
     for var TypeAlias in TypeAlias do
-      AddLine('  %s = %s;', [TypeAlias.Name, TypeAlias.TypeName.Name]);
+      AddLine('  %s = %s;', [TypeAlias.Name, TypeAlias.ResolveType.Name]);
 
     AddLine;
   end;
@@ -903,11 +930,6 @@ begin
   Result := ResolveType is TClassDefinition;
 end;
 
-function TTypeDefinition.GetName: String;
-begin
-  Result := FName;
-end;
-
 function TTypeDefinition.ResolveType: TTypeDefinition;
 begin
   Result := Self;
@@ -921,11 +943,6 @@ begin
 
   FImporter := Importer;
   FTypeName := TypeName;
-end;
-
-function TTypeDelayed.GetName: String;
-begin
-  Result := ResolveType.Name;
 end;
 
 function TTypeDelayed.ResolveType: TTypeDefinition;
@@ -945,7 +962,14 @@ constructor TUndefinedType.Create(const TypeName: String);
 begin
   inherited Create;
 
-  FName := Format('Undefined { %s }', [TypeName]);
+  FName := TypeName;
+  FUndefinedType := TTypeDefinition.Create;
+  FUndefinedType.Name := Format('Undefined { %s }', [FName]);
+end;
+
+function TUndefinedType.ResolveType: TTypeDefinition;
+begin
+  Result := FUndefinedType;
 end;
 
 { TTypeAlias }
@@ -953,6 +977,28 @@ end;
 function TTypeAlias.ResolveType: TTypeDefinition;
 begin
   Result := TypeName.ResolveType;
+end;
+
+{ TTypeChangeDefinition }
+
+constructor TTypeChangeDefinition.Create(const Importer: TImporter; const AliasName, TypeName: String);
+begin
+  inherited Create;
+
+  FImporter := Importer;
+  FName := AliasName;
+  FTypeName := TypeName;
+end;
+
+function TTypeChangeDefinition.ResolveType: TTypeDefinition;
+begin
+  if not Assigned(FType) then
+    FType := FImporter.FindType(FTypeName);
+
+  if not Assigned(FType) then
+    raise Exception.CreateFmt('Wrong type configuration %s - %s!', [FName, FTypeName]);
+
+  Result := FType.ResolveType;
 end;
 
 end.
