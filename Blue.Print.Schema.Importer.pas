@@ -51,6 +51,7 @@ type
 
     function GetNeedGetFunction: Boolean;
     function GetOptional: Boolean;
+    function GetNeedAddFunction: Boolean;
   public
     constructor Create;
 
@@ -62,6 +63,7 @@ type
     property Attributes: TList<String> read FAttributes write FAttributes;
     property IsArray: Boolean read FIsArray write FIsArray;
     property Name: String read FName write FName;
+    property NeedAddFunction: Boolean read GetNeedAddFunction;
     property NeedGetFunction: Boolean read GetNeedGetFunction;
     property Optional: Boolean read GetOptional write FOptional;
     property TypeName: TTypeDefinition read FTypeName write FTypeName;
@@ -641,7 +643,7 @@ var
       Result := Format('TArray<%s>', [Result]);
   end;
 
-  function GetaAddFuntionName(const &Property: TProperty): String;
+  function GetAddFuntionName(const &Property: TProperty): String;
   begin
     Result := 'Add' + &Property.Name;
   end;
@@ -716,8 +718,8 @@ var
           AddLine;
 
         for var &Property in ClassDefinition.Properties do
-          if &Property.IsArray then
-            AddLine('%s  function %s: %s;', [Ident, GetaAddFuntionName(&Property), GetTypeName(&Property)]);
+          if &Property.NeedAddFunction then
+            AddLine('%s  function %s: %s;', [Ident, GetAddFuntionName(&Property), GetTypeName(&Property)]);
       end;
 
       AddLine('%spublished', [Ident]);
@@ -828,12 +830,12 @@ var
 
           AddLine;
         end
-        else if &Property.IsArray then
+        else if &Property.NeedAddFunction then
         begin
           var PropertyFieldName := GetPropertyFieldName(&Property);
           var PropertyTypeName := GetTypeName(&Property);
 
-          AddLine('function %s.%s: %s;', [GetClassImplementationName(ClassDefinition), GetaAddFuntionName(&Property), PropertyTypeName]);
+          AddLine('function %s.%s: %s;', [GetClassImplementationName(ClassDefinition), GetAddFuntionName(&Property), PropertyTypeName]);
 
           AddLine('begin');
 
@@ -996,6 +998,11 @@ begin
   FAttributes.Free;
 
   inherited;
+end;
+
+function TProperty.GetNeedAddFunction: Boolean;
+begin
+  Result := IsArray and TypeName.IsClassDefinition;
 end;
 
 function TProperty.GetNeedGetFunction: Boolean;
