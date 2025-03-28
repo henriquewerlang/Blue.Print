@@ -47,6 +47,7 @@ type
     FName: String;
     FOptional: Boolean;
     FTypeName: TTypeDefinition;
+    FIsArray: Boolean;
 
     function GetNeedGetFunction: Boolean;
     function GetOptional: Boolean;
@@ -59,6 +60,7 @@ type
     procedure AddXMLAttributeValue;
 
     property Attributes: TList<String> read FAttributes write FAttributes;
+    property IsArray: Boolean read FIsArray write FIsArray;
     property Name: String read FName write FName;
     property NeedGetFunction: Boolean read GetNeedGetFunction;
     property Optional: Boolean read GetOptional write FOptional;
@@ -388,6 +390,7 @@ var
       begin
         var Element := ElementDefs[A];
         var NewProperty := AddProperty(Element.Name, Element.DataType);
+        NewProperty.IsArray := (Element.MinOccurs <> NULL) and (Element.MaxOccurs > 1);
         NewProperty.Optional := AllPropertiesOptionals or (Element.MinOccurs <> NULL) and (Element.MinOccurs <= 0);
 
         if CanGenerateClass(Element) then
@@ -624,6 +627,9 @@ var
 
     if TypeName.IsClassDefinition then
       Result := GetClassName(TypeName as TClassDefinition);
+
+    if &Property.IsArray then
+      Result := Format('TArray<%s>', [Result]);
   end;
 
   procedure GenerateClassDeclaration(const Ident: String; const ClassDefinition: TClassDefinition);
@@ -743,12 +749,23 @@ var
         AddLine('begin');
 
         for var &Property in ClassDefinition.Properties do
-          if GetPropertyType(&Property).IsClassDefinition then
+        begin
+          var PropertyType := GetPropertyType(&Property);
+
+          if &Property.IsArray and PropertyType.IsClassDefinition then
+          begin
+            AddLine('  for var AObject in %s do', [GetPropertyFieldName(&Property)]);
+            AddLine('    AObject.Free;');
+
+            AddLine;
+          end
+          else if PropertyType.IsClassDefinition then
           begin
             AddLine('  %s.Free;', [GetPropertyFieldName(&Property)]);
 
             AddLine;
           end;
+        end;
 
         AddLine('  inherited;');
 
@@ -758,7 +775,7 @@ var
       end;
 
       for var &Property in ClassDefinition.Properties do
-        if GetPropertyType(&Property).IsClassDefinition then
+        if &Property.NeedGetFunction then
         begin
           var PropertyFieldName := GetPropertyFieldName(&Property);
           var PropertyTypeName := GetPropertyTypeName(&Property);
@@ -928,7 +945,7 @@ end;
 
 function TProperty.GetNeedGetFunction: Boolean;
 begin
-  Result := TypeName.IsClassDefinition;
+  Result := TypeName.IsClassDefinition and not IsArray;
 end;
 
 function TProperty.GetOptional: Boolean;
