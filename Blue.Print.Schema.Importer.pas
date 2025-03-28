@@ -5,6 +5,9 @@ interface
 uses System.Generics.Collections, Xml.XMLSchema;
 
 type
+  TImporter = class;
+  TTypeDefinition = class;
+
   TUnitConfiguration = class
   private
     FFileName: String;
@@ -42,8 +45,9 @@ type
   private
     FAttributes: TList<String>;
     FName: String;
-    FTypeName: String;
     FOptional: Boolean;
+    FTypeName: TTypeDefinition;
+    function GetOptional: Boolean;
   public
     constructor Create;
 
@@ -54,16 +58,27 @@ type
 
     property Attributes: TList<String> read FAttributes write FAttributes;
     property Name: String read FName write FName;
-    property Optional: Boolean read FOptional write FOptional;
-    property TypeName: String read FTypeName write FTypeName;
+    property Optional: Boolean read GetOptional write FOptional;
+    property TypeName: TTypeDefinition read FTypeName write FTypeName;
   end;
 
-  TClassDefinition = class
+  TTypeDefinition = class
   private
     FName: String;
+  protected
+    function GetName: String; virtual;
+  public
+    function ResolveType: TTypeDefinition; virtual;
+
+    property Name: String read GetName write FName;
+  end;
+
+  TClassDefinition = class(TTypeDefinition)
+  private
     FClasses: TList<TClassDefinition>;
     FProperties: TList<TProperty>;
     FParentClass: TClassDefinition;
+    FInheritedFrom: TTypeDefinition;
   public
     constructor Create;
 
@@ -73,18 +88,36 @@ type
     procedure AddProperty(const &Property: TProperty);
 
     property Classes: TList<TClassDefinition> read FClasses;
-    property Name: String read FName write FName;
+    property InheritedFrom: TTypeDefinition read FInheritedFrom write FInheritedFrom;
     property ParentClass: TClassDefinition read FParentClass write FParentClass;
     property Properties: TList<TProperty> read FProperties write FProperties;
   end;
 
-  TTypeAlias = class
+  TTypeAlias = class(TTypeDefinition)
   private
-    FName: String;
-    FTypeName: String;
+    FTypeName: TTypeDefinition;
   public
-    property Name: String read FName write FName;
-    property TypeName: String read FTypeName write FTypeName;
+    function ResolveType: TTypeDefinition; override;
+
+    property TypeName: TTypeDefinition read FTypeName write FTypeName;
+  end;
+
+  TTypeDelayed = class(TTypeDefinition)
+  private
+    FImporter: TImporter;
+    FTypeName: String;
+    FType: TTypeDefinition;
+  protected
+    function GetName: String; override;
+  public
+    constructor Create(const Importer: TImporter; const TypeName: String);
+
+    function ResolveType: TTypeDefinition; override;
+  end;
+
+  TUndefinedType = class(TTypeDefinition)
+  public
+    constructor Create(const TypeName: String);
   end;
 
   TUnit = class
@@ -98,21 +131,23 @@ type
 
     destructor Destroy; override;
 
-    procedure AddTypeAlias(const TypeAlias: TTypeAlias);
+    procedure AddTypeAlias(const AType: TTypeAlias);
     procedure AddUses(const SchemaUnit: TUnit);
     procedure GenerateFile(const OutputFolder: String);
 
     property Classes: TList<TClassDefinition> read FClasses write FClasses;
+    property TypeAlias: TList<TTypeAlias> read FTypeAlias;
     property UnitConfiguration: TUnitConfiguration read FUnitConfiguration write FUnitConfiguration;
   end;
 
   TImporter = class
   private
-    FBuildInType: TDictionary<String, String>;
-    FChangeType: TDictionary<String, String>;
+    FBuildInType: TDictionary<String, TTypeDefinition>;
+    FDelayedTypes: TDictionary<String, TTypeDelayed>;
     FUnits: TDictionary<String, TUnit>;
     FConfiguration: TConfiguration;
 
+    function FindType(const TypeName: String): TTypeDefinition;
     function GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
   public
     constructor Create;
@@ -134,37 +169,91 @@ uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, XML.xmldo
 
 procedure TImporter.AddChangeType(const AliasName, TypeName: String);
 begin
-  FChangeType.Add(AliasName, TypeName);
+//  FChangeType.Add(AliasName, TypeName);
 end;
 
 constructor TImporter.Create;
+
+  function AddType(const TypeName: String): TTypeDefinition;
+  begin
+    Result := TTypeDefinition.Create;
+    Result.Name := TypeName;
+  end;
+
+  function AddTypeAlias(const Alias: String; TypeName: TTypeDefinition): TTypeAlias;
+  begin
+    Result := TTypeAlias.Create;
+    Result.Name := Alias;
+    Result.TypeName := TypeName;
+  end;
+
 begin
   inherited;
 
-  FBuildInType := TDictionary<String, String>.Create;
-  FChangeType := TDictionary<String, String>.Create;
+  FBuildInType := TDictionary<String, TTypeDefinition>.Create;
+  FDelayedTypes := TDictionary<String, TTypeDelayed>.Create;
   FUnits := TObjectDictionary<String, TUnit>.Create([doOwnsValues]);
 
-  FBuildInType.Add('string', 'String');
-  FBuildInType.Add('boolean', 'Boolean');
-  FBuildInType.Add('decimal', 'Double');
-  FBuildInType.Add('dateTime', 'TDateTime');
-  FBuildInType.Add('date', 'TDate');
-  FBuildInType.Add('ID', 'String');
-  FBuildInType.Add('time', 'TTime');
-  FBuildInType.Add('base64Binary', 'String');
-  FBuildInType.Add('anyURI', 'String');
+  var StringType := AddType('String');
+
+  FBuildInType.Add('string', StringType);
+  FBuildInType.Add('boolean', AddType('Boolean'));
+  FBuildInType.Add('decimal', AddType('Double'));
+  FBuildInType.Add('dateTime', AddType('TDateTime'));
+  FBuildInType.Add('date', AddType('TDate'));
+  FBuildInType.Add('ID', StringType);
+  FBuildInType.Add('time', AddType('TTime'));
+  FBuildInType.Add('base64Binary', StringType);
+  FBuildInType.Add('anyURI', StringType);
+  FBuildInType.Add('Undefined', AddType('Undefined'));
 end;
 
 destructor TImporter.Destroy;
 begin
   FBuildInType.Free;
 
-  FChangeType.Free;
+  FDelayedTypes.Free;
 
   FUnits.Free;
 
   inherited;
+end;
+
+function TImporter.FindType(const TypeName: String): TTypeDefinition;
+
+  function FindInClasses(const ClassList: TList<TClassDefinition>; const TypeName: String): TTypeDefinition;
+  begin
+    Result := nil;
+
+    for var ClassDefinition in ClassList do
+    begin
+      if ClassDefinition.Name = TypeName then
+        Exit(ClassDefinition);
+
+      Result := FindInClasses(ClassDefinition.Classes, TypeName);
+
+      if Assigned(Result) then
+        Exit;
+    end;
+  end;
+
+begin
+  Result := nil;
+
+  if FBuildInType.TryGetValue(TypeName, Result) then
+    Exit;
+
+  for var UnitDefinition in FUnits.Values do
+  begin
+    Result := FindInClasses(UnitDefinition.Classes, TypeName);
+
+    if Assigned(Result) then
+      Exit;
+
+    for var SimpleType in UnitDefinition.TypeAlias do
+      if SimpleType.Name = TypeName then
+        Exit(SimpleType);
+  end;
 end;
 
 function TImporter.GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
@@ -190,19 +279,6 @@ var
     end;
   end;
 
-  function FindTypeAlias(const XSDTypeName: String; var TypeName: String): Boolean;
-  begin
-    Result := False;
-
-    for var SimpleType in SchemaUnit.FTypeAlias do
-      if SimpleType.Name = XSDTypeName then
-      begin
-        TypeName := SimpleType.TypeName;
-
-        Exit(True);
-      end;
-  end;
-
   function GetBaseType(SimpleType: IXMLTypeDef): String;
   begin
     while Assigned(SimpleType.BaseType) do
@@ -211,22 +287,31 @@ var
     Result := ExtractLocalName(SimpleType.Name);
   end;
 
-  function FindTypeName(&Type: IXMLTypeDef): String;
+  function FindTypeName(&Type: IXMLTypeDef): TTypeDefinition;
   begin
-    Result := GetBaseType(&Type);
+    var TypeName := GetBaseType(&Type);
 
-    if FBuildInType.ContainsKey(Result) then
-      Result := FBuildInType[Result]
-    else if FindTypeAlias(Result, Result) then
-    else if FChangeType.ContainsKey(Result) then
-      Result := FChangeType[Result]
-    else if &Type.IsComplex then
-      Result := 'T' + Result
-    else
-      Result := 'Undefined; //Type not found ' + &Type.Name
+    Result := FindType(TypeName);
+
+    if not Assigned(Result) then
+      for var DelayedType in FDelayedTypes.Values do
+        if DelayedType.FTypeName = TypeName then
+          Result := DelayedType;
+
+    if not Assigned(Result) then
+    begin
+      Result := TTypeDelayed.Create(Self, TypeName);
+
+      FDelayedTypes.Add(TypeName, Result as TTypeDelayed);
+    end;
   end;
 
-  function GenerateSchemaClass(const ComplexType: IXMLComplexTypeDef): TClassDefinition;
+  function CanGenerateClass(const Element: IXMLElementDef): Boolean;
+  begin
+    Result := Element.DataType.IsComplex and not Assigned(Element.Ref) and not Assigned(Element.AttributeNodes.FindNode('type'));
+  end;
+
+  function GenerateClassDefinition(const ComplexType: IXMLComplexTypeDef): TClassDefinition;
   var
     ClassDefinition: TClassDefinition absolute Result;
 
@@ -245,8 +330,8 @@ var
       begin
         var Element := ElementDefs[A];
 
-        if Element.DataType.IsComplex and not Assigned(Element.Ref) and not Assigned(Element.AttributeNodes.FindNode('type')) then
-          Result.AddClassType(GenerateSchemaClass(Element.DataType as IXMLComplexTypeDef));
+        if CanGenerateClass(Element) then
+          Result.AddClassType(GenerateClassDefinition(Element.DataType as IXMLComplexTypeDef));
 
         AddProperty(Element.Name, Element.DataType).Optional := AllPropertiesOptionals or (Element.MinOccurs <> NULL) and (Element.MinOccurs <= 0);
       end;
@@ -302,15 +387,36 @@ begin
 
     FUnits.Add(UnitConfiguration.FileName, SchemaUnit);
 
-    for var A := 0 to Pred(Definition.ComplexTypes.Count) do
-      SchemaUnit.Classes.Add(GenerateSchemaClass(Definition.ComplexTypes[A]));
-
     for var A := 0 to Pred(Definition.SimpleTypes.Count) do
       SchemaUnit.AddTypeAlias(GenerateSimpleType(Definition.SimpleTypes[A]));
 
     ProcessReferences(Definition.SchemaIncludes);
 
     ProcessReferences(Definition.SchemaImports);
+
+    for var A := 0 to Pred(Definition.ElementDefs.Count) do
+    begin
+      var Element := Definition.ElementDefs[A];
+
+      if CanGenerateClass(Element) then
+      begin
+        var ClassDefinition := GenerateClassDefinition(Element.DataType as IXMLComplexTypeDef);
+        ClassDefinition.Name := UnitConfiguration.UnitClassName;
+
+        SchemaUnit.Classes.Add(ClassDefinition);
+      end
+      else if Assigned(Element.AttributeNodes.FindNode('type')) then
+      begin
+        var ClassDefinition := TClassDefinition.Create;
+        ClassDefinition.Name := Element.Name;
+        ClassDefinition.InheritedFrom := FindTypeName(Element.DataType);
+
+        SchemaUnit.Classes.Add(ClassDefinition);
+      end;
+    end;
+
+    for var A := 0 to Pred(Definition.ComplexTypes.Count) do
+      SchemaUnit.Classes.Add(GenerateClassDefinition(Definition.ComplexTypes[A]));
   end;
 end;
 
@@ -344,9 +450,9 @@ end;
 
 { TUnit }
 
-procedure TUnit.AddTypeAlias(const TypeAlias: TTypeAlias);
+procedure TUnit.AddTypeAlias(const AType: TTypeAlias);
 begin
-  FTypeAlias.Add(TypeAlias);
+  TypeAlias.Add(AType);
 end;
 
 procedure TUnit.AddUses(const SchemaUnit: TUnit);
@@ -413,9 +519,6 @@ var
   function GetClassName(const ClassDefinition: TClassDefinition): String;
   begin
     Result := ClassDefinition.Name;
-
-    if not ClassDefinition.Name.StartsWith('TT') then
-      Result := 'T' + Result;
   end;
 
   procedure GenerateClassDeclaration(const Ident: String; const ClassDefinition: TClassDefinition);
@@ -428,8 +531,16 @@ var
         Result := Format(' stored %s', [GetStoredFunctionName(&Property)]);
     end;
 
+    function GetInheritence: String;
+    begin
+      if Assigned(ClassDefinition.InheritedFrom) then
+        Result := Format('(%s)', [ClassDefinition.InheritedFrom.Name])
+      else
+        Result := EmptyStr;
+    end;
+
   begin
-    AddLine('%s%s = class', [Ident, GetClassName(ClassDefinition)]);
+    AddLine('%s%s = class%s', [Ident, GetClassName(ClassDefinition), GetInheritence]);
 
     if not ClassDefinition.Classes.IsEmpty then
     begin
@@ -449,7 +560,7 @@ var
       AddLine('%sprivate', [Ident]);
 
       for var &Property in ClassDefinition.Properties do
-        AddLine('%s  F%s: %s;', [Ident, &Property.Name, &Property.TypeName]);
+        AddLine('%s  F%s: %s;', [Ident, &Property.Name, &Property.TypeName.Name]);
 
       for var &Property in ClassDefinition.Properties do
         if &Property.Optional then
@@ -462,7 +573,7 @@ var
         for var Attribute in &Property.Attributes do
           AddLine('%:s  [%s]', [Ident, Attribute]);
 
-        AddLine('%0:s  property %1:s: %2:s read F%3:s write F%3:s%4:s;', [Ident, CheckReservedName(&Property.Name), &Property.TypeName, &Property.Name, GetStoredPropertyDeclaration(&Property)]);
+        AddLine('%0:s  property %1:s: %2:s read F%3:s write F%3:s%4:s;', [Ident, CheckReservedName(&Property.Name), &Property.TypeName.Name, &Property.Name, GetStoredPropertyDeclaration(&Property)]);
       end;
     end;
 
@@ -480,9 +591,9 @@ var
 
   function GetOptionalValue(const &Property: TProperty): String;
   begin
-    if &Property.TypeName = 'String' then
+    if &Property.TypeName.Name = 'String' then
       Result := Format('not F%s.IsEmpty', [&Property.Name])
-    else if &Property.TypeName.StartsWith('T') then
+    else if &Property.TypeName is TClassDefinition then
       Result := Format('Assigned(F%s)', [&Property.Name])
     else
       Result := 'False';
@@ -546,19 +657,23 @@ begin
     UsesList := UsesList + ', ' + AUnit.UnitConfiguration.Name;
   end;
 
+  AddLine('// File generated from %s;', [UnitConfiguration.FileName]);
+
+  AddLine;
+
   AddLine('uses %s;', [UsesList]);
 
   AddLine;
 
-  if not FTypeAlias.IsEmpty or not Classes.IsEmpty then
+  if not TypeAlias.IsEmpty or not Classes.IsEmpty then
     AddLine('type');
 
-  if not FTypeAlias.IsEmpty then
+  if not TypeAlias.IsEmpty then
   begin
     AddLine('  // Forward type alias');
 
-    for var TypeAlias in FTypeAlias do
-      AddLine('  %s = %s;', [TypeAlias.Name, TypeAlias.TypeName]);
+    for var TypeAlias in TypeAlias do
+      AddLine('  %s = %s;', [TypeAlias.Name, TypeAlias.TypeName.Name]);
 
     AddLine;
   end;
@@ -649,6 +764,65 @@ begin
   FAttributes.Free;
 
   inherited;
+end;
+
+function TProperty.GetOptional: Boolean;
+begin
+  Result := FOptional and not (TypeName.ResolveType is TClassDefinition);
+end;
+
+{ TTypeDefinition }
+
+function TTypeDefinition.GetName: String;
+begin
+  Result := FName;
+end;
+
+function TTypeDefinition.ResolveType: TTypeDefinition;
+begin
+  Result := Self;
+end;
+
+{ TTypeDelayed }
+
+constructor TTypeDelayed.Create(const Importer: TImporter; const TypeName: String);
+begin
+  inherited Create;
+
+  FImporter := Importer;
+  FTypeName := TypeName;
+end;
+
+function TTypeDelayed.GetName: String;
+begin
+  Result := ResolveType.Name;
+end;
+
+function TTypeDelayed.ResolveType: TTypeDefinition;
+begin
+  if not Assigned(FType) then
+    FType := FImporter.FindType(FTypeName);
+
+  if not Assigned(FType) then
+    FType := TUndefinedType.Create(FTypeName);
+
+  Result := FType.ResolveType;
+end;
+
+{ TUndefinedType }
+
+constructor TUndefinedType.Create(const TypeName: String);
+begin
+  inherited Create;
+
+  FName := Format('Undefined { %s }', [TypeName]);
+end;
+
+{ TTypeAlias }
+
+function TTypeAlias.ResolveType: TTypeDefinition;
+begin
+  Result := TypeName.ResolveType;
 end;
 
 end.
