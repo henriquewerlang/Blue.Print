@@ -59,6 +59,7 @@ type
 
     procedure AddXMLAttributeFixed(const Name, Value: String);
     procedure AddXMLAttributeValue;
+    procedure AddXMLValueAttribute;
 
     property Attributes: TList<String> read FAttributes write FAttributes;
     property IsArray: Boolean read FIsArray write FIsArray;
@@ -479,6 +480,14 @@ var
       var &Property := AddPropertyWithType(Attribute.Name, Attribute.DataType);
 
       AddPropertyAttribute(&Property, Attribute);
+    end;
+
+    if Assigned(ComplexType.BaseType) then    
+    begin
+      var &Property := AddProperty('Value');
+      &Property.TypeName := FindTypeName(ComplexType.BaseType, ClassDefinition);
+
+      &Property.AddXMLValueAttribute;
     end;
   end;
 
@@ -1024,6 +1033,11 @@ end;
 procedure TProperty.AddXMLAttributeValue;
 begin
   Attributes.Add('XMLAttributeValue');
+end;
+
+procedure TProperty.AddXMLValueAttribute;
+begin
+  Attributes.Add('XMLValue');
 end;
 
 constructor TProperty.Create;
