@@ -409,6 +409,7 @@ var
               var Attribute := ComplexType.AttributeDefs[B];
 
               AddPropertyAttribute(NewProperty, Attribute);
+
               NewProperty.TypeName := FindTypeName(Attribute.DataType);
             end
           else
@@ -479,6 +480,9 @@ begin
       begin
         var ClassDefinition := GenerateClassDefinition(Element.DataType as IXMLComplexTypeDef);
         ClassDefinition.Name := UnitConfiguration.UnitClassName;
+
+        if UnitConfiguration.UnitClassName.IsEmpty then
+          raise Exception.CreateFmt('Schema file %s need a class name in the configuration file!', [UnitConfiguration.FileName]);
 
         UnitDeclaration.Classes.Add(ClassDefinition);
       end
@@ -612,6 +616,18 @@ var
         Exit(True);
   end;
 
+  function GetClassImplementationName(ClassDefinition: TClassDefinition): String;
+  begin
+    Result := GetClassName(ClassDefinition);
+
+    while Assigned(ClassDefinition.ParentClass) do
+    begin
+      Result := Format('%s.%s', [GetClassName(ClassDefinition.ParentClass), Result]);
+
+      ClassDefinition := ClassDefinition.ParentClass;
+    end;
+  end;
+
   function GetPropertyFieldName(const &Property: TProperty): String;
   begin
     Result := 'F' + &Property.Name;
@@ -632,7 +648,7 @@ var
     Result := TypeName.Name;
 
     if TypeName.IsClassDefinition then
-      Result := GetClassName(TypeName as TClassDefinition);
+      Result := GetClassImplementationName(TypeName as TClassDefinition);
   end;
 
   function GetPropertyTypeName(const &Property: TProperty): String;
@@ -756,19 +772,6 @@ var
   end;
 
   procedure GenerateClassImplementation(const ClassDefinition: TClassDefinition);
-
-    function GetClassImplementationName(ClassDefinition: TClassDefinition): String;
-    begin
-      Result := GetClassName(ClassDefinition);
-
-      while Assigned(ClassDefinition.ParentClass) do
-      begin
-        Result := Format('%s.%s', [GetClassName(ClassDefinition.ParentClass), Result]);
-
-        ClassDefinition := ClassDefinition.ParentClass;
-      end;
-    end;
-
   begin
     if HasOptionalProperty(ClassDefinition) or CheckNeedDestructor(ClassDefinition) then
     begin
