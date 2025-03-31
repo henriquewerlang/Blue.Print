@@ -72,12 +72,14 @@ type
   TTypeDefinition = class
   private
     function GetIsClassDefinition: Boolean;
+    function GetNeedDestructor: Boolean;
   protected
     FName: String;
   public
     function ResolveType: TTypeDefinition; virtual;
 
     property IsClassDefinition: Boolean read GetIsClassDefinition;
+    property NeedDestructor: Boolean read GetNeedDestructor;
     property Name: String read FName write FName;
   end;
 
@@ -124,10 +126,11 @@ type
   TTypeDelayed = class(TTypeDefinition)
   private
     FImporter: TImporter;
+    FParentClass: TClassDefinition;
     FTypeName: String;
     FType: TTypeDefinition;
   public
-    constructor Create(const Importer: TImporter; const TypeName: String);
+    constructor Create(const Importer: TImporter; const TypeName: String; const ParentClass: TClassDefinition);
 
     function ResolveType: TTypeDefinition; override;
   end;
@@ -170,7 +173,7 @@ type
     FUnits: TDictionary<String, TUnit>;
     FXMLBuildInType: TDictionary<String, TTypeDefinition>;
 
-    function FindType(const TypeName: String): TTypeDefinition;
+    function FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
     function GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
   public
     constructor Create;
@@ -225,7 +228,7 @@ begin
   var CardinalType := AddType('Cardinal');
   var IntegerType := AddType('Integer');
   var Int64Type := AddType('Int64');
-  AddType('TObject');
+  AddType(TObject.ClassName);
   AddType('Undefined');
   var WordType := AddType('Word');
 
@@ -260,22 +263,38 @@ begin
   inherited;
 end;
 
-function TImporter.FindType(const TypeName: String): TTypeDefinition;
+function TImporter.FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
 
-  function FindInClasses(const ClassList: TList<TClassDefinition>; const TypeName: String): TTypeDefinition;
+  function FindInClassList(const ClassList: TList<TClassDefinition>; const TypeName: String): TTypeDefinition;
   begin
     Result := nil;
 
     for var ClassDefinition in ClassList do
-    begin
       if ClassDefinition.Name = TypeName then
         Exit(ClassDefinition);
+  end;
 
-      Result := FindInClasses(ClassDefinition.Classes, TypeName);
+  function FindInClasses(const ClassList: TList<TClassDefinition>; const TypeName: String): TTypeDefinition;
+  begin
+    Result := FindInClassList(ClassList, TypeName);
 
-      if Assigned(Result) then
-        Exit;
-    end;
+    if not Assigned(Result) then
+      for var ClassDefinition in ClassList do
+      begin
+        Result := FindInClasses(ClassDefinition.Classes, TypeName);
+
+        if Assigned(Result) then
+          Exit;
+      end;
+  end;
+
+  function FindInClass(ClassDefinition: TClassDefinition; const TypeName: String): TTypeDefinition;
+  begin
+    repeat
+      Result := FindInClassList(ClassDefinition.Classes, TypeName);
+
+      ClassDefinition := ClassDefinition.ParentClass;
+    until Assigned(Result) or not Assigned(ClassDefinition);
   end;
 
 begin
@@ -287,20 +306,24 @@ begin
   if FXMLBuildInType.TryGetValue(TypeName, Result) then
     Exit;
 
-  for var UnitDefinition in FUnits.Values do
-  begin
-    Result := FindInClasses(UnitDefinition.Classes, TypeName);
-
-    if Assigned(Result) then
-      Exit;
-
-    for var SimpleType in UnitDefinition.TypeAlias do
-      if SimpleType.Name = TypeName then
-        Exit(SimpleType);
-  end;
-
   if FChangeTypes.TryGetValue(TypeName, Result) then
     Exit;
+
+  if Assigned(ParentClass) then
+    Result := FindInClass(ParentClass, TypeName);
+
+  if not Assigned(Result) then
+    for var UnitDefinition in FUnits.Values do
+    begin
+      Result := FindInClasses(UnitDefinition.Classes, TypeName);
+
+      if Assigned(Result) then
+        Exit;
+
+      for var SimpleType in UnitDefinition.TypeAlias do
+        if SimpleType.Name = TypeName then
+          Exit(SimpleType);
+    end;
 end;
 
 function TImporter.GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
@@ -326,19 +349,20 @@ var
     end;
   end;
 
-  function GetBaseType(SimpleType: IXMLTypeDef): String;
+  function GetBaseType(TypeDefinition: IXMLTypeDef): String;
   begin
-    while Assigned(SimpleType.BaseType) do
-      SimpleType := SimpleType.BaseType as IXMLSimpleTypeDef;
+    if not TypeDefinition.IsComplex then
+      while Assigned(TypeDefinition.BaseType) do
+        TypeDefinition := TypeDefinition.BaseType as IXMLSimpleTypeDef;
 
-    Result := ExtractLocalName(SimpleType.Name);
+    Result := ExtractLocalName(TypeDefinition.Name);
   end;
 
-  function FindTypeName(&Type: IXMLTypeDef): TTypeDefinition;
+  function FindTypeName(&Type: IXMLTypeDef; const ParentClass: TClassDefinition): TTypeDefinition;
   begin
     var TypeName := GetBaseType(&Type);
 
-    Result := FindType(TypeName);
+    Result := FindType(TypeName, ParentClass);
 
     if not Assigned(Result) then
       for var DelayedType in FDelayedTypes.Values do
@@ -347,7 +371,7 @@ var
 
     if not Assigned(Result) then
     begin
-      Result := TTypeDelayed.Create(Self, TypeName);
+      Result := TTypeDelayed.Create(Self, TypeName, ParentClass);
 
       FDelayedTypes.Add(TypeName, Result as TTypeDelayed);
     end;
@@ -367,7 +391,7 @@ var
   var
     ClassDefinition: TClassDefinition absolute Result;
 
-    function AddProperty(const Name: String; const &Type: IXMLTypeDef): TProperty;
+    function AddProperty(const Name: String): TProperty;
     begin
       for var &Property in ClassDefinition.Properties do
         if &Property.Name = Name then
@@ -375,9 +399,14 @@ var
 
       Result := TProperty.Create;
       Result.Name := Name;
-      Result.TypeName := FindTypeName(&Type);
 
       ClassDefinition.AddProperty(Result);
+    end;
+
+    function AddPropertyWithType(const Name: String; const &Type: IXMLTypeDef): TProperty;
+    begin
+      Result := AddProperty(Name);
+      Result.TypeName := FindTypeName(&Type, ClassDefinition);
     end;
 
     procedure AddPropertyAttribute(const &Property: TProperty; const Attribute: IXMLAttributeDef);
@@ -395,26 +424,32 @@ var
       for var A := 0 to Pred(ElementDefs.Count) do
       begin
         var Element := ElementDefs[A];
-        var NewProperty := AddProperty(Element.Name, Element.DataType);
+        var NewProperty := AddProperty(Element.Name);
         NewProperty.IsArray := Element.IsRepeating;
         NewProperty.Optional := AllPropertiesOptionals or (Element.MinOccurs <> NULL) and (Element.MinOccurs <= 0);
+        var PropertyType := Element.DataType;
 
         if CanGenerateClass(Element) then
         begin
           var ComplexType := (Element.DataType as IXMLComplexTypeDef);
 
-          if ComplexType.ElementDefs.Count = 0 then
+          if (ComplexType.ElementDefs.Count = 0) and (ComplexType.AttributeDefs.Count = 1) then
             for var B := 0 to Pred(ComplexType.AttributeDefs.Count) do
             begin
               var Attribute := ComplexType.AttributeDefs[B];
+              PropertyType := Attribute.DataType;
 
               AddPropertyAttribute(NewProperty, Attribute);
-
-              NewProperty.TypeName := FindTypeName(Attribute.DataType);
             end
           else
+          begin
+            PropertyType := ComplexType;
+
             Result.AddClassType(GenerateClassDefinition(ComplexType));
+          end;
         end;
+
+        NewProperty.TypeName := FindTypeName(PropertyType, ClassDefinition);
       end;
     end;
 
@@ -441,7 +476,7 @@ var
     for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
     begin
       var Attribute := ComplexType.AttributeDefs[A];
-      var &Property := AddProperty(Attribute.Name, Attribute.DataType);
+      var &Property := AddPropertyWithType(Attribute.Name, Attribute.DataType);
 
       AddPropertyAttribute(&Property, Attribute);
     end;
@@ -451,7 +486,7 @@ var
   begin
     Result := TTypeAlias.Create;
     Result.Name := SimpleType.Name;
-    Result.TypeName := FindTypeName(SimpleType);
+    Result.TypeName := FindTypeName(SimpleType, nil);
   end;
 
 begin
@@ -490,7 +525,7 @@ begin
       begin
         var ClassDefinition := TClassDefinition.Create;
         ClassDefinition.Name := Element.Name;
-        ClassDefinition.InheritedFrom := FindTypeName(Element.DataType);
+        ClassDefinition.InheritedFrom := FindTypeName(Element.DataType, ClassDefinition);
 
         UnitDeclaration.Classes.Add(ClassDefinition);
       end;
@@ -612,7 +647,7 @@ var
     Result := False;
 
     for var &Property in ClassDefinition.Properties do
-      if GetPropertyType(&Property).IsClassDefinition then
+      if GetPropertyType(&Property).NeedDestructor then
         Exit(True);
   end;
 
@@ -789,14 +824,14 @@ var
         begin
           var PropertyType := GetPropertyType(&Property);
 
-          if &Property.IsArray and PropertyType.IsClassDefinition then
+          if &Property.IsArray and PropertyType.NeedDestructor then
           begin
             AddLine('  for var AObject in %s do', [GetPropertyFieldName(&Property)]);
             AddLine('    AObject.Free;');
 
             AddLine;
           end
-          else if PropertyType.IsClassDefinition then
+          else if PropertyType.NeedDestructor then
           begin
             AddLine('  %s.Free;', [GetPropertyFieldName(&Property)]);
 
@@ -1025,6 +1060,11 @@ begin
   Result := ResolveType is TClassDefinition;
 end;
 
+function TTypeDefinition.GetNeedDestructor: Boolean;
+begin
+  Result := IsClassDefinition or (Name = TObject.ClassName);
+end;
+
 function TTypeDefinition.ResolveType: TTypeDefinition;
 begin
   Result := Self;
@@ -1032,18 +1072,19 @@ end;
 
 { TTypeDelayed }
 
-constructor TTypeDelayed.Create(const Importer: TImporter; const TypeName: String);
+constructor TTypeDelayed.Create(const Importer: TImporter; const TypeName: String; const ParentClass: TClassDefinition);
 begin
   inherited Create;
 
   FImporter := Importer;
+  FParentClass := ParentClass;
   FTypeName := TypeName;
 end;
 
 function TTypeDelayed.ResolveType: TTypeDefinition;
 begin
   if not Assigned(FType) then
-    FType := FImporter.FindType(FTypeName);
+    FType := FImporter.FindType(FTypeName, FParentClass);
 
   if not Assigned(FType) then
     FType := TUndefinedType.Create(FTypeName);
@@ -1088,7 +1129,7 @@ end;
 function TTypeChangeDefinition.ResolveType: TTypeDefinition;
 begin
   if not Assigned(FType) then
-    FType := FImporter.FindType(FTypeName);
+    FType := FImporter.FindType(FTypeName, nil);
 
   if not Assigned(FType) then
     raise Exception.CreateFmt('Wrong type configuration %s - %s!', [FName, FTypeName]);
