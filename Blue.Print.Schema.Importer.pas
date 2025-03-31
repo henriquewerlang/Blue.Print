@@ -31,7 +31,9 @@ type
   TTypeExternalConfig = class
   private
     FName: String;
+    FModuleName: String;
   public
+    property ModuleName: String read FModuleName write FModuleName;
     property Name: String read FName write FName;
   end;
 
@@ -157,8 +159,12 @@ type
   end;
 
   TTypeExternal = class(TTypeDefinition)
+  private
+    FModuleName: String;
   public
-    constructor Create(const TypeName: String);
+    constructor Create(const ModuleName, TypeName: String);
+
+    property ModuleName: String read FModuleName write FModuleName;
   end;
 
   TUnit = class
@@ -200,7 +206,7 @@ type
     destructor Destroy; override;
 
     procedure AddChangeType(const AliasName, TypeName: String);
-    procedure AddTypeExternal(const TypeName: String);
+    procedure AddTypeExternal(const ModuleName, TypeName: String);
     procedure Import;
     procedure LoadConfig(const FileName: String);
 
@@ -218,9 +224,9 @@ begin
   FChangeTypes.Add(AliasName, TTypeChangeDefinition.Create(Self, AliasName, TypeName));
 end;
 
-procedure TImporter.AddTypeExternal(const TypeName: String);
+procedure TImporter.AddTypeExternal(const ModuleName, TypeName: String);
 begin
-  FTypeExternal.Add(TypeName, TTypeExternal.Create(TypeName));
+  FTypeExternal.Add(TypeName, TTypeExternal.Create(ModuleName, TypeName));
 end;
 
 constructor TImporter.Create;
@@ -623,7 +629,7 @@ begin
       AddChangeType(TypeChange.AliasName, TypeChange.TypeName);
 
     for var TypeExternal in Configuration.TypeExternal do
-      AddTypeExternal(TypeExternal.Name);
+      AddTypeExternal(TypeExternal.ModuleName, TypeExternal.Name);
   end;
 end;
 
@@ -973,6 +979,40 @@ var
       GenerateClassImplementation(SubClassDefinition);
   end;
 
+  function GetAllExternalModules: TArray<String>;
+  var
+    Return: TDictionary<String, String>;
+
+    procedure CheckClasses(const Classes: TList<TClassDefinition>);
+    begin
+      for var ClassDefinition in Classes do
+      begin
+        for var &Property in ClassDefinition.Properties do
+        begin
+          var PropertyType := GetPropertyType(&Property);
+
+          if PropertyType is TTypeExternal then
+            Return.AddOrSetValue(TTypeExternal(PropertyType).ModuleName, EmptyStr);
+        end;
+
+        CheckClasses(ClassDefinition.Classes);
+      end;
+    end;
+
+  begin
+    Return := TDictionary<String, String>.Create;
+
+    CheckClasses(Classes);
+
+    for var TypeAlias in TypeAlias do
+      if TypeAlias.ResolveType is TTypeExternal then
+        Return.AddOrSetValue(TTypeExternal(TypeAlias.ResolveType).ModuleName, EmptyStr);
+
+    Result := Return.Keys.ToArray;
+
+    Return.Free;
+  end;
+
 begin
   UnitDefinition := TStringList.Create;
 
@@ -991,9 +1031,10 @@ begin
   var UsesList := 'Blue.Print.Types';
 
   for var AUnit in FUses do
-  begin
     UsesList := UsesList + ', ' + AUnit.UnitConfiguration.Name;
-  end;
+
+  for var ModuleName in GetAllExternalModules do
+    UsesList := UsesList + ', ' + ModuleName;
 
   AddLine('// File generated from %s;', [UnitConfiguration.FileName]);
 
@@ -1226,10 +1267,11 @@ end;
 
 { TTypeExternal }
 
-constructor TTypeExternal.Create(const TypeName: String);
+constructor TTypeExternal.Create(const ModuleName, TypeName: String);
 begin
   inherited Create;
 
+  FModuleName := ModuleName;
   Name := TypeName;
 end;
 
