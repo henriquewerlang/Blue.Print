@@ -28,16 +28,27 @@ type
     property TypeName: String read FTypeName write FTypeName;
   end;
 
+  TTypeExternalConfig = class
+  private
+    FName: String;
+  public
+    property Name: String read FName write FName;
+  end;
+
   TConfiguration = class
   private
     FUnitConfiguration: TArray<TUnitConfiguration>;
     FTypeChange: TArray<TTypeChangeConfig>;
     FOutputFolder: String;
     FSchemaFolder: String;
+    FTypeExternal: TArray<TTypeExternalConfig>;
   public
+    destructor Destroy; override;
+
     property OutputFolder: String read FOutputFolder write FOutputFolder;
     property SchemaFolder: String read FSchemaFolder write FSchemaFolder;
     property TypeChange: TArray<TTypeChangeConfig> read FTypeChange write FTypeChange;
+    property TypeExternal: TArray<TTypeExternalConfig> read FTypeExternal write FTypeExternal;
     property UnitConfiguration: TArray<TUnitConfiguration> read FUnitConfiguration write FUnitConfiguration;
   end;
 
@@ -145,6 +156,11 @@ type
     function ResolveType: TTypeDefinition; override;
   end;
 
+  TTypeExternal = class(TTypeDefinition)
+  public
+    constructor Create(const TypeName: String);
+  end;
+
   TUnit = class
   private
     FClasses: TList<TClassDefinition>;
@@ -171,6 +187,8 @@ type
     FChangeTypes: TDictionary<String, TTypeDefinition>;
     FConfiguration: TConfiguration;
     FDelayedTypes: TDictionary<String, TTypeDelayed>;
+    FTypeExternal: TDictionary<String, TTypeDefinition>;
+    FTypeAlias: TDictionary<String, TTypeDefinition>;
     FUnits: TDictionary<String, TUnit>;
     FXMLBuildInType: TDictionary<String, TTypeDefinition>;
 
@@ -182,6 +200,7 @@ type
     destructor Destroy; override;
 
     procedure AddChangeType(const AliasName, TypeName: String);
+    procedure AddTypeExternal(const TypeName: String);
     procedure Import;
     procedure LoadConfig(const FileName: String);
 
@@ -199,21 +218,37 @@ begin
   FChangeTypes.Add(AliasName, TTypeChangeDefinition.Create(Self, AliasName, TypeName));
 end;
 
+procedure TImporter.AddTypeExternal(const TypeName: String);
+begin
+  FTypeExternal.Add(TypeName, TTypeExternal.Create(TypeName));
+end;
+
 constructor TImporter.Create;
-
-  function AddType(const TypeName: String): TTypeDefinition;
-  begin
-    Result := TTypeDefinition.Create;
-    Result.Name := TypeName;
-
-    FBuildInType.Add(Result.Name, Result);
-  end;
 
   function AddTypeAlias(const Alias: String; TypeName: TTypeDefinition): TTypeAlias;
   begin
     Result := TTypeAlias.Create;
     Result.Name := Alias;
     Result.TypeName := TypeName;
+
+    FTypeAlias.Add(Alias, Result);
+  end;
+
+  function AddBuildInType(const TypeName: String; const TypeDefinition: TTypeDefinition): TTypeDefinition;
+  begin
+    Result := TypeDefinition;
+
+    FXMLBuildInType.Add(TypeName, TypeDefinition);
+  end;
+
+  function AddType(const TypeName: String): TTypeDefinition;
+  begin
+    Result := TTypeDefinition.Create;
+    Result.Name := 'System.' + TypeName;
+
+    FBuildInType.Add(Result.Name, Result);
+
+    AddTypeAlias(TypeName, Result);
   end;
 
 begin
@@ -222,6 +257,8 @@ begin
   FBuildInType := TDictionary<String, TTypeDefinition>.Create;
   FChangeTypes := TDictionary<String, TTypeDefinition>.Create;
   FDelayedTypes := TDictionary<String, TTypeDelayed>.Create;
+  FTypeAlias := TObjectDictionary<String, TTypeDefinition>.Create([doOwnsValues]);
+  FTypeExternal := TObjectDictionary<String, TTypeDefinition>.Create([doOwnsValues]);
   FUnits := TObjectDictionary<String, TUnit>.Create([doOwnsValues]);
   FXMLBuildInType := TDictionary<String, TTypeDefinition>.Create;
 
@@ -233,20 +270,20 @@ begin
   AddType('Undefined');
   var WordType := AddType('Word');
 
-  FXMLBuildInType.Add('anyURI', StringType);
-  FXMLBuildInType.Add('base64Binary', StringType);
-  FXMLBuildInType.Add('boolean', AddType('Boolean'));
-  FXMLBuildInType.Add('date', AddType('TDate'));
-  FXMLBuildInType.Add('dateTime', AddType('TDateTime'));
-  FXMLBuildInType.Add('decimal', AddType('Double'));
-  FXMLBuildInType.Add('ID', StringType);
-  FXMLBuildInType.Add('int', IntegerType);
-  FXMLBuildInType.Add('long', Int64Type);
-  FXMLBuildInType.Add('string', StringType);
-  FXMLBuildInType.Add('time', AddType('TTime'));
-  FXMLBuildInType.Add('token', StringType);
-  FXMLBuildInType.Add('unsignedShort', WordType);
-  FXMLBuildInType.Add('unsignedInt', CardinalType);
+  AddBuildInType('anyURI', StringType);
+  AddBuildInType('base64Binary', StringType);
+  AddBuildInType('boolean', AddType('Boolean'));
+  AddBuildInType('date', AddType('TDate'));
+  AddBuildInType('dateTime', AddType('TDateTime'));
+  AddBuildInType('decimal', AddType('Double'));
+  AddBuildInType('ID', StringType);
+  AddBuildInType('int', IntegerType);
+  AddBuildInType('long', Int64Type);
+  AddBuildInType('string', StringType);
+  AddBuildInType('time', AddType('TTime'));
+  AddBuildInType('token', StringType);
+  AddBuildInType('unsignedShort', WordType);
+  AddBuildInType('unsignedInt', CardinalType);
 end;
 
 destructor TImporter.Destroy;
@@ -258,6 +295,10 @@ begin
   FChangeTypes.Free;
 
   FDelayedTypes.Free;
+
+  FTypeExternal.Free;
+
+  FTypeAlias.Free;
 
   FUnits.Free;
 
@@ -300,6 +341,12 @@ function TImporter.FindType(const TypeName: String; const ParentClass: TClassDef
 
 begin
   Result := nil;
+
+  if FTypeExternal.TryGetValue(TypeName, Result) then
+    Exit;
+
+  if FTypeAlias.TryGetValue(TypeName, Result) then
+    Exit;
 
   if FBuildInType.TryGetValue(TypeName, Result) then
     Exit;
@@ -361,9 +408,16 @@ var
 
   function FindTypeName(&Type: IXMLTypeDef; const ParentClass: TClassDefinition): TTypeDefinition;
   begin
-    var TypeName := GetBaseType(&Type);
+    var TypeName := &Type.Name;
 
     Result := FindType(TypeName, ParentClass);
+
+    if not Assigned(Result) then
+    begin
+      TypeName := GetBaseType(&Type);
+
+      Result := FindType(TypeName, ParentClass);
+    end;
 
     if not Assigned(Result) then
       for var DelayedType in FDelayedTypes.Values do
@@ -567,6 +621,9 @@ begin
 
     for var TypeChange in Configuration.TypeChange do
       AddChangeType(TypeChange.AliasName, TypeChange.TypeName);
+
+    for var TypeExternal in Configuration.TypeExternal do
+      AddTypeExternal(TypeExternal.Name);
   end;
 end;
 
@@ -1149,6 +1206,31 @@ begin
     raise Exception.CreateFmt('Wrong type configuration %s - %s!', [FName, FTypeName]);
 
   Result := FType.ResolveType;
+end;
+
+{ TConfiguration }
+
+destructor TConfiguration.Destroy;
+begin
+  for var AUnit in FUnitConfiguration do
+    AUnit.Free;
+
+  for var TypeChange in FTypeChange do
+    TypeChange.Free;
+
+  for var TypeExternal in FTypeExternal do
+    TypeExternal.Free;
+
+  inherited;
+end;
+
+{ TTypeExternal }
+
+constructor TTypeExternal.Create(const TypeName: String);
+begin
+  inherited Create;
+
+  Name := TypeName;
 end;
 
 end.
