@@ -103,6 +103,7 @@ type
     FProperties: TList<TProperty>;
     FParentClass: TClassDefinition;
     FInheritedFrom: TTypeDefinition;
+    FAttributes: TList<String>;
   public
     constructor Create;
 
@@ -110,8 +111,10 @@ type
 
     function AddProperty(const Name: String): TProperty;
 
+    procedure AddNamespaceAttribute(const Namespace: String);
     procedure AddClassType(const ClassDefinition: TClassDefinition);
 
+    property Attributes: TList<String> read FAttributes write FAttributes;
     property Classes: TList<TClassDefinition> read FClasses;
     property InheritedFrom: TTypeDefinition read FInheritedFrom write FInheritedFrom;
     property ParentClass: TClassDefinition read FParentClass write FParentClass;
@@ -586,6 +589,9 @@ begin
 
       GenerateProperties(ClassDefinition, Definition.ElementDefs, False);
 
+      for var SubClassDefinition in ClassDefinition.Classes do
+        SubClassDefinition.AddNamespaceAttribute(Definition.TargetNamespace);
+
       UnitDeclaration.Classes.Add(ClassDefinition);
     end;
   end;
@@ -793,6 +799,10 @@ var
     end;
 
   begin
+    if not ClassDefinition.Attributes.IsEmpty then
+      for var Attribute in ClassDefinition.Attributes do
+      AddLine('%s[%s]', [Ident, Attribute]);
+
     AddLine('%s%s = class%s', [Ident, GetClassName(ClassDefinition), GetInheritence]);
 
     if not ClassDefinition.Classes.IsEmpty then
@@ -1093,6 +1103,12 @@ begin
   FClasses.Add(ClassDefinition);
 end;
 
+procedure TClassDefinition.AddNamespaceAttribute(const Namespace: String);
+begin
+  if not Namespace.IsEmpty then
+    Attributes.Add(Format('XMLNamespace(''%s'')', [Namespace]));
+end;
+
 function TClassDefinition.AddProperty(const Name: String): TProperty;
 begin
   for var &Property in Properties do
@@ -1109,12 +1125,15 @@ constructor TClassDefinition.Create;
 begin
   inherited;
 
+  FAttributes := TList<String>.Create;
   FClasses := TObjectList<TClassDefinition>.Create;
   FProperties := TObjectList<TProperty>.Create;
 end;
 
 destructor TClassDefinition.Destroy;
 begin
+  FAttributes.Free;
+
   FClasses.Free;
 
   FProperties.Free;
