@@ -396,7 +396,7 @@ var
       begin
         var Element := ElementDefs[A];
         var NewProperty := AddProperty(Element.Name, Element.DataType);
-        NewProperty.IsArray := (Element.MinOccurs <> NULL) and (Element.MaxOccurs > 1);
+        NewProperty.IsArray := Element.IsRepeating;
         NewProperty.Optional := AllPropertiesOptionals or (Element.MinOccurs <> NULL) and (Element.MinOccurs <= 0);
 
         if CanGenerateClass(Element) then
