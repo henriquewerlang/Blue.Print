@@ -108,8 +108,9 @@ type
 
     destructor Destroy; override;
 
+    function AddProperty(const Name: String): TProperty;
+
     procedure AddClassType(const ClassDefinition: TClassDefinition);
-    procedure AddProperty(const &Property: TProperty);
 
     property Classes: TList<TClassDefinition> read FClasses;
     property InheritedFrom: TTypeDefinition read FInheritedFrom write FInheritedFrom;
@@ -198,8 +199,17 @@ type
     FUnits: TDictionary<String, TUnit>;
     FXMLBuildInType: TDictionary<String, TTypeDefinition>;
 
+    function AddProperty(const ClassDefinition: TClassDefinition; const Name: String): TProperty;
+    function AddPropertyWithType(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef): TProperty;
+    function CanGenerateClass(const Element: IXMLElementDef): Boolean;
     function FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
+    function FindTypeName(&Type: IXMLTypeDef; const ParentClass: TClassDefinition): TTypeDefinition;
+    function GenerateClassDefinition(const ComplexType: IXMLComplexTypeDef): TClassDefinition;
     function GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
+    function IsReferenceType(const Element: IXMLElementDef): Boolean;
+
+    procedure AddPropertyAttribute(const &Property: TProperty; const Attribute: IXMLAttributeDef);
+    procedure GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefs; const AllPropertiesOptionals: Boolean);
   public
     constructor Create;
 
@@ -224,9 +234,35 @@ begin
   FChangeTypes.Add(AliasName, TTypeChangeDefinition.Create(Self, AliasName, TypeName));
 end;
 
+function TImporter.AddProperty(const ClassDefinition: TClassDefinition; const Name: String): TProperty;
+begin
+  Result := ClassDefinition.AddProperty(Name);
+end;
+
+procedure TImporter.AddPropertyAttribute(const &Property: TProperty; const Attribute: IXMLAttributeDef);
+begin
+  if Attribute.Fixed = NULL then
+    &Property.AddXMLAttributeValue
+  else
+    &Property.AddXMLAttributeFixed(Attribute.Name, Attribute.Fixed);
+
+  &Property.Optional := (Attribute.Use <> NULL) and (Attribute.Use = 'optional');
+end;
+
+function TImporter.AddPropertyWithType(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef): TProperty;
+begin
+  Result := AddProperty(ClassDefinition, Name);
+  Result.TypeName := FindTypeName(&Type, ClassDefinition);
+end;
+
 procedure TImporter.AddTypeExternal(const ModuleName, TypeName: String);
 begin
   FTypeExternal.Add(TypeName, TTypeExternal.Create(ModuleName, TypeName));
+end;
+
+function TImporter.CanGenerateClass(const Element: IXMLElementDef): Boolean;
+begin
+  Result := Element.DataType.IsComplex and not IsReferenceType(Element);
 end;
 
 constructor TImporter.Create;
@@ -380,6 +416,117 @@ begin
     end;
 end;
 
+function TImporter.FindTypeName(&Type: IXMLTypeDef; const ParentClass: TClassDefinition): TTypeDefinition;
+
+  function GetBaseType(TypeDefinition: IXMLTypeDef): String;
+  begin
+    if not TypeDefinition.IsComplex then
+      while Assigned(TypeDefinition.BaseType) do
+        TypeDefinition := TypeDefinition.BaseType as IXMLSimpleTypeDef;
+
+    Result := ExtractLocalName(TypeDefinition.Name);
+  end;
+
+begin
+  var TypeName := &Type.Name;
+
+  Result := FindType(TypeName, ParentClass);
+
+  if not Assigned(Result) then
+  begin
+    TypeName := GetBaseType(&Type);
+
+    Result := FindType(TypeName, ParentClass);
+  end;
+
+  if not Assigned(Result) then
+    for var DelayedType in FDelayedTypes.Values do
+      if DelayedType.FTypeName = TypeName then
+        Result := DelayedType;
+
+  if not Assigned(Result) then
+  begin
+    Result := TTypeDelayed.Create(Self, TypeName, ParentClass);
+
+    FDelayedTypes.Add(TypeName, Result as TTypeDelayed);
+  end;
+end;
+
+function TImporter.GenerateClassDefinition(const ComplexType: IXMLComplexTypeDef): TClassDefinition;
+var
+  ClassDefinition: TClassDefinition absolute Result;
+
+  procedure CheckCompositor(const ElementCompositors: IXMLElementCompositors);
+  begin
+    for var A := 0 to Pred(ElementCompositors.Count) do
+    begin
+      var Compositor := ElementCompositors[A];
+
+      GenerateProperties(ClassDefinition, Compositor.ElementDefs, True);
+
+      CheckCompositor(Compositor.Compositors);
+    end;
+  end;
+
+begin
+  Result := TClassDefinition.Create;
+  Result.Name := ComplexType.Name;
+
+  GenerateProperties(ClassDefinition, ComplexType.ElementDefs, False);
+
+  CheckCompositor(ComplexType.ElementCompositors);
+
+  for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
+  begin
+    var Attribute := ComplexType.AttributeDefs[A];
+    var &Property := AddPropertyWithType(ClassDefinition, Attribute.Name, Attribute.DataType);
+
+    AddPropertyAttribute(&Property, Attribute);
+  end;
+
+  if Assigned(ComplexType.BaseType) then
+  begin
+    var &Property := AddProperty(ClassDefinition, 'Value');
+    &Property.TypeName := FindTypeName(ComplexType.BaseType, ClassDefinition);
+
+    &Property.AddXMLValueAttribute;
+  end;
+end;
+
+procedure TImporter.GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefs; const AllPropertiesOptionals: Boolean);
+begin
+  for var A := 0 to Pred(ElementDefs.Count) do
+  begin
+    var Element := ElementDefs[A];
+    var NewProperty := AddProperty(ClassDefinition, Element.Name);
+    NewProperty.IsArray := Element.IsRepeating;
+    NewProperty.Optional := AllPropertiesOptionals or (Element.MinOccurs <> NULL) and (Element.MinOccurs <= 0);
+    var PropertyType := Element.DataType;
+
+    if CanGenerateClass(Element) then
+    begin
+      var ComplexType := (Element.DataType as IXMLComplexTypeDef);
+
+      if (ComplexType.ElementDefs.Count = 0) and (ComplexType.AttributeDefs.Count = 1) then
+        for var B := 0 to Pred(ComplexType.AttributeDefs.Count) do
+        begin
+          var Attribute := ComplexType.AttributeDefs[B];
+          PropertyType := Attribute.DataType;
+
+          AddPropertyAttribute(NewProperty, Attribute);
+        end
+      else
+      begin
+        PropertyType := ComplexType;
+
+        ClassDefinition.AddClassType(GenerateClassDefinition(ComplexType));
+      end;
+    end;
+
+    NewProperty.TypeName := FindTypeName(PropertyType, ClassDefinition);
+  end;
+end;
+
 function TImporter.GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
 var
   UnitDeclaration: TUnit absolute Result;
@@ -400,154 +547,6 @@ var
       var Reference := List[A];
 
       UnitDeclaration.AddUses(GenerateUnit(Reference.SchemaRef, FindUnitConfiguration(Reference.SchemaLocation)));
-    end;
-  end;
-
-  function GetBaseType(TypeDefinition: IXMLTypeDef): String;
-  begin
-    if not TypeDefinition.IsComplex then
-      while Assigned(TypeDefinition.BaseType) do
-        TypeDefinition := TypeDefinition.BaseType as IXMLSimpleTypeDef;
-
-    Result := ExtractLocalName(TypeDefinition.Name);
-  end;
-
-  function FindTypeName(&Type: IXMLTypeDef; const ParentClass: TClassDefinition): TTypeDefinition;
-  begin
-    var TypeName := &Type.Name;
-
-    Result := FindType(TypeName, ParentClass);
-
-    if not Assigned(Result) then
-    begin
-      TypeName := GetBaseType(&Type);
-
-      Result := FindType(TypeName, ParentClass);
-    end;
-
-    if not Assigned(Result) then
-      for var DelayedType in FDelayedTypes.Values do
-        if DelayedType.FTypeName = TypeName then
-          Result := DelayedType;
-
-    if not Assigned(Result) then
-    begin
-      Result := TTypeDelayed.Create(Self, TypeName, ParentClass);
-
-      FDelayedTypes.Add(TypeName, Result as TTypeDelayed);
-    end;
-  end;
-
-  function IsReferenceType(const Element: IXMLElementDef): Boolean;
-  begin
-    Result := Assigned(Element.Ref) or Assigned(Element.AttributeNodes.FindNode('type'));
-  end;
-
-  function CanGenerateClass(const Element: IXMLElementDef): Boolean;
-  begin
-    Result := Element.DataType.IsComplex and not IsReferenceType(Element);
-  end;
-
-  function GenerateClassDefinition(const ComplexType: IXMLComplexTypeDef): TClassDefinition;
-  var
-    ClassDefinition: TClassDefinition absolute Result;
-
-    function AddProperty(const Name: String): TProperty;
-    begin
-      for var &Property in ClassDefinition.Properties do
-        if &Property.Name = Name then
-          Exit(&Property);
-
-      Result := TProperty.Create;
-      Result.Name := Name;
-
-      ClassDefinition.AddProperty(Result);
-    end;
-
-    function AddPropertyWithType(const Name: String; const &Type: IXMLTypeDef): TProperty;
-    begin
-      Result := AddProperty(Name);
-      Result.TypeName := FindTypeName(&Type, ClassDefinition);
-    end;
-
-    procedure AddPropertyAttribute(const &Property: TProperty; const Attribute: IXMLAttributeDef);
-    begin
-      if Attribute.Fixed = NULL then
-        &Property.AddXMLAttributeValue
-      else
-        &Property.AddXMLAttributeFixed(Attribute.Name, Attribute.Fixed);
-
-      &Property.Optional := (Attribute.Use <> NULL) and (Attribute.Use = 'optional');
-    end;
-
-    procedure GenerateProperties(const ElementDefs: IXMLElementDefs; const AllPropertiesOptionals: Boolean);
-    begin
-      for var A := 0 to Pred(ElementDefs.Count) do
-      begin
-        var Element := ElementDefs[A];
-        var NewProperty := AddProperty(Element.Name);
-        NewProperty.IsArray := Element.IsRepeating;
-        NewProperty.Optional := AllPropertiesOptionals or (Element.MinOccurs <> NULL) and (Element.MinOccurs <= 0);
-        var PropertyType := Element.DataType;
-
-        if CanGenerateClass(Element) then
-        begin
-          var ComplexType := (Element.DataType as IXMLComplexTypeDef);
-
-          if (ComplexType.ElementDefs.Count = 0) and (ComplexType.AttributeDefs.Count = 1) then
-            for var B := 0 to Pred(ComplexType.AttributeDefs.Count) do
-            begin
-              var Attribute := ComplexType.AttributeDefs[B];
-              PropertyType := Attribute.DataType;
-
-              AddPropertyAttribute(NewProperty, Attribute);
-            end
-          else
-          begin
-            PropertyType := ComplexType;
-
-            Result.AddClassType(GenerateClassDefinition(ComplexType));
-          end;
-        end;
-
-        NewProperty.TypeName := FindTypeName(PropertyType, ClassDefinition);
-      end;
-    end;
-
-    procedure CheckCompositor(const ElementCompositors: IXMLElementCompositors);
-    begin
-      for var A := 0 to Pred(ElementCompositors.Count) do
-      begin
-        var Compositor := ElementCompositors[A];
-
-        GenerateProperties(Compositor.ElementDefs, True);
-
-        CheckCompositor(Compositor.Compositors);
-      end;
-    end;
-
-  begin
-    Result := TClassDefinition.Create;
-    Result.Name := ComplexType.Name;
-
-    GenerateProperties(ComplexType.ElementDefs, False);
-
-    CheckCompositor(ComplexType.ElementCompositors);
-
-    for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
-    begin
-      var Attribute := ComplexType.AttributeDefs[A];
-      var &Property := AddPropertyWithType(Attribute.Name, Attribute.DataType);
-
-      AddPropertyAttribute(&Property, Attribute);
-    end;
-
-    if Assigned(ComplexType.BaseType) then    
-    begin
-      var &Property := AddProperty('Value');
-      &Property.TypeName := FindTypeName(ComplexType.BaseType, ClassDefinition);
-
-      &Property.AddXMLValueAttribute;
     end;
   end;
 
@@ -576,28 +575,18 @@ begin
     for var A := 0 to Pred(Definition.ComplexTypes.Count) do
       UnitDeclaration.Classes.Add(GenerateClassDefinition(Definition.ComplexTypes[A]));
 
-    for var A := 0 to Pred(Definition.ElementDefs.Count) do
+    if Definition.ElementDefs.Count > 0 then
     begin
-      var Element := Definition.ElementDefs[A];
+      if UnitConfiguration.UnitClassName.IsEmpty then
+        raise Exception.CreateFmt('Schema file %s need a class name in the configuration file!', [UnitConfiguration.FileName]);
 
-      if CanGenerateClass(Element) then
-      begin
-        var ClassDefinition := GenerateClassDefinition(Element.DataType as IXMLComplexTypeDef);
-        ClassDefinition.Name := UnitConfiguration.UnitClassName;
+      var ClassDefinition := TClassDefinition.Create;
+//      ClassDefinition.InheritedFrom := FindTypeName(Element.DataType, ClassDefinition);
+      ClassDefinition.Name := UnitConfiguration.UnitClassName;
 
-        if UnitConfiguration.UnitClassName.IsEmpty then
-          raise Exception.CreateFmt('Schema file %s need a class name in the configuration file!', [UnitConfiguration.FileName]);
+      GenerateProperties(ClassDefinition, Definition.ElementDefs, False);
 
-        UnitDeclaration.Classes.Add(ClassDefinition);
-      end
-      else if IsReferenceType(Element) then
-      begin
-        var ClassDefinition := TClassDefinition.Create;
-        ClassDefinition.Name := Element.Name;
-        ClassDefinition.InheritedFrom := FindTypeName(Element.DataType, ClassDefinition);
-
-        UnitDeclaration.Classes.Add(ClassDefinition);
-      end;
+      UnitDeclaration.Classes.Add(ClassDefinition);
     end;
   end;
 end;
@@ -615,6 +604,11 @@ begin
     for var SchemaUnit in FUnits.Values do
       SchemaUnit.GenerateFile(Configuration.OutputFolder);
   end;
+end;
+
+function TImporter.IsReferenceType(const Element: IXMLElementDef): Boolean;
+begin
+  Result := Assigned(Element.Ref) or Assigned(Element.AttributeNodes.FindNode('type'));
 end;
 
 procedure TImporter.LoadConfig(const FileName: String);
@@ -1099,9 +1093,16 @@ begin
   FClasses.Add(ClassDefinition);
 end;
 
-procedure TClassDefinition.AddProperty(const &Property: TProperty);
+function TClassDefinition.AddProperty(const Name: String): TProperty;
 begin
-  FProperties.Add(&Property);
+  for var &Property in Properties do
+    if &Property.Name = Name then
+      Exit(&Property);
+
+  Result := TProperty.Create;
+  Result.Name := Name;
+
+  FProperties.Add(Result);
 end;
 
 constructor TClassDefinition.Create;
