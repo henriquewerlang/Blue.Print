@@ -63,7 +63,6 @@ type
     FIsArray: Boolean;
 
     function GetNeedGetFunction: Boolean;
-    function GetOptional: Boolean;
     function GetNeedAddFunction: Boolean;
   public
     constructor Create;
@@ -79,12 +78,14 @@ type
     property Name: String read FName write FName;
     property NeedAddFunction: Boolean read GetNeedAddFunction;
     property NeedGetFunction: Boolean read GetNeedGetFunction;
-    property Optional: Boolean read GetOptional write FOptional;
+    property Optional: Boolean read FOptional write FOptional;
     property TypeName: TTypeDefinition read FTypeName write FTypeName;
   end;
 
   TTypeDefinition = class
   private
+    FIsString: Boolean;
+    FIsNumericType: Boolean;
     function GetIsClassDefinition: Boolean;
     function GetNeedDestructor: Boolean;
   protected
@@ -93,6 +94,8 @@ type
     function ResolveType: TTypeDefinition; virtual;
 
     property IsClassDefinition: Boolean read GetIsClassDefinition;
+    property IsString: Boolean read FIsString write FIsString;
+    property IsNumericType: Boolean read FIsNumericType write FIsNumericType;
     property NeedDestructor: Boolean read GetNeedDestructor;
     property Name: String read FName write FName;
   end;
@@ -296,6 +299,12 @@ constructor TImporter.Create;
     AddTypeAlias(TypeName, Result);
   end;
 
+  function AddNumberType(const TypeName: String): TTypeDefinition;
+  begin
+    Result := AddType(TypeName);
+    Result.IsNumericType := True;
+  end;
+
 begin
   inherited;
 
@@ -308,24 +317,25 @@ begin
   FXMLBuildInType := TDictionary<String, TTypeDefinition>.Create;
 
   var StringType := AddType('String');
-  var CardinalType := AddType('Cardinal');
-  var IntegerType := AddType('Integer');
-  var Int64Type := AddType('Int64');
+  StringType.IsString := True;
+  var CardinalType := AddNumberType('Cardinal');
+  var IntegerType := AddNumberType('Integer');
+  var Int64Type := AddNumberType('Int64');
   AddType(TObject.ClassName);
   AddType('Undefined');
-  var WordType := AddType('Word');
+  var WordType := AddNumberType('Word');
 
   AddBuildInType('anyURI', StringType);
   AddBuildInType('base64Binary', StringType);
   AddBuildInType('boolean', AddType('Boolean'));
-  AddBuildInType('date', AddType('TDate'));
-  AddBuildInType('dateTime', AddType('TDateTime'));
-  AddBuildInType('decimal', AddType('Double'));
+  AddBuildInType('date', AddNumberType('TDate'));
+  AddBuildInType('dateTime', AddNumberType('TDateTime'));
+  AddBuildInType('decimal', AddNumberType('Double'));
   AddBuildInType('ID', StringType);
   AddBuildInType('int', IntegerType);
   AddBuildInType('long', Int64Type);
   AddBuildInType('string', StringType);
-  AddBuildInType('time', AddType('TTime'));
+  AddBuildInType('time', AddNumberType('TTime'));
   AddBuildInType('token', StringType);
   AddBuildInType('unsignedShort', WordType);
   AddBuildInType('unsignedInt', CardinalType);
@@ -874,10 +884,14 @@ var
 
   function GetOptionalValue(const &Property: TProperty): String;
   begin
-    if GetPropertyTypeName(&Property) = 'String' then
-      Result := Format('not %s.IsEmpty', [GetPropertyFieldName(&Property)])
-    else if GetPropertyType(&Property).IsClassDefinition then
+    var PropertyType := GetPropertyType(&Property);
+
+    if PropertyType.IsClassDefinition or &Property.IsArray then
       Result := Format('Assigned(%s)', [GetPropertyFieldName(&Property)])
+    else if PropertyType.IsString then
+      Result := Format('not %s.IsEmpty', [GetPropertyFieldName(&Property)])
+    else if PropertyType.IsNumericType then
+      Result := Format('%s <> 0;', [GetPropertyFieldName(&Property)])
     else
       Result := 'False';
   end;
@@ -1178,11 +1192,6 @@ end;
 function TProperty.GetNeedGetFunction: Boolean;
 begin
   Result := TypeName.IsClassDefinition and not IsArray;
-end;
-
-function TProperty.GetOptional: Boolean;
-begin
-  Result := FOptional and not TypeName.IsClassDefinition;
 end;
 
 { TTypeDefinition }
