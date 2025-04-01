@@ -96,16 +96,18 @@ type
 
   TTypeDefinition = class
   private
-    FIsStringType: Boolean;
-    FIsNumericType: Boolean;
     FAttributes: TList<String>;
+    FIsNumericType: Boolean;
+    FIsObjectType: Boolean;
+    FIsStringType: Boolean;
 
     function GetAsClassDefinition: TClassDefinition;
     function GetIsClassDefinition: Boolean;
     function GetIsExternal: Boolean;
-    function GetNeedDestructor: Boolean;
     function GetIsNumericType: Boolean;
+    function GetIsObjectType: Boolean;
     function GetIsStringType: Boolean;
+    function GetNeedDestructor: Boolean;
   protected
     FName: String;
   public
@@ -120,9 +122,10 @@ type
     property IsClassDefinition: Boolean read GetIsClassDefinition;
     property IsExternal: Boolean read GetIsExternal;
     property IsNumericType: Boolean read GetIsNumericType;
+    property IsObjectType: Boolean read GetIsObjectType;
     property IsStringType: Boolean read GetIsStringType;
-    property NeedDestructor: Boolean read GetNeedDestructor;
     property Name: String read FName write FName;
+    property NeedDestructor: Boolean read GetNeedDestructor;
   end;
 
   TClassDefinition = class(TTypeDefinition)
@@ -222,6 +225,7 @@ type
     function AddPropertyWithType(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef): TPropertyDefinition;
     function CanGenerateClass(const Element: IXMLElementDef): Boolean;
     function FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
+    function FindTypeChange(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
     function FindTypeName(&Type: IXMLTypeDef; const ParentClass: TClassDefinition): TTypeDefinition;
     function GenerateClassDefinition(const ComplexType: IXMLComplexTypeDef): TClassDefinition;
     function GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
@@ -327,7 +331,7 @@ begin
   var CardinalType := AddNumberType('Cardinal');
   var IntegerType := AddNumberType('Integer');
   var Int64Type := AddNumberType('Int64');
-  AddType(TObject.ClassName);
+  AddType(TObject.ClassName).FIsObjectType := True;
   AddType('Undefined');
   var WordType := AddNumberType('Word');
 
@@ -428,6 +432,15 @@ begin
         if SimpleType.Name = TypeName then
           Exit(SimpleType);
     end;
+end;
+
+function TImporter.FindTypeChange(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
+begin
+  Result := nil;
+
+  for var ChangeType in Configuration.TypeChange do
+    if ChangeType.AliasName = TypeName then
+      Exit(FindType(ChangeType.TypeName, nil));
 end;
 
 function TImporter.FindTypeName(&Type: IXMLTypeDef; const ParentClass: TClassDefinition): TTypeDefinition;
@@ -568,10 +581,7 @@ var
   begin
     Result := TTypeAlias.Create;
     Result.Name := SimpleType.Name;
-
-    for var ChangeType in Configuration.TypeChange do
-      if ChangeType.AliasName = Result.Name then
-        Result.TypeDefinition := FindType(ChangeType.TypeName, nil);
+    Result.TypeDefinition := FindTypeChange(Result.Name, nil);
 
     if not Assigned(Result.TypeDefinition) then
       Result.TypeDefinition := FindTypeName(SimpleType, nil);
@@ -1197,7 +1207,7 @@ end;
 
 function TPropertyDefinition.GetNeedGetFunction: Boolean;
 begin
-  Result := TypeName.IsClassDefinition and not IsArray;
+  Result := TypeName.IsClassDefinition and not IsArray and not TypeName.IsObjectType;
 end;
 
 { TTypeDefinition }
@@ -1234,6 +1244,11 @@ begin
   Result := ResolveType.FIsNumericType;
 end;
 
+function TTypeDefinition.GetIsObjectType: Boolean;
+begin
+  Result := ResolveType.FIsObjectType;
+end;
+
 function TTypeDefinition.GetIsStringType: Boolean;
 begin
   Result := ResolveType.FIsStringType;
@@ -1241,7 +1256,7 @@ end;
 
 function TTypeDefinition.GetNeedDestructor: Boolean;
 begin
-  Result := IsClassDefinition or (Name = TObject.ClassName);
+  Result := IsClassDefinition or IsObjectType;
 end;
 
 function TTypeDefinition.ResolveType: TTypeDefinition;
