@@ -953,6 +953,8 @@ begin
       end;
     end;
 
+    tkInteger,
+    tkInt64,
     tkFloat:
     begin
       if RttiType.Handle = TypeInfo(TDateTime) then

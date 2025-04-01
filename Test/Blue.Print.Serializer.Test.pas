@@ -392,6 +392,7 @@ type
     FNumberFormat: Double;
     FTimeFormat: TTime;
     FDateTimeFormat: TDateTime;
+    FIntegerFormat: Int64;
   published
     [DateTimeFormat('dd/mm/yyyy')]
     property DateFormat: TDate read FDateFormat write FDateFormat;
@@ -401,6 +402,8 @@ type
     property TimeFormat: TTime read FTimeFormat write FTimeFormat;
     [NumberFormat('000,000.0000')]
     property NumberFormat: Double read FNumberFormat write FNumberFormat;
+    [NumberFormat('000000')]
+    property IntegerFormat: Int64 read FIntegerFormat write FIntegerFormat;
   end;
 
   TMyClassWithPropertyWithNamespaceAttribute = class
@@ -995,12 +998,13 @@ begin
   var MyObject := TMyClassWithFormatAttribute.Create;
   MyObject.DateFormat := EncodeDate(2025, 04, 01);
   MyObject.DateTimeFormat := EncodeDateTime(2025, 04, 01, 08, 00, 00, 000);
-  MyObject.TimeFormat := EncodeTime(08, 00, 00, 000);
+  MyObject.IntegerFormat := 12;
   MyObject.NumberFormat := 1000.1;
+  MyObject.TimeFormat := EncodeTime(08, 00, 00, 000);
   var Value := FSerializer.Serialize(MyObject);
 
   Assert.AreEqual(Format(
-    '<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><DateFormat>01-04-2025</DateFormat><DateTimeFormat>01-04-2025T08.00.00%s</DateTimeFormat><TimeFormat>08.00.00.000</TimeFormat><NumberFormat>001;000-1000</NumberFormat></Document>'#13#10,
+    '<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><DateFormat>01-04-2025</DateFormat><DateTimeFormat>01-04-2025T08.00.00%s</DateTimeFormat><TimeFormat>08.00.00.000</TimeFormat><NumberFormat>001;000-1000</NumberFormat><IntegerFormat>000012</IntegerFormat></Document>'#13#10,
     [TBluePrintXMLSerializer.GetCurrentTimeZone]), Value);
 
   MyObject.Free;
