@@ -795,12 +795,12 @@ var
         Result := EmptyStr;
     end;
 
-    function HasArrayProperty(const ClassDefinition: TClassDefinition): Boolean;
+    function CheckNeedAddFunction(const ClassDefinition: TClassDefinition): Boolean;
     begin
       Result := False;
 
       for var &Property in ClassDefinition.Properties do
-        if &Property.IsArray then
+        if &Property.NeedAddFunction then
           Exit(True);
     end;
 
@@ -839,15 +839,14 @@ var
         if &Property.Optional then
           AddLine('%s  function %s: Boolean;', [Ident, GetStoredFunctionName(&Property)]);
 
-      if CheckNeedDestructor(ClassDefinition) or HasArrayProperty(ClassDefinition) then
+      if CheckNeedDestructor(ClassDefinition) or CheckNeedAddFunction(ClassDefinition) then
       begin
         AddLine('%spublic', [Ident]);
 
         if CheckNeedDestructor(ClassDefinition) then
           AddLine('%s  destructor Destroy; override;', [Ident]);
 
-
-        if CheckNeedDestructor(ClassDefinition) and HasArrayProperty(ClassDefinition) then
+        if CheckNeedDestructor(ClassDefinition) and CheckNeedAddFunction(ClassDefinition) then
           AddLine;
 
         for var &Property in ClassDefinition.Properties do
