@@ -54,11 +54,13 @@ type
     FOutputFolder: String;
     FSchemaFolder: String;
     FTypeExternal: TArray<TTypeExternalConfig>;
+    FTypeAttributes: TArray<TTypeAttributeConfig>;
   public
     destructor Destroy; override;
 
     property OutputFolder: String read FOutputFolder write FOutputFolder;
     property SchemaFolder: String read FSchemaFolder write FSchemaFolder;
+    property TypeAttributes: TArray<TTypeAttributeConfig> read FTypeAttributes write FTypeAttributes;
     property TypeChange: TArray<TTypeChangeConfig> read FTypeChange write FTypeChange;
     property TypeExternal: TArray<TTypeExternalConfig> read FTypeExternal write FTypeExternal;
     property UnitConfiguration: TArray<TUnitConfiguration> read FUnitConfiguration write FUnitConfiguration;
@@ -96,6 +98,7 @@ type
   private
     FIsStringType: Boolean;
     FIsNumericType: Boolean;
+    FAttributes: TList<String>;
 
     function GetAsClassDefinition: TClassDefinition;
     function GetIsClassDefinition: Boolean;
@@ -106,13 +109,18 @@ type
   protected
     FName: String;
   public
+    constructor Create;
+
+    destructor Destroy; override;
+
     function ResolveType: TTypeDefinition; virtual;
 
     property AsClassDefinition: TClassDefinition read GetAsClassDefinition;
+    property Attributes: TList<String> read FAttributes write FAttributes;
     property IsClassDefinition: Boolean read GetIsClassDefinition;
     property IsExternal: Boolean read GetIsExternal;
-    property IsStringType: Boolean read GetIsStringType;
     property IsNumericType: Boolean read GetIsNumericType;
+    property IsStringType: Boolean read GetIsStringType;
     property NeedDestructor: Boolean read GetNeedDestructor;
     property Name: String read FName write FName;
   end;
@@ -617,6 +625,9 @@ begin
     GenerateUnit(Schema.SchemaDef, UnitConfiguration);
   end;
 
+  for var TypeAttribute in Configuration.TypeAttributes do
+    FindType(TypeAttribute.TypeName, nil).Attributes.Add(TypeAttribute.Attribute);
+
   for var UnitDefinition in FUnits.Values do
     UnitDefinition.GenerateFile(Self);
 end;
@@ -858,7 +869,7 @@ var
 
       for var &Property in ClassDefinition.Properties do
       begin
-        for var Attribute in &Property.Attributes do
+        for var Attribute in &Property.Attributes.ToArray + GetPropertyType(&Property).Attributes.ToArray do
           AddLine('%:s  [%s]', [Ident, Attribute]);
 
         AddLine('%s  property %s: %s read %s write %s%s;', [Ident, CheckReservedName(&Property.Name), GetPropertyTypeName(&Property), GetPropertyGetFunction(&Property), GetPropertyFieldName(&Property), GetStoredPropertyDeclaration(&Property)]);
@@ -1191,6 +1202,18 @@ end;
 
 { TTypeDefinition }
 
+constructor TTypeDefinition.Create;
+begin
+  FAttributes := TList<String>.Create;
+end;
+
+destructor TTypeDefinition.Destroy;
+begin
+  FAttributes.Free;
+
+  inherited;
+end;
+
 function TTypeDefinition.GetAsClassDefinition: TClassDefinition;
 begin
   Result := ResolveType as TClassDefinition;
@@ -1283,6 +1306,9 @@ begin
 
   for var TypeExternal in FTypeExternal do
     TypeExternal.Free;
+
+  for var TypeAttribute in FTypeAttributes do
+    TypeAttribute.Free;
 
   inherited;
 end;
