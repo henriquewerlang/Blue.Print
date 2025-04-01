@@ -54,7 +54,7 @@ type
     property UnitConfiguration: TArray<TUnitConfiguration> read FUnitConfiguration write FUnitConfiguration;
   end;
 
-  TProperty = class
+  TPropertyDefinition = class
   private
     FAttributes: TList<String>;
     FName: String;
@@ -103,7 +103,7 @@ type
   TClassDefinition = class(TTypeDefinition)
   private
     FClasses: TList<TClassDefinition>;
-    FProperties: TList<TProperty>;
+    FProperties: TList<TPropertyDefinition>;
     FParentClass: TClassDefinition;
     FInheritedFrom: TTypeDefinition;
     FAttributes: TList<String>;
@@ -112,7 +112,7 @@ type
 
     destructor Destroy; override;
 
-    function AddProperty(const Name: String): TProperty;
+    function AddProperty(const Name: String): TPropertyDefinition;
 
     procedure AddNamespaceAttribute(const Namespace: String);
     procedure AddClassType(const ClassDefinition: TClassDefinition);
@@ -121,7 +121,7 @@ type
     property Classes: TList<TClassDefinition> read FClasses;
     property InheritedFrom: TTypeDefinition read FInheritedFrom write FInheritedFrom;
     property ParentClass: TClassDefinition read FParentClass write FParentClass;
-    property Properties: TList<TProperty> read FProperties write FProperties;
+    property Properties: TList<TPropertyDefinition> read FProperties write FProperties;
   end;
 
   TTypeChangeDefinition = class(TTypeDefinition)
@@ -205,8 +205,8 @@ type
     FUnits: TDictionary<String, TUnit>;
     FXMLBuildInType: TDictionary<String, TTypeDefinition>;
 
-    function AddProperty(const ClassDefinition: TClassDefinition; const Name: String): TProperty;
-    function AddPropertyWithType(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef): TProperty;
+    function AddProperty(const ClassDefinition: TClassDefinition; const Name: String): TPropertyDefinition;
+    function AddPropertyWithType(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef): TPropertyDefinition;
     function CanGenerateClass(const Element: IXMLElementDef): Boolean;
     function FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
     function FindTypeName(&Type: IXMLTypeDef; const ParentClass: TClassDefinition): TTypeDefinition;
@@ -214,7 +214,7 @@ type
     function GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
     function IsReferenceType(const Element: IXMLElementDef): Boolean;
 
-    procedure AddPropertyAttribute(const &Property: TProperty; const Attribute: IXMLAttributeDef);
+    procedure AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefs; const AllPropertiesOptionals: Boolean);
   public
     constructor Create;
@@ -240,12 +240,12 @@ begin
   FChangeTypes.Add(AliasName, TTypeChangeDefinition.Create(Self, AliasName, TypeName));
 end;
 
-function TImporter.AddProperty(const ClassDefinition: TClassDefinition; const Name: String): TProperty;
+function TImporter.AddProperty(const ClassDefinition: TClassDefinition; const Name: String): TPropertyDefinition;
 begin
   Result := ClassDefinition.AddProperty(Name);
 end;
 
-procedure TImporter.AddPropertyAttribute(const &Property: TProperty; const Attribute: IXMLAttributeDef);
+procedure TImporter.AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
 begin
   if Attribute.Fixed = NULL then
     &Property.AddXMLAttributeValue
@@ -255,7 +255,7 @@ begin
   &Property.Optional := (Attribute.Use <> NULL) and (Attribute.Use = 'optional');
 end;
 
-function TImporter.AddPropertyWithType(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef): TProperty;
+function TImporter.AddPropertyWithType(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef): TPropertyDefinition;
 begin
   Result := AddProperty(ClassDefinition, Name);
   Result.TypeName := FindTypeName(&Type, ClassDefinition);
@@ -694,7 +694,7 @@ var
     AddLine(EmptyStr);
   end;
 
-  function GetStoredFunctionName(const &Property: TProperty): String;
+  function GetStoredFunctionName(const &Property: TPropertyDefinition): String;
   begin
     Result := Format('Get%sStored', [&Property.Name]);
   end;
@@ -719,7 +719,7 @@ var
       Result := 'T' + Result.Substring(0, 1).ToUpper + Result.Substring(1);
   end;
 
-  function GetPropertyType(const &Property: TProperty): TTypeDefinition;
+  function GetPropertyType(const &Property: TPropertyDefinition): TTypeDefinition;
   begin
     Result := &Property.TypeName.ResolveType;
   end;
@@ -745,12 +745,12 @@ var
     end;
   end;
 
-  function GetPropertyFieldName(const &Property: TProperty): String;
+  function GetPropertyFieldName(const &Property: TPropertyDefinition): String;
   begin
     Result := 'F' + &Property.Name;
   end;
 
-  function GetPropertyGetFunction(const &Property: TProperty): String;
+  function GetPropertyGetFunction(const &Property: TPropertyDefinition): String;
   begin
     if &Property.NeedGetFunction then
       Result := 'Get' + &Property.Name
@@ -758,7 +758,7 @@ var
       Result := GetPropertyFieldName(&Property);
   end;
 
-  function GetTypeName(const &Property: TProperty): String;
+  function GetTypeName(const &Property: TPropertyDefinition): String;
   begin
     var TypeName := GetPropertyType(&Property);
 
@@ -768,7 +768,7 @@ var
       Result := GetClassImplementationName(TypeName as TClassDefinition);
   end;
 
-  function GetPropertyTypeName(const &Property: TProperty): String;
+  function GetPropertyTypeName(const &Property: TPropertyDefinition): String;
   begin
     Result := GetTypeName(&Property);
 
@@ -776,14 +776,14 @@ var
       Result := Format('TArray<%s>', [Result]);
   end;
 
-  function GetAddFuntionName(const &Property: TProperty): String;
+  function GetAddFuntionName(const &Property: TPropertyDefinition): String;
   begin
     Result := 'Add' + &Property.Name;
   end;
 
   procedure GenerateClassDeclaration(const Ident: String; const ClassDefinition: TClassDefinition);
 
-    function GetStoredPropertyDeclaration(const &Property: TProperty): String;
+    function GetStoredPropertyDeclaration(const &Property: TPropertyDefinition): String;
     begin
       Result := EmptyStr;
 
@@ -882,7 +882,7 @@ var
         Exit(True);
   end;
 
-  function GetOptionalValue(const &Property: TProperty): String;
+  function GetOptionalValue(const &Property: TPropertyDefinition): String;
   begin
     var PropertyType := GetPropertyType(&Property);
 
@@ -1123,13 +1123,13 @@ begin
     Attributes.Add(Format('XMLNamespace(''%s'')', [Namespace]));
 end;
 
-function TClassDefinition.AddProperty(const Name: String): TProperty;
+function TClassDefinition.AddProperty(const Name: String): TPropertyDefinition;
 begin
   for var &Property in Properties do
     if &Property.Name = Name then
       Exit(&Property);
 
-  Result := TProperty.Create;
+  Result := TPropertyDefinition.Create;
   Result.Name := Name;
 
   FProperties.Add(Result);
@@ -1141,7 +1141,7 @@ begin
 
   FAttributes := TList<String>.Create;
   FClasses := TObjectList<TClassDefinition>.Create;
-  FProperties := TObjectList<TProperty>.Create;
+  FProperties := TObjectList<TPropertyDefinition>.Create;
 end;
 
 destructor TClassDefinition.Destroy;
@@ -1155,41 +1155,41 @@ begin
   inherited;
 end;
 
-{ TProperty }
+{ TPropertyDefinition }
 
-procedure TProperty.AddXMLAttributeFixed(const Name, Value: String);
+procedure TPropertyDefinition.AddXMLAttributeFixed(const Name, Value: String);
 begin
   Attributes.Add(Format('XMLAttribute(''%s'', ''%s'')', [Name, value]));
 end;
 
-procedure TProperty.AddXMLAttributeValue;
+procedure TPropertyDefinition.AddXMLAttributeValue;
 begin
   Attributes.Add('XMLAttributeValue');
 end;
 
-procedure TProperty.AddXMLValueAttribute;
+procedure TPropertyDefinition.AddXMLValueAttribute;
 begin
   Attributes.Add('XMLValue');
 end;
 
-constructor TProperty.Create;
+constructor TPropertyDefinition.Create;
 begin
   FAttributes := TList<String>.Create;
 end;
 
-destructor TProperty.Destroy;
+destructor TPropertyDefinition.Destroy;
 begin
   FAttributes.Free;
 
   inherited;
 end;
 
-function TProperty.GetNeedAddFunction: Boolean;
+function TPropertyDefinition.GetNeedAddFunction: Boolean;
 begin
   Result := IsArray and TypeName.IsClassDefinition;
 end;
 
-function TProperty.GetNeedGetFunction: Boolean;
+function TPropertyDefinition.GetNeedGetFunction: Boolean;
 begin
   Result := TypeName.IsClassDefinition and not IsArray;
 end;
