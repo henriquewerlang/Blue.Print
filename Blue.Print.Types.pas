@@ -25,7 +25,10 @@ type
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function Serialize(const Value: TValue): String;
 
+    procedure SetFormatSettings(const Value: TFormatSettings);
+
     property ContentType: String read GetContentType;
+    property FormatSettings: TFormatSettings write SetFormatSettings;
   end;
 
   EHTTPStatusError = class(Exception)
@@ -220,6 +223,21 @@ type
   end;
 
   AuthorizationAttribute = class(TCustomAttribute);
+
+  TFormatAttribute = class(TCustomAttribute)
+  private
+    FFormat: String;
+  public
+    constructor Create(const Format: String);
+
+    property Format: String read FFormat write FFormat;
+  end;
+
+  NumberFormatAttribute = class(TFormatAttribute)
+  end;
+
+  DateTimeFormatAttribute = class(TFormatAttribute)
+  end;
 
   TBluePrintStream = class(TStream)
   private
@@ -622,6 +640,15 @@ end;
 function TRttiTypeHelper.IsInterface: Boolean;
 begin
   Result := Self is TRttiInterfaceType;
+end;
+
+{ TFormatAttribute }
+
+constructor TFormatAttribute.Create(const Format: String);
+begin
+  inherited Create;
+
+  FFormat := Format;
 end;
 
 end.

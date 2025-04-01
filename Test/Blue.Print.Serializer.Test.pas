@@ -35,8 +35,6 @@ type
     procedure WhenSerializeAnEnumerationWithTheEnumValueAttributeMustSerializeTheValueFromAttribute;
     [Test]
     procedure WhenDeserializeAnEnumerationWithTheEnumValueAttributeMustUseTheAttributeNameToReturnTheEnumerationValue;
-    [Test]
-    procedure WhenGetTheCurrentTimezoneMustReturnTheValueAsExpected;
   end;
 
   [TestFixture]
@@ -167,6 +165,10 @@ type
     procedure WhenDeserializeAnArrayMustLoadAllPropertiesAfterItAsExpected;
     [Test]
     procedure WhenThePropertyHasTheXMLValueAttributeMustLoadTheValueFromTheNodeInTheProperty;
+    [Test]
+    procedure WhenGetTheCurrentTimezoneMustReturnTheValueAsExpected;
+    [Test]
+    procedure WhenSerializeAClassWithFormatAttributesMustLoadTheValuesAsExpected;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -384,6 +386,23 @@ type
     property MyValue: TMyClassWithXMLValueAttribute read FMyValue write FMyValue;
   end;
 
+  TMyClassWithFormatAttribute = class
+  private
+    FDateFormat: TDate;
+    FNumberFormat: Double;
+    FTimeFormat: TTime;
+    FDateTimeFormat: TDateTime;
+  published
+    [DateTimeFormat('dd/mm/yyyy')]
+    property DateFormat: TDate read FDateFormat write FDateFormat;
+    [DateTimeFormat('dd/mm/yyyy"T"hh:nn:ssoooo')]
+    property DateTimeFormat: TDateTime read FDateTimeFormat write FDateTimeFormat;
+    [DateTimeFormat('hh:mm:ss:zzz')]
+    property TimeFormat: TTime read FTimeFormat write FTimeFormat;
+    [NumberFormat('000,000.0000')]
+    property NumberFormat: Double read FNumberFormat write FNumberFormat;
+  end;
+
   TMyClassWithPropertyWithNamespaceAttribute = class
   private
     FMyProp: String;
@@ -438,13 +457,6 @@ begin
   var Value := FSerializer.Deserialize('abc', TypeInfo(String));
 
   Assert.AreEqual('abc', Value.ToString);
-end;
-
-procedure TBluePrintSerializerTest.WhenGetTheCurrentTimezoneMustReturnTheValueAsExpected;
-begin
-  var CurrentTimezone := TTimeZone.Local.Abbreviation.Substring(3) + ':00';
-
-  Assert.AreEqual(CurrentTimezone, TBluePrintSerializer.GetCurrentTimeZone);
 end;
 
 procedure TBluePrintSerializerTest.WhenSerializeABooleanValueMustReturnTheValueAsExpected;
@@ -869,7 +881,7 @@ end;
 procedure TBluePrintXMLSerializerTest.WhenDeserializeADateOrTimeValueMustLoadThePropertiesWithTheExpectedValues;
 begin
   var Value := FSerializer.Deserialize(Format('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyDate>2024-05-21</MyDate><MyTime>01:02:03</MyTime><MyDateTime>2024-05-21T01:02:03%s</MyDateTime></Document>'#13#10,
-    [TBluePrintSerializer.GetCurrentTimeZone]), TypeInfo(TMyDateAndTimeClass));
+    [TBluePrintXMLSerializer.GetCurrentTimeZone]), TypeInfo(TMyDateAndTimeClass));
 
   var MyObject := Value.AsType<TMyDateAndTimeClass>;
 
@@ -952,6 +964,13 @@ begin
   Value.Free;
 end;
 
+procedure TBluePrintXMLSerializerTest.WhenGetTheCurrentTimezoneMustReturnTheValueAsExpected;
+begin
+  var CurrentTimezone := TTimeZone.Local.Abbreviation.Substring(3) + ':00';
+
+  Assert.AreEqual(CurrentTimezone, TBluePrintXMLSerializer.GetCurrentTimeZone);
+end;
+
 procedure TBluePrintXMLSerializerTest.WhenSerializarAnObjectMustGenerateTheXMLAsExpected;
 begin
   var MyObject := TMyObject.Create;
@@ -961,6 +980,28 @@ begin
   var Value := FSerializer.Serialize(MyObject);
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyProp1>abc</MyProp1><MyProp2>123</MyProp2><MyProp3>123.456</MyProp3><MyProp4>MyValue</MyProp4></Document>'#13#10, Value);
+
+  MyObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenSerializeAClassWithFormatAttributesMustLoadTheValuesAsExpected;
+begin
+  var FormatSetting := TFormatSettings.Invariant;
+  FormatSetting.DateSeparator := '-';
+  FormatSetting.DecimalSeparator := '-';
+  FormatSetting.ThousandSeparator := ';';
+  FormatSetting.TimeSeparator := '.';
+  FSerializer.FormatSettings := FormatSetting;
+  var MyObject := TMyClassWithFormatAttribute.Create;
+  MyObject.DateFormat := EncodeDate(2025, 04, 01);
+  MyObject.DateTimeFormat := EncodeDateTime(2025, 04, 01, 08, 00, 00, 000);
+  MyObject.TimeFormat := EncodeTime(08, 00, 00, 000);
+  MyObject.NumberFormat := 1000.1;
+  var Value := FSerializer.Serialize(MyObject);
+
+  Assert.AreEqual(Format(
+    '<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><DateFormat>01-04-2025</DateFormat><DateTimeFormat>01-04-2025T08.00.00%s</DateTimeFormat><TimeFormat>08.00.00.000</TimeFormat><NumberFormat>001;000-1000</NumberFormat></Document>'#13#10,
+    [TBluePrintXMLSerializer.GetCurrentTimeZone]), Value);
 
   MyObject.Free;
 end;
@@ -985,7 +1026,8 @@ begin
 
   var Value := FSerializer.Serialize(MyObject);
 
-  Assert.AreEqual(Format('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyDate>2024-05-21</MyDate><MyTime>01:02:03</MyTime><MyDateTime>2024-05-21T01:02:03%s</MyDateTime></Document>'#13#10, [TBluePrintSerializer.GetCurrentTimeZone]), Value);
+  Assert.AreEqual(Format('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyDate>2024-05-21</MyDate><MyTime>01:02:03</MyTime><MyDateTime>2024-05-21T01:02:03%s</MyDateTime></Document>'#13#10,
+    [TBluePrintXMLSerializer.GetCurrentTimeZone]), Value);
 
   MyObject.Free;
 end;

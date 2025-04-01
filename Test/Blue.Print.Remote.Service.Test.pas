@@ -185,6 +185,8 @@ type
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function GetContentType: String;
     function Serialize(const Value: TValue): String;
+
+    procedure SetFormatSettings(const Value: TFormatSettings);
   public
     property DeserializeCalled: Boolean read FDeserializeCalled;
     property ReturnValue: TValue read FReturnValue write FReturnValue;
@@ -964,6 +966,11 @@ function TSerializerMock.Serialize(const Value: TValue): String;
 begin
   FSerializeValue := Value;
   Result := FReturnValue.AsString;
+end;
+
+procedure TSerializerMock.SetFormatSettings(const Value: TFormatSettings);
+begin
+
 end;
 
 end.

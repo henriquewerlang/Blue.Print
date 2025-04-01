@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Classes, System.Rtti, System.TypInfo, System.Generics.Collections, Test.Insight.Framework, Blue.Print.Web.Module, Web.HTTPApp, Blue.Print.Types;
+uses System.Classes, System.Rtti, System.TypInfo, System.Generics.Collections, System.SysUtils, Test.Insight.Framework, Blue.Print.Web.Module, Web.HTTPApp, Blue.Print.Types;
 
 type
   TMyService = class;
@@ -117,6 +117,7 @@ type
     function Serialize(const Value: TValue): String;
 
     procedure SetDeserializeValues(const Value: TArray<TValue>);
+    procedure SetFormatSettings(const Value: TFormatSettings);
     procedure SetSerializeValues(const Value: TArray<TValue>);
   public
     constructor Create;
@@ -129,7 +130,7 @@ type
 
 implementation
 
-uses System.SysUtils, Blue.Print.Request.Mock;
+uses Blue.Print.Request.Mock;
 
 { TBluePrintWebModuleTest }
 
@@ -603,6 +604,11 @@ end;
 procedure TSerializerMock.SetDeserializeValues(const Value: TArray<TValue>);
 begin
   FDeserializeValues.AddRange(Value);
+end;
+
+procedure TSerializerMock.SetFormatSettings(const Value: TFormatSettings);
+begin
+
 end;
 
 procedure TSerializerMock.SetSerializeValues(const Value: TArray<TValue>);

@@ -27,9 +27,12 @@ type
   private
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function Serialize(const Value: TValue): String;
+
+    procedure SetFormatSettings(const Value: TFormatSettings);
   protected
     FContext: TRttiContext;
     FContentType: String;
+    FFormatSettings: TFormatSettings;
 
     function CreateObject(const RttiType: TRttiInstanceType): TObject; virtual;
     function GetContentType: String;
@@ -39,8 +42,6 @@ type
     constructor Create;
 
     destructor Destroy; override;
-
-    class function GetCurrentTimeZone: String;
   end;
 
   TBluePrintJsonSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
@@ -64,6 +65,7 @@ type
   TBluePrintXMLSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
   private
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+    function GetFormatValue(const RttiMember: TRttiMember): String;
     function GetNodeName(const RttiMember: TRttiMember): String;
     function GetNamespaceValue(const RttiObject: TRttiObject; const Namespace: String): String;
     function LoadAttributes(const RttiObject: TRttiObject; const Node: IXMLNode): IXMLNode;
@@ -75,9 +77,13 @@ type
 
     procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
     procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode; const Namespace: String);
-    procedure SerializeArray(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace: String);
+    procedure SerializeArray(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace, ValueFormat: String);
     procedure SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode; const Namespace: String);
-    procedure SerializeType(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace: String);
+    procedure SerializeType(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace, ValueFormat: String);
+  public
+    constructor Create;
+
+    class function GetCurrentTimeZone: String;
   end;
 
 implementation
@@ -173,16 +179,6 @@ begin
   Result := FContentType;
 end;
 
-class function TBluePrintSerializer.GetCurrentTimeZone: String;
-begin
-{$IFDEF DCC}
-  Result := TTimeZone.Local.Abbreviation.Substring(3);
-
-  if Result.Length < 5 then
-    Result := Result + ':00';
-{$ENDIF}
-end;
-
 function TBluePrintSerializer.GetEnumerationNames(const TypeInfo: PTypeInfo): TArray<String>;
 var
   Attribute: EnumValueAttribute;
@@ -243,6 +239,11 @@ begin
 
     else Result := EmptyStr;
   end;
+end;
+
+procedure TBluePrintSerializer.SetFormatSettings(const Value: TFormatSettings);
+begin
+  FFormatSettings := Value;
 end;
 
 { TBluePrintJsonSerializer }
@@ -554,6 +555,19 @@ end;
 
 { TBluePrintXMLSerializer }
 
+constructor TBluePrintXMLSerializer.Create;
+begin
+  inherited;
+
+{$IFDEF DCC}
+  FFormatSettings := TFormatSettings.Invariant;
+  FFormatSettings.DateSeparator := '-';
+  FFormatSettings.DecimalSeparator := '.';
+  FFormatSettings.ThousandSeparator := #0;
+  FFormatSettings.TimeSeparator := ':';
+{$ENDIF}
+end;
+
 function TBluePrintXMLSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
 begin
 {$IFDEF DCC}
@@ -724,6 +738,28 @@ begin
 {$ENDIF}
 end;
 
+class function TBluePrintXMLSerializer.GetCurrentTimeZone: String;
+begin
+{$IFDEF DCC}
+  Result := TTimeZone.Local.Abbreviation.Substring(3);
+
+  if Result.Length < 5 then
+    Result := Result + ':00';
+{$ENDIF}
+end;
+
+function TBluePrintXMLSerializer.GetFormatValue(const RttiMember: TRttiMember): String;
+begin
+{$IFDEF DCC}
+  Result := EmptyStr;
+
+  var FormatAttribute := RttiMember.GetAttribute<TFormatAttribute>;
+
+  if Assigned(FormatAttribute) then
+    Result := FormatAttribute.Format;
+{$ENDIF}
+end;
+
 function TBluePrintXMLSerializer.GetNamespaceValue(const RttiObject: TRttiObject; const Namespace: String): String;
 begin
 {$IFDEF DCC}
@@ -811,7 +847,7 @@ begin
 
       Namespace := GetNamespaceValue(ValueType, EmptyStr);
 
-      SerializeType(ValueType, Value, XMLDocument.AddChild(GetDocumentName, Namespace), GetNamespaceValue(ValueType, Namespace));
+      SerializeType(ValueType, Value, XMLDocument.AddChild(GetDocumentName, Namespace), GetNamespaceValue(ValueType, Namespace), EmptyStr);
 
       var XML := TStringStream.Create(Emptystr, TEncoding.UTF8);
 
@@ -827,7 +863,7 @@ begin
 {$ENDIF}
 end;
 
-procedure TBluePrintXMLSerializer.SerializeArray(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace: String);
+procedure TBluePrintXMLSerializer.SerializeArray(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace, ValueFormat: String);
 begin
 {$IFDEF DCC}
   var NodeName := Node.NodeName;
@@ -839,7 +875,7 @@ begin
   begin
     var ElementValue := Value.GetArrayElement(A);
 
-    SerializeType(FContext.GetType(ElementValue.TypeInfo), ElementValue, ParentNode.AddChild(NodeName, Namespace), Namespace);
+    SerializeType(FContext.GetType(ElementValue.TypeInfo), ElementValue, ParentNode.AddChild(NodeName, Namespace), Namespace, ValueFormat);
   end;
 {$ENDIF}
 end;
@@ -848,7 +884,7 @@ procedure TBluePrintXMLSerializer.SerializeFields(const RttiType: TRttiType; con
 begin
 {$IFDEF DCC}
   for var Field in RttiType.GetFields do
-    SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetNodeName(Field)), Namespace);
+    SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetNodeName(Field)), Namespace, '');
 {$ENDIF}
 end;
 
@@ -864,13 +900,29 @@ begin
       begin
         var CurrentNamespace := GetNamespaceValue(&Property.PropertyType, Namespace);
 
-        SerializeType(&Property.PropertyType, PropertyValue, LoadAttributes(&Property, Node.AddChild(GetNodeName(&Property), CurrentNamespace)), CurrentNamespace);
+        SerializeType(&Property.PropertyType, PropertyValue, LoadAttributes(&Property, Node.AddChild(GetNodeName(&Property), CurrentNamespace)), CurrentNamespace, GetFormatValue(&Property));
       end;
     end;
 {$ENDIF}
 end;
 
-procedure TBluePrintXMLSerializer.SerializeType(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace: String);
+procedure TBluePrintXMLSerializer.SerializeType(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace, ValueFormat: String);
+{$IFDEF DCC}
+
+  function GetValueFormat: String;
+  begin
+    Result := ValueFormat;
+
+    if Result.IsEmpty then
+      if RttiType.Handle = TypeInfo(TDateTime) then
+        Result := 'YYYY-MM-DD"T"HH:NN:SSOOOO'
+      else if RttiType.Handle = TypeInfo(TDate) then
+        Result := 'YYYY-MM-DD'
+      else if RttiType.Handle = TypeInfo(TTime) then
+        Result := 'HH:NN:SS';
+  end;
+
+{$ENDIF}
 begin
 {$IFDEF DCC}
   case Value.Kind of
@@ -881,10 +933,10 @@ begin
       begin
         var SOAPBody := Value.AsType<TSOAPBody>;
 
-        SerializeType(FContext.GetType(SOAPBody.Body.TypeInfo), SOAPBody.Body, LoadAttributes(SOAPBody.Parameter, Node.AddChild(SOAPBody.Parameter.Name, GetNamespaceValue(SOAPBody.Parameter, Namespace))), Namespace);
+        SerializeType(FContext.GetType(SOAPBody.Body.TypeInfo), SOAPBody.Body, LoadAttributes(SOAPBody.Parameter, Node.AddChild(SOAPBody.Parameter.Name, GetNamespaceValue(SOAPBody.Parameter, Namespace))), Namespace, ValueFormat);
       end
       else if Value.TypeInfo = TypeInfo(TValue) then
-        SerializeType(FContext.GetType(Value.AsType<TValue>.TypeInfo), Value.AsType<TValue>, Node, Namespace)
+        SerializeType(FContext.GetType(Value.AsType<TValue>.TypeInfo), Value.AsType<TValue>, Node, Namespace, ValueFormat)
       else
         SerializeFields(RttiType, Value, LoadAttributes(RttiType, Node), Namespace);
     end;
@@ -904,17 +956,17 @@ begin
     tkFloat:
     begin
       if RttiType.Handle = TypeInfo(TDateTime) then
-        Node.NodeValue := FormatDateTime('YYYY-MM-DD"T"HH:NN:SS', Value.AsExtended) + TBluePrintSerializer.GetCurrentTimeZone
+        Node.NodeValue := FormatDateTime(GetValueFormat.Replace('OOOO', Format('"%s"', [GetCurrentTimeZone]), [rfIgnoreCase]), Value.AsExtended, FFormatSettings)
       else if RttiType.Handle = TypeInfo(TDate) then
-        Node.NodeValue := FormatDateTime('YYYY-MM-DD', Value.AsExtended)
+        Node.NodeValue := FormatDateTime(GetValueFormat, Value.AsExtended, FFormatSettings)
       else if RttiType.Handle = TypeInfo(TTime) then
-        Node.NodeValue := FormatDateTime('HH:NN:SS', Value.AsExtended)
+        Node.NodeValue := FormatDateTime(GetValueFormat, Value.AsExtended, FFormatSettings)
       else
-        Node.NodeValue := inherited Serialize(Value);
+        Node.NodeValue := FormatFloat(GetValueFormat, Value.AsExtended, FFormatSettings);
     end;
 
     tkDynArray,
-    tkArray: SerializeArray(RttiType, Value, Node, Namespace);
+    tkArray: SerializeArray(RttiType, Value, Node, Namespace, ValueFormat);
 
     else Node.NodeValue := inherited Serialize(Value);
   end;
