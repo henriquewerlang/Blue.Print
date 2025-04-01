@@ -46,16 +46,6 @@ begin
 
   if FindCmdLineSwitch('XSD', FileName) then
   begin
-    var List := TStringList.Create('"', ';');
-
-    if FindCmdLineSwitch('TypeChange', TypeChange) then
-    begin
-      List.DelimitedText := TypeChange;
-
-      for var A := 0 to Pred(List.Count) do
-        Importer.AddChangeType(List.Names[A], List.ValueFromIndex[A]);
-    end;
-
     if FindCmdLineSwitch('Config', ConfigFile) then
       Importer.LoadConfig(ConfigFile);
 

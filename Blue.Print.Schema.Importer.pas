@@ -5,6 +5,7 @@ interface
 uses System.Generics.Collections, Xml.XMLSchema;
 
 type
+  TClassDefinition = class;
   TImporter = class;
   TTypeDefinition = class;
 
@@ -17,6 +18,15 @@ type
     property FileName: String read FFileName write FFileName;
     property Name: String read FName write FName;
     property UnitClassName: String read FUnitClassName write FUnitClassName;
+  end;
+
+  TTypeAttributeConfig = class
+  private
+    FTypeName: String;
+    FAttribute: String;
+  public
+    property Attribute: String read FAttribute write FAttribute;
+    property TypeName: String read FTypeName write FTypeName;
   end;
 
   TTypeChangeConfig = class
@@ -84,18 +94,25 @@ type
 
   TTypeDefinition = class
   private
-    FIsString: Boolean;
+    FIsStringType: Boolean;
     FIsNumericType: Boolean;
+
+    function GetAsClassDefinition: TClassDefinition;
     function GetIsClassDefinition: Boolean;
+    function GetIsExternal: Boolean;
     function GetNeedDestructor: Boolean;
+    function GetIsNumericType: Boolean;
+    function GetIsStringType: Boolean;
   protected
     FName: String;
   public
     function ResolveType: TTypeDefinition; virtual;
 
+    property AsClassDefinition: TClassDefinition read GetAsClassDefinition;
     property IsClassDefinition: Boolean read GetIsClassDefinition;
-    property IsString: Boolean read FIsString write FIsString;
-    property IsNumericType: Boolean read FIsNumericType write FIsNumericType;
+    property IsExternal: Boolean read GetIsExternal;
+    property IsStringType: Boolean read GetIsStringType;
+    property IsNumericType: Boolean read GetIsNumericType;
     property NeedDestructor: Boolean read GetNeedDestructor;
     property Name: String read FName write FName;
   end;
@@ -124,24 +141,13 @@ type
     property Properties: TList<TPropertyDefinition> read FProperties write FProperties;
   end;
 
-  TTypeChangeDefinition = class(TTypeDefinition)
-  private
-    FImporter: TImporter;
-    FType: TTypeDefinition;
-    FTypeName: String;
-  public
-    constructor Create(const Importer: TImporter; const AliasName, TypeName: String);
-
-    function ResolveType: TTypeDefinition; override;
-  end;
-
   TTypeAlias = class(TTypeDefinition)
   private
-    FTypeName: TTypeDefinition;
+    FTypeDefinition: TTypeDefinition;
   public
     function ResolveType: TTypeDefinition; override;
 
-    property TypeName: TTypeDefinition read FTypeName write FTypeName;
+    property TypeDefinition: TTypeDefinition read FTypeDefinition write FTypeDefinition;
   end;
 
   TTypeDelayed = class(TTypeDefinition)
@@ -187,7 +193,7 @@ type
 
     procedure AddTypeAlias(const AType: TTypeAlias);
     procedure AddUses(const SchemaUnit: TUnit);
-    procedure GenerateFile(const OutputFolder: String);
+    procedure GenerateFile(const Importer: TImporter);
 
     property Classes: TList<TClassDefinition> read FClasses write FClasses;
     property TypeAlias: TList<TTypeAlias> read FTypeAlias;
@@ -197,7 +203,6 @@ type
   TImporter = class
   private
     FBuildInType: TDictionary<String, TTypeDefinition>;
-    FChangeTypes: TDictionary<String, TTypeDefinition>;
     FConfiguration: TConfiguration;
     FDelayedTypes: TDictionary<String, TTypeDelayed>;
     FTypeExternal: TDictionary<String, TTypeDefinition>;
@@ -221,7 +226,6 @@ type
 
     destructor Destroy; override;
 
-    procedure AddChangeType(const AliasName, TypeName: String);
     procedure AddTypeExternal(const ModuleName, TypeName: String);
     procedure Import;
     procedure LoadConfig(const FileName: String);
@@ -234,11 +238,6 @@ implementation
 uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, XML.xmldom, Blue.Print.Serializer, Blue.Print.Types;
 
 { TImporter }
-
-procedure TImporter.AddChangeType(const AliasName, TypeName: String);
-begin
-  FChangeTypes.Add(AliasName, TTypeChangeDefinition.Create(Self, AliasName, TypeName));
-end;
 
 function TImporter.AddProperty(const ClassDefinition: TClassDefinition; const Name: String): TPropertyDefinition;
 begin
@@ -273,11 +272,11 @@ end;
 
 constructor TImporter.Create;
 
-  function AddTypeAlias(const Alias: String; TypeName: TTypeDefinition): TTypeAlias;
+  function AddTypeAlias(const Alias: String; TypeDefinition: TTypeDefinition): TTypeAlias;
   begin
     Result := TTypeAlias.Create;
     Result.Name := Alias;
-    Result.TypeName := TypeName;
+    Result.TypeDefinition := TypeDefinition;
 
     FTypeAlias.Add(Alias, Result);
   end;
@@ -302,14 +301,13 @@ constructor TImporter.Create;
   function AddNumberType(const TypeName: String): TTypeDefinition;
   begin
     Result := AddType(TypeName);
-    Result.IsNumericType := True;
+    Result.FIsNumericType := True;
   end;
 
 begin
   inherited;
 
   FBuildInType := TDictionary<String, TTypeDefinition>.Create;
-  FChangeTypes := TDictionary<String, TTypeDefinition>.Create;
   FDelayedTypes := TDictionary<String, TTypeDelayed>.Create;
   FTypeAlias := TObjectDictionary<String, TTypeDefinition>.Create([doOwnsValues]);
   FTypeExternal := TObjectDictionary<String, TTypeDefinition>.Create([doOwnsValues]);
@@ -317,7 +315,7 @@ begin
   FXMLBuildInType := TDictionary<String, TTypeDefinition>.Create;
 
   var StringType := AddType('String');
-  StringType.IsString := True;
+  StringType.FIsStringType := True;
   var CardinalType := AddNumberType('Cardinal');
   var IntegerType := AddNumberType('Integer');
   var Int64Type := AddNumberType('Int64');
@@ -346,8 +344,6 @@ begin
   FXMLBuildInType.Free;
 
   FBuildInType.Free;
-
-  FChangeTypes.Free;
 
   FDelayedTypes.Free;
 
@@ -407,9 +403,6 @@ begin
     Exit;
 
   if FXMLBuildInType.TryGetValue(TypeName, Result) then
-    Exit;
-
-  if FChangeTypes.TryGetValue(TypeName, Result) then
     Exit;
 
   if Assigned(ParentClass) then
@@ -567,7 +560,13 @@ var
   begin
     Result := TTypeAlias.Create;
     Result.Name := SimpleType.Name;
-    Result.TypeName := FindTypeName(SimpleType, nil);
+
+    for var ChangeType in Configuration.TypeChange do
+      if ChangeType.AliasName = Result.Name then
+        Result.TypeDefinition := FindType(ChangeType.TypeName, nil);
+
+    if not Assigned(Result.TypeDefinition) then
+      Result.TypeDefinition := FindTypeName(SimpleType, nil);
   end;
 
 begin
@@ -616,10 +615,10 @@ begin
     var Schema := LoadXMLSchema(SchemaFile);
 
     GenerateUnit(Schema.SchemaDef, UnitConfiguration);
-
-    for var SchemaUnit in FUnits.Values do
-      SchemaUnit.GenerateFile(Configuration.OutputFolder);
   end;
+
+  for var UnitDefinition in FUnits.Values do
+    UnitDefinition.GenerateFile(Self);
 end;
 
 function TImporter.IsReferenceType(const Element: IXMLElementDef): Boolean;
@@ -634,9 +633,6 @@ begin
     var Serializer: IBluePrintSerializer := TBluePrintJsonSerializer.Create;
 
     Configuration := Serializer.Deserialize(TFile.ReadAllText(FileName), TypeInfo(TConfiguration)).AsType<TConfiguration>;
-
-    for var TypeChange in Configuration.TypeChange do
-      AddChangeType(TypeChange.AliasName, TypeChange.TypeName);
 
     for var TypeExternal in Configuration.TypeExternal do
       AddTypeExternal(TypeExternal.ModuleName, TypeExternal.Name);
@@ -675,7 +671,7 @@ begin
   inherited;
 end;
 
-procedure TUnit.GenerateFile(const OutputFolder: String);
+procedure TUnit.GenerateFile(const Importer: TImporter);
 var
   UnitDefinition: TStringList;
 
@@ -721,7 +717,7 @@ var
 
   function GetPropertyType(const &Property: TPropertyDefinition): TTypeDefinition;
   begin
-    Result := &Property.TypeName.ResolveType;
+    Result := &Property.TypeName;
   end;
 
   function CheckNeedDestructor(const ClassDefinition: TClassDefinition): Boolean;
@@ -765,7 +761,7 @@ var
     Result := TypeName.Name;
 
     if TypeName.IsClassDefinition then
-      Result := GetClassImplementationName(TypeName as TClassDefinition);
+      Result := GetClassImplementationName(TypeName.AsClassDefinition);
   end;
 
   function GetPropertyTypeName(const &Property: TPropertyDefinition): String;
@@ -888,7 +884,7 @@ var
 
     if PropertyType.IsClassDefinition or &Property.IsArray then
       Result := Format('Assigned(%s)', [GetPropertyFieldName(&Property)])
-    else if PropertyType.IsString then
+    else if PropertyType.IsStringType then
       Result := Format('not %s.IsEmpty', [GetPropertyFieldName(&Property)])
     else if PropertyType.IsNumericType then
       Result := Format('%s <> 0;', [GetPropertyFieldName(&Property)])
@@ -1001,17 +997,18 @@ var
   var
     Return: TDictionary<String, String>;
 
+    procedure CheckType(const TypeDefinition: TTypeDefinition);
+    begin
+      if TypeDefinition.IsExternal then
+        Return.AddOrSetValue(TTypeExternal(TypeDefinition.ResolveType).ModuleName, EmptyStr);
+    end;
+
     procedure CheckClasses(const Classes: TList<TClassDefinition>);
     begin
       for var ClassDefinition in Classes do
       begin
         for var &Property in ClassDefinition.Properties do
-        begin
-          var PropertyType := GetPropertyType(&Property);
-
-          if PropertyType is TTypeExternal then
-            Return.AddOrSetValue(TTypeExternal(PropertyType).ModuleName, EmptyStr);
-        end;
+          CheckType(GetPropertyType(&Property));
 
         CheckClasses(ClassDefinition.Classes);
       end;
@@ -1023,8 +1020,7 @@ var
     CheckClasses(Classes);
 
     for var TypeAlias in TypeAlias do
-      if TypeAlias.ResolveType is TTypeExternal then
-        Return.AddOrSetValue(TTypeExternal(TypeAlias.ResolveType).ModuleName, EmptyStr);
+      CheckType(TypeAlias);
 
     Result := Return.Keys.ToArray;
 
@@ -1105,7 +1101,7 @@ begin
 
   AddLine('end.');
 
-  UnitDefinition.SaveToFile(Format('%s\%s.pas', [OutputFolder, UnitConfiguration.Name]), TEncoding.UTF8);
+  UnitDefinition.SaveToFile(Format('%s\%s.pas', [Importer.Configuration.OutputFolder, UnitConfiguration.Name]), TEncoding.UTF8);
 end;
 
 { TClassDefinition }
@@ -1196,9 +1192,29 @@ end;
 
 { TTypeDefinition }
 
+function TTypeDefinition.GetAsClassDefinition: TClassDefinition;
+begin
+  Result := ResolveType as TClassDefinition;
+end;
+
 function TTypeDefinition.GetIsClassDefinition: Boolean;
 begin
   Result := ResolveType is TClassDefinition;
+end;
+
+function TTypeDefinition.GetIsExternal: Boolean;
+begin
+  Result := ResolveType is TTypeExternal;
+end;
+
+function TTypeDefinition.GetIsNumericType: Boolean;
+begin
+  Result := ResolveType.FIsNumericType;
+end;
+
+function TTypeDefinition.GetIsStringType: Boolean;
+begin
+  Result := ResolveType.FIsStringType;
 end;
 
 function TTypeDefinition.GetNeedDestructor: Boolean;
@@ -1253,29 +1269,7 @@ end;
 
 function TTypeAlias.ResolveType: TTypeDefinition;
 begin
-  Result := TypeName.ResolveType;
-end;
-
-{ TTypeChangeDefinition }
-
-constructor TTypeChangeDefinition.Create(const Importer: TImporter; const AliasName, TypeName: String);
-begin
-  inherited Create;
-
-  FImporter := Importer;
-  FName := AliasName;
-  FTypeName := TypeName;
-end;
-
-function TTypeChangeDefinition.ResolveType: TTypeDefinition;
-begin
-  if not Assigned(FType) then
-    FType := FImporter.FindType(FTypeName, nil);
-
-  if not Assigned(FType) then
-    raise Exception.CreateFmt('Wrong type configuration %s - %s!', [FName, FTypeName]);
-
-  Result := FType.ResolveType;
+  Result := TypeDefinition.ResolveType;
 end;
 
 { TConfiguration }
