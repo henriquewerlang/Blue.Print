@@ -38,9 +38,6 @@ type
     FCertificateValue: TStream;
     FHeaders: TStringList;
 
-{$IFDEF DCC}
-    procedure LoadCertificate(const Sender: TObject; const ARequest: TURLRequest; const ACertificateList: TCertificateList; var AnIndex: Integer);
-{$ENDIF}
     procedure SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
     procedure SetCertificate(const FileName, Password: String); overload;
     procedure SetCertificate(const Value: TStream; const Password: String); overload;
@@ -534,18 +531,6 @@ begin
   inherited;
 end;
 
-{$IFDEF DCC}
-procedure THTTPCommunication.LoadCertificate(const Sender: TObject; const ARequest: TURLRequest; const ACertificateList: TCertificateList; var AnIndex: Integer);
-begin
-  var Request: IHTTPRequest := ARequest as THTTPRequest;
-
-  if FCertificateFileName.IsEmpty then
-    Request.SetClientCertificate(FCertificateValue, FCertificatePassword)
-  else
-    Request.SetClientCertificate(FCertificateFileName, FCertificatePassword);
-end;
-{$ENDIF}
-
 procedure THTTPCommunication.SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
 const
   REQUEST_METHOD_NAME: array[TRequestMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT', 'OPTIONS');
@@ -608,15 +593,22 @@ begin
   ContentStream := nil;
   ContentString := EmptyStr;
   Connection := THTTPClient.Create;
-  Connection.OnNeedClientCertificate := LoadCertificate;
-  Connection.ValidateServerCertificateCallback := ValidateCertificate;
   Connection.ResponseTimeout := -1;
   Connection.SendTimeout := -1;
+  Connection.ValidateServerCertificateCallback := ValidateCertificate;
 
   LoadHeaders;
 
+  var Request := Connection.GetRequest(REQUEST_METHOD_NAME[RequestMethod], URLString);
+  Request.SourceStream := BodyStream;
+
+  if Assigned(FCertificateValue) then
+    Request.SetClientCertificate(FCertificateValue, FCertificatePassword)
+  else if not FCertificateFileName.IsEmpty then
+    Request.SetClientCertificate(FCertificateFileName, FCertificatePassword);
+
   try
-    var Response := Connection.Execute(REQUEST_METHOD_NAME[RequestMethod], URLString, BodyStream) as IHTTPResponse;
+    var Response := Connection.Execute(Request, nil);
 
     if ReturnStream then
       ContentStream := Response.ContentStream
