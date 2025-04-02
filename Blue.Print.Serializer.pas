@@ -970,7 +970,13 @@ begin
     tkDynArray,
     tkArray: SerializeArray(RttiType, Value, Node, Namespace, ValueFormat);
 
-    else Node.NodeValue := inherited Serialize(Value);
+    else
+    begin
+      var NodeValue := inherited Serialize(Value);
+
+      if not NodeValue.IsEmpty then
+        Node.NodeValue := NodeValue;
+    end;
   end;
 {$ENDIF}
 end;

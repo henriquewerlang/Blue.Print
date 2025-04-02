@@ -169,6 +169,8 @@ type
     procedure WhenGetTheCurrentTimezoneMustReturnTheValueAsExpected;
     [Test]
     procedure WhenSerializeAClassWithFormatAttributesMustLoadTheValuesAsExpected;
+    [Test]
+    procedure WhenThePropetyValueIsEmptyMustLoadTheXMLWithTheNodeEmptyAsExpected;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -805,7 +807,7 @@ begin
 
   var Value := FSerializer.Serialize(MyClass);
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyProp MyAttribute="MyValue"><MyProperty></MyProperty></MyProp></Document>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyProp MyAttribute="MyValue"><MyProperty/></MyProp></Document>'#13#10, Value);
 
   MyClass.MyProp.Free;
 
@@ -831,7 +833,7 @@ begin
 
   var Value := FSerializer.Serialize(MyClass);
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document xmlns="MyNamespace"><MyProp><MyProp MyAttribute="MyValue"><MyProperty></MyProperty></MyProp></MyProp></Document>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document xmlns="MyNamespace"><MyProp><MyProp MyAttribute="MyValue"><MyProperty/></MyProp></MyProp></Document>'#13#10, Value);
 
   MyClass.MyProp.MyProp.Free;
 
@@ -844,7 +846,7 @@ procedure TBluePrintXMLSerializerTest.WhenAnObjectPropertyIsNilCantLoadTheNodeIn
 begin
   var MyObject := TMyObjectParent.Create;
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><Error></Error></Document>'#13#10, FSerializer.Serialize(MyObject));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><Error/></Document>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.Free;
 end;
@@ -1054,7 +1056,7 @@ begin
   var MyObject := TMyObjectParent.Create;
   MyObject.MyObject := TMyObject.Create;
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><Error></Error><MyObject><MyProp1></MyProp1><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></Document>'#13#10, FSerializer.Serialize(MyObject));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><Error/><MyObject><MyProp1/><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></Document>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.MyObject.Free;
 
@@ -1079,7 +1081,7 @@ begin
 
   var Value := FSerializer.Serialize(MyClass);
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><Error></Error><MyObject><Another>0</Another><MyProp1></MyProp1><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></Document>'#13#10, FSerializer.Serialize(MyClass));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><Error/><MyObject><Another>0</Another><MyProp1/><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></Document>'#13#10, FSerializer.Serialize(MyClass));
 
   MyClass.MyObject.Free;
 
@@ -1157,7 +1159,7 @@ procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheNamespaceAttributeMus
 begin
   var MyClass := TMyClassWithPropertyWithNamespaceAttribute.Create;
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyProp MyAtt="MyValue"></MyProp></Document>'#13#10, FSerializer.Serialize(MyClass));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyProp MyAtt="MyValue"/></Document>'#13#10, FSerializer.Serialize(MyClass));
 
   MyClass.Free;
 end;
@@ -1193,6 +1195,16 @@ begin
   Value.Free;
 end;
 
+procedure TBluePrintXMLSerializerTest.WhenThePropetyValueIsEmptyMustLoadTheXMLWithTheNodeEmptyAsExpected;
+begin
+  var MyClass := TMyClassWithNodeNameAttribute.Create;
+  MyClass.MyProperty := EmptyStr;
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<MyDocument><MyProperty/></MyDocument>'#13#10, FSerializer.Serialize(MyClass));
+
+  MyClass.Free;
+end;
+
 procedure TBluePrintXMLSerializerTest.WhenTheRecordFieldHaveTheNodeNameAttributeMustSerializeTheRecordAsExpected;
 begin
   var MyRecord: TMyRecordWithAttribute;
@@ -1210,7 +1222,7 @@ begin
   var SOAPRequest := TSOAPEnvelop.Create(RttiMethod.GetParameters[0], nil);
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-    + '<SOAP-ENV:Body><MyParam xmlns="MySpace"></MyParam></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPRequest)));
+    + '<SOAP-ENV:Body><MyParam xmlns="MySpace"/></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPRequest)));
 
   RttiContext.Free;
 end;
