@@ -8,6 +8,7 @@ type
   TClassDefinition = class;
   TImporter = class;
   TTypeDefinition = class;
+  TUnit = class;
 
   TUnitConfiguration = class
   private
@@ -47,17 +48,28 @@ type
     property Name: String read FName write FName;
   end;
 
+  TClassInheritanceChangeConfig = class
+  private
+    FParentClass: String;
+    FSourceClass: String;
+  public
+    property ParentClass: String read FParentClass write FParentClass;
+    property SourceClass: String read FSourceClass write FSourceClass;
+  end;
+
   TConfiguration = class
   private
-    FUnitConfiguration: TArray<TUnitConfiguration>;
-    FTypeChange: TArray<TTypeChangeConfig>;
+    FClassInheritanceChange: TArray<TClassInheritanceChangeConfig>;
     FOutputFolder: String;
     FSchemaFolder: String;
-    FTypeExternal: TArray<TTypeExternalConfig>;
     FTypeAttributes: TArray<TTypeAttributeConfig>;
+    FTypeChange: TArray<TTypeChangeConfig>;
+    FTypeExternal: TArray<TTypeExternalConfig>;
+    FUnitConfiguration: TArray<TUnitConfiguration>;
   public
     destructor Destroy; override;
 
+    property ClassInheritanceChange: TArray<TClassInheritanceChangeConfig> read FClassInheritanceChange write FClassInheritanceChange;
     property OutputFolder: String read FOutputFolder write FOutputFolder;
     property SchemaFolder: String read FSchemaFolder write FSchemaFolder;
     property TypeAttributes: TArray<TTypeAttributeConfig> read FTypeAttributes write FTypeAttributes;
@@ -130,13 +142,14 @@ type
 
   TClassDefinition = class(TTypeDefinition)
   private
-    FClasses: TList<TClassDefinition>;
-    FProperties: TList<TPropertyDefinition>;
-    FParentClass: TClassDefinition;
-    FInheritedFrom: TTypeDefinition;
     FAttributes: TList<String>;
+    FClasses: TList<TClassDefinition>;
+    FInheritedFrom: TClassDefinition;
+    FParentClass: TClassDefinition;
+    FProperties: TList<TPropertyDefinition>;
+    FUnitDefinition: TUnit;
   public
-    constructor Create;
+    constructor Create(const UnitDefinition: TUnit);
 
     destructor Destroy; override;
 
@@ -147,9 +160,10 @@ type
 
     property Attributes: TList<String> read FAttributes write FAttributes;
     property Classes: TList<TClassDefinition> read FClasses;
-    property InheritedFrom: TTypeDefinition read FInheritedFrom write FInheritedFrom;
+    property InheritedFrom: TClassDefinition read FInheritedFrom write FInheritedFrom;
     property ParentClass: TClassDefinition read FParentClass write FParentClass;
     property Properties: TList<TPropertyDefinition> read FProperties write FProperties;
+    property UnitDefinition: TUnit read FUnitDefinition;
   end;
 
   TTypeAlias = class(TTypeDefinition)
@@ -227,7 +241,7 @@ type
     function FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
     function FindTypeChange(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
     function FindTypeName(&Type: IXMLTypeDef; const ParentClass: TClassDefinition): TTypeDefinition;
-    function GenerateClassDefinition(const ComplexType: IXMLComplexTypeDef): TClassDefinition;
+    function GenerateClassDefinition(const UnitDeclaration: TUnit; const ComplexType: IXMLComplexTypeDef): TClassDefinition;
     function GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
     function IsReferenceType(const Element: IXMLElementDef): Boolean;
 
@@ -479,7 +493,7 @@ begin
   end;
 end;
 
-function TImporter.GenerateClassDefinition(const ComplexType: IXMLComplexTypeDef): TClassDefinition;
+function TImporter.GenerateClassDefinition(const UnitDeclaration: TUnit; const ComplexType: IXMLComplexTypeDef): TClassDefinition;
 var
   ClassDefinition: TClassDefinition absolute Result;
 
@@ -496,7 +510,7 @@ var
   end;
 
 begin
-  Result := TClassDefinition.Create;
+  Result := TClassDefinition.Create(UnitDeclaration);
   Result.Name := ComplexType.Name;
 
   GenerateProperties(ClassDefinition, ComplexType.ElementDefs, False);
@@ -546,7 +560,7 @@ begin
       begin
         PropertyType := ComplexType;
 
-        ClassDefinition.AddClassType(GenerateClassDefinition(ComplexType));
+        ClassDefinition.AddClassType(GenerateClassDefinition(ClassDefinition.UnitDefinition, ComplexType));
       end;
     end;
 
@@ -603,14 +617,14 @@ begin
       UnitDeclaration.AddTypeAlias(GenerateSimpleType(Definition.SimpleTypes[A]));
 
     for var A := 0 to Pred(Definition.ComplexTypes.Count) do
-      UnitDeclaration.Classes.Add(GenerateClassDefinition(Definition.ComplexTypes[A]));
+      UnitDeclaration.Classes.Add(GenerateClassDefinition(UnitDeclaration, Definition.ComplexTypes[A]));
 
     if Definition.ElementDefs.Count > 0 then
     begin
       if UnitConfiguration.UnitClassName.IsEmpty then
         raise Exception.CreateFmt('Schema file %s need a class name in the configuration file!', [UnitConfiguration.FileName]);
 
-      var ClassDefinition := TClassDefinition.Create;
+      var ClassDefinition := TClassDefinition.Create(UnitDeclaration);
 //      ClassDefinition.InheritedFrom := FindTypeName(Element.DataType, ClassDefinition);
       ClassDefinition.Name := UnitConfiguration.UnitClassName;
 
@@ -625,18 +639,50 @@ begin
 end;
 
 procedure TImporter.Import;
+
+  function FindClassList(const ClassName: String; ClassList: TList<TClassDefinition>): TClassDefinition;
+  begin
+    Result := nil;
+
+    for var Name in ClassName.Split(['.']) do
+    begin
+      for var ClassDefinition in ClassList do
+        if Name = ClassDefinition.Name then
+          Result := ClassDefinition;
+
+      if Assigned(Result) then
+        ClassList := Result.Classes
+      else
+        Break;
+    end;
+  end;
+
+  function FindClass(const ClassName: String): TClassDefinition;
+  begin
+    Result := nil;
+
+    for var UnitDefinition in FUnits.Values do
+    begin
+      Result := FindClassList(ClassName, UnitDefinition.Classes);
+
+      if Assigned(Result) then
+        Exit;
+    end;
+  end;
+
 begin
   for var UnitConfiguration in Configuration.UnitConfiguration do
   begin
-    var SchemaFile := Format('%s\%s', [Configuration.SchemaFolder, UnitConfiguration.FileName]);
-
-    var Schema := LoadXMLSchema(SchemaFile);
+    var Schema := LoadXMLSchema(Format('%s\%s', [Configuration.SchemaFolder, UnitConfiguration.FileName]));
 
     GenerateUnit(Schema.SchemaDef, UnitConfiguration);
   end;
 
   for var TypeAttribute in Configuration.TypeAttributes do
     FindType(TypeAttribute.TypeName, nil).Attributes.Add(TypeAttribute.Attribute);
+
+  for var ChangeInheritance in Configuration.ClassInheritanceChange do
+    FindClass(ChangeInheritance.SourceClass).InheritedFrom := FindClass(ChangeInheritance.ParentClass);
 
   for var UnitDefinition in FUnits.Values do
     UnitDefinition.GenerateFile(Self);
@@ -811,7 +857,7 @@ var
     function GetInheritence: String;
     begin
       if Assigned(ClassDefinition.InheritedFrom) then
-        Result := Format('(%s)', [ClassDefinition.InheritedFrom.Name])
+        Result := Format('(%s)', [GetClassImplementationName(ClassDefinition.InheritedFrom)])
       else
         Result := EmptyStr;
     end;
@@ -1015,12 +1061,36 @@ var
 
   function GetAllExternalModules: TArray<String>;
   var
-    Return: TDictionary<String, String>;
+    Return: TList<String>;
+
+    procedure AddUses(const ModuleName: String);
+    begin
+      for var Name in Return do
+        if Name = ModuleName then
+          Exit;
+
+      Return.Add(ModuleName);
+    end;
 
     procedure CheckType(const TypeDefinition: TTypeDefinition);
     begin
+      var ModuleName := EmptyStr;
+
       if TypeDefinition.IsExternal then
-        Return.AddOrSetValue(TTypeExternal(TypeDefinition.ResolveType).ModuleName, EmptyStr);
+        ModuleName := TTypeExternal(TypeDefinition.ResolveType).ModuleName
+      else if TypeDefinition.IsClassDefinition then
+      begin
+        var ClassDefinition := TypeDefinition.AsClassDefinition;
+
+        if ClassDefinition.UnitDefinition <> Self then
+          ModuleName := ClassDefinition.UnitDefinition.UnitConfiguration.Name;
+
+        if Assigned(ClassDefinition.InheritedFrom) then
+          CheckType(ClassDefinition.InheritedFrom);
+      end;
+
+      if not ModuleName.IsEmpty then
+        AddUses(ModuleName);
     end;
 
     procedure CheckClasses(const Classes: TList<TClassDefinition>);
@@ -1035,14 +1105,17 @@ var
     end;
 
   begin
-    Return := TDictionary<String, String>.Create;
+    Return := TList<String>.Create;
+
+    for var AUnit in FUses do
+      AddUses(AUnit.UnitConfiguration.Name);
 
     CheckClasses(Classes);
 
     for var TypeAlias in TypeAlias do
       CheckType(TypeAlias);
 
-    Result := Return.Keys.ToArray;
+    Result := Return.ToArray;
 
     Return.Free;
   end;
@@ -1063,9 +1136,6 @@ begin
   AddLine;
 
   var UsesList := 'Blue.Print.Types';
-
-  for var AUnit in FUses do
-    UsesList := UsesList + ', ' + AUnit.UnitConfiguration.Name;
 
   for var ModuleName in GetAllExternalModules do
     UsesList := UsesList + ', ' + ModuleName;
@@ -1151,13 +1221,14 @@ begin
   FProperties.Add(Result);
 end;
 
-constructor TClassDefinition.Create;
+constructor TClassDefinition.Create(const UnitDefinition: TUnit);
 begin
-  inherited;
+  inherited Create;
 
   FAttributes := TList<String>.Create;
   FClasses := TObjectList<TClassDefinition>.Create;
   FProperties := TObjectList<TPropertyDefinition>.Create;
+  FUnitDefinition := UnitDefinition;
 end;
 
 destructor TClassDefinition.Destroy;
@@ -1324,6 +1395,9 @@ begin
 
   for var TypeAttribute in FTypeAttributes do
     TypeAttribute.Free;
+
+  for var ClassInheritance in FClassInheritanceChange do
+    ClassInheritance.Free;
 
   inherited;
 end;
