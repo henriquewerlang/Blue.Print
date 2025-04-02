@@ -617,7 +617,13 @@ begin
       UnitDeclaration.AddTypeAlias(GenerateSimpleType(Definition.SimpleTypes[A]));
 
     for var A := 0 to Pred(Definition.ComplexTypes.Count) do
-      UnitDeclaration.Classes.Add(GenerateClassDefinition(UnitDeclaration, Definition.ComplexTypes[A]));
+    begin
+      var ClassDefinition := GenerateClassDefinition(UnitDeclaration, Definition.ComplexTypes[A]);
+
+      ClassDefinition.AddNamespaceAttribute(Definition.TargetNamespace);
+
+      UnitDeclaration.Classes.Add(ClassDefinition);
+    end;
 
     if Definition.ElementDefs.Count > 0 then
     begin
@@ -630,8 +636,7 @@ begin
 
       GenerateProperties(ClassDefinition, Definition.ElementDefs, False);
 
-      for var SubClassDefinition in ClassDefinition.Classes do
-        SubClassDefinition.AddNamespaceAttribute(Definition.TargetNamespace);
+      ClassDefinition.AddNamespaceAttribute(Definition.TargetNamespace);
 
       UnitDeclaration.Classes.Add(ClassDefinition);
     end;
@@ -1424,4 +1429,5 @@ begin
 end;
 
 end.
+
 
