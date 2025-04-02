@@ -899,8 +899,12 @@ begin
       if not PropertyValue.IsEmpty then
       begin
         var CurrentNamespace := GetNamespaceValue(&Property.PropertyType, Namespace);
+        var NodeValue := Node;
 
-        SerializeType(&Property.PropertyType, PropertyValue, LoadAttributes(&Property, Node.AddChild(GetNodeName(&Property), CurrentNamespace)), CurrentNamespace, GetFormatValue(&Property));
+        if not &Property.HasAttribute<XMLValueAttribute> then
+          NodeValue := Node.AddChild(GetNodeName(&Property), CurrentNamespace);
+
+        SerializeType(&Property.PropertyType, PropertyValue, LoadAttributes(&Property, NodeValue), CurrentNamespace, GetFormatValue(&Property));
       end;
     end;
 {$ENDIF}

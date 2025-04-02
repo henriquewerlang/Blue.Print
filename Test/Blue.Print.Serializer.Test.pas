@@ -171,6 +171,8 @@ type
     procedure WhenSerializeAClassWithFormatAttributesMustLoadTheValuesAsExpected;
     [Test]
     procedure WhenThePropetyValueIsEmptyMustLoadTheXMLWithTheNodeEmptyAsExpected;
+    [Test]
+    procedure WhenSerializeAClassWithXMLValueAttributeMustLoadTheXMLWithOnlyThePropertyValue;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -1008,6 +1010,20 @@ begin
   Assert.AreEqual(Format(
     '<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><DateFormat>01-04-2025</DateFormat><DateTimeFormat>01-04-2025T08.00.00%s</DateTimeFormat><TimeFormat>08.00.00.000</TimeFormat><NumberFormat>001;000-1000</NumberFormat><IntegerFormat>000012</IntegerFormat></Document>'#13#10,
     [TBluePrintXMLSerializer.GetCurrentTimeZone]), Value);
+
+  MyObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenSerializeAClassWithXMLValueAttributeMustLoadTheXMLWithOnlyThePropertyValue;
+begin
+  var MyObject := TMyClassWithXMLValueAttributeParent.Create;
+  MyObject.MyValue := TMyClassWithXMLValueAttribute.Create;
+  MyObject.MyValue.Value := 'MyValue';
+  var Value := FSerializer.Serialize(MyObject);
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyValue>MyValue</MyValue></Document>'#13#10, Value);
+
+  MyObject.MyValue.Free;
 
   MyObject.Free;
 end;
