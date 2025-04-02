@@ -694,12 +694,23 @@ begin
 end;
 
 procedure TImporter.LoadConfig(const FileName: String);
+
+  function FixFolderPath(const Folder: String): String;
+  begin
+    Result := Folder;
+
+    if TDirectory.IsRelativePath(Result) then
+      Result := TPath.GetFullPath(Format('%s%s', [ExtractFilePath(FileName), Result]));
+  end;
+
 begin
   if TFile.Exists(FileName) then
   begin
     var Serializer: IBluePrintSerializer := TBluePrintJsonSerializer.Create;
 
     Configuration := Serializer.Deserialize(TFile.ReadAllText(FileName), TypeInfo(TConfiguration)).AsType<TConfiguration>;
+    Configuration.OutputFolder := FixFolderPath(Configuration.OutputFolder);
+    Configuration.SchemaFolder := FixFolderPath(Configuration.SchemaFolder);
 
     for var TypeExternal in Configuration.TypeExternal do
       AddTypeExternal(TypeExternal.ModuleName, TypeExternal.Name);
