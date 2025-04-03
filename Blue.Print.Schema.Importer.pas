@@ -683,10 +683,20 @@ begin
   end;
 
   for var TypeAttribute in Configuration.TypeAttributes do
-    FindType(TypeAttribute.TypeName, nil).Attributes.Add(TypeAttribute.Attribute);
+  begin
+    var TypeDefinition := FindType(TypeAttribute.TypeName, nil);
+
+    if Assigned(TypeDefinition) then
+      TypeDefinition.Attributes.Add(TypeAttribute.Attribute);
+  end;
 
   for var ChangeInheritance in Configuration.ClassInheritanceChange do
-    FindClass(ChangeInheritance.SourceClass).InheritedFrom := FindClass(ChangeInheritance.ParentClass);
+  begin
+    var ClassDefinition := FindClass(ChangeInheritance.SourceClass);
+
+    if Assigned(ClassDefinition) then
+      ClassDefinition.InheritedFrom := FindClass(ChangeInheritance.ParentClass);
+  end;
 
   for var UnitDefinition in FUnits.Values do
     UnitDefinition.GenerateFile(Self);
