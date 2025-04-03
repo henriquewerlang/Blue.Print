@@ -148,8 +148,9 @@ type
     FParentClass: TClassDefinition;
     FProperties: TList<TPropertyDefinition>;
     FUnitDefinition: TUnit;
+    FTargetNamespace: String;
   public
-    constructor Create(const UnitDefinition: TUnit);
+    constructor Create(const UnitDefinition: TUnit; const TargetNamespace: String);
 
     destructor Destroy; override;
 
@@ -163,6 +164,7 @@ type
     property InheritedFrom: TClassDefinition read FInheritedFrom write FInheritedFrom;
     property ParentClass: TClassDefinition read FParentClass write FParentClass;
     property Properties: TList<TPropertyDefinition> read FProperties write FProperties;
+    property TargetNamespace: String read FTargetNamespace write FTargetNamespace;
     property UnitDefinition: TUnit read FUnitDefinition;
   end;
 
@@ -241,12 +243,12 @@ type
     function FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
     function FindTypeChange(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
     function FindTypeName(&Type: IXMLTypeDef; const ParentClass: TClassDefinition): TTypeDefinition;
-    function GenerateClassDefinition(const UnitDeclaration: TUnit; const ComplexType: IXMLComplexTypeDef): TClassDefinition;
+    function GenerateClassDefinition(const UnitDeclaration: TUnit; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TClassDefinition;
     function GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
     function IsReferenceType(const Element: IXMLElementDef): Boolean;
 
     procedure AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
-    procedure GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefs; const AllPropertiesOptionals: Boolean);
+    procedure GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefs; const AllPropertiesOptionals: Boolean; const TargetNamespace: String);
   public
     constructor Create;
 
@@ -493,7 +495,7 @@ begin
   end;
 end;
 
-function TImporter.GenerateClassDefinition(const UnitDeclaration: TUnit; const ComplexType: IXMLComplexTypeDef): TClassDefinition;
+function TImporter.GenerateClassDefinition(const UnitDeclaration: TUnit; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TClassDefinition;
 var
   ClassDefinition: TClassDefinition absolute Result;
 
@@ -503,17 +505,17 @@ var
     begin
       var Compositor := ElementCompositors[A];
 
-      GenerateProperties(ClassDefinition, Compositor.ElementDefs, True);
+      GenerateProperties(ClassDefinition, Compositor.ElementDefs, True, TargetNamespace);
 
       CheckCompositor(Compositor.Compositors);
     end;
   end;
 
 begin
-  Result := TClassDefinition.Create(UnitDeclaration);
+  Result := TClassDefinition.Create(UnitDeclaration, TargetNamespace);
   Result.Name := ComplexType.Name;
 
-  GenerateProperties(ClassDefinition, ComplexType.ElementDefs, False);
+  GenerateProperties(ClassDefinition, ComplexType.ElementDefs, False, TargetNamespace);
 
   CheckCompositor(ComplexType.ElementCompositors);
 
@@ -534,7 +536,7 @@ begin
   end;
 end;
 
-procedure TImporter.GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefs; const AllPropertiesOptionals: Boolean);
+procedure TImporter.GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefs; const AllPropertiesOptionals: Boolean; const TargetNamespace: String);
 begin
   for var A := 0 to Pred(ElementDefs.Count) do
   begin
@@ -560,7 +562,7 @@ begin
       begin
         PropertyType := ComplexType;
 
-        ClassDefinition.AddClassType(GenerateClassDefinition(ClassDefinition.UnitDefinition, ComplexType));
+        ClassDefinition.AddClassType(GenerateClassDefinition(ClassDefinition.UnitDefinition, ComplexType, TargetNamespace));
       end;
     end;
 
@@ -618,9 +620,7 @@ begin
 
     for var A := 0 to Pred(Definition.ComplexTypes.Count) do
     begin
-      var ClassDefinition := GenerateClassDefinition(UnitDeclaration, Definition.ComplexTypes[A]);
-
-      ClassDefinition.AddNamespaceAttribute(Definition.TargetNamespace);
+      var ClassDefinition := GenerateClassDefinition(UnitDeclaration, Definition.ComplexTypes[A], Definition.TargetNamespace);
 
       UnitDeclaration.Classes.Add(ClassDefinition);
     end;
@@ -630,13 +630,11 @@ begin
       if UnitConfiguration.UnitClassName.IsEmpty then
         raise Exception.CreateFmt('Schema file %s need a class name in the configuration file!', [UnitConfiguration.FileName]);
 
-      var ClassDefinition := TClassDefinition.Create(UnitDeclaration);
+      var ClassDefinition := TClassDefinition.Create(UnitDeclaration, EmptyStr);
 //      ClassDefinition.InheritedFrom := FindTypeName(Element.DataType, ClassDefinition);
       ClassDefinition.Name := UnitConfiguration.UnitClassName;
 
-      GenerateProperties(ClassDefinition, Definition.ElementDefs, False);
-
-      ClassDefinition.AddNamespaceAttribute(Definition.TargetNamespace);
+      GenerateProperties(ClassDefinition, Definition.ElementDefs, False, Definition.TargetNamespace);
 
       UnitDeclaration.Classes.Add(ClassDefinition);
     end;
@@ -1237,14 +1235,17 @@ begin
   FProperties.Add(Result);
 end;
 
-constructor TClassDefinition.Create(const UnitDefinition: TUnit);
+constructor TClassDefinition.Create(const UnitDefinition: TUnit; const TargetNamespace: String);
 begin
   inherited Create;
 
   FAttributes := TList<String>.Create;
   FClasses := TObjectList<TClassDefinition>.Create;
   FProperties := TObjectList<TPropertyDefinition>.Create;
+  FTargetNamespace := TargetNamespace;
   FUnitDefinition := UnitDefinition;
+
+  AddNamespaceAttribute(TargetNamespace);
 end;
 
 destructor TClassDefinition.Destroy;
