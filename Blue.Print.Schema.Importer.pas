@@ -249,7 +249,8 @@ type
     function IsReferenceType(const Element: IXMLElementDef): Boolean;
 
     procedure AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
-    procedure GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefs; const AllPropertiesOptionals: Boolean; const TargetNamespace: String);
+    procedure GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef; const TargetNamespace: String);
+    procedure GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList; const TargetNamespace: String);
   public
     constructor Create;
 
@@ -500,25 +501,11 @@ function TImporter.GenerateClassDefinition(const UnitDeclaration: TUnit; const C
 var
   ClassDefinition: TClassDefinition absolute Result;
 
-  procedure CheckCompositor(const ElementCompositors: IXMLElementCompositors);
-  begin
-    for var A := 0 to Pred(ElementCompositors.Count) do
-    begin
-      var Compositor := ElementCompositors[A];
-
-      GenerateProperties(ClassDefinition, Compositor.ElementDefs, True, TargetNamespace);
-
-      CheckCompositor(Compositor.Compositors);
-    end;
-  end;
-
 begin
   Result := TClassDefinition.Create(UnitDeclaration, TargetNamespace);
   Result.Name := ComplexType.Name;
 
-  GenerateProperties(ClassDefinition, ComplexType.ElementDefs, False, TargetNamespace);
-
-  CheckCompositor(ComplexType.ElementCompositors);
+  GenerateProperties(ClassDefinition, ComplexType.ElementDefList, TargetNamespace);
 
   for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
   begin
@@ -537,38 +524,52 @@ begin
   end;
 end;
 
-procedure TImporter.GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefs; const AllPropertiesOptionals: Boolean; const TargetNamespace: String);
+procedure TImporter.GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList; const TargetNamespace: String);
 begin
   for var A := 0 to Pred(ElementDefs.Count) do
+    GenerateProperty(ClassDefinition, ElementDefs[A], TargetNamespace);
+end;
+
+procedure TImporter.GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef; const TargetNamespace: String);
+
+  function IsOptional(const ElementDefinition: IXMLElementDef): Boolean;
+  var
+    Compositor: IXMLElementCompositor;
+
   begin
-    var Element := ElementDefs[A];
-    var NewProperty := AddProperty(ClassDefinition, Element.Name);
-    NewProperty.IsArray := Element.IsRepeating;
-    NewProperty.Optional := AllPropertiesOptionals or (Element.MinOccurs <> NULL) and (Element.MinOccurs <= 0);
-    var PropertyType := Element.DataType;
+    Result := ElementDefinition.MinOccurs <= 0;
 
-    if CanGenerateClass(Element) then
-    begin
-      var ComplexType := (Element.DataType as IXMLComplexTypeDef);
-
-      if (ComplexType.ElementDefs.Count = 0) and (ComplexType.AttributeDefs.Count = 1) then
-        for var B := 0 to Pred(ComplexType.AttributeDefs.Count) do
-        begin
-          var Attribute := ComplexType.AttributeDefs[B];
-          PropertyType := Attribute.DataType;
-
-          AddPropertyAttribute(NewProperty, Attribute);
-        end
-      else
-      begin
-        PropertyType := ComplexType;
-
-        ClassDefinition.AddClassType(GenerateClassDefinition(ClassDefinition.UnitDefinition, ComplexType, TargetNamespace));
-      end;
-    end;
-
-    NewProperty.TypeName := FindTypeName(PropertyType, ClassDefinition);
+    if not Result and Supports(ElementDefinition.ParentNode, IXMLElementCompositor, Compositor) then
+      Result := (Compositor.CompositorType = ctChoice) or (Compositor.MinOccurs <= 0);
   end;
+
+begin
+  var NewProperty := AddProperty(ClassDefinition, ElementDefinition.Name);
+  NewProperty.IsArray := ElementDefinition.IsRepeating;
+  NewProperty.Optional := IsOptional(ElementDefinition);
+  var PropertyType := ElementDefinition.DataType;
+
+  if CanGenerateClass(ElementDefinition) then
+  begin
+    var ComplexType := (ElementDefinition.DataType as IXMLComplexTypeDef);
+
+    if (ComplexType.ElementDefs.Count = 0) and (ComplexType.AttributeDefs.Count = 1) then
+      for var B := 0 to Pred(ComplexType.AttributeDefs.Count) do
+      begin
+        var Attribute := ComplexType.AttributeDefs[B];
+        PropertyType := Attribute.DataType;
+
+        AddPropertyAttribute(NewProperty, Attribute);
+      end
+    else
+    begin
+      PropertyType := ComplexType;
+
+      ClassDefinition.AddClassType(GenerateClassDefinition(ClassDefinition.UnitDefinition, ComplexType, TargetNamespace));
+    end;
+  end;
+
+  NewProperty.TypeName := FindTypeName(PropertyType, ClassDefinition);
 end;
 
 function TImporter.GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
@@ -635,7 +636,8 @@ begin
 //      ClassDefinition.InheritedFrom := FindTypeName(Element.DataType, ClassDefinition);
       ClassDefinition.Name := UnitConfiguration.UnitClassName;
 
-      GenerateProperties(ClassDefinition, Definition.ElementDefs, False, Definition.TargetNamespace);
+      for var A := 0 to Pred(Definition.ElementDefs.Count) do
+        GenerateProperty(ClassDefinition, Definition.ElementDefs[A], Definition.TargetNamespace);
 
       UnitDeclaration.Classes.Add(ClassDefinition);
     end;
