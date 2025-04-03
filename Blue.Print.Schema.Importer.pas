@@ -88,6 +88,7 @@ type
 
     function GetNeedGetFunction: Boolean;
     function GetNeedAddFunction: Boolean;
+    function GetOptional: Boolean;
   public
     constructor Create;
 
@@ -102,7 +103,7 @@ type
     property Name: String read FName write FName;
     property NeedAddFunction: Boolean read GetNeedAddFunction;
     property NeedGetFunction: Boolean read GetNeedGetFunction;
-    property Optional: Boolean read FOptional write FOptional;
+    property Optional: Boolean read GetOptional write FOptional;
     property TypeName: TTypeDefinition read FTypeName write FTypeName;
   end;
 
@@ -962,7 +963,7 @@ var
   begin
     var PropertyType := GetPropertyType(&Property);
 
-    if PropertyType.IsClassDefinition or &Property.IsArray then
+    if PropertyType.IsClassDefinition then
       Result := Format('Assigned(%s)', [GetPropertyFieldName(&Property)])
     else if PropertyType.IsStringType then
       Result := Format('not %s.IsEmpty', [GetPropertyFieldName(&Property)])
@@ -1296,6 +1297,11 @@ end;
 function TPropertyDefinition.GetNeedGetFunction: Boolean;
 begin
   Result := TypeName.IsClassDefinition and not IsArray and not TypeName.IsObjectType;
+end;
+
+function TPropertyDefinition.GetOptional: Boolean;
+begin
+  Result := FOptional and not IsArray;
 end;
 
 { TTypeDefinition }
