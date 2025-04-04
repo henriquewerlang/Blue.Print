@@ -784,9 +784,14 @@ var
     AddLine(EmptyStr);
   end;
 
+  function FormatName(const Name: String): String;
+  begin
+     Result := Name.Substring(0, 1).ToUpper + Name.Substring(1);
+  end;
+
   function GetStoredFunctionName(const &Property: TPropertyDefinition): String;
   begin
-    Result := Format('Get%sStored', [&Property.Name]);
+    Result := Format('Get%sStored', [FormatName(&Property.Name)]);
   end;
 
   function CheckReservedName(const Name: String): String;
@@ -806,7 +811,7 @@ var
     Result := ClassDefinition.Name;
 
     if Assigned(ClassDefinition.ParentClass) then
-      Result := 'T' + Result.Substring(0, 1).ToUpper + Result.Substring(1);
+      Result := 'T' + FormatName(Result);
   end;
 
   function GetPropertyType(const &Property: TPropertyDefinition): TTypeDefinition;
@@ -958,7 +963,7 @@ var
 
         for var &Property in ClassDefinition.Properties do
           if &Property.Optional then
-            AddLine('%s  property Is%sStored: Boolean read %s;', [Ident, &Property.Name, GetStoredFunctionName(&Property)]);
+            AddLine('%s  property Is%sStored: Boolean read %s;', [Ident, FormatName(&Property.Name), GetStoredFunctionName(&Property)]);
       end;
 
       AddLine('%spublished', [Ident]);
