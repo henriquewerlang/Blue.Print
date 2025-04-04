@@ -871,6 +871,15 @@ var
     Result := 'Add' + &Property.Name;
   end;
 
+  function HasOptionalProperty(const ClassDefinition: TClassDefinition): Boolean;
+  begin
+    Result := False;
+
+    for var &Property in ClassDefinition.Properties do
+      if &Property.Optional then
+        Exit(True);
+  end;
+
   procedure GenerateClassDeclaration(const Ident: String; const ClassDefinition: TClassDefinition);
 
     function GetStoredPropertyDeclaration(const &Property: TPropertyDefinition): String;
@@ -933,7 +942,7 @@ var
         if &Property.Optional then
           AddLine('%s  function %s: Boolean;', [Ident, GetStoredFunctionName(&Property)]);
 
-      if CheckNeedDestructor(ClassDefinition) or CheckNeedAddFunction(ClassDefinition) then
+      if CheckNeedDestructor(ClassDefinition) or CheckNeedAddFunction(ClassDefinition) or HasOptionalProperty(ClassDefinition) then
       begin
         AddLine('%spublic', [Ident]);
 
@@ -946,6 +955,10 @@ var
         for var &Property in ClassDefinition.Properties do
           if &Property.NeedAddFunction then
             AddLine('%s  function %s: %s;', [Ident, GetAddFuntionName(&Property), GetTypeName(&Property)]);
+
+        for var &Property in ClassDefinition.Properties do
+          if &Property.Optional then
+            AddLine('%s  property Is%sStored: Boolean read %s;', [Ident, &Property.Name, GetStoredFunctionName(&Property)]);
       end;
 
       AddLine('%spublished', [Ident]);
@@ -960,15 +973,6 @@ var
     end;
 
     AddLine('%send;', [Ident]);
-  end;
-
-  function HasOptionalProperty(const ClassDefinition: TClassDefinition): Boolean;
-  begin
-    Result := False;
-
-    for var &Property in ClassDefinition.Properties do
-      if &Property.Optional then
-        Exit(True);
   end;
 
   function GetOptionalValue(const &Property: TPropertyDefinition): String;
