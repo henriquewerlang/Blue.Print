@@ -6,7 +6,8 @@ uses
   Blue.Print.Schema.Importer.Main in 'Blue.Print.Schema.Importer.Main.pas' {Main},
   Blue.Print.Schema.Importer in 'Blue.Print.Schema.Importer.pas',
   Blue.Print.Serializer in 'Blue.Print.Serializer.pas',
-  Blue.Print.Types in 'Blue.Print.Types.pas';
+  Blue.Print.Types in 'Blue.Print.Types.pas',
+  Blue.Print.Open.API.Schema in 'Blue.Print.Open.API.Schema.pas';
 
 {$R *.res}
 

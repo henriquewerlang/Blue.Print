@@ -302,6 +302,10 @@ type
     procedure Import;
   end;
 
+  TOpenAPIImport = class(TSchemaImporter)
+
+  end;
+
 implementation
 
 uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, XML.xmldom, Blue.Print.Serializer, Blue.Print.Types;
