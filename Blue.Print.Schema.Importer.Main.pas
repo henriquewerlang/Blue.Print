@@ -41,7 +41,7 @@ begin
   var AliasCommand: String;
   var ConfigFile: String;
   var FileName: String;
-  var Importer := TImporter.Create;
+  var Importer := TXSDImporter.Create;
   var TypeChange: String;
 
   if FindCmdLineSwitch('XSD', FileName) then
@@ -59,7 +59,7 @@ end;
 
 procedure TMain.GenerateFilesClick(Sender: TObject);
 begin
-  var Importer := TImporter.Create;
+  var Importer := TXSDImporter.Create;
 
   Importer.LoadConfig(ConfigurationFile.Text);
 

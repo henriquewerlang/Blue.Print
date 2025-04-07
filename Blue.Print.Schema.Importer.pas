@@ -6,9 +6,10 @@ uses System.Generics.Collections, Xml.XMLSchema;
 
 type
   TClassDefinition = class;
-  TImporter = class;
+  TSchemaImporter = class;
   TTypeDefinition = class;
   TUnit = class;
+  TXSDImporter = class;
 
   TUnitConfiguration = class
   private
@@ -180,12 +181,12 @@ type
 
   TTypeDelayed = class(TTypeDefinition)
   private
-    FImporter: TImporter;
+    FImporter: TSchemaImporter;
     FParentClass: TClassDefinition;
     FTypeName: String;
     FType: TTypeDefinition;
   public
-    constructor Create(const Importer: TImporter; const TypeName: String; const ParentClass: TClassDefinition);
+    constructor Create(const Importer: TSchemaImporter; const TypeName: String; const ParentClass: TClassDefinition);
 
     function ResolveType: TTypeDefinition; override;
   end;
@@ -221,27 +222,66 @@ type
 
     procedure AddTypeAlias(const AType: TTypeAlias);
     procedure AddUses(const SchemaUnit: TUnit);
-    procedure GenerateFile(const Importer: TImporter);
+    procedure GenerateFile(const Importer: TSchemaImporter);
 
     property Classes: TList<TClassDefinition> read FClasses write FClasses;
     property TypeAlias: TList<TTypeAlias> read FTypeAlias;
     property UnitConfiguration: TUnitConfiguration read FUnitConfiguration write FUnitConfiguration;
   end;
 
-  TImporter = class
+  TSchemaImporter = class
   private
     FBuildInType: TDictionary<String, TTypeDefinition>;
     FConfiguration: TConfiguration;
     FDelayedTypes: TDictionary<String, TTypeDelayed>;
-    FTypeExternal: TDictionary<String, TTypeDefinition>;
     FTypeAlias: TDictionary<String, TTypeDefinition>;
+    FTypeExternal: TDictionary<String, TTypeDefinition>;
     FUnits: TDictionary<String, TUnit>;
+    FStringType: TTypeDefinition;
+    FCardinalType: TTypeDefinition;
+    FIntegerType: TTypeDefinition;
+    FInt64Type: TTypeDefinition;
+    FObjectType: TTypeDefinition;
+    FWordType: TTypeDefinition;
+    FDateType: TTypeDefinition;
+    FBooleanType: TTypeDefinition;
+    FDateTimeType: TTypeDefinition;
+    FDoubleType: TTypeDefinition;
+    FTimeType: TTypeDefinition;
+  protected
+    function FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition; virtual;
+
+    procedure LoadInternalTypes;
+
+    property BooleanType: TTypeDefinition read FBooleanType;
+    property CardinalType: TTypeDefinition read FCardinalType;
+    property DateType: TTypeDefinition read FDateType;
+    property DateTimeType: TTypeDefinition read FDateTimeType;
+    property DoubleType: TTypeDefinition read FDoubleType;
+    property Int64Type: TTypeDefinition read FInt64Type;
+    property IntegerType: TTypeDefinition read FIntegerType;
+    property ObjectType: TTypeDefinition read FObjectType;
+    property StringType: TTypeDefinition read FStringType;
+    property TimeType: TTypeDefinition read FTimeType;
+    property WordType: TTypeDefinition read FWordType;
+  public
+    constructor Create;
+
+    destructor Destroy; override;
+
+    procedure AddTypeExternal(const ModuleName, TypeName: String);
+    procedure LoadConfig(const FileName: String);
+
+    property Configuration: TConfiguration read FConfiguration write FConfiguration;
+  end;
+
+  TXSDImporter = class(TSchemaImporter)
+  private
     FXMLBuildInType: TDictionary<String, TTypeDefinition>;
 
     function AddProperty(const ClassDefinition: TClassDefinition; const Name: String): TPropertyDefinition;
     function AddPropertyWithType(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef): TPropertyDefinition;
     function CanGenerateClass(const Element: IXMLElementDef): Boolean;
-    function FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
     function FindTypeChange(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
     function FindTypeName(&Type: IXMLTypeDef; const ParentClass: TClassDefinition): TTypeDefinition;
     function GenerateClassDefinition(const UnitDeclaration: TUnit; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TClassDefinition;
@@ -251,56 +291,95 @@ type
     procedure AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
     procedure GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef; const TargetNamespace: String);
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList; const TargetNamespace: String);
+    procedure LoadXSDTypes;
+  protected
+    function FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition; override;
   public
     constructor Create;
 
     destructor Destroy; override;
 
-    procedure AddTypeExternal(const ModuleName, TypeName: String);
     procedure Import;
-    procedure LoadConfig(const FileName: String);
-
-    property Configuration: TConfiguration read FConfiguration write FConfiguration;
   end;
 
 implementation
 
 uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, XML.xmldom, Blue.Print.Serializer, Blue.Print.Types;
 
-{ TImporter }
+{ TSchemaImporter }
 
-function TImporter.AddProperty(const ClassDefinition: TClassDefinition; const Name: String): TPropertyDefinition;
-begin
-  Result := ClassDefinition.AddProperty(Name);
-end;
-
-procedure TImporter.AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
-begin
-  if Attribute.Fixed = NULL then
-    &Property.AddXMLAttributeValue
-  else
-    &Property.AddXMLAttributeFixed(Attribute.Name, Attribute.Fixed);
-
-  &Property.Optional := (Attribute.Use <> NULL) and (Attribute.Use = 'optional');
-end;
-
-function TImporter.AddPropertyWithType(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef): TPropertyDefinition;
-begin
-  Result := AddProperty(ClassDefinition, Name);
-  Result.TypeName := FindTypeName(&Type, ClassDefinition);
-end;
-
-procedure TImporter.AddTypeExternal(const ModuleName, TypeName: String);
+procedure TSchemaImporter.AddTypeExternal(const ModuleName, TypeName: String);
 begin
   FTypeExternal.Add(TypeName, TTypeExternal.Create(ModuleName, TypeName));
 end;
 
-function TImporter.CanGenerateClass(const Element: IXMLElementDef): Boolean;
+constructor TSchemaImporter.Create;
 begin
-  Result := Element.DataType.IsComplex and not IsReferenceType(Element);
+  inherited;
+
+  FBuildInType := TDictionary<String, TTypeDefinition>.Create;
+  FDelayedTypes := TDictionary<String, TTypeDelayed>.Create;
+  FTypeAlias := TObjectDictionary<String, TTypeDefinition>.Create([doOwnsValues]);
+  FTypeExternal := TObjectDictionary<String, TTypeDefinition>.Create([doOwnsValues]);
+  FUnits := TObjectDictionary<String, TUnit>.Create([doOwnsValues]);
+
+  LoadInternalTypes;
 end;
 
-constructor TImporter.Create;
+destructor TSchemaImporter.Destroy;
+begin
+  FTypeExternal.Free;
+
+  FBuildInType.Free;
+
+  FDelayedTypes.Free;
+
+  FTypeAlias.Free;
+
+  FUnits.Free;
+
+  inherited;
+end;
+
+function TSchemaImporter.FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
+begin
+  Result := nil;
+
+  if FTypeExternal.TryGetValue(TypeName, Result) then
+    Exit;
+
+  if FTypeAlias.TryGetValue(TypeName, Result) then
+    Exit;
+
+  if FBuildInType.TryGetValue(TypeName, Result) then
+    Exit;
+end;
+
+procedure TSchemaImporter.LoadConfig(const FileName: String);
+
+  function FixFolderPath(const Folder: String): String;
+  begin
+    Result := Folder;
+
+    if TDirectory.IsRelativePath(Result) then
+      Result := TPath.GetFullPath(Format('%s%s', [ExtractFilePath(FileName), Result]));
+  end;
+
+begin
+  if TFile.Exists(FileName) then
+  begin
+    var Serializer: IBluePrintSerializer := TBluePrintJsonSerializer.Create;
+
+    Configuration := Serializer.Deserialize(TFile.ReadAllText(FileName), TypeInfo(TConfiguration)).AsType<TConfiguration>;
+    Configuration.OutputFolder := FixFolderPath(Configuration.OutputFolder);
+    Configuration.SchemaFolder := FixFolderPath(Configuration.SchemaFolder);
+
+    for var TypeExternal in Configuration.TypeExternal do
+      AddTypeExternal(TypeExternal.ModuleName, TypeExternal.Name);
+  end;
+end;
+
+procedure TSchemaImporter.LoadInternalTypes;
 
   function AddTypeAlias(const Alias: String; TypeDefinition: TTypeDefinition): TTypeAlias;
   begin
@@ -309,13 +388,6 @@ constructor TImporter.Create;
     Result.TypeDefinition := TypeDefinition;
 
     FTypeAlias.Add(Alias, Result);
-  end;
-
-  function AddBuildInType(const TypeName: String; const TypeDefinition: TTypeDefinition): TTypeDefinition;
-  begin
-    Result := TypeDefinition;
-
-    FXMLBuildInType.Add(TypeName, TypeDefinition);
   end;
 
   function AddType(const TypeName: String): TTypeDefinition;
@@ -335,58 +407,68 @@ constructor TImporter.Create;
   end;
 
 begin
-  inherited;
+  FBooleanType := AddType('Boolean');
+  FCardinalType := AddNumberType('Cardinal');
+  FDateTimeType := AddNumberType('TDateTime');
+  FDateType := AddNumberType('TDate');
+  FDoubleType := AddNumberType('Double');
+  FInt64Type := AddNumberType('Int64');
+  FIntegerType := AddNumberType('Integer');
+  FObjectType := AddType(TObject.ClassName);
+  FObjectType.FIsObjectType := True;
+  FStringType := AddType('String');
+  FStringType.FIsStringType := True;
+  FTimeType := AddNumberType('TTime');
+  FWordType := AddNumberType('Word');
 
-  FBuildInType := TDictionary<String, TTypeDefinition>.Create;
-  FDelayedTypes := TDictionary<String, TTypeDelayed>.Create;
-  FTypeAlias := TObjectDictionary<String, TTypeDefinition>.Create([doOwnsValues]);
-  FTypeExternal := TObjectDictionary<String, TTypeDefinition>.Create([doOwnsValues]);
-  FUnits := TObjectDictionary<String, TUnit>.Create([doOwnsValues]);
-  FXMLBuildInType := TDictionary<String, TTypeDefinition>.Create;
-
-  var StringType := AddType('String');
-  StringType.FIsStringType := True;
-  var CardinalType := AddNumberType('Cardinal');
-  var IntegerType := AddNumberType('Integer');
-  var Int64Type := AddNumberType('Int64');
-  AddType(TObject.ClassName).FIsObjectType := True;
   AddType('Undefined');
-  var WordType := AddNumberType('Word');
-
-  AddBuildInType('anyURI', StringType);
-  AddBuildInType('base64Binary', StringType);
-  AddBuildInType('boolean', AddType('Boolean'));
-  AddBuildInType('date', AddNumberType('TDate'));
-  AddBuildInType('dateTime', AddNumberType('TDateTime'));
-  AddBuildInType('decimal', AddNumberType('Double'));
-  AddBuildInType('ID', StringType);
-  AddBuildInType('int', IntegerType);
-  AddBuildInType('long', Int64Type);
-  AddBuildInType('string', StringType);
-  AddBuildInType('time', AddNumberType('TTime'));
-  AddBuildInType('token', StringType);
-  AddBuildInType('unsignedShort', WordType);
-  AddBuildInType('unsignedInt', CardinalType);
 end;
 
-destructor TImporter.Destroy;
+{ TXSDImporter }
+
+function TXSDImporter.AddProperty(const ClassDefinition: TClassDefinition; const Name: String): TPropertyDefinition;
+begin
+  Result := ClassDefinition.AddProperty(Name);
+end;
+
+procedure TXSDImporter.AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
+begin
+  if Attribute.Fixed = NULL then
+    &Property.AddXMLAttributeValue
+  else
+    &Property.AddXMLAttributeFixed(Attribute.Name, Attribute.Fixed);
+
+  &Property.Optional := (Attribute.Use <> NULL) and (Attribute.Use = 'optional');
+end;
+
+function TXSDImporter.AddPropertyWithType(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef): TPropertyDefinition;
+begin
+  Result := AddProperty(ClassDefinition, Name);
+  Result.TypeName := FindTypeName(&Type, ClassDefinition);
+end;
+
+function TXSDImporter.CanGenerateClass(const Element: IXMLElementDef): Boolean;
+begin
+  Result := Element.DataType.IsComplex and not IsReferenceType(Element);
+end;
+
+constructor TXSDImporter.Create;
+begin
+  inherited;
+
+  FXMLBuildInType := TDictionary<String, TTypeDefinition>.Create;
+
+  LoadXSDTypes;
+end;
+
+destructor TXSDImporter.Destroy;
 begin
   FXMLBuildInType.Free;
 
-  FBuildInType.Free;
-
-  FDelayedTypes.Free;
-
-  FTypeExternal.Free;
-
-  FTypeAlias.Free;
-
-  FUnits.Free;
-
   inherited;
 end;
 
-function TImporter.FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
+function TXSDImporter.FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
 
   function FindInClassList(const ClassList: TList<TClassDefinition>; const TypeName: String): TTypeDefinition;
   begin
@@ -423,15 +505,6 @@ function TImporter.FindType(const TypeName: String; const ParentClass: TClassDef
 begin
   Result := nil;
 
-  if FTypeExternal.TryGetValue(TypeName, Result) then
-    Exit;
-
-  if FTypeAlias.TryGetValue(TypeName, Result) then
-    Exit;
-
-  if FBuildInType.TryGetValue(TypeName, Result) then
-    Exit;
-
   if FXMLBuildInType.TryGetValue(TypeName, Result) then
     Exit;
 
@@ -452,7 +525,7 @@ begin
     end;
 end;
 
-function TImporter.FindTypeChange(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
+function TXSDImporter.FindTypeChange(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
 begin
   Result := nil;
 
@@ -461,7 +534,7 @@ begin
       Exit(FindType(ChangeType.TypeName, nil));
 end;
 
-function TImporter.FindTypeName(&Type: IXMLTypeDef; const ParentClass: TClassDefinition): TTypeDefinition;
+function TXSDImporter.FindTypeName(&Type: IXMLTypeDef; const ParentClass: TClassDefinition): TTypeDefinition;
 
   function GetBaseType(TypeDefinition: IXMLTypeDef): String;
   begin
@@ -497,7 +570,7 @@ begin
   end;
 end;
 
-function TImporter.GenerateClassDefinition(const UnitDeclaration: TUnit; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TClassDefinition;
+function TXSDImporter.GenerateClassDefinition(const UnitDeclaration: TUnit; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TClassDefinition;
 var
   ClassDefinition: TClassDefinition absolute Result;
 
@@ -524,13 +597,13 @@ begin
   end;
 end;
 
-procedure TImporter.GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList; const TargetNamespace: String);
+procedure TXSDImporter.GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList; const TargetNamespace: String);
 begin
   for var A := 0 to Pred(ElementDefs.Count) do
     GenerateProperty(ClassDefinition, ElementDefs[A], TargetNamespace);
 end;
 
-procedure TImporter.GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef; const TargetNamespace: String);
+procedure TXSDImporter.GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef; const TargetNamespace: String);
 
   function IsOptional(const ElementDefinition: IXMLElementDef): Boolean;
   var
@@ -572,7 +645,7 @@ begin
   NewProperty.TypeName := FindTypeName(PropertyType, ClassDefinition);
 end;
 
-function TImporter.GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
+function TXSDImporter.GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitConfiguration): TUnit;
 var
   UnitDeclaration: TUnit absolute Result;
 
@@ -644,7 +717,7 @@ begin
   end;
 end;
 
-procedure TImporter.Import;
+procedure TXSDImporter.Import;
 
   function FindClassList(const ClassName: String; ClassList: TList<TClassDefinition>): TClassDefinition;
   begin
@@ -704,33 +777,35 @@ begin
     UnitDefinition.GenerateFile(Self);
 end;
 
-function TImporter.IsReferenceType(const Element: IXMLElementDef): Boolean;
+function TXSDImporter.IsReferenceType(const Element: IXMLElementDef): Boolean;
 begin
   Result := Assigned(Element.Ref) or Assigned(Element.AttributeNodes.FindNode('type'));
 end;
 
-procedure TImporter.LoadConfig(const FileName: String);
+procedure TXSDImporter.LoadXSDTypes;
 
-  function FixFolderPath(const Folder: String): String;
+  function AddBuildInType(const TypeName: String; const TypeDefinition: TTypeDefinition): TTypeDefinition;
   begin
-    Result := Folder;
+    Result := TypeDefinition;
 
-    if TDirectory.IsRelativePath(Result) then
-      Result := TPath.GetFullPath(Format('%s%s', [ExtractFilePath(FileName), Result]));
+    FXMLBuildInType.Add(TypeName, TypeDefinition);
   end;
 
 begin
-  if TFile.Exists(FileName) then
-  begin
-    var Serializer: IBluePrintSerializer := TBluePrintJsonSerializer.Create;
-
-    Configuration := Serializer.Deserialize(TFile.ReadAllText(FileName), TypeInfo(TConfiguration)).AsType<TConfiguration>;
-    Configuration.OutputFolder := FixFolderPath(Configuration.OutputFolder);
-    Configuration.SchemaFolder := FixFolderPath(Configuration.SchemaFolder);
-
-    for var TypeExternal in Configuration.TypeExternal do
-      AddTypeExternal(TypeExternal.ModuleName, TypeExternal.Name);
-  end;
+  AddBuildInType('anyURI', StringType);
+  AddBuildInType('base64Binary', StringType);
+  AddBuildInType('boolean', BooleanType);
+  AddBuildInType('date', DateType);
+  AddBuildInType('dateTime', DateTimeType);
+  AddBuildInType('decimal', DoubleType);
+  AddBuildInType('ID', StringType);
+  AddBuildInType('int', IntegerType);
+  AddBuildInType('long', Int64Type);
+  AddBuildInType('string', StringType);
+  AddBuildInType('time', TimeType);
+  AddBuildInType('token', StringType);
+  AddBuildInType('unsignedShort', WordType);
+  AddBuildInType('unsignedInt', CardinalType);
 end;
 
 { TUnit }
@@ -765,7 +840,7 @@ begin
   inherited;
 end;
 
-procedure TUnit.GenerateFile(const Importer: TImporter);
+procedure TUnit.GenerateFile(const Importer: TSchemaImporter);
 var
   UnitDefinition: TStringList;
 
@@ -1381,7 +1456,7 @@ end;
 
 { TTypeDelayed }
 
-constructor TTypeDelayed.Create(const Importer: TImporter; const TypeName: String; const ParentClass: TClassDefinition);
+constructor TTypeDelayed.Create(const Importer: TSchemaImporter; const TypeName: String; const ParentClass: TClassDefinition);
 begin
   inherited Create;
 
@@ -1457,5 +1532,4 @@ begin
 end;
 
 end.
-
 
