@@ -22,60 +22,33 @@ type
     property UnitClassName: String read FUnitClassName write FUnitClassName;
   end;
 
-  TTypeAttributeConfig = class
-  private
-    FTypeName: String;
-    FAttribute: String;
-  public
-    property Attribute: String read FAttribute write FAttribute;
-    property TypeName: String read FTypeName write FTypeName;
-  end;
-
-  TTypeChangeConfig = class
-  private
-    FAliasName: String;
-    FTypeName: String;
-  public
-    property AliasName: String read FAliasName write FAliasName;
-    property TypeName: String read FTypeName write FTypeName;
-  end;
-
-  TTypeExternalConfig = class
+  TTypeDefinitionConfiguration = class
   private
     FName: String;
+    FAttribute: String;
     FModuleName: String;
+    FBaseType: String;
+    FInheritance: String;
   public
-    property ModuleName: String read FModuleName write FModuleName;
     property Name: String read FName write FName;
-  end;
-
-  TClassInheritanceChangeConfig = class
-  private
-    FParentClass: String;
-    FSourceClass: String;
-  public
-    property ParentClass: String read FParentClass write FParentClass;
-    property SourceClass: String read FSourceClass write FSourceClass;
+    property Attribute: String read FAttribute write FAttribute;
+    property BaseType: String read FBaseType write FBaseType;
+    property Inheritance: String read FInheritance write FInheritance;
+    property ModuleName: String read FModuleName write FModuleName;
   end;
 
   TConfiguration = class
   private
-    FClassInheritanceChange: TArray<TClassInheritanceChangeConfig>;
     FOutputFolder: String;
     FSchemaFolder: String;
-    FTypeAttributes: TArray<TTypeAttributeConfig>;
-    FTypeChange: TArray<TTypeChangeConfig>;
-    FTypeExternal: TArray<TTypeExternalConfig>;
     FUnitConfiguration: TArray<TUnitConfiguration>;
+    FTypeDefinition: TArray<TTypeDefinitionConfiguration>;
   public
     destructor Destroy; override;
 
-    property ClassInheritanceChange: TArray<TClassInheritanceChangeConfig> read FClassInheritanceChange write FClassInheritanceChange;
     property OutputFolder: String read FOutputFolder write FOutputFolder;
     property SchemaFolder: String read FSchemaFolder write FSchemaFolder;
-    property TypeAttributes: TArray<TTypeAttributeConfig> read FTypeAttributes write FTypeAttributes;
-    property TypeChange: TArray<TTypeChangeConfig> read FTypeChange write FTypeChange;
-    property TypeExternal: TArray<TTypeExternalConfig> read FTypeExternal write FTypeExternal;
+    property TypeDefinition: TArray<TTypeDefinitionConfiguration> read FTypeDefinition write FTypeDefinition;
     property UnitConfiguration: TArray<TUnitConfiguration> read FUnitConfiguration write FUnitConfiguration;
   end;
 
@@ -251,6 +224,7 @@ type
   protected
     function FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition; virtual;
 
+    procedure GenerateUnitDefinitions; virtual; abstract;
     procedure LoadInternalTypes;
 
     property BooleanType: TTypeDefinition read FBooleanType;
@@ -270,6 +244,7 @@ type
     destructor Destroy; override;
 
     procedure AddTypeExternal(const ModuleName, TypeName: String);
+    procedure Import;
     procedure LoadConfig(const FileName: String);
 
     property Configuration: TConfiguration read FConfiguration write FConfiguration;
@@ -294,12 +269,12 @@ type
     procedure LoadXSDTypes;
   protected
     function FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition; override;
+
+    procedure GenerateUnitDefinitions; override;
   public
     constructor Create;
 
     destructor Destroy; override;
-
-    procedure Import;
   end;
 
   TOpenAPIImport = class(TSchemaImporter)
@@ -408,6 +383,63 @@ begin
     end;
 end;
 
+procedure TSchemaImporter.Import;
+
+  function FindClassList(const ClassName: String; ClassList: TList<TClassDefinition>): TClassDefinition;
+  begin
+    Result := nil;
+
+    for var Name in ClassName.Split(['.']) do
+    begin
+      for var ClassDefinition in ClassList do
+        if Name = ClassDefinition.Name then
+          Result := ClassDefinition;
+
+      if Assigned(Result) then
+        ClassList := Result.Classes
+      else
+        Break;
+    end;
+  end;
+
+  function FindClass(const ClassName: String): TClassDefinition;
+  begin
+    Result := nil;
+
+    for var UnitDefinition in FUnits.Values do
+    begin
+      Result := FindClassList(ClassName, UnitDefinition.Classes);
+
+      if Assigned(Result) then
+        Exit;
+    end;
+  end;
+
+begin
+  GenerateUnitDefinitions;
+
+  for var TypeDefinitionConfig in Configuration.TypeDefinition do
+    if not TypeDefinitionConfig.Attribute.IsEmpty then
+    begin
+      var TypeDefinition := FindType(TypeDefinitionConfig.Name, nil);
+
+      if Assigned(TypeDefinition) then
+        TypeDefinition.Attributes.Add(TypeDefinitionConfig.Attribute);
+    end;
+
+  for var ChangeInheritance in Configuration.TypeDefinition do
+    if not ChangeInheritance.Inheritance.IsEmpty  then
+    begin
+      var ClassDefinition := FindClass(ChangeInheritance.Name);
+
+      if Assigned(ClassDefinition) then
+        ClassDefinition.InheritedFrom := FindClass(ChangeInheritance.Inheritance);
+    end;
+
+  for var UnitDefinition in FUnits.Values do
+    UnitDefinition.GenerateFile(Self);
+end;
+
 procedure TSchemaImporter.LoadConfig(const FileName: String);
 
   function FixFolderPath(const Folder: String): String;
@@ -427,8 +459,9 @@ begin
     Configuration.OutputFolder := FixFolderPath(Configuration.OutputFolder);
     Configuration.SchemaFolder := FixFolderPath(Configuration.SchemaFolder);
 
-    for var TypeExternal in Configuration.TypeExternal do
-      AddTypeExternal(TypeExternal.ModuleName, TypeExternal.Name);
+    for var TypeExternal in Configuration.TypeDefinition do
+      if not TypeExternal.ModuleName.IsEmpty then
+        AddTypeExternal(TypeExternal.ModuleName, TypeExternal.Name);
   end;
 end;
 
@@ -533,9 +566,9 @@ function TXSDImporter.FindTypeChange(const TypeName: String; const ParentClass: 
 begin
   Result := nil;
 
-  for var ChangeType in Configuration.TypeChange do
-    if ChangeType.AliasName = TypeName then
-      Exit(FindType(ChangeType.TypeName, nil));
+  for var ChangeType in Configuration.TypeDefinition do
+    if ChangeType.Name = TypeName then
+      Exit(FindType(ChangeType.BaseType, nil));
 end;
 
 function TXSDImporter.FindTypeName(&Type: IXMLTypeDef; const ParentClass: TClassDefinition): TTypeDefinition;
@@ -721,38 +754,7 @@ begin
   end;
 end;
 
-procedure TXSDImporter.Import;
-
-  function FindClassList(const ClassName: String; ClassList: TList<TClassDefinition>): TClassDefinition;
-  begin
-    Result := nil;
-
-    for var Name in ClassName.Split(['.']) do
-    begin
-      for var ClassDefinition in ClassList do
-        if Name = ClassDefinition.Name then
-          Result := ClassDefinition;
-
-      if Assigned(Result) then
-        ClassList := Result.Classes
-      else
-        Break;
-    end;
-  end;
-
-  function FindClass(const ClassName: String): TClassDefinition;
-  begin
-    Result := nil;
-
-    for var UnitDefinition in FUnits.Values do
-    begin
-      Result := FindClassList(ClassName, UnitDefinition.Classes);
-
-      if Assigned(Result) then
-        Exit;
-    end;
-  end;
-
+procedure TXSDImporter.GenerateUnitDefinitions;
 begin
   for var UnitConfiguration in Configuration.UnitConfiguration do
   begin
@@ -760,25 +762,6 @@ begin
 
     GenerateUnit(Schema.SchemaDef, UnitConfiguration);
   end;
-
-  for var TypeAttribute in Configuration.TypeAttributes do
-  begin
-    var TypeDefinition := FindType(TypeAttribute.TypeName, nil);
-
-    if Assigned(TypeDefinition) then
-      TypeDefinition.Attributes.Add(TypeAttribute.Attribute);
-  end;
-
-  for var ChangeInheritance in Configuration.ClassInheritanceChange do
-  begin
-    var ClassDefinition := FindClass(ChangeInheritance.SourceClass);
-
-    if Assigned(ClassDefinition) then
-      ClassDefinition.InheritedFrom := FindClass(ChangeInheritance.ParentClass);
-  end;
-
-  for var UnitDefinition in FUnits.Values do
-    UnitDefinition.GenerateFile(Self);
 end;
 
 function TXSDImporter.IsReferenceType(const Element: IXMLElementDef): Boolean;
@@ -1510,17 +1493,8 @@ begin
   for var AUnit in FUnitConfiguration do
     AUnit.Free;
 
-  for var TypeChange in FTypeChange do
-    TypeChange.Free;
-
-  for var TypeExternal in FTypeExternal do
-    TypeExternal.Free;
-
-  for var TypeAttribute in FTypeAttributes do
-    TypeAttribute.Free;
-
-  for var ClassInheritance in FClassInheritanceChange do
-    ClassInheritance.Free;
+  for var TypeDefinitionConfig in TypeDefinition do
+    TypeDefinitionConfig.Free;
 
   inherited;
 end;
