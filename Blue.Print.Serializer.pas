@@ -477,7 +477,7 @@ begin
           DeserializeProperties(RttiType, Result.AsObject, TJSONObject(JSONValue));
       end;
 
-    tkArray, tkDynArray: Result := DeserializeArray(RttiType, TJSONArray(JSONValue));
+    tkArray, tkDynArray: Result := DeserializeArray(RttiType, JSONValue as TJSONArray);
 
 {$IFDEF DCC}
     tkMRecord,
