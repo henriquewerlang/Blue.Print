@@ -346,6 +346,39 @@ begin
 end;
 
 function TSchemaImporter.FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
+
+  function FindInClassList(const ClassList: TList<TClassDefinition>; const TypeName: String): TTypeDefinition;
+  begin
+    Result := nil;
+
+    for var ClassDefinition in ClassList do
+      if ClassDefinition.Name = TypeName then
+        Exit(ClassDefinition);
+  end;
+
+  function FindInClasses(const ClassList: TList<TClassDefinition>; const TypeName: String): TTypeDefinition;
+  begin
+    Result := FindInClassList(ClassList, TypeName);
+
+    if not Assigned(Result) then
+      for var ClassDefinition in ClassList do
+      begin
+        Result := FindInClasses(ClassDefinition.Classes, TypeName);
+
+        if Assigned(Result) then
+          Exit;
+      end;
+  end;
+
+  function FindInClass(ClassDefinition: TClassDefinition; const TypeName: String): TTypeDefinition;
+  begin
+    repeat
+      Result := FindInClassList(ClassDefinition.Classes, TypeName);
+
+      ClassDefinition := ClassDefinition.ParentClass;
+    until Assigned(Result) or not Assigned(ClassDefinition);
+  end;
+
 begin
   Result := nil;
 
@@ -357,6 +390,22 @@ begin
 
   if FBuildInType.TryGetValue(TypeName, Result) then
     Exit;
+
+  if Assigned(ParentClass) then
+    Result := FindInClass(ParentClass, TypeName);
+
+  if not Assigned(Result) then
+    for var UnitDefinition in FUnits.Values do
+    begin
+      Result := FindInClasses(UnitDefinition.Classes, TypeName);
+
+      if Assigned(Result) then
+        Exit;
+
+      for var SimpleType in UnitDefinition.TypeAlias do
+        if SimpleType.Name = TypeName then
+          Exit(SimpleType);
+    end;
 end;
 
 procedure TSchemaImporter.LoadConfig(const FileName: String);
@@ -473,60 +522,11 @@ begin
 end;
 
 function TXSDImporter.FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
-
-  function FindInClassList(const ClassList: TList<TClassDefinition>; const TypeName: String): TTypeDefinition;
-  begin
-    Result := nil;
-
-    for var ClassDefinition in ClassList do
-      if ClassDefinition.Name = TypeName then
-        Exit(ClassDefinition);
-  end;
-
-  function FindInClasses(const ClassList: TList<TClassDefinition>; const TypeName: String): TTypeDefinition;
-  begin
-    Result := FindInClassList(ClassList, TypeName);
-
-    if not Assigned(Result) then
-      for var ClassDefinition in ClassList do
-      begin
-        Result := FindInClasses(ClassDefinition.Classes, TypeName);
-
-        if Assigned(Result) then
-          Exit;
-      end;
-  end;
-
-  function FindInClass(ClassDefinition: TClassDefinition; const TypeName: String): TTypeDefinition;
-  begin
-    repeat
-      Result := FindInClassList(ClassDefinition.Classes, TypeName);
-
-      ClassDefinition := ClassDefinition.ParentClass;
-    until Assigned(Result) or not Assigned(ClassDefinition);
-  end;
-
 begin
-  Result := nil;
-
   if FXMLBuildInType.TryGetValue(TypeName, Result) then
     Exit;
 
-  if Assigned(ParentClass) then
-    Result := FindInClass(ParentClass, TypeName);
-
-  if not Assigned(Result) then
-    for var UnitDefinition in FUnits.Values do
-    begin
-      Result := FindInClasses(UnitDefinition.Classes, TypeName);
-
-      if Assigned(Result) then
-        Exit;
-
-      for var SimpleType in UnitDefinition.TypeAlias do
-        if SimpleType.Name = TypeName then
-          Exit(SimpleType);
-    end;
+  Result := inherited;
 end;
 
 function TXSDImporter.FindTypeChange(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
