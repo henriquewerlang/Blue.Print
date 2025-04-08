@@ -301,8 +301,9 @@ type
 
   TRttiTypeHelper = class helper for TRttiType
   public
-    function IsInterface: Boolean;
     function AsInterface: TRttiInterfaceType;
+    function IsInterface: Boolean;
+    function IsMap: Boolean;
   end;
 
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
@@ -640,6 +641,11 @@ end;
 function TRttiTypeHelper.IsInterface: Boolean;
 begin
   Result := Self is TRttiInterfaceType;
+end;
+
+function TRttiTypeHelper.IsMap: Boolean;
+begin
+  Result := Self.QualifiedName.StartsWith('Blue.Print.Serializer.TMap<');
 end;
 
 { TFormatAttribute }

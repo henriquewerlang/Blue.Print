@@ -2,7 +2,7 @@
 
 interface
 
-uses System.SysUtils, System.Rtti, System.TypInfo, Blue.Print.Types, {$IFDEF PAS2JS}BrowserApi.Web, JSApi.JS{$ELSE}System.JSON, Xml.XMLIntf{$ENDIF};
+uses System.SysUtils, System.Rtti, System.TypInfo, System.Generics.Collections, Blue.Print.Types, {$IFDEF PAS2JS}BrowserApi.Web, JSApi.JS{$ELSE}System.JSON, Xml.XMLIntf{$ENDIF};
 
 type
 {$IFDEF PAS2JS}
@@ -21,6 +21,14 @@ type
   EInvalidXMLDocument = class(Exception)
   public
     constructor Create;
+  end;
+
+  TMap<K, V> = class(TObjectDictionary<K, V>)
+  private
+    function GetMapItem(const Key: K): V;
+    procedure SetMapItem(const Key: K; const Value: V);
+  public
+    property Map[const Key: K]: V read GetMapItem write SetMapItem; default;
   end;
 
   TBluePrintSerializer = class(TInterfacedObject)
@@ -57,8 +65,10 @@ type
     function SerializeType(const RttiType: TRttiType; const Value: TValue): TJSONValue; virtual;
 
     procedure DeserializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
+    procedure DeserializeMap(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
     procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
     procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
+    procedure SerializeMap(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
     procedure SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
   end;
 
@@ -88,7 +98,7 @@ type
 
 implementation
 
-uses System.Classes, System.Generics.Collections, System.DateUtils, {$IFDEF DCC}System.SysConst, Xml.XMLDoc, REST.Types{$ELSE}System.RTLConsts{$ENDIF};
+uses System.Classes, System.DateUtils, {$IFDEF DCC}System.SysConst, Xml.XMLDoc, REST.Types{$ELSE}System.RTLConsts{$ENDIF};
 
 {$IFDEF PAS2JS}
 type
@@ -138,8 +148,15 @@ begin
 end;
 
 function TBluePrintSerializer.CreateObject(const RttiType: TRttiInstanceType): TObject;
+var
+  ConstructorMethod: TRttiMethod;
+
 begin
-  Result := RttiType.MetaClassType.Create;
+  Result := nil;
+
+  for ConstructorMethod in RttiType.GetMethods('Create') do
+    if Length(ConstructorMethod.GetParameters) = 0 then
+      Exit(ConstructorMethod.Invoke(RttiType.AsInstance.MetaclassType, []).AsObject);
 end;
 
 function TBluePrintSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
@@ -302,6 +319,11 @@ begin
       JSONObject.AddPair(Field.Name, SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData)));
 end;
 
+procedure TBluePrintJsonSerializer.SerializeMap(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
+begin
+  raise Exception.Create('Not implemented yet!');
+end;
+
 procedure TBluePrintJsonSerializer.SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
 var
   &Property: TRttiProperty;
@@ -370,7 +392,10 @@ begin
       begin
         Result := CreateJSONObject;
 
-        SerializeProperties(FContext.GetType(Value.TypeInfo), Value.AsObject, TJSONObject(Result));
+        if RttiType.IsMap then
+          SerializeMap(FContext.GetType(Value.TypeInfo).AsInstance, Value.AsObject, TJSONObject(Result))
+        else
+          SerializeProperties(FContext.GetType(Value.TypeInfo), Value.AsObject, TJSONObject(Result));
       end;
 
     tkArray, tkDynArray: Result := SerializeArray(RttiType, Value);
@@ -446,7 +471,10 @@ begin
       begin
         Result := TValue.From(CreateObject(RttiType.AsInstance));
 
-        DeserializeProperties(RttiType, Result.AsObject, TJSONObject(JSONValue));
+        if RttiType.IsMap then
+          DeserializeMap(RttiType.AsInstance, Result.AsObject, TJSONObject(JSONValue))
+        else
+          DeserializeProperties(RttiType, Result.AsObject, TJSONObject(JSONValue));
       end;
 
     tkArray, tkDynArray: Result := DeserializeArray(RttiType, TJSONArray(JSONValue));
@@ -551,6 +579,18 @@ begin
     if Assigned(Field) then
       Field.SetValue(Instance.GetReferenceToRawData, DeserializeType(Field.FieldType, {$IFDEF PAS2JS}JSONObject[Key]{$ELSE}Key.JsonValue{$ENDIF}));
   end;
+end;
+
+procedure TBluePrintJsonSerializer.DeserializeMap(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
+var
+  Pair: TJSONPair;
+  WriteMethod: TRttiMethod;
+
+begin
+  WriteMethod := RttiType.GetDeclaredIndexedProperties[0].WriteMethod;
+
+  for Pair in JSONObject do
+    WriteMethod.Invoke(Instance, [DeserializeType(WriteMethod.GetParameters[0].ParamType, Pair.JsonString), DeserializeType(WriteMethod.GetParameters[1].ParamType, Pair.JsonValue)]);
 end;
 
 { TBluePrintXMLSerializer }
@@ -1004,6 +1044,18 @@ begin
 {$ELSE}
   DynArraySetLength(PPointer(GetReferenceToRawData)^, TypeInfo, 1, @Value);
 {$ENDIF}
+end;
+
+{ TMap<K, V> }
+
+function TMap<K, V>.GetMapItem(const Key: K): V;
+begin
+  Result := inherited Items[Key];
+end;
+
+procedure TMap<K, V>.SetMapItem(const Key: K; const Value: V);
+begin
+  AddOrSetValue(Key, Value);
 end;
 
 end.

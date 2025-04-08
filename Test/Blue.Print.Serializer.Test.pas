@@ -35,6 +35,12 @@ type
     procedure WhenSerializeAnEnumerationWithTheEnumValueAttributeMustSerializeTheValueFromAttribute;
     [Test]
     procedure WhenDeserializeAnEnumerationWithTheEnumValueAttributeMustUseTheAttributeNameToReturnTheEnumerationValue;
+    [Test]
+    procedure WhenDeserializeAClassMustCallTheClassConstructorToCreateTheObject;
+    [Test]
+    procedure WhenTheClassHasMoreThanOneConstructorCantRaiseAnyError;
+    [Test]
+    procedure WhenTheClassHasMoreThanOneConstructorMustCallTheConstructorWithoutParameters;
   end;
 
   [TestFixture]
@@ -88,6 +94,12 @@ type
     procedure WhenSerializeAPropertyObjectMustLoadThePropertyFromTheObjectTypeAndNotTheProperyType;
     [Test]
     procedure WhenDeserializeAClassWithAnEnumeratorWithEnumValueAttributeMustLoadTheEnumaratorValueAsExpected;
+    [Test]
+    procedure WhenDeserializeAPropertyTypeOfTMapMustLoadTheFieldNameFromJSONInTheKeyValueOfTheMapProperty;
+    [Test]
+    procedure WhenDeserializeAPropertyTypeOfTMapMustLoadValueOfTheJSONInTheMapValue;
+    [Test]
+    procedure WhenSerializeAPropertyTypeOfTMapMustLoadTheKeyValueFromTheMapInTheFieldValueOfTheJSONAndTheValueInTheValueOfTheField;
   end;
 
   [TestFixture]
@@ -418,6 +430,34 @@ type
     property MyProp: String read FMyProp write FMyProp;
   end;
 
+  TMyClassWithMap = class
+  private
+    FMap: TMap<String, String>;
+  public
+    destructor Destroy; override;
+  published
+    property Map: TMap<String, String> read FMap write FMap;
+  end;
+
+  TClassWithConstructor = class
+  private
+    FConstrutctorCalled: Boolean;
+  public
+    constructor Create;
+
+    property ConstrutctorCalled: Boolean read FConstrutctorCalled write FConstrutctorCalled;
+  end;
+
+  TClassWithMoreThanConstructor = class
+  private
+    FConstrutctorCalled: Boolean;
+  public
+    constructor Create(const Value: Integer); overload;
+    constructor Create; overload;
+
+    property ConstrutctorCalled: Boolean read FConstrutctorCalled write FConstrutctorCalled;
+  end;
+
   ISOAPService = interface(IInvokable)
     ['{BBBBC6F3-1730-40F4-A1B1-CC7CA6F08F5D}']
     procedure MyMethod(const MyParam: Integer);
@@ -436,6 +476,18 @@ begin
   var Value := FSerializer.Deserialize('True', TypeInfo(Boolean));
 
   Assert.AreEqual(True, Value.AsBoolean);
+end;
+
+procedure TBluePrintSerializerTest.WhenDeserializeAClassMustCallTheClassConstructorToCreateTheObject;
+begin
+  var Source := TClassWithConstructor.Create;
+  var Value := FSerializer.Deserialize(FSerializer.Serialize(TValue.From(Source)), TypeInfo(TClassWithConstructor)).AsType<TClassWithConstructor>;
+
+  Assert.IsTrue(Value.ConstrutctorCalled);
+
+  Source.Free;
+
+  Value.Free;
 end;
 
 procedure TBluePrintSerializerTest.WhenDeserializeAnEnumerationWithTheEnumValueAttributeMustUseTheAttributeNameToReturnTheEnumerationValue;
@@ -513,6 +565,32 @@ begin
   var Value := FSerializer.Serialize('abc');
 
   Assert.AreEqual('abc', Value);
+end;
+
+procedure TBluePrintSerializerTest.WhenTheClassHasMoreThanOneConstructorCantRaiseAnyError;
+begin
+  Assert.WillNotRaise(
+    procedure
+    begin
+      var Source := TClassWithMoreThanConstructor.Create;
+      var Value := FSerializer.Deserialize(FSerializer.Serialize(TValue.From(Source)), TypeInfo(TClassWithMoreThanConstructor)).AsType<TClassWithMoreThanConstructor>;
+
+      Source.Free;
+
+      Value.Free;
+    end);
+end;
+
+procedure TBluePrintSerializerTest.WhenTheClassHasMoreThanOneConstructorMustCallTheConstructorWithoutParameters;
+begin
+  var Source := TClassWithMoreThanConstructor.Create;
+  var Value := FSerializer.Deserialize(FSerializer.Serialize(TValue.From(Source)), TypeInfo(TClassWithMoreThanConstructor)).AsType<TClassWithMoreThanConstructor>;
+
+  Assert.IsTrue(Value.ConstrutctorCalled);
+
+  Source.Free;
+
+  Value.Free;
 end;
 
 { TBluePrintJsonSerializerTest }
@@ -635,6 +713,28 @@ begin
   Value.Free;
 end;
 
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAPropertyTypeOfTMapMustLoadTheFieldNameFromJSONInTheKeyValueOfTheMapProperty;
+begin
+  var Value := FSerializer.Deserialize('{"Map":{"Field1":"Value1","Field2":"Value2","Field3":"Value3"}}', TypeInfo(TMyClassWithMap)).AsType<TMyClassWithMap>;
+
+  Assert.IsTrue(Value.Map.ContainsKey('Field1'));
+  Assert.IsTrue(Value.Map.ContainsKey('Field2'));
+  Assert.IsTrue(Value.Map.ContainsKey('Field3'));
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAPropertyTypeOfTMapMustLoadValueOfTheJSONInTheMapValue;
+begin
+  var Value := FSerializer.Deserialize('{"Map":{"Field1":"Value1","Field2":"Value2","Field3":"Value3"}}', TypeInfo(TMyClassWithMap)).AsType<TMyClassWithMap>;
+
+  Assert.AreEqual('Value1', Value.Map['Field1']);
+  Assert.AreEqual('Value2', Value.Map['Field2']);
+  Assert.AreEqual('Value3', Value.Map['Field3']);
+
+  Value.Free;
+end;
+
 procedure TBluePrintJsonSerializerTest.WhenDeserializeARecordMustLoadTheRecordsFieldsAsExpected;
 begin
   var MyRecord: TMyRecord;
@@ -731,6 +831,19 @@ begin
   Assert.AreEqual('{"Error":"","MyObject":{"Another":0,"MyProp1":"","MyProp2":0,"MyProp3":0.0,"MyProp4":"MyValue"}}', FSerializer.Serialize(MyClass));
 
   MyClass.MyObject.Free;
+
+  MyClass.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenSerializeAPropertyTypeOfTMapMustLoadTheKeyValueFromTheMapInTheFieldValueOfTheJSONAndTheValueInTheValueOfTheField;
+begin
+  var MyClass := TMyClassWithMap.Create;
+  MyClass.Map := TMap<String, String>.Create;
+  MyClass.Map.Add('Field1', 'Value1');
+  MyClass.Map.Add('Field2', 'Value2');
+  MyClass.Map.Add('Field3', 'Value3');
+
+  Assert.AreEqual('{"Map":{"Field1":"Value1","Field2":"Value2","Field3":"Value3"}}', FSerializer.Serialize(TValue.From(MyClass)));
 
   MyClass.Free;
 end;
@@ -1250,6 +1363,36 @@ begin
     begin
       FSerializer.Deserialize(EmptyStr, TypeInfo(TMyClassWithArray));
     end, EInvalidXMLDocument);
+end;
+
+{ TClassWithConstructor }
+
+constructor TClassWithConstructor.Create;
+begin
+  inherited;
+
+  ConstrutctorCalled := True;
+end;
+
+{ TClassWithMoreThanConstructor }
+
+constructor TClassWithMoreThanConstructor.Create;
+begin
+  ConstrutctorCalled := True;
+end;
+
+constructor TClassWithMoreThanConstructor.Create(const Value: Integer);
+begin
+
+end;
+
+{ TMyClassWithMap }
+
+destructor TMyClassWithMap.Destroy;
+begin
+  FMap.Free;
+
+  inherited;
 end;
 
 end.
