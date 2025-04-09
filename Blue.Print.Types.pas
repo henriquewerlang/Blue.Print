@@ -99,13 +99,16 @@ type
     property Names: TArray<String> read FNames;
   end;
 
-  NodeNameAttribute = class(TCustomAttribute)
+  FieldNameAttribute = class(TCustomAttribute)
   private
-    FNodeName: String;
+    FName: String;
   public
-    constructor Create(const NodeName: String);
+    constructor Create(const Name: String);
 
-    property NodeName: String read FNodeName write FNodeName;
+    property Name: String read FName write FName;
+  end;
+
+  NodeNameAttribute = class(FieldNameAttribute)
   end;
 
   XMLAttributeAttribute = class(TCustomAttribute)
@@ -481,15 +484,6 @@ begin
   FActionName := ActionName;
 end;
 
-{ NodeNameAttribute }
-
-constructor NodeNameAttribute.Create(const NodeName: String);
-begin
-  inherited Create;
-
-  FNodeName := NodeName;
-end;
-
 { SoapServiceAttribute }
 
 constructor SoapServiceAttribute.Create(const BaseAction: String);
@@ -655,6 +649,15 @@ begin
   inherited Create;
 
   FFormat := Format;
+end;
+
+{ FieldNameAttribute }
+
+constructor FieldNameAttribute.Create(const Name: String);
+begin
+  inherited Create;
+
+  FName := Name;
 end;
 
 end.

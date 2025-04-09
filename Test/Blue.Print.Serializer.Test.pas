@@ -100,6 +100,10 @@ type
     procedure WhenDeserializeAPropertyTypeOfTMapMustLoadValueOfTheJSONInTheMapValue;
     [Test]
     procedure WhenSerializeAPropertyTypeOfTMapMustLoadTheKeyValueFromTheMapInTheFieldValueOfTheJSONAndTheValueInTheValueOfTheField;
+    [Test]
+    procedure WhenAPropertyHasTheFieldNameAttributeMustSerializeTheValueWithThisName;
+    [Test]
+    procedure WhenAPropertyHasTheFieldNameAttributeMustDeserializeTheValueAsExpected;
   end;
 
   [TestFixture]
@@ -458,6 +462,14 @@ type
     property ConstrutctorCalled: Boolean read FConstrutctorCalled write FConstrutctorCalled;
   end;
 
+  TClassWithFieldNameAttribute = class
+  private
+    FMyProperty: Integer;
+  published
+    [FieldName('MyField')]
+    property MyProperty: Integer read FMyProperty write FMyProperty;
+  end;
+
   ISOAPService = interface(IInvokable)
     ['{BBBBC6F3-1730-40F4-A1B1-CC7CA6F08F5D}']
     procedure MyMethod(const MyParam: Integer);
@@ -623,6 +635,26 @@ end;
 procedure TBluePrintJsonSerializerTest.Setup;
 begin
   FSerializer := TBluePrintJsonSerializer.Create;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenAPropertyHasTheFieldNameAttributeMustDeserializeTheValueAsExpected;
+begin
+  var MyClass := FSerializer.Deserialize('{"MyField":123}', TypeInfo(TClassWithFieldNameAttribute)).AsType<TClassWithFieldNameAttribute>;
+
+  Assert.AreEqual(123, MyClass.MyProperty);
+
+  MyClass.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenAPropertyHasTheFieldNameAttributeMustSerializeTheValueWithThisName;
+begin
+  var MyClass := TClassWithFieldNameAttribute.Create;
+  MyClass.MyProperty := 123;
+  var Value := FSerializer.Serialize(TValue.From(MyClass));
+
+  Assert.AreEqual('{"MyField":123}', Value);
+
+  MyClass.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeABooleanPropertyMustLoadThePropetyAsExpected;

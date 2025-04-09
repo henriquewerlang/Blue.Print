@@ -46,6 +46,7 @@ type
     function GetContentType: String;
     function GetEnumerationNames(const TypeInfo: PTypeInfo): TArray<String>;
     function GetEnumerationValue(const TypeInfo: PTypeInfo; const Value: String): TValue;
+    function GetFieldName(const RttiObject: TRttiObject; const DefaultValue: String): String;
   public
     constructor Create;
 
@@ -55,6 +56,7 @@ type
   TBluePrintJsonSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
   private
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+    function GetFieldName(const RttiObject: TRttiNamedObject): String;
     function GetJSONValue(const JSONValue: TJSONValue): String; inline;
     function Serialize(const Value: TValue): String;
   protected
@@ -232,6 +234,19 @@ begin
   Result := TValue.FromOrdinal(TypeInfo, CurrentValue);
 end;
 
+function TBluePrintSerializer.GetFieldName(const RttiObject: TRttiObject; const DefaultValue: String): String;
+var
+  FieldName: FieldNameAttribute;
+
+begin
+  FieldName := RttiObject.GetAttribute<FieldNameAttribute>;
+
+  if Assigned(FieldName) then
+    Result := FieldName.Name
+  else
+    Result := DefaultValue;
+end;
+
 function TBluePrintSerializer.Serialize(const Value: TValue): String;
 begin
   FContentType := CONTENTTYPE_TEXT_PLAIN;
@@ -331,7 +346,7 @@ var
 begin
   for &Property in RttiType.GetProperties do
     if (&Property.Visibility = mvPublished) and System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).{$IFDEF DCC}PropInfo{$ELSE}PropertyTypeInfo{$ENDIF}) then
-      JSONObject.AddPair(&Property.Name, SerializeType(&Property.PropertyType, &Property.GetValue(Instance)));
+      JSONObject.AddPair(GetFieldName(&Property), SerializeType(&Property.PropertyType, &Property.GetValue(Instance)));
 end;
 
 function TBluePrintJsonSerializer.SerializeType(const RttiType: TRttiType; const Value: TValue): TJSONValue;
@@ -422,10 +437,22 @@ var
   Key: {$IFDEF PAS2JS}String{$ELSE}TJSONPair{$ENDIF};
   Prop: TRttiProperty;
 
+  function FindProperty: TRttiProperty;
+  var
+    Prop: TRttiProperty;
+
+  begin
+    Result := nil;
+
+    for Prop in RttiType.GetProperties do
+      if GetFieldName(Prop) = Key{$IFDEF DCC}.JsonString.Value{$ENDIF} then
+        Exit(Prop);
+  end;
+
 begin
   for Key in {$IFDEF PAS2JS}TJSObject.Keys{$ENDIF}(JSONObject) do
   begin
-    Prop := RttiType.GetProperty(Key{$IFDEF DCC}.JsonString.Value{$ENDIF});
+    Prop := FindProperty;
 
     if Assigned(Prop) then
       Prop.SetValue(Instance, DeserializeType(Prop.PropertyType, {$IFDEF PAS2JS}JSONObject[Key]{$ELSE}Key.JsonValue{$ENDIF}));
@@ -491,6 +518,11 @@ begin
 
     else Result := TValue.Empty;
   end;
+end;
+
+function TBluePrintJsonSerializer.GetFieldName(const RttiObject: TRttiNamedObject): String;
+begin
+  Result := inherited GetFieldName(RttiObject, RttiObject.Name);
 end;
 
 function TBluePrintJsonSerializer.GetJSONValue(const JSONValue: TJSONValue): String;
@@ -813,14 +845,7 @@ end;
 
 function TBluePrintXMLSerializer.GetNodeName(const RttiMember: TRttiMember): String;
 begin
-{$IFDEF DCC}
-  var NodeNameAttribute := RttiMember.GetAttribute<NodeNameAttribute>;
-
-  if Assigned(NodeNameAttribute) then
-    Result := NodeNameAttribute.NodeName
-  else
-    Result := RttiMember.Name;
-{$ENDIF}
+  Result := inherited GetFieldName(RttiMember, RttiMember.Name);
 end;
 
 function TBluePrintXMLSerializer.LoadAttributes(const RttiObject: TRttiObject; const Node: IXMLNode): IXMLNode;
@@ -860,16 +885,8 @@ var
   XMLDocument: IXMLDocument;
 
   function GetDocumentName: String;
-  var
-    NodeName: NodeNameAttribute;
-
   begin
-    NodeName := ValueType.GetAttribute<NodeNameAttribute>;
-
-    if Assigned(NodeName) then
-      Result := NodeName.NodeName
-    else
-      Result := 'Document';
+    Result := GetFieldName(ValueType, 'Document');
   end;
 {$ENDIF}
 
