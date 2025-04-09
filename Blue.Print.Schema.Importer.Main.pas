@@ -2,7 +2,7 @@
 
 interface
 
-uses Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Controls, System.Classes;
+uses Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Controls, System.Classes, Blue.Print.Schema.Importer;
 
 type
   TMain = class(TForm)
@@ -10,7 +10,7 @@ type
     lblSchemaFile: TLabel;
     SelectSchemaFile: TButton;
     OpenSchemaFile: TFileOpenDialog;
-    GenerateFiles: TButton;
+    GenerateXML: TButton;
     lblConfigurationFile: TLabel;
     ConfigurationFile: TEdit;
     SelectConfigurationFile: TButton;
@@ -19,10 +19,14 @@ type
     OutputFolder: TEdit;
     SelectOutputFolder: TButton;
     OpenOutputFolder: TFileOpenDialog;
-    procedure GenerateFilesClick(Sender: TObject);
+    GenerateOpenAPI: TButton;
+    procedure GenerateXMLClick(Sender: TObject);
     procedure SelectSchemaFileClick(Sender: TObject);
     procedure SelectConfigurationFileClick(Sender: TObject);
     procedure SelectOutputFolderClick(Sender: TObject);
+    procedure GenerateOpenAPIClick(Sender: TObject);
+  private
+    procedure GenerateFile(const Importer: TSchemaImporter);
   end;
 
   procedure ImportCommandLine;
@@ -34,7 +38,7 @@ implementation
 
 {$R *.dfm}
 
-uses System.SysUtils, Blue.Print.Schema.Importer;
+uses System.SysUtils;
 
 procedure ImportCommandLine;
 begin
@@ -57,10 +61,8 @@ end;
 
 { TMain }
 
-procedure TMain.GenerateFilesClick(Sender: TObject);
+procedure TMain.GenerateFile(const Importer: TSchemaImporter);
 begin
-  var Importer := TXSDImporter.Create;
-
   Importer.LoadConfig(ConfigurationFile.Text);
 
   if SchemaFileName.Text <> EmptyStr then
@@ -72,6 +74,16 @@ begin
   Importer.Import;
 
   Importer.Free;
+end;
+
+procedure TMain.GenerateOpenAPIClick(Sender: TObject);
+begin
+  GenerateFile(TOpenAPIImport30.Create);
+end;
+
+procedure TMain.GenerateXMLClick(Sender: TObject);
+begin
+  GenerateFile(TXSDImporter.Create);
 end;
 
 procedure TMain.SelectConfigurationFileClick(Sender: TObject);

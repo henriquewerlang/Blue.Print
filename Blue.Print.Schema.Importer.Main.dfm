@@ -50,15 +50,15 @@ object Main: TMain
     TabOrder = 3
     OnClick = SelectSchemaFileClick
   end
-  object GenerateFiles: TButton
+  object GenerateXML: TButton
     Left = 8
     Top = 158
-    Width = 75
+    Width = 98
     Height = 25
-    Caption = 'Generate'
+    Caption = 'Generate XML'
     Default = True
     TabOrder = 6
-    OnClick = GenerateFilesClick
+    OnClick = GenerateXMLClick
   end
   object ConfigurationFile: TEdit
     Left = 8
@@ -93,6 +93,16 @@ object Main: TMain
     Caption = '...'
     TabOrder = 5
     OnClick = SelectOutputFolderClick
+  end
+  object GenerateOpenAPI: TButton
+    Left = 112
+    Top = 158
+    Width = 121
+    Height = 25
+    Caption = 'Generate Open API'
+    Default = True
+    TabOrder = 7
+    OnClick = GenerateOpenAPIClick
   end
   object OpenSchemaFile: TFileOpenDialog
     FavoriteLinks = <>
