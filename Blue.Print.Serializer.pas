@@ -23,14 +23,6 @@ type
     constructor Create;
   end;
 
-  TMap<K, V> = class(TObjectDictionary<K, V>)
-  private
-    function GetMapItem(const Key: K): V;
-    procedure SetMapItem(const Key: K; const Value: V);
-  public
-    property Map[const Key: K]: V read GetMapItem write SetMapItem; default;
-  end;
-
   TBluePrintSerializer = class(TInterfacedObject)
   private
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
@@ -498,10 +490,11 @@ begin
       begin
         Result := TValue.From(CreateObject(RttiType.AsInstance));
 
-        if RttiType.IsMap then
-          DeserializeMap(RttiType.AsInstance, Result.AsObject, TJSONObject(JSONValue))
-        else
-          DeserializeProperties(RttiType, Result.AsObject, TJSONObject(JSONValue));
+        if JSONValue is TJSONObject then
+          if RttiType.IsMap then
+            DeserializeMap(RttiType.AsInstance, Result.AsObject, TJSONObject(JSONValue))
+          else
+            DeserializeProperties(RttiType, Result.AsObject, TJSONObject(JSONValue));
       end;
 
     tkArray, tkDynArray: Result := DeserializeArray(RttiType, JSONValue as TJSONArray);
@@ -513,7 +506,7 @@ begin
     begin
       TValue.Make(nil, RttiType.Handle, Result);
 
-      DeserializeFields(RttiType, Result, TJSONObject(JSONValue));
+      DeserializeFields(RttiType, Result, JSONValue as TJSONObject);
     end;
 
     else Result := TValue.Empty;
@@ -1061,18 +1054,6 @@ begin
 {$ELSE}
   DynArraySetLength(PPointer(GetReferenceToRawData)^, TypeInfo, 1, @Value);
 {$ENDIF}
-end;
-
-{ TMap<K, V> }
-
-function TMap<K, V>.GetMapItem(const Key: K): V;
-begin
-  Result := inherited Items[Key];
-end;
-
-procedure TMap<K, V>.SetMapItem(const Key: K; const Value: V);
-begin
-  AddOrSetValue(Key, Value);
 end;
 
 end.

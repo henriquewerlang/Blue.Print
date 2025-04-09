@@ -104,6 +104,8 @@ type
     procedure WhenAPropertyHasTheFieldNameAttributeMustSerializeTheValueWithThisName;
     [Test]
     procedure WhenAPropertyHasTheFieldNameAttributeMustDeserializeTheValueAsExpected;
+    [Test]
+    procedure WhenDeserializingAnObjectAndTheJSONValueIsNotAJSONObjectCanRaiseAnyError;
   end;
 
   [TestFixture]
@@ -777,6 +779,17 @@ begin
   Assert.AreEqual(123, Value.MyField2);
   Assert.AreEqual(123.456, Value.MyField3);
   Assert.AreEqual(TMyEnum.MyValue2, Value.MyField4);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializingAnObjectAndTheJSONValueIsNotAJSONObjectCanRaiseAnyError;
+begin
+  Assert.WillNotRaise(
+    procedure
+    begin
+      var Value := FSerializer.Deserialize('{"Error":"Error value","MyObject":true}', TypeInfo(TMyObjectParent)).AsObject;
+
+      Value.Free;
+    end);
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenSerializeABooleanPropertyMustGenerateTheJSONAsExpected;

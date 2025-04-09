@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Rtti, System.Classes, System.SysUtils, System.TypInfo, {$IFDEF PAS2JS}JSApi.JS, BrowserAPI.Web, BrowserApi.WebOrWorker{$ELSE}Web.HTTPApp, System.Net.Mime, System.NetEncoding{$ENDIF};
+uses System.Rtti, System.Classes, System.SysUtils, System.TypInfo, System.Generics.Collections, {$IFDEF PAS2JS}JSApi.JS, BrowserAPI.Web, BrowserApi.WebOrWorker{$ELSE}Web.HTTPApp, System.Net.Mime, System.NetEncoding{$ENDIF};
 
 {$SCOPEDENUMS ON}
 
@@ -300,6 +300,14 @@ type
     SOAPBody: TSOAPBody;
 
     constructor Create(const Parameter: TRttiParameter; const Body: TValue);
+  end;
+
+  TMap<K, V> = class(TObjectDictionary<K, V>)
+  private
+    function GetMapItem(const Key: K): V;
+    procedure SetMapItem(const Key: K; const Value: V);
+  public
+    property Map[const Key: K]: V read GetMapItem write SetMapItem; default;
   end;
 
   TRttiTypeHelper = class helper for TRttiType
@@ -639,7 +647,7 @@ end;
 
 function TRttiTypeHelper.IsMap: Boolean;
 begin
-  Result := Self.QualifiedName.StartsWith('Blue.Print.Serializer.TMap<');
+  Result := Self.QualifiedName.StartsWith('Blue.Print.Types.TMap<');
 end;
 
 { TFormatAttribute }
@@ -658,6 +666,18 @@ begin
   inherited Create;
 
   FName := Name;
+end;
+
+{ TMap<K, V> }
+
+function TMap<K, V>.GetMapItem(const Key: K): V;
+begin
+  Result := inherited Items[Key];
+end;
+
+procedure TMap<K, V>.SetMapItem(const Key: K; const Value: V);
+begin
+  AddOrSetValue(Key, Value);
 end;
 
 end.
