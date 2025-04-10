@@ -10,7 +10,7 @@ type
     lblSchemaFile: TLabel;
     SelectSchemaFile: TButton;
     OpenSchemaFile: TFileOpenDialog;
-    GenerateXML: TButton;
+    ImportXSD: TButton;
     lblConfigurationFile: TLabel;
     ConfigurationFile: TEdit;
     SelectConfigurationFile: TButton;
@@ -19,12 +19,14 @@ type
     OutputFolder: TEdit;
     SelectOutputFolder: TButton;
     OpenOutputFolder: TFileOpenDialog;
-    GenerateOpenAPI: TButton;
-    procedure GenerateXMLClick(Sender: TObject);
+    ImportOpenAPI30: TButton;
+    ImportJSONSchema: TButton;
+    procedure ImportXSDClick(Sender: TObject);
     procedure SelectSchemaFileClick(Sender: TObject);
     procedure SelectConfigurationFileClick(Sender: TObject);
     procedure SelectOutputFolderClick(Sender: TObject);
-    procedure GenerateOpenAPIClick(Sender: TObject);
+    procedure ImportOpenAPI30Click(Sender: TObject);
+    procedure ImportJSONSchemaClick(Sender: TObject);
   private
     procedure GenerateFile(const Importer: TSchemaImporter);
   end;
@@ -76,14 +78,19 @@ begin
   Importer.Free;
 end;
 
-procedure TMain.GenerateOpenAPIClick(Sender: TObject);
+procedure TMain.ImportOpenAPI30Click(Sender: TObject);
 begin
   GenerateFile(TOpenAPIImport30.Create);
 end;
 
-procedure TMain.GenerateXMLClick(Sender: TObject);
+procedure TMain.ImportXSDClick(Sender: TObject);
 begin
   GenerateFile(TXSDImporter.Create);
+end;
+
+procedure TMain.ImportJSONSchemaClick(Sender: TObject);
+begin
+  GenerateFile(TJSONSchemaImport.Create);
 end;
 
 procedure TMain.SelectConfigurationFileClick(Sender: TObject);

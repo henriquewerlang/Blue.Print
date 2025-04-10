@@ -50,15 +50,15 @@ object Main: TMain
     TabOrder = 3
     OnClick = SelectSchemaFileClick
   end
-  object GenerateXML: TButton
+  object ImportXSD: TButton
     Left = 8
     Top = 158
-    Width = 98
+    Width = 73
     Height = 25
-    Caption = 'Generate XML'
+    Caption = 'Import XSD'
     Default = True
     TabOrder = 6
-    OnClick = GenerateXMLClick
+    OnClick = ImportXSDClick
   end
   object ConfigurationFile: TEdit
     Left = 8
@@ -94,15 +94,25 @@ object Main: TMain
     TabOrder = 5
     OnClick = SelectOutputFolderClick
   end
-  object GenerateOpenAPI: TButton
-    Left = 112
+  object ImportOpenAPI30: TButton
+    Left = 214
     Top = 158
     Width = 121
     Height = 25
-    Caption = 'Generate Open API'
+    Caption = 'Import Open API 3.0'
     Default = True
     TabOrder = 7
-    OnClick = GenerateOpenAPIClick
+    OnClick = ImportOpenAPI30Click
+  end
+  object ImportJSONSchema: TButton
+    Left = 87
+    Top = 158
+    Width = 121
+    Height = 25
+    Caption = 'Import JSON Schema'
+    Default = True
+    TabOrder = 8
+    OnClick = ImportJSONSchemaClick
   end
   object OpenSchemaFile: TFileOpenDialog
     FavoriteLinks = <>

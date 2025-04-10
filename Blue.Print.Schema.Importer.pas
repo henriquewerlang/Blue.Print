@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Generics.Collections, Xml.XMLSchema, Blue.Print.Open.API.Schema.v30;
+uses System.Generics.Collections, Xml.XMLSchema, Blue.Print.JSON.Schema, Blue.Print.Types;
 
 type
   TClassDefinition = class;
@@ -279,16 +279,28 @@ type
     destructor Destroy; override;
   end;
 
+  TJSONSchemaImport = class(TSchemaImporter)
+  private
+    FJSONSchema: TSchema;
+
+    function FindReference(const Reference: String): TSchema;
+    function GenerateClassDefinition(const UnitDeclaration: TUnit; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
+
+    procedure GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
+  protected
+    procedure GenerateUnitDefinition(const UnitConfiguration: TUnitConfiguration); override;
+  end;
+
   TOpenAPIImport30 = class(TSchemaImporter)
   private
-    function GenerateClassDefinition(const UnitDeclaration: TUnit; const ClassTypeName: String; const Schema: TSchemaObject): TClassDefinition;
+    function GenerateClassDefinition(const UnitDeclaration: TUnit; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
   protected
     procedure GenerateUnitDefinition(const UnitConfiguration: TUnitConfiguration); override;
   end;
 
 implementation
 
-uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, XML.xmldom, Blue.Print.Serializer, Blue.Print.Types;
+uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, XML.xmldom, Blue.Print.Serializer;
 
 { TSchemaImporter }
 
@@ -878,10 +890,10 @@ var
 
   function GetClassName(const ClassDefinition: TClassDefinition): String;
   begin
-    Result := ClassDefinition.Name;
+    Result := FormatName(ClassDefinition.Name);
 
     if Assigned(ClassDefinition.ParentClass) then
-      Result := 'T' + FormatName(Result);
+      Result := 'T' + Result;
   end;
 
   function GetPropertyType(const &Property: TPropertyDefinition): TTypeDefinition;
@@ -912,13 +924,13 @@ var
 
   function GetPropertyFieldName(const &Property: TPropertyDefinition): String;
   begin
-    Result := 'F' + &Property.Name;
+    Result := 'F' + FormatName(&Property.Name);
   end;
 
   function GetPropertyGetFunction(const &Property: TPropertyDefinition): String;
   begin
     if &Property.NeedGetFunction then
-      Result := 'Get' + &Property.Name
+      Result := 'Get' + FormatName(&Property.Name)
     else
       Result := GetPropertyFieldName(&Property);
   end;
@@ -943,7 +955,7 @@ var
 
   function GetAddFuntionName(const &Property: TPropertyDefinition): String;
   begin
-    Result := 'Add' + &Property.Name;
+    Result := 'Add' + FormatName(&Property.Name);
   end;
 
   function HasOptionalProperty(const ClassDefinition: TClassDefinition): Boolean;
@@ -1524,57 +1536,129 @@ end;
 
 { TOpenAPIImport30 }
 
-function TOpenAPIImport30.GenerateClassDefinition(const UnitDeclaration: TUnit; const ClassTypeName: String; const Schema: TSchemaObject): TClassDefinition;
+function TOpenAPIImport30.GenerateClassDefinition(const UnitDeclaration: TUnit; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
+//
+//  function FindReference(const ReferenceObject: TReferenceObject): String;
+//  begin
+//    var References := ReferenceObject.ref.Split(['/']);
+//
+//    Result := References[High(References)];
+//  end;
+//
+//  function GenerateTypeDefinition(const Schema: TSchemaObject; const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
+//  begin
+//    if not Schema.ref.IsEmpty then
+//      Result := TTypeDelayed.Create(Self, FindReference(Schema), ParentClass)
+//    else
+//      case Schema.&type of
+//        TPropertyType.&array: Result := GenerateTypeDefinition(Schema.items, TypeName, ParentClass);
+//        TPropertyType.boolean: Result := BooleanType;
+//        TPropertyType.null: Result := nil;
+//        TPropertyType.integer: Result := IntegerType;
+//        TPropertyType.number: Result := DoubleType;
+//        TPropertyType.&object: Result := GenerateClassDefinition(UnitDeclaration, TypeName, Schema);
+//        TPropertyType.&string: Result := StringType;
+//        else Result := nil;
+//      end;
+//  end;
 
-  function FindReference(const ReferenceObject: TReferenceObject): String;
-  begin
-    var References := ReferenceObject.ref.Split(['/']);
+begin
+//  Result := TClassDefinition.Create(UnitDeclaration);
+//  Result.Name := ClassTypeName;
+//
+//  for var Pair in Schema.properties do
+//  begin
+//    var Prop := TPropertyDefinition.Create;
+//    var SchemaType := Pair.Value;
+//    Prop.IsArray := SchemaType.&type = TPropertyType.&array;
+//    Prop.Name := Pair.Key;
+//    Prop.TypeName := GenerateTypeDefinition(Pair.Value, Pair.Key, Result);
+//
+//    Result.Properties.Add(Prop);
+//  end;
+end;
 
-    Result := References[High(References)];
-  end;
+procedure TOpenAPIImport30.GenerateUnitDefinition(const UnitConfiguration: TUnitConfiguration);
+begin
+//  var Serializer := TBluePrintJsonSerializer.Create as IBluePrintSerializer;
+//
+//  var OpenAPISchema := Serializer.Deserialize(TFile.ReadAllText(Format('%s\%s', [Configuration.SchemaFolder, UnitConfiguration.FileName])), TypeInfo(TOpenAPIObject)).AsType<TOpenAPIObject>;
+//  var UnitDeclaration := CreateUnit(UnitConfiguration);
+//
+//  for var ComponentSchema in OpenAPISchema.components.schemas do
+//    UnitDeclaration.Classes.Add(GenerateClassDefinition(UnitDeclaration, ComponentSchema.Key, ComponentSchema.Value));
+end;
 
-  function GenerateTypeDefinition(const Schema: TSchemaObject; const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
-  begin
-    if not Schema.ref.IsEmpty then
-      Result := TTypeDelayed.Create(Self, FindReference(Schema), ParentClass)
-    else
-      case Schema.&type of
-        TPropertyType.&array: Result := GenerateTypeDefinition(Schema.items, TypeName, ParentClass);
-        TPropertyType.boolean: Result := BooleanType;
-        TPropertyType.null: Result := nil;
-        TPropertyType.integer: Result := IntegerType;
-        TPropertyType.number: Result := DoubleType;
-        TPropertyType.&object: Result := GenerateClassDefinition(UnitDeclaration, TypeName, Schema);
-        TPropertyType.&string: Result := StringType;
-        else Result := nil;
-      end;
-  end;
+{ TJSONSchemaImport }
 
+function TJSONSchemaImport.FindReference(const Reference: String): TSchema;
+begin
+  var References := Reference.Split(['/']);
+
+  var ReferenceName := References[High(References)];
+
+  Result := FJSONSchema.defs[ReferenceName];
+end;
+
+function TJSONSchemaImport.GenerateClassDefinition(const UnitDeclaration: TUnit; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
 begin
   Result := TClassDefinition.Create(UnitDeclaration);
   Result.Name := ClassTypeName;
 
-  for var Pair in Schema.properties do
+  GenerateProperties(Result, Schema);
+
+  UnitDeclaration.Classes.Add(Result);
+end;
+
+procedure TJSONSchemaImport.GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
+
+  function GenerateTypeDefinition(const Schema: TSchema; const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
+  begin
+    Result := FindType(TypeName, ParentClass);
+
+    if not Assigned(Result) then
+      if not Schema.ref.IsEmpty then
+        Result := GenerateTypeDefinition(FindReference(Schema.ref), TypeName, nil)
+      else
+        case Schema.&type of
+          TPropertyType.&array: Result := GenerateTypeDefinition(Schema.items, TypeName, ParentClass);
+          TPropertyType.boolean: Result := BooleanType;
+          TPropertyType.null: Result := nil;
+          TPropertyType.integer: Result := IntegerType;
+          TPropertyType.number: Result := DoubleType;
+          TPropertyType.&object: Result := GenerateClassDefinition(ClassDefinition.UnitDefinition, TypeName, Schema);
+          TPropertyType.&string: Result := StringType;
+          else Result := TUndefinedType.Create(TypeName);
+        end;
+  end;
+
+begin
+  for var Pair in Schema.Properties do
   begin
     var Prop := TPropertyDefinition.Create;
     var SchemaType := Pair.Value;
     Prop.IsArray := SchemaType.&type = TPropertyType.&array;
     Prop.Name := Pair.Key;
-    Prop.TypeName := GenerateTypeDefinition(Pair.Value, Pair.Key, Result);
+    Prop.TypeName := GenerateTypeDefinition(SchemaType, Prop.Name, ClassDefinition);
 
-    Result.Properties.Add(Prop);
+    ClassDefinition.Properties.Add(Prop);
   end;
 end;
 
-procedure TOpenAPIImport30.GenerateUnitDefinition(const UnitConfiguration: TUnitConfiguration);
+procedure TJSONSchemaImport.GenerateUnitDefinition(const UnitConfiguration: TUnitConfiguration);
 begin
   var Serializer := TBluePrintJsonSerializer.Create as IBluePrintSerializer;
 
-  var OpenAPISchema := Serializer.Deserialize(TFile.ReadAllText(Format('%s\%s', [Configuration.SchemaFolder, UnitConfiguration.FileName])), TypeInfo(TOpenAPIObject)).AsType<TOpenAPIObject>;
+  FJSONSchema := Serializer.Deserialize(TFile.ReadAllText(Format('%s\%s', [Configuration.SchemaFolder, UnitConfiguration.FileName])), TypeInfo(TSchema)).AsType<TSchema>;
   var UnitDeclaration := CreateUnit(UnitConfiguration);
+  var UnitClass := TClassDefinition.Create(UnitDeclaration);
+  UnitClass.Name := UnitConfiguration.UnitClassName;
 
-  for var ComponentSchema in OpenAPISchema.components.schemas do
-    UnitDeclaration.Classes.Add(GenerateClassDefinition(UnitDeclaration, ComponentSchema.Key, ComponentSchema.Value));
+  UnitDeclaration.Classes.Add(UnitClass);
+
+  GenerateProperties(UnitClass, FJSONSchema);
+
+  FJSONSchema.Free;
 end;
 
 end.

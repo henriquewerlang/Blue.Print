@@ -3,524 +3,450 @@
 interface
 
 {$M+}
-{$SCOPEDENUMS ON}
 
-uses System.Generics.Collections, Blue.Print.Types, Blue.Print.Serializer;
+// File generated from Open API 3.0.json;
+
+uses Blue.Print.Types;
 
 type
-  TFormat = (Undefined, int32, int64, float, double, byte, binary, date, datetime, password);
-  TParameterLocation = (Undefined, cookie, header, path, query);
-  TPropertyType = (Undefined, &array, boolean, null, integer, number, &object, &string);
-  TSecurityType = (Undefined, apiKey, http, oauth2, openIdConnect);
-  TStyle = (Undefined, matrix, &label, simple, form, spaceDelimited, pipeDelimited, deepObject);
+  // Forward class declaration
+  TOpenAPI30 = class;
+  License = class;
+  Contact = class;
+  Info = class;
+  Variables = class;
+  Servers = class;
+  Security = class;
+  ExternalDocs = class;
+  Tags = class;
+  RequestBodies = class;
+  Responses = class;
+  Callbacks = class;
+  SecuritySchemes = class;
+  Links = class;
+  Schemas = class;
+  Parameters = class;
+  Headers = class;
+  Examples = class;
+  Components = class;
+  Paths = class;
 
-  TExampleObject = class;
-  THeaderObject = class;
-  TPathItemObject = class;
-  TSchemaObject = class;
-
-  TOAuthFlowObject = class
+  TOpenAPI30 = class
   private
-    FauthorizationUrl: String;
-    FtokenUrl: String;
-    FrefreshUrl: String;
-    Fscopes: TMap<String, String>;
+    FOpenapi: System.String;
+    FInfo: Info;
+    FServers: TArray<Servers>;
+    FSecurity: TArray<Security>;
+    FTags: TArray<Tags>;
+    FComponents: Components;
+    FExternalDocs: ExternalDocs;
+    FPaths: Paths;
+    function GetInfo: Info;
+    function GetComponents: Components;
+    function GetExternalDocs: ExternalDocs;
+    function GetPaths: Paths;
+  public
+    destructor Destroy; override;
+
+    function AddServers: Servers;
+    function AddSecurity: Security;
+    function AddTags: Tags;
   published
-    property authorizationUrl: String read FauthorizationUrl write FauthorizationUrl;
-    property tokenUrl: String read FtokenUrl write FtokenUrl;
-    property refreshUrl: String read FrefreshUrl write FrefreshUrl;
-    property scopes: TMap<String, String> read Fscopes write Fscopes;
+    property openapi: System.String read FOpenapi write FOpenapi;
+    property info: Info read GetInfo write FInfo;
+    property servers: TArray<Servers> read FServers write FServers;
+    property security: TArray<Security> read FSecurity write FSecurity;
+    property tags: TArray<Tags> read FTags write FTags;
+    property components: Components read GetComponents write FComponents;
+    property externalDocs: ExternalDocs read GetExternalDocs write FExternalDocs;
+    property paths: Paths read GetPaths write FPaths;
   end;
 
-  TOAuthFlowsObject = class
+  License = class
   private
-    Fimplicit: TOAuthFlowObject;
-    Fpassword: TOAuthFlowObject;
-    FclientCredentials: TOAuthFlowObject;
-    FauthorizationCode: TOAuthFlowObject;
+    FUrl: System.String;
+    FName: System.String;
   published
-    property implicit: TOAuthFlowObject read Fimplicit write Fimplicit;
-    property password: TOAuthFlowObject read Fpassword write Fpassword;
-    property clientCredentials: TOAuthFlowObject read FclientCredentials write FclientCredentials;
-    property authorizationCode: TOAuthFlowObject read FauthorizationCode write FauthorizationCode;
+    property url: System.String read FUrl write FUrl;
+    property name: System.String read FName write FName;
   end;
 
-  TSecurityRequirementObject = class
+  Contact = class
   private
-    FRequiriments: TMap<String, String>;
+    FEmail: System.String;
+    FName: System.String;
+    FUrl: System.String;
   published
-    property Requiriments: TMap<String, String> read FRequiriments write FRequiriments;
+    property email: System.String read FEmail write FEmail;
+    property name: System.String read FName write FName;
+    property url: System.String read FUrl write FUrl;
   end;
 
-  TDiscriminatorObject = class
+  Info = class
   private
-    FpropertyName: String;
-    Fmapping: TMap<String, String>;
-  published
-    property propertyName: String read FpropertyName write FpropertyName;
-    property mapping: TMap<String, String> read Fmapping write Fmapping;
-  end;
-
-  TXMLObject = class
-  private
-    Fname: String;
-    Fnamespace: String;
-    Fprefix: String;
-    Fattribute: Boolean;
-    Fwrapped: Boolean;
-  published
-    property name: String read Fname write Fname;
-    property namespace: String read Fnamespace write Fnamespace;
-    property prefix: String read Fprefix write Fprefix;
-    property attribute: Boolean read Fattribute write Fattribute;
-    property wrapped: Boolean read Fwrapped write Fwrapped;
-  end;
-
-  TServerVariableObject = class
-  private
-    Fenum: TArray<String>;
-    Fdefault: String;
-    Fdescription: String;
-  published
-    property enum: TArray<String> read Fenum write Fenum;
-    property &default: String read Fdefault write Fdefault;
-    property description: String read Fdescription write Fdescription;
-  end;
-
-  TServerObject = class
-  private
-    Furl: String;
-    Fdescription: String;
-    Fvariables: TMap<String, TServerVariableObject>;
-  published
-    property url: String read Furl write Furl;
-    property description: String read Fdescription write Fdescription;
-    property variables: TMap<String, TServerVariableObject> read Fvariables write Fvariables;
-  end;
-
-  TContactObject = class
-  private
-    Fname: String;
-    Furl: String;
-    Femail: String;
-  published
-    property name: String read Fname write Fname;
-    property url: String read Furl write Furl;
-    property email: String read Femail write Femail;
-  end;
-
-  TLicenseObject = class
-  private
-    Fname: String;
-    Furl: String;
-  published
-    property name: String read Fname write Fname;
-    property url: String read Furl write Furl;
-  end;
-
-  TInfoObject = class
-  private
-    Ftitle: String;
-    Fdescription: String;
-    FtermsOfService: String;
-    Fcontact: TContactObject;
-    Flicense: TLicenseObject;
-    Fversion: String;
+    FVersion: System.String;
+    FTitle: System.String;
+    FLicense: License;
+    FDescription: System.String;
+    FTermsOfService: System.String;
+    FContact: Contact;
+    function GetLicense: License;
+    function GetContact: Contact;
   public
     destructor Destroy; override;
   published
-    property title: String read Ftitle write Ftitle;
-    property description: String read Fdescription write Fdescription;
-    property termsOfService: String read FtermsOfService write FtermsOfService;
-    property contact: TContactObject read Fcontact write Fcontact;
-    property license: TLicenseObject read Flicense write Flicense;
-    property version: String read Fversion write Fversion;
+    property version: System.String read FVersion write FVersion;
+    property title: System.String read FTitle write FTitle;
+    property license: License read GetLicense write FLicense;
+    property description: System.String read FDescription write FDescription;
+    property termsOfService: System.String read FTermsOfService write FTermsOfService;
+    property contact: Contact read GetContact write FContact;
   end;
 
-  TExternalDocumentationObject = class
+  Variables = class
+  end;
+
+  Servers = class
   private
-    Fdescription: String;
-    Furl: String;
+    FVariables: Variables;
+    FDescription: System.String;
+    FUrl: System.String;
+    function GetVariables: Variables;
+  public
+    destructor Destroy; override;
   published
-    property description: String read Fdescription write Fdescription;
-    property url: String read Furl write Furl;
+    property variables: Variables read GetVariables write FVariables;
+    property description: System.String read FDescription write FDescription;
+    property url: System.String read FUrl write FUrl;
   end;
 
-  TEncodingObject = class
+  Security = class
+  end;
+
+  ExternalDocs = class
   private
-    FcontentType: String;
-    Fheaders: TMap<String, THeaderObject>;
-    Fstyle: TStyle;
-    Fexplode: Boolean;
-    FallowReserved: Boolean;
+    FDescription: System.String;
+    FUrl: System.String;
   published
-    property contentType: String read FcontentType write FcontentType;
-    property headers: TMap<String, THeaderObject> read Fheaders write Fheaders;
-    property style: TStyle read Fstyle write Fstyle;
-    property explode: Boolean read Fexplode write Fexplode;
-    property allowReserved: Boolean read FallowReserved write FallowReserved;
+    property description: System.String read FDescription write FDescription;
+    property url: System.String read FUrl write FUrl;
   end;
 
-  TMediaTypeObject = class
+  Tags = class
   private
-    Fschema: TSchemaObject;
-    Fexamples: TMap<String, TExampleObject>;
-    Fexample: String;
-    Fencoding: TMap<String, TEncodingObject>;
+    FName: System.String;
+    FDescription: System.String;
+    FExternalDocs: ExternalDocs;
+    function GetExternalDocs: ExternalDocs;
+  public
+    destructor Destroy; override;
   published
-    property schema: TSchemaObject read Fschema write Fschema;
-    property example: String read Fexample write Fexample;
-    property examples: TMap<String, TExampleObject> read Fexamples write Fexamples;
-    property encoding: TMap<String, TEncodingObject> read Fencoding write Fencoding;
+    property name: System.String read FName write FName;
+    property description: System.String read FDescription write FDescription;
+    property externalDocs: ExternalDocs read GetExternalDocs write FExternalDocs;
   end;
 
-  TReferenceObject = class
+  RequestBodies = class
+  end;
+
+  Responses = class
+  end;
+
+  Callbacks = class
+  end;
+
+  SecuritySchemes = class
+  end;
+
+  Links = class
+  end;
+
+  Schemas = class
+  end;
+
+  Parameters = class
+  end;
+
+  Headers = class
+  end;
+
+  Examples = class
+  end;
+
+  Components = class
   private
-    Fref: String;
+    FRequestBodies: RequestBodies;
+    FResponses: Responses;
+    FCallbacks: Callbacks;
+    FSecuritySchemes: SecuritySchemes;
+    FLinks: Links;
+    FSchemas: Schemas;
+    FParameters: Parameters;
+    FHeaders: Headers;
+    FExamples: Examples;
+    function GetRequestBodies: RequestBodies;
+    function GetResponses: Responses;
+    function GetCallbacks: Callbacks;
+    function GetSecuritySchemes: SecuritySchemes;
+    function GetLinks: Links;
+    function GetSchemas: Schemas;
+    function GetParameters: Parameters;
+    function GetHeaders: Headers;
+    function GetExamples: Examples;
+  public
+    destructor Destroy; override;
   published
-    [FieldName('$ref')]
-    property ref: String read Fref write Fref;
+    property requestBodies: RequestBodies read GetRequestBodies write FRequestBodies;
+    property responses: Responses read GetResponses write FResponses;
+    property callbacks: Callbacks read GetCallbacks write FCallbacks;
+    property securitySchemes: SecuritySchemes read GetSecuritySchemes write FSecuritySchemes;
+    property links: Links read GetLinks write FLinks;
+    property schemas: Schemas read GetSchemas write FSchemas;
+    property parameters: Parameters read GetParameters write FParameters;
+    property headers: Headers read GetHeaders write FHeaders;
+    property examples: Examples read GetExamples write FExamples;
   end;
 
-  TSchemaObject = class(TReferenceObject)
-  private
-    Fnullable: Boolean;
-    Fdiscriminator: TDiscriminatorObject;
-    FreadOnly: Boolean;
-    FwriteOnly: Boolean;
-    Fxml: TXMLObject;
-    FexternalDocs: TExternalDocumentationObject;
-    Fexample: String;
-    Fdeprecated: Boolean;
-    Ftitle: String;
-    Ftype: TPropertyType;
-    FmultipleOf: Double;
-    Fmaximum: Double;
-    FexclusiveMaximum: Double;
-    Fminimum: Double;
-    FexclusiveMinimum: Double;
-    FmaxLength: Integer;
-    FminLength: Integer;
-    Fpattern: String;
-    FmaxItems: Integer;
-    FminItems: Integer;
-    FuniqueItems: Boolean;
-    FmaxProperties: Integer;
-    FminProperties: Integer;
-    Frequired: TArray<String>;
-    Fenum: TArray<String>;
-    FallOf: TArray<TSchemaObject>;
-    FoneOf: TArray<TSchemaObject>;
-    FanyOf: Tarray<TSchemaObject>;
-    Fnot: TSchemaObject;
-    Fitems: TSchemaObject;
-    Fproperties: TMap<String, TSchemaObject>;
-    FadditionalProperties: Boolean;
-    Fdescription: String;
-    Fformat: TFormat;
-    Fdefault: String;
-  published
-    property title: String read Ftitle write Ftitle;
-    property multipleOf: Double read FmultipleOf write FmultipleOf;
-    property maximum: Double read Fmaximum write Fmaximum;
-    property exclusiveMaximum: Double read FexclusiveMaximum write FexclusiveMaximum;
-    property minimum: Double read Fminimum write Fminimum;
-    property exclusiveMinimum: Double read FexclusiveMinimum write FexclusiveMinimum;
-    property maxLength: Integer read FmaxLength write FmaxLength;
-    property minLength: Integer read FminLength write FminLength;
-    property pattern: String read Fpattern write Fpattern;
-    property maxItems: Integer read FmaxItems write FmaxItems;
-    property minItems: Integer read FminItems write FminItems;
-    property uniqueItems: Boolean read FuniqueItems write FuniqueItems;
-    property maxProperties: Integer read FmaxProperties write FmaxProperties;
-    property minProperties: Integer read FminProperties write FminProperties;
-    property required: TArray<String> read Frequired write Frequired;
-    property enum: TArray<String> read Fenum write Fenum;
-    property &type: TPropertyType read Ftype write Ftype;
-    property allOf: TArray<TSchemaObject> read FallOf write FallOf;
-    property oneOf: TArray<TSchemaObject> read FoneOf write FoneOf;
-    property anyOf: Tarray<TSchemaObject> read FanyOf write FanyOf;
-    property &not: TSchemaObject read Fnot write Fnot;
-    property items: TSchemaObject read Fitems write Fitems;
-    property properties: TMap<String, TSchemaObject> read Fproperties write Fproperties;
-    property additionalProperties: Boolean read FadditionalProperties write FadditionalProperties;
-    property description: String read Fdescription write Fdescription;
-    property format: TFormat read Fformat write Fformat;
-    property &default: String read Fdefault write Fdefault;
-    property nullable: Boolean read Fnullable write Fnullable;
-    property discriminator: TDiscriminatorObject read Fdiscriminator write Fdiscriminator;
-    property readOnly: Boolean read FreadOnly write FreadOnly;
-    property writeOnly: Boolean read FwriteOnly write FwriteOnly;
-    property xml: TXMLObject read Fxml write Fxml;
-    property externalDocs: TExternalDocumentationObject read FexternalDocs write FexternalDocs;
-    property example: String read Fexample write Fexample;
-    property deprecated: Boolean read Fdeprecated write Fdeprecated;
-  end;
-
-  TLinkObject = class(TReferenceObject)
-  private
-    FoperationRef: String;
-    FoperationId: String;
-    Fparameters: TMap<String, String>;
-    FrequestBody: String;
-    Fdescription: String;
-    Fserver: TServerObject;
-  published
-    property operationRef: String read FoperationRef write FoperationRef;
-    property operationId: String read FoperationId write FoperationId;
-    property parameters: TMap<String, String> read Fparameters write Fparameters;
-    property requestBody: String read FrequestBody write FrequestBody;
-    property description: String read Fdescription write Fdescription;
-    property server: TServerObject read Fserver write Fserver;
-  end;
-
-  TResponseObject = class(TReferenceObject)
-  private
-    Fdescription: String;
-    Fheaders: TMap<String, THeaderObject>;
-    Fcontent: TMap<String, TMediaTypeObject>;
-    Flinks: TMap<String, TLinkObject>;
-  published
-    property description: String read Fdescription write Fdescription;
-    property headers: TMap<String, THeaderObject> read Fheaders write Fheaders;
-    property content: TMap<String, TMediaTypeObject> read Fcontent write Fcontent;
-    property links: TMap<String, TLinkObject> read Flinks write Flinks;
-  end;
-
-  TExampleObject = class(TReferenceObject)
-  private
-    Fsummary: String;
-    Fdescription: String;
-    Fvalue: String;
-    FexternalValue: String;
-  published
-    property summary: String read Fsummary write Fsummary;
-    property description: String read Fdescription write Fdescription;
-    property value: String read Fvalue write Fvalue;
-    property externalValue: String read FexternalValue write FexternalValue;
-  end;
-
-  TParameterObject = class(TReferenceObject)
-  private
-    Fin: TParameterLocation;
-    Fname: String;
-    Fdescription: String;
-    Frequired: Boolean;
-    Fdeprecated: Boolean;
-    FallowEmptyValue: Boolean;
-    Fstyle: TStyle;
-    Fexplode: Boolean;
-    FallowReserved: Boolean;
-    Fschema: TSchemaObject;
-    Fexample: String;
-    Fexamples: TMap<String, TExampleObject>;
-    Fcontent: TMap<String, TMediaTypeObject>;
-  published
-    property name: String read Fname write Fname;
-    property &in: TParameterLocation read Fin write Fin;
-    property description: String read Fdescription write Fdescription;
-    property required: Boolean read Frequired write Frequired;
-    property deprecated: Boolean read Fdeprecated write Fdeprecated;
-    property allowEmptyValue: Boolean read FallowEmptyValue write FallowEmptyValue;
-
-    // For Schema
-    property style: TStyle read Fstyle write Fstyle;
-    property explode: Boolean read Fexplode write Fexplode;
-    property allowReserved: Boolean read FallowReserved write FallowReserved;
-    property schema: TSchemaObject read Fschema write Fschema;
-    property example: String read Fexample write Fexample;
-    property examples: TMap<String, TExampleObject> read Fexamples write Fexamples;
-
-    // For Content
-    property content: TMap<String, TMediaTypeObject> read Fcontent write Fcontent;
-  end;
-
-  TRequestBodyObject = class(TReferenceObject)
-  private
-    Fdescription: String;
-    Fcontent: TMap<String, TMediaTypeObject>;
-    Frequired: Boolean;
-  published
-    property description: String read Fdescription write Fdescription;
-    property content: TMap<String, TMediaTypeObject> read Fcontent write Fcontent;
-    property required: Boolean read Frequired write Frequired;
-  end;
-
-  THeaderObject = class(TParameterObject)
-  end;
-
-  TSecuritySchemeObject = class(TReferenceObject)
-  private
-    Ftype: TSecurityType;
-    Fdescription: String;
-    Fname: String;
-    Fin: TParameterLocation;
-    Fscheme: String;
-    FbearerFormat: String;
-    Fflows: TOAuthFlowsObject;
-    FopenIdConnectUrl: String;
-  published
-    property &type: TSecurityType read Ftype write Ftype;
-    property description: String read Fdescription write Fdescription;
-    property name: String read Fname write Fname;
-    property &in: TParameterLocation read Fin write Fin;
-    property scheme: String read Fscheme write Fscheme;
-    property bearerFormat: String read FbearerFormat write FbearerFormat;
-    property flows: TOAuthFlowsObject read Fflows write Fflows;
-    property openIdConnectUrl: String read FopenIdConnectUrl write FopenIdConnectUrl;
-  end;
-
-  TCallbackObject = class(TReferenceObject)
-  private
-    FExpressions: TMap<String, TPathItemObject>;
-  published
-    [Default]
-    property Expressions: TMap<String, TPathItemObject> read FExpressions write FExpressions;
-  end;
-
-  TResponsesObject = class
-  private
-    Fdefault: TResponseObject;
-    FHTTPStatusCode: TMap<Integer, TResponseObject>;
-  published
-    property &default: TResponseObject read Fdefault write Fdefault;
-    [Default]
-    property HTTPStatusCode: TMap<Integer, TResponseObject> read FHTTPStatusCode write FHTTPStatusCode;
-  end;
-
-  TOperationObject = class
-  private
-    Ftags: TArray<String>;
-    Fsummary: String;
-    Fdescription: String;
-    FexternalDocs: TExternalDocumentationObject;
-    FoperationId: String;
-    Fparameters: TArray<TParameterObject>;
-    FrequestBody: TRequestBodyObject;
-    Fresponses: TResponsesObject;
-    Fcallbacks: TMap<String, TCallbackObject>;
-    Fdeprecated: Boolean;
-    Fsecurity: TArray<TSecurityRequirementObject>;
-    Fservers: TArray<TServerObject>;
-  published
-    property tags: TArray<String> read Ftags write Ftags;
-    property summary: String read Fsummary write Fsummary;
-    property description: String read Fdescription write Fdescription;
-    property externalDocs: TExternalDocumentationObject read FexternalDocs write FexternalDocs;
-    property operationId: String read FoperationId write FoperationId;
-    property parameters: TArray<TParameterObject> read Fparameters write Fparameters;
-    property requestBody: TRequestBodyObject read FrequestBody write FrequestBody;
-    property responses: TResponsesObject read Fresponses write Fresponses;
-    property callbacks: TMap<String, TCallbackObject> read Fcallbacks write Fcallbacks;
-    property deprecated: Boolean read Fdeprecated write Fdeprecated;
-    property security: TArray<TSecurityRequirementObject> read Fsecurity write Fsecurity;
-    property servers: TArray<TServerObject> read Fservers write Fservers;
-  end;
-
-  TPathItemObject = class(TReferenceObject)
-  private
-    Fsummary: String;
-    Fdescription: String;
-    Fget: TOperationObject;
-    Fput: TOperationObject;
-    Fpost: TOperationObject;
-    Fdelete: TOperationObject;
-    Foptions: TOperationObject;
-    Fhead: TOperationObject;
-    Fpatch: TOperationObject;
-    Ftrace: TOperationObject;
-    Fservers: TArray<TServerObject>;
-    Fparameters: TArray<TParameterObject>;
-  published
-    property summary: String read Fsummary write Fsummary;
-    property description: String read Fdescription write Fdescription;
-    property get: TOperationObject read Fget write Fget;
-    property put: TOperationObject read Fput write Fput;
-    property post: TOperationObject read Fpost write Fpost;
-    property delete: TOperationObject read Fdelete write Fdelete;
-    property options: TOperationObject read Foptions write Foptions;
-    property head: TOperationObject read Fhead write Fhead;
-    property patch: TOperationObject read Fpatch write Fpatch;
-    property trace: TOperationObject read Ftrace write Ftrace;
-    property servers: TArray<TServerObject> read Fservers write Fservers;
-    property parameters: TArray<TParameterObject> read Fparameters write Fparameters;
-  end;
-
-  TPathsObject = class
-  private
-    FPaths: TMap<String, TPathItemObject>;
-  published
-    [Default]
-    property Paths: TMap<String, TPathItemObject> read FPaths write FPaths;
-  end;
-
-  TComponentsObject = class
-  private
-    Fschemas: TMap<String, TSchemaObject>;
-    Fresponses: TMap<String, TResponseObject>;
-    Fparameters: TMap<String, TParameterObject>;
-    Fexamples: TMap<String, TExampleObject>;
-    FrequestBodies: TMap<String, TRequestBodyObject>;
-    Fheaders: TMap<String, THeaderObject>;
-    FsecuritySchemes: TMap<String, TSecuritySchemeObject>;
-    Flinks: TMap<String, TLinkObject>;
-    Fcallbacks: TMap<String, TCallbackObject>;
-  published
-    property schemas: TMap<String, TSchemaObject> read Fschemas write Fschemas;
-    property responses: TMap<String, TResponseObject> read Fresponses write Fresponses;
-    property parameters: TMap<String, TParameterObject> read Fparameters write Fparameters;
-    property examples: TMap<String, TExampleObject> read Fexamples write Fexamples;
-    property requestBodies: TMap<String, TRequestBodyObject> read FrequestBodies write FrequestBodies;
-    property headers: TMap<String, THeaderObject> read Fheaders write Fheaders;
-    property securitySchemes: TMap<String, TSecuritySchemeObject> read FsecuritySchemes write FsecuritySchemes;
-    property links: TMap<String, TLinkObject> read Flinks write Flinks;
-    property callbacks: TMap<String, TCallbackObject> read Fcallbacks write Fcallbacks;
-  end;
-
-  TTagObject = class
-  private
-    Fname: String;
-    Fdescription: String;
-    FexternalDocs: TExternalDocumentationObject;
-  published
-    property name: String read Fname write Fname;
-    property description: String read Fdescription write Fdescription;
-    property externalDocs: TExternalDocumentationObject read FexternalDocs write FexternalDocs;
-  end;
-
-  TOpenAPIObject = class
-  private
-    Fopenapi: String;
-    Finfo: TInfoObject;
-    Fservers: TArray<TServerObject>;
-    Fpaths: TPathsObject;
-    Fcomponents: TComponentsObject;
-    Ftags: TArray<TTagObject>;
-    Fsecurity: TArray<TSecurityRequirementObject>;
-    FexternalDocs: TExternalDocumentationObject;
-  published
-    property openapi: String read Fopenapi write Fopenapi;
-    property info: TInfoObject read Finfo write Finfo;
-    property servers: TArray<TServerObject> read Fservers write Fservers;
-    property paths: TPathsObject read Fpaths write Fpaths;
-    property components: TComponentsObject read Fcomponents write Fcomponents;
-    property security: TArray<TSecurityRequirementObject> read Fsecurity write Fsecurity;
-    property tags: TArray<TTagObject> read Ftags write Ftags;
-    property externalDocs: TExternalDocumentationObject read FexternalDocs write FexternalDocs;
+  Paths = class
   end;
 
 implementation
 
-{ TInfoObject }
+uses System.SysUtils;
 
-destructor TInfoObject.Destroy;
+{ TOpenAPI30 }
+
+destructor TOpenAPI30.Destroy;
 begin
-  Fcontact.Free;
+  FInfo.Free;
 
-  Flicense.Free;
+  for var AObject in FServers do
+    AObject.Free;
+
+  for var AObject in FSecurity do
+    AObject.Free;
+
+  for var AObject in FTags do
+    AObject.Free;
+
+  FComponents.Free;
+
+  FExternalDocs.Free;
+
+  FPaths.Free;
 
   inherited;
 end;
 
-end.
+function TOpenAPI30.GetInfo: Info;
+begin
+  if not Assigned(FInfo) then
+    FInfo := Info.Create;
 
+  Result := FInfo;
+end;
+
+function TOpenAPI30.AddServers: Servers;
+begin
+  Result := Servers.Create;
+
+  FServers := FServers + [Result];
+end;
+
+function TOpenAPI30.AddSecurity: Security;
+begin
+  Result := Security.Create;
+
+  FSecurity := FSecurity + [Result];
+end;
+
+function TOpenAPI30.AddTags: Tags;
+begin
+  Result := Tags.Create;
+
+  FTags := FTags + [Result];
+end;
+
+function TOpenAPI30.GetComponents: Components;
+begin
+  if not Assigned(FComponents) then
+    FComponents := Components.Create;
+
+  Result := FComponents;
+end;
+
+function TOpenAPI30.GetExternalDocs: ExternalDocs;
+begin
+  if not Assigned(FExternalDocs) then
+    FExternalDocs := ExternalDocs.Create;
+
+  Result := FExternalDocs;
+end;
+
+function TOpenAPI30.GetPaths: Paths;
+begin
+  if not Assigned(FPaths) then
+    FPaths := Paths.Create;
+
+  Result := FPaths;
+end;
+
+{ Info }
+
+destructor Info.Destroy;
+begin
+  FLicense.Free;
+
+  FContact.Free;
+
+  inherited;
+end;
+
+function Info.GetLicense: License;
+begin
+  if not Assigned(FLicense) then
+    FLicense := License.Create;
+
+  Result := FLicense;
+end;
+
+function Info.GetContact: Contact;
+begin
+  if not Assigned(FContact) then
+    FContact := Contact.Create;
+
+  Result := FContact;
+end;
+
+{ Servers }
+
+destructor Servers.Destroy;
+begin
+  FVariables.Free;
+
+  inherited;
+end;
+
+function Servers.GetVariables: Variables;
+begin
+  if not Assigned(FVariables) then
+    FVariables := Variables.Create;
+
+  Result := FVariables;
+end;
+
+{ Tags }
+
+destructor Tags.Destroy;
+begin
+  FExternalDocs.Free;
+
+  inherited;
+end;
+
+function Tags.GetExternalDocs: ExternalDocs;
+begin
+  if not Assigned(FExternalDocs) then
+    FExternalDocs := ExternalDocs.Create;
+
+  Result := FExternalDocs;
+end;
+
+{ Components }
+
+destructor Components.Destroy;
+begin
+  FRequestBodies.Free;
+
+  FResponses.Free;
+
+  FCallbacks.Free;
+
+  FSecuritySchemes.Free;
+
+  FLinks.Free;
+
+  FSchemas.Free;
+
+  FParameters.Free;
+
+  FHeaders.Free;
+
+  FExamples.Free;
+
+  inherited;
+end;
+
+function Components.GetRequestBodies: RequestBodies;
+begin
+  if not Assigned(FRequestBodies) then
+    FRequestBodies := RequestBodies.Create;
+
+  Result := FRequestBodies;
+end;
+
+function Components.GetResponses: Responses;
+begin
+  if not Assigned(FResponses) then
+    FResponses := Responses.Create;
+
+  Result := FResponses;
+end;
+
+function Components.GetCallbacks: Callbacks;
+begin
+  if not Assigned(FCallbacks) then
+    FCallbacks := Callbacks.Create;
+
+  Result := FCallbacks;
+end;
+
+function Components.GetSecuritySchemes: SecuritySchemes;
+begin
+  if not Assigned(FSecuritySchemes) then
+    FSecuritySchemes := SecuritySchemes.Create;
+
+  Result := FSecuritySchemes;
+end;
+
+function Components.GetLinks: Links;
+begin
+  if not Assigned(FLinks) then
+    FLinks := Links.Create;
+
+  Result := FLinks;
+end;
+
+function Components.GetSchemas: Schemas;
+begin
+  if not Assigned(FSchemas) then
+    FSchemas := Schemas.Create;
+
+  Result := FSchemas;
+end;
+
+function Components.GetParameters: Parameters;
+begin
+  if not Assigned(FParameters) then
+    FParameters := Parameters.Create;
+
+  Result := FParameters;
+end;
+
+function Components.GetHeaders: Headers;
+begin
+  if not Assigned(FHeaders) then
+    FHeaders := Headers.Create;
+
+  Result := FHeaders;
+end;
+
+function Components.GetExamples: Examples;
+begin
+  if not Assigned(FExamples) then
+    FExamples := Examples.Create;
+
+  Result := FExamples;
+end;
+
+end.
