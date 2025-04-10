@@ -27,12 +27,12 @@ type
     FName: String;
     FAttribute: String;
     FModuleName: String;
-    FBaseType: String;
     FInheritance: String;
+    FChangeType: String;
   public
     property Name: String read FName write FName;
     property Attribute: String read FAttribute write FAttribute;
-    property BaseType: String read FBaseType write FBaseType;
+    property ChangeType: String read FChangeType write FChangeType;
     property Inheritance: String read FInheritance write FInheritance;
     property ModuleName: String read FModuleName write FModuleName;
   end;
@@ -223,8 +223,9 @@ type
     FDoubleType: TTypeDefinition;
     FTimeType: TTypeDefinition;
   protected
+    function AddTypeAlias(const Alias: String; TypeDefinition: TTypeDefinition): TTypeAlias;
     function CreateUnit(const UnitConfiguration: TUnitConfiguration): TUnit;
-    function FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition; virtual;
+    function FindType(const TypeName: String; ParentClass: TClassDefinition): TTypeDefinition; virtual;
 
     procedure GenerateUnitDefinition(const UnitConfiguration: TUnitConfiguration); virtual; abstract;
     procedure LoadInternalTypes;
@@ -270,7 +271,7 @@ type
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList; const TargetNamespace: String);
     procedure LoadXSDTypes;
   protected
-    function FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition; override;
+    function FindType(const TypeName: String; ParentClass: TClassDefinition): TTypeDefinition; override;
 
     procedure GenerateUnitDefinition(const UnitConfiguration: TUnitConfiguration); override;
   public
@@ -303,6 +304,15 @@ implementation
 uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, XML.xmldom, Blue.Print.Serializer;
 
 { TSchemaImporter }
+
+function TSchemaImporter.AddTypeAlias(const Alias: String; TypeDefinition: TTypeDefinition): TTypeAlias;
+begin
+  Result := TTypeAlias.Create;
+  Result.Name := Alias;
+  Result.TypeDefinition := TypeDefinition;
+
+  FTypeAlias.Add(Alias, Result);
+end;
 
 procedure TSchemaImporter.AddTypeExternal(const ModuleName, TypeName: String);
 begin
@@ -345,7 +355,7 @@ begin
   inherited;
 end;
 
-function TSchemaImporter.FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
+function TSchemaImporter.FindType(const TypeName: String; ParentClass: TClassDefinition): TTypeDefinition;
 
   function FindInClassList(const ClassList: TList<TClassDefinition>; const TypeName: String): TTypeDefinition;
   begin
@@ -356,111 +366,86 @@ function TSchemaImporter.FindType(const TypeName: String; const ParentClass: TCl
         Exit(ClassDefinition);
   end;
 
-  function FindInClasses(const ClassList: TList<TClassDefinition>; const TypeName: String): TTypeDefinition;
+  function FindTypeDefinition(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
   begin
-    Result := FindInClassList(ClassList, TypeName);
+    Result := nil;
+
+    if FTypeExternal.TryGetValue(TypeName, Result) then
+      Exit;
+
+    if FTypeAlias.TryGetValue(TypeName, Result) then
+      Exit;
+
+    if FBuildInType.TryGetValue(TypeName, Result) then
+      Exit;
 
     if not Assigned(Result) then
-      for var ClassDefinition in ClassList do
-      begin
-        Result := FindInClasses(ClassDefinition.Classes, TypeName);
-
-        if Assigned(Result) then
-          Exit;
-      end;
-  end;
-
-  function FindInClass(ClassDefinition: TClassDefinition; const TypeName: String): TTypeDefinition;
-  begin
-    repeat
-      Result := FindInClassList(ClassDefinition.Classes, TypeName);
-
-      ClassDefinition := ClassDefinition.ParentClass;
-    until Assigned(Result) or not Assigned(ClassDefinition);
+      for var UnitDefinition in FUnits.Values do
+        for var SimpleType in UnitDefinition.TypeAlias do
+          if SimpleType.Name = TypeName then
+            Exit(SimpleType);
   end;
 
 begin
   Result := nil;
 
-  if FTypeExternal.TryGetValue(TypeName, Result) then
-    Exit;
+  while Assigned(ParentClass) and not Assigned(Result) do
+  begin
+    Result := FindInClassList(ParentClass.Classes, TypeName);
 
-  if FTypeAlias.TryGetValue(TypeName, Result) then
-    Exit;
-
-  if FBuildInType.TryGetValue(TypeName, Result) then
-    Exit;
-
-  if Assigned(ParentClass) then
-    Result := FindInClass(ParentClass, TypeName);
+    ParentClass := ParentClass.ParentClass;
+  end;
 
   if not Assigned(Result) then
-    for var UnitDefinition in FUnits.Values do
+  begin
+    ParentClass := nil;
+
+    for var SplitTypeName in TypeName.Split(['.']) do
     begin
-      Result := FindInClasses(UnitDefinition.Classes, TypeName);
+      Result := FindTypeDefinition(SplitTypeName, ParentClass);
 
-      if Assigned(Result) then
-        Exit;
+      if Assigned(ParentClass) then
+        Result := FindInClassList(ParentClass.Classes, SplitTypeName)
+      else if not Assigned(Result) then
+        for var UnitDefinition in FUnits.Values do
+        begin
+          Result := FindInClassList(UnitDefinition.Classes, SplitTypeName);
 
-      for var SimpleType in UnitDefinition.TypeAlias do
-        if SimpleType.Name = TypeName then
-          Exit(SimpleType);
+          if Assigned(Result) then
+            Break;
+        end;
+
+      ParentClass := TClassDefinition(Result);
     end;
+  end;
 end;
 
 procedure TSchemaImporter.Import;
-
-  function FindClassList(const ClassName: String; ClassList: TList<TClassDefinition>): TClassDefinition;
-  begin
-    Result := nil;
-
-    for var Name in ClassName.Split(['.']) do
-    begin
-      for var ClassDefinition in ClassList do
-        if Name = ClassDefinition.Name then
-          Result := ClassDefinition;
-
-      if Assigned(Result) then
-        ClassList := Result.Classes
-      else
-        Break;
-    end;
-  end;
-
-  function FindClass(const ClassName: String): TClassDefinition;
-  begin
-    Result := nil;
-
-    for var UnitDefinition in FUnits.Values do
-    begin
-      Result := FindClassList(ClassName, UnitDefinition.Classes);
-
-      if Assigned(Result) then
-        Exit;
-    end;
-  end;
-
 begin
+  for var TypeDefinitionConfig in Configuration.TypeDefinition do
+    if not TypeDefinitionConfig.ChangeType.IsEmpty then
+      AddTypeAlias(TypeDefinitionConfig.Name, TTypeDelayed.Create(Self, TypeDefinitionConfig.ChangeType, nil));
+
   for var UnitConfiguration in Configuration.UnitConfiguration do
     GenerateUnitDefinition(UnitConfiguration);
 
   for var TypeDefinitionConfig in Configuration.TypeDefinition do
-    if not TypeDefinitionConfig.Attribute.IsEmpty then
-    begin
-      var TypeDefinition := FindType(TypeDefinitionConfig.Name, nil);
+  begin
+    var TypeDefinition := FindType(TypeDefinitionConfig.Name, nil);
 
-      if Assigned(TypeDefinition) then
+    if Assigned(TypeDefinition) then
+    begin
+      if not TypeDefinitionConfig.Attribute.IsEmpty then
         TypeDefinition.Attributes.Add(TypeDefinitionConfig.Attribute);
-    end;
 
-  for var ChangeInheritance in Configuration.TypeDefinition do
-    if not ChangeInheritance.Inheritance.IsEmpty  then
-    begin
-      var ClassDefinition := FindClass(ChangeInheritance.Name);
+      if not TypeDefinitionConfig.Inheritance.IsEmpty then
+      begin
+        var ClassDefinition := TypeDefinition as TClassDefinition;
 
-      if Assigned(ClassDefinition) then
-        ClassDefinition.InheritedFrom := FindClass(ChangeInheritance.Inheritance);
+        ClassDefinition.InheritedFrom := FindType(TypeDefinitionConfig.Inheritance, nil) as TClassDefinition;
+      end;
     end;
+  end;
 
   for var UnitDefinition in FUnits.Values do
     UnitDefinition.GenerateFile(Self);
@@ -492,15 +477,6 @@ begin
 end;
 
 procedure TSchemaImporter.LoadInternalTypes;
-
-  function AddTypeAlias(const Alias: String; TypeDefinition: TTypeDefinition): TTypeAlias;
-  begin
-    Result := TTypeAlias.Create;
-    Result.Name := Alias;
-    Result.TypeDefinition := TypeDefinition;
-
-    FTypeAlias.Add(Alias, Result);
-  end;
 
   function AddType(const TypeName: String): TTypeDefinition;
   begin
@@ -580,7 +556,7 @@ begin
   inherited;
 end;
 
-function TXSDImporter.FindType(const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
+function TXSDImporter.FindType(const TypeName: String; ParentClass: TClassDefinition): TTypeDefinition;
 begin
   if FXMLBuildInType.TryGetValue(TypeName, Result) then
     Exit;
@@ -594,7 +570,7 @@ begin
 
   for var ChangeType in Configuration.TypeDefinition do
     if ChangeType.Name = TypeName then
-      Exit(FindType(ChangeType.BaseType, nil));
+      Exit(FindType(ChangeType.ChangeType, nil));
 end;
 
 function TXSDImporter.FindTypeName(&Type: IXMLTypeDef; const ParentClass: TClassDefinition): TTypeDefinition;
@@ -733,12 +709,10 @@ var
 
   function GenerateSimpleType(const SimpleType: IXMLSimpleTypeDef): TTypeAlias;
   begin
-    Result := TTypeAlias.Create;
-    Result.Name := SimpleType.Name;
-    Result.TypeDefinition := FindTypeChange(Result.Name, nil);
+    Result := FindType(SimpleType.Name, nil) as TTypeAlias;
 
-    if not Assigned(Result.TypeDefinition) then
-      Result.TypeDefinition := FindTypeName(SimpleType, nil);
+    if not Assigned(Result) then
+      Result := AddTypeAlias(SimpleType.Name, FindTypeName(SimpleType, nil));
   end;
 
 begin
@@ -832,7 +806,7 @@ begin
   inherited;
 
   FClasses := TObjectList<TClassDefinition>.Create;
-  FTypeAlias := TObjectList<TTypeAlias>.Create;
+  FTypeAlias := TList<TTypeAlias>.Create;
   FUses := TList<TUnit>.Create;
 end;
 
@@ -994,10 +968,14 @@ var
           Exit(True);
     end;
 
+    procedure LoadAttributes(const Ident: String; const AttributesList: TArray<String>);
+    begin
+      for var Attribute in AttributesList do
+        AddLine('%s[%s]', [Ident, Attribute]);
+    end;
+
   begin
-    if not ClassDefinition.Attributes.IsEmpty then
-      for var Attribute in ClassDefinition.Attributes do
-      AddLine('%s[%s]', [Ident, Attribute]);
+    LoadAttributes(Ident, ClassDefinition.Attributes.ToArray);
 
     AddLine('%s%s = class%s', [Ident, GetClassName(ClassDefinition), GetInheritence]);
 
@@ -1052,8 +1030,7 @@ var
 
       for var &Property in ClassDefinition.Properties do
       begin
-        for var Attribute in &Property.Attributes.ToArray + GetPropertyType(&Property).Attributes.ToArray do
-          AddLine('%:s  [%s]', [Ident, Attribute]);
+        LoadAttributes(Ident + '  ', &Property.Attributes.ToArray + GetPropertyType(&Property).Attributes.ToArray);
 
         AddLine('%s  property %s: %s read %s write %s%s;', [Ident, CheckReservedName(&Property.Name), GetPropertyTypeName(&Property), GetPropertyGetFunction(&Property), GetPropertyFieldName(&Property), GetStoredPropertyDeclaration(&Property)]);
       end;
