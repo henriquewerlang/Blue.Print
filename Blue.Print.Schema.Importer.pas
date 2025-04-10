@@ -86,7 +86,6 @@ type
   TTypeDefinition = class
   private
     FAttributes: TList<String>;
-    FIsEnumeration: Boolean;
     FIsNumericType: Boolean;
     FIsObjectType: Boolean;
     FIsStringType: Boolean;
@@ -102,6 +101,8 @@ type
     function GetIsStringType: Boolean;
     function GetNeedDestructor: Boolean;
     function GetIsEnumeration: Boolean;
+    function GetIsUnitDefinition: Boolean;
+    function GetAsUnitDefinition: TUnitDefinition;
   protected
     FName: String;
   public
@@ -113,6 +114,7 @@ type
 
     property AsClassDefinition: TClassDefinition read GetAsClassDefinition;
     property AsTypeEnumeration: TTypeEnumeration read GetAsTypeEnumeration;
+    property AsUnitDefinition: TUnitDefinition read GetAsUnitDefinition;
     property Attributes: TList<String> read FAttributes write FAttributes;
     property IsClassDefinition: Boolean read GetIsClassDefinition;
     property IsEnumeration: Boolean read GetIsEnumeration;
@@ -120,6 +122,7 @@ type
     property IsNumericType: Boolean read GetIsNumericType;
     property IsObjectType: Boolean read GetIsObjectType;
     property IsStringType: Boolean read GetIsStringType;
+    property IsUnitDefinition: Boolean read GetIsUnitDefinition;
     property Name: String read FName write FName;
     property NeedDestructor: Boolean read GetNeedDestructor;
     property ParentAttributes: TList<String> read FParentAttributes;
@@ -639,17 +642,19 @@ begin
 end;
 
 function TXSDImporter.CheckEnumeration(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeEnumeration;
+var
+  EnumValues: TStringList;
 
   function GetEnumerationValues: String;
   begin
     Result := EmptyStr;
 
-    for var A := 0 to Pred(&Type.Enumerations.Count) do
+    for var EnumValue in EnumValues do
     begin
       if not Result.IsEmpty then
         Result := Result + ', ';
 
-      Result := Result + &Type.Enumerations[A].Value;
+      Result := Result + EnumValue;
     end;
   end;
 
@@ -673,13 +678,22 @@ function TXSDImporter.CheckEnumeration(const &Type: IXMLTypeDef; const Module: T
 begin
   if &Type.Enumerations.Count > 0 then
   begin
+    EnumValues := TStringList.Create(dupIgnore, False, False);
     Result := TTypeEnumeration.Create(Module);
     Result.Name := &Type.Name;
 
+    for var A := 0 to Pred(&Type.Enumerations.Count) do
+    begin
+      var EnumValue := FormatEnumeratorValue(&Type.Enumerations[A].Value);
+
+      if EnumValues.IndexOf(EnumValue) = -1 then
+        EnumValues.Add(EnumValue);
+    end;
+
     Result.Attributes.Add(Format('EnumValue(''%s'')', [GetEnumerationValues]));
 
-    for var A := 0 to Pred(&Type.Enumerations.Count) do
-      Result.Values.Add('t' + FormatEnumeratorValue(&Type.Enumerations[A].Value));
+    for var EnumValue in EnumValues do
+      Result.Values.Add('t' + EnumValue);
 
     if Assigned(Module) then
       Module.Enumarations.Add(Result);
@@ -1311,7 +1325,9 @@ var
 
         if Assigned(ClassDefinition.InheritedFrom) then
           CheckType(ClassDefinition.InheritedFrom);
-      end;
+      end
+      else if TypeDefinition.IsEnumeration and TypeDefinition.ParentModule.IsUnitDefinition and (TypeDefinition.ParentModule <> Self) then
+        ModuleName := TypeDefinition.ParentModule.AsUnitDefinition.UnitConfiguration.Name;
 
       if not ModuleName.IsEmpty then
         AddUses(ModuleName);
@@ -1356,6 +1372,9 @@ begin
   AddLine;
 
   AddLine('{$M+}');
+
+  if not Enumarations.IsEmpty then
+    AddLine('{$SCOPEDENUMS ON}');
 
   AddLine;
 
@@ -1555,6 +1574,11 @@ begin
   Result := ResolveType as TTypeEnumeration;
 end;
 
+function TTypeDefinition.GetAsUnitDefinition: TUnitDefinition;
+begin
+  Result := ResolveType as TUnitDefinition;
+end;
+
 function TTypeDefinition.GetIsClassDefinition: Boolean;
 begin
   Result := ResolveType is TClassDefinition;
@@ -1562,7 +1586,7 @@ end;
 
 function TTypeDefinition.GetIsEnumeration: Boolean;
 begin
-  Result := ResolveType.FIsEnumeration;
+  Result := ResolveType is TTypeEnumeration;
 end;
 
 function TTypeDefinition.GetIsExternal: Boolean;
@@ -1583,6 +1607,11 @@ end;
 function TTypeDefinition.GetIsStringType: Boolean;
 begin
   Result := ResolveType.FIsStringType;
+end;
+
+function TTypeDefinition.GetIsUnitDefinition: Boolean;
+begin
+  Result := ResolveType is TUnitDefinition;
 end;
 
 function TTypeDefinition.GetNeedDestructor: Boolean;
@@ -1795,7 +1824,6 @@ constructor TTypeEnumeration.Create(const Module: TTypeModuleDefinition);
 begin
   inherited;
 
-  FIsEnumeration := True;
   FValues := TList<String>.Create;
 end;
 
