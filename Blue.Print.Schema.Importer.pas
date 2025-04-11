@@ -1194,7 +1194,7 @@ var
     else if PropertyType.IsStringType then
       Result := Format('not %s.IsEmpty', [GetPropertyFieldName(&Property)])
     else if PropertyType.IsNumericType then
-      Result := Format('%s <> 0;', [GetPropertyFieldName(&Property)])
+      Result := Format('%s <> 0', [GetPropertyFieldName(&Property)])
     else
       Result := 'False';
   end;
