@@ -338,7 +338,7 @@ type
 
 implementation
 
-uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, XML.xmldom, Blue.Print.Serializer;
+uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, XML.XMLDom, Xml.XMLSchemaTags, Blue.Print.Serializer;
 
 function FormatName(const Name: String): String;
 begin
@@ -798,16 +798,15 @@ begin
 
   if CanGenerateClass(ElementDefinition) then
   begin
-    var ComplexType := (ElementDefinition.DataType as IXMLComplexTypeDef);
+    var ComplexType := ElementDefinition.DataType as IXMLComplexTypeDef;
 
-    if (ComplexType.ElementDefs.Count = 0) and (ComplexType.AttributeDefs.Count = 1) then
-      for var B := 0 to Pred(ComplexType.AttributeDefs.Count) do
-      begin
-        var Attribute := ComplexType.AttributeDefs[B];
-        PropertyType := Attribute.DataType;
+    if (ComplexType.ElementDefs.Count = 0) and (ComplexType.AttributeDefs.Count = 1) and ComplexType.AttributeDefs[0].HasAttribute(SFixed) then
+    begin
+      var Attribute := ComplexType.AttributeDefs[0];
+      PropertyType := Attribute.DataType;
 
-        AddPropertyAttribute(NewProperty, Attribute);
-      end
+      AddPropertyAttribute(NewProperty, Attribute);
+    end
     else
     begin
       PropertyType := ComplexType;
