@@ -864,7 +864,7 @@ begin
   for var Attribute in Member.GetAttributes do
     if Attribute is XMLAttributeValueAttribute then
     begin
-      Node.Attributes[Member.Name] := Member.GetValue(Instance).ToString;
+      Node.Attributes[Member.Name] := Serialize(Member.GetValue(Instance));
       Result := True;
     end;
 {$ENDIF}

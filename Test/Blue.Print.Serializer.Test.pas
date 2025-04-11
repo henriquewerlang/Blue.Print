@@ -191,6 +191,8 @@ type
     procedure WhenThePropetyValueIsEmptyMustLoadTheXMLWithTheNodeEmptyAsExpected;
     [Test]
     procedure WhenSerializeAClassWithXMLValueAttributeMustLoadTheXMLWithOnlyThePropertyValue;
+    [Test]
+    procedure WhenSerializeAPropertyWithAnEnumeratorMustLoadTheValueOfTheAttributeWithTheCorrectValue;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -348,6 +350,14 @@ type
   private
     FMyProp: TMyEnumWithAttribute;
   published
+    property MyProp: TMyEnumWithAttribute read FMyProp write FMyProp;
+  end;
+
+  TMyClassWithEnumValuesXML = class
+  private
+    FMyProp: TMyEnumWithAttribute;
+  published
+    [XMLAttributeValue]
     property MyProp: TMyEnumWithAttribute read FMyProp write FMyProp;
   end;
 
@@ -1258,6 +1268,16 @@ begin
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><Error/><MyObject><Another>0</Another><MyProp1/><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></Document>'#13#10, FSerializer.Serialize(MyClass));
 
   MyClass.MyObject.Free;
+
+  MyClass.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenSerializeAPropertyWithAnEnumeratorMustLoadTheValueOfTheAttributeWithTheCorrectValue;
+begin
+  var MyClass := TMyClassWithEnumValuesXML.Create;
+  MyClass.MyProp := TMyEnumWithAttribute.MyValue3;
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document MyProp="abc"/>'#13#10, FSerializer.Serialize(MyClass));
 
   MyClass.Free;
 end;
