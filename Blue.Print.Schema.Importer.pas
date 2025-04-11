@@ -713,13 +713,16 @@ end;
 
 function TXSDImporter.CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
 
-  function GetBaseType(TypeDefinition: IXMLTypeDef): String;
+  function GetBaseType(TypeDefinition: IXMLTypeDef): TTypeDefinition;
   begin
-    if not TypeDefinition.IsComplex then
-      while Assigned(TypeDefinition.BaseType) do
+    Result := nil;
+
+    if not TypeDefinition.IsComplex and Assigned(TypeDefinition.BaseType) then
+      repeat
         TypeDefinition := TypeDefinition.BaseType as IXMLSimpleTypeDef;
 
-    Result := ExtractLocalName(TypeDefinition.Name);
+        Result := FindType(TypeDefinition.Name, Module);
+      until Assigned(Result) or not Assigned(TypeDefinition);
   end;
 
 begin
@@ -731,7 +734,7 @@ begin
     Result := CheckEnumeration(&Type, Module);
 
   if not Assigned(Result) then
-    Result := FindType(GetBaseType(&Type), Module);
+    Result := GetBaseType(&Type);
 end;
 
 function TXSDImporter.CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
