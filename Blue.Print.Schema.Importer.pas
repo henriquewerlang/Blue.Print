@@ -689,7 +689,7 @@ begin
 
     for var A := 0 to Pred(&Type.Enumerations.Count) do
     begin
-      var EnumValue := FormatEnumeratorValue(&Type.Enumerations[A].Value);
+      var EnumValue := &Type.Enumerations[A].Value;
 
       if EnumValues.IndexOf(EnumValue) = -1 then
         EnumValues.Add(EnumValue);
@@ -698,7 +698,7 @@ begin
     Result.Attributes.Add(Format('EnumValue(''%s'')', [GetEnumerationValues]));
 
     for var EnumValue in EnumValues do
-      Result.Values.Add('t' + EnumValue);
+      Result.Values.Add('t' + FormatEnumeratorValue(EnumValue));
 
     if Assigned(Module) then
       Module.Enumarations.Add(Result);
