@@ -31,12 +31,14 @@ type
     FModuleName: String;
     FInheritance: String;
     FChangeType: String;
+    FParentAttribute: String;
   public
     property Name: String read FName write FName;
     property Attribute: String read FAttribute write FAttribute;
     property ChangeType: String read FChangeType write FChangeType;
     property Inheritance: String read FInheritance write FInheritance;
     property ModuleName: String read FModuleName write FModuleName;
+    property ParentAttribute: String read FParentAttribute write FParentAttribute;
   end;
 
   TConfiguration = class
@@ -513,7 +515,10 @@ begin
     if Assigned(TypeDefinition) then
     begin
       if not TypeDefinitionConfig.Attribute.IsEmpty then
-        TypeDefinition.ParentAttributes.Add(TypeDefinitionConfig.Attribute);
+        TypeDefinition.Attributes.Add(TypeDefinitionConfig.Attribute);
+
+      if not TypeDefinitionConfig.ParentAttribute.IsEmpty then
+        TypeDefinition.ParentAttributes.Add(TypeDefinitionConfig.ParentAttribute);
 
       if not TypeDefinitionConfig.Inheritance.IsEmpty then
       begin
