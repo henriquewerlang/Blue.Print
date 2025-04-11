@@ -352,6 +352,18 @@ begin
   Result := 'T' + Name;
 end;
 
+function CheckReservedName(const Name: String): String;
+const
+  SPECIAL_NAMES: array[0..7] of String = ('type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class');
+
+begin
+  Result := Name;
+
+  for var SpecialName in SPECIAL_NAMES do
+    if CompareText(Name, SpecialName) = 0 then
+      Exit('&' + Result);
+end;
+
 { TSchemaImporter }
 
 function TSchemaImporter.AddDelayedType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
@@ -677,7 +689,10 @@ var
     Result := EmptyStr;
 
     for var Split in Value.Split([' ']) do
-      Result := Result + OnlyValidChars(FormatName(Split));
+        Result := Result + CheckReservedName(OnlyValidChars(FormatName(Split)));
+
+    if CharInSet(Result[1], ['0'..'9']) then
+      Result := 't' + Result;
   end;
 
 begin
@@ -698,7 +713,7 @@ begin
     Result.Attributes.Add(Format('EnumValue(''%s'')', [GetEnumerationValues]));
 
     for var EnumValue in EnumValues do
-      Result.Values.Add('t' + FormatEnumeratorValue(EnumValue));
+      Result.Values.Add(FormatEnumeratorValue(EnumValue));
 
     if Assigned(Module) then
       Module.Enumarations.Add(Result);
@@ -970,18 +985,6 @@ var
   function GetStoredFunctionName(const &Property: TPropertyDefinition): String;
   begin
     Result := Format('Get%sStored', [FormatName(&Property.Name)]);
-  end;
-
-  function CheckReservedName(const Name: String): String;
-  const
-    SPECIAL_NAMES: array[0..1] of String = ('type', 'mod');
-
-  begin
-    Result := Name;
-
-    for var SpecialName in SPECIAL_NAMES do
-      if CompareText(Name, SpecialName) = 0 then
-        Exit('&' + Result);
   end;
 
   function GetClassName(const ClassDefinition: TClassDefinition): String;
