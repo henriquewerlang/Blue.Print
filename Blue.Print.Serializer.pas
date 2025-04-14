@@ -497,7 +497,7 @@ begin
             DeserializeProperties(RttiType, Result.AsObject, TJSONObject(JSONValue));
       end;
 
-    tkArray, tkDynArray: Result := DeserializeArray(RttiType, JSONValue as TJSONArray);
+    tkArray, tkDynArray: Result := DeserializeArray(RttiType, TJSONArray(JSONValue));
 
 {$IFDEF DCC}
     tkMRecord,
@@ -506,7 +506,7 @@ begin
     begin
       TValue.Make(nil, RttiType.Handle, Result);
 
-      DeserializeFields(RttiType, Result, JSONValue as TJSONObject);
+      DeserializeFields(RttiType, Result, TJSONObject(JSONValue) as TJSONObject);
     end;
 
     else Result := TValue.Empty;
@@ -608,14 +608,16 @@ end;
 
 procedure TBluePrintJsonSerializer.DeserializeMap(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
 var
-  Pair: TJSONPair;
+  Pair: {$IFDEF PAS2JS}String{$ELSE}TJSONPair{$ENDIF};
   WriteMethod: TRttiMethod;
 
 begin
+{$IFDEF DCC}
   WriteMethod := RttiType.GetDeclaredIndexedProperties[0].WriteMethod;
 
-  for Pair in JSONObject do
-    WriteMethod.Invoke(Instance, [DeserializeType(WriteMethod.GetParameters[0].ParamType, Pair.JsonString), DeserializeType(WriteMethod.GetParameters[1].ParamType, Pair.JsonValue)]);
+  for Pair in {$IFDEF PAS2JS}TJSObject.Keys{$ENDIF}(JSONObject) do
+    WriteMethod.Invoke(Instance, [DeserializeType(WriteMethod.GetParameters[0].ParamType, Pair.JsonString), DeserializeType(WriteMethod.GetParameters[1].ParamType, {$IFDEF PAS2JS}JSONObject[Pair]{$ELSE}Pair.JsonValue{$ENDIF})]);
+{$ENDIF}
 end;
 
 { TBluePrintXMLSerializer }
