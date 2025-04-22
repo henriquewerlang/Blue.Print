@@ -47,9 +47,13 @@ type
     FSchemaFolder: String;
     FUnitConfiguration: TArray<TUnitDefinitionConfiguration>;
     FTypeDefinition: TArray<TTypeDefinitionConfiguration>;
+    FMaxColumnSize: Integer;
   public
+    constructor Create;
+
     destructor Destroy; override;
 
+    property MaxColumnSize: Integer read FMaxColumnSize write FMaxColumnSize;
     property OutputFolder: String read FOutputFolder write FOutputFolder;
     property SchemaFolder: String read FSchemaFolder write FSchemaFolder;
     property TypeDefinition: TArray<TTypeDefinitionConfiguration> read FTypeDefinition write FTypeDefinition;
@@ -342,6 +346,9 @@ implementation
 
 uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, XML.XMLDom, Xml.XMLSchemaTags, Blue.Print.Serializer;
 
+const
+  WHITE_SPACE_IDENT = '  ';
+
 function FormatName(const Name: String): String;
 begin
    Result := Name.Substring(0, 1).ToUpper + Name.Substring(1);
@@ -363,6 +370,32 @@ begin
     if CompareText(Name, SpecialName) = 0 then
       Exit('&' + Result);
 end;
+
+function OnlyValidChars(const Value: String): String;
+begin
+  Result := EmptyStr;
+
+  for var Char in Value do
+    if CharInSet(Char, ['0'..'9', 'a'..'z', 'A'..'Z']) then
+      Result := Result + Char;
+end;
+
+function FormatEnumeratorValue(Value: String): String;
+begin
+  Result := EmptyStr;
+
+  for var Split in Value.Split([' ']) do
+      Result := Result + CheckReservedName(OnlyValidChars(FormatName(Split)));
+
+  if CharInSet(Result[1], ['0'..'9']) then
+    Result := 't' + Result;
+end;
+
+function NotFormatEnumeratorValue(Value: String): String;
+begin
+  Result := Value;
+end;
+
 
 { TSchemaImporter }
 
@@ -662,39 +695,6 @@ function TXSDImporter.CheckEnumeration(const &Type: IXMLTypeDef; const Module: T
 var
   EnumValues: TStringList;
 
-  function GetEnumerationValues: String;
-  begin
-    Result := EmptyStr;
-
-    for var EnumValue in EnumValues do
-    begin
-      if not Result.IsEmpty then
-        Result := Result + ', ';
-
-      Result := Result + EnumValue;
-    end;
-  end;
-
-  function OnlyValidChars(const Value: String): String;
-  begin
-    Result := EmptyStr;
-
-    for var Char in Value do
-      if CharInSet(Char, ['0'..'9', 'a'..'z', 'A'..'Z']) then
-        Result := Result + Char;
-  end;
-
-  function FormatEnumeratorValue(const Value: String): String;
-  begin
-    Result := EmptyStr;
-
-    for var Split in Value.Split([' ']) do
-        Result := Result + CheckReservedName(OnlyValidChars(FormatName(Split)));
-
-    if CharInSet(Result[1], ['0'..'9']) then
-      Result := 't' + Result;
-  end;
-
 begin
   if &Type.Enumerations.Count > 0 then
   begin
@@ -710,10 +710,8 @@ begin
         EnumValues.Add(EnumValue);
     end;
 
-    Result.Attributes.Add(Format('EnumValue(''%s'')', [GetEnumerationValues]));
-
     for var EnumValue in EnumValues do
-      Result.Values.Add(FormatEnumeratorValue(EnumValue));
+      Result.Values.Add(EnumValue);
 
     if Assigned(Module) then
       Module.Enumarations.Add(Result);
@@ -1076,16 +1074,26 @@ var
 
   procedure GenerateEnumerators(const Ident: String; const Module: TTypeModuleDefinition);
 
-    function GetEnumeratorValues(const Enumerator: TTypeEnumeration): String;
+    function GetEnumeratorValues(const Enumerator: TTypeEnumeration; const LineBreak: String; const FormatFunction: TFunc<String, String>): String;
     begin
+      var LineBreakCount := 1;
       Result := EmptyStr;
 
       for var Value in Enumerator.Values do
       begin
+        var FormatedValue := FormatFunction(Value);
+
         if not Result.IsEmpty then
           Result := Result + ', ';
 
-        Result := Result + Value;
+        if Result.Length + FormatedValue.Length - LineBreak.Length * Pred(LineBreakCount) > Importer.Configuration.MaxColumnSize * LineBreakCount then
+        begin
+          Result := Result + LineBreak;
+
+          Inc(LineBreakCount);
+        end;
+
+        Result := Result + FormatedValue;
       end;
     end;
 
@@ -1094,7 +1102,9 @@ var
     begin
       LoadAttributes(Ident, Enumerator.Attributes.ToArray);
 
-      AddLine('%s%s = (%s);', [Ident, Enumerator.EnumeratorName, GetEnumeratorValues(Enumerator)]);
+      AddLine('%s[EnumValue(''%s'')]', [Ident, GetEnumeratorValues(Enumerator, ''' +' + sLineBreak + Ident + WHITE_SPACE_IDENT + '''', NotFormatEnumeratorValue)]);
+
+      AddLine('%s%s = (%s);', [Ident, Enumerator.EnumeratorName, GetEnumeratorValues(Enumerator, sLineBreak + Ident + WHITE_SPACE_IDENT, FormatEnumeratorValue)]);
     end;
   end;
 
@@ -1134,11 +1144,11 @@ var
     begin
       AddLine('%spublic type', [Ident]);
 
-      GenerateEnumerators(Ident + '  ', ClassDefinition);
+      GenerateEnumerators(Ident + WHITE_SPACE_IDENT, ClassDefinition);
 
       for var SubClass in ClassDefinition.Classes do
       begin
-        GenerateClassDeclaration(Ident + '  ', SubClass);
+        GenerateClassDeclaration(Ident + WHITE_SPACE_IDENT, SubClass);
 
         if SubClass <> ClassDefinition.Classes.Last then
           AddLine;
@@ -1183,7 +1193,7 @@ var
 
       for var &Property in ClassDefinition.Properties do
       begin
-        LoadAttributes(Ident + '  ', &Property.Attributes.ToArray + GetPropertyType(&Property).ParentAttributes.ToArray);
+        LoadAttributes(Ident + WHITE_SPACE_IDENT, &Property.Attributes.ToArray + GetPropertyType(&Property).ParentAttributes.ToArray);
 
         AddLine('%s  property %s: %s read %s write %s%s;', [Ident, CheckReservedName(&Property.Name), GetPropertyTypeName(&Property), GetPropertyGetFunction(&Property), GetPropertyFieldName(&Property), GetStoredPropertyDeclaration(&Property)]);
       end;
@@ -1418,7 +1428,7 @@ begin
   begin
     AddLine('  // Enumerations declaration');
 
-    GenerateEnumerators('  ', Self);
+    GenerateEnumerators(WHITE_SPACE_IDENT, Self);
 
     AddLine;
   end;
@@ -1434,7 +1444,7 @@ begin
 
     for var AClass in Classes do
     begin
-      GenerateClassDeclaration('  ', AClass);
+      GenerateClassDeclaration(WHITE_SPACE_IDENT, AClass);
 
       AddLine;
     end;
@@ -1679,6 +1689,13 @@ begin
 end;
 
 { TConfiguration }
+
+constructor TConfiguration.Create;
+begin
+  inherited;
+
+  FMaxColumnSize := 80;
+end;
 
 destructor TConfiguration.Destroy;
 begin
