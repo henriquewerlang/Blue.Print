@@ -286,6 +286,7 @@ type
     function CreateTypeAlias(const Module: TTypeModuleDefinition; const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
     function CreateUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
     function FindType(const TypeName: String; Module: TTypeModuleDefinition): TTypeDefinition; virtual;
+    function LoadFile(const UnitFile: TUnitFileConfiguration): String;
 
     procedure GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration); virtual; abstract;
     procedure LoadInternalTypes;
@@ -374,7 +375,7 @@ type
 
 implementation
 
-uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, XML.XMLDom, Xml.XMLSchemaTags, Blue.Print.Serializer;
+uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, XML.XMLDom, Xml.XMLSchemaTags, Blue.Print.Serializer;
 
 const
   WHITE_SPACE_IDENT = '  ';
@@ -431,7 +432,6 @@ function NotFormatEnumeratorValue(Value: String): String;
 begin
   Result := Value;
 end;
-
 
 { TSchemaImporter }
 
@@ -637,6 +637,28 @@ begin
       if not TypeExternal.ModuleName.IsEmpty then
         AddTypeExternal(TypeExternal.ModuleName, TypeExternal.Name);
   end;
+end;
+
+function TSchemaImporter.LoadFile(const UnitFile: TUnitFileConfiguration): String;
+
+  function DownloadFile(const URL: String): String;
+  begin
+    var Connection := THTTPClient.Create;
+    var Response := Connection.Execute('GET', URL) as IHTTPResponse;
+
+    if Response.StatusCode = 200 then
+      Result := Response.ContentAsString
+    else
+      raise Exception.CreateFmt('Error downloading the file %s', [URL]);
+
+    Connection.Free;
+  end;
+
+begin
+  if UnitFile.Reference.StartsWith('http') then
+    Result := DownloadFile(UnitFile.Reference)
+  else
+    Result := TFile.ReadAllText(Format('%s\%s', [Configuration.SchemaFolder, UnitFile.Reference]));
 end;
 
 procedure TSchemaImporter.LoadInternalTypes;
@@ -931,7 +953,7 @@ procedure TXSDImporter.GenerateUnitDefinition(const UnitConfiguration: TUnitDefi
 begin
   for var UnitFile in UnitConfiguration.Files do
   begin
-    var Schema := LoadXMLSchema(Format('%s\%s', [Configuration.SchemaFolder, UnitFile.Reference]));
+    var Schema := LoadXMLSchemaStr(LoadFile(UnitFile));
 
     GenerateUnit(Schema.SchemaDef, UnitConfiguration);
   end;
@@ -1918,12 +1940,12 @@ begin
       TPropertyType.&string: Result := StringType;
       else
       begin
-          var InnerClassDefinition := CreateClassDefinition(ParentModule, TypeName);
+        var InnerClassDefinition := CreateClassDefinition(ParentModule, TypeName);
 
-          for var AllOf in Schema.allOf do
-            GenerateProperties(InnerClassDefinition, AllOf);
+        for var AllOf in Schema.allOf do
+          GenerateProperties(InnerClassDefinition, AllOf);
 
-          Result := InnerClassDefinition;
+        Result := InnerClassDefinition;
       end;
     end;
 end;
@@ -1931,11 +1953,11 @@ end;
 procedure TJSONSchemaImport.GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration);
 begin
   var Serializer := TBluePrintJsonSerializer.Create as IBluePrintSerializer;
+  var UnitDeclaration := CreateUnit(UnitConfiguration);
 
   for var UnitFile in UnitConfiguration.Files do
   begin
-    FJSONSchema := Serializer.Deserialize(TFile.ReadAllText(Format('%s\%s', [Configuration.SchemaFolder, UnitFile.Reference])), TypeInfo(TSchema)).AsType<TSchema>;
-    var UnitDeclaration := CreateUnit(UnitConfiguration);
+    FJSONSchema := Serializer.Deserialize(LoadFile(UnitFile), TypeInfo(TSchema)).AsType<TSchema>;
     var UnitClass := TClassDefinition.Create(UnitDeclaration);
     UnitClass.Name := UnitFile.UnitClassName;
 
