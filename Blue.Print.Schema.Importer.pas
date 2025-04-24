@@ -285,6 +285,7 @@ type
     function CreateTypeAlias(const Module: TTypeModuleDefinition; const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
     function CreateUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
     function FindType(const TypeName: String; Module: TTypeModuleDefinition): TTypeDefinition; virtual;
+    function GetFileNameFromSchemaFolder(const FileName: String): String;
     function LoadFile(const UnitFile: TUnitFileConfiguration): String;
 
     procedure GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration); virtual; abstract;
@@ -325,7 +326,6 @@ type
     function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
     function CheckEnumeration(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeEnumeration;
     function GenerateClassDefinition(const UnitDeclaration: TUnitDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TClassDefinition;
-    function GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
     function IsReferenceType(const Element: IXMLElementDef): Boolean;
 
     procedure AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
@@ -530,15 +530,21 @@ function TSchemaImporter.FindType(const TypeName: String; Module: TTypeModuleDef
     if FBuildInType.TryGetValue(TypeName, Result) then
       Exit;
 
-    for var TypeDefinitionConfig in Configuration.TypeDefinition do
-      if TypeDefinitionConfig.Name = TypeName then
-        Exit(CreateTypeAlias(Module, TypeDefinitionConfig.Name, AddDelayedType(TypeDefinitionConfig.ChangeType, nil)));
-
     if not Assigned(Result) then
       for var UnitDefinition in FUnits.Values do
         for var TypeAlias in UnitDefinition.TypeAlias do
           if TypeAlias.Name = TypeName then
             Exit(TypeAlias);
+
+    for var TypeDefinitionConfig in Configuration.TypeDefinition do
+      if TypeDefinitionConfig.Name = TypeName then
+      begin
+        var TypeAlias := CreateTypeAlias(Module, TypeDefinitionConfig.Name, AddDelayedType(TypeDefinitionConfig.ChangeType, nil));
+
+        TClassDefinition(Module).UnitDefinition.TypeAlias.Add(TypeAlias);
+
+        Exit(TypeAlias);
+      end;
   end;
 
 begin
@@ -573,6 +579,11 @@ begin
       end;
     end;
   end;
+end;
+
+function TSchemaImporter.GetFileNameFromSchemaFolder(const FileName: String): String;
+begin
+  Result := Format('%s\%s', [Configuration.SchemaFolder, FileName]);
 end;
 
 procedure TSchemaImporter.Import;
@@ -649,7 +660,7 @@ begin
   if UnitFile.Reference.StartsWith('http') then
     Result := DownloadFile(UnitFile.Reference)
   else
-    Result := TFile.ReadAllText(Format('%s\%s', [Configuration.SchemaFolder, UnitFile.Reference]));
+    Result := TFile.ReadAllText(GetFileNameFromSchemaFolder(UnitFile.Reference));
 end;
 
 procedure TSchemaImporter.LoadInternalTypes;
@@ -885,66 +896,34 @@ begin
     NewProperty.PropertyType := TTypeArrayDefinition.Create(ClassDefinition, NewProperty.PropertyType);
 end;
 
-function TXSDImporter.GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
-var
-  UnitDeclaration: TUnitDefinition absolute Result;
-
-  function FindUnitConfiguration(const Reference: String): TUnitDefinitionConfiguration;
-  begin
-    for var Configuration in Configuration.UnitConfiguration do
-      for var UnitFile in Configuration.Files do
-        if UnitFile.Reference = Reference then
-          Exit(Configuration);
-
-    raise Exception.CreateFmt('Schema file without unit configuration %s!', [ExtractFileName(Reference)]);
-  end;
-
-  procedure ProcessReferences(const List: IXMLSchemaDocRefs);
-  begin
-    for var A := 0 to Pred(List.Count) do
-    begin
-      var Reference := List[A];
-
-      UnitDeclaration.AddUses(GenerateUnit(Reference.SchemaRef, FindUnitConfiguration(Reference.SchemaLocation)));
-    end;
-  end;
-
-begin
-  Result := CreateUnit(UnitConfiguration);
-
-  ProcessReferences(Definition.SchemaIncludes);
-
-  ProcessReferences(Definition.SchemaImports);
-
-  for var A := 0 to Pred(Definition.SimpleTypes.Count) do
-    CheckUnitTypeDefinition(Definition.SimpleTypes[A], Result);
-
-  for var A := 0 to Pred(Definition.ComplexTypes.Count) do
-  begin
-    var ClassDefinition := GenerateClassDefinition(UnitDeclaration, Definition.ComplexTypes[A], Definition.TargetNamespace);
-
-    UnitDeclaration.Classes.Add(ClassDefinition);
-  end;
-
-  if Definition.ElementDefs.Count > 0 then
-  begin
-    var ClassDefinition := TClassDefinition.Create(UnitDeclaration, EmptyStr);
-    ClassDefinition.Name := UnitConfiguration.Name;
-
-    for var A := 0 to Pred(Definition.ElementDefs.Count) do
-      GenerateProperty(ClassDefinition, Definition.ElementDefs[A], Definition.TargetNamespace);
-
-    UnitDeclaration.Classes.Add(ClassDefinition);
-  end;
-end;
-
 procedure TXSDImporter.GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration);
 begin
+  var UnitDefinition := CreateUnit(UnitConfiguration);
+
   for var UnitFile in UnitConfiguration.Files do
   begin
-    var Schema := LoadXMLSchemaStr(LoadFile(UnitFile));
+    var Schema := LoadXMLSchema(GetFileNameFromSchemaFolder(UnitFile.Reference));
 
-    GenerateUnit(Schema.SchemaDef, UnitConfiguration);
+    for var A := 0 to Pred(Schema.SchemaDef.SimpleTypes.Count) do
+      CheckUnitTypeDefinition(Schema.SchemaDef.SimpleTypes[A], UnitDefinition);
+
+    for var A := 0 to Pred(Schema.SchemaDef.ComplexTypes.Count) do
+    begin
+      var ClassDefinition := GenerateClassDefinition(UnitDefinition, Schema.SchemaDef.ComplexTypes[A], Schema.SchemaDef.TargetNamespace);
+
+      UnitDefinition.Classes.Add(ClassDefinition);
+    end;
+
+    if Schema.SchemaDef.ElementDefs.Count > 0 then
+    begin
+      var ClassDefinition := TClassDefinition.Create(UnitDefinition, EmptyStr);
+      ClassDefinition.Name := UnitFile.UnitClassName;
+
+      for var A := 0 to Pred(Schema.SchemaDef.ElementDefs.Count) do
+        GenerateProperty(ClassDefinition, Schema.SchemaDef.ElementDefs[A], Schema.SchemaDef.TargetNamespace);
+
+      UnitDefinition.Classes.Add(ClassDefinition);
+    end;
   end;
 end;
 
