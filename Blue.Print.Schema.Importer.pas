@@ -153,14 +153,14 @@ type
   TTypeModuleDefinition = class(TTypeDefinition)
   private
     FClasses: TList<TClassDefinition>;
-    FEnumarations: TList<TTypeEnumeration>;
+    FEnumerations: TList<TTypeEnumeration>;
   public
     constructor Create(const Module: TTypeModuleDefinition); virtual;
 
     destructor Destroy; override;
 
-    property Enumarations: TList<TTypeEnumeration> read FEnumarations write FEnumarations;
     property Classes: TList<TClassDefinition> read FClasses;
+    property Enumerations: TList<TTypeEnumeration> read FEnumerations write FEnumerations;
   end;
 
   TClassDefinition = class(TTypeModuleDefinition)
@@ -506,7 +506,7 @@ function TSchemaImporter.FindType(const TypeName: String; Module: TTypeModuleDef
       end;
     end;
 
-    for var Enumerator in Module.Enumarations do
+    for var Enumerator in Module.Enumerations do
     begin
       Result := Enumerator.Name = TypeName;
 
@@ -755,7 +755,7 @@ begin
       Result.Values.Add(EnumValue);
 
     if Assigned(Module) then
-      Module.Enumarations.Add(Result);
+      Module.Enumerations.Add(Result);
   end
   else
     Result := nil;
@@ -1146,7 +1146,7 @@ var
     end;
 
   begin
-    for var Enumerator in Module.Enumarations do
+    for var Enumerator in Module.Enumerations do
     begin
       LoadAttributes(Ident, Enumerator.Attributes.ToArray);
 
@@ -1195,7 +1195,7 @@ var
 
     AddLine('%s%s = class%s', [Ident, GetClassName(ClassDefinition), GetInheritence]);
 
-    if not ClassDefinition.Classes.IsEmpty or not ClassDefinition.Enumarations.IsEmpty then
+    if not ClassDefinition.Classes.IsEmpty or not ClassDefinition.Enumerations.IsEmpty then
     begin
       AddLine('%spublic type', [Ident]);
 
@@ -1469,7 +1469,7 @@ begin
 
   AddLine('{$M+}');
 
-  if not Enumarations.IsEmpty then
+  if not Enumerations.IsEmpty then
     AddLine('{$SCOPEDENUMS ON}');
 
   AddLine;
@@ -1490,7 +1490,7 @@ begin
   if not TypeAlias.IsEmpty or not Classes.IsEmpty then
     AddLine('type');
 
-  if not Enumarations.IsEmpty then
+  if not Enumerations.IsEmpty then
   begin
     AddLine('  // Enumerations declaration');
 
@@ -2014,14 +2014,14 @@ begin
   inherited;
 
   FClasses := TObjectList<TClassDefinition>.Create;
-  FEnumarations := TObjectList<TTypeEnumeration>.Create;
+  FEnumerations := TObjectList<TTypeEnumeration>.Create;
 end;
 
 destructor TTypeModuleDefinition.Destroy;
 begin
   FClasses.Free;
 
-  FEnumarations.Free;
+  FEnumerations.Free;
 
   inherited;
 end;
