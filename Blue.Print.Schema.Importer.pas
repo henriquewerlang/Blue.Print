@@ -693,8 +693,6 @@ begin
   FStringType.FIsStringType := True;
   FTimeType := AddNumberType('TTime');
   FWordType := AddNumberType('Word');
-
-  AddType('Undefined');
 end;
 
 { TXSDImporter }
