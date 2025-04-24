@@ -7,6 +7,7 @@ uses System.Generics.Collections, Xml.XMLSchema, Blue.Print.JSON.Schema, Blue.Pr
 type
   TClassDefinition = class;
   TSchemaImporter = class;
+  TTypeAlias = class;
   TTypeArrayDefinition = class;
   TTypeDefinition = class;
   TTypeDelayed = class;
@@ -119,7 +120,9 @@ type
     function GetIsDelayedType: Boolean;
     function GetIsEnumeration: Boolean;
     function GetIsExternal: Boolean;
+    function GetIsTypeAlias: Boolean;
     function GetIsUnitDefinition: Boolean;
+    function GetAsTypeAlias: TTypeAlias;
   public
     constructor Create(const ParentModule: TTypeModuleDefinition);
 
@@ -128,6 +131,7 @@ type
     property AsArrayType: TTypeArrayDefinition read GetAsArrayType;
     property AsClassDefinition: TClassDefinition read GetAsClassDefinition;
     property AsDelayedType: TTypeDelayed read GetAsDelayedType;
+    property AsTypeAlias: TTypeAlias read GetAsTypeAlias;
     property AsTypeEnumeration: TTypeEnumeration read GetAsTypeEnumeration;
     property AsTypeExternal: TTypeExternal read GetAsTypeExternal;
     property AsUnitDefinition: TUnitDefinition read GetAsUnitDefinition;
@@ -140,6 +144,7 @@ type
     property IsNumericType: Boolean read FIsNumericType;
     property IsObjectType: Boolean read FIsObjectType;
     property IsStringType: Boolean read FIsStringType;
+    property IsTypeAlias: Boolean read GetIsTypeAlias;
     property IsUnitDefinition: Boolean read GetIsUnitDefinition;
     property Name: String read FName write FName;
     property ParentAttributes: TList<String> read FParentAttributes;
@@ -525,6 +530,10 @@ function TSchemaImporter.FindType(const TypeName: String; Module: TTypeModuleDef
     if FBuildInType.TryGetValue(TypeName, Result) then
       Exit;
 
+    for var TypeDefinitionConfig in Configuration.TypeDefinition do
+      if TypeDefinitionConfig.Name = TypeName then
+        Exit(CreateTypeAlias(Module, TypeDefinitionConfig.Name, AddDelayedType(TypeDefinitionConfig.ChangeType, nil)));
+
     if not Assigned(Result) then
       for var UnitDefinition in FUnits.Values do
         for var TypeAlias in UnitDefinition.TypeAlias do
@@ -552,21 +561,22 @@ begin
       if Assigned(Module) then
         FindTypeDefinitionModule(Module, SplitTypeName, Result)
       else if not Assigned(Result) then
+      begin
         for var UnitDefinition in FUnits.Values do
           if FindTypeDefinitionModule(UnitDefinition, SplitTypeName, Result) then
             Break;
 
-      Module := TClassDefinition(Result);
+        if Assigned(Result) then
+          Module := TClassDefinition(Result)
+        else
+          Exit;
+      end;
     end;
   end;
 end;
 
 procedure TSchemaImporter.Import;
 begin
-//  for var TypeDefinitionConfig in Configuration.TypeDefinition do
-//    if not TypeDefinitionConfig.ChangeType.IsEmpty then
-//      AddTypeAlias(TypeDefinitionConfig.Name, AddDelayedType(TypeDefinitionConfig.ChangeType, nil));
-
   for var UnitConfiguration in Configuration.UnitConfiguration do
     GenerateUnitDefinition(UnitConfiguration);
 
@@ -1038,6 +1048,14 @@ var
       Result := ResolveTypeDefinition(Result.AsDelayedType.ResolveType);
   end;
 
+  function ResolveTypeAlias(const TypeDefinition: TTypeDefinition): TTypeDefinition;
+  begin
+    Result := ResolveTypeDefinition(TypeDefinition);
+
+    if Result.IsTypeAlias then
+      Result := ResolveTypeAlias(Result.AsTypeAlias.TypeDefinition);
+  end;
+
   function GetPropertyType(const &Property: TPropertyDefinition): TTypeDefinition;
   begin
     Result := ResolveTypeDefinition(&Property.PropertyType);
@@ -1051,9 +1069,18 @@ var
       Result := TypeDefinition;
   end;
 
+  function GetNeedAddFunction(const &Property: TPropertyDefinition): Boolean;
+  begin
+    var PropertyType := GetPropertyType(&Property);
+    Result := PropertyType.IsArrayType;
+
+    if Result then
+      Result := ResolveTypeAlias(PropertyType).IsClassDefinition;
+  end;
+
   function GetNeedDestructor(const &Property: TPropertyDefinition): Boolean;
   begin
-    var PropertyType := GetArrayType(GetPropertyType(&Property));
+    var PropertyType := ResolveTypeAlias(GetPropertyType(&Property));
 
     Result := PropertyType.IsClassDefinition and not PropertyType.IsObjectType;
   end;
@@ -1174,15 +1201,6 @@ var
     end;
   end;
 
-  function GetNeedAddFunction(const &Property: TPropertyDefinition): Boolean;
-  begin
-    var PropertyType := GetPropertyType(&Property);
-    Result := PropertyType.IsArrayType;
-
-    if Result then
-      Result := GetArrayType(PropertyType).IsClassDefinition;
-  end;
-
   procedure GenerateClassDeclaration(const Ident: String; const ClassDefinition: TClassDefinition);
 
     function GetStoredPropertyDeclaration(const &Property: TPropertyDefinition): String;
@@ -1277,9 +1295,9 @@ var
     AddLine('%send;', [Ident]);
   end;
 
-  function GetOptionalValue(const &Property: TPropertyDefinition): String;
+  function GetIsStoredFunctionValue(const &Property: TPropertyDefinition): String;
   begin
-    var PropertyType := GetPropertyType(&Property);
+    var PropertyType := ResolveTypeAlias(GetPropertyType(&Property));
 
     if PropertyType.IsClassDefinition then
       Result := Format('Assigned(%s)', [GetPropertyFieldName(&Property)])
@@ -1380,7 +1398,7 @@ var
 
           AddLine('begin');
 
-          AddLine('  Result := %s;', [GetOptionalValue(&Property)]);
+          AddLine('  Result := %s;', [GetIsStoredFunctionValue(&Property)]);
 
           AddLine('end;');
 
@@ -1469,14 +1487,6 @@ var
     end;
   end;
 
-  function ResolverTypeAlias(const TypeDefinition: TTypeDefinition): TTypeDefinition;
-  begin
-    Result := TypeDefinition;
-
-    if Result is TTypeAlias then
-      Result := ResolverTypeAlias(TTypeAlias(Result).TypeDefinition);
-  end;
-
 begin
   UnitDefinition := TStringList.Create;
 
@@ -1535,7 +1545,7 @@ begin
     AddLine('  // Forward type alias');
 
     for var TypeAlias in TypeAlias do
-      AddLine('  %s = %s;', [TypeAlias.Name, GetTypeName(ResolverTypeAlias(TypeAlias.TypeDefinition))]);
+      AddLine('  %s = %s;', [TypeAlias.Name, GetTypeName(ResolveTypeAlias(TypeAlias))]);
 
     AddLine;
   end;
@@ -1706,6 +1716,11 @@ begin
   Result := Self as TTypeDelayed;
 end;
 
+function TTypeDefinition.GetAsTypeAlias: TTypeAlias;
+begin
+  Result := Self as TTypeAlias;
+end;
+
 function TTypeDefinition.GetAsTypeEnumeration: TTypeEnumeration;
 begin
   Result := Self as TTypeEnumeration;
@@ -1744,6 +1759,11 @@ end;
 function TTypeDefinition.GetIsExternal: Boolean;
 begin
   Result := Self is TTypeExternal;
+end;
+
+function TTypeDefinition.GetIsTypeAlias: Boolean;
+begin
+  Result := Self is TTypeAlias;
 end;
 
 function TTypeDefinition.GetIsUnitDefinition: Boolean;
