@@ -79,7 +79,6 @@ type
     FOptional: Boolean;
     FPropertyType: TTypeDefinition;
 
-    function GetNeedGetFunction: Boolean;
     function GetOptional: Boolean;
   public
     constructor Create;
@@ -95,7 +94,6 @@ type
 
     property Attributes: TList<String> read FAttributes write FAttributes;
     property Name: String read FName write FName;
-    property NeedGetFunction: Boolean read GetNeedGetFunction;
     property Optional: Boolean read GetOptional write FOptional;
     property PropertyType: TTypeDefinition read FPropertyType write FPropertyType;
   end;
@@ -122,7 +120,6 @@ type
     function GetIsEnumeration: Boolean;
     function GetIsExternal: Boolean;
     function GetIsUnitDefinition: Boolean;
-    function GetNeedDestructor: Boolean;
   public
     constructor Create(const ParentModule: TTypeModuleDefinition);
 
@@ -145,7 +142,6 @@ type
     property IsStringType: Boolean read FIsStringType;
     property IsUnitDefinition: Boolean read GetIsUnitDefinition;
     property Name: String read FName write FName;
-    property NeedDestructor: Boolean read GetNeedDestructor;
     property ParentAttributes: TList<String> read FParentAttributes;
     property ParentModule: TTypeModuleDefinition read FParentModule;
   end;
@@ -1047,12 +1043,27 @@ var
     Result := ResolveTypeDefinition(&Property.PropertyType);
   end;
 
+  function GetArrayType(const TypeDefinition: TTypeDefinition): TTypeDefinition;
+  begin
+    if TypeDefinition.IsArrayType then
+      Result := ResolveTypeDefinition(TypeDefinition.AsArrayType.ArrayType)
+    else
+      Result := TypeDefinition;
+  end;
+
+  function GetNeedDestructor(const &Property: TPropertyDefinition): Boolean;
+  begin
+    var PropertyType := GetArrayType(GetPropertyType(&Property));
+
+    Result := PropertyType.IsClassDefinition and not PropertyType.IsObjectType;
+  end;
+
   function CheckNeedDestructor(const ClassDefinition: TClassDefinition): Boolean;
   begin
     Result := False;
 
     for var &Property in ClassDefinition.Properties do
-      if GetPropertyType(&Property).NeedDestructor then
+      if GetNeedDestructor(&Property) then
         Exit(True);
   end;
 
@@ -1073,9 +1084,16 @@ var
     Result := 'F' + FormatName(&Property.Name);
   end;
 
+  function GetNeedGetFunction(const &Property: TPropertyDefinition): Boolean;
+  begin
+    var PropertyType := GetPropertyType(&Property);
+
+    Result := PropertyType.IsClassDefinition and not PropertyType.IsArrayType and not PropertyType.IsObjectType;
+  end;
+
   function GetPropertyGetFunction(const &Property: TPropertyDefinition): String;
   begin
-    if &Property.NeedGetFunction then
+    if GetNeedGetFunction(&Property) then
       Result := 'Get' + FormatName(&Property.Name)
     else
       Result := GetPropertyFieldName(&Property);
@@ -1084,7 +1102,7 @@ var
   function GetTypeName(const TypeDefinition: TTypeDefinition): String;
   begin
     if TypeDefinition.IsArrayType then
-      Result := Format('TArray<%s>', [GetTypeName(TypeDefinition.AsArrayType.ArrayType)])
+      Result := Format('TArray<%s>', [GetTypeName(GetArrayType(TypeDefinition))])
     else if TypeDefinition.IsClassDefinition then
       Result := GetClassImplementationName(TypeDefinition.AsClassDefinition)
     else if TypeDefinition.IsEnumeration then
@@ -1102,7 +1120,7 @@ var
 
   function GetAddFuntionName(const &Property: TPropertyDefinition): String;
   begin
-    Result := 'Add' + FormatName(&Property.Name);
+    Result := Format('Add%s: %s', [FormatName(&Property.Name), GetTypeName(GetArrayType(GetPropertyType(&Property)))]);
   end;
 
   function HasOptionalProperty(const ClassDefinition: TClassDefinition): Boolean;
@@ -1159,8 +1177,10 @@ var
   function GetNeedAddFunction(const &Property: TPropertyDefinition): Boolean;
   begin
     var PropertyType := GetPropertyType(&Property);
+    Result := PropertyType.IsArrayType;
 
-    Result := PropertyType.IsArrayType and PropertyType.AsArrayType.ArrayType.IsClassDefinition;
+    if Result then
+      Result := GetArrayType(PropertyType).IsClassDefinition;
   end;
 
   procedure GenerateClassDeclaration(const Ident: String; const ClassDefinition: TClassDefinition);
@@ -1218,7 +1238,7 @@ var
         AddLine('%s  %s: %s;', [Ident, GetPropertyFieldName(&Property), GetPropertyTypeName(&Property)]);
 
       for var &Property in ClassDefinition.Properties do
-        if &Property.NeedGetFunction then
+        if GetNeedGetFunction(&Property) then
           AddLine('%s  function %s: %s;', [Ident, GetPropertyGetFunction(&Property), GetPropertyTypeName(&Property)]);
 
       for var &Property in ClassDefinition.Properties do
@@ -1237,7 +1257,7 @@ var
 
         for var &Property in ClassDefinition.Properties do
           if GetNeedAddFunction(&Property) then
-            AddLine('%s  function %s: %s;', [Ident, GetAddFuntionName(&Property), GetPropertyTypeName(&Property)]);
+            AddLine('%s  function %s;', [Ident, GetAddFuntionName(&Property)]);
 
         for var &Property in ClassDefinition.Properties do
           if &Property.Optional then
@@ -1289,20 +1309,21 @@ var
         begin
           var PropertyType := GetPropertyType(&Property);
 
-          if PropertyType.IsArrayType and PropertyType.NeedDestructor then
-          begin
-            AddLine('  for var AObject in %s do', [GetPropertyFieldName(&Property)]);
-            AddLine('    AObject.Free;');
+          if GetNeedDestructor(&Property) then
+            if PropertyType.IsArrayType then
+            begin
+              AddLine('  for var AObject in %s do', [GetPropertyFieldName(&Property)]);
+              AddLine('    AObject.Free;');
 
-            AddLine;
-          end
-          else if PropertyType.NeedDestructor then
-          begin
-            AddLine('  %s.Free;', [GetPropertyFieldName(&Property)]);
+              AddLine;
+            end
+            else
+            begin
+              AddLine('  %s.Free;', [GetPropertyFieldName(&Property)]);
 
-            AddLine;
+              AddLine;
+            end;
           end;
-        end;
 
         AddLine('  inherited;');
 
@@ -1316,7 +1337,7 @@ var
         var PropertyFieldName := GetPropertyFieldName(&Property);
         var PropertyType := GetPropertyType(&Property);
 
-        if &Property.NeedGetFunction then
+        if GetNeedGetFunction(&Property) then
         begin
           var PropertyTypeName := GetTypeName(PropertyType);
 
@@ -1338,11 +1359,11 @@ var
         end
         else if GetNeedAddFunction(&Property) then
         begin
-          AddLine('function %s.%s: %s;', [GetClassImplementationName(ClassDefinition), GetAddFuntionName(&Property), GetPropertyTypeName(&Property)]);
+          AddLine('function %s.%s;', [GetClassImplementationName(ClassDefinition), GetAddFuntionName(&Property)]);
 
           AddLine('begin');
 
-          AddLine('  Result := %s.Create;', [GetTypeName(PropertyType.AsArrayType.ArrayType)]);
+          AddLine('  Result := %s.Create;', [GetTypeName(GetArrayType(PropertyType))]);
 
           AddLine;
 
@@ -1645,11 +1666,6 @@ begin
   inherited;
 end;
 
-function TPropertyDefinition.GetNeedGetFunction: Boolean;
-begin
-  Result := PropertyType.IsClassDefinition and not PropertyType.IsArrayType and not PropertyType.IsObjectType;
-end;
-
 function TPropertyDefinition.GetOptional: Boolean;
 begin
   Result := FOptional and not PropertyType.IsArrayType;
@@ -1733,11 +1749,6 @@ end;
 function TTypeDefinition.GetIsUnitDefinition: Boolean;
 begin
   Result := Self is TUnitDefinition;
-end;
-
-function TTypeDefinition.GetNeedDestructor: Boolean;
-begin
-  Result := IsClassDefinition or IsObjectType;
 end;
 
 { TTypeDelayed }
