@@ -1465,6 +1465,14 @@ var
     end;
   end;
 
+  function ResolverTypeAlias(const TypeDefinition: TTypeDefinition): TTypeDefinition;
+  begin
+    Result := TypeDefinition;
+
+    if Result is TTypeAlias then
+      Result := ResolverTypeAlias(TTypeAlias(Result).TypeDefinition);
+  end;
+
 begin
   UnitDefinition := TStringList.Create;
 
@@ -1499,16 +1507,6 @@ begin
   if not TypeAlias.IsEmpty or not Classes.IsEmpty then
     AddLine('type');
 
-  if not TypeAlias.IsEmpty then
-  begin
-    AddLine('  // Forward type alias');
-
-    for var TypeAlias in TypeAlias do
-      AddLine('  %s = %s;', [TypeAlias.Name, GetTypeName(TypeAlias.TypeDefinition)]);
-
-    AddLine;
-  end;
-
   if not Enumarations.IsEmpty then
   begin
     AddLine('  // Enumerations declaration');
@@ -1526,13 +1524,23 @@ begin
       AddLine('  %s = class;', [GetClassName(AClass)]);
 
     AddLine;
+  end;
 
-    for var AClass in Classes do
-    begin
-      GenerateClassDeclaration(WHITE_SPACE_IDENT, AClass);
+  if not TypeAlias.IsEmpty then
+  begin
+    AddLine('  // Forward type alias');
 
-      AddLine;
-    end;
+    for var TypeAlias in TypeAlias do
+      AddLine('  %s = %s;', [TypeAlias.Name, GetTypeName(ResolverTypeAlias(TypeAlias.TypeDefinition))]);
+
+    AddLine;
+  end;
+
+  for var AClass in Classes do
+  begin
+    GenerateClassDeclaration(WHITE_SPACE_IDENT, AClass);
+
+    AddLine;
   end;
 
   AddLine('implementation');
