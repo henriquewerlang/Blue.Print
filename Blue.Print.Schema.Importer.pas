@@ -7,8 +7,11 @@ uses System.Generics.Collections, Xml.XMLSchema, Blue.Print.JSON.Schema, Blue.Pr
 type
   TClassDefinition = class;
   TSchemaImporter = class;
+  TTypeArrayDefinition = class;
   TTypeDefinition = class;
+  TTypeDelayed = class;
   TTypeEnumeration = class;
+  TTypeExternal = class;
   TTypeModuleDefinition = class;
   TUnitDefinition = class;
   TXSDImporter = class;
@@ -65,28 +68,27 @@ type
     FAttributes: TList<String>;
     FName: String;
     FOptional: Boolean;
-    FTypeName: TTypeDefinition;
-    FIsArray: Boolean;
+    FPropertyType: TTypeDefinition;
 
     function GetNeedGetFunction: Boolean;
-    function GetNeedAddFunction: Boolean;
     function GetOptional: Boolean;
   public
     constructor Create;
 
     destructor Destroy; override;
 
+    procedure AddAtribute(const Attribute: String); overload;
+    procedure AddAtribute(const Attribute: String; const Params: array of const); overload;
+    procedure AddFieldAttribute(const Name: String);
     procedure AddXMLAttributeFixed(const Name, Value: String);
     procedure AddXMLAttributeValue;
     procedure AddXMLValueAttribute;
 
     property Attributes: TList<String> read FAttributes write FAttributes;
-    property IsArray: Boolean read FIsArray write FIsArray;
     property Name: String read FName write FName;
-    property NeedAddFunction: Boolean read GetNeedAddFunction;
     property NeedGetFunction: Boolean read GetNeedGetFunction;
     property Optional: Boolean read GetOptional write FOptional;
-    property TypeName: TTypeDefinition read FTypeName write FTypeName;
+    property PropertyType: TTypeDefinition read FPropertyType write FPropertyType;
   end;
 
   TTypeDefinition = class
@@ -95,39 +97,43 @@ type
     FIsNumericType: Boolean;
     FIsObjectType: Boolean;
     FIsStringType: Boolean;
+    FName: String;
     FParentAttributes: TList<String>;
     FParentModule: TTypeModuleDefinition;
 
+    function GetAsArrayType: TTypeArrayDefinition;
     function GetAsClassDefinition: TClassDefinition;
+    function GetAsDelayedType: TTypeDelayed;
     function GetAsTypeEnumeration: TTypeEnumeration;
-    function GetIsClassDefinition: Boolean;
-    function GetIsExternal: Boolean;
-    function GetIsNumericType: Boolean;
-    function GetIsObjectType: Boolean;
-    function GetIsStringType: Boolean;
-    function GetNeedDestructor: Boolean;
-    function GetIsEnumeration: Boolean;
-    function GetIsUnitDefinition: Boolean;
+    function GetAsTypeExternal: TTypeExternal;
     function GetAsUnitDefinition: TUnitDefinition;
-  protected
-    FName: String;
+    function GetIsArrayType: Boolean;
+    function GetIsClassDefinition: Boolean;
+    function GetIsDelayedType: Boolean;
+    function GetIsEnumeration: Boolean;
+    function GetIsExternal: Boolean;
+    function GetIsUnitDefinition: Boolean;
+    function GetNeedDestructor: Boolean;
   public
     constructor Create(const ParentModule: TTypeModuleDefinition);
 
     destructor Destroy; override;
 
-    function ResolveType: TTypeDefinition; virtual;
-
+    property AsArrayType: TTypeArrayDefinition read GetAsArrayType;
     property AsClassDefinition: TClassDefinition read GetAsClassDefinition;
+    property AsDelayedType: TTypeDelayed read GetAsDelayedType;
     property AsTypeEnumeration: TTypeEnumeration read GetAsTypeEnumeration;
+    property AsTypeExternal: TTypeExternal read GetAsTypeExternal;
     property AsUnitDefinition: TUnitDefinition read GetAsUnitDefinition;
     property Attributes: TList<String> read FAttributes write FAttributes;
+    property IsArrayType: Boolean read GetIsArrayType;
     property IsClassDefinition: Boolean read GetIsClassDefinition;
+    property IsDelayedType: Boolean read GetIsDelayedType;
     property IsEnumeration: Boolean read GetIsEnumeration;
     property IsExternal: Boolean read GetIsExternal;
-    property IsNumericType: Boolean read GetIsNumericType;
-    property IsObjectType: Boolean read GetIsObjectType;
-    property IsStringType: Boolean read GetIsStringType;
+    property IsNumericType: Boolean read FIsNumericType;
+    property IsObjectType: Boolean read FIsObjectType;
+    property IsStringType: Boolean read FIsStringType;
     property IsUnitDefinition: Boolean read GetIsUnitDefinition;
     property Name: String read FName write FName;
     property NeedDestructor: Boolean read GetNeedDestructor;
@@ -140,7 +146,7 @@ type
     FClasses: TList<TClassDefinition>;
     FEnumarations: TList<TTypeEnumeration>;
   public
-    constructor Create(const Module: TTypeModuleDefinition);
+    constructor Create(const Module: TTypeModuleDefinition); virtual;
 
     destructor Destroy; override;
 
@@ -154,10 +160,11 @@ type
     FParentClass: TClassDefinition;
     FProperties: TList<TPropertyDefinition>;
     FTargetNamespace: String;
+
     function GetUnitDefinition: TUnitDefinition;
   public
-    constructor Create(const UnitDefinition: TUnitDefinition); overload;
-    constructor Create(const UnitDefinition: TUnitDefinition; const TargetNamespace: String); overload;
+    constructor Create(const Module: TTypeModuleDefinition); overload; override;
+    constructor Create(const Module: TTypeModuleDefinition; const TargetNamespace: String); reintroduce; overload;
 
     destructor Destroy; override;
 
@@ -177,8 +184,6 @@ type
   private
     FTypeDefinition: TTypeDefinition;
   public
-    function ResolveType: TTypeDefinition; override;
-
     property TypeDefinition: TTypeDefinition read FTypeDefinition write FTypeDefinition;
   end;
 
@@ -190,16 +195,12 @@ type
   public
     constructor Create(const Importer: TSchemaImporter; const TypeName: String; const Module: TTypeModuleDefinition);
 
-    function ResolveType: TTypeDefinition; override;
+    function ResolveType: TTypeDefinition;
   end;
 
   TUndefinedType = class(TTypeDefinition)
-  private
-    FUndefinedType: TTypeDefinition;
   public
     constructor Create(const TypeName: String);
-
-    function ResolveType: TTypeDefinition; override;
   end;
 
   TTypeExternal = class(TTypeDefinition)
@@ -224,13 +225,22 @@ type
     property Values: TList<String> read FValues write FValues;
   end;
 
+  TTypeArrayDefinition = class(TTypeDefinition)
+  private
+    FArrayType: TTypeDefinition;
+  public
+    constructor Create(const Module: TTypeModuleDefinition; const ArrayType: TTypeDefinition);
+
+    property ArrayType: TTypeDefinition read FArrayType write FArrayType;
+  end;
+
   TUnitDefinition = class(TTypeModuleDefinition)
   private
     FUses: TList<TUnitDefinition>;
     FTypeAlias: TList<TTypeAlias>;
     FUnitConfiguration: TUnitDefinitionConfiguration;
   public
-    constructor Create;
+    constructor Create; reintroduce;
 
     destructor Destroy; override;
 
@@ -327,8 +337,12 @@ type
   private
     FJSONSchema: TSchema;
 
-    function FindReference(const Reference: String): TSchema;
-    function GenerateClassDefinition(const UnitDeclaration: TUnitDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
+    function CreateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String): TClassDefinition;
+    function FindReference(const Schema: TSchema): TSchema;
+    function GetReferenceName(const Schema: TSchema): String;
+    function GetReferenceType(const ParentModule: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
+    function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
+    function GenerateTypeDefinition(const ParentModule: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
 
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
   protected
@@ -336,10 +350,17 @@ type
   end;
 
   TOpenAPIImport30 = class(TSchemaImporter)
-  private
-    function GenerateClassDefinition(const UnitDeclaration: TUnitDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
+//  private
+//    function GenerateClassDefinition(const UnitDeclaration: TUnitDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
   protected
     procedure GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration); override;
+  end;
+
+  TSchemaHelper = class helper for TSchema
+  private
+    function GetIsArray: Boolean;
+  public
+    property IsArray: Boolean read GetIsArray;
   end;
 
 implementation
@@ -348,11 +369,6 @@ uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, XML.XMLDo
 
 const
   WHITE_SPACE_IDENT = '  ';
-
-function FormatName(const Name: String): String;
-begin
-   Result := Name.Substring(0, 1).ToUpper + Name.Substring(1);
-end;
 
 function GetTypePrefixName(const Name: String): String;
 begin
@@ -380,15 +396,26 @@ begin
       Result := Result + Char;
 end;
 
+function FormatName(Name: String): String;
+begin
+  Name := OnlyValidChars(Name);
+  Result := Name.Substring(0, 1).ToUpper + Name.Substring(1);
+end;
+
 function FormatEnumeratorValue(Value: String): String;
 begin
   Result := EmptyStr;
 
   for var Split in Value.Split([' ']) do
-      Result := Result + CheckReservedName(OnlyValidChars(FormatName(Split)));
+      Result := Result + CheckReservedName(FormatName(Split));
 
   if CharInSet(Result[1], ['0'..'9']) then
     Result := 't' + Result;
+end;
+
+function FormatPropertyName(const PropertyName: String): String;
+begin
+  Result := CheckReservedName(OnlyValidChars(PropertyName));
 end;
 
 function NotFormatEnumeratorValue(Value: String): String;
@@ -548,7 +575,7 @@ procedure TSchemaImporter.Import;
 begin
   for var TypeDefinitionConfig in Configuration.TypeDefinition do
     if not TypeDefinitionConfig.ChangeType.IsEmpty then
-      AddTypeAlias(TypeDefinitionConfig.Name, TTypeDelayed.Create(Self, TypeDefinitionConfig.ChangeType, nil));
+      AddTypeAlias(TypeDefinitionConfig.Name, AddDelayedType(TypeDefinitionConfig.ChangeType, nil));
 
   for var UnitConfiguration in Configuration.UnitConfiguration do
     GenerateUnitDefinition(UnitConfiguration);
@@ -659,7 +686,7 @@ end;
 function TXSDImporter.AddPropertyWithType(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef): TPropertyDefinition;
 begin
   Result := AddProperty(ClassDefinition, Name);
-  Result.TypeName := CheckPropertyTypeDefinition(&Type, ClassDefinition);
+  Result.PropertyType := CheckPropertyTypeDefinition(&Type, ClassDefinition);
 end;
 
 function TXSDImporter.CanGenerateClass(const Element: IXMLElementDef): Boolean;
@@ -810,7 +837,6 @@ procedure TXSDImporter.GenerateProperty(const ClassDefinition: TClassDefinition;
 
 begin
   var NewProperty := AddProperty(ClassDefinition, ElementDefinition.Name);
-  NewProperty.IsArray := ElementDefinition.IsRepeating;
   NewProperty.Optional := IsOptional(ElementDefinition);
   var PropertyType := ElementDefinition.DataType;
 
@@ -833,7 +859,10 @@ begin
     end;
   end;
 
-  NewProperty.TypeName := CheckPropertyTypeDefinition(PropertyType, ClassDefinition);
+  NewProperty.PropertyType := CheckPropertyTypeDefinition(PropertyType, ClassDefinition);
+
+  if ElementDefinition.IsRepeating then
+    NewProperty.PropertyType := TTypeArrayDefinition.Create(ClassDefinition, NewProperty.PropertyType);
 end;
 
 function TXSDImporter.GenerateUnit(const Definition: IXMLSchemaDef; const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
@@ -993,9 +1022,17 @@ var
       Result := GetTypePrefixName(Result);
   end;
 
+  function ResolveTypeDefinition(const TypeDefinition: TTypeDefinition): TTypeDefinition;
+  begin
+    Result := TypeDefinition;
+
+    if Result.IsDelayedType then
+      Result := ResolveTypeDefinition(Result.AsDelayedType.ResolveType);
+  end;
+
   function GetPropertyType(const &Property: TPropertyDefinition): TTypeDefinition;
   begin
-    Result := &Property.TypeName;
+    Result := ResolveTypeDefinition(&Property.PropertyType);
   end;
 
   function CheckNeedDestructor(const ClassDefinition: TClassDefinition): Boolean;
@@ -1032,24 +1069,23 @@ var
       Result := GetPropertyFieldName(&Property);
   end;
 
-  function GetTypeName(const &Property: TPropertyDefinition): String;
+  function GetTypeName(const TypeDefinition: TTypeDefinition): String;
   begin
-    var TypeName := GetPropertyType(&Property);
-
-    if TypeName.IsClassDefinition then
-      Result := GetClassImplementationName(TypeName.AsClassDefinition)
-    else if TypeName.IsEnumeration then
-      Result := TypeName.AsTypeEnumeration.EnumeratorName
+    if TypeDefinition.IsArrayType then
+      Result := Format('TArray<%s>', [GetTypeName(TypeDefinition.AsArrayType.ArrayType)])
+    else if TypeDefinition.IsClassDefinition then
+      Result := GetClassImplementationName(TypeDefinition.AsClassDefinition)
+    else if TypeDefinition.IsEnumeration then
+      Result := TypeDefinition.AsTypeEnumeration.EnumeratorName
+    else if TypeDefinition is TUndefinedType then
+      Result := Format('Undefined { %s }', [TypeDefinition.Name])
     else
-      Result := TypeName.Name;
+      Result := ResolveTypeDefinition(TypeDefinition).Name;
   end;
 
   function GetPropertyTypeName(const &Property: TPropertyDefinition): String;
   begin
-    Result := GetTypeName(&Property);
-
-    if &Property.IsArray then
-      Result := Format('TArray<%s>', [Result]);
+    Result := GetTypeName(GetPropertyType(&Property));
   end;
 
   function GetAddFuntionName(const &Property: TPropertyDefinition): String;
@@ -1108,6 +1144,13 @@ var
     end;
   end;
 
+  function GetNeedAddFunction(const &Property: TPropertyDefinition): Boolean;
+  begin
+    var PropertyType := GetPropertyType(&Property);
+
+    Result := PropertyType.IsArrayType and PropertyType.AsArrayType.ArrayType.IsClassDefinition;
+  end;
+
   procedure GenerateClassDeclaration(const Ident: String; const ClassDefinition: TClassDefinition);
 
     function GetStoredPropertyDeclaration(const &Property: TPropertyDefinition): String;
@@ -1131,7 +1174,7 @@ var
       Result := False;
 
       for var &Property in ClassDefinition.Properties do
-        if &Property.NeedAddFunction then
+        if GetNeedAddFunction(&Property) then
           Exit(True);
     end;
 
@@ -1181,8 +1224,8 @@ var
           AddLine;
 
         for var &Property in ClassDefinition.Properties do
-          if &Property.NeedAddFunction then
-            AddLine('%s  function %s: %s;', [Ident, GetAddFuntionName(&Property), GetTypeName(&Property)]);
+          if GetNeedAddFunction(&Property) then
+            AddLine('%s  function %s: %s;', [Ident, GetAddFuntionName(&Property), GetPropertyTypeName(&Property)]);
 
         for var &Property in ClassDefinition.Properties do
           if &Property.Optional then
@@ -1195,7 +1238,7 @@ var
       begin
         LoadAttributes(Ident + WHITE_SPACE_IDENT, &Property.Attributes.ToArray + GetPropertyType(&Property).ParentAttributes.ToArray);
 
-        AddLine('%s  property %s: %s read %s write %s%s;', [Ident, CheckReservedName(&Property.Name), GetPropertyTypeName(&Property), GetPropertyGetFunction(&Property), GetPropertyFieldName(&Property), GetStoredPropertyDeclaration(&Property)]);
+        AddLine('%s  property %s: %s read %s write %s%s;', [Ident, FormatPropertyName(&Property.Name), GetPropertyTypeName(&Property), GetPropertyGetFunction(&Property), GetPropertyFieldName(&Property), GetStoredPropertyDeclaration(&Property)]);
       end;
     end;
 
@@ -1234,7 +1277,7 @@ var
         begin
           var PropertyType := GetPropertyType(&Property);
 
-          if &Property.IsArray and PropertyType.NeedDestructor then
+          if PropertyType.IsArrayType and PropertyType.NeedDestructor then
           begin
             AddLine('  for var AObject in %s do', [GetPropertyFieldName(&Property)]);
             AddLine('    AObject.Free;');
@@ -1257,10 +1300,13 @@ var
       end;
 
       for var &Property in ClassDefinition.Properties do
+      begin
+        var PropertyFieldName := GetPropertyFieldName(&Property);
+        var PropertyType := GetPropertyType(&Property);
+
         if &Property.NeedGetFunction then
         begin
-          var PropertyFieldName := GetPropertyFieldName(&Property);
-          var PropertyTypeName := GetPropertyTypeName(&Property);
+          var PropertyTypeName := GetTypeName(PropertyType);
 
           AddLine('function %s.%s: %s;', [GetClassImplementationName(ClassDefinition), GetPropertyGetFunction(&Property), PropertyTypeName]);
 
@@ -1278,16 +1324,13 @@ var
 
           AddLine;
         end
-        else if &Property.NeedAddFunction then
+        else if GetNeedAddFunction(&Property) then
         begin
-          var PropertyFieldName := GetPropertyFieldName(&Property);
-          var PropertyTypeName := GetTypeName(&Property);
-
-          AddLine('function %s.%s: %s;', [GetClassImplementationName(ClassDefinition), GetAddFuntionName(&Property), PropertyTypeName]);
+          AddLine('function %s.%s: %s;', [GetClassImplementationName(ClassDefinition), GetAddFuntionName(&Property), GetPropertyTypeName(&Property)]);
 
           AddLine('begin');
 
-          AddLine('  Result := %s.Create;', [PropertyTypeName]);
+          AddLine('  Result := %s.Create;', [GetTypeName(PropertyType.AsArrayType.ArrayType)]);
 
           AddLine;
 
@@ -1298,7 +1341,6 @@ var
           AddLine;
         end;
 
-      for var &Property in ClassDefinition.Properties do
         if &Property.Optional then
         begin
           AddLine('function %s.%s: Boolean;', [GetClassImplementationName(ClassDefinition), GetStoredFunctionName(&Property)]);
@@ -1311,6 +1353,7 @@ var
 
           AddLine;
         end;
+      end;
     end;
 
     for var SubClassDefinition in ClassDefinition.Classes do
@@ -1335,7 +1378,7 @@ var
       var ModuleName := EmptyStr;
 
       if TypeDefinition.IsExternal then
-        ModuleName := TTypeExternal(TypeDefinition.ResolveType).ModuleName
+        ModuleName := TypeDefinition.AsTypeExternal.ModuleName
       else if TypeDefinition.IsClassDefinition then
       begin
         var ClassDefinition := TypeDefinition.AsClassDefinition;
@@ -1419,7 +1462,7 @@ begin
     AddLine('  // Forward type alias');
 
     for var TypeAlias in TypeAlias do
-      AddLine('  %s = %s;', [TypeAlias.Name, TypeAlias.ResolveType.Name]);
+      AddLine('  %s = %s;', [TypeAlias.Name, GetTypeName(TypeAlias.TypeDefinition)]);
 
     AddLine;
   end;
@@ -1493,17 +1536,17 @@ begin
   FProperties.Add(Result);
 end;
 
-constructor TClassDefinition.Create(const UnitDefinition: TUnitDefinition);
+constructor TClassDefinition.Create(const Module: TTypeModuleDefinition);
 begin
-  inherited Create(UnitDefinition);
+  inherited Create(Module);
 
   FProperties := TObjectList<TPropertyDefinition>.Create;
   FTargetNamespace := TargetNamespace;
 end;
 
-constructor TClassDefinition.Create(const UnitDefinition: TUnitDefinition; const TargetNamespace: String);
+constructor TClassDefinition.Create(const Module: TTypeModuleDefinition; const TargetNamespace: String);
 begin
-  Create(UnitDefinition);
+  Create(Module);
 
   AddNamespaceAttribute(TargetNamespace);
 end;
@@ -1517,24 +1560,44 @@ end;
 
 function TClassDefinition.GetUnitDefinition: TUnitDefinition;
 begin
-  Result := ParentModule as TUnitDefinition;
+  var Parent := ParentModule;
+
+  while not (Parent is TUnitDefinition) do
+    Parent := Parent.ParentModule;
+
+  Result := Parent as TUnitDefinition;
 end;
 
 { TPropertyDefinition }
 
+procedure TPropertyDefinition.AddAtribute(const Attribute: String; const Params: array of const);
+begin
+  AddAtribute(Format(Attribute, Params));
+end;
+
+procedure TPropertyDefinition.AddAtribute(const Attribute: String);
+begin
+  Attributes.Add(Attribute);
+end;
+
+procedure TPropertyDefinition.AddFieldAttribute(const Name: String);
+begin
+  AddAtribute('FieldName(''%s'')', [Name]);
+end;
+
 procedure TPropertyDefinition.AddXMLAttributeFixed(const Name, Value: String);
 begin
-  Attributes.Add(Format('XMLAttribute(''%s'', ''%s'')', [Name, value]));
+  AddAtribute('XMLAttribute(''%s'', ''%s'')', [Name, value]);
 end;
 
 procedure TPropertyDefinition.AddXMLAttributeValue;
 begin
-  Attributes.Add('XMLAttributeValue');
+  AddAtribute('XMLAttributeValue');
 end;
 
 procedure TPropertyDefinition.AddXMLValueAttribute;
 begin
-  Attributes.Add('XMLValue');
+  AddAtribute('XMLValue');
 end;
 
 constructor TPropertyDefinition.Create;
@@ -1549,19 +1612,14 @@ begin
   inherited;
 end;
 
-function TPropertyDefinition.GetNeedAddFunction: Boolean;
-begin
-  Result := IsArray and TypeName.IsClassDefinition;
-end;
-
 function TPropertyDefinition.GetNeedGetFunction: Boolean;
 begin
-  Result := TypeName.IsClassDefinition and not IsArray and not TypeName.IsObjectType;
+  Result := PropertyType.IsClassDefinition and not PropertyType.IsArrayType and not PropertyType.IsObjectType;
 end;
 
 function TPropertyDefinition.GetOptional: Boolean;
 begin
-  Result := FOptional and not IsArray;
+  Result := FOptional and not PropertyType.IsArrayType;
 end;
 
 { TTypeDefinition }
@@ -1584,64 +1642,69 @@ begin
   inherited;
 end;
 
+function TTypeDefinition.GetAsArrayType: TTypeArrayDefinition;
+begin
+  Result := Self as TTypeArrayDefinition;
+end;
+
 function TTypeDefinition.GetAsClassDefinition: TClassDefinition;
 begin
-  Result := ResolveType as TClassDefinition;
+  Result := Self as TClassDefinition;
+end;
+
+function TTypeDefinition.GetAsDelayedType: TTypeDelayed;
+begin
+  Result := Self as TTypeDelayed;
 end;
 
 function TTypeDefinition.GetAsTypeEnumeration: TTypeEnumeration;
 begin
-  Result := ResolveType as TTypeEnumeration;
+  Result := Self as TTypeEnumeration;
+end;
+
+function TTypeDefinition.GetAsTypeExternal: TTypeExternal;
+begin
+  Result := Self as TTypeExternal;
 end;
 
 function TTypeDefinition.GetAsUnitDefinition: TUnitDefinition;
 begin
-  Result := ResolveType as TUnitDefinition;
+  Result := Self as TUnitDefinition;
+end;
+
+function TTypeDefinition.GetIsArrayType: Boolean;
+begin
+  Result := Self is TTypeArrayDefinition;
 end;
 
 function TTypeDefinition.GetIsClassDefinition: Boolean;
 begin
-  Result := ResolveType is TClassDefinition;
+  Result := Self is TClassDefinition;
+end;
+
+function TTypeDefinition.GetIsDelayedType: Boolean;
+begin
+  Result := Self is TTypeDelayed;
 end;
 
 function TTypeDefinition.GetIsEnumeration: Boolean;
 begin
-  Result := ResolveType is TTypeEnumeration;
+  Result := Self is TTypeEnumeration;
 end;
 
 function TTypeDefinition.GetIsExternal: Boolean;
 begin
-  Result := ResolveType is TTypeExternal;
-end;
-
-function TTypeDefinition.GetIsNumericType: Boolean;
-begin
-  Result := ResolveType.FIsNumericType;
-end;
-
-function TTypeDefinition.GetIsObjectType: Boolean;
-begin
-  Result := ResolveType.FIsObjectType;
-end;
-
-function TTypeDefinition.GetIsStringType: Boolean;
-begin
-  Result := ResolveType.FIsStringType;
+  Result := Self is TTypeExternal;
 end;
 
 function TTypeDefinition.GetIsUnitDefinition: Boolean;
 begin
-  Result := ResolveType is TUnitDefinition;
+  Result := Self is TUnitDefinition;
 end;
 
 function TTypeDefinition.GetNeedDestructor: Boolean;
 begin
   Result := IsClassDefinition or IsObjectType;
-end;
-
-function TTypeDefinition.ResolveType: TTypeDefinition;
-begin
-  Result := Self;
 end;
 
 { TTypeDelayed }
@@ -1650,6 +1713,7 @@ constructor TTypeDelayed.Create(const Importer: TSchemaImporter; const TypeName:
 begin
   inherited Create(Module);
 
+  FName := 'Delayed';
   FImporter := Importer;
   FTypeName := TypeName;
 end;
@@ -1662,7 +1726,7 @@ begin
   if not Assigned(FType) then
     FType := TUndefinedType.Create(FTypeName);
 
-  Result := FType.ResolveType;
+  Result := FType;
 end;
 
 { TUndefinedType }
@@ -1672,20 +1736,6 @@ begin
   inherited Create(nil);
 
   FName := TypeName;
-  FUndefinedType := TTypeDefinition.Create(nil);
-  FUndefinedType.Name := Format('Undefined { %s }', [FName]);
-end;
-
-function TUndefinedType.ResolveType: TTypeDefinition;
-begin
-  Result := FUndefinedType;
-end;
-
-{ TTypeAlias }
-
-function TTypeAlias.ResolveType: TTypeDefinition;
-begin
-  Result := TypeDefinition.ResolveType;
 end;
 
 { TConfiguration }
@@ -1720,7 +1770,7 @@ end;
 
 { TOpenAPIImport30 }
 
-function TOpenAPIImport30.GenerateClassDefinition(const UnitDeclaration: TUnitDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
+//function TOpenAPIImport30.GenerateClassDefinition(const UnitDeclaration: TUnitDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
 //
 //  function FindReference(const ReferenceObject: TReferenceObject): String;
 //  begin
@@ -1745,8 +1795,8 @@ function TOpenAPIImport30.GenerateClassDefinition(const UnitDeclaration: TUnitDe
 //        else Result := nil;
 //      end;
 //  end;
-
-begin
+//
+//begin
 //  Result := TClassDefinition.Create(UnitDeclaration);
 //  Result.Name := ClassTypeName;
 //
@@ -1760,7 +1810,7 @@ begin
 //
 //    Result.Properties.Add(Prop);
 //  end;
-end;
+//end;
 
 procedure TOpenAPIImport30.GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration);
 begin
@@ -1775,58 +1825,87 @@ end;
 
 { TJSONSchemaImport }
 
-function TJSONSchemaImport.FindReference(const Reference: String): TSchema;
+function TJSONSchemaImport.CreateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String): TClassDefinition;
 begin
-  var References := Reference.Split(['/']);
-
-  var ReferenceName := References[High(References)];
-
-  Result := FJSONSchema.defs[ReferenceName];
-end;
-
-function TJSONSchemaImport.GenerateClassDefinition(const UnitDeclaration: TUnitDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
-begin
-  Result := TClassDefinition.Create(UnitDeclaration);
+  Result := TClassDefinition.Create(ParentModule);
   Result.Name := ClassTypeName;
 
-  GenerateProperties(Result, Schema);
+  ParentModule.Classes.Add(Result);
+end;
 
-  UnitDeclaration.Classes.Add(Result);
+function TJSONSchemaImport.FindReference(const Schema: TSchema): TSchema;
+begin
+  Result := FJSONSchema.defs[GetReferenceName(Schema)];
+end;
+
+function TJSONSchemaImport.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
+begin
+  Result := CreateClassDefinition(ParentModule, ClassTypeName);
+
+  GenerateProperties(Result, Schema);
 end;
 
 procedure TJSONSchemaImport.GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
 
-  function GenerateTypeDefinition(const Schema: TSchema; const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
+  function CheckPropertyType(const Prop: TPropertyDefinition; const Schema: TSchema): TTypeDefinition;
   begin
-    Result := FindType(TypeName, ParentClass);
-
-    if not Assigned(Result) then
-      if not Schema.ref.IsEmpty then
-        Result := GenerateTypeDefinition(FindReference(Schema.ref), TypeName, nil)
-      else
-        case Schema.&type of
-          TPropertyType.&array: Result := GenerateTypeDefinition(Schema.items, TypeName, ParentClass);
-          TPropertyType.boolean: Result := BooleanType;
-          TPropertyType.null: Result := nil;
-          TPropertyType.integer: Result := IntegerType;
-          TPropertyType.number: Result := DoubleType;
-          TPropertyType.&object: Result := GenerateClassDefinition(ClassDefinition.UnitDefinition, TypeName, Schema);
-          TPropertyType.&string: Result := StringType;
-          else Result := TUndefinedType.Create(TypeName);
-        end;
+    if not Schema.ref.IsEmpty then
+      Result := GetReferenceType(ClassDefinition, Schema, Prop.Name)
+    else
+      Result := GenerateTypeDefinition(ClassDefinition, Schema, Prop.Name);
   end;
 
-begin
-  for var Pair in Schema.Properties do
+  procedure DefineProperty(const PropertyName: String; const SchemaType: TSchema);
   begin
     var Prop := TPropertyDefinition.Create;
-    var SchemaType := Pair.Value;
-    Prop.IsArray := SchemaType.&type = TPropertyType.&array;
-    Prop.Name := Pair.Key;
-    Prop.TypeName := GenerateTypeDefinition(SchemaType, Prop.Name, ClassDefinition);
+    Prop.Name := PropertyName;
+    Prop.PropertyType := CheckPropertyType(Prop, SchemaType);
+
+    if FormatPropertyName(Prop.Name) <> Prop.Name then
+      Prop.AddFieldAttribute(Prop.Name);
+
+    if not Assigned(Prop.PropertyType) then
+      raise Exception.Create('Property type not found!');
 
     ClassDefinition.Properties.Add(Prop);
   end;
+
+  procedure AppendProperties(const Properties: TMap<String, TSchema>);
+  begin
+    for var Pair in Properties do
+      DefineProperty(Pair.Key, Pair.Value);
+  end;
+
+begin
+  if not Schema.ref.IsEmpty then
+    DefineProperty(GetReferenceName(Schema), FindReference(Schema));
+
+  AppendProperties(Schema.Properties);
+end;
+
+function TJSONSchemaImport.GenerateTypeDefinition(const ParentModule: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
+begin
+  if not Schema.ref.IsEmpty then
+    Result := GetReferenceType(ParentModule, Schema, TypeName)
+  else
+    case Schema.&type of
+      TPropertyType.&array: Result := TTypeArrayDefinition.Create(ParentModule, GenerateTypeDefinition(ParentModule, Schema.items, TypeName));
+      TPropertyType.boolean: Result := BooleanType;
+      TPropertyType.null: Result := nil;
+      TPropertyType.integer: Result := IntegerType;
+      TPropertyType.number: Result := DoubleType;
+      TPropertyType.&object: Result := GenerateClassDefinition(ParentModule, TypeName, Schema);
+      TPropertyType.&string: Result := StringType;
+      else
+      begin
+          var InnerClassDefinition := CreateClassDefinition(ParentModule, TypeName);
+
+          for var AllOf in Schema.allOf do
+            GenerateProperties(InnerClassDefinition, AllOf);
+
+          Result := InnerClassDefinition;
+      end;
+    end;
 end;
 
 procedure TJSONSchemaImport.GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration);
@@ -1840,9 +1919,32 @@ begin
 
   UnitDeclaration.Classes.Add(UnitClass);
 
+  for var Definition in FJSONSchema.defs do
+  begin
+    var TypeDefinition := GenerateTypeDefinition(UnitDeclaration, Definition.Value, Definition.Key);
+
+    if not TypeDefinition.IsClassDefinition then
+      UnitDeclaration.TypeAlias.Add(CreateTypeAlias(UnitDeclaration, Definition.Key, TypeDefinition));
+  end;
+
   GenerateProperties(UnitClass, FJSONSchema);
 
   FJSONSchema.Free;
+end;
+
+function TJSONSchemaImport.GetReferenceName(const Schema: TSchema): String;
+begin
+  var References := Schema.ref.Split(['/']);
+
+  Result := References[High(References)];
+end;
+
+function TJSONSchemaImport.GetReferenceType(const ParentModule: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
+begin
+  Result := FindType(GetReferenceName(Schema), ParentModule);
+
+  if not Assigned(Result) then
+    Result := AddDelayedType(TypeName, ParentModule);
 end;
 
 { TTypeEnumeration }
@@ -1886,6 +1988,22 @@ begin
   FEnumarations.Free;
 
   inherited;
+end;
+
+{ TSchemaHelper }
+
+function TSchemaHelper.GetIsArray: Boolean;
+begin
+  Result := &type = TPropertyType.&array;
+end;
+
+{ TTypeArrayDefinition }
+
+constructor TTypeArrayDefinition.Create(const Module: TTypeModuleDefinition; const ArrayType: TTypeDefinition);
+begin
+  inherited Create(Module);
+
+  FArrayType := ArrayType;
 end;
 
 end.
