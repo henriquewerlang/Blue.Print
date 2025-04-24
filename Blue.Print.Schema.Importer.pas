@@ -16,15 +16,24 @@ type
   TUnitDefinition = class;
   TXSDImporter = class;
 
+  TUnitFileConfiguration = class
+  private
+    FUnitClassName: String;
+    FReference: String;
+  public
+    property Reference: String read FReference write FReference;
+    property UnitClassName: String read FUnitClassName write FUnitClassName;
+  end;
+
   TUnitDefinitionConfiguration = class
   private
-    FFileName: String;
     FName: String;
-    FUnitClassName: String;
+    FFiles: TArray<TUnitFileConfiguration>;
   public
-    property FileName: String read FFileName write FFileName;
+    destructor Destroy; override;
+
+    property Files: TArray<TUnitFileConfiguration> read FFiles write FFiles;
     property Name: String read FName write FName;
-    property UnitClassName: String read FUnitClassName write FUnitClassName;
   end;
 
   TTypeDefinitionConfiguration = class
@@ -473,7 +482,7 @@ begin
   Result := TUnitDefinition.Create;
   Result.UnitConfiguration := UnitConfiguration;
 
-  FUnits.Add(UnitConfiguration.FileName, Result);
+  FUnits.Add(UnitConfiguration.Name, Result);
 end;
 
 destructor TSchemaImporter.Destroy;
@@ -869,13 +878,14 @@ function TXSDImporter.GenerateUnit(const Definition: IXMLSchemaDef; const UnitCo
 var
   UnitDeclaration: TUnitDefinition absolute Result;
 
-  function FindUnitConfiguration(const FileName: String): TUnitDefinitionConfiguration;
+  function FindUnitConfiguration(const Reference: String): TUnitDefinitionConfiguration;
   begin
     for var Configuration in Configuration.UnitConfiguration do
-      if Configuration.FileName = FileName then
-        Exit(Configuration);
+      for var UnitFile in Configuration.Files do
+        if UnitFile.Reference = Reference then
+          Exit(Configuration);
 
-    raise Exception.CreateFmt('Schema file without unit configuration %s!', [ExtractFileName(FileName)]);
+    raise Exception.CreateFmt('Schema file without unit configuration %s!', [ExtractFileName(Reference)]);
   end;
 
   procedure ProcessReferences(const List: IXMLSchemaDocRefs);
@@ -889,45 +899,42 @@ var
   end;
 
 begin
-  if not FUnits.TryGetValue(UnitConfiguration.FileName, Result) then
+  Result := CreateUnit(UnitConfiguration);
+
+  ProcessReferences(Definition.SchemaIncludes);
+
+  ProcessReferences(Definition.SchemaImports);
+
+  for var A := 0 to Pred(Definition.SimpleTypes.Count) do
+    CheckUnitTypeDefinition(Definition.SimpleTypes[A], Result);
+
+  for var A := 0 to Pred(Definition.ComplexTypes.Count) do
   begin
-    Result := CreateUnit(UnitConfiguration);
+    var ClassDefinition := GenerateClassDefinition(UnitDeclaration, Definition.ComplexTypes[A], Definition.TargetNamespace);
 
-    ProcessReferences(Definition.SchemaIncludes);
+    UnitDeclaration.Classes.Add(ClassDefinition);
+  end;
 
-    ProcessReferences(Definition.SchemaImports);
+  if Definition.ElementDefs.Count > 0 then
+  begin
+    var ClassDefinition := TClassDefinition.Create(UnitDeclaration, EmptyStr);
+    ClassDefinition.Name := UnitConfiguration.Name;
 
-    for var A := 0 to Pred(Definition.SimpleTypes.Count) do
-      CheckUnitTypeDefinition(Definition.SimpleTypes[A], Result);
+    for var A := 0 to Pred(Definition.ElementDefs.Count) do
+      GenerateProperty(ClassDefinition, Definition.ElementDefs[A], Definition.TargetNamespace);
 
-    for var A := 0 to Pred(Definition.ComplexTypes.Count) do
-    begin
-      var ClassDefinition := GenerateClassDefinition(UnitDeclaration, Definition.ComplexTypes[A], Definition.TargetNamespace);
-
-      UnitDeclaration.Classes.Add(ClassDefinition);
-    end;
-
-    if Definition.ElementDefs.Count > 0 then
-    begin
-      if UnitConfiguration.UnitClassName.IsEmpty then
-        raise Exception.CreateFmt('Schema file %s need a class name in the configuration file!', [UnitConfiguration.FileName]);
-
-      var ClassDefinition := TClassDefinition.Create(UnitDeclaration, EmptyStr);
-      ClassDefinition.Name := UnitConfiguration.UnitClassName;
-
-      for var A := 0 to Pred(Definition.ElementDefs.Count) do
-        GenerateProperty(ClassDefinition, Definition.ElementDefs[A], Definition.TargetNamespace);
-
-      UnitDeclaration.Classes.Add(ClassDefinition);
-    end;
+    UnitDeclaration.Classes.Add(ClassDefinition);
   end;
 end;
 
 procedure TXSDImporter.GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration);
 begin
-  var Schema := LoadXMLSchema(Format('%s\%s', [Configuration.SchemaFolder, UnitConfiguration.FileName]));
+  for var UnitFile in UnitConfiguration.Files do
+  begin
+    var Schema := LoadXMLSchema(Format('%s\%s', [Configuration.SchemaFolder, UnitFile.Reference]));
 
-  GenerateUnit(Schema.SchemaDef, UnitConfiguration);
+    GenerateUnit(Schema.SchemaDef, UnitConfiguration);
+  end;
 end;
 
 function TXSDImporter.IsReferenceType(const Element: IXMLElementDef): Boolean;
@@ -1423,6 +1430,19 @@ var
     Return.Free;
   end;
 
+  function GetUnitReferencesNames(const UnitConfiguration: TUnitDefinitionConfiguration): String;
+  begin
+    Result := EmptyStr;
+
+    for var UnitFile in UnitConfiguration.Files do
+    begin
+      if not Result.IsEmpty then
+        Result := Result + ', ';
+
+      Result := Result + UnitFile.Reference;
+    end;
+  end;
+
 begin
   UnitDefinition := TStringList.Create;
 
@@ -1446,7 +1466,7 @@ begin
   for var ModuleName in GetAllExternalModules do
     UsesList := UsesList + ', ' + ModuleName;
 
-  AddLine('// File generated from %s;', [UnitConfiguration.FileName]);
+  AddLine('// File generated from %s;', [GetUnitReferencesNames(UnitConfiguration)]);
 
   AddLine;
 
@@ -1912,24 +1932,27 @@ procedure TJSONSchemaImport.GenerateUnitDefinition(const UnitConfiguration: TUni
 begin
   var Serializer := TBluePrintJsonSerializer.Create as IBluePrintSerializer;
 
-  FJSONSchema := Serializer.Deserialize(TFile.ReadAllText(Format('%s\%s', [Configuration.SchemaFolder, UnitConfiguration.FileName])), TypeInfo(TSchema)).AsType<TSchema>;
-  var UnitDeclaration := CreateUnit(UnitConfiguration);
-  var UnitClass := TClassDefinition.Create(UnitDeclaration);
-  UnitClass.Name := UnitConfiguration.UnitClassName;
-
-  UnitDeclaration.Classes.Add(UnitClass);
-
-  for var Definition in FJSONSchema.defs do
+  for var UnitFile in UnitConfiguration.Files do
   begin
-    var TypeDefinition := GenerateTypeDefinition(UnitDeclaration, Definition.Value, Definition.Key);
+    FJSONSchema := Serializer.Deserialize(TFile.ReadAllText(Format('%s\%s', [Configuration.SchemaFolder, UnitFile.Reference])), TypeInfo(TSchema)).AsType<TSchema>;
+    var UnitDeclaration := CreateUnit(UnitConfiguration);
+    var UnitClass := TClassDefinition.Create(UnitDeclaration);
+    UnitClass.Name := UnitFile.UnitClassName;
 
-    if not TypeDefinition.IsClassDefinition then
-      UnitDeclaration.TypeAlias.Add(CreateTypeAlias(UnitDeclaration, Definition.Key, TypeDefinition));
+    UnitDeclaration.Classes.Add(UnitClass);
+
+    for var Definition in FJSONSchema.defs do
+    begin
+      var TypeDefinition := GenerateTypeDefinition(UnitDeclaration, Definition.Value, Definition.Key);
+
+      if not TypeDefinition.IsClassDefinition then
+        UnitDeclaration.TypeAlias.Add(CreateTypeAlias(UnitDeclaration, Definition.Key, TypeDefinition));
+    end;
+
+    GenerateProperties(UnitClass, FJSONSchema);
+
+    FJSONSchema.Free;
   end;
-
-  GenerateProperties(UnitClass, FJSONSchema);
-
-  FJSONSchema.Free;
 end;
 
 function TJSONSchemaImport.GetReferenceName(const Schema: TSchema): String;
@@ -2004,6 +2027,16 @@ begin
   inherited Create(Module);
 
   FArrayType := ArrayType;
+end;
+
+{ TUnitDefinitionConfiguration }
+
+destructor TUnitDefinitionConfiguration.Destroy;
+begin
+  for var UnitFile in Files do
+    UnitFile.Free;
+
+  inherited;
 end;
 
 end.

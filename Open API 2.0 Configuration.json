@@ -3,9 +3,13 @@
    "SchemaFolder": ".\\Schemas",
    "UnitConfiguration": [
       {
-         "FileName": "Open API 2.0.json",
          "Name": "Blue.Print.Open.API.Schema.v20",
-         "UnitClassName": "TOpenAPI20"
+         "Files": [
+            {
+               "Reference": "Open API 2.0.json",
+               "UnitClassName": "TOpenAPI20"
+            }
+         ]
       }
    ]
 }
