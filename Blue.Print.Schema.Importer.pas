@@ -266,7 +266,6 @@ type
     FBuildInType: TDictionary<String, TTypeDefinition>;
     FConfiguration: TConfiguration;
     FDelayedTypes: TDictionary<String, TTypeDefinition>;
-    FTypeAlias: TDictionary<String, TTypeDefinition>;
     FTypeExternal: TDictionary<String, TTypeDefinition>;
     FUnits: TDictionary<String, TUnitDefinition>;
     FStringType: TTypeDefinition;
@@ -282,7 +281,6 @@ type
     FTimeType: TTypeDefinition;
   protected
     function AddDelayedType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
-    function AddTypeAlias(const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
     function CreateTypeAlias(const Module: TTypeModuleDefinition; const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
     function CreateUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
     function FindType(const TypeName: String; Module: TTypeModuleDefinition): TTypeDefinition; virtual;
@@ -445,13 +443,6 @@ begin
   end;
 end;
 
-function TSchemaImporter.AddTypeAlias(const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
-begin
-  Result := CreateTypeAlias(nil, Alias, TypeDefinition);
-
-  FTypeAlias.Add(Alias, Result);
-end;
-
 procedure TSchemaImporter.AddTypeExternal(const ModuleName, TypeName: String);
 begin
   FTypeExternal.Add(TypeName, TTypeExternal.Create(ModuleName, TypeName));
@@ -463,7 +454,6 @@ begin
 
   FBuildInType := TDictionary<String, TTypeDefinition>.Create;
   FDelayedTypes := TDictionary<String, TTypeDefinition>.Create;
-  FTypeAlias := TObjectDictionary<String, TTypeDefinition>.Create([doOwnsValues]);
   FTypeExternal := TObjectDictionary<String, TTypeDefinition>.Create([doOwnsValues]);
   FUnits := TObjectDictionary<String, TUnitDefinition>.Create([doOwnsValues]);
 
@@ -492,8 +482,6 @@ begin
   FBuildInType.Free;
 
   FDelayedTypes.Free;
-
-  FTypeAlias.Free;
 
   FUnits.Free;
 
@@ -538,9 +526,6 @@ function TSchemaImporter.FindType(const TypeName: String; Module: TTypeModuleDef
     if FTypeExternal.TryGetValue(TypeName, Result) then
       Exit;
 
-    if FTypeAlias.TryGetValue(TypeName, Result) then
-      Exit;
-
     if FBuildInType.TryGetValue(TypeName, Result) then
       Exit;
 
@@ -582,9 +567,9 @@ end;
 
 procedure TSchemaImporter.Import;
 begin
-  for var TypeDefinitionConfig in Configuration.TypeDefinition do
-    if not TypeDefinitionConfig.ChangeType.IsEmpty then
-      AddTypeAlias(TypeDefinitionConfig.Name, AddDelayedType(TypeDefinitionConfig.ChangeType, nil));
+//  for var TypeDefinitionConfig in Configuration.TypeDefinition do
+//    if not TypeDefinitionConfig.ChangeType.IsEmpty then
+//      AddTypeAlias(TypeDefinitionConfig.Name, AddDelayedType(TypeDefinitionConfig.ChangeType, nil));
 
   for var UnitConfiguration in Configuration.UnitConfiguration do
     GenerateUnitDefinition(UnitConfiguration);
@@ -670,7 +655,7 @@ procedure TSchemaImporter.LoadInternalTypes;
 
     FBuildInType.Add(Result.Name, Result);
 
-    AddTypeAlias(TypeName, Result);
+    FBuildInType.Add(TypeName, CreateTypeAlias(nil, TypeName, Result));
   end;
 
   function AddNumberType(const TypeName: String): TTypeDefinition;
