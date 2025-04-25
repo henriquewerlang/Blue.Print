@@ -579,21 +579,19 @@ begin
     var CurrentModule: TTypeModuleDefinition := nil;
 
     for var SplitTypeName in TypeName.Split(['.']) do
+    begin
       if Assigned(CurrentModule) then
         FindTypeDefinitionModule(CurrentModule, SplitTypeName, Result)
       else if not Assigned(Result) then
-      begin
         for var UnitDefinition in FUnits.Values do
           if FindTypeDefinitionModule(UnitDefinition, SplitTypeName, Result) then
             Break;
 
-        if not Assigned(Result) then
-          Break
-        else if Result.IsClassDefinition then
-          CurrentModule := Result.AsClassDefinition
-        else
-          Break;
-      end;
+      if Assigned(Result) and Result.IsClassDefinition then
+        CurrentModule := Result.AsClassDefinition
+      else
+        Break;
+    end;
   end;
 
   if not Assigned(Result) and Assigned(Module) then
@@ -1524,6 +1522,9 @@ var
           var ClassDefinition := TypeDefinition.AsClassDefinition;
 
           AddUnitDefinition(ClassDefinition.UnitDefinition);
+
+          if Assigned(ClassDefinition.InheritedFrom) then
+            AddUnitDefinition(ClassDefinition.InheritedFrom.UnitDefinition);
         end
         else if TypeDefinition.IsEnumeration and TypeDefinition.ParentModule.IsUnitDefinition then
           AddUnitDefinition(TypeDefinition.ParentModule.AsUnitDefinition)
