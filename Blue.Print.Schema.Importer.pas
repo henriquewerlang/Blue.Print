@@ -286,22 +286,23 @@ type
 
   TSchemaImporter = class
   private
-    FBuildInType: TDictionary<String, TTypeDefinition>;
-    FConfiguration: TConfiguration;
-    FDelayedTypes: TDictionary<String, TTypeDefinition>;
-    FTypeExternal: TDictionary<String, TTypeDefinition>;
-    FUnits: TDictionary<String, TUnitDefinition>;
-    FStringType: TTypeDefinition;
-    FCardinalType: TTypeDefinition;
-    FIntegerType: TTypeDefinition;
-    FInt64Type: TTypeDefinition;
-    FObjectType: TTypeDefinition;
-    FWordType: TTypeDefinition;
-    FDateType: TTypeDefinition;
     FBooleanType: TTypeDefinition;
+    FBuildInType: TDictionary<String, TTypeDefinition>;
+    FCardinalType: TTypeDefinition;
+    FConfiguration: TConfiguration;
     FDateTimeType: TTypeDefinition;
+    FDateType: TTypeDefinition;
+    FDelayedTypes: TDictionary<String, TTypeDefinition>;
     FDoubleType: TTypeDefinition;
+    FInt64Type: TTypeDefinition;
+    FIntegerType: TTypeDefinition;
+    FObjectType: TTypeDefinition;
+    FStringType: TTypeDefinition;
     FTimeType: TTypeDefinition;
+    FTypeExternal: TDictionary<String, TTypeDefinition>;
+    FUnits: TDictionary<TUnitDefinitionConfiguration, TUnitDefinition>;
+    FUnitFiles: TDictionary<TUnitFileConfiguration, TUnitDefinition>;
+    FWordType: TTypeDefinition;
   protected
     function AddDelayedType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
     function CreateTypeAlias(const Module: TTypeModuleDefinition; const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
@@ -309,9 +310,13 @@ type
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition; virtual;
     function GetFileNameFromSchemaFolder(const FileName: String): String;
     function LoadFile(const UnitFile: TUnitFileConfiguration): String;
+    function LoadUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
 
-    procedure GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration); virtual; abstract;
+    procedure GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration);
+    procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration); virtual; abstract;
     procedure LoadInternalTypes;
+    procedure LoadUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+    procedure LoadUnitFromReference(const Reference: String);
 
     property BooleanType: TTypeDefinition read FBooleanType;
     property CardinalType: TTypeDefinition read FCardinalType;
@@ -358,7 +363,7 @@ type
   protected
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition; override;
 
-    procedure GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration); override;
+    procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration); override;
   public
     constructor Create;
 
@@ -378,14 +383,7 @@ type
 
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
   protected
-    procedure GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration); override;
-  end;
-
-  TOpenAPIImport30 = class(TSchemaImporter)
-//  private
-//    function GenerateClassDefinition(const UnitDeclaration: TUnitDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
-  protected
-    procedure GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration); override;
+    procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration); override;
   end;
 
   TSchemaHelper = class helper for TSchema
@@ -479,7 +477,8 @@ begin
   FBuildInType := TDictionary<String, TTypeDefinition>.Create;
   FDelayedTypes := TDictionary<String, TTypeDefinition>.Create;
   FTypeExternal := TObjectDictionary<String, TTypeDefinition>.Create([doOwnsValues]);
-  FUnits := TObjectDictionary<String, TUnitDefinition>.Create([doOwnsValues]);
+  FUnits := TObjectDictionary<TUnitDefinitionConfiguration, TUnitDefinition>.Create([doOwnsValues]);
+  FUnitFiles := TDictionary<TUnitFileConfiguration, TUnitDefinition>.Create;
 
   LoadInternalTypes;
 end;
@@ -496,7 +495,7 @@ begin
   Result := TUnitDefinition.Create;
   Result.UnitConfiguration := UnitConfiguration;
 
-  FUnits.Add(UnitConfiguration.Name, Result);
+  FUnits.Add(UnitConfiguration, Result);
 end;
 
 destructor TSchemaImporter.Destroy;
@@ -508,6 +507,8 @@ begin
   FDelayedTypes.Free;
 
   FUnits.Free;
+
+  FUnitFiles.Free;
 
   inherited;
 end;
@@ -614,6 +615,14 @@ begin
         Exit(TypeAlias);
       end;
   end;
+end;
+
+procedure TSchemaImporter.GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration);
+begin
+  var UnitDefinition := LoadUnit(UnitConfiguration);
+
+  for var UnitFile in UnitConfiguration.Files do
+    LoadUnitFileDefinition(UnitDefinition, UnitFile);
 end;
 
 function TSchemaImporter.GetFileNameFromSchemaFolder(const FileName: String): String;
@@ -730,6 +739,36 @@ begin
   FStringType.FIsStringType := True;
   FTimeType := AddNumberType('TTime');
   FWordType := AddNumberType('Word');
+end;
+
+function TSchemaImporter.LoadUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
+begin
+  if not FUnits.TryGetValue(UnitConfiguration, Result) then
+    Result := CreateUnit(UnitConfiguration);
+end;
+
+procedure TSchemaImporter.LoadUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+begin
+  if not FUnitFiles.ContainsKey(UnitFileConfiguration) then
+  begin
+    GenerateUnitFileDefinition(UnitDefinition, UnitFileConfiguration);
+
+    FUnitFiles.Add(UnitFileConfiguration, UnitDefinition);
+  end;
+end;
+
+procedure TSchemaImporter.LoadUnitFromReference(const Reference: String);
+begin
+  for var UnitConfiguration in Configuration.UnitConfiguration do
+    for var UnitFileConfiguration in UnitConfiguration.Files do
+      if UnitFileConfiguration.Reference = Reference then
+      begin
+        LoadUnitFileDefinition(LoadUnit(UnitConfiguration), UnitFileConfiguration);
+
+        Exit;
+      end;
+
+  raise Exception.CreateFmt('Schema file without unit configuration %s!', [ExtractFileName(Reference)]);
 end;
 
 { TXSDImporter }
@@ -933,34 +972,44 @@ begin
     NewProperty.PropertyType := TTypeArrayDefinition.Create(ClassDefinition, NewProperty.PropertyType);
 end;
 
-procedure TXSDImporter.GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration);
-begin
-  var UnitDefinition := CreateUnit(UnitConfiguration);
+procedure TXSDImporter.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
 
-  for var UnitFile in UnitConfiguration.Files do
+  procedure ProcessReferences(const UnitDefinition: TUnitDefinition; const List: IXMLSchemaDocRefs);
   begin
-    var Schema := LoadXMLSchema(GetFileNameFromSchemaFolder(UnitFile.Reference));
-
-    for var A := 0 to Pred(Schema.SchemaDef.SimpleTypes.Count) do
-      CheckUnitTypeDefinition(Schema.SchemaDef.SimpleTypes[A], UnitDefinition);
-
-    for var A := 0 to Pred(Schema.SchemaDef.ComplexTypes.Count) do
+    for var A := 0 to Pred(List.Count) do
     begin
-      var ClassDefinition := GenerateClassDefinition(UnitDefinition, Schema.SchemaDef.ComplexTypes[A], Schema.SchemaDef.TargetNamespace);
+      var Reference := List[A];
 
-      UnitDefinition.Classes.Add(ClassDefinition);
+      LoadUnitFromReference(Reference.SchemaLocation);
     end;
+  end;
 
-    if Schema.SchemaDef.ElementDefs.Count > 0 then
-    begin
-      var ClassDefinition := TClassDefinition.Create(UnitDefinition, EmptyStr);
-      ClassDefinition.Name := UnitFile.UnitClassName;
+begin
+  var Schema := LoadXMLSchema(GetFileNameFromSchemaFolder(UnitFileConfiguration.Reference));
 
-      for var A := 0 to Pred(Schema.SchemaDef.ElementDefs.Count) do
-        GenerateProperty(ClassDefinition, Schema.SchemaDef.ElementDefs[A], Schema.SchemaDef.TargetNamespace);
+  ProcessReferences(UnitDefinition, Schema.SchemaDef.SchemaIncludes);
 
-      UnitDefinition.Classes.Add(ClassDefinition);
-    end;
+  ProcessReferences(UnitDefinition, Schema.SchemaDef.SchemaImports);
+
+  for var A := 0 to Pred(Schema.SchemaDef.SimpleTypes.Count) do
+    CheckUnitTypeDefinition(Schema.SchemaDef.SimpleTypes[A], UnitDefinition);
+
+  for var A := 0 to Pred(Schema.SchemaDef.ComplexTypes.Count) do
+  begin
+    var ClassDefinition := GenerateClassDefinition(UnitDefinition, Schema.SchemaDef.ComplexTypes[A], Schema.SchemaDef.TargetNamespace);
+
+    UnitDefinition.Classes.Add(ClassDefinition);
+  end;
+
+  if Schema.SchemaDef.ElementDefs.Count > 0 then
+  begin
+    var ClassDefinition := TClassDefinition.Create(UnitDefinition, EmptyStr);
+    ClassDefinition.Name := UnitFileConfiguration.UnitClassName;
+
+    for var A := 0 to Pred(Schema.SchemaDef.ElementDefs.Count) do
+      GenerateProperty(ClassDefinition, Schema.SchemaDef.ElementDefs[A], Schema.SchemaDef.TargetNamespace);
+
+    UnitDefinition.Classes.Add(ClassDefinition);
   end;
 end;
 
@@ -1893,61 +1942,6 @@ begin
   Name := TypeName;
 end;
 
-{ TOpenAPIImport30 }
-
-//function TOpenAPIImport30.GenerateClassDefinition(const UnitDeclaration: TUnitDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
-//
-//  function FindReference(const ReferenceObject: TReferenceObject): String;
-//  begin
-//    var References := ReferenceObject.ref.Split(['/']);
-//
-//    Result := References[High(References)];
-//  end;
-//
-//  function GenerateTypeDefinition(const Schema: TSchemaObject; const TypeName: String; const ParentClass: TClassDefinition): TTypeDefinition;
-//  begin
-//    if not Schema.ref.IsEmpty then
-//      Result := TTypeDelayed.Create(Self, FindReference(Schema), ParentClass)
-//    else
-//      case Schema.&type of
-//        TPropertyType.&array: Result := GenerateTypeDefinition(Schema.items, TypeName, ParentClass);
-//        TPropertyType.boolean: Result := BooleanType;
-//        TPropertyType.null: Result := nil;
-//        TPropertyType.integer: Result := IntegerType;
-//        TPropertyType.number: Result := DoubleType;
-//        TPropertyType.&object: Result := GenerateClassDefinition(UnitDeclaration, TypeName, Schema);
-//        TPropertyType.&string: Result := StringType;
-//        else Result := nil;
-//      end;
-//  end;
-//
-//begin
-//  Result := TClassDefinition.Create(UnitDeclaration);
-//  Result.Name := ClassTypeName;
-//
-//  for var Pair in Schema.properties do
-//  begin
-//    var Prop := TPropertyDefinition.Create;
-//    var SchemaType := Pair.Value;
-//    Prop.IsArray := SchemaType.&type = TPropertyType.&array;
-//    Prop.Name := Pair.Key;
-//    Prop.TypeName := GenerateTypeDefinition(Pair.Value, Pair.Key, Result);
-//
-//    Result.Properties.Add(Prop);
-//  end;
-//end;
-
-procedure TOpenAPIImport30.GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration);
-begin
-//  var Serializer := TBluePrintJsonSerializer.Create as IBluePrintSerializer;
-//
-//  var OpenAPISchema := Serializer.Deserialize(TFile.ReadAllText(Format('%s\%s', [Configuration.SchemaFolder, UnitConfiguration.FileName])), TypeInfo(TOpenAPIObject)).AsType<TOpenAPIObject>;
-//  var UnitDeclaration := CreateUnit(UnitConfiguration);
-//
-//  for var ComponentSchema in OpenAPISchema.components.schemas do
-//    UnitDeclaration.Classes.Add(GenerateClassDefinition(UnitDeclaration, ComponentSchema.Key, ComponentSchema.Value));
-end;
-
 { TJSONSchemaImport }
 
 function TJSONSchemaImport.CreateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String): TClassDefinition;
@@ -2033,31 +2027,27 @@ begin
     end;
 end;
 
-procedure TJSONSchemaImport.GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration);
+procedure TJSONSchemaImport.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
 begin
   var Serializer := TBluePrintJsonSerializer.Create as IBluePrintSerializer;
-  var UnitDeclaration := CreateUnit(UnitConfiguration);
+  var UnitClass := TClassDefinition.Create(UnitDefinition);
+  UnitClass.Name := UnitFileConfiguration.UnitClassName;
 
-  for var UnitFile in UnitConfiguration.Files do
+  FJSONSchema := Serializer.Deserialize(LoadFile(UnitFileConfiguration), TypeInfo(TSchema)).AsType<TSchema>;
+
+  UnitDefinition.Classes.Add(UnitClass);
+
+  for var Definition in FJSONSchema.defs do
   begin
-    FJSONSchema := Serializer.Deserialize(LoadFile(UnitFile), TypeInfo(TSchema)).AsType<TSchema>;
-    var UnitClass := TClassDefinition.Create(UnitDeclaration);
-    UnitClass.Name := UnitFile.UnitClassName;
+    var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
 
-    UnitDeclaration.Classes.Add(UnitClass);
-
-    for var Definition in FJSONSchema.defs do
-    begin
-      var TypeDefinition := GenerateTypeDefinition(UnitDeclaration, Definition.Value, Definition.Key);
-
-      if not TypeDefinition.IsClassDefinition then
-        UnitDeclaration.TypeAlias.Add(CreateTypeAlias(UnitDeclaration, Definition.Key, TypeDefinition));
-    end;
-
-    GenerateProperties(UnitClass, FJSONSchema);
-
-    FJSONSchema.Free;
+    if not TypeDefinition.IsClassDefinition then
+      UnitDefinition.TypeAlias.Add(CreateTypeAlias(UnitDefinition, Definition.Key, TypeDefinition));
   end;
+
+  GenerateProperties(UnitClass, FJSONSchema);
+
+  FJSONSchema.Free;
 end;
 
 function TJSONSchemaImport.GetReferenceName(const Schema: TSchema): String;

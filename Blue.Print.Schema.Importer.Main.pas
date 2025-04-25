@@ -80,7 +80,7 @@ end;
 
 procedure TMain.ImportOpenAPI30Click(Sender: TObject);
 begin
-  GenerateFile(TOpenAPIImport30.Create);
+  GenerateFile(nil);
 end;
 
 procedure TMain.ImportXSDClick(Sender: TObject);
