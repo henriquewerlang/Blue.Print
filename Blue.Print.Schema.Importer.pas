@@ -1498,39 +1498,44 @@ var
       GenerateClassImplementation(SubClassDefinition);
   end;
 
-  function GetAllExternalModules: TArray<String>;
+  function LoadUnitUses: String;
   var
-    UsesList: TStringList;
+    UsesList: TList<String>;
+
+    procedure AddUses(const Value: String);
+    begin
+      if not UsesList.Contains(Value) then
+        UsesList.Add(Value);
+    end;
 
     procedure CheckType(const TypeDefinition: TTypeDefinition);
 
-      procedure AddUses(const UnitDefinition: TUnitDefinition);
+      procedure AddUnitDefinition(const UnitDefinition: TUnitDefinition);
       begin
-        UsesList.Add(UnitDefinition.UnitConfiguration.Name);
+        AddUses(UnitDefinition.UnitConfiguration.Name);
+      end;
+
+      procedure CheckUses(const TypeDefinition: TTypeDefinition);
+      begin
+        if TypeDefinition.IsExternal then
+          AddUses(TypeDefinition.AsTypeExternal.ModuleName)
+        else if TypeDefinition.IsClassDefinition then
+        begin
+          var ClassDefinition := TypeDefinition.AsClassDefinition;
+
+          AddUnitDefinition(ClassDefinition.UnitDefinition);
+        end
+        else if TypeDefinition.IsEnumeration and TypeDefinition.ParentModule.IsUnitDefinition then
+          AddUnitDefinition(TypeDefinition.ParentModule.AsUnitDefinition)
+        else if TypeDefinition.IsTypeAlias and Assigned(TypeDefinition.AsTypeAlias.ParentModule) then
+          AddUnitDefinition(TypeDefinition.AsTypeAlias.ParentModule.AsUnitDefinition);
       end;
 
     begin
-      var ModuleName := EmptyStr;
-
-      if TypeDefinition.IsExternal then
-        UsesList.Add(TypeDefinition.AsTypeExternal.ModuleName)
-      else if TypeDefinition.IsClassDefinition then
-      begin
-        var ClassDefinition := TypeDefinition.AsClassDefinition;
-
-        AddUses(ClassDefinition.UnitDefinition);
-
-        if Assigned(ClassDefinition.InheritedFrom) then
-          CheckType(ClassDefinition.InheritedFrom);
-      end
-      else if TypeDefinition.IsEnumeration and TypeDefinition.ParentModule.IsUnitDefinition then
-        AddUses(TypeDefinition.ParentModule.AsUnitDefinition)
-      else if TypeDefinition.IsTypeAlias then
-      begin
-        AddUses(TypeDefinition.AsTypeAlias.ParentModule.AsUnitDefinition);
-
-        CheckType(TypeDefinition.AsTypeAlias.TypeDefinition);
-      end;
+      if TypeDefinition.IsDelayedType then
+        CheckType(ResolveTypeDefinition(TypeDefinition))
+      else
+        CheckUses(TypeDefinition);
     end;
 
     procedure CheckClasses(const Classes: TList<TClassDefinition>);
@@ -1545,22 +1550,28 @@ var
     end;
 
   begin
-    UsesList := TStringList.Create(dupIgnore, True, False);
+    Result := EmptyStr;
+    UsesList := TList<String>.Create;
+
+    AddUses('Blue.Print.Types');
 
     for var AUnit in FUses do
-      UsesList.Add(AUnit.UnitConfiguration.Name);
+      AddUses(AUnit.UnitConfiguration.Name);
 
     CheckClasses(Classes);
 
     for var TypeAlias in TypeAlias do
-      CheckType(TypeAlias);
+      CheckType(TypeAlias.TypeDefinition);
 
-    var CurrentUnitIndex := UsesList.IndexOf(UnitConfiguration.Name);
+    UsesList.Remove(UnitConfiguration.Name);
 
-    if CurrentUnitIndex > -1 then
-      UsesList.Delete(CurrentUnitIndex);
+    for var Value in UsesList do
+    begin
+      if not Result.IsEmpty then
+        Result := Result + ', ';
 
-    Result := UsesList.ToStringArray;
+      Result := Result + Value;
+    end;
 
     UsesList.Free;
   end;
@@ -1596,16 +1607,11 @@ begin
 
   AddLine;
 
-  var UsesList := 'Blue.Print.Types';
-
-  for var ModuleName in GetAllExternalModules do
-    UsesList := UsesList + ', ' + ModuleName;
-
   AddLine('// File generated from %s;', [GetUnitReferencesNames(UnitConfiguration)]);
 
   AddLine;
 
-  AddLine('uses %s;', [UsesList]);
+  AddLine('uses %s;', [LoadUnitUses]);
 
   AddLine;
 
