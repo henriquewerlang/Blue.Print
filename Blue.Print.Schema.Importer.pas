@@ -1215,13 +1215,20 @@ var
     end;
 
   begin
+    var FirstEnumerator := True;
+
     for var Enumerator in Module.Enumerations do
     begin
+      if not FirstEnumerator then
+        AddLine;
+
       LoadAttributes(Ident, Enumerator.Attributes.ToArray);
 
       AddLine('%s[EnumValue(''%s'')]', [Ident, GetEnumeratorValues(Enumerator, ''' +' + sLineBreak + Ident + WHITE_SPACE_IDENT + '''', NotFormatEnumeratorValue)]);
 
       AddLine('%s%s = (%s);', [Ident, Enumerator.EnumeratorName, GetEnumeratorValues(Enumerator, sLineBreak + Ident + WHITE_SPACE_IDENT, FormatEnumeratorValue)]);
+
+      FirstEnumerator := False;
     end;
   end;
 
@@ -1610,8 +1617,6 @@ begin
     AddLine('  // Enumerations declaration');
 
     GenerateEnumerators(WHITE_SPACE_IDENT, Self);
-
-    AddLine;
   end;
 
   if not Classes.IsEmpty then
