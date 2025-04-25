@@ -6,9 +6,13 @@
          "Name": "Blue.Print.Open.API.Schema.v20",
          "Files": [
             {
+               "Reference": "http://json-schema.org/draft-04/schema#",
+               "UnitClassName": "TSchema"
+            },
+            {
                "Reference": "Open API 2.0.json",
-               "UnitClassName": "TOpenAPI20"
-            }
+               "UnitClassName": "TSchemaOpenAPI20"
+            }            
          ]
       }
    ]
