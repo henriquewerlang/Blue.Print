@@ -1493,38 +1493,37 @@ var
 
   function GetAllExternalModules: TArray<String>;
   var
-    Return: TList<String>;
-
-    procedure AddUses(const ModuleName: String);
-    begin
-      for var Name in Return do
-        if Name = ModuleName then
-          Exit;
-
-      Return.Add(ModuleName);
-    end;
+    UsesList: TStringList;
 
     procedure CheckType(const TypeDefinition: TTypeDefinition);
+
+      procedure AddUses(const UnitDefinition: TUnitDefinition);
+      begin
+        UsesList.Add(UnitDefinition.UnitConfiguration.Name);
+      end;
+
     begin
       var ModuleName := EmptyStr;
 
       if TypeDefinition.IsExternal then
-        ModuleName := TypeDefinition.AsTypeExternal.ModuleName
+        UsesList.Add(TypeDefinition.AsTypeExternal.ModuleName)
       else if TypeDefinition.IsClassDefinition then
       begin
         var ClassDefinition := TypeDefinition.AsClassDefinition;
 
-        if ClassDefinition.UnitDefinition <> Self then
-          ModuleName := ClassDefinition.UnitDefinition.UnitConfiguration.Name;
+        AddUses(ClassDefinition.UnitDefinition);
 
         if Assigned(ClassDefinition.InheritedFrom) then
           CheckType(ClassDefinition.InheritedFrom);
       end
-      else if TypeDefinition.IsEnumeration and TypeDefinition.ParentModule.IsUnitDefinition and (TypeDefinition.ParentModule <> Self) then
-        ModuleName := TypeDefinition.ParentModule.AsUnitDefinition.UnitConfiguration.Name;
+      else if TypeDefinition.IsEnumeration and TypeDefinition.ParentModule.IsUnitDefinition then
+        AddUses(TypeDefinition.ParentModule.AsUnitDefinition)
+      else if TypeDefinition.IsTypeAlias then
+      begin
+        AddUses(TypeDefinition.AsTypeAlias.ParentModule.AsUnitDefinition);
 
-      if not ModuleName.IsEmpty then
-        AddUses(ModuleName);
+        CheckType(TypeDefinition.AsTypeAlias.TypeDefinition);
+      end;
     end;
 
     procedure CheckClasses(const Classes: TList<TClassDefinition>);
@@ -1539,19 +1538,24 @@ var
     end;
 
   begin
-    Return := TList<String>.Create;
+    UsesList := TStringList.Create(dupIgnore, True, False);
 
     for var AUnit in FUses do
-      AddUses(AUnit.UnitConfiguration.Name);
+      UsesList.Add(AUnit.UnitConfiguration.Name);
 
     CheckClasses(Classes);
 
     for var TypeAlias in TypeAlias do
       CheckType(TypeAlias);
 
-    Result := Return.ToArray;
+    var CurrentUnitIndex := UsesList.IndexOf(UnitConfiguration.Name);
 
-    Return.Free;
+    if CurrentUnitIndex > -1 then
+      UsesList.Delete(CurrentUnitIndex);
+
+    Result := UsesList.ToStringArray;
+
+    UsesList.Free;
   end;
 
   function GetUnitReferencesNames(const UnitConfiguration: TUnitDefinitionConfiguration): String;
