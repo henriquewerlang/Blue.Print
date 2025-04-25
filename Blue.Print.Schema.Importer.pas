@@ -347,6 +347,7 @@ type
     function CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
     function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
     function CheckEnumeration(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeEnumeration;
+    function FindBaseType(TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
     function GenerateClassDefinition(const UnitDeclaration: TUnitDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TClassDefinition;
     function IsReferenceType(const Element: IXMLElementDef): Boolean;
 
@@ -775,6 +776,18 @@ begin
   inherited;
 end;
 
+function TXSDImporter.FindBaseType(TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
+begin
+  Result := nil;
+
+  if not TypeDefinition.IsComplex and Assigned(TypeDefinition.BaseType) then
+    repeat
+      TypeDefinition := TypeDefinition.BaseType as IXMLSimpleTypeDef;
+
+      Result := FindType(TypeDefinition.Name, Module);
+    until Assigned(Result) or not Assigned(TypeDefinition);
+end;
+
 function TXSDImporter.FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
 begin
   if FXMLBuildInType.TryGetValue(TypeName, Result) then
@@ -817,41 +830,32 @@ begin
   Result := CheckTypeDefinition(&Type, Module);
 
   if not Assigned(Result) then
+    Result := FindBaseType(&Type, Module);
+
+  if not Assigned(Result) then
     Result := AddDelayedType(&Type.Name, Module);
 end;
 
 function TXSDImporter.CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
-
-  function GetBaseType(TypeDefinition: IXMLTypeDef): TTypeDefinition;
-  begin
-    Result := nil;
-
-    if not TypeDefinition.IsComplex and Assigned(TypeDefinition.BaseType) then
-      repeat
-        TypeDefinition := TypeDefinition.BaseType as IXMLSimpleTypeDef;
-
-        Result := FindType(TypeDefinition.Name, Module);
-      until Assigned(Result) or not Assigned(TypeDefinition);
-  end;
-
 begin
-  var TypeName := &Type.Name;
-
-  Result := FindType(TypeName, Module);
+  Result := FindType(&Type.Name, Module);
 
   if not Assigned(Result) then
     Result := CheckEnumeration(&Type, Module);
-
-  if not Assigned(Result) then
-    Result := GetBaseType(&Type);
 end;
 
 function TXSDImporter.CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
 begin
   Result := CheckTypeDefinition(&Type, UnitDefinition);
 
-//  if not Result.IsEnumeration then
-//    UnitDefinition.AddTypeAlias(CreateTypeAlias(UnitDefinition, &Type.Name, Result));
+  if not Assigned(Result) then
+  begin
+    var TypeAlias := CreateTypeAlias(UnitDefinition, &Type.Name, FindBaseType(&Type, UnitDefinition));
+
+    Result := TypeAlias;
+
+    UnitDefinition.AddTypeAlias(TypeAlias);
+  end;
 end;
 
 function TXSDImporter.GenerateClassDefinition(const UnitDeclaration: TUnitDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TClassDefinition;
