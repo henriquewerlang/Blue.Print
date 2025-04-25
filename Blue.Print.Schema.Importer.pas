@@ -334,7 +334,8 @@ type
 
     destructor Destroy; override;
 
-    procedure AddTypeExternal(const ModuleName, TypeName: String);
+    function AddTypeExternal(const ModuleName, TypeName: String): TTypeExternal;
+
     procedure Import;
     procedure LoadConfig(const FileName: String);
 
@@ -379,7 +380,7 @@ type
     function GetReferenceName(const Schema: TSchema): String;
     function GetReferenceType(const ParentModule: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
     function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
-    function GenerateTypeDefinition(const ParentModule: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
+    function GenerateTypeDefinition(const UnitDefinition: TUnitDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
 
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
   protected
@@ -465,9 +466,11 @@ begin
   end;
 end;
 
-procedure TSchemaImporter.AddTypeExternal(const ModuleName, TypeName: String);
+function TSchemaImporter.AddTypeExternal(const ModuleName, TypeName: String): TTypeExternal;
 begin
-  FTypeExternal.Add(TypeName, TTypeExternal.Create(ModuleName, TypeName));
+  Result := TTypeExternal.Create(ModuleName, TypeName);
+
+  FTypeExternal.Add(TypeName, Result);
 end;
 
 constructor TSchemaImporter.Create;
@@ -749,9 +752,9 @@ procedure TSchemaImporter.LoadUnitFileDefinition(const UnitDefinition: TUnitDefi
 begin
   if not FUnitFiles.ContainsKey(UnitFileConfiguration) then
   begin
-    GenerateUnitFileDefinition(UnitDefinition, UnitFileConfiguration);
-
     FUnitFiles.Add(UnitFileConfiguration, UnitDefinition);
+
+    GenerateUnitFileDefinition(UnitDefinition, UnitFileConfiguration);
   end;
 end;
 
@@ -1987,7 +1990,7 @@ procedure TJSONSchemaImport.GenerateProperties(const ClassDefinition: TClassDefi
     if not Schema.ref.IsEmpty then
       Result := GetReferenceType(ClassDefinition, Schema, Prop.Name)
     else
-      Result := GenerateTypeDefinition(ClassDefinition, Schema, Prop.Name);
+      Result := GenerateTypeDefinition(ClassDefinition.UnitDefinition, Schema, Prop.Name);
   end;
 
   procedure DefineProperty(const PropertyName: String; const SchemaType: TSchema);
@@ -2018,27 +2021,72 @@ begin
   AppendProperties(Schema.Properties);
 end;
 
-function TJSONSchemaImport.GenerateTypeDefinition(const ParentModule: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
+function TJSONSchemaImport.GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
+var
+  UnitDefinition: TUnitDefinition;
+
+  function GetAnyTypeDefinition: TTypeDefinition;
+  const
+    ANY_TYPE_NAME = 'any';
+
+  begin
+    Result := FindType(ANY_TYPE_NAME, Module);
+
+    if not Assigned(Result) then
+    begin
+      var AnyType := CreateTypeAlias(UnitDefinition, ANY_TYPE_NAME, AddTypeExternal('System.Rtti', 'TValue'));
+      Result := AnyType;
+
+      UnitDefinition.AddTypeAlias(AnyType);
+    end;
+  end;
+
+  function GetItemArrayTypeDefinition(const ArraySchema: TSchema): TTypeDefinition;
+  begin
+    if Assigned(ArraySchema.items) then
+      Result := GenerateTypeDefinition(Module, Schema.items, TypeName)
+    else
+      Result := GetAnyTypeDefinition;
+  end;
+
+  function CreateEnumerator: TTypeEnumeration;
+  begin
+    Result := TTypeEnumeration.Create(Module);
+    Result.Name := TypeName;
+
+    Result.Values.AddRange(Schema.enum);
+  end;
+
 begin
+  if Module.IsUnitDefinition then
+    UnitDefinition := Module.AsUnitDefinition
+  else
+    UnitDefinition := Module.AsClassDefinition.UnitDefinition;
+
   if not Schema.ref.IsEmpty then
-    Result := GetReferenceType(ParentModule, Schema, TypeName)
+    Result := GenerateTypeDefinition(Module, GetReferenceSchema(Schema), TypeName)
   else
     case Schema.&type of
-      TPropertyType.&array: Result := TTypeArrayDefinition.Create(ParentModule, GenerateTypeDefinition(ParentModule, Schema.items, TypeName));
+      TPropertyType.&array: Result := TTypeArrayDefinition.Create(UnitDefinition, GetItemArrayTypeDefinition(Schema));
       TPropertyType.boolean: Result := BooleanType;
       TPropertyType.null: Result := nil;
       TPropertyType.integer: Result := IntegerType;
       TPropertyType.number: Result := DoubleType;
-      TPropertyType.&object: Result := GenerateClassDefinition(ParentModule, TypeName, Schema);
+      TPropertyType.&object: Result := GenerateClassDefinition(Module, TypeName, Schema);
       TPropertyType.&string: Result := StringType;
       else
       begin
-        var InnerClassDefinition := CreateClassDefinition(ParentModule, TypeName);
+        if Assigned(Schema.enum) then
+          Result := CreateEnumerator
+        else
+        begin
+          var InnerClassDefinition := CreateClassDefinition(Module, TypeName);
 
-        for var AllOf in Schema.allOf do
-          GenerateProperties(InnerClassDefinition, AllOf);
+          for var AllOf in Schema.allOf do
+            GenerateProperties(InnerClassDefinition, AllOf);
 
-        Result := InnerClassDefinition;
+          Result := InnerClassDefinition;
+        end;
       end;
     end;
 end;
@@ -2051,14 +2099,19 @@ begin
 
   FJSONSchema := Serializer.Deserialize(LoadFile(UnitFileConfiguration), TypeInfo(TSchema)).AsType<TSchema>;
 
+  if not FJSONSchema.schema.IsEmpty then
+    LoadUnitFromReference(FJSONSchema.schema);
+
   UnitDefinition.Classes.Add(UnitClass);
 
   for var Definition in FJSONSchema.defs do
   begin
-    var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
+    var TypeDefinition := GenerateTypeDefinition(UnitClass, Definition.Value, Definition.Key);
 
-    if not TypeDefinition.IsClassDefinition then
-      UnitDefinition.TypeAlias.Add(CreateTypeAlias(UnitDefinition, Definition.Key, TypeDefinition));
+    if TypeDefinition.IsEnumeration then
+      UnitDefinition.Enumerations.Add(TypeDefinition.AsTypeEnumeration)
+    else if not TypeDefinition.IsClassDefinition then
+      UnitDefinition.AddTypeAlias(CreateTypeAlias(UnitDefinition, Definition.Key, TypeDefinition));
   end;
 
   GenerateProperties(UnitClass, FJSONSchema);
@@ -2075,10 +2128,20 @@ end;
 
 function TJSONSchemaImport.GetReferenceType(const ParentModule: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
 begin
-  Result := FindType(GetReferenceName(Schema), ParentModule);
+  if Schema.ref = '#' then
+  begin
+    Result := ParentModule;
 
-  if not Assigned(Result) then
-    Result := AddDelayedType(TypeName, ParentModule);
+    while Assigned(Result.ParentModule) and not Result.ParentModule.IsUnitDefinition do
+      Result := Result.ParentModule;
+  end
+  else
+  begin
+    Result := FindType(GetReferenceName(Schema), ParentModule);
+
+    if not Assigned(Result) then
+      Result := AddDelayedType(TypeName, ParentModule);
+  end;
 end;
 
 { TTypeEnumeration }
