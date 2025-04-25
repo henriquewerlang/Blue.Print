@@ -2,6 +2,8 @@
 
 interface
 
+{$SCOPEDENUMS ON}
+
 uses System.Generics.Collections, Xml.XMLSchema, Blue.Print.JSON.Schema, Blue.Print.Types;
 
 type
@@ -16,6 +18,9 @@ type
   TTypeModuleDefinition = class;
   TUnitDefinition = class;
   TXSDImporter = class;
+
+  TImplementationInformation = (NeedDestructor, NeedGetFunction, NeedAddFunction, NeedIsStoredFunction);
+  TImplementationInformations = set of TImplementationInformation;
 
   TUnitFileConfiguration = class
   private
@@ -76,11 +81,15 @@ type
   TPropertyDefinition = class
   private
     FAttributes: TList<String>;
+    FInformations: TImplementationInformations;
     FName: String;
     FOptional: Boolean;
     FPropertyType: TTypeDefinition;
 
-    function GetOptional: Boolean;
+    function GetNeedAddFunction: Boolean;
+    function GetNeedDestructor: Boolean;
+    function GetNeedGetFunction: Boolean;
+    function GetNeedIsStoredFunction: Boolean;
   public
     constructor Create;
 
@@ -94,8 +103,13 @@ type
     procedure AddXMLValueAttribute;
 
     property Attributes: TList<String> read FAttributes write FAttributes;
+    property Informations: TImplementationInformations read FInformations write FInformations;
     property Name: String read FName write FName;
-    property Optional: Boolean read GetOptional write FOptional;
+    property NeedAddFunction: Boolean read GetNeedAddFunction;
+    property NeedDestructor: Boolean read GetNeedDestructor;
+    property NeedGetFunction: Boolean read GetNeedGetFunction;
+    property NeedIsStoredFunction: Boolean read GetNeedIsStoredFunction;
+    property Optional: Boolean read FOptional write FOptional;
     property PropertyType: TTypeDefinition read FPropertyType write FPropertyType;
   end;
 
@@ -166,11 +180,15 @@ type
 
   TClassDefinition = class(TTypeModuleDefinition)
   private
+    FInformations: TImplementationInformations;
     FInheritedFrom: TClassDefinition;
     FParentClass: TClassDefinition;
     FProperties: TList<TPropertyDefinition>;
     FTargetNamespace: String;
 
+    function GetNeedAddFunction: Boolean;
+    function GetNeedDestructor: Boolean;
+    function GetNeedImplementation: Boolean;
     function GetUnitDefinition: TUnitDefinition;
   public
     constructor Create(const Module: TTypeModuleDefinition); overload; override;
@@ -183,7 +201,11 @@ type
     procedure AddNamespaceAttribute(const Namespace: String);
     procedure AddClassType(const ClassDefinition: TClassDefinition);
 
+    property Informations: TImplementationInformations read FInformations write FInformations;
     property InheritedFrom: TClassDefinition read FInheritedFrom write FInheritedFrom;
+    property NeedAddFunction: Boolean read GetNeedAddFunction;
+    property NeedImplementation: Boolean read GetNeedImplementation;
+    property NeedDestructor: Boolean read GetNeedDestructor;
     property ParentClass: TClassDefinition read FParentClass write FParentClass;
     property Properties: TList<TPropertyDefinition> read FProperties write FProperties;
     property TargetNamespace: String read FTargetNamespace write FTargetNamespace;
@@ -321,8 +343,8 @@ type
     function AddProperty(const ClassDefinition: TClassDefinition; const Name: String): TPropertyDefinition;
     function AddPropertyWithType(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef): TPropertyDefinition;
     function CanGenerateClass(const Element: IXMLElementDef): Boolean;
-    function CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
     function CheckPropertyTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
+    function CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
     function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
     function CheckEnumeration(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeEnumeration;
     function GenerateClassDefinition(const UnitDeclaration: TUnitDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TClassDefinition;
@@ -572,7 +594,7 @@ begin
       end;
   end;
 
-  if not Assigned(Result) then
+  if not Assigned(Result) and Assigned(Module) then
   begin
     var UnitDefintion: TUnitDefinition;
 
@@ -790,7 +812,6 @@ begin
     Result := nil;
 end;
 
-
 function TXSDImporter.CheckPropertyTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
 begin
   Result := CheckTypeDefinition(&Type, Module);
@@ -829,8 +850,8 @@ function TXSDImporter.CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const Un
 begin
   Result := CheckTypeDefinition(&Type, UnitDefinition);
 
-  if not Result.IsEnumeration then
-    UnitDefinition.AddTypeAlias(CreateTypeAlias(UnitDefinition, &Type.Name, Result));
+//  if not Result.IsEnumeration then
+//    UnitDefinition.AddTypeAlias(CreateTypeAlias(UnitDefinition, &Type.Name, Result));
 end;
 
 function TXSDImporter.GenerateClassDefinition(const UnitDeclaration: TUnitDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TClassDefinition;
@@ -1060,31 +1081,6 @@ var
       Result := TypeDefinition;
   end;
 
-  function GetNeedAddFunction(const &Property: TPropertyDefinition): Boolean;
-  begin
-    var PropertyType := GetPropertyType(&Property);
-    Result := PropertyType.IsArrayType;
-
-    if Result then
-      Result := ResolveTypeAlias(PropertyType).IsClassDefinition;
-  end;
-
-  function GetNeedDestructor(const &Property: TPropertyDefinition): Boolean;
-  begin
-    var PropertyType := ResolveTypeAlias(GetPropertyType(&Property));
-
-    Result := PropertyType.IsClassDefinition and not PropertyType.IsObjectType;
-  end;
-
-  function CheckNeedDestructor(const ClassDefinition: TClassDefinition): Boolean;
-  begin
-    Result := False;
-
-    for var &Property in ClassDefinition.Properties do
-      if GetNeedDestructor(&Property) then
-        Exit(True);
-  end;
-
   function GetClassImplementationName(ClassDefinition: TClassDefinition): String;
   begin
     Result := GetClassName(ClassDefinition);
@@ -1102,16 +1098,9 @@ var
     Result := 'F' + FormatName(&Property.Name);
   end;
 
-  function GetNeedGetFunction(const &Property: TPropertyDefinition): Boolean;
-  begin
-    var PropertyType := GetPropertyType(&Property);
-
-    Result := PropertyType.IsClassDefinition and not PropertyType.IsArrayType and not PropertyType.IsObjectType;
-  end;
-
   function GetPropertyGetFunction(const &Property: TPropertyDefinition): String;
   begin
-    if GetNeedGetFunction(&Property) then
+    if &Property.NeedGetFunction then
       Result := 'Get' + FormatName(&Property.Name)
     else
       Result := GetPropertyFieldName(&Property);
@@ -1139,15 +1128,6 @@ var
   function GetAddFuntionName(const &Property: TPropertyDefinition): String;
   begin
     Result := Format('Add%s: %s', [FormatName(&Property.Name), GetTypeName(GetArrayType(GetPropertyType(&Property)))]);
-  end;
-
-  function HasOptionalProperty(const ClassDefinition: TClassDefinition): Boolean;
-  begin
-    Result := False;
-
-    for var &Property in ClassDefinition.Properties do
-      if &Property.Optional then
-        Exit(True);
   end;
 
   procedure LoadAttributes(const Ident: String; const AttributesList: TArray<String>);
@@ -1198,7 +1178,7 @@ var
     begin
       Result := EmptyStr;
 
-      if &Property.Optional then
+      if &Property.NeedIsStoredFunction then
         Result := Format(' stored %s', [GetStoredFunctionName(&Property)]);
     end;
 
@@ -1210,16 +1190,70 @@ var
         Result := EmptyStr;
     end;
 
-    function CheckNeedAddFunction(const ClassDefinition: TClassDefinition): Boolean;
+    procedure LoadClassInformation;
+
+      function GetNeedAddFunction(const PropertyType: TTypeDefinition): Boolean;
+      begin
+        Result := PropertyType.IsArrayType;
+
+        if Result then
+          Result := ResolveTypeAlias(GetArrayType(PropertyType)).IsClassDefinition;
+      end;
+
+      function GetIsOptional(const &Property: TPropertyDefinition; const PropertyType: TTypeDefinition): Boolean;
+      begin
+        Result := &Property.Optional and not PropertyType.IsArrayType;
+      end;
+
+      function GetNeedDestructor(const PropertyType: TTypeDefinition): Boolean;
+      begin
+        var ResolvedPropertyType := ResolveTypeAlias(GetArrayType(PropertyType));
+
+        Result := ResolvedPropertyType.IsClassDefinition and not ResolvedPropertyType.IsObjectType;
+      end;
+
+      function GetNeedGetFunction(const PropertyType: TTypeDefinition): Boolean;
+      begin
+        var ResolvedPropertyType := ResolveTypeAlias(PropertyType);
+
+        Result := ResolvedPropertyType.IsClassDefinition and not ResolvedPropertyType.IsArrayType and not ResolvedPropertyType.IsObjectType;
+      end;
+
+      procedure AppendInformation(const NeedAdd: Boolean; const &Property: TPropertyDefinition; const Information: TImplementationInformation);
+      begin
+        if NeedAdd then
+        begin
+          ClassDefinition.Informations := ClassDefinition.Informations + [Information];
+          &Property.Informations := &Property.Informations + [Information];
+        end;
+      end;
+
     begin
-      Result := False;
+      var ClassInformation: TImplementationInformations := [];
 
       for var &Property in ClassDefinition.Properties do
-        if GetNeedAddFunction(&Property) then
-          Exit(True);
+      begin
+        var PropertyType := GetPropertyType(&Property);
+
+        AppendInformation(GetNeedAddFunction(PropertyType), &Property, TImplementationInformation.NeedAddFunction);
+
+        AppendInformation(GetIsOptional(&Property, PropertyType), &Property, TImplementationInformation.NeedIsStoredFunction);
+
+        AppendInformation(GetNeedDestructor(PropertyType), &Property, TImplementationInformation.NeedDestructor);
+
+        AppendInformation(GetNeedGetFunction(PropertyType), &Property, TImplementationInformation.NeedGetFunction);
+      end;
+    end;
+
+    procedure CheckAddLine(const Information: TImplementationInformation; const Informations: TImplementationInformations);
+    begin
+      if (Information in ClassDefinition.Informations) and (Informations * ClassDefinition.Informations <> []) then
+        AddLine;
     end;
 
   begin
+    LoadClassInformation;
+
     LoadAttributes(Ident, ClassDefinition.Attributes.ToArray);
 
     AddLine('%s%s = class%s', [Ident, GetClassName(ClassDefinition), GetInheritence]);
@@ -1247,29 +1281,30 @@ var
         AddLine('%s  %s: %s;', [Ident, GetPropertyFieldName(&Property), GetPropertyTypeName(&Property)]);
 
       for var &Property in ClassDefinition.Properties do
-        if GetNeedGetFunction(&Property) then
+        if &Property.NeedGetFunction then
           AddLine('%s  function %s: %s;', [Ident, GetPropertyGetFunction(&Property), GetPropertyTypeName(&Property)]);
 
       for var &Property in ClassDefinition.Properties do
-        if &Property.Optional then
+        if &Property.NeedIsStoredFunction then
           AddLine('%s  function %s: Boolean;', [Ident, GetStoredFunctionName(&Property)]);
 
-      if CheckNeedDestructor(ClassDefinition) or CheckNeedAddFunction(ClassDefinition) or HasOptionalProperty(ClassDefinition) then
+      if ClassDefinition.NeedImplementation then
       begin
         AddLine('%spublic', [Ident]);
 
-        if CheckNeedDestructor(ClassDefinition) then
+        if ClassDefinition.NeedDestructor then
           AddLine('%s  destructor Destroy; override;', [Ident]);
 
-        if CheckNeedDestructor(ClassDefinition) and CheckNeedAddFunction(ClassDefinition) then
-          AddLine;
+        CheckAddLine(TImplementationInformation.NeedAddFunction, [TImplementationInformation.NeedDestructor]);
 
         for var &Property in ClassDefinition.Properties do
-          if GetNeedAddFunction(&Property) then
+          if &Property.NeedAddFunction then
             AddLine('%s  function %s;', [Ident, GetAddFuntionName(&Property)]);
 
+        CheckAddLine(TImplementationInformation.NeedIsStoredFunction, [TImplementationInformation.NeedDestructor, TImplementationInformation.NeedAddFunction]);
+
         for var &Property in ClassDefinition.Properties do
-          if &Property.Optional then
+          if &Property.NeedIsStoredFunction then
             AddLine('%s  property Is%sStored: Boolean read %s;', [Ident, FormatName(&Property.Name), GetStoredFunctionName(&Property)]);
       end;
 
@@ -1302,13 +1337,13 @@ var
 
   procedure GenerateClassImplementation(const ClassDefinition: TClassDefinition);
   begin
-    if HasOptionalProperty(ClassDefinition) or CheckNeedDestructor(ClassDefinition) then
+    if ClassDefinition.NeedImplementation then
     begin
       AddLine('{ %s }', [GetClassImplementationName(ClassDefinition)]);
 
       AddLine;
 
-      if CheckNeedDestructor(ClassDefinition) then
+      if ClassDefinition.NeedDestructor then
       begin
         AddLine('destructor %s.Destroy;', [GetClassImplementationName(ClassDefinition)]);
 
@@ -1318,7 +1353,7 @@ var
         begin
           var PropertyType := GetPropertyType(&Property);
 
-          if GetNeedDestructor(&Property) then
+          if &Property.NeedDestructor then
             if PropertyType.IsArrayType then
             begin
               AddLine('  for var AObject in %s do', [GetPropertyFieldName(&Property)]);
@@ -1346,7 +1381,7 @@ var
         var PropertyFieldName := GetPropertyFieldName(&Property);
         var PropertyType := GetPropertyType(&Property);
 
-        if GetNeedGetFunction(&Property) then
+        if &Property.NeedGetFunction then
         begin
           var PropertyTypeName := GetTypeName(PropertyType);
 
@@ -1365,8 +1400,9 @@ var
           AddLine('end;');
 
           AddLine;
-        end
-        else if GetNeedAddFunction(&Property) then
+        end;
+
+        if &Property.NeedAddFunction then
         begin
           AddLine('function %s.%s;', [GetClassImplementationName(ClassDefinition), GetAddFuntionName(&Property)]);
 
@@ -1383,7 +1419,7 @@ var
           AddLine;
         end;
 
-        if &Property.Optional then
+        if &Property.NeedIsStoredFunction then
         begin
           AddLine('function %s.%s: Boolean;', [GetClassImplementationName(ClassDefinition), GetStoredFunctionName(&Property)]);
 
@@ -1613,6 +1649,21 @@ begin
   inherited;
 end;
 
+function TClassDefinition.GetNeedAddFunction: Boolean;
+begin
+  Result := TImplementationInformation.NeedAddFunction in Informations;
+end;
+
+function TClassDefinition.GetNeedDestructor: Boolean;
+begin
+  Result := TImplementationInformation.NeedDestructor in Informations;
+end;
+
+function TClassDefinition.GetNeedImplementation: Boolean;
+begin
+  Result := Informations <> [];
+end;
+
 function TClassDefinition.GetUnitDefinition: TUnitDefinition;
 begin
   var Parent := ParentModule;
@@ -1667,9 +1718,24 @@ begin
   inherited;
 end;
 
-function TPropertyDefinition.GetOptional: Boolean;
+function TPropertyDefinition.GetNeedAddFunction: Boolean;
 begin
-  Result := FOptional and not PropertyType.IsArrayType;
+  Result := TImplementationInformation.NeedAddFunction in Informations;
+end;
+
+function TPropertyDefinition.GetNeedDestructor: Boolean;
+begin
+  Result := TImplementationInformation.NeedDestructor in Informations;
+end;
+
+function TPropertyDefinition.GetNeedGetFunction: Boolean;
+begin
+  Result :=  TImplementationInformation.NeedGetFunction in Informations;
+end;
+
+function TPropertyDefinition.GetNeedIsStoredFunction: Boolean;
+begin
+  Result := TImplementationInformation.NeedIsStoredFunction in Informations;
 end;
 
 { TTypeDefinition }
