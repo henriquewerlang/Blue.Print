@@ -2042,12 +2042,16 @@ var
     Result.Values.AddRange(Schema.enum);
   end;
 
-  function GetPropertyName(const Schema: TSchema): String;
+  function GetPropertyName(const Schema: TSchema; var PropertyName: String): Boolean;
   begin
-    if Schema.ref.IsEmpty then
-      Result := TRttiEnumerationType.GetName(Schema.&type)
+    if not Schema.ref.IsEmpty then
+      PropertyName := GetReferenceName(Schema)
+    else if Schema.&type <> TPropertyType.Undefined then
+      PropertyName := TRttiEnumerationType.GetName(Schema.&type)
     else
-      Result := GetReferenceName(Schema);
+      PropertyName := EmptyStr;
+
+    Result := not PropertyName.IsEmpty;
   end;
 
 begin
@@ -2080,11 +2084,13 @@ begin
           else if Assigned(Schema.allOf + Schema.oneOf + Schema.anyOf) then
           begin
             var InnerClassDefinition := CreateClassDefinition(Module, TypeName);
+            var PropertyName := EmptyStr;
 
             InnerClassDefinition.AddAtribute('SingleObject');
 
             for var SchemaProperty in Schema.allOf + Schema.oneOf + Schema.anyOf do
-              DefineProperty(InnerClassDefinition, GetPropertyName(SchemaProperty), SchemaProperty);
+              if GetPropertyName(SchemaProperty, PropertyName) then
+                DefineProperty(InnerClassDefinition, PropertyName, SchemaProperty);
 
             Result := InnerClassDefinition;
           end

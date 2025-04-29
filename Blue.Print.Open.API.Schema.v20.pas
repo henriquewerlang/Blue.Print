@@ -26,10 +26,10 @@ type
   Type = class;
 
   // Forward type alias
-  any = TValue;
   schemaArray = TArray<TSchema>;
   positiveInteger = System.Integer;
   stringArray = TArray<System.String>;
+  any = TValue;
 
   TSchema = class
   public type
@@ -37,10 +37,8 @@ type
     PositiveIntegerDefault0 = class
     private
       FPositiveInteger: System.Integer;
-      FUndefined: any;
     published
       property positiveInteger: System.Integer read FPositiveInteger write FPositiveInteger;
-      property Undefined: any read FUndefined write FUndefined;
     end;
   private
     FAnyOf: schemaArray;
@@ -148,10 +146,8 @@ type
   PositiveIntegerDefault0 = class
   private
     FPositiveInteger: positiveInteger;
-    FUndefined: any;
   published
     property positiveInteger: positiveInteger read FPositiveInteger write FPositiveInteger;
-    property Undefined: any read FUndefined write FUndefined;
   end;
 
   PatternProperties = class
