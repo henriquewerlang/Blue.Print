@@ -398,7 +398,7 @@ type
 
 implementation
 
-uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, XML.XMLDom, Xml.XMLSchemaTags, Blue.Print.Serializer;
+uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, XML.XMLDom, Xml.XMLSchemaTags, Blue.Print.Serializer;
 
 const
   WHITE_SPACE_IDENT = '  ';
@@ -2042,6 +2042,14 @@ var
     Result.Values.AddRange(Schema.enum);
   end;
 
+  function GetPropertyName(const Schema: TSchema): String;
+  begin
+    if Schema.ref.IsEmpty then
+      Result := TRttiEnumerationType.GetName(Schema.&type)
+    else
+      Result := GetReferenceName(Schema);
+  end;
+
 begin
   Result := FindType(TypeName, Module);
 
@@ -2075,9 +2083,8 @@ begin
 
             InnerClassDefinition.AddAtribute('SingleObject');
 
-            for var AllOf in Schema.allOf + Schema.oneOf + Schema.anyOf do
-              if not AllOf.ref.IsEmpty then
-                DefineProperty(InnerClassDefinition, GetReferenceName(AllOf), AllOf);
+            for var SchemaProperty in Schema.allOf + Schema.oneOf + Schema.anyOf do
+              DefineProperty(InnerClassDefinition, GetPropertyName(SchemaProperty), SchemaProperty);
 
             Result := InnerClassDefinition;
           end

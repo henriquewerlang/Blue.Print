@@ -26,10 +26,10 @@ type
   Type = class;
 
   // Forward type alias
+  any = TValue;
   schemaArray = TArray<TSchema>;
   positiveInteger = System.Integer;
   stringArray = TArray<System.String>;
-  any = TValue;
 
   TSchema = class
   public type
@@ -37,8 +37,10 @@ type
     PositiveIntegerDefault0 = class
     private
       FPositiveInteger: System.Integer;
+      FUndefined: any;
     published
       property positiveInteger: System.Integer read FPositiveInteger write FPositiveInteger;
+      property Undefined: any read FUndefined write FUndefined;
     end;
   private
     FAnyOf: schemaArray;
@@ -132,11 +134,13 @@ type
   [SingleObject]
   AdditionalItems = class
   private
+    FBoolean: System.Boolean;
     FSchema: TSchema;
     function GetSchema: TSchema;
   public
     destructor Destroy; override;
   published
+    property boolean: System.Boolean read FBoolean write FBoolean;
     property Schema: TSchema read GetSchema write FSchema;
   end;
 
@@ -144,8 +148,10 @@ type
   PositiveIntegerDefault0 = class
   private
     FPositiveInteger: positiveInteger;
+    FUndefined: any;
   published
     property positiveInteger: positiveInteger read FPositiveInteger write FPositiveInteger;
+    property Undefined: any read FUndefined write FUndefined;
   end;
 
   PatternProperties = class
@@ -157,11 +163,13 @@ type
   [SingleObject]
   AdditionalProperties = class
   private
+    FBoolean: System.Boolean;
     FSchema: TSchema;
     function GetSchema: TSchema;
   public
     destructor Destroy; override;
   published
+    property boolean: System.Boolean read FBoolean write FBoolean;
     property Schema: TSchema read GetSchema write FSchema;
   end;
 
@@ -185,8 +193,10 @@ type
   Type = class
   private
     FSimpleTypes: TsimpleTypes;
+    FArray: TArray<TsimpleTypes>;
   published
     property simpleTypes: TsimpleTypes read FSimpleTypes write FSimpleTypes;
+    property array: TArray<TsimpleTypes> read FArray write FArray;
   end;
 
 implementation
