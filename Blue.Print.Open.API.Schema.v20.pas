@@ -12,12 +12,12 @@ uses Blue.Print.Types, System.Rtti;
 type
   // Enumerations declaration
   [EnumValue('array, boolean, integer, null, number, object, string')]
-  TsimpleTypes = (Array, Boolean, Integer, Null, Number, Object, String);
+  simpleTypes = (Array, Boolean, Integer, Null, Number, Object, String);
   // Forward class declaration
   TSchema = class;
+  PositiveIntegerDefault0 = class;
   Properties = class;
   AdditionalItems = class;
-  PositiveIntegerDefault0 = class;
   PatternProperties = class;
   Dependencies = class;
   AdditionalProperties = class;
@@ -32,14 +32,6 @@ type
   any = TValue;
 
   TSchema = class
-  public type
-    [SingleObject]
-    PositiveIntegerDefault0 = class
-    private
-      FPositiveInteger: System.Integer;
-    published
-      property positiveInteger: System.Integer read FPositiveInteger write FPositiveInteger;
-    end;
   private
     FAnyOf: schemaArray;
     FExclusiveMaximum: System.Boolean;
@@ -126,6 +118,14 @@ type
     property &type: Type read GetType write FType;
   end;
 
+  [SingleObject]
+  PositiveIntegerDefault0 = class
+  private
+    FPositiveInteger: System.Integer;
+  published
+    property positiveInteger: System.Integer read FPositiveInteger write FPositiveInteger;
+  end;
+
   Properties = class
   end;
 
@@ -140,14 +140,6 @@ type
   published
     property boolean: System.Boolean read FBoolean write FBoolean;
     property Schema: TSchema read GetSchema write FSchema;
-  end;
-
-  [SingleObject]
-  PositiveIntegerDefault0 = class
-  private
-    FPositiveInteger: positiveInteger;
-  published
-    property positiveInteger: positiveInteger read FPositiveInteger write FPositiveInteger;
   end;
 
   PatternProperties = class
@@ -188,11 +180,11 @@ type
   [SingleObject]
   Type = class
   private
-    FSimpleTypes: TsimpleTypes;
-    FArray: TArray<TsimpleTypes>;
+    FSimpleTypes: simpleTypes;
+    FArray: TArray<simpleTypes>;
   published
-    property simpleTypes: TsimpleTypes read FSimpleTypes write FSimpleTypes;
-    property array: TArray<TsimpleTypes> read FArray write FArray;
+    property simpleTypes: simpleTypes read FSimpleTypes write FSimpleTypes;
+    property array: TArray<simpleTypes> read FArray write FArray;
   end;
 
 implementation

@@ -2118,7 +2118,7 @@ begin
 
   for var Definition in FJSONSchema.defs do
   begin
-    var TypeDefinition := GenerateTypeDefinition(UnitClass, Definition.Value, Definition.Key);
+    var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
 
     if TypeDefinition.IsEnumeration then
       UnitDefinition.Enumerations.Add(TypeDefinition.AsTypeEnumeration)
