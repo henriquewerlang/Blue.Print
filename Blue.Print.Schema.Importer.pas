@@ -376,17 +376,23 @@ type
   private
     FJSONSchema: TSchema;
     FReferenceClassDefinition: TClassDefinition;
+    FSchemas: TDictionary<String, TSchema>;
 
     function CreateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String): TClassDefinition;
     function GetReferenceName(const Schema: TSchema): String;
     function GetReferenceSchema(const Schema: TSchema): TSchema;
     function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
+    function LoadSchema(const UnitFileConfiguration: TUnitFileConfiguration): TSchema;
 
     procedure DefineProperty(const ClassDefinition: TClassDefinition; const PropertyName: String; const PropertySchemaType: TSchema);
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
   protected
     procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration); override;
+  public
+    constructor Create;
+
+    destructor Destroy; override;
   end;
 
   TSchemaHelper = class helper for TSchema
@@ -1970,6 +1976,13 @@ end;
 
 { TJSONSchemaImport }
 
+constructor TJSONSchemaImport.Create;
+begin
+  inherited;
+
+  FSchemas := TDictionary<String, TSchema>.Create;
+end;
+
 function TJSONSchemaImport.CreateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String): TClassDefinition;
 begin
   Result := TClassDefinition.Create(ParentModule);
@@ -1991,6 +2004,13 @@ begin
     raise Exception.Create('Property type not found!');
 
   ClassDefinition.Properties.Add(Prop);
+end;
+
+destructor TJSONSchemaImport.Destroy;
+begin
+  FSchemas.Free;
+
+  inherited;
 end;
 
 function TJSONSchemaImport.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
@@ -2103,11 +2123,10 @@ end;
 
 procedure TJSONSchemaImport.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
 begin
-  var Serializer := TBluePrintJsonSerializer.Create as IBluePrintSerializer;
   var UnitClass := TClassDefinition.Create(UnitDefinition);
   UnitClass.Name := UnitFileConfiguration.UnitClassName;
 
-  FJSONSchema := Serializer.Deserialize(LoadFile(UnitFileConfiguration), TypeInfo(TSchema)).AsType<TSchema>;
+  FJSONSchema := LoadSchema(UnitFileConfiguration);
 
   if not FJSONSchema.schema.IsEmpty then
     LoadUnitFromReference(FJSONSchema.schema);
@@ -2127,8 +2146,6 @@ begin
   end;
 
   GenerateProperties(UnitClass, FJSONSchema);
-
-  FJSONSchema.Free;
 end;
 
 function TJSONSchemaImport.GetReferenceName(const Schema: TSchema): String;
@@ -2142,13 +2159,25 @@ begin
 end;
 
 function TJSONSchemaImport.GetReferenceSchema(const Schema: TSchema): TSchema;
+const
+  REFERENCE_SEPARATOR = '#';
+
 begin
+  var BaseSchema: TSchema := nil;
   var List: TMap<String, TSchema> := nil;
   Result := nil;
+  var References := Schema.ref.Split([REFERENCE_SEPARATOR]);
 
-  for var ReferenceName in Schema.ref.Split(['/']) do
-    if ReferenceName = '#' then
-      Result := FJSONSchema
+  var Reference := REFERENCE_SEPARATOR + References[High(References)];
+
+  if FSchemas.TryGetValue(References[Low(References)] + REFERENCE_SEPARATOR, BaseSchema) then
+    Result := nil
+  else
+    BaseSchema := FJSONSchema;
+
+  for var ReferenceName in Reference.Split(['/']) do
+    if ReferenceName = REFERENCE_SEPARATOR then
+      Result := BaseSchema
     else if (ReferenceName = 'definitions') or (ReferenceName = 'defs') then
       List := Result.defs
     else if ReferenceName = 'properties' then
@@ -2158,6 +2187,18 @@ begin
 
   if not Assigned(Result) then
     raise Exception.CreateFmt('Reference not found %s', [Schema.ref]);
+end;
+
+function TJSONSchemaImport.LoadSchema(const UnitFileConfiguration: TUnitFileConfiguration): TSchema;
+begin
+  if not FSchemas.TryGetValue(UnitFileConfiguration.Reference, Result) then
+  begin
+    var Serializer := TBluePrintJsonSerializer.Create as IBluePrintSerializer;
+
+    Result := Serializer.Deserialize(LoadFile(UnitFileConfiguration), TypeInfo(TSchema)).AsType<TSchema>;
+
+    FSchemas.Add(Result.id, Result);
+  end;
 end;
 
 { TTypeEnumeration }
