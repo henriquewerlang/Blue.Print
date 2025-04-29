@@ -1994,6 +1994,7 @@ end;
 procedure TJSONSchemaImport.DefineProperty(const ClassDefinition: TClassDefinition; const PropertyName: String; const PropertySchemaType: TSchema);
 begin
   var Prop := TPropertyDefinition.Create;
+  Prop.Optional := True;
   Prop.Name := PropertyName;
   Prop.PropertyType := GenerateTypeDefinition(ClassDefinition.UnitDefinition, PropertySchemaType, Prop.Name);
 
@@ -2024,6 +2025,11 @@ procedure TJSONSchemaImport.GenerateProperties(const ClassDefinition: TClassDefi
 begin
   for var Pair in Schema.Properties do
     DefineProperty(ClassDefinition, Pair.Key, Pair.Value);
+
+  for var Required in Schema.required do
+    for var &Property in ClassDefinition.Properties do
+      if &Property.Name = Required then
+        &Property.Optional := False;
 end;
 
 function TJSONSchemaImport.GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
