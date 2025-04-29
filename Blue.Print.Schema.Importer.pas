@@ -198,6 +198,7 @@ type
 
     function AddProperty(const Name: String): TPropertyDefinition;
 
+    procedure AddAtribute(const Value: String);
     procedure AddNamespaceAttribute(const Namespace: String);
     procedure AddClassType(const ClassDefinition: TClassDefinition);
 
@@ -382,6 +383,7 @@ type
     function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
 
+    procedure DefineProperty(const ClassDefinition: TClassDefinition; const PropertyName: String; const PropertySchemaType: TSchema);
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
   protected
     procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration); override;
@@ -1674,6 +1676,11 @@ end;
 
 { TClassDefinition }
 
+procedure TClassDefinition.AddAtribute(const Value: String);
+begin
+  Attributes.Add(Value);
+end;
+
 procedure TClassDefinition.AddClassType(const ClassDefinition: TClassDefinition);
 begin
   ClassDefinition.ParentClass := Self;
@@ -1684,7 +1691,7 @@ end;
 procedure TClassDefinition.AddNamespaceAttribute(const Namespace: String);
 begin
   if not Namespace.IsEmpty then
-    Attributes.Add(Format('XMLNamespace(''%s'')', [Namespace]));
+   AddAtribute(Format('XMLNamespace(''%s'')', [Namespace]));
 end;
 
 function TClassDefinition.AddProperty(const Name: String): TPropertyDefinition;
@@ -1971,6 +1978,21 @@ begin
   ParentModule.Classes.Add(Result);
 end;
 
+procedure TJSONSchemaImport.DefineProperty(const ClassDefinition: TClassDefinition; const PropertyName: String; const PropertySchemaType: TSchema);
+begin
+  var Prop := TPropertyDefinition.Create;
+  Prop.Name := PropertyName;
+  Prop.PropertyType := GenerateTypeDefinition(ClassDefinition.UnitDefinition, PropertySchemaType, Prop.Name);
+
+  if FormatPropertyName(Prop.Name) <> Prop.Name then
+    Prop.AddFieldAttribute(Prop.Name);
+
+  if not Assigned(Prop.PropertyType) then
+    raise Exception.Create('Property type not found!');
+
+  ClassDefinition.Properties.Add(Prop);
+end;
+
 function TJSONSchemaImport.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
 begin
   Result := CreateClassDefinition(ParentModule, ClassTypeName);
@@ -1979,25 +2001,9 @@ begin
 end;
 
 procedure TJSONSchemaImport.GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
-
-  procedure DefineProperty(const PropertyName: String; const PropertySchemaType: TSchema);
-  begin
-    var Prop := TPropertyDefinition.Create;
-    Prop.Name := PropertyName;
-    Prop.PropertyType := GenerateTypeDefinition(ClassDefinition.UnitDefinition, PropertySchemaType, Prop.Name);
-
-    if FormatPropertyName(Prop.Name) <> Prop.Name then
-      Prop.AddFieldAttribute(Prop.Name);
-
-    if not Assigned(Prop.PropertyType) then
-      raise Exception.Create('Property type not found!');
-
-    ClassDefinition.Properties.Add(Prop);
-  end;
-
 begin
   for var Pair in Schema.Properties do
-    DefineProperty(Pair.Key, Pair.Value);
+    DefineProperty(ClassDefinition, Pair.Key, Pair.Value);
 end;
 
 function TJSONSchemaImport.GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
@@ -2063,15 +2069,20 @@ begin
         begin
           if Assigned(Schema.enum) then
             Result := CreateEnumerator
-          else
+          else if Assigned(Schema.allOf + Schema.oneOf + Schema.anyOf) then
           begin
             var InnerClassDefinition := CreateClassDefinition(Module, TypeName);
 
-            for var AllOf in Schema.allOf do
-              GenerateProperties(InnerClassDefinition, AllOf);
+            InnerClassDefinition.AddAtribute('SingleObject');
+
+            for var AllOf in Schema.allOf + Schema.oneOf + Schema.anyOf do
+              if not AllOf.ref.IsEmpty then
+                DefineProperty(InnerClassDefinition, GetReferenceName(AllOf), AllOf);
 
             Result := InnerClassDefinition;
-          end;
+          end
+          else
+            Result := GetAnyTypeDefinition;
         end;
       end;
   end;
@@ -2112,6 +2123,9 @@ begin
   var Values := Schema.ref.Split(['/']);
 
   Result := Values[High(Values)];
+
+  if Result = '#' then
+    Result := 'Schema';
 end;
 
 function TJSONSchemaImport.GetReferenceSchema(const Schema: TSchema): TSchema;

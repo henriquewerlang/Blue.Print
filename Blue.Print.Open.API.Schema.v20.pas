@@ -17,7 +17,6 @@ type
   TSchema = class;
   Properties = class;
   AdditionalItems = class;
-  Default = class;
   PositiveIntegerDefault0 = class;
   PatternProperties = class;
   Dependencies = class;
@@ -34,7 +33,12 @@ type
 
   TSchema = class
   public type
+    [SingleObject]
     PositiveIntegerDefault0 = class
+    private
+      FPositiveInteger: System.Integer;
+    published
+      property positiveInteger: System.Integer read FPositiveInteger write FPositiveInteger;
     end;
   private
     FAnyOf: schemaArray;
@@ -50,7 +54,7 @@ type
     FAdditionalItems: AdditionalItems;
     FId: System.String;
     FPattern: System.String;
-    FDefault: Default;
+    FDefault: any;
     FMinProperties: PositiveIntegerDefault0;
     FMinLength: PositiveIntegerDefault0;
     FTitle: System.String;
@@ -73,7 +77,6 @@ type
     function GetProperties: Properties;
     function GetNot: TSchema;
     function GetAdditionalItems: AdditionalItems;
-    function GetDefault: Default;
     function GetMinProperties: PositiveIntegerDefault0;
     function GetMinLength: PositiveIntegerDefault0;
     function GetPatternProperties: PatternProperties;
@@ -100,7 +103,7 @@ type
     property additionalItems: AdditionalItems read GetAdditionalItems write FAdditionalItems;
     property id: System.String read FId write FId;
     property pattern: System.String read FPattern write FPattern;
-    property default: Default read GetDefault write FDefault;
+    property default: any read FDefault write FDefault;
     property minProperties: PositiveIntegerDefault0 read GetMinProperties write FMinProperties;
     property minLength: PositiveIntegerDefault0 read GetMinLength write FMinLength;
     property title: System.String read FTitle write FTitle;
@@ -126,13 +129,23 @@ type
   Properties = class
   end;
 
+  [SingleObject]
   AdditionalItems = class
+  private
+    FSchema: TSchema;
+    function GetSchema: TSchema;
+  public
+    destructor Destroy; override;
+  published
+    property Schema: TSchema read GetSchema write FSchema;
   end;
 
-  Default = class
-  end;
-
+  [SingleObject]
   PositiveIntegerDefault0 = class
+  private
+    FPositiveInteger: positiveInteger;
+  published
+    property positiveInteger: positiveInteger read FPositiveInteger write FPositiveInteger;
   end;
 
   PatternProperties = class
@@ -141,16 +154,39 @@ type
   Dependencies = class
   end;
 
+  [SingleObject]
   AdditionalProperties = class
+  private
+    FSchema: TSchema;
+    function GetSchema: TSchema;
+  public
+    destructor Destroy; override;
+  published
+    property Schema: TSchema read GetSchema write FSchema;
   end;
 
   Definitions = class
   end;
 
+  [SingleObject]
   Items = class
+  private
+    FSchema: TSchema;
+    FSchemaArray: schemaArray;
+    function GetSchema: TSchema;
+  public
+    destructor Destroy; override;
+  published
+    property Schema: TSchema read GetSchema write FSchema;
+    property schemaArray: schemaArray read FSchemaArray write FSchemaArray;
   end;
 
+  [SingleObject]
   Type = class
+  private
+    FSimpleTypes: TsimpleTypes;
+  published
+    property simpleTypes: TsimpleTypes read FSimpleTypes write FSimpleTypes;
   end;
 
 implementation
@@ -166,8 +202,6 @@ begin
   FNot.Free;
 
   FAdditionalItems.Free;
-
-  FDefault.Free;
 
   FMinProperties.Free;
 
@@ -212,14 +246,6 @@ begin
     FAdditionalItems := AdditionalItems.Create;
 
   Result := FAdditionalItems;
-end;
-
-function TSchema.GetDefault: Default;
-begin
-  if not Assigned(FDefault) then
-    FDefault := Default.Create;
-
-  Result := FDefault;
 end;
 
 function TSchema.GetMinProperties: PositiveIntegerDefault0;
@@ -292,6 +318,57 @@ begin
     FType := Type.Create;
 
   Result := FType;
+end;
+
+{ AdditionalItems }
+
+destructor AdditionalItems.Destroy;
+begin
+  FSchema.Free;
+
+  inherited;
+end;
+
+function AdditionalItems.GetSchema: TSchema;
+begin
+  if not Assigned(FSchema) then
+    FSchema := TSchema.Create;
+
+  Result := FSchema;
+end;
+
+{ AdditionalProperties }
+
+destructor AdditionalProperties.Destroy;
+begin
+  FSchema.Free;
+
+  inherited;
+end;
+
+function AdditionalProperties.GetSchema: TSchema;
+begin
+  if not Assigned(FSchema) then
+    FSchema := TSchema.Create;
+
+  Result := FSchema;
+end;
+
+{ Items }
+
+destructor Items.Destroy;
+begin
+  FSchema.Free;
+
+  inherited;
+end;
+
+function Items.GetSchema: TSchema;
+begin
+  if not Assigned(FSchema) then
+    FSchema := TSchema.Create;
+
+  Result := FSchema;
 end;
 
 end.
