@@ -64,6 +64,7 @@ type
     FunevaluatedItems: TSchema;
     Fref: String;
     FpatternProperties: TMap<String, TSchema>;
+    FadditionalProperties: TSchema;
     function GetDefs: TMap<String, TSchema>;
     function GeProperties: TMap<String, TSchema>;
     function GetpatternProperties: TMap<String, TSchema>;
@@ -95,7 +96,7 @@ type
     property &else: TSchema read Felse write Felse;
     property &not: TSchema read Fnot write Fnot;
     property properties: TMap<String, TSchema> read GeProperties write Fproperties;
-//    property additionalProperties: TSchema read FadditionalProperties write FadditionalProperties;
+    property additionalProperties: TSchema read FadditionalProperties write FadditionalProperties;
     property patternProperties: TMap<String, TSchema> read GetpatternProperties write FpatternProperties;
     property dependentSchemas: TMap<String, TSchema> read FdependentSchemas write FdependentSchemas;
     property propertyNames: TSchema read FpropertyNames write FpropertyNames;

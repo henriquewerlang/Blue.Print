@@ -12,7 +12,7 @@ uses Blue.Print.Types, System.Rtti;
 type
   // Enumerations declaration
   [EnumValue('array, boolean, integer, null, number, object, string')]
-  simpleTypes = (Array, Boolean, Integer, Null, Number, Object, String);
+  simpleTypes = (&array, boolean, integer, null, number, &object, &string);
   // Forward class declaration
   TSchema = class;
   PositiveIntegerDefault0 = class;
@@ -23,7 +23,7 @@ type
   AdditionalProperties = class;
   Definitions = class;
   Items = class;
-  Type = class;
+  &Type = class;
   TSchemaOpenAPI20 = class;
   JsonReference = class;
   ResponseDefinitions = class;
@@ -126,7 +126,7 @@ type
     FItems: Items;
     FMinItems: PositiveIntegerDefault0;
     FRequired: stringArray;
-    FType: Type;
+    FType: &Type;
     function GetProperties: Properties;
     function GetNot: TSchema;
     function GetAdditionalItems: AdditionalItems;
@@ -138,7 +138,7 @@ type
     function GetDefinitions: Definitions;
     function GetItems: Items;
     function GetMinItems: PositiveIntegerDefault0;
-    function GetType: Type;
+    function GetType: &Type;
     function GetAnyOfStored: Boolean;
     function GetExclusiveMaximumStored: Boolean;
     function GetFormatStored: Boolean;
@@ -215,7 +215,8 @@ type
     [FieldName('$schema')]
     property schema: System.String read FSchema write FSchema stored GetSchemaStored;
     property properties: Properties read GetProperties write FProperties stored GetPropertiesStored;
-    property not: TSchema read GetNot write FNot stored GetNotStored;
+    [FieldName('not')]
+    property &not: TSchema read GetNot write FNot stored GetNotStored;
     property maxLength: positiveInteger read FMaxLength write FMaxLength stored GetMaxLengthStored;
     property enum: TArray<any> read FEnum write FEnum;
     property additionalItems: AdditionalItems read GetAdditionalItems write FAdditionalItems stored GetAdditionalItemsStored;
@@ -241,7 +242,7 @@ type
     property minItems: PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
     property required: stringArray read FRequired write FRequired stored GetRequiredStored;
     [FieldName('type')]
-    property &type: Type read GetType write FType stored GetTypeStored;
+    property &type: &Type read GetType write FType stored GetTypeStored;
   end;
 
   [SingleObject]
@@ -322,7 +323,7 @@ type
   end;
 
   [SingleObject]
-  Type = class
+  &Type = class
   private
     FSimpleTypes: simpleTypes;
     FArray: TArray<simpleTypes>;
@@ -331,7 +332,8 @@ type
     property IsSimpleTypesStored: Boolean read GetSimpleTypesStored;
   published
     property simpleTypes: simpleTypes read FSimpleTypes write FSimpleTypes stored GetSimpleTypesStored;
-    property array: TArray<simpleTypes> read FArray write FArray;
+    [FieldName('array')]
+    property &array: TArray<simpleTypes> read FArray write FArray;
   end;
 
   TSchemaOpenAPI20 = class
@@ -575,7 +577,7 @@ type
     FExternalDocs: ExternalDocs;
     FMultipleOf: System.Double;
     FRequired: stringArray;
-    FType: Type;
+    FType: &Type;
     function GetAdditionalProperties: AdditionalProperties;
     function GetProperties: Properties;
     function GetXml: Xml;
@@ -584,7 +586,7 @@ type
     function GetItems: Items;
     function GetMinItems: PositiveIntegerDefault0;
     function GetExternalDocs: ExternalDocs;
-    function GetType: Type;
+    function GetType: &Type;
     function GetExampleStored: Boolean;
     function GetExclusiveMaximumStored: Boolean;
     function GetMinimumStored: Boolean;
@@ -678,7 +680,7 @@ type
     property multipleOf: System.Double read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
     property required: stringArray read FRequired write FRequired stored GetRequiredStored;
     [FieldName('type')]
-    property &type: Type read GetType write FType stored GetTypeStored;
+    property &type: &Type read GetType write FType stored GetTypeStored;
   end;
 
   Xml = class
@@ -802,10 +804,10 @@ type
     FTitle: System.String;
     FExternalDocs: ExternalDocs;
     FRequired: stringArray;
-    FType: Type;
+    FType: &Type;
     FExample: any;
     function GetExternalDocs: ExternalDocs;
-    function GetType: Type;
+    function GetType: &Type;
     function GetFormatStored: Boolean;
     function GetDescriptionStored: Boolean;
     function GetDefaultStored: Boolean;
@@ -834,7 +836,7 @@ type
     property externalDocs: ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
     property required: stringArray read FRequired write FRequired stored GetRequiredStored;
     [FieldName('type')]
-    property &type: Type read GetType write FType;
+    property &type: &Type read GetType write FType;
     property example: any read FExample write FExample stored GetExampleStored;
   end;
 
@@ -843,10 +845,10 @@ type
     FFlow: System.String;
     FDescription: System.String;
     FScopes: Oauth2Scopes;
-    FType: Type;
+    FType: &Type;
     FTokenUrl: System.String;
     function GetScopes: Oauth2Scopes;
-    function GetType: Type;
+    function GetType: &Type;
     function GetDescriptionStored: Boolean;
     function GetScopesStored: Boolean;
   public
@@ -859,7 +861,7 @@ type
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property scopes: Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
     [FieldName('type')]
-    property &type: Type read GetType write FType;
+    property &type: &Type read GetType write FType;
     property tokenUrl: System.String read FTokenUrl write FTokenUrl;
   end;
 
@@ -869,10 +871,10 @@ type
     FTokenUrl: System.String;
     FDescription: System.String;
     FScopes: Oauth2Scopes;
-    FType: Type;
+    FType: &Type;
     FAuthorizationUrl: System.String;
     function GetScopes: Oauth2Scopes;
-    function GetType: Type;
+    function GetType: &Type;
     function GetDescriptionStored: Boolean;
     function GetScopesStored: Boolean;
   public
@@ -886,15 +888,15 @@ type
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property scopes: Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
     [FieldName('type')]
-    property &type: Type read GetType write FType;
+    property &type: &Type read GetType write FType;
     property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
   end;
 
   BasicAuthenticationSecurity = class
   private
     FDescription: System.String;
-    FType: Type;
-    function GetType: Type;
+    FType: &Type;
+    function GetType: &Type;
     function GetDescriptionStored: Boolean;
   public
     destructor Destroy; override;
@@ -903,7 +905,7 @@ type
   published
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     [FieldName('type')]
-    property &type: Type read GetType write FType;
+    property &type: &Type read GetType write FType;
   end;
 
   Paths = class
@@ -914,8 +916,8 @@ type
     FName: System.String;
     FIn: System.String;
     FDescription: System.String;
-    FType: Type;
-    function GetType: Type;
+    FType: &Type;
+    function GetType: &Type;
     function GetDescriptionStored: Boolean;
   public
     destructor Destroy; override;
@@ -926,7 +928,7 @@ type
     property in: System.String read FIn write FIn;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     [FieldName('type')]
-    property &type: Type read GetType write FType;
+    property &type: &Type read GetType write FType;
   end;
 
   PrimitivesItems = class
@@ -947,11 +949,11 @@ type
     FMinLength: PositiveIntegerDefault0;
     FMinItems: PositiveIntegerDefault0;
     FMultipleOf: multipleOf;
-    FType: Type;
+    FType: &Type;
     function GetItems: Items;
     function GetMinLength: PositiveIntegerDefault0;
     function GetMinItems: PositiveIntegerDefault0;
-    function GetType: Type;
+    function GetType: &Type;
     function GetExclusiveMaximumStored: Boolean;
     function GetMinimumStored: Boolean;
     function GetFormatStored: Boolean;
@@ -1007,7 +1009,7 @@ type
     property minItems: PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
     property multipleOf: multipleOf read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
     [FieldName('type')]
-    property &type: Type read GetType write FType stored GetTypeStored;
+    property &type: &Type read GetType write FType stored GetTypeStored;
   end;
 
   Oauth2ApplicationSecurity = class
@@ -1015,10 +1017,10 @@ type
     FFlow: System.String;
     FDescription: System.String;
     FScopes: Oauth2Scopes;
-    FType: Type;
+    FType: &Type;
     FTokenUrl: System.String;
     function GetScopes: Oauth2Scopes;
-    function GetType: Type;
+    function GetType: &Type;
     function GetDescriptionStored: Boolean;
     function GetScopesStored: Boolean;
   public
@@ -1031,7 +1033,7 @@ type
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property scopes: Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
     [FieldName('type')]
-    property &type: Type read GetType write FType;
+    property &type: &Type read GetType write FType;
     property tokenUrl: System.String read FTokenUrl write FTokenUrl;
   end;
 
@@ -1043,10 +1045,10 @@ type
     FFlow: System.String;
     FDescription: System.String;
     FScopes: Oauth2Scopes;
-    FType: Type;
+    FType: &Type;
     FAuthorizationUrl: System.String;
     function GetScopes: Oauth2Scopes;
-    function GetType: Type;
+    function GetType: &Type;
     function GetDescriptionStored: Boolean;
     function GetScopesStored: Boolean;
   public
@@ -1059,7 +1061,7 @@ type
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property scopes: Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
     [FieldName('type')]
-    property &type: Type read GetType write FType;
+    property &type: &Type read GetType write FType;
     property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
   end;
 
@@ -1082,11 +1084,11 @@ type
     FMinLength: PositiveIntegerDefault0;
     FMinItems: PositiveIntegerDefault0;
     FMultipleOf: multipleOf;
-    FType: Type;
+    FType: &Type;
     function GetItems: Items;
     function GetMinLength: PositiveIntegerDefault0;
     function GetMinItems: PositiveIntegerDefault0;
-    function GetType: Type;
+    function GetType: &Type;
     function GetExclusiveMaximumStored: Boolean;
     function GetMinimumStored: Boolean;
     function GetFormatStored: Boolean;
@@ -1143,7 +1145,7 @@ type
     property minItems: PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
     property multipleOf: multipleOf read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
     [FieldName('type')]
-    property &type: Type read GetType write FType;
+    property &type: &Type read GetType write FType;
   end;
 
   [SingleObject]
@@ -1549,10 +1551,10 @@ begin
   Result := False;
 end;
 
-function TSchema.GetType: Type;
+function TSchema.GetType: &Type;
 begin
   if not Assigned(FType) then
-    FType := Type.Create;
+    FType := &Type.Create;
 
   Result := FType;
 end;
@@ -1650,9 +1652,9 @@ begin
   Result := False;
 end;
 
-{ Type }
+{ &Type }
 
-function Type.GetSimpleTypesStored: Boolean;
+function &Type.GetSimpleTypesStored: Boolean;
 begin
   Result := False;
 end;
@@ -2256,10 +2258,10 @@ begin
   Result := False;
 end;
 
-function Schema.GetType: Type;
+function Schema.GetType: &Type;
 begin
   if not Assigned(FType) then
-    FType := Type.Create;
+    FType := &Type.Create;
 
   Result := FType;
 end;
@@ -2428,10 +2430,10 @@ begin
   Result := False;
 end;
 
-function FileSchema.GetType: Type;
+function FileSchema.GetType: &Type;
 begin
   if not Assigned(FType) then
-    FType := Type.Create;
+    FType := &Type.Create;
 
   Result := FType;
 end;
@@ -2470,10 +2472,10 @@ begin
   Result := Assigned(FScopes);
 end;
 
-function Oauth2PasswordSecurity.GetType: Type;
+function Oauth2PasswordSecurity.GetType: &Type;
 begin
   if not Assigned(FType) then
-    FType := Type.Create;
+    FType := &Type.Create;
 
   Result := FType;
 end;
@@ -2507,10 +2509,10 @@ begin
   Result := Assigned(FScopes);
 end;
 
-function Oauth2AccessCodeSecurity.GetType: Type;
+function Oauth2AccessCodeSecurity.GetType: &Type;
 begin
   if not Assigned(FType) then
-    FType := Type.Create;
+    FType := &Type.Create;
 
   Result := FType;
 end;
@@ -2529,10 +2531,10 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function BasicAuthenticationSecurity.GetType: Type;
+function BasicAuthenticationSecurity.GetType: &Type;
 begin
   if not Assigned(FType) then
-    FType := Type.Create;
+    FType := &Type.Create;
 
   Result := FType;
 end;
@@ -2551,10 +2553,10 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function ApiKeySecurity.GetType: Type;
+function ApiKeySecurity.GetType: &Type;
 begin
   if not Assigned(FType) then
-    FType := Type.Create;
+    FType := &Type.Create;
 
   Result := FType;
 end;
@@ -2678,10 +2680,10 @@ begin
   Result := FMultipleOf <> 0;
 end;
 
-function PrimitivesItems.GetType: Type;
+function PrimitivesItems.GetType: &Type;
 begin
   if not Assigned(FType) then
-    FType := Type.Create;
+    FType := &Type.Create;
 
   Result := FType;
 end;
@@ -2720,10 +2722,10 @@ begin
   Result := Assigned(FScopes);
 end;
 
-function Oauth2ApplicationSecurity.GetType: Type;
+function Oauth2ApplicationSecurity.GetType: &Type;
 begin
   if not Assigned(FType) then
-    FType := Type.Create;
+    FType := &Type.Create;
 
   Result := FType;
 end;
@@ -2757,10 +2759,10 @@ begin
   Result := Assigned(FScopes);
 end;
 
-function Oauth2ImplicitSecurity.GetType: Type;
+function Oauth2ImplicitSecurity.GetType: &Type;
 begin
   if not Assigned(FType) then
-    FType := Type.Create;
+    FType := &Type.Create;
 
   Result := FType;
 end;
@@ -2889,10 +2891,10 @@ begin
   Result := FMultipleOf <> 0;
 end;
 
-function Header.GetType: Type;
+function Header.GetType: &Type;
 begin
   if not Assigned(FType) then
-    FType := Type.Create;
+    FType := &Type.Create;
 
   Result := FType;
 end;

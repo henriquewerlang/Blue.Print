@@ -416,7 +416,7 @@ end;
 
 function CheckReservedName(const Name: String): String;
 const
-  SPECIAL_NAMES: array[0..7] of String = ('type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class');
+  SPECIAL_NAMES: array[0..12] of String = ('type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'string', 'const', 'not');
 
 begin
   Result := Name;
@@ -446,7 +446,7 @@ begin
   Result := EmptyStr;
 
   for var Split in Value.Split([' ']) do
-      Result := Result + CheckReservedName(FormatName(Split));
+      Result := Result + CheckReservedName(OnlyValidChars(Split));
 
   if CharInSet(Result[1], ['0'..'9']) then
     Result := 't' + Result;
@@ -1108,7 +1108,7 @@ var
 
   function GetClassName(const ClassDefinition: TClassDefinition): String;
   begin
-    Result := FormatName(ClassDefinition.Name);
+    Result := CheckReservedName(FormatName(ClassDefinition.Name));
 
     if Assigned(ClassDefinition.ParentClass) then
       Result := GetTypePrefixName(Result);

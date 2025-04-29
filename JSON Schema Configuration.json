@@ -1,0 +1,15 @@
+{
+   "OutputFolder": ".\\",
+   "SchemaFolder": ".\\Schemas",
+   "UnitConfiguration": [
+      {
+         "Name": "Blue.Print.JSON.Schema",
+         "Files": [
+            {
+               "Reference": "http://json-schema.org/draft-07/schema#",
+               "UnitClassName": "TSchema"
+            }
+         ]
+      }
+   ]
+}
