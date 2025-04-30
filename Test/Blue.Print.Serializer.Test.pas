@@ -116,6 +116,20 @@ type
     procedure WhenDeserializeATValueAndTheJSONValueIsAnObjectMustLoadTheFieldAndValuesInTheMap;
     [Test]
     procedure WhenDeserializeATValueAndTheJSONValueIsAnObjectMustLoadTheValuesInTheMap;
+    [Test]
+    procedure WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnArrayMustLoadTheArrayProperty;
+    [Test]
+    procedure WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnStringMustLoadTheStringProperty;
+    [Test]
+    procedure WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnNumberMustLoadTheNumberProperty;
+    [Test]
+    procedure WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnObjectMustLoadTheObjectProperty;
+    [Test]
+    procedure WhenDeserializeAClassWithSingleObjectAttributeAndNotFoundThePropertyByTypeMustRaiseError;
+    [Test]
+    procedure WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnStringMustLoadTheEnumeratorProperty;
+    [Test]
+    procedure WhenDeserializeAClassWithSingleObjectAttributeAndFoundMoreThanOnePropertyForTheTypeMustRaiseError;
   end;
 
   [TestFixture]
@@ -492,6 +506,32 @@ type
     property MyProperty: Integer read FMyProperty write FMyProperty;
   end;
 
+  [SingleObject]
+  TClassWithSingleObjectAttribute = class
+  private
+    FMyArray: TArray<Integer>;
+    FMyProperty: String;
+    FMyInteger: Integer;
+    FMyObject: TObject;
+  published
+    property MyArray: TArray<Integer> read FMyArray write FMyArray;
+    property MyInteger: Integer read FMyInteger write FMyInteger;
+    property MyObject: TObject read FMyObject write FMyObject;
+    property MyProperty: String read FMyProperty write FMyProperty;
+  end;
+
+  [SingleObject]
+  TClassWithSingleObjectAttributeAndEnumator = class
+  private
+    FMyEnumerator: TMyEnum;
+    FMyInteger: Integer;
+    FMyFloat: Double;
+  published
+    property MyEnumerator: TMyEnum read FMyEnumerator write FMyEnumerator;
+    property MyFloat: Double read FMyFloat write FMyFloat;
+    property MyInteger: Integer read FMyInteger write FMyInteger;
+  end;
+
   ISOAPService = interface(IInvokable)
     ['{BBBBC6F3-1730-40F4-A1B1-CC7CA6F08F5D}']
     procedure MyMethod(const MyParam: Integer);
@@ -729,6 +769,69 @@ begin
   Assert.IsNil(Value.AsType<TMyObjectParent>.MyObject);
 
   Value.AsObject.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndFoundMoreThanOnePropertyForTheTypeMustRaiseError;
+begin
+  Assert.WillRaise(
+    procedure
+    begin
+      FSerializer.Deserialize('1234', TypeInfo(TClassWithSingleObjectAttributeAndEnumator)).AsType<TClassWithSingleObjectAttributeAndEnumator>;
+    end, EJSONTypeCompatibleWithMoreThanOneProperty);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndNotFoundThePropertyByTypeMustRaiseError;
+begin
+  Assert.WillRaise(
+    procedure
+    begin
+      FSerializer.Deserialize('{}', TypeInfo(TClassWithSingleObjectAttributeAndEnumator)).AsType<TClassWithSingleObjectAttributeAndEnumator>;
+    end, EJSONTypeIncompatibleWithProperty);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnArrayMustLoadTheArrayProperty;
+begin
+  var Value := FSerializer.Deserialize('[123,456,789]', TypeInfo(TClassWithSingleObjectAttribute)).AsType<TClassWithSingleObjectAttribute>;
+
+  Assert.AreEqual(3, Length(Value.MyArray));
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnNumberMustLoadTheNumberProperty;
+begin
+  var Value := FSerializer.Deserialize('1234', TypeInfo(TClassWithSingleObjectAttribute)).AsType<TClassWithSingleObjectAttribute>;
+
+  Assert.AreEqual(1234, Value.MyInteger);
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnObjectMustLoadTheObjectProperty;
+begin
+  var Value := FSerializer.Deserialize('{}', TypeInfo(TClassWithSingleObjectAttribute)).AsType<TClassWithSingleObjectAttribute>;
+
+  Assert.IsNotNil(Value.MyObject);
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnStringMustLoadTheEnumeratorProperty;
+begin
+  var Value := FSerializer.Deserialize('"MyValue2"', TypeInfo(TClassWithSingleObjectAttributeAndEnumator)).AsType<TClassWithSingleObjectAttributeAndEnumator>;
+
+  Assert.AreEqual(TMyEnum.MyValue2, Value.MyEnumerator);
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnStringMustLoadTheStringProperty;
+begin
+  var Value := FSerializer.Deserialize('"String"', TypeInfo(TClassWithSingleObjectAttribute)).AsType<TClassWithSingleObjectAttribute>;
+
+  Assert.AreEqual('String', Value.MyProperty);
+
+  Value.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeADateOrTimeMustLoadTheFieldsAsExpected;

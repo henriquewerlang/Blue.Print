@@ -51,6 +51,12 @@ type
     constructor Create(const ErrorMessage: String);
   end;
 
+  EJSONTypeIncompatibleWithProperty = class(Exception)
+  end;
+
+  EJSONTypeCompatibleWithMoreThanOneProperty = class(Exception)
+  end;
+
   TRequestMethodAttribute = class(TCustomAttribute)
   private
     FMethod: TRequestMethod;
@@ -109,6 +115,9 @@ type
   end;
 
   NodeNameAttribute = class(FieldNameAttribute)
+  end;
+
+  SingleObjectAttribute = class(TCustomAttribute)
   end;
 
   XMLAttributeAttribute = class(TCustomAttribute)

@@ -62,6 +62,7 @@ type
     procedure DeserializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
     procedure DeserializeMap(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
     procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
+    procedure DeserializeSingleObject(const RttiType: TRttiType; const Instance: TValue; const JSONValue: TJSONValue);
     procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
     procedure SerializeMap(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
     procedure SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
@@ -452,6 +453,63 @@ begin
   end;
 end;
 
+procedure TBluePrintJsonSerializer.DeserializeSingleObject(const RttiType: TRttiType; const Instance: TValue; const JSONValue: TJSONValue);
+var
+  &Property: TRttiProperty;
+
+  function FindPropety(const Types: TTypeKinds): TRttiProperty;
+  var
+    &Property: TRttiProperty;
+
+  begin
+    Result := nil;
+
+    for &Property in RttiType.AsInstance.GetProperties do
+      if &Property.PropertyType.TypeKind in Types then
+        if Assigned(Result) then
+          raise EJSONTypeCompatibleWithMoreThanOneProperty.Create('More than one property found for this JSON type!')
+        else
+          Result := &Property;
+  end;
+
+  function GetStringProperty: TRttiProperty;
+  begin
+    Result := FindPropety([{$IFDEF DCC}tkLString, tkUString, tkWChar, tkWString, {$ENDIF}tkChar, tkString, tkEnumeration]);
+  end;
+
+  function GetArrayProperty: TRttiProperty;
+  begin
+    Result := FindPropety([tkDynArray, tkArray]);
+  end;
+
+  function GetNumberProperty: TRttiProperty;
+  begin
+    Result := FindPropety([{$IFDEF DCC}tkInt64, {$ENDIF}tkFloat, tkInteger]);
+  end;
+
+  function GetObjectProperty: TRttiProperty;
+  begin
+    Result := FindPropety([tkClass]);
+  end;
+
+begin
+  &Property := nil;
+
+  if JSONValue is TJSONNumber then
+    &Property := GetNumberProperty
+  else if JSONValue is TJSONString then
+    &Property := GetStringProperty
+  else if JSONValue is TJSONArray then
+    &Property := GetArrayProperty
+  else if JSONValue is TJSONObject then
+    &Property := GetObjectProperty;
+
+  if Assigned(&Property) then
+    &Property.SetValue(Instance.AsObject, DeserializeType(&Property.PropertyType, JSONValue))
+  else
+    raise EJSONTypeIncompatibleWithProperty.Create('Property by type not found!');
+end;
+
 function TBluePrintJsonSerializer.DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
 begin
   case RttiType.TypeKind of
@@ -467,6 +525,7 @@ begin
 {$IFDEF PAS2JS}
     tkBool: Result := TValue.From<Boolean>(JSONValue = True);
 {$ENDIF}
+
     tkEnumeration: Result := GetEnumerationValue(RttiType.Handle, {$IFDEF PAS2JS}String(JSONValue){$ELSE}JSONValue.Value{$ENDIF});
 
     tkFloat:
@@ -480,6 +539,7 @@ begin
 {$IFDEF DCC}
     tkInt64: Result := (JSONValue as TJSONNumber).AsInt64;
 {$ENDIF}
+
     tkInteger: Result := TValue.From({$IFDEF PAS2JS}Integer(JSONValue){$ELSE}(JSONValue as TJSONNumber).AsInt{$ENDIF});
 
     tkClassRef: Result := DeserializeClassReference(RttiType, JSONValue);
@@ -491,11 +551,12 @@ begin
       begin
         Result := TValue.From(CreateObject(RttiType.AsInstance));
 
-        if JSONValue is TJSONObject then
-          if RttiType.IsMap then
-            DeserializeMap(RttiType.AsInstance, Result.AsObject, TJSONObject(JSONValue))
-          else
-            DeserializeProperties(RttiType, Result.AsObject, TJSONObject(JSONValue));
+        if RttiType.IsMap then
+          DeserializeMap(RttiType.AsInstance, Result.AsObject, TJSONObject(JSONValue))
+        else if RttiType.HasAttribute(SingleObjectAttribute) then
+          DeserializeSingleObject(RttiType, Result, JSONValue)
+        else
+          DeserializeProperties(RttiType, Result.AsObject, TJSONObject(JSONValue));
       end;
 
     tkArray, tkDynArray: Result := DeserializeArray(RttiType, TJSONArray(JSONValue));
