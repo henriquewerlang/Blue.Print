@@ -130,6 +130,8 @@ type
     procedure WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnStringMustLoadTheEnumeratorProperty;
     [Test]
     procedure WhenDeserializeAClassWithSingleObjectAttributeAndFoundMoreThanOnePropertyForTheTypeMustRaiseError;
+    [Test]
+    procedure WhenDeserializeAClassWithSingleObjectAttributeOnlyThePublishedPropertiesMustBeLoaded;
   end;
 
   [TestFixture]
@@ -532,6 +534,23 @@ type
     property MyInteger: Integer read FMyInteger write FMyInteger;
   end;
 
+  [SingleObject]
+  TMyPublishedClassSingleObject = class
+  private
+    FMyPublic: Integer;
+    FMyPublished: Integer;
+    FMyProtected: Integer;
+    FMyPrivate: Integer;
+
+    property MyPrivate: Integer read FMyPrivate write FMyPrivate;
+  protected
+    property MyProtected: Integer read FMyProtected write FMyProtected;
+  public
+    property MyPublic: Integer read FMyPublic write FMyPublic;
+  published
+    property MyPublished: Integer read FMyPublished write FMyPublished;
+  end;
+
   ISOAPService = interface(IInvokable)
     ['{BBBBC6F3-1730-40F4-A1B1-CC7CA6F08F5D}']
     procedure MyMethod(const MyParam: Integer);
@@ -830,6 +849,18 @@ begin
   var Value := FSerializer.Deserialize('"String"', TypeInfo(TClassWithSingleObjectAttribute)).AsType<TClassWithSingleObjectAttribute>;
 
   Assert.AreEqual('String', Value.MyProperty);
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeOnlyThePublishedPropertiesMustBeLoaded;
+begin
+  var Value := FSerializer.Deserialize('555', TypeInfo(TMyPublishedClassSingleObject)).AsType<TMyPublishedClassSingleObject>;
+
+  Assert.AreEqual(0, Value.MyPrivate);
+  Assert.AreEqual(0, Value.MyProtected);
+  Assert.AreEqual(0, Value.MyPublic);
+  Assert.AreEqual(555, Value.MyPublished);
 
   Value.Free;
 end;

@@ -465,7 +465,7 @@ var
     Result := nil;
 
     for &Property in RttiType.AsInstance.GetProperties do
-      if &Property.PropertyType.TypeKind in Types then
+      if (&Property.Visibility = mvPublished) and (&Property.PropertyType.TypeKind in Types) then
         if Assigned(Result) then
           raise EJSONTypeCompatibleWithMoreThanOneProperty.Create('More than one property found for this JSON type!')
         else
@@ -555,7 +555,7 @@ begin
           DeserializeMap(RttiType.AsInstance, Result.AsObject, TJSONObject(JSONValue))
         else if RttiType.HasAttribute(SingleObjectAttribute) then
           DeserializeSingleObject(RttiType, Result, JSONValue)
-        else
+        else if JSONValue is TJSONObject then
           DeserializeProperties(RttiType, Result.AsObject, TJSONObject(JSONValue));
       end;
 
