@@ -15,6 +15,7 @@ type
   TTypeDelayed = class;
   TTypeEnumeration = class;
   TTypeExternal = class;
+  TTypeMapDefinition = class;
   TTypeModuleDefinition = class;
   TUnitDefinition = class;
   TXSDImporter = class;
@@ -126,6 +127,8 @@ type
     function GetAsArrayType: TTypeArrayDefinition;
     function GetAsClassDefinition: TClassDefinition;
     function GetAsDelayedType: TTypeDelayed;
+    function GetAsMapType: TTypeMapDefinition;
+    function GetAsTypeAlias: TTypeAlias;
     function GetAsTypeEnumeration: TTypeEnumeration;
     function GetAsTypeExternal: TTypeExternal;
     function GetAsUnitDefinition: TUnitDefinition;
@@ -134,9 +137,9 @@ type
     function GetIsDelayedType: Boolean;
     function GetIsEnumeration: Boolean;
     function GetIsExternal: Boolean;
+    function GetIsMapType: Boolean;
     function GetIsTypeAlias: Boolean;
     function GetIsUnitDefinition: Boolean;
-    function GetAsTypeAlias: TTypeAlias;
   public
     constructor Create(const ParentModule: TTypeModuleDefinition);
 
@@ -145,6 +148,7 @@ type
     property AsArrayType: TTypeArrayDefinition read GetAsArrayType;
     property AsClassDefinition: TClassDefinition read GetAsClassDefinition;
     property AsDelayedType: TTypeDelayed read GetAsDelayedType;
+    property AsMapType: TTypeMapDefinition read GetAsMapType;
     property AsTypeAlias: TTypeAlias read GetAsTypeAlias;
     property AsTypeEnumeration: TTypeEnumeration read GetAsTypeEnumeration;
     property AsTypeExternal: TTypeExternal read GetAsTypeExternal;
@@ -155,6 +159,7 @@ type
     property IsDelayedType: Boolean read GetIsDelayedType;
     property IsEnumeration: Boolean read GetIsEnumeration;
     property IsExternal: Boolean read GetIsExternal;
+    property IsMapType: Boolean read GetIsMapType;
     property IsNumericType: Boolean read FIsNumericType;
     property IsObjectType: Boolean read FIsObjectType;
     property IsStringType: Boolean read FIsStringType;
@@ -265,6 +270,17 @@ type
     constructor Create(const Module: TTypeModuleDefinition; const ArrayType: TTypeDefinition);
 
     property ArrayType: TTypeDefinition read FArrayType write FArrayType;
+  end;
+
+  TTypeMapDefinition = class(TTypeDefinition)
+  private
+    FKeyType: TTypeDefinition;
+    FValueType: TTypeDefinition;
+  public
+    constructor Create(const Module: TTypeModuleDefinition; const KeyType, ValueType: TTypeDefinition);
+
+    property KeyType: TTypeDefinition read FKeyType write FKeyType;
+    property ValueType: TTypeDefinition read FValueType write FValueType;
   end;
 
   TUnitDefinition = class(TTypeModuleDefinition)
@@ -393,13 +409,6 @@ type
     constructor Create;
 
     destructor Destroy; override;
-  end;
-
-  TSchemaHelper = class helper for TSchema
-  private
-    function GetIsArray: Boolean;
-  public
-    property IsArray: Boolean read GetIsArray;
   end;
 
 implementation
@@ -1172,6 +1181,8 @@ var
   begin
     if TypeDefinition.IsArrayType then
       Result := Format('TArray<%s>', [GetTypeName(GetArrayType(TypeDefinition))])
+    else if TypeDefinition.IsMapType then
+      Result := Format('TMap<%s, %s>', [GetTypeName(ResolveTypeDefinition(TypeDefinition.AsMapType.KeyType)), GetTypeName(ResolveTypeDefinition(TypeDefinition.AsMapType.ValueType))])
     else if TypeDefinition.IsClassDefinition then
       Result := GetClassImplementationName(TypeDefinition.AsClassDefinition)
     else if TypeDefinition.IsEnumeration then
@@ -1858,6 +1869,11 @@ begin
   Result := Self as TTypeDelayed;
 end;
 
+function TTypeDefinition.GetAsMapType: TTypeMapDefinition;
+begin
+  Result := Self as TTypeMapDefinition;
+end;
+
 function TTypeDefinition.GetAsTypeAlias: TTypeAlias;
 begin
   Result := Self as TTypeAlias;
@@ -1901,6 +1917,11 @@ end;
 function TTypeDefinition.GetIsExternal: Boolean;
 begin
   Result := Self is TTypeExternal;
+end;
+
+function TTypeDefinition.GetIsMapType: Boolean;
+begin
+  Result := Self is TTypeMapDefinition;
 end;
 
 function TTypeDefinition.GetIsTypeAlias: Boolean;
@@ -2250,13 +2271,6 @@ begin
   inherited;
 end;
 
-{ TSchemaHelper }
-
-function TSchemaHelper.GetIsArray: Boolean;
-begin
-  Result := &type = TPropertyType.&array;
-end;
-
 { TTypeArrayDefinition }
 
 constructor TTypeArrayDefinition.Create(const Module: TTypeModuleDefinition; const ArrayType: TTypeDefinition);
@@ -2274,6 +2288,17 @@ begin
     UnitFile.Free;
 
   inherited;
+end;
+
+{ TTypeMapDefinition }
+
+constructor TTypeMapDefinition.Create(const Module: TTypeModuleDefinition; const KeyType, ValueType: TTypeDefinition);
+begin
+  inherited Create(Module);
+
+  FKeyType := KeyType;
+  FName := 'Map';
+  FValueType := ValueType;
 end;
 
 end.
