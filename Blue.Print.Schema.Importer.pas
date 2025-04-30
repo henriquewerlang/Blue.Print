@@ -20,7 +20,7 @@ type
   TUnitDefinition = class;
   TXSDImporter = class;
 
-  TImplementationInformation = (NeedDestructor, NeedGetFunction, NeedAddFunction, NeedIsStoredFunction);
+  TImplementationInformation = (NeedDestructor, NeedGetFunction, NeedSetProcedure, NeedAddFunction, NeedIsStoredFunction, NeedIsStoredField);
   TImplementationInformations = set of TImplementationInformation;
 
   TUnitFileConfiguration = class
@@ -90,7 +90,9 @@ type
     function GetNeedAddFunction: Boolean;
     function GetNeedDestructor: Boolean;
     function GetNeedGetFunction: Boolean;
+    function GetNeedIsStoredField: Boolean;
     function GetNeedIsStoredFunction: Boolean;
+    function GetNeedSetProcedure: Boolean;
   public
     constructor Create;
 
@@ -109,7 +111,9 @@ type
     property NeedAddFunction: Boolean read GetNeedAddFunction;
     property NeedDestructor: Boolean read GetNeedDestructor;
     property NeedGetFunction: Boolean read GetNeedGetFunction;
+    property NeedIsStoredField: Boolean read GetNeedIsStoredField;
     property NeedIsStoredFunction: Boolean read GetNeedIsStoredFunction;
+    property NeedSetProcedure: Boolean read GetNeedSetProcedure;
     property Optional: Boolean read FOptional write FOptional;
     property PropertyType: TTypeDefinition read FPropertyType write FPropertyType;
   end;
@@ -1169,10 +1173,33 @@ var
     Result := 'F' + FormatName(&Property.Name);
   end;
 
-  function GetPropertyGetFunction(const &Property: TPropertyDefinition): String;
+  function GetStoredFieldName(const &Property: TPropertyDefinition): String;
+  begin
+    Result := Format('%sIsStored', [GetPropertyFieldName(&Property)])
+  end;
+
+  function GetPropertyGetFunctionName(const &Property: TPropertyDefinition): String;
+  begin
+    Result := 'Get' + FormatName(&Property.Name)
+  end;
+
+  function GetPropertyReadMethod(const &Property: TPropertyDefinition): String;
   begin
     if &Property.NeedGetFunction then
-      Result := 'Get' + FormatName(&Property.Name)
+      Result := GetPropertyGetFunctionName(&Property)
+    else
+      Result := GetPropertyFieldName(&Property);
+  end;
+
+  function GetPropertySetProcedureName(const &Property: TPropertyDefinition): String;
+  begin
+    Result := 'Set' + FormatName(&Property.Name);
+  end;
+
+  function GetPropertyWriteMethod(const &Property: TPropertyDefinition): String;
+  begin
+    if &Property.NeedSetProcedure then
+      Result := GetPropertySetProcedureName(&Property)
     else
       Result := GetPropertyFieldName(&Property);
   end;
@@ -1196,6 +1223,11 @@ var
   function GetPropertyTypeName(const &Property: TPropertyDefinition): String;
   begin
     Result := GetTypeName(GetPropertyType(&Property));
+  end;
+
+  function GetSetProcedureValueName(const &Property: TPropertyDefinition): String;
+  begin
+    Result := Format('%s(const Value: %s)', [GetPropertySetProcedureName(&Property), GetPropertyTypeName(&Property)]);
   end;
 
   function GetAddFuntionName(const &Property: TPropertyDefinition): String;
@@ -1254,12 +1286,22 @@ var
 
   procedure GenerateClassDeclaration(const Ident: String; const ClassDefinition: TClassDefinition);
 
+    function GetStoredMethodName(const &Property: TPropertyDefinition): String;
+    begin
+      if &Property.NeedIsStoredFunction then
+        Result := GetStoredFunctionName(&Property)
+      else if &Property.NeedIsStoredField then
+        Result := GetStoredFieldName(&Property)
+      else
+        Result := EmptyStr;
+    end;
+
     function GetStoredPropertyDeclaration(const &Property: TPropertyDefinition): String;
     begin
-      Result := EmptyStr;
+      Result := GetStoredMethodName(&Property);
 
-      if &Property.NeedIsStoredFunction then
-        Result := Format(' stored %s', [GetStoredFunctionName(&Property)]);
+      if not Result.IsEmpty then
+        Result := Format(' stored %s', [Result]);
     end;
 
     function GetInheritence: String;
@@ -1308,6 +1350,14 @@ var
         end;
       end;
 
+      function GetStoredInformation(const PropertyType: TTypeDefinition): TImplementationInformation;
+      begin
+        if PropertyType.IsEnumeration then
+          Result := TImplementationInformation.NeedIsStoredField
+        else
+          Result := TImplementationInformation.NeedIsStoredFunction;
+      end;
+
     begin
       var ClassInformation: TImplementationInformations := [];
 
@@ -1317,7 +1367,9 @@ var
 
         AppendInformation(GetNeedAddFunction(PropertyType), &Property, TImplementationInformation.NeedAddFunction);
 
-        AppendInformation(GetIsOptional(&Property, PropertyType), &Property, TImplementationInformation.NeedIsStoredFunction);
+        AppendInformation(GetIsOptional(&Property, PropertyType), &Property, GetStoredInformation(PropertyType));
+
+        AppendInformation(GetIsOptional(&Property, PropertyType) and PropertyType.IsEnumeration, &Property, TImplementationInformation.NeedSetProcedure);
 
         AppendInformation(GetNeedDestructor(PropertyType), &Property, TImplementationInformation.NeedDestructor);
 
@@ -1361,12 +1413,23 @@ var
         AddLine('%s  %s: %s;', [Ident, GetPropertyFieldName(&Property), GetPropertyTypeName(&Property)]);
 
       for var &Property in ClassDefinition.Properties do
+        if &Property.NeedIsStoredField then
+          AddLine('%s  %s: Boolean;', [Ident, GetStoredFieldName(&Property)]);
+
+      if ClassDefinition.NeedImplementation then
+        AddLine;
+
+      for var &Property in ClassDefinition.Properties do
         if &Property.NeedGetFunction then
-          AddLine('%s  function %s: %s;', [Ident, GetPropertyGetFunction(&Property), GetPropertyTypeName(&Property)]);
+          AddLine('%s  function %s: %s;', [Ident, GetPropertyGetFunctionName(&Property), GetPropertyTypeName(&Property)]);
 
       for var &Property in ClassDefinition.Properties do
         if &Property.NeedIsStoredFunction then
           AddLine('%s  function %s: Boolean;', [Ident, GetStoredFunctionName(&Property)]);
+
+      for var &Property in ClassDefinition.Properties do
+        if &Property.NeedSetProcedure then
+          AddLine('%s  procedure %s;', [Ident, GetSetProcedureValueName(&Property)]);
 
       if ClassDefinition.NeedImplementation then
       begin
@@ -1384,8 +1447,12 @@ var
         CheckAddLine(TImplementationInformation.NeedIsStoredFunction, [TImplementationInformation.NeedDestructor, TImplementationInformation.NeedAddFunction]);
 
         for var &Property in ClassDefinition.Properties do
-          if &Property.NeedIsStoredFunction then
-            AddLine('%s  property Is%sStored: Boolean read %s;', [Ident, FormatName(&Property.Name), GetStoredFunctionName(&Property)]);
+        begin
+          var StoredMethodName := GetStoredMethodName(&Property);
+
+          if not StoredMethodName.IsEmpty then
+            AddLine('%s  property Is%sStored: Boolean read %s;', [Ident, FormatName(&Property.Name), StoredMethodName]);
+        end;
       end;
 
       AddLine('%spublished', [Ident]);
@@ -1394,7 +1461,8 @@ var
       begin
         LoadAttributes(Ident + WHITE_SPACE_IDENT, &Property.Attributes.ToArray + GetPropertyType(&Property).ParentAttributes.ToArray);
 
-        AddLine('%s  property %s: %s read %s write %s%s;', [Ident, FormatPropertyName(&Property.Name), GetPropertyTypeName(&Property), GetPropertyGetFunction(&Property), GetPropertyFieldName(&Property), GetStoredPropertyDeclaration(&Property)]);
+        AddLine('%s  property %s: %s read %s write %s%s;', [Ident, FormatPropertyName(&Property.Name), GetPropertyTypeName(&Property), GetPropertyReadMethod(&Property), GetPropertyWriteMethod(&Property),
+          GetStoredPropertyDeclaration(&Property)]);
       end;
     end;
 
@@ -1411,6 +1479,8 @@ var
       Result := Format('not %s.IsEmpty', [GetPropertyFieldName(&Property)])
     else if PropertyType.IsNumericType then
       Result := Format('%s <> 0', [GetPropertyFieldName(&Property)])
+    else if PropertyType.IsEnumeration then
+      Result := GetStoredFieldName(&Property)
     else
       Result := 'False';
   end;
@@ -1465,7 +1535,7 @@ var
         begin
           var PropertyTypeName := GetTypeName(PropertyType);
 
-          AddLine('function %s.%s: %s;', [GetClassImplementationName(ClassDefinition), GetPropertyGetFunction(&Property), PropertyTypeName]);
+          AddLine('function %s.%s: %s;', [GetClassImplementationName(ClassDefinition), GetPropertyGetFunctionName(&Property), PropertyTypeName]);
 
           AddLine('begin');
 
@@ -1506,6 +1576,22 @@ var
           AddLine('begin');
 
           AddLine('  Result := %s;', [GetIsStoredFunctionValue(&Property)]);
+
+          AddLine('end;');
+
+          AddLine;
+        end;
+
+        if &Property.NeedSetProcedure then
+        begin
+          AddLine('procedure %s.%s;', [GetClassImplementationName(ClassDefinition), GetSetProcedureValueName(&Property)]);
+
+          AddLine('begin');
+
+          AddLine('  %s := Value;', [PropertyFieldName]);
+
+          if &Property.NeedIsStoredField then
+            AddLine('  %s := True;', [GetStoredFieldName(&Property)]);
 
           AddLine('end;');
 
@@ -1757,7 +1843,8 @@ end;
 
 function TClassDefinition.GetNeedImplementation: Boolean;
 begin
-  Result := Informations <> [];
+//  Result := (Informations <> []) and (Informations * [TImplementationInformation.NeedIsStoredField] = []);
+  Result := Informations - [TImplementationInformation.NeedIsStoredField] <> [];
 end;
 
 function TClassDefinition.GetUnitDefinition: TUnitDefinition;
@@ -1829,9 +1916,19 @@ begin
   Result :=  TImplementationInformation.NeedGetFunction in Informations;
 end;
 
+function TPropertyDefinition.GetNeedIsStoredField: Boolean;
+begin
+  Result := TImplementationInformation.NeedIsStoredField in Informations;
+end;
+
 function TPropertyDefinition.GetNeedIsStoredFunction: Boolean;
 begin
   Result := TImplementationInformation.NeedIsStoredFunction in Informations;
+end;
+
+function TPropertyDefinition.GetNeedSetProcedure: Boolean;
+begin
+  Result := TImplementationInformation.NeedSetProcedure in Informations;
 end;
 
 { TTypeDefinition }
