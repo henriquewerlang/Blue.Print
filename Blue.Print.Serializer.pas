@@ -48,6 +48,7 @@ type
   TBluePrintJsonSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
   private
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+    function GenerateMap(const JSONValue: TJSONObject): TMap<String, TValue>;
     function GetFieldName(const RttiObject: TRttiNamedObject): String;
     function GetJSONValue(const JSONValue: TJSONValue): String; inline;
     function Serialize(const Value: TValue): String;
@@ -504,13 +505,30 @@ begin
 {$ENDIF}
     tkRecord:
     begin
-      TValue.Make(nil, RttiType.Handle, Result);
+      if RttiType.Handle = TypeInfo(TValue) then
+        if JSONValue is TJSONNumber then
+          Result := TValue.From(TJSONNumber(JSONValue).AsDouble)
+        else if JSONValue is TJSONObject then
+          Result := TValue.From(GenerateMap(JSONValue as TJSONObject))
+        else
+          Result := TValue.From(TJSONString(JSONValue).Value)
+      else
+      begin
+        TValue.Make(nil, RttiType.Handle, Result);
 
-      DeserializeFields(RttiType, Result, TJSONObject(JSONValue) as TJSONObject);
+        DeserializeFields(RttiType, Result, JSONValue as TJSONObject);
+      end;
     end;
 
     else Result := TValue.Empty;
   end;
+end;
+
+function TBluePrintJsonSerializer.GenerateMap(const JSONValue: TJSONObject): TMap<String, TValue>;
+begin
+  Result := TMap<String, TValue>.Create;
+
+  DeserializeMap(FContext.GetType(Result.ClassType).AsInstance, Result, JSONValue as TJSONObject);
 end;
 
 function TBluePrintJsonSerializer.GetFieldName(const RttiObject: TRttiNamedObject): String;

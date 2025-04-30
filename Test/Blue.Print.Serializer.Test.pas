@@ -106,6 +106,16 @@ type
     procedure WhenAPropertyHasTheFieldNameAttributeMustDeserializeTheValueAsExpected;
     [Test]
     procedure WhenDeserializingAnObjectAndTheJSONValueIsNotAJSONObjectCanRaiseAnyError;
+    [Test]
+    procedure WhenDeserializeATValueAndTheJSONValueIsAStringMustLoadThisValueInTheProperty;
+    [Test]
+    procedure WhenDeserializeATValueAndTheJSONValueIsANumberMustLoadThisValueInTheProperty;
+    [Test]
+    procedure WhenDeserializeATValueAndTheJSONValueIsAnObjectMustLoadAMapType;
+    [Test]
+    procedure WhenDeserializeATValueAndTheJSONValueIsAnObjectMustLoadTheFieldAndValuesInTheMap;
+    [Test]
+    procedure WhenDeserializeATValueAndTheJSONValueIsAnObjectMustLoadTheValuesInTheMap;
   end;
 
   [TestFixture]
@@ -789,6 +799,63 @@ begin
   Assert.AreEqual(123, Value.MyField2);
   Assert.AreEqual(123.456, Value.MyField3);
   Assert.AreEqual(TMyEnum.MyValue2, Value.MyField4);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeATValueAndTheJSONValueIsAnObjectMustLoadAMapType;
+begin
+  var Value := FSerializer.Deserialize('{"Value":{"Field1":"abc","Field2":123}}', TypeInfo(TMyTValueClass)).AsType<TMyTValueClass>;
+
+  Assert.IsTrue(Value.Value.AsObject is TMap<String, TValue>);
+
+  Value.Value.AsObject.Free;
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeATValueAndTheJSONValueIsAnObjectMustLoadTheFieldAndValuesInTheMap;
+begin
+  var Value := FSerializer.Deserialize('{"Value":{"Field1":"abc","Field2":123}}', TypeInfo(TMyTValueClass)).AsType<TMyTValueClass>;
+
+  var Map := Value.Value.AsType<TMap<String, TValue>>;
+
+  Assert.IsTrue(Map.ContainsKey('Field1'));
+  Assert.IsTrue(Map.ContainsKey('Field2'));
+
+  Value.Value.AsObject.Free;
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeATValueAndTheJSONValueIsAnObjectMustLoadTheValuesInTheMap;
+begin
+  var Value := FSerializer.Deserialize('{"Value":{"Field1":"abc","Field2":123}}', TypeInfo(TMyTValueClass)).AsType<TMyTValueClass>;
+
+  var Map := Value.Value.AsType<TMap<String, TValue>>;
+
+  Assert.AreEqual('abc', Map['Field1'].AsString);
+  Assert.AreEqual(123, Map['Field2'].AsExtended);
+
+  Value.Value.AsObject.Free;
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeATValueAndTheJSONValueIsANumberMustLoadThisValueInTheProperty;
+begin
+  var Value := FSerializer.Deserialize('{"Value":123.456}', TypeInfo(TMyTValueClass)).AsType<TMyTValueClass>;
+
+  Assert.AreEqual(123.456, Value.Value.AsExtended);
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeATValueAndTheJSONValueIsAStringMustLoadThisValueInTheProperty;
+begin
+  var Value := FSerializer.Deserialize('{"Value":"abc"}', TypeInfo(TMyTValueClass)).AsType<TMyTValueClass>;
+
+  Assert.AreEqual('abc', Value.Value.AsString);
+
+  Value.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializingAnObjectAndTheJSONValueIsNotAJSONObjectCanRaiseAnyError;
