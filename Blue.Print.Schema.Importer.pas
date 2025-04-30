@@ -399,13 +399,13 @@ type
     FSchemas: TDictionary<String, TSchema>;
 
     function CreateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String): TClassDefinition;
+    function DefineProperty(const ClassDefinition: TClassDefinition; const PropertyName: String; const PropertySchemaType: TSchema): TPropertyDefinition;
     function GetReferenceName(const Schema: TSchema): String;
     function GetReferenceSchema(const Schema: TSchema): TSchema;
     function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
     function LoadSchema(const UnitFileConfiguration: TUnitFileConfiguration): TSchema;
 
-    procedure DefineProperty(const ClassDefinition: TClassDefinition; const PropertyName: String; const PropertySchemaType: TSchema);
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
   protected
     procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration); override;
@@ -1322,11 +1322,6 @@ var
           Result := ResolveTypeAlias(GetArrayType(PropertyType)).IsClassDefinition;
       end;
 
-      function GetIsOptional(const &Property: TPropertyDefinition; const PropertyType: TTypeDefinition): Boolean;
-      begin
-        Result := &Property.Optional and not PropertyType.IsArrayType;
-      end;
-
       function GetNeedDestructor(const PropertyType: TTypeDefinition): Boolean;
       begin
         var ResolvedPropertyType := ResolveTypeAlias(GetArrayType(PropertyType));
@@ -1367,9 +1362,9 @@ var
 
         AppendInformation(GetNeedAddFunction(PropertyType), &Property, TImplementationInformation.NeedAddFunction);
 
-        AppendInformation(GetIsOptional(&Property, PropertyType), &Property, GetStoredInformation(PropertyType));
+        AppendInformation(&Property.Optional, &Property, GetStoredInformation(PropertyType));
 
-        AppendInformation(GetIsOptional(&Property, PropertyType) and PropertyType.IsEnumeration, &Property, TImplementationInformation.NeedSetProcedure);
+        AppendInformation(&Property.Optional and PropertyType.IsEnumeration, &Property, TImplementationInformation.NeedSetProcedure);
 
         AppendInformation(GetNeedDestructor(PropertyType), &Property, TImplementationInformation.NeedDestructor);
 
@@ -2109,20 +2104,20 @@ begin
   ParentModule.Classes.Add(Result);
 end;
 
-procedure TJSONSchemaImport.DefineProperty(const ClassDefinition: TClassDefinition; const PropertyName: String; const PropertySchemaType: TSchema);
+function TJSONSchemaImport.DefineProperty(const ClassDefinition: TClassDefinition; const PropertyName: String; const PropertySchemaType: TSchema): TPropertyDefinition;
 begin
-  var Prop := TPropertyDefinition.Create;
-  Prop.Optional := True;
-  Prop.Name := PropertyName;
-  Prop.PropertyType := GenerateTypeDefinition(ClassDefinition.UnitDefinition, PropertySchemaType, Prop.Name);
+  Result := TPropertyDefinition.Create;
+  Result.Optional := True;
+  Result.Name := PropertyName;
+  Result.PropertyType := GenerateTypeDefinition(ClassDefinition.UnitDefinition, PropertySchemaType, Result.Name);
 
-  if FormatPropertyName(Prop.Name) <> Prop.Name then
-    Prop.AddFieldAttribute(Prop.Name);
+  if FormatPropertyName(Result.Name) <> Result.Name then
+    Result.AddFieldAttribute(Result.Name);
 
-  if not Assigned(Prop.PropertyType) then
+  if not Assigned(Result.PropertyType) then
     raise Exception.Create('Property type not found!');
 
-  ClassDefinition.Properties.Add(Prop);
+  ClassDefinition.Properties.Add(Result);
 end;
 
 destructor TJSONSchemaImport.Destroy;
@@ -2234,7 +2229,7 @@ begin
 
             for var SchemaProperty in Schema.allOf + Schema.oneOf + Schema.anyOf do
               if GetPropertyName(SchemaProperty, PropertyName) then
-                DefineProperty(InnerClassDefinition, PropertyName, SchemaProperty);
+                DefineProperty(InnerClassDefinition, PropertyName, SchemaProperty).Optional := True;
 
             Result := InnerClassDefinition;
           end
