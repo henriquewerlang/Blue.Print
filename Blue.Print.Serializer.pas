@@ -39,6 +39,7 @@ type
     function GetEnumerationNames(const TypeInfo: PTypeInfo): TArray<String>;
     function GetEnumerationValue(const TypeInfo: PTypeInfo; const Value: String): TValue;
     function GetFieldName(const RttiObject: TRttiObject; const DefaultValue: String): String;
+    function GetProperties(const RttiType: TRttiType): TArray<TRttiProperty>;
   public
     constructor Create;
 
@@ -241,6 +242,18 @@ begin
     Result := DefaultValue;
 end;
 
+function TBluePrintSerializer.GetProperties(const RttiType: TRttiType): TArray<TRttiProperty>;
+var
+  &Property: TRttiProperty;
+
+begin
+  Result := nil;
+
+  for &Property in RttiType.AsInstance.GetProperties do
+    if &Property.Visibility = mvPublished then
+      Result := Result + [&Property];
+end;
+
 function TBluePrintSerializer.Serialize(const Value: TValue): String;
 begin
   FContentType := CONTENTTYPE_TEXT_PLAIN;
@@ -338,8 +351,8 @@ var
   &Property: TRttiProperty;
 
 begin
-  for &Property in RttiType.GetProperties do
-    if (&Property.Visibility = mvPublished) and System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).{$IFDEF DCC}PropInfo{$ELSE}PropertyTypeInfo{$ENDIF}) then
+  for &Property in GetProperties(RttiType) do
+    if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).{$IFDEF DCC}PropInfo{$ELSE}PropertyTypeInfo{$ENDIF}) then
       JSONObject.AddPair(GetFieldName(&Property), SerializeType(&Property.PropertyType, &Property.GetValue(Instance)));
 end;
 
@@ -457,19 +470,28 @@ procedure TBluePrintJsonSerializer.DeserializeSingleObject(const RttiType: TRtti
 var
   &Property: TRttiProperty;
 
-  function FindPropety(const Types: TTypeKinds): TRttiProperty;
+  function LocateProperty(const CompareFunction: TFunc<TRttiProperty, Boolean>): TRttiProperty;
   var
     &Property: TRttiProperty;
 
   begin
     Result := nil;
 
-    for &Property in RttiType.AsInstance.GetProperties do
-      if (&Property.Visibility = mvPublished) and (&Property.PropertyType.TypeKind in Types) then
+    for &Property in GetProperties(RttiType) do
+      if CompareFunction(&Property) then
         if Assigned(Result) then
           raise EJSONTypeCompatibleWithMoreThanOneProperty.Create('More than one property found for this JSON type!')
         else
           Result := &Property;
+  end;
+
+  function FindPropety(const Types: TTypeKinds): TRttiProperty;
+  begin
+    Result := LocateProperty(
+      function (&Property: TRttiProperty): Boolean
+      begin
+        Result := &Property.PropertyType.TypeKind in Types;
+      end);
   end;
 
   function GetStringProperty: TRttiProperty;
@@ -492,10 +514,21 @@ var
     Result := FindPropety([tkClass]);
   end;
 
+  function GetBooleanProperty: TRttiProperty;
+  begin
+    Result := LocateProperty(
+      function (&Property: TRttiProperty): Boolean
+      begin
+        Result := &Property.PropertyType.Handle = TypeInfo(Boolean);
+      end);
+  end;
+
 begin
   &Property := nil;
 
-  if JSONValue is TJSONNumber then
+  if JSONValue is TJSONBool then
+    &Property := GetBooleanProperty
+  else if JSONValue is TJSONNumber then
     &Property := GetNumberProperty
   else if JSONValue is TJSONString then
     &Property := GetStringProperty
@@ -1022,8 +1055,8 @@ end;
 procedure TBluePrintXMLSerializer.SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode; const Namespace: String);
 begin
 {$IFDEF DCC}
-  for var &Property in RttiType.GetProperties do
-    if (&Property.Visibility = mvPublished) and System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).PropInfo) and not LoadAttributeValue(&Property, Instance, Node) then
+  for var &Property in GetProperties(RttiType) do
+    if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).PropInfo) and not LoadAttributeValue(&Property, Instance, Node) then
     begin
       var PropertyValue := &Property.GetValue(Instance);
 

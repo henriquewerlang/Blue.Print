@@ -132,6 +132,8 @@ type
     procedure WhenDeserializeAClassWithSingleObjectAttributeAndFoundMoreThanOnePropertyForTheTypeMustRaiseError;
     [Test]
     procedure WhenDeserializeAClassWithSingleObjectAttributeOnlyThePublishedPropertiesMustBeLoaded;
+    [Test]
+    procedure WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsBooleanValueMustLoadTheBooleanProperty;
   end;
 
   [TestFixture]
@@ -523,7 +525,7 @@ type
   end;
 
   [SingleObject]
-  TClassWithSingleObjectAttributeAndEnumator = class
+  TClassWithSingleObjectAttributeAndEnumerator = class
   private
     FMyEnumerator: TMyEnum;
     FMyInteger: Integer;
@@ -532,6 +534,14 @@ type
     property MyEnumerator: TMyEnum read FMyEnumerator write FMyEnumerator;
     property MyFloat: Double read FMyFloat write FMyFloat;
     property MyInteger: Integer read FMyInteger write FMyInteger;
+  end;
+
+  [SingleObject]
+  TClassWithSingleObjectAttributeAndBoolean = class
+  private
+    FMyBoolean: Boolean;
+  published
+    property MyBoolean: Boolean read FMyBoolean write FMyBoolean;
   end;
 
   [SingleObject]
@@ -795,7 +805,7 @@ begin
   Assert.WillRaise(
     procedure
     begin
-      FSerializer.Deserialize('1234', TypeInfo(TClassWithSingleObjectAttributeAndEnumator)).AsType<TClassWithSingleObjectAttributeAndEnumator>;
+      FSerializer.Deserialize('1234', TypeInfo(TClassWithSingleObjectAttributeAndEnumerator)).AsType<TClassWithSingleObjectAttributeAndEnumerator>;
     end, EJSONTypeCompatibleWithMoreThanOneProperty);
 end;
 
@@ -804,7 +814,7 @@ begin
   Assert.WillRaise(
     procedure
     begin
-      FSerializer.Deserialize('{}', TypeInfo(TClassWithSingleObjectAttributeAndEnumator)).AsType<TClassWithSingleObjectAttributeAndEnumator>;
+      FSerializer.Deserialize('{}', TypeInfo(TClassWithSingleObjectAttributeAndEnumerator)).AsType<TClassWithSingleObjectAttributeAndEnumerator>;
     end, EJSONTypeIncompatibleWithProperty);
 end;
 
@@ -837,7 +847,7 @@ end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnStringMustLoadTheEnumeratorProperty;
 begin
-  var Value := FSerializer.Deserialize('"MyValue2"', TypeInfo(TClassWithSingleObjectAttributeAndEnumator)).AsType<TClassWithSingleObjectAttributeAndEnumator>;
+  var Value := FSerializer.Deserialize('"MyValue2"', TypeInfo(TClassWithSingleObjectAttributeAndEnumerator)).AsType<TClassWithSingleObjectAttributeAndEnumerator>;
 
   Assert.AreEqual(TMyEnum.MyValue2, Value.MyEnumerator);
 
@@ -849,6 +859,15 @@ begin
   var Value := FSerializer.Deserialize('"String"', TypeInfo(TClassWithSingleObjectAttribute)).AsType<TClassWithSingleObjectAttribute>;
 
   Assert.AreEqual('String', Value.MyProperty);
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsBooleanValueMustLoadTheBooleanProperty;
+begin
+  var Value := FSerializer.Deserialize('true', TypeInfo(TClassWithSingleObjectAttributeAndBoolean)).AsType<TClassWithSingleObjectAttributeAndBoolean>;
+
+  Assert.IsTrue(Value.MyBoolean);
 
   Value.Free;
 end;
