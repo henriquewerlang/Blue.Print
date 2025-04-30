@@ -137,6 +137,10 @@ type
   public
     destructor Destroy; override;
 
+    function AddAnyOf: Blue.Print.JSON.Schema.TSchema;
+    function AddAllOf: Blue.Print.JSON.Schema.TSchema;
+    function AddOneOf: Blue.Print.JSON.Schema.TSchema;
+
     property IsPropertyNamesStored: Boolean read GetPropertyNamesStored;
     property IsAnyOfStored: Boolean read GetAnyOfStored;
     property IsExclusiveMaximumStored: Boolean read GetExclusiveMaximumStored;
@@ -285,6 +289,8 @@ type
   public
     destructor Destroy; override;
 
+    function AddSchemaArray: Blue.Print.JSON.Schema.TSchema;
+
     property IsSchemaStored: Boolean read GetSchemaStored;
     property IsSchemaArrayStored: Boolean read GetSchemaArrayStored;
   published
@@ -320,6 +326,12 @@ destructor TSchema.Destroy;
 begin
   FPropertyNames.Free;
 
+  for var AObject in FAnyOf do
+    AObject.Free;
+
+  for var AObject in FAllOf do
+    AObject.Free;
+
   FNot.Free;
 
   FAdditionalItems.Free;
@@ -327,6 +339,9 @@ begin
   FMinProperties.Free;
 
   FMinLength.Free;
+
+  for var AObject in FOneOf do
+    AObject.Free;
 
   FThen.Free;
 
@@ -360,9 +375,16 @@ begin
   Result := Assigned(FPropertyNames);
 end;
 
+function TSchema.AddAnyOf: Blue.Print.JSON.Schema.TSchema;
+begin
+  Result := Blue.Print.JSON.Schema.TSchema.Create;
+
+  FAnyOf := FAnyOf + [Result];
+end;
+
 function TSchema.GetAnyOfStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FAnyOf);
 end;
 
 function TSchema.GetExclusiveMaximumStored: Boolean;
@@ -380,9 +402,16 @@ begin
   Result := FExclusiveMinimum <> 0;
 end;
 
+function TSchema.AddAllOf: Blue.Print.JSON.Schema.TSchema;
+begin
+  Result := Blue.Print.JSON.Schema.TSchema.Create;
+
+  FAllOf := FAllOf + [Result];
+end;
+
 function TSchema.GetAllOfStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FAllOf);
 end;
 
 function TSchema.GetSchemaStored: Boolean;
@@ -415,7 +444,7 @@ end;
 
 function TSchema.GetEnumStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FEnum);
 end;
 
 function TSchema.GetRefStored: Boolean;
@@ -507,9 +536,16 @@ begin
   Result := False;
 end;
 
+function TSchema.AddOneOf: Blue.Print.JSON.Schema.TSchema;
+begin
+  Result := Blue.Print.JSON.Schema.TSchema.Create;
+
+  FOneOf := FOneOf + [Result];
+end;
+
 function TSchema.GetOneOfStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FOneOf);
 end;
 
 function TSchema.GetThen: Blue.Print.JSON.Schema.TSchema;
@@ -660,7 +696,7 @@ end;
 
 function TSchema.GetRequiredStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FRequired);
 end;
 
 function TSchema.GetType: Blue.Print.JSON.Schema.&Type;
@@ -678,7 +714,7 @@ end;
 
 function TSchema.GetExamplesStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FExamples);
 end;
 
 { NonNegativeIntegerDefault0 }
@@ -712,7 +748,7 @@ end;
 
 function Dependencies.GetStringArrayStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FStringArray);
 end;
 
 { Items }
@@ -720,6 +756,9 @@ end;
 destructor Items.Destroy;
 begin
   FSchema.Free;
+
+  for var AObject in FSchemaArray do
+    AObject.Free;
 
   inherited;
 end;
@@ -737,9 +776,16 @@ begin
   Result := Assigned(FSchema);
 end;
 
+function Items.AddSchemaArray: Blue.Print.JSON.Schema.TSchema;
+begin
+  Result := Blue.Print.JSON.Schema.TSchema.Create;
+
+  FSchemaArray := FSchemaArray + [Result];
+end;
+
 function Items.GetSchemaArrayStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FSchemaArray);
 end;
 
 { &Type }
@@ -752,7 +798,7 @@ end;
 
 function &Type.GetArrayStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FArray);
 end;
 
 end.

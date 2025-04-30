@@ -1148,12 +1148,24 @@ var
     Result := ResolveTypeDefinition(&Property.PropertyType);
   end;
 
-  function GetArrayType(const TypeDefinition: TTypeDefinition): TTypeDefinition;
+  function GetPropertyBaseType(const &Property: TPropertyDefinition): TTypeDefinition;
   begin
-    if TypeDefinition.IsArrayType then
-      Result := ResolveTypeDefinition(TypeDefinition.AsArrayType.ArrayType)
+    Result := ResolveTypeAlias(&Property.PropertyType);
+  end;
+
+  function GetArrayItemType(const TypeDefinition: TTypeDefinition): TTypeDefinition;
+  begin
+    var BaseType := ResolveTypeAlias(TypeDefinition);
+
+    if BaseType.IsArrayType then
+      Result := ResolveTypeDefinition(BaseType.AsArrayType.ArrayType)
     else
       Result := TypeDefinition;
+  end;
+
+  function GetArrayItemBaseType(const TypeDefinition: TTypeDefinition): TTypeDefinition;
+  begin
+    Result := ResolveTypeAlias(GetArrayItemType(TypeDefinition));
   end;
 
   function GetClassImplementationName(ClassDefinition: TClassDefinition): String;
@@ -1207,7 +1219,7 @@ var
   function GetTypeName(const TypeDefinition: TTypeDefinition): String;
   begin
     if TypeDefinition.IsArrayType then
-      Result := Format('TArray<%s>', [GetTypeName(GetArrayType(TypeDefinition))])
+      Result := Format('TArray<%s>', [GetTypeName(GetArrayItemType(TypeDefinition))])
     else if TypeDefinition.IsMapType then
       Result := Format('TMap<%s, %s>', [GetTypeName(ResolveTypeDefinition(TypeDefinition.AsMapType.KeyType)), GetTypeName(ResolveTypeDefinition(TypeDefinition.AsMapType.ValueType))])
     else if TypeDefinition.IsClassDefinition then
@@ -1232,7 +1244,7 @@ var
 
   function GetAddFuntionName(const &Property: TPropertyDefinition): String;
   begin
-    Result := Format('Add%s: %s', [FormatName(&Property.Name), GetTypeName(GetArrayType(GetPropertyType(&Property)))]);
+    Result := Format('Add%s: %s', [FormatName(&Property.Name), GetTypeName(GetArrayItemType(GetPropertyType(&Property)))]);
   end;
 
   procedure LoadAttributes(const Ident: String; const AttributesList: TArray<String>);
@@ -1316,24 +1328,17 @@ var
 
       function GetNeedAddFunction(const PropertyType: TTypeDefinition): Boolean;
       begin
-        Result := PropertyType.IsArrayType;
-
-        if Result then
-          Result := ResolveTypeAlias(GetArrayType(PropertyType)).IsClassDefinition;
+        Result := PropertyType.IsArrayType and GetArrayItemType(PropertyType).IsClassDefinition;
       end;
 
       function GetNeedDestructor(const PropertyType: TTypeDefinition): Boolean;
       begin
-        var ResolvedPropertyType := ResolveTypeAlias(GetArrayType(PropertyType));
-
-        Result := ResolvedPropertyType.IsClassDefinition and not ResolvedPropertyType.IsObjectType;
+        Result := PropertyType.IsClassDefinition and not PropertyType.IsObjectType or PropertyType.IsArrayType and GetNeedDestructor(GetArrayItemBaseType(PropertyType));
       end;
 
       function GetNeedGetFunction(const PropertyType: TTypeDefinition): Boolean;
       begin
-        var ResolvedPropertyType := ResolveTypeAlias(PropertyType);
-
-        Result := ResolvedPropertyType.IsClassDefinition and not ResolvedPropertyType.IsArrayType and not ResolvedPropertyType.IsObjectType;
+        Result := PropertyType.IsClassDefinition and not PropertyType.IsArrayType and not PropertyType.IsObjectType;
       end;
 
       procedure AppendInformation(const NeedAdd: Boolean; const &Property: TPropertyDefinition; const Information: TImplementationInformation);
@@ -1358,7 +1363,7 @@ var
 
       for var &Property in ClassDefinition.Properties do
       begin
-        var PropertyType := GetPropertyType(&Property);
+        var PropertyType := GetPropertyBaseType(&Property);
 
         AppendInformation(GetNeedAddFunction(PropertyType), &Property, TImplementationInformation.NeedAddFunction);
 
@@ -1464,11 +1469,9 @@ var
     AddLine('%send;', [Ident]);
   end;
 
-  function GetIsStoredFunctionValue(const &Property: TPropertyDefinition): String;
+  function GetIsStoredFunctionValue(const &Property: TPropertyDefinition; const PropertyType: TTypeDefinition): String;
   begin
-    var PropertyType := ResolveTypeAlias(GetPropertyType(&Property));
-
-    if PropertyType.IsClassDefinition then
+    if PropertyType.IsClassDefinition or PropertyType.IsArrayType then
       Result := Format('Assigned(%s)', [GetPropertyFieldName(&Property)])
     else if PropertyType.IsStringType then
       Result := Format('not %s.IsEmpty', [GetPropertyFieldName(&Property)])
@@ -1496,7 +1499,7 @@ var
 
         for var &Property in ClassDefinition.Properties do
         begin
-          var PropertyType := GetPropertyType(&Property);
+          var PropertyType := GetPropertyBaseType(&Property);
 
           if &Property.NeedDestructor then
             if PropertyType.IsArrayType then
@@ -1524,7 +1527,7 @@ var
       for var &Property in ClassDefinition.Properties do
       begin
         var PropertyFieldName := GetPropertyFieldName(&Property);
-        var PropertyType := GetPropertyType(&Property);
+        var PropertyType := GetPropertyBaseType(&Property);
 
         if &Property.NeedGetFunction then
         begin
@@ -1553,7 +1556,7 @@ var
 
           AddLine('begin');
 
-          AddLine('  Result := %s.Create;', [GetTypeName(GetArrayType(PropertyType))]);
+          AddLine('  Result := %s.Create;', [GetTypeName(GetArrayItemBaseType(PropertyType))]);
 
           AddLine;
 
@@ -1570,7 +1573,7 @@ var
 
           AddLine('begin');
 
-          AddLine('  Result := %s;', [GetIsStoredFunctionValue(&Property)]);
+          AddLine('  Result := %s;', [GetIsStoredFunctionValue(&Property, PropertyType)]);
 
           AddLine('end;');
 
