@@ -74,6 +74,9 @@ type
     FRequired: stringArray;
     FType: Blue.Print.JSON.Schema.&Type;
     FExamples: TArray<any>;
+    FReadOnlyIsStored: Boolean;
+    FWriteOnlyIsStored: Boolean;
+    FUniqueItemsIsStored: Boolean;
 
     function GetPropertyNames: Blue.Print.JSON.Schema.TSchema;
     function GetNot: Blue.Print.JSON.Schema.TSchema;
@@ -105,7 +108,6 @@ type
     function GetPatternStored: Boolean;
     function GetDefaultStored: Boolean;
     function GetMinPropertiesStored: Boolean;
-    function GetReadOnlyStored: Boolean;
     function GetMinLengthStored: Boolean;
     function GetTitleStored: Boolean;
     function GetCommentStored: Boolean;
@@ -118,13 +120,11 @@ type
     function GetDependenciesStored: Boolean;
     function GetAdditionalPropertiesStored: Boolean;
     function GetContainsStored: Boolean;
-    function GetWriteOnlyStored: Boolean;
     function GetDefinitionsStored: Boolean;
     function GetMaxPropertiesStored: Boolean;
     function GetElseStored: Boolean;
     function GetIdStored: Boolean;
     function GetMaxItemsStored: Boolean;
-    function GetUniqueItemsStored: Boolean;
     function GetDescriptionStored: Boolean;
     function GetMaximumStored: Boolean;
     function GetContentEncodingStored: Boolean;
@@ -134,6 +134,9 @@ type
     function GetRequiredStored: Boolean;
     function GetTypeStored: Boolean;
     function GetExamplesStored: Boolean;
+    procedure SetReadOnly(const Value: System.Boolean);
+    procedure SetWriteOnly(const Value: System.Boolean);
+    procedure SetUniqueItems(const Value: System.Boolean);
   public
     destructor Destroy; override;
 
@@ -158,7 +161,7 @@ type
     property IsPatternStored: Boolean read GetPatternStored;
     property IsDefaultStored: Boolean read GetDefaultStored;
     property IsMinPropertiesStored: Boolean read GetMinPropertiesStored;
-    property IsReadOnlyStored: Boolean read GetReadOnlyStored;
+    property IsReadOnlyStored: Boolean read FReadOnlyIsStored;
     property IsMinLengthStored: Boolean read GetMinLengthStored;
     property IsTitleStored: Boolean read GetTitleStored;
     property IsCommentStored: Boolean read GetCommentStored;
@@ -171,13 +174,13 @@ type
     property IsDependenciesStored: Boolean read GetDependenciesStored;
     property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
     property IsContainsStored: Boolean read GetContainsStored;
-    property IsWriteOnlyStored: Boolean read GetWriteOnlyStored;
+    property IsWriteOnlyStored: Boolean read FWriteOnlyIsStored;
     property IsDefinitionsStored: Boolean read GetDefinitionsStored;
     property IsMaxPropertiesStored: Boolean read GetMaxPropertiesStored;
     property IsElseStored: Boolean read GetElseStored;
     property IsIdStored: Boolean read GetIdStored;
     property IsMaxItemsStored: Boolean read GetMaxItemsStored;
-    property IsUniqueItemsStored: Boolean read GetUniqueItemsStored;
+    property IsUniqueItemsStored: Boolean read FUniqueItemsIsStored;
     property IsDescriptionStored: Boolean read GetDescriptionStored;
     property IsMaximumStored: Boolean read GetMaximumStored;
     property IsContentEncodingStored: Boolean read GetContentEncodingStored;
@@ -208,7 +211,7 @@ type
     property pattern: System.String read FPattern write FPattern stored GetPatternStored;
     property default: any read FDefault write FDefault stored GetDefaultStored;
     property minProperties: Blue.Print.JSON.Schema.NonNegativeIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
-    property readOnly: System.Boolean read FReadOnly write FReadOnly stored GetReadOnlyStored;
+    property readOnly: System.Boolean read FReadOnly write SetReadOnly stored FReadOnlyIsStored;
     property minLength: Blue.Print.JSON.Schema.NonNegativeIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
     property title: System.String read FTitle write FTitle stored GetTitleStored;
     [FieldName('$comment')]
@@ -224,7 +227,7 @@ type
     property dependencies: TMap<System.String, Blue.Print.JSON.Schema.Dependencies> read FDependencies write FDependencies stored GetDependenciesStored;
     property additionalProperties: Blue.Print.JSON.Schema.TSchema read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
     property contains: Blue.Print.JSON.Schema.TSchema read GetContains write FContains stored GetContainsStored;
-    property writeOnly: System.Boolean read FWriteOnly write FWriteOnly stored GetWriteOnlyStored;
+    property writeOnly: System.Boolean read FWriteOnly write SetWriteOnly stored FWriteOnlyIsStored;
     property definitions: TMap<System.String, Blue.Print.JSON.Schema.TSchema> read FDefinitions write FDefinitions stored GetDefinitionsStored;
     property maxProperties: nonNegativeInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
     [FieldName('else')]
@@ -232,7 +235,7 @@ type
     [FieldName('$id')]
     property id: System.String read FId write FId stored GetIdStored;
     property maxItems: nonNegativeInteger read FMaxItems write FMaxItems stored GetMaxItemsStored;
-    property uniqueItems: System.Boolean read FUniqueItems write FUniqueItems stored GetUniqueItemsStored;
+    property uniqueItems: System.Boolean read FUniqueItems write SetUniqueItems stored FUniqueItemsIsStored;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property maximum: System.Double read FMaximum write FMaximum stored GetMaximumStored;
     property contentEncoding: System.String read FContentEncoding write FContentEncoding stored GetContentEncodingStored;
@@ -493,9 +496,10 @@ begin
   Result := Assigned(FMinProperties);
 end;
 
-function TSchema.GetReadOnlyStored: Boolean;
+procedure TSchema.SetReadOnly(const Value: System.Boolean);
 begin
-  Result := False;
+  FReadOnly := Value;
+  FReadOnlyIsStored := True;
 end;
 
 function TSchema.GetMinLength: Blue.Print.JSON.Schema.NonNegativeIntegerDefault0;
@@ -597,9 +601,10 @@ begin
   Result := Assigned(FContains);
 end;
 
-function TSchema.GetWriteOnlyStored: Boolean;
+procedure TSchema.SetWriteOnly(const Value: System.Boolean);
 begin
-  Result := False;
+  FWriteOnly := Value;
+  FWriteOnlyIsStored := True;
 end;
 
 function TSchema.GetDefinitionsStored: Boolean;
@@ -635,9 +640,10 @@ begin
   Result := FMaxItems <> 0;
 end;
 
-function TSchema.GetUniqueItemsStored: Boolean;
+procedure TSchema.SetUniqueItems(const Value: System.Boolean);
 begin
-  Result := False;
+  FUniqueItems := Value;
+  FUniqueItemsIsStored := True;
 end;
 
 function TSchema.GetDescriptionStored: Boolean;

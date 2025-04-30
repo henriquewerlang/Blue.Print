@@ -731,14 +731,19 @@ end;
 
 procedure TSchemaImporter.LoadInternalTypes;
 
-  function AddType(const TypeName: String): TTypeDefinition;
+  function AddTypeDefinition(const TypeDefinition: TTypeDefinition; const TypeName: String): TTypeDefinition;
   begin
-    Result := TTypeDefinition.Create(nil);
+    Result := TypeDefinition;
     Result.Name := 'System.' + TypeName;
 
     FBuildInType.Add(Result.Name, Result);
 
     FBuildInType.Add(TypeName, CreateTypeAlias(nil, TypeName, Result));
+  end;
+
+  function AddType(const TypeName: String): TTypeDefinition;
+  begin
+    Result := AddTypeDefinition(TTypeDefinition.Create(nil), TypeName);
   end;
 
   function AddNumberType(const TypeName: String): TTypeDefinition;
@@ -748,7 +753,7 @@ procedure TSchemaImporter.LoadInternalTypes;
   end;
 
 begin
-  FBooleanType := AddType('Boolean');
+  FBooleanType := AddTypeDefinition(TTypeEnumeration.Create(nil), 'Boolean');
   FCardinalType := AddNumberType('Cardinal');
   FDateTimeType := AddNumberType('TDateTime');
   FDateType := AddNumberType('TDate');
