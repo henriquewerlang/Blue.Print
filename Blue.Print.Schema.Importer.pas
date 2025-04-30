@@ -402,7 +402,6 @@ type
     function DefineProperty(const ClassDefinition: TClassDefinition; const PropertyName: String; const PropertySchemaType: TSchema): TPropertyDefinition;
     function GetReferenceName(const Schema: TSchema): String;
     function GetReferenceSchema(const Schema: TSchema): TSchema;
-    function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
     function LoadSchema(const UnitFileConfiguration: TUnitFileConfiguration): TSchema;
 
@@ -517,6 +516,7 @@ end;
 function TSchemaImporter.CreateUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
 begin
   Result := TUnitDefinition.Create;
+  Result.Name := UnitConfiguration.Name;
   Result.UnitConfiguration := UnitConfiguration;
 
   FUnits.Add(UnitConfiguration, Result);
@@ -1211,7 +1211,7 @@ var
     else if TypeDefinition.IsMapType then
       Result := Format('TMap<%s, %s>', [GetTypeName(ResolveTypeDefinition(TypeDefinition.AsMapType.KeyType)), GetTypeName(ResolveTypeDefinition(TypeDefinition.AsMapType.ValueType))])
     else if TypeDefinition.IsClassDefinition then
-      Result := GetClassImplementationName(TypeDefinition.AsClassDefinition)
+      Result := Format('%s.%s', [TypeDefinition.AsClassDefinition.UnitDefinition.Name, GetClassImplementationName(TypeDefinition.AsClassDefinition)])
     else if TypeDefinition.IsEnumeration then
       Result := TypeDefinition.AsTypeEnumeration.EnumeratorName
     else if TypeDefinition is TUndefinedType then
@@ -1613,7 +1613,7 @@ var
 
       procedure AddUnitDefinition(const UnitDefinition: TUnitDefinition);
       begin
-        AddUses(UnitDefinition.UnitConfiguration.Name);
+        AddUses(UnitDefinition.Name);
       end;
 
       procedure CheckUses(const TypeDefinition: TTypeDefinition);
@@ -1660,14 +1660,14 @@ var
     AddUses('Blue.Print.Types');
 
     for var AUnit in FUses do
-      AddUses(AUnit.UnitConfiguration.Name);
+      AddUses(AUnit.Name);
 
     CheckClasses(Classes);
 
     for var TypeAlias in TypeAlias do
       CheckType(TypeAlias.TypeDefinition);
 
-    UsesList.Remove(UnitConfiguration.Name);
+    UsesList.Remove(Name);
 
     for var Value in UsesList do
     begin
@@ -1696,7 +1696,7 @@ var
 begin
   UnitDefinition := TStringList.Create;
 
-  AddLine('unit %s;', [UnitConfiguration.Name]);
+  AddLine('unit %s;', [Name]);
 
   AddLine;
 
@@ -1769,7 +1769,7 @@ begin
 
   AddLine('end.');
 
-  UnitDefinition.SaveToFile(Format('%s\%s.pas', [Importer.Configuration.OutputFolder, UnitConfiguration.Name]), TEncoding.UTF8);
+  UnitDefinition.SaveToFile(Format('%s\%s.pas', [Importer.Configuration.OutputFolder, Name]), TEncoding.UTF8);
 end;
 
 { TClassDefinition }
@@ -1838,7 +1838,6 @@ end;
 
 function TClassDefinition.GetNeedImplementation: Boolean;
 begin
-//  Result := (Informations <> []) and (Informations * [TImplementationInformation.NeedIsStoredField] = []);
   Result := Informations - [TImplementationInformation.NeedIsStoredField] <> [];
 end;
 
@@ -2127,13 +2126,6 @@ begin
   inherited;
 end;
 
-function TJSONSchemaImport.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String; const Schema: TSchema): TClassDefinition;
-begin
-  Result := CreateClassDefinition(ParentModule, ClassTypeName);
-
-  GenerateProperties(Result, Schema);
-end;
-
 procedure TJSONSchemaImport.GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
 begin
   for var Pair in Schema.Properties do
@@ -2168,7 +2160,7 @@ var
   function GetItemArrayTypeDefinition(const ArraySchema: TSchema): TTypeDefinition;
   begin
     if Assigned(ArraySchema.items) then
-      Result := GenerateTypeDefinition(Module, Schema.items, TypeName)
+      Result := GenerateTypeDefinition(Module, Schema.items.Schema, TypeName)
     else
       Result := GetAnyTypeDefinition;
   end;
@@ -2178,15 +2170,16 @@ var
     Result := TTypeEnumeration.Create(Module);
     Result.Name := TypeName;
 
-    Result.Values.AddRange(Schema.enum);
+    for var EnumeratorValue in Schema.enum do
+      Result.Values.Add(EnumeratorValue.ToString);
   end;
 
   function GetPropertyName(const Schema: TSchema; var PropertyName: String): Boolean;
   begin
     if not Schema.ref.IsEmpty then
       PropertyName := GetReferenceName(Schema)
-    else if Schema.&type <> TPropertyType.Undefined then
-      PropertyName := TRttiEnumerationType.GetName(Schema.&type)
+    else if Schema.IsTypeStored then
+      PropertyName := TRttiEnumerationType.GetName(Schema.&type.simpleTypes)
     else
       PropertyName := EmptyStr;
 
@@ -2207,35 +2200,35 @@ begin
       Result := GenerateTypeDefinition(Module, GetReferenceSchema(Schema), GetReferenceName(Schema))
     else if Schema = FJSONSchema then
       Result := FReferenceClassDefinition
-    else
-      case Schema.&type of
-        TPropertyType.&array: Result := TTypeArrayDefinition.Create(UnitDefinition, GetItemArrayTypeDefinition(Schema));
-        TPropertyType.boolean: Result := BooleanType;
-        TPropertyType.null: Result := nil;
-        TPropertyType.integer: Result := IntegerType;
-        TPropertyType.number: Result := DoubleType;
-        TPropertyType.&object: Result := GenerateClassDefinition(Module, TypeName, Schema);
-        TPropertyType.&string: Result := StringType;
-        else
+    else if Schema.IsTypeStored then
+      case Schema.&type.simpleTypes of
+        simpleTypes.&array: Result := TTypeArrayDefinition.Create(UnitDefinition, GetItemArrayTypeDefinition(Schema));
+        simpleTypes.boolean: Result := BooleanType;
+        simpleTypes.null: Result := nil;
+        simpleTypes.integer: Result := IntegerType;
+        simpleTypes.number: Result := DoubleType;
+        simpleTypes.&object: Result := TTypeMapDefinition.Create(UnitDefinition, StringType, GenerateTypeDefinition(Module, Schema.additionalProperties, TypeName));
+        simpleTypes.&string: Result := StringType;
+      end
+      else
+      begin
+        if Assigned(Schema.enum) then
+          Result := CreateEnumerator
+        else if Assigned(Schema.allOf + Schema.oneOf + Schema.anyOf) then
         begin
-          if Assigned(Schema.enum) then
-            Result := CreateEnumerator
-          else if Assigned(Schema.allOf + Schema.oneOf + Schema.anyOf) then
-          begin
-            var InnerClassDefinition := CreateClassDefinition(Module, TypeName);
-            var PropertyName := EmptyStr;
+          var InnerClassDefinition := CreateClassDefinition(Module, TypeName);
+          var PropertyName := EmptyStr;
 
-            InnerClassDefinition.AddAtribute('SingleObject');
+          InnerClassDefinition.AddAtribute('SingleObject');
 
-            for var SchemaProperty in Schema.allOf + Schema.oneOf + Schema.anyOf do
-              if GetPropertyName(SchemaProperty, PropertyName) then
-                DefineProperty(InnerClassDefinition, PropertyName, SchemaProperty).Optional := True;
+          for var SchemaProperty in Schema.allOf + Schema.oneOf + Schema.anyOf do
+            if GetPropertyName(SchemaProperty, PropertyName) then
+              DefineProperty(InnerClassDefinition, PropertyName, SchemaProperty).Optional := True;
 
-            Result := InnerClassDefinition;
-          end
-          else
-            Result := GetAnyTypeDefinition;
-        end;
+          Result := InnerClassDefinition;
+        end
+        else
+          Result := GetAnyTypeDefinition;
       end;
   end;
 end;
@@ -2254,7 +2247,7 @@ begin
 
   FReferenceClassDefinition := UnitClass;
 
-  for var Definition in FJSONSchema.defs do
+  for var Definition in FJSONSchema.definitions do
   begin
     var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
 
@@ -2298,7 +2291,7 @@ begin
     if ReferenceName = REFERENCE_SEPARATOR then
       Result := BaseSchema
     else if (ReferenceName = 'definitions') or (ReferenceName = 'defs') then
-      List := Result.defs
+      List := Result.definitions
     else if ReferenceName = 'properties' then
       List := Result.properties
     else
