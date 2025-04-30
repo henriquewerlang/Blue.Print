@@ -538,9 +538,7 @@ begin
     &Property := GetObjectProperty;
 
   if Assigned(&Property) then
-    &Property.SetValue(Instance.AsObject, DeserializeType(&Property.PropertyType, JSONValue))
-  else
-    raise EJSONTypeIncompatibleWithProperty.Create('Property by type not found!');
+    &Property.SetValue(Instance.AsObject, DeserializeType(&Property.PropertyType, JSONValue));
 end;
 
 function TBluePrintJsonSerializer.DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;

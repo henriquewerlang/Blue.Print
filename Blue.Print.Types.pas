@@ -51,9 +51,6 @@ type
     constructor Create(const ErrorMessage: String);
   end;
 
-  EJSONTypeIncompatibleWithProperty = class(Exception)
-  end;
-
   EJSONTypeCompatibleWithMoreThanOneProperty = class(Exception)
   end;
 

@@ -125,7 +125,7 @@ type
     [Test]
     procedure WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnObjectMustLoadTheObjectProperty;
     [Test]
-    procedure WhenDeserializeAClassWithSingleObjectAttributeAndNotFoundThePropertyByTypeMustRaiseError;
+    procedure WhenDeserializeAClassWithSingleObjectAttributeAndNotFoundThePropertyByTypeCantRaiseAnyError;
     [Test]
     procedure WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnStringMustLoadTheEnumeratorProperty;
     [Test]
@@ -809,13 +809,13 @@ begin
     end, EJSONTypeCompatibleWithMoreThanOneProperty);
 end;
 
-procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndNotFoundThePropertyByTypeMustRaiseError;
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndNotFoundThePropertyByTypeCantRaiseAnyError;
 begin
-  Assert.WillRaise(
+  Assert.WillNotRaise(
     procedure
     begin
       FSerializer.Deserialize('{}', TypeInfo(TClassWithSingleObjectAttributeAndEnumerator)).AsType<TClassWithSingleObjectAttributeAndEnumerator>;
-    end, EJSONTypeIncompatibleWithProperty);
+    end);
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnArrayMustLoadTheArrayProperty;
