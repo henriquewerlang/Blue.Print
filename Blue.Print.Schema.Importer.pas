@@ -397,15 +397,19 @@ type
     FJSONSchema: TSchema;
     FReferenceClassDefinition: TClassDefinition;
     FSchemas: TDictionary<String, TSchema>;
+    FAnyTypeDefinition: TTypeDefinition;
 
     function CreateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String): TClassDefinition;
     function DefineProperty(const ClassDefinition: TClassDefinition; const PropertyName: String; const PropertySchemaType: TSchema): TPropertyDefinition;
+    function GetAnyTypeDefinition: TTypeDefinition;
     function GetReferenceName(const Schema: TSchema): String;
     function GetReferenceSchema(const Schema: TSchema): TSchema;
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
     function LoadSchema(const UnitFileConfiguration: TUnitFileConfiguration): TSchema;
 
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
+
+    property AnyTypeDefinition: TTypeDefinition read GetAnyTypeDefinition;
   protected
     procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration); override;
   public
@@ -2149,28 +2153,12 @@ function TJSONSchemaImport.GenerateTypeDefinition(const Module: TTypeModuleDefin
 var
   UnitDefinition: TUnitDefinition;
 
-  function GetAnyTypeDefinition: TTypeDefinition;
-  const
-    ANY_TYPE_NAME = 'any';
-
-  begin
-    Result := FindType(ANY_TYPE_NAME, Module);
-
-    if not Assigned(Result) then
-    begin
-      var AnyType := CreateTypeAlias(UnitDefinition, ANY_TYPE_NAME, AddTypeExternal('System.Rtti', 'TValue'));
-      Result := AnyType;
-
-      UnitDefinition.AddTypeAlias(AnyType);
-    end;
-  end;
-
   function GetItemArrayTypeDefinition(const ArraySchema: TSchema): TTypeDefinition;
   begin
     if Assigned(ArraySchema.items) then
       Result := GenerateTypeDefinition(Module, Schema.items.Schema, TypeName)
     else
-      Result := GetAnyTypeDefinition;
+      Result := AnyTypeDefinition;
   end;
 
   function CreateEnumerator: TTypeEnumeration;
@@ -2236,7 +2224,7 @@ begin
           Result := InnerClassDefinition;
         end
         else
-          Result := GetAnyTypeDefinition;
+          Result := AnyTypeDefinition;
       end;
   end;
 end;
@@ -2266,6 +2254,14 @@ begin
   end;
 
   GenerateProperties(UnitClass, FJSONSchema);
+end;
+
+function TJSONSchemaImport.GetAnyTypeDefinition: TTypeDefinition;
+begin
+  if not Assigned(FAnyTypeDefinition) then
+    FAnyTypeDefinition := CreateTypeAlias(nil, 'any', AddTypeExternal('System.Rtti', 'TValue'));
+
+  Result := FAnyTypeDefinition;
 end;
 
 function TJSONSchemaImport.GetReferenceName(const Schema: TSchema): String;
