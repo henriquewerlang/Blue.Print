@@ -2310,7 +2310,7 @@ begin
 
     Result := Serializer.Deserialize(LoadFile(UnitFileConfiguration), TypeInfo(TSchema)).AsType<TSchema>;
 
-    FSchemas.Add(Result.id, Result);
+    FSchemas.Add(UnitFileConfiguration.Reference, Result);
   end;
 end;
 
