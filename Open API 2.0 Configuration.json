@@ -10,7 +10,7 @@
                "UnitClassName": "TSchema"
             },
             {
-               "Reference": "Open API 2.0.json",
+               "Reference": "http://swagger.io/v2/schema.json#",
                "UnitClassName": "TSchemaOpenAPI20"
             }            
          ]
