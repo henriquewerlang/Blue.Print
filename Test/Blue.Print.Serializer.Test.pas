@@ -134,6 +134,8 @@ type
     procedure WhenDeserializeAClassWithSingleObjectAttributeOnlyThePublishedPropertiesMustBeLoaded;
     [Test]
     procedure WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsBooleanValueMustLoadTheBooleanProperty;
+    [Test]
+    procedure WhenTryToDeserializeAInvalidValueToADoublePropertyCannotRaiseAnyError;
   end;
 
   [TestFixture]
@@ -1155,6 +1157,17 @@ begin
   Assert.AreEqual('{"Value":"abc"}', Value);
 
   MyObject.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenTryToDeserializeAInvalidValueToADoublePropertyCannotRaiseAnyError;
+begin
+  Assert.WillNotRaise(
+    procedure
+    begin
+      var Value := FSerializer.Deserialize('{"MyProp3":"Invalid"}', TypeInfo(TMyObject)).AsType<TMyObject>;
+
+      Value.Free;
+    end);
 end;
 
 { TBluePrintXMLSerializerTest }

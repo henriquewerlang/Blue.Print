@@ -563,7 +563,7 @@ begin
     begin
       if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
         Result := TValue.From(ISO8601ToDate(GetJSONValue(JSONValue)))
-      else
+      else if JSONValue is TJSONNumber then
         Result := TValue.From({$IFDEF PAS2JS}Double(JSONValue){$ELSE}(JSONValue as TJSONNumber).AsDouble{$ENDIF});
     end;
 
