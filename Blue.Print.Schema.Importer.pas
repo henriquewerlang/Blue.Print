@@ -2153,12 +2153,9 @@ function TJSONSchemaImport.GenerateTypeDefinition(const Module: TTypeModuleDefin
 var
   UnitDefinition: TUnitDefinition;
 
-  function GetItemArrayTypeDefinition(const ArraySchema: TSchema): TTypeDefinition;
+  function GetItemArrayTypeDefinition: TTypeDefinition;
   begin
-    if Assigned(ArraySchema.items) then
-      Result := GenerateTypeDefinition(Module, Schema.items.Schema, TypeName)
-    else
-      Result := AnyTypeDefinition;
+    Result := GenerateTypeDefinition(Module, Schema.items.Schema, TypeName);
   end;
 
   function CreateEnumerator: TTypeEnumeration;
@@ -2198,7 +2195,7 @@ begin
       Result := FReferenceClassDefinition
     else if Schema.IsTypeStored then
       case Schema.&type.simpleTypes of
-        simpleTypes.&array: Result := TTypeArrayDefinition.Create(UnitDefinition, GetItemArrayTypeDefinition(Schema));
+        simpleTypes.&array: Result := TTypeArrayDefinition.Create(UnitDefinition, GetItemArrayTypeDefinition);
         simpleTypes.boolean: Result := BooleanType;
         simpleTypes.null: Result := nil;
         simpleTypes.integer: Result := IntegerType;
