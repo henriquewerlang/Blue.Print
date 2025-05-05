@@ -523,10 +523,15 @@ var
       end);
   end;
 
+  function IsBooleanValue: Boolean;
+  begin
+    Result := {$IFDEF DCC}JSONValue is TJSONBool{$ELSE}IsBoolean(JSONValue){$ENDIF};
+  end;
+
 begin
   &Property := nil;
 
-  if JSONValue is TJSONBool then
+  if IsBooleanValue then
     &Property := GetBooleanProperty
   else if JSONValue is TJSONNumber then
     &Property := GetNumberProperty
@@ -599,16 +604,16 @@ begin
     begin
       if RttiType.Handle = TypeInfo(TValue) then
         if JSONValue is TJSONNumber then
-          Result := TValue.From(TJSONNumber(JSONValue).AsDouble)
+          Result := TValue.From({$IFDEF PAS2JS}Double(JSONValue){$ELSE}TJSONNumber(JSONValue).AsDouble{$ENDIF})
         else if JSONValue is TJSONObject then
-          Result := TValue.From(GenerateMap(JSONValue as TJSONObject))
+          Result := TValue.From(GenerateMap(TJSONObject(JSONValue)))
         else
-          Result := TValue.From(TJSONString(JSONValue).Value)
+          Result := TValue.From({$IFDEF PAS2JS}String(JSONValue){$ELSE}TJSONString(JSONValue).Value{$ENDIF})
       else
       begin
         TValue.Make(nil, RttiType.Handle, Result);
 
-        DeserializeFields(RttiType, Result, JSONValue as TJSONObject);
+        DeserializeFields(RttiType, Result, TJSONObject(JSONValue));
       end;
     end;
 
