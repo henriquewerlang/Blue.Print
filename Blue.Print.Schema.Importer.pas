@@ -12,7 +12,7 @@ type
   TTypeAlias = class;
   TTypeArrayDefinition = class;
   TTypeDefinition = class;
-  TTypeDelayed = class;
+  TTypeDelayedDefinition = class;
   TTypeEnumeration = class;
   TTypeExternal = class;
   TTypeMapDefinition = class;
@@ -130,7 +130,7 @@ type
 
     function GetAsArrayType: TTypeArrayDefinition;
     function GetAsClassDefinition: TClassDefinition;
-    function GetAsDelayedType: TTypeDelayed;
+    function GetAsDelayedType: TTypeDelayedDefinition;
     function GetAsMapType: TTypeMapDefinition;
     function GetAsTypeAlias: TTypeAlias;
     function GetAsTypeEnumeration: TTypeEnumeration;
@@ -151,7 +151,7 @@ type
 
     property AsArrayType: TTypeArrayDefinition read GetAsArrayType;
     property AsClassDefinition: TClassDefinition read GetAsClassDefinition;
-    property AsDelayedType: TTypeDelayed read GetAsDelayedType;
+    property AsDelayedType: TTypeDelayedDefinition read GetAsDelayedType;
     property AsMapType: TTypeMapDefinition read GetAsMapType;
     property AsTypeAlias: TTypeAlias read GetAsTypeAlias;
     property AsTypeEnumeration: TTypeEnumeration read GetAsTypeEnumeration;
@@ -177,13 +177,17 @@ type
   TTypeModuleDefinition = class(TTypeDefinition)
   private
     FClasses: TList<TClassDefinition>;
+    FDelayedTypes: TDictionary<String, TTypeDefinition>;
     FEnumerations: TList<TTypeEnumeration>;
   public
     constructor Create(const Module: TTypeModuleDefinition); virtual;
 
     destructor Destroy; override;
 
+    function AddDelayedType(const TypeName: String): TTypeDelayedDefinition;
+
     property Classes: TList<TClassDefinition> read FClasses;
+    property DelayedTypes: TDictionary<String, TTypeDefinition> read FDelayedTypes;
     property Enumerations: TList<TTypeEnumeration> read FEnumerations write FEnumerations;
   end;
 
@@ -229,15 +233,15 @@ type
     property TypeDefinition: TTypeDefinition read FTypeDefinition write FTypeDefinition;
   end;
 
-  TTypeDelayed = class(TTypeDefinition)
+  TTypeDelayedDefinition = class(TTypeDefinition)
   private
-    FImporter: TSchemaImporter;
-    FTypeName: String;
-    FType: TTypeDefinition;
+    FTypeResolved: TTypeDefinition;
+    FUnresolvedType: String;
   public
-    constructor Create(const Importer: TSchemaImporter; const TypeName: String; const Module: TTypeModuleDefinition);
+    constructor Create(const TypeName: String; const Module: TTypeModuleDefinition);
 
-    function ResolveType: TTypeDefinition;
+    property TypeResolved: TTypeDefinition read FTypeResolved write FTypeResolved;
+    property UnresolvedType: String read FUnresolvedType write FUnresolvedType;
   end;
 
   TUndefinedType = class(TTypeDefinition)
@@ -313,7 +317,6 @@ type
     FConfiguration: TConfiguration;
     FDateTimeType: TTypeDefinition;
     FDateType: TTypeDefinition;
-    FDelayedTypes: TDictionary<String, TTypeDefinition>;
     FDoubleType: TTypeDefinition;
     FInt64Type: TTypeDefinition;
     FIntegerType: TTypeDefinition;
@@ -325,7 +328,6 @@ type
     FUnitFiles: TDictionary<TUnitFileConfiguration, TUnitDefinition>;
     FWordType: TTypeDefinition;
   protected
-    function AddDelayedType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
     function CreateTypeAlias(const Module: TTypeModuleDefinition; const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
     function CreateUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition; virtual;
@@ -375,7 +377,7 @@ type
     function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
     function CheckEnumeration(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeEnumeration;
     function FindBaseType(TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
-    function GenerateClassDefinition(const UnitDeclaration: TUnitDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TClassDefinition;
+    function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TClassDefinition;
     function IsReferenceType(const Element: IXMLElementDef): Boolean;
 
     procedure AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
@@ -480,16 +482,6 @@ end;
 
 { TSchemaImporter }
 
-function TSchemaImporter.AddDelayedType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
-begin
-  if not FDelayedTypes.TryGetValue(TypeName, Result) then
-  begin
-    Result := TTypeDelayed.Create(Self, TypeName, Module);
-
-    FDelayedTypes.Add(TypeName, Result);
-  end;
-end;
-
 function TSchemaImporter.AddTypeExternal(const ModuleName, TypeName: String): TTypeExternal;
 begin
   Result := TTypeExternal.Create(ModuleName, TypeName);
@@ -502,7 +494,6 @@ begin
   inherited;
 
   FBuildInType := TDictionary<String, TTypeDefinition>.Create;
-  FDelayedTypes := TDictionary<String, TTypeDefinition>.Create;
   FTypeExternal := TObjectDictionary<String, TTypeDefinition>.Create([doOwnsValues]);
   FUnits := TObjectDictionary<TUnitDefinitionConfiguration, TUnitDefinition>.Create([doOwnsValues]);
   FUnitFiles := TDictionary<TUnitFileConfiguration, TUnitDefinition>.Create;
@@ -532,8 +523,6 @@ begin
 
   FBuildInType.Free;
 
-  FDelayedTypes.Free;
-
   FUnits.Free;
 
   FUnitFiles.Free;
@@ -546,6 +535,9 @@ function TSchemaImporter.FindType(const TypeName: String; const Module: TTypeMod
   function FindTypeDefinitionModule(const Module: TTypeModuleDefinition; const TypeName: String; var TypeDefinition: TTypeDefinition): Boolean;
   begin
     Result := False;
+
+    if Module.DelayedTypes.TryGetValue(TypeName, TypeDefinition) then
+      Exit(True);
 
     for var ClassDefinition in Module.Classes do
     begin
@@ -634,7 +626,12 @@ begin
     for var TypeDefinitionConfig in Configuration.TypeDefinition do
       if TypeDefinitionConfig.Name = TypeName then
       begin
-        var TypeAlias := CreateTypeAlias(UnitDefintion, TypeDefinitionConfig.Name, AddDelayedType(TypeDefinitionConfig.ChangeType, nil));
+        var TypeDefinition := FindType(TypeDefinitionConfig.ChangeType, nil);
+
+        if not Assigned(TypeDefinition) then
+          TypeDefinition := UnitDefintion.AddDelayedType(TypeDefinitionConfig.ChangeType);
+
+        var TypeAlias := CreateTypeAlias(UnitDefintion, TypeDefinitionConfig.Name, TypeDefinition);
 
         UnitDefintion.TypeAlias.Add(TypeAlias);
 
@@ -903,7 +900,7 @@ begin
     Result := FindBaseType(&Type, Module);
 
   if not Assigned(Result) then
-    Result := AddDelayedType(&Type.Name, Module);
+    Result := Module.AddDelayedType(&Type.Name);
 end;
 
 function TXSDImporter.CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
@@ -928,12 +925,12 @@ begin
   end;
 end;
 
-function TXSDImporter.GenerateClassDefinition(const UnitDeclaration: TUnitDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TClassDefinition;
+function TXSDImporter.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TClassDefinition;
 var
   ClassDefinition: TClassDefinition absolute Result;
 
 begin
-  Result := TClassDefinition.Create(UnitDeclaration, TargetNamespace);
+  Result := TClassDefinition.Create(ParentModule, TargetNamespace);
   Result.Name := ComplexType.Name;
 
   GenerateProperties(ClassDefinition, ComplexType.ElementDefList, TargetNamespace);
@@ -1141,7 +1138,21 @@ var
     Result := TypeDefinition;
 
     if Result.IsDelayedType then
-      Result := ResolveTypeDefinition(Result.AsDelayedType.ResolveType);
+    begin
+      var DelayedType := Result.AsDelayedType;
+
+      if not Assigned(DelayedType.TypeResolved) then
+      begin
+        var TypeName := DelayedType.UnresolvedType;
+
+        DelayedType.TypeResolved := ResolveTypeDefinition(Importer.FindType(TypeName, DelayedType.ParentModule));
+
+        if not Assigned(DelayedType.TypeResolved) then
+          DelayedType.TypeResolved := TUndefinedType.Create(TypeName);
+      end;
+
+      Result := DelayedType.TypeResolved;
+    end;
   end;
 
   function ResolveTypeAlias(const TypeDefinition: TTypeDefinition): TTypeDefinition;
@@ -1967,9 +1978,9 @@ begin
   Result := Self as TClassDefinition;
 end;
 
-function TTypeDefinition.GetAsDelayedType: TTypeDelayed;
+function TTypeDefinition.GetAsDelayedType: TTypeDelayedDefinition;
 begin
-  Result := Self as TTypeDelayed;
+  Result := Self as TTypeDelayedDefinition;
 end;
 
 function TTypeDefinition.GetAsMapType: TTypeMapDefinition;
@@ -2009,7 +2020,7 @@ end;
 
 function TTypeDefinition.GetIsDelayedType: Boolean;
 begin
-  Result := Self is TTypeDelayed;
+  Result := Self is TTypeDelayedDefinition;
 end;
 
 function TTypeDefinition.GetIsEnumeration: Boolean;
@@ -2037,26 +2048,14 @@ begin
   Result := Self is TUnitDefinition;
 end;
 
-{ TTypeDelayed }
+{ TTypeDelayedDefinition }
 
-constructor TTypeDelayed.Create(const Importer: TSchemaImporter; const TypeName: String; const Module: TTypeModuleDefinition);
+constructor TTypeDelayedDefinition.Create(const TypeName: String; const Module: TTypeModuleDefinition);
 begin
   inherited Create(Module);
 
-  FName := 'Delayed';
-  FImporter := Importer;
-  FTypeName := TypeName;
-end;
-
-function TTypeDelayed.ResolveType: TTypeDefinition;
-begin
-  if not Assigned(FType) then
-    FType := FImporter.FindType(FTypeName, ParentModule);
-
-  if not Assigned(FType) then
-    FType := TUndefinedType.Create(FTypeName);
-
-  Result := FType;
+  FName := Format('Delayed(%s)', [TypeName]);
+  FUnresolvedType := TypeName;
 end;
 
 { TUndefinedType }
@@ -2340,17 +2339,25 @@ end;
 
 { TTypeModuleDefinition }
 
+function TTypeModuleDefinition.AddDelayedType(const TypeName: String): TTypeDelayedDefinition;
+begin
+  Result := TTypeDelayedDefinition.Create(TypeName, Self);
+end;
+
 constructor TTypeModuleDefinition.Create(const Module: TTypeModuleDefinition);
 begin
   inherited;
 
   FClasses := TObjectList<TClassDefinition>.Create;
+  FDelayedTypes := TDictionary<String, TTypeDefinition>.Create;
   FEnumerations := TObjectList<TTypeEnumeration>.Create;
 end;
 
 destructor TTypeModuleDefinition.Destroy;
 begin
   FClasses.Free;
+
+  FDelayedTypes.Free;
 
   FEnumerations.Free;
 
