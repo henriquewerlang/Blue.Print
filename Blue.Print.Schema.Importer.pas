@@ -850,12 +850,12 @@ function TXSDImporter.FindBaseType(TypeDefinition: IXMLTypeDef; const Module: TT
 begin
   Result := nil;
 
-  if not TypeDefinition.IsComplex and Assigned(TypeDefinition.BaseType) then
-    repeat
-      TypeDefinition := TypeDefinition.BaseType as IXMLSimpleTypeDef;
+  while not Assigned(Result) and not TypeDefinition.IsComplex and Assigned(TypeDefinition.BaseType) do
+  begin
+    TypeDefinition := TypeDefinition.BaseType;
 
-      Result := FindType(TypeDefinition.Name, Module);
-    until Assigned(Result) or not Assigned(TypeDefinition);
+    Result := FindType(TypeDefinition.Name, Module);
+  end;
 end;
 
 function TXSDImporter.FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
