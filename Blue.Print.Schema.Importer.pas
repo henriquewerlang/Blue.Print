@@ -1027,7 +1027,7 @@ begin
 
   for var A := 0 to Pred(Schema.SchemaDef.ComplexTypes.Count) do
   begin
-    var ClassDefinition := GenerateClassDefinition(UnitDefinition, Schema.SchemaDef.ComplexTypes[A], Schema.SchemaDef.TargetNamespace);
+    var ClassDefinition := GenerateClassDefinition(UnitDefinition, Schema.SchemaDef.ComplexTypes[A], VarToStr(Schema.SchemaDef.TargetNamespace));
 
     UnitDefinition.Classes.Add(ClassDefinition);
   end;
