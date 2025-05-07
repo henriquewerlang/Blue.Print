@@ -195,7 +195,6 @@ type
   private
     FInformations: TImplementationInformations;
     FInheritedFrom: TClassDefinition;
-    FParentClass: TClassDefinition;
     FProperties: TList<TPropertyDefinition>;
     FTargetNamespace: String;
 
@@ -213,14 +212,12 @@ type
 
     procedure AddAtribute(const Value: String);
     procedure AddNamespaceAttribute(const Namespace: String);
-    procedure AddClassType(const ClassDefinition: TClassDefinition);
 
     property Informations: TImplementationInformations read FInformations write FInformations;
     property InheritedFrom: TClassDefinition read FInheritedFrom write FInheritedFrom;
     property NeedAddFunction: Boolean read GetNeedAddFunction;
     property NeedImplementation: Boolean read GetNeedImplementation;
     property NeedDestructor: Boolean read GetNeedDestructor;
-    property ParentClass: TClassDefinition read FParentClass write FParentClass;
     property Properties: TList<TPropertyDefinition> read FProperties write FProperties;
     property TargetNamespace: String read FTargetNamespace write FTargetNamespace;
     property UnitDefinition: TUnitDefinition read GetUnitDefinition;
@@ -377,10 +374,10 @@ type
     function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
     function CheckEnumeration(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeEnumeration;
     function FindBaseType(TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
-    function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TClassDefinition;
     function IsReferenceType(const Element: IXMLElementDef): Boolean;
 
     procedure AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
+    procedure GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String);
     procedure GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef; const TargetNamespace: String);
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList; const TargetNamespace: String);
     procedure LoadXSDTypes;
@@ -589,10 +586,7 @@ begin
   var ClassModule := Module;
 
   while Assigned(ClassModule) and not FindTypeDefinitionModule(ClassModule, TypeName, Result) do
-    if ClassModule.IsClassDefinition then
-      ClassModule := ClassModule.AsClassDefinition.ParentClass
-    else
-      ClassModule := nil;
+    ClassModule := ClassModule.ParentModule;
 
   if not Assigned(Result) then
   begin
@@ -925,13 +919,10 @@ begin
   end;
 end;
 
-function TXSDImporter.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TClassDefinition;
-var
-  ClassDefinition: TClassDefinition absolute Result;
-
+procedure TXSDImporter.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String);
 begin
-  Result := TClassDefinition.Create(ParentModule, TargetNamespace);
-  Result.Name := ComplexType.Name;
+  var ClassDefinition := TClassDefinition.Create(ParentModule, TargetNamespace);
+  ClassDefinition.Name := ComplexType.Name;
 
   GenerateProperties(ClassDefinition, ComplexType.ElementDefList, TargetNamespace);
 
@@ -949,6 +940,8 @@ begin
 
     &Property.AddXMLValueAttribute;
   end;
+
+  ParentModule.Classes.Add(ClassDefinition);
 end;
 
 procedure TXSDImporter.GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList; const TargetNamespace: String);
@@ -973,6 +966,7 @@ procedure TXSDImporter.GenerateProperty(const ClassDefinition: TClassDefinition;
 begin
   var NewProperty := AddProperty(ClassDefinition, ElementDefinition.Name);
   NewProperty.Optional := IsOptional(ElementDefinition);
+  var ParentTypeModule: TTypeModuleDefinition := ClassDefinition;
   var PropertyType := ElementDefinition.DataType;
 
   if CanGenerateClass(ElementDefinition) then
@@ -990,11 +984,13 @@ begin
     begin
       PropertyType := ComplexType;
 
-      ClassDefinition.AddClassType(GenerateClassDefinition(ClassDefinition.UnitDefinition, ComplexType, TargetNamespace));
+      GenerateClassDefinition(ParentTypeModule, ComplexType, TargetNamespace);
     end;
-  end;
+  end
+  else
+    ParentTypeModule := ClassDefinition.UnitDefinition;
 
-  NewProperty.PropertyType := CheckPropertyTypeDefinition(PropertyType, ClassDefinition);
+  NewProperty.PropertyType := CheckPropertyTypeDefinition(PropertyType, ParentTypeModule);
 
   if ElementDefinition.IsRepeating then
     NewProperty.PropertyType := TTypeArrayDefinition.Create(ClassDefinition, NewProperty.PropertyType);
@@ -1023,11 +1019,7 @@ begin
     CheckUnitTypeDefinition(Schema.SchemaDef.SimpleTypes[A], UnitDefinition);
 
   for var A := 0 to Pred(Schema.SchemaDef.ComplexTypes.Count) do
-  begin
-    var ClassDefinition := GenerateClassDefinition(UnitDefinition, Schema.SchemaDef.ComplexTypes[A], VarToStr(Schema.SchemaDef.TargetNamespace));
-
-    UnitDefinition.Classes.Add(ClassDefinition);
-  end;
+    GenerateClassDefinition(UnitDefinition, Schema.SchemaDef.ComplexTypes[A], VarToStr(Schema.SchemaDef.TargetNamespace));
 
   if Schema.SchemaDef.ElementDefs.Count > 0 then
   begin
@@ -1129,7 +1121,7 @@ var
   begin
     Result := CheckReservedName(FormatName(ClassDefinition.Name));
 
-    if Assigned(ClassDefinition.ParentClass) then
+    if Assigned(ClassDefinition.ParentModule) and ClassDefinition.ParentModule.IsClassDefinition then
       Result := GetTypePrefixName(Result);
   end;
 
@@ -1192,11 +1184,11 @@ var
   begin
     Result := GetClassName(ClassDefinition);
 
-    while Assigned(ClassDefinition.ParentClass) do
+    while Assigned(ClassDefinition.ParentModule) and ClassDefinition.ParentModule.IsClassDefinition do
     begin
-      Result := Format('%s.%s', [GetClassName(ClassDefinition.ParentClass), Result]);
+      Result := Format('%s.%s', [GetClassName(ClassDefinition.ParentModule.AsClassDefinition), Result]);
 
-      ClassDefinition := ClassDefinition.ParentClass;
+      ClassDefinition := ClassDefinition.ParentModule.AsClassDefinition;
     end;
   end;
 
@@ -1800,13 +1792,6 @@ end;
 procedure TClassDefinition.AddAtribute(const Value: String);
 begin
   Attributes.Add(Value);
-end;
-
-procedure TClassDefinition.AddClassType(const ClassDefinition: TClassDefinition);
-begin
-  ClassDefinition.ParentClass := Self;
-
-  FClasses.Add(ClassDefinition);
 end;
 
 procedure TClassDefinition.AddNamespaceAttribute(const Namespace: String);
