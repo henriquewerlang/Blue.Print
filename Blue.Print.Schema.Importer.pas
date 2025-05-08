@@ -177,7 +177,7 @@ type
   TTypeModuleDefinition = class(TTypeDefinition)
   private
     FClasses: TList<TClassDefinition>;
-    FDelayedTypes: TDictionary<String, TTypeDefinition>;
+    FDelayedTypes: TDictionary<String, TTypeDelayedDefinition>;
     FEnumerations: TList<TTypeEnumeration>;
   public
     constructor Create(const Module: TTypeModuleDefinition); virtual;
@@ -187,7 +187,7 @@ type
     function AddDelayedType(const TypeName: String): TTypeDelayedDefinition;
 
     property Classes: TList<TClassDefinition> read FClasses;
-    property DelayedTypes: TDictionary<String, TTypeDefinition> read FDelayedTypes;
+    property DelayedTypes: TDictionary<String, TTypeDelayedDefinition> read FDelayedTypes;
     property Enumerations: TList<TTypeEnumeration> read FEnumerations write FEnumerations;
   end;
 
@@ -328,6 +328,7 @@ type
     function CreateTypeAlias(const Module: TTypeModuleDefinition; const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
     function CreateUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition; virtual;
+    function FindTypeDefinitionInModule(const Module: TTypeModuleDefinition; const TypeName: String; var TypeDefinition: TTypeDefinition): Boolean;
     function GetFileNameFromSchemaFolder(const FileName: String): String;
     function LoadFile(const UnitFile: TUnitFileConfiguration): String;
     function LoadUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
@@ -348,6 +349,7 @@ type
     property ObjectType: TTypeDefinition read FObjectType;
     property StringType: TTypeDefinition read FStringType;
     property TimeType: TTypeDefinition read FTimeType;
+    property Units: TDictionary<TUnitDefinitionConfiguration, TUnitDefinition> read FUnits;
     property WordType: TTypeDefinition read FWordType;
   public
     constructor Create;
@@ -528,52 +530,6 @@ begin
 end;
 
 function TSchemaImporter.FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
-
-  function FindTypeDefinitionModule(const Module: TTypeModuleDefinition; const TypeName: String; var TypeDefinition: TTypeDefinition): Boolean;
-  begin
-    Result := False;
-
-    if Module.DelayedTypes.TryGetValue(TypeName, TypeDefinition) then
-      Exit(True);
-
-    for var ClassDefinition in Module.Classes do
-    begin
-      Result := ClassDefinition.Name = TypeName;
-
-      if Result then
-      begin
-        TypeDefinition := ClassDefinition;
-
-        Exit;
-      end;
-    end;
-
-    for var Enumerator in Module.Enumerations do
-    begin
-      Result := Enumerator.Name = TypeName;
-
-      if Result then
-      begin
-        TypeDefinition := Enumerator;
-
-        Exit;
-      end;
-    end;
-
-    if Module.IsUnitDefinition then
-      for var TypeAlias in Module.AsUnitDefinition.TypeAlias do
-      begin
-        Result := TypeAlias.Name = TypeName;
-
-        if Result then
-        begin
-          TypeDefinition := TypeAlias;
-
-          Exit;
-        end;
-      end;
-  end;
-
 begin
   Result := nil;
 
@@ -585,28 +541,8 @@ begin
 
   var ClassModule := Module;
 
-  while Assigned(ClassModule) and not FindTypeDefinitionModule(ClassModule, TypeName, Result) do
+  while Assigned(ClassModule) and not FindTypeDefinitionInModule(ClassModule, TypeName, Result) do
     ClassModule := ClassModule.ParentModule;
-
-  if not Assigned(Result) then
-  begin
-    var CurrentModule: TTypeModuleDefinition := nil;
-
-    for var SplitTypeName in TypeName.Split(['.']) do
-    begin
-      if Assigned(CurrentModule) then
-        FindTypeDefinitionModule(CurrentModule, SplitTypeName, Result)
-      else if not Assigned(Result) then
-        for var UnitDefinition in FUnits.Values do
-          if FindTypeDefinitionModule(UnitDefinition, SplitTypeName, Result) then
-            Break;
-
-      if Assigned(Result) and Result.IsClassDefinition then
-        CurrentModule := Result.AsClassDefinition
-      else
-        Break;
-    end;
-  end;
 
   if not Assigned(Result) and Assigned(Module) then
   begin
@@ -632,6 +568,48 @@ begin
         Exit(TypeAlias);
       end;
   end;
+end;
+
+function TSchemaImporter.FindTypeDefinitionInModule(const Module: TTypeModuleDefinition; const TypeName: String; var TypeDefinition: TTypeDefinition): Boolean;
+begin
+  Result := False;
+
+  for var ClassDefinition in Module.Classes do
+  begin
+    Result := ClassDefinition.Name = TypeName;
+
+    if Result then
+    begin
+      TypeDefinition := ClassDefinition;
+
+      Exit;
+    end;
+  end;
+
+  for var Enumerator in Module.Enumerations do
+  begin
+    Result := Enumerator.Name = TypeName;
+
+    if Result then
+    begin
+      TypeDefinition := Enumerator;
+
+      Exit;
+    end;
+  end;
+
+  if Module.IsUnitDefinition then
+    for var TypeAlias in Module.AsUnitDefinition.TypeAlias do
+    begin
+      Result := TypeAlias.Name = TypeName;
+
+      if Result then
+      begin
+        TypeDefinition := TypeAlias;
+
+        Exit;
+      end;
+    end;
 end;
 
 procedure TSchemaImporter.GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration);
@@ -1137,10 +1115,35 @@ var
       begin
         var TypeName := DelayedType.UnresolvedType;
 
-        DelayedType.TypeResolved := ResolveTypeDefinition(Importer.FindType(TypeName, DelayedType.ParentModule));
+        DelayedType.TypeResolved := Importer.FindType(TypeName, DelayedType.ParentModule);
 
-        if not Assigned(DelayedType.TypeResolved) then
-          DelayedType.TypeResolved := TUndefinedType.Create(TypeName);
+        if Assigned(DelayedType.TypeResolved) then
+          DelayedType.TypeResolved := ResolveTypeDefinition(DelayedType.TypeResolved)
+        else
+        begin
+          var CurrentModule: TTypeModuleDefinition := nil;
+          var TypeDefinitionFound: TTypeDefinition := nil;
+
+          for var SplitTypeName in TypeName.Split(['.']) do
+          begin
+            if Assigned(CurrentModule) then
+              Importer.FindTypeDefinitionInModule(CurrentModule, SplitTypeName, TypeDefinitionFound)
+            else if not Assigned(TypeDefinitionFound) then
+              for var UnitDefinition in Importer.Units.Values do
+                if Importer.FindTypeDefinitionInModule(UnitDefinition, SplitTypeName, TypeDefinitionFound) then
+                  Break;
+
+            if Assigned(TypeDefinitionFound) and TypeDefinitionFound.IsClassDefinition then
+              CurrentModule := TypeDefinitionFound.AsClassDefinition
+            else
+              Break;
+          end;
+
+          DelayedType.TypeResolved := TypeDefinitionFound;
+
+          if not Assigned(DelayedType.TypeResolved) then
+            DelayedType.TypeResolved := TUndefinedType.Create(TypeName);
+        end;
       end;
 
       Result := DelayedType.TypeResolved;
@@ -2326,7 +2329,12 @@ end;
 
 function TTypeModuleDefinition.AddDelayedType(const TypeName: String): TTypeDelayedDefinition;
 begin
-  Result := TTypeDelayedDefinition.Create(TypeName, Self);
+  if not DelayedTypes.TryGetValue(TypeName, Result) then
+  begin
+    Result := TTypeDelayedDefinition.Create(TypeName, Self);
+
+    DelayedTypes.Add(TypeName, Result);
+  end;
 end;
 
 constructor TTypeModuleDefinition.Create(const Module: TTypeModuleDefinition);
@@ -2334,7 +2342,7 @@ begin
   inherited;
 
   FClasses := TObjectList<TClassDefinition>.Create;
-  FDelayedTypes := TDictionary<String, TTypeDefinition>.Create;
+  FDelayedTypes := TDictionary<String, TTypeDelayedDefinition>.Create;
   FEnumerations := TObjectList<TTypeEnumeration>.Create;
 end;
 
