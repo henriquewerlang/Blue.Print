@@ -329,6 +329,7 @@ type
     function CreateUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition; virtual;
     function FindTypeDefinitionInModule(const Module: TTypeModuleDefinition; const TypeName: String; var TypeDefinition: TTypeDefinition): Boolean;
+    function FindTypeInUnits(const TypeName: String): TTypeDefinition;
     function GetFileNameFromSchemaFolder(const FileName: String): String;
     function LoadFile(const UnitFile: TUnitFileConfiguration): String;
     function LoadUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
@@ -611,6 +612,27 @@ begin
     end;
 end;
 
+function TSchemaImporter.FindTypeInUnits(const TypeName: String): TTypeDefinition;
+begin
+  var CurrentModule: TTypeModuleDefinition := nil;
+  Result := nil;
+
+  for var SplitTypeName in TypeName.Split(['.']) do
+  begin
+    if Assigned(CurrentModule) then
+      FindTypeDefinitionInModule(CurrentModule, SplitTypeName, Result)
+    else if not Assigned(Result) then
+      for var UnitDefinition in Units.Values do
+        if FindTypeDefinitionInModule(UnitDefinition, SplitTypeName, Result) then
+          Break;
+
+    if Assigned(Result) and Result.IsClassDefinition then
+      CurrentModule := Result.AsClassDefinition
+    else
+      Break;
+  end;
+end;
+
 procedure TSchemaImporter.GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration);
 begin
   var UnitDefinition := LoadUnit(UnitConfiguration);
@@ -631,7 +653,7 @@ begin
 
   for var TypeDefinitionConfig in Configuration.TypeDefinition do
   begin
-    var TypeDefinition := FindType(TypeDefinitionConfig.Name, nil);
+    var TypeDefinition := FindTypeInUnits(TypeDefinitionConfig.Name);
 
     if Assigned(TypeDefinition) then
     begin
@@ -1118,25 +1140,7 @@ var
 
         if not Assigned(DelayedType.TypeResolved) then
         begin
-          var CurrentModule: TTypeModuleDefinition := nil;
-          var TypeDefinitionFound: TTypeDefinition := nil;
-
-          for var SplitTypeName in TypeName.Split(['.']) do
-          begin
-            if Assigned(CurrentModule) then
-              Importer.FindTypeDefinitionInModule(CurrentModule, SplitTypeName, TypeDefinitionFound)
-            else if not Assigned(TypeDefinitionFound) then
-              for var UnitDefinition in Importer.Units.Values do
-                if Importer.FindTypeDefinitionInModule(UnitDefinition, SplitTypeName, TypeDefinitionFound) then
-                  Break;
-
-            if Assigned(TypeDefinitionFound) and TypeDefinitionFound.IsClassDefinition then
-              CurrentModule := TypeDefinitionFound.AsClassDefinition
-            else
-              Break;
-          end;
-
-          DelayedType.TypeResolved := TypeDefinitionFound;
+          DelayedType.TypeResolved := Importer.FindTypeInUnits(TypeName);
 
           if not Assigned(DelayedType.TypeResolved) then
             DelayedType.TypeResolved := TUndefinedType.Create(TypeName);
