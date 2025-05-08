@@ -897,6 +897,9 @@ begin
   Result := CheckEnumeration(&Type, UnitDefinition);
 
   if not Assigned(Result) then
+    Result := FindType(&Type.Name, UnitDefinition);
+
+  if not Assigned(Result) then
   begin
     var TypeAlias := CreateTypeAlias(UnitDefinition, &Type.Name, FindBaseType(&Type, UnitDefinition));
 
