@@ -327,6 +327,7 @@ type
   protected
     function CreateTypeAlias(const Module: TTypeModuleDefinition; const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
     function CreateUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
+    function CheckChangeTypeName(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition; virtual;
     function FindTypeDefinitionInModule(const Module: TTypeModuleDefinition; const TypeName: String; var TypeDefinition: TTypeDefinition): Boolean;
     function FindTypeInUnits(const TypeName: String): TTypeDefinition;
@@ -488,6 +489,15 @@ begin
   FTypeExternal.Add(TypeName, Result);
 end;
 
+function TSchemaImporter.CheckChangeTypeName(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
+begin
+  Result := nil;
+
+  for var TypeDefinitionConfig in Configuration.TypeDefinition do
+    if (TypeDefinitionConfig.Name = TypeName) and not TypeDefinitionConfig.ChangeType.IsEmpty then
+      Result := Module.AddDelayedType(TypeDefinitionConfig.ChangeType);
+end;
+
 constructor TSchemaImporter.Create;
 begin
   inherited;
@@ -543,31 +553,6 @@ begin
 
   while Assigned(ClassModule) and not FindTypeDefinitionInModule(ClassModule, TypeName, Result) do
     ClassModule := ClassModule.ParentModule;
-
-  if not Assigned(Result) and Assigned(Module) then
-  begin
-    var UnitDefintion: TUnitDefinition;
-
-    if Module.IsUnitDefinition then
-      UnitDefintion := Module.AsUnitDefinition
-    else
-      UnitDefintion := Module.AsClassDefinition.UnitDefinition;
-
-    for var TypeDefinitionConfig in Configuration.TypeDefinition do
-      if TypeDefinitionConfig.Name = TypeName then
-      begin
-        var TypeDefinition := FindType(TypeDefinitionConfig.ChangeType, nil);
-
-        if not Assigned(TypeDefinition) then
-          TypeDefinition := UnitDefintion.AddDelayedType(TypeDefinitionConfig.ChangeType);
-
-        var TypeAlias := CreateTypeAlias(UnitDefintion, TypeDefinitionConfig.Name, Module.AddDelayedType(TypeDefinitionConfig.ChangeType));
-
-        UnitDefintion.TypeAlias.Add(TypeAlias);
-
-        Exit(TypeAlias);
-      end;
-  end;
 end;
 
 function TSchemaImporter.FindTypeDefinitionInModule(const Module: TTypeModuleDefinition; const TypeName: String; var TypeDefinition: TTypeDefinition): Boolean;
@@ -838,9 +823,9 @@ end;
 
 function TXSDImporter.FindBaseType(const TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
 begin
-  Result := nil;
+  Result := CheckChangeTypeName(TypeDefinition.Name, Module);
 
-  if Assigned(TypeDefinition.BaseType) then
+  if not Assigned(Result) and Assigned(TypeDefinition.BaseType) then
   begin
     Result := FindType(TypeDefinition.BaseType.Name, Module);
 
