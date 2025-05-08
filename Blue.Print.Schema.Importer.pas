@@ -372,7 +372,6 @@ type
     function AddPropertyWithType(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef): TPropertyDefinition;
     function CanGenerateClass(const Element: IXMLElementDef): Boolean;
     function CheckPropertyTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
-    function CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
     function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
     function CheckEnumeration(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeEnumeration;
     function FindBaseType(TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
@@ -866,26 +865,23 @@ end;
 
 function TXSDImporter.CheckPropertyTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
 begin
-  Result := CheckTypeDefinition(&Type, Module);
+  Result := FindType(&Type.Name, Module);
 
   if not Assigned(Result) and not Module.IsUnitDefinition then
+  begin
     Result := CheckEnumeration(&Type, Module);
 
-  if not Assigned(Result) then
-    Result := FindBaseType(&Type, Module);
+    if not Assigned(Result) then
+      Result := FindBaseType(&Type, Module);
+  end;
 
   if not Assigned(Result) then
     Result := Module.AddDelayedType(&Type.Name);
 end;
 
-function TXSDImporter.CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
-begin
-  Result := FindType(&Type.Name, Module);
-end;
-
 function TXSDImporter.CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
 begin
-  Result := CheckTypeDefinition(&Type, UnitDefinition);
+  Result := FindType(&Type.Name, UnitDefinition);
 
   if not Assigned(Result) then
     Result := CheckEnumeration(&Type, UnitDefinition);
