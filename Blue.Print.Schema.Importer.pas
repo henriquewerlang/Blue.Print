@@ -375,7 +375,7 @@ type
     function CheckPropertyTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition; const IsReferenceType: Boolean): TTypeDefinition;
     function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
     function CheckEnumeration(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeEnumeration;
-    function FindBaseType(TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
+    function FindBaseType(const TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
     function IsReferenceType(const Element: IXMLTypedSchemaItem): Boolean;
 
     procedure AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
@@ -836,20 +836,17 @@ begin
   inherited;
 end;
 
-function TXSDImporter.FindBaseType(TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
+function TXSDImporter.FindBaseType(const TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
 begin
   Result := nil;
-  var TypeName := TypeDefinition.Name;
 
-  while not Assigned(Result) and not TypeDefinition.IsComplex and Assigned(TypeDefinition.BaseType) do
+  if Assigned(TypeDefinition.BaseType) then
   begin
-    TypeDefinition := TypeDefinition.BaseType;
+    Result := FindType(TypeDefinition.BaseType.Name, Module);
 
-    Result := FindType(TypeDefinition.Name, Module);
+    if not Assigned(Result) then
+      Result := Module.AddDelayedType(TypeDefinition.BaseType.Name);
   end;
-
-  if not Assigned(Result) then
-    raise Exception.CreateFmt('Base type not found for %s!', [TypeName]);
 end;
 
 function TXSDImporter.FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
