@@ -868,6 +868,9 @@ function TXSDImporter.CheckPropertyTypeDefinition(const &Type: IXMLTypeDef; cons
 begin
   Result := CheckTypeDefinition(&Type, Module);
 
+  if not Assigned(Result) and not Module.IsUnitDefinition then
+    Result := CheckEnumeration(&Type, Module);
+
   if not Assigned(Result) then
     Result := FindBaseType(&Type, Module);
 
@@ -878,14 +881,14 @@ end;
 function TXSDImporter.CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
 begin
   Result := FindType(&Type.Name, Module);
-
-  if not Assigned(Result) then
-    Result := CheckEnumeration(&Type, Module);
 end;
 
 function TXSDImporter.CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
 begin
   Result := CheckTypeDefinition(&Type, UnitDefinition);
+
+  if not Assigned(Result) then
+    Result := CheckEnumeration(&Type, UnitDefinition);
 
   if not Assigned(Result) then
   begin
@@ -965,7 +968,7 @@ begin
       GenerateClassDefinition(ParentTypeModule, ComplexType, TargetNamespace);
     end;
   end
-  else
+  else if IsReferenceType(ElementDefinition) then
     ParentTypeModule := ClassDefinition.UnitDefinition;
 
   NewProperty.PropertyType := CheckPropertyTypeDefinition(PropertyType, ParentTypeModule);
@@ -1117,9 +1120,7 @@ var
 
         DelayedType.TypeResolved := Importer.FindType(TypeName, DelayedType.ParentModule);
 
-        if Assigned(DelayedType.TypeResolved) then
-          DelayedType.TypeResolved := ResolveTypeDefinition(DelayedType.TypeResolved)
-        else
+        if not Assigned(DelayedType.TypeResolved) then
         begin
           var CurrentModule: TTypeModuleDefinition := nil;
           var TypeDefinitionFound: TTypeDefinition := nil;
@@ -1146,7 +1147,7 @@ var
         end;
       end;
 
-      Result := DelayedType.TypeResolved;
+      Result := ResolveTypeDefinition(DelayedType.TypeResolved);
     end;
   end;
 
@@ -2329,12 +2330,7 @@ end;
 
 function TTypeModuleDefinition.AddDelayedType(const TypeName: String): TTypeDelayedDefinition;
 begin
-  if not DelayedTypes.TryGetValue(TypeName, Result) then
-  begin
-    Result := TTypeDelayedDefinition.Create(TypeName, Self);
-
-    DelayedTypes.Add(TypeName, Result);
-  end;
+  Result := TTypeDelayedDefinition.Create(TypeName, Self);
 end;
 
 constructor TTypeModuleDefinition.Create(const Module: TTypeModuleDefinition);
