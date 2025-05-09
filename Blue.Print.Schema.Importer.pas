@@ -194,7 +194,7 @@ type
   TClassDefinition = class(TTypeModuleDefinition)
   private
     FInformations: TImplementationInformations;
-    FInheritedFrom: TClassDefinition;
+    FInheritedFrom: TTypeDefinition;
     FProperties: TList<TPropertyDefinition>;
     FTargetNamespace: String;
 
@@ -214,7 +214,7 @@ type
     procedure AddNamespaceAttribute(const Namespace: String);
 
     property Informations: TImplementationInformations read FInformations write FInformations;
-    property InheritedFrom: TClassDefinition read FInheritedFrom write FInheritedFrom;
+    property InheritedFrom: TTypeDefinition read FInheritedFrom write FInheritedFrom;
     property NeedAddFunction: Boolean read GetNeedAddFunction;
     property NeedImplementation: Boolean read GetNeedImplementation;
     property NeedDestructor: Boolean read GetNeedDestructor;
@@ -605,7 +605,10 @@ begin
   for var SplitTypeName in TypeName.Split(['.']) do
   begin
     if Assigned(CurrentModule) then
-      FindTypeDefinitionInModule(CurrentModule, SplitTypeName, Result)
+    begin
+      if not FindTypeDefinitionInModule(CurrentModule, SplitTypeName, Result) then
+        raise Exception.CreateFmt('Type name not found %s!', [TypeName]);
+    end
     else if not Assigned(Result) then
       for var UnitDefinition in Units do
         if FindTypeDefinitionInModule(UnitDefinition, SplitTypeName, Result) then
@@ -650,9 +653,9 @@ begin
 
       if not TypeDefinitionConfig.Inheritance.IsEmpty then
       begin
-        var ClassDefinition := TypeDefinition as TClassDefinition;
+        var ClassDefinition := TypeDefinition.AsClassDefinition;
 
-        ClassDefinition.InheritedFrom := FindType(TypeDefinitionConfig.Inheritance, nil) as TClassDefinition;
+        ClassDefinition.InheritedFrom := ClassDefinition.AddDelayedType(TypeDefinitionConfig.Inheritance);
       end;
     end;
   end;
@@ -1141,9 +1144,11 @@ var
           if not Assigned(DelayedType.TypeResolved) then
             DelayedType.TypeResolved := TUndefinedType.Create(TypeName);
         end;
+
+        DelayedType.TypeResolved := ResolveTypeDefinition(DelayedType.TypeResolved);
       end;
 
-      Result := ResolveTypeDefinition(DelayedType.TypeResolved);
+      Result := DelayedType.TypeResolved;
     end;
   end;
 
@@ -1331,7 +1336,7 @@ var
     function GetInheritence: String;
     begin
       if Assigned(ClassDefinition.InheritedFrom) then
-        Result := Format('(%s)', [GetClassImplementationName(ClassDefinition.InheritedFrom)])
+        Result := Format('(%s)', [GetClassImplementationName(ResolveTypeDefinition(ClassDefinition.InheritedFrom).AsClassDefinition)])
       else
         Result := EmptyStr;
     end;
@@ -1647,7 +1652,7 @@ var
           AddUnitDefinition(ClassDefinition.UnitDefinition);
 
           if Assigned(ClassDefinition.InheritedFrom) then
-            AddUnitDefinition(ClassDefinition.InheritedFrom.UnitDefinition);
+            AddUnitDefinition(ResolveTypeDefinition(ClassDefinition.InheritedFrom).AsClassDefinition.UnitDefinition);
         end
         else if TypeDefinition.IsEnumeration and TypeDefinition.ParentModule.IsUnitDefinition then
           AddUnitDefinition(TypeDefinition.ParentModule.AsUnitDefinition)
