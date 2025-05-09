@@ -321,7 +321,7 @@ type
     FStringType: TTypeDefinition;
     FTimeType: TTypeDefinition;
     FTypeExternal: TDictionary<String, TTypeDefinition>;
-    FUnits: TDictionary<TUnitDefinitionConfiguration, TUnitDefinition>;
+    FUnits: TList<TUnitDefinition>;
     FUnitFiles: TDictionary<TUnitFileConfiguration, TUnitDefinition>;
     FWordType: TTypeDefinition;
   protected
@@ -351,7 +351,7 @@ type
     property ObjectType: TTypeDefinition read FObjectType;
     property StringType: TTypeDefinition read FStringType;
     property TimeType: TTypeDefinition read FTimeType;
-    property Units: TDictionary<TUnitDefinitionConfiguration, TUnitDefinition> read FUnits;
+    property Units: TList<TUnitDefinition> read FUnits;
     property WordType: TTypeDefinition read FWordType;
   public
     constructor Create;
@@ -504,7 +504,7 @@ begin
 
   FBuildInType := TDictionary<String, TTypeDefinition>.Create(TIStringComparer.Ordinal);
   FTypeExternal := TObjectDictionary<String, TTypeDefinition>.Create([doOwnsValues], TIStringComparer.Ordinal);
-  FUnits := TObjectDictionary<TUnitDefinitionConfiguration, TUnitDefinition>.Create([doOwnsValues]);
+  FUnits := TObjectList<TUnitDefinition>.Create;
   FUnitFiles := TDictionary<TUnitFileConfiguration, TUnitDefinition>.Create;
 
   LoadInternalTypes;
@@ -523,7 +523,7 @@ begin
   Result.Name := UnitConfiguration.Name;
   Result.UnitConfiguration := UnitConfiguration;
 
-  FUnits.Add(UnitConfiguration, Result);
+  Units.Add(Result);
 end;
 
 destructor TSchemaImporter.Destroy;
@@ -607,7 +607,7 @@ begin
     if Assigned(CurrentModule) then
       FindTypeDefinitionInModule(CurrentModule, SplitTypeName, Result)
     else if not Assigned(Result) then
-      for var UnitDefinition in Units.Values do
+      for var UnitDefinition in Units do
         if FindTypeDefinitionInModule(UnitDefinition, SplitTypeName, Result) then
           Break;
 
@@ -657,7 +657,7 @@ begin
     end;
   end;
 
-  for var UnitDefinition in FUnits.Values do
+  for var UnitDefinition in Units do
     UnitDefinition.GenerateFile(Self);
 end;
 
@@ -749,8 +749,11 @@ end;
 
 function TSchemaImporter.LoadUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
 begin
-  if not FUnits.TryGetValue(UnitConfiguration, Result) then
-    Result := CreateUnit(UnitConfiguration);
+  for var &Unit in Units do
+    if &Unit.UnitConfiguration = UnitConfiguration then
+      Exit(&Unit);
+
+  Result := CreateUnit(UnitConfiguration);
 end;
 
 procedure TSchemaImporter.LoadUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
