@@ -894,10 +894,10 @@ end;
 
 function TXSDImporter.CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
 begin
-  Result := CheckEnumeration(&Type, UnitDefinition);
+  Result := FindType(&Type.Name, UnitDefinition);
 
   if not Assigned(Result) then
-    Result := FindType(&Type.Name, UnitDefinition);
+    Result := CheckEnumeration(&Type, UnitDefinition);
 
   if not Assigned(Result) then
   begin
@@ -911,27 +911,32 @@ end;
 
 procedure TXSDImporter.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String);
 begin
-  var ClassDefinition := TClassDefinition.Create(ParentModule, TargetNamespace);
-  ClassDefinition.Name := ComplexType.Name;
+  var ClassName := ComplexType.Name;
 
-  GenerateProperties(ClassDefinition, ComplexType.ElementDefList, TargetNamespace);
-
-  for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
+  if FindType(ClassName, ParentModule) = nil then
   begin
-    var Attribute := ComplexType.AttributeDefs[A];
-    var &Property := AddPropertyWithType(ClassDefinition, Attribute.Name, Attribute.DataType, IsReferenceType(Attribute));
+    var ClassDefinition := TClassDefinition.Create(ParentModule, TargetNamespace);
+    ClassDefinition.Name := ClassName;
 
-    AddPropertyAttribute(&Property, Attribute);
+    GenerateProperties(ClassDefinition, ComplexType.ElementDefList, TargetNamespace);
+
+    for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
+    begin
+      var Attribute := ComplexType.AttributeDefs[A];
+      var &Property := AddPropertyWithType(ClassDefinition, Attribute.Name, Attribute.DataType, IsReferenceType(Attribute));
+
+      AddPropertyAttribute(&Property, Attribute);
+    end;
+
+    if Assigned(ComplexType.BaseType) then
+    begin
+      var &Property := AddPropertyWithType(ClassDefinition, 'Value', ComplexType.BaseType, False);
+
+      &Property.AddXMLValueAttribute;
+    end;
+
+    ParentModule.Classes.Add(ClassDefinition);
   end;
-
-  if Assigned(ComplexType.BaseType) then
-  begin
-    var &Property := AddPropertyWithType(ClassDefinition, 'Value', ComplexType.BaseType, False);
-
-    &Property.AddXMLValueAttribute;
-  end;
-
-  ParentModule.Classes.Add(ClassDefinition);
 end;
 
 procedure TXSDImporter.GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList; const TargetNamespace: String);
