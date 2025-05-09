@@ -1492,6 +1492,11 @@ var
       Result := 'False';
   end;
 
+  function CreateObjectClass(const TypeDefinition: TTypeDefinition): String;
+  begin
+    Result := Format('%s.Create', [GetTypeName(TypeDefinition)]);
+  end;
+
   procedure GenerateClassImplementation(const ClassDefinition: TClassDefinition);
   begin
     if ClassDefinition.NeedImplementation then
@@ -1548,7 +1553,7 @@ var
 
           AddLine('  if not Assigned(%s) then', [PropertyFieldName]);
 
-          AddLine('    %s := %s.Create;', [PropertyFieldName, PropertyTypeName]);
+          AddLine('    %s := %s;', [PropertyFieldName, CreateObjectClass(PropertyType)]);
 
           AddLine;
 
@@ -1565,7 +1570,7 @@ var
 
           AddLine('begin');
 
-          AddLine('  Result := %s.Create;', [GetTypeName(GetArrayItemBaseType(PropertyType))]);
+          AddLine('  Result := %s;', [CreateObjectClass(GetArrayItemBaseType(PropertyType))]);
 
           AddLine;
 
