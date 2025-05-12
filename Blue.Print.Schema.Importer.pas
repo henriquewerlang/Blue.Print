@@ -447,7 +447,7 @@ begin
   Result := EmptyStr;
 
   for var Char in Value do
-    if CharInSet(Char, ['0'..'9', 'a'..'z', 'A'..'Z']) then
+    if CharInSet(Char, ['0'..'9', 'a'..'z', 'A'..'Z', '_']) then
       Result := Result + Char;
 end;
 
