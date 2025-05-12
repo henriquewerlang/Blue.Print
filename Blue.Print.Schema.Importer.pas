@@ -324,6 +324,7 @@ type
     FUnits: TList<TUnitDefinition>;
     FUnitFiles: TDictionary<TUnitFileConfiguration, TUnitDefinition>;
     FWordType: TTypeDefinition;
+    FTValueType: TTypeDefinition;
   protected
     function CreateTypeAlias(const Module: TTypeModuleDefinition; const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
     function CreateUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
@@ -351,6 +352,7 @@ type
     property ObjectType: TTypeDefinition read FObjectType;
     property StringType: TTypeDefinition read FStringType;
     property TimeType: TTypeDefinition read FTimeType;
+    property TValueType: TTypeDefinition read FTValueType;
     property Units: TList<TUnitDefinition> read FUnits;
     property WordType: TTypeDefinition read FWordType;
   public
@@ -399,19 +401,15 @@ type
     FJSONSchema: TSchema;
     FReferenceClassDefinition: TClassDefinition;
     FSchemas: TDictionary<String, TSchema>;
-    FAnyTypeDefinition: TTypeDefinition;
 
     function CreateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String): TClassDefinition;
     function DefineProperty(const ClassDefinition: TClassDefinition; const PropertyName: String; const PropertySchemaType: TSchema): TPropertyDefinition;
-    function GetAnyTypeDefinition: TTypeDefinition;
     function GetReferenceName(const Schema: TSchema): String;
     function GetReferenceSchema(const Schema: TSchema): TSchema;
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
     function LoadSchema(const UnitFileConfiguration: TUnitFileConfiguration): TSchema;
 
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
-
-    property AnyTypeDefinition: TTypeDefinition read GetAnyTypeDefinition;
   protected
     procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration); override;
   public
@@ -713,19 +711,24 @@ end;
 
 procedure TSchemaImporter.LoadInternalTypes;
 
-  function AddTypeDefinition(const TypeDefinition: TTypeDefinition; const TypeName: String): TTypeDefinition;
+  function AddTypeDefinition(const TypeDefinition: TTypeDefinition; const UnitName, TypeName: String): TTypeDefinition;
   begin
     Result := TypeDefinition;
-    Result.Name := 'System.' + TypeName;
+    Result.Name := Format('%s.%s', [UnitName, TypeName]);
 
     FBuildInType.Add(Result.Name, Result);
 
     FBuildInType.Add(TypeName, CreateTypeAlias(nil, TypeName, Result));
   end;
 
-  function AddType(const TypeName: String): TTypeDefinition;
+  function AddType(const UnitName, TypeName: String): TTypeDefinition; overload;
   begin
-    Result := AddTypeDefinition(TTypeDefinition.Create(nil), TypeName);
+    Result := AddTypeDefinition(TTypeDefinition.Create(nil), UnitName, TypeName);
+  end;
+
+  function AddType(const TypeName: String): TTypeDefinition; overload;
+  begin
+    Result := AddType('System', TypeName);
   end;
 
   function AddNumberType(const TypeName: String): TTypeDefinition;
@@ -735,7 +738,7 @@ procedure TSchemaImporter.LoadInternalTypes;
   end;
 
 begin
-  FBooleanType := AddTypeDefinition(TTypeEnumeration.Create(nil), 'Boolean');
+  FBooleanType := AddTypeDefinition(TTypeEnumeration.Create(nil), 'System', 'Boolean');
   FCardinalType := AddNumberType('Cardinal');
   FDateTimeType := AddNumberType('TDateTime');
   FDateType := AddNumberType('TDate');
@@ -747,6 +750,7 @@ begin
   FStringType := AddType('String');
   FStringType.FIsStringType := True;
   FTimeType := AddNumberType('TTime');
+  FTValueType := AddTypeDefinition(AddTypeExternal('System.Rtti', 'System.Rtti.TValue'), 'System.Rtti', 'TValue');
   FWordType := AddNumberType('Word');
 end;
 
@@ -1247,6 +1251,18 @@ var
       Result := Format('Undefined { %s }', [TypeDefinition.Name])
     else
       Result := ResolveTypeDefinition(TypeDefinition).Name;
+  end;
+
+  function GetBaseTypeName(const TypeDefinition: TTypeDefinition): String;
+  begin
+    var ResolvedTypeDefinition := ResolveTypeAlias(TypeDefinition);
+
+    if ResolvedTypeDefinition.IsArrayType then
+      Result := Format('TArray<%s>', [GetBaseTypeName(GetArrayItemType(ResolvedTypeDefinition))])
+    else if ResolvedTypeDefinition.IsMapType then
+      Result := Format('TMap<%s, %s>', [GetBaseTypeName(ResolvedTypeDefinition.AsMapType.KeyType), GetBaseTypeName(ResolvedTypeDefinition.AsMapType.ValueType)])
+    else
+      Result := GetTypeName(ResolvedTypeDefinition);
   end;
 
   function GetPropertyTypeName(const &Property: TPropertyDefinition): String;
@@ -1769,7 +1785,7 @@ begin
     AddLine('  // Forward type alias');
 
     for var TypeAlias in TypeAlias do
-      AddLine('  %s = %s;', [TypeAlias.Name, GetTypeName(ResolveTypeAlias(TypeAlias))]);
+      AddLine('  %s = %s;', [TypeAlias.Name, GetBaseTypeName(TypeAlias)]);
 
     AddLine;
   end;
@@ -2161,6 +2177,22 @@ var
       Result.Values.Add(EnumeratorValue.ToString);
   end;
 
+  function GetAnyTypeDefinition: TTypeDefinition;
+  const
+    ANY_TYPE_NAME = 'any';
+
+  begin
+    Result := FindType(ANY_TYPE_NAME, Module);
+
+    if not Assigned(Result) then
+    begin
+      var AliasType := CreateTypeAlias(Module, ANY_TYPE_NAME, TValueType);
+      Result := AliasType;
+
+      UnitDefinition.AddTypeAlias(AliasType);
+    end;
+  end;
+
   function GetPropertyName(const Schema: TSchema; var PropertyName: String): Boolean;
   begin
     if not Schema.ref.IsEmpty then
@@ -2215,7 +2247,7 @@ begin
           Result := InnerClassDefinition;
         end
         else
-          Result := AnyTypeDefinition;
+          Result := GetAnyTypeDefinition;
       end;
   end;
 end;
@@ -2239,20 +2271,15 @@ begin
     var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
 
     if TypeDefinition.IsEnumeration then
-      UnitDefinition.Enumerations.Add(TypeDefinition.AsTypeEnumeration)
+    begin
+      if not FBuildInType.ContainsKey(TypeDefinition.Name) then
+        UnitDefinition.Enumerations.Add(TypeDefinition.AsTypeEnumeration)
+    end
     else if not TypeDefinition.IsClassDefinition then
       UnitDefinition.AddTypeAlias(CreateTypeAlias(UnitDefinition, Definition.Key, TypeDefinition));
   end;
 
   GenerateProperties(UnitClass, FJSONSchema);
-end;
-
-function TJSONSchemaImport.GetAnyTypeDefinition: TTypeDefinition;
-begin
-  if not Assigned(FAnyTypeDefinition) then
-    FAnyTypeDefinition := CreateTypeAlias(nil, 'any', AddTypeExternal('System.Rtti', 'TValue'));
-
-  Result := FAnyTypeDefinition;
 end;
 
 function TJSONSchemaImport.GetReferenceName(const Schema: TSchema): String;
