@@ -14,29 +14,30 @@ type
   [EnumValue('array, boolean, integer, null, number, object, string')]
   simpleTypes = (&array, boolean, integer, null, number, &object, &string);
   // Forward class declaration
-  TSchema = class;
+  TJSONSchema = class;
   PositiveIntegerDefault0 = class;
   AdditionalItems = class;
   DependenciesAdditionalProperties = class;
   AdditionalProperties = class;
   Items = class;
   &Type = class;
-  TSchemaOpenAPI20 = class;
+  TOpenAPIDefinition = class;
   JsonReference = class;
   Response = class;
   Header = class;
-  Schema = class;
-  FileSchema = class;
-  ExternalDocs = class;
   Operation = class;
   Consumes = class;
   ParametersListArrayItem = class;
   Parameter = class;
   BodyParameter = class;
+  Schema = class;
+  Xml = class;
+  ExternalDocs = class;
   Produces = class;
   Info = class;
   License = class;
   Contact = class;
+  FileSchema = class;
   Oauth2PasswordSecurity = class;
   Oauth2AccessCodeSecurity = class;
   BasicAuthenticationSecurity = class;
@@ -45,13 +46,12 @@ type
   Oauth2ApplicationSecurity = class;
   SecurityDefinitionsAdditionalProperties = class;
   Oauth2ImplicitSecurity = class;
-  Xml = class;
   ResponseValue = class;
   PathItem = class;
   Tag = class;
 
   // Forward type alias
-  schemaArray = TArray<Blue.Print.Open.API.Schema.v20.TSchema>;
+  schemaArray = TArray<Blue.Print.Open.API.Schema.v20.TJSONSchema>;
   positiveInteger = System.Integer;
   stringArray = TArray<System.String>;
   any = System.Rtti.TValue;
@@ -89,7 +89,7 @@ type
   headers = TMap<System.String, Blue.Print.Open.API.Schema.v20.Header>;
   examples = TMap<System.String, System.Rtti.TValue>;
 
-  TSchema = class
+  TJSONSchema = class
   private
     FAnyOf: schemaArray;
     FExclusiveMaximum: System.Boolean;
@@ -97,8 +97,8 @@ type
     FExclusiveMinimum: System.Boolean;
     FAllOf: schemaArray;
     FSchema: System.String;
-    FProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
-    FNot: Blue.Print.Open.API.Schema.v20.TSchema;
+    FProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TJSONSchema>;
+    FNot: Blue.Print.Open.API.Schema.v20.TJSONSchema;
     FMaxLength: positiveInteger;
     FEnum: TArray<any>;
     FAdditionalItems: Blue.Print.Open.API.Schema.v20.AdditionalItems;
@@ -109,12 +109,12 @@ type
     FMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
     FTitle: System.String;
     FMultipleOf: System.Double;
-    FPatternProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
+    FPatternProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TJSONSchema>;
     FOneOf: schemaArray;
     FMinimum: System.Double;
     FDependencies: TMap<System.String, Blue.Print.Open.API.Schema.v20.DependenciesAdditionalProperties>;
     FAdditionalProperties: Blue.Print.Open.API.Schema.v20.AdditionalProperties;
-    FDefinitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
+    FDefinitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.TJSONSchema>;
     FMaxProperties: positiveInteger;
     FMaxItems: positiveInteger;
     FUniqueItems: System.Boolean;
@@ -128,15 +128,15 @@ type
     FExclusiveMinimumIsStored: Boolean;
     FUniqueItemsIsStored: Boolean;
 
-    function GetProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
-    function GetNot: Blue.Print.Open.API.Schema.v20.TSchema;
+    function GetProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TJSONSchema>;
+    function GetNot: Blue.Print.Open.API.Schema.v20.TJSONSchema;
     function GetAdditionalItems: Blue.Print.Open.API.Schema.v20.AdditionalItems;
     function GetMinProperties: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
     function GetMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
-    function GetPatternProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
+    function GetPatternProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TJSONSchema>;
     function GetDependencies: TMap<System.String, Blue.Print.Open.API.Schema.v20.DependenciesAdditionalProperties>;
     function GetAdditionalProperties: Blue.Print.Open.API.Schema.v20.AdditionalProperties;
-    function GetDefinitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
+    function GetDefinitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.TJSONSchema>;
     function GetItems: Blue.Print.Open.API.Schema.v20.Items;
     function GetMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
     function GetType: Blue.Print.Open.API.Schema.v20.&Type;
@@ -176,9 +176,9 @@ type
   public
     destructor Destroy; override;
 
-    function AddAnyOf: Blue.Print.Open.API.Schema.v20.TSchema;
-    function AddAllOf: Blue.Print.Open.API.Schema.v20.TSchema;
-    function AddOneOf: Blue.Print.Open.API.Schema.v20.TSchema;
+    function AddAnyOf: Blue.Print.Open.API.Schema.v20.TJSONSchema;
+    function AddAllOf: Blue.Print.Open.API.Schema.v20.TJSONSchema;
+    function AddOneOf: Blue.Print.Open.API.Schema.v20.TJSONSchema;
 
     property IsAnyOfStored: Boolean read GetAnyOfStored;
     property IsExclusiveMaximumStored: Boolean read FExclusiveMaximumIsStored;
@@ -221,9 +221,9 @@ type
     property allOf: schemaArray read FAllOf write FAllOf stored GetAllOfStored;
     [FieldName('$schema')]
     property schema: System.String read FSchema write FSchema stored GetSchemaStored;
-    property properties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema> read GetProperties write FProperties stored GetPropertiesStored;
+    property properties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TJSONSchema> read GetProperties write FProperties stored GetPropertiesStored;
     [FieldName('not')]
-    property &not: Blue.Print.Open.API.Schema.v20.TSchema read GetNot write FNot stored GetNotStored;
+    property &not: Blue.Print.Open.API.Schema.v20.TJSONSchema read GetNot write FNot stored GetNotStored;
     property maxLength: positiveInteger read FMaxLength write FMaxLength stored GetMaxLengthStored;
     property enum: TArray<any> read FEnum write FEnum stored GetEnumStored;
     property additionalItems: Blue.Print.Open.API.Schema.v20.AdditionalItems read GetAdditionalItems write FAdditionalItems stored GetAdditionalItemsStored;
@@ -234,12 +234,12 @@ type
     property minLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
     property title: System.String read FTitle write FTitle stored GetTitleStored;
     property multipleOf: System.Double read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
-    property patternProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema> read GetPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
+    property patternProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TJSONSchema> read GetPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
     property oneOf: schemaArray read FOneOf write FOneOf stored GetOneOfStored;
     property minimum: System.Double read FMinimum write FMinimum stored GetMinimumStored;
     property dependencies: TMap<System.String, Blue.Print.Open.API.Schema.v20.DependenciesAdditionalProperties> read GetDependencies write FDependencies stored GetDependenciesStored;
     property additionalProperties: Blue.Print.Open.API.Schema.v20.AdditionalProperties read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
-    property definitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema> read GetDefinitions write FDefinitions stored GetDefinitionsStored;
+    property definitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.TJSONSchema> read GetDefinitions write FDefinitions stored GetDefinitionsStored;
     property maxProperties: positiveInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
     property maxItems: positiveInteger read FMaxItems write FMaxItems stored GetMaxItemsStored;
     property uniqueItems: System.Boolean read FUniqueItems write SetUniqueItems stored FUniqueItemsIsStored;
@@ -268,10 +268,10 @@ type
   AdditionalItems = class
   private
     FBoolean: Boolean;
-    FSchema: Blue.Print.Open.API.Schema.v20.TSchema;
+    FSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
     FBooleanIsStored: Boolean;
 
-    function GetSchema: Blue.Print.Open.API.Schema.v20.TSchema;
+    function GetSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
     function GetSchemaStored: Boolean;
     procedure SetBoolean(const Value: Boolean);
   public
@@ -281,16 +281,16 @@ type
     property IsSchemaStored: Boolean read GetSchemaStored;
   published
     property boolean: Boolean read FBoolean write SetBoolean stored FBooleanIsStored;
-    property Schema: Blue.Print.Open.API.Schema.v20.TSchema read GetSchema write FSchema stored GetSchemaStored;
+    property Schema: Blue.Print.Open.API.Schema.v20.TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
   end;
 
   [SingleObject]
   DependenciesAdditionalProperties = class
   private
-    FSchema: Blue.Print.Open.API.Schema.v20.TSchema;
+    FSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
     FStringArray: stringArray;
 
-    function GetSchema: Blue.Print.Open.API.Schema.v20.TSchema;
+    function GetSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
     function GetSchemaStored: Boolean;
     function GetStringArrayStored: Boolean;
   public
@@ -299,7 +299,7 @@ type
     property IsSchemaStored: Boolean read GetSchemaStored;
     property IsStringArrayStored: Boolean read GetStringArrayStored;
   published
-    property Schema: Blue.Print.Open.API.Schema.v20.TSchema read GetSchema write FSchema stored GetSchemaStored;
+    property Schema: Blue.Print.Open.API.Schema.v20.TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
     property stringArray: stringArray read FStringArray write FStringArray stored GetStringArrayStored;
   end;
 
@@ -307,10 +307,10 @@ type
   AdditionalProperties = class
   private
     FBoolean: Boolean;
-    FSchema: Blue.Print.Open.API.Schema.v20.TSchema;
+    FSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
     FBooleanIsStored: Boolean;
 
-    function GetSchema: Blue.Print.Open.API.Schema.v20.TSchema;
+    function GetSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
     function GetSchemaStored: Boolean;
     procedure SetBoolean(const Value: Boolean);
   public
@@ -320,27 +320,27 @@ type
     property IsSchemaStored: Boolean read GetSchemaStored;
   published
     property boolean: Boolean read FBoolean write SetBoolean stored FBooleanIsStored;
-    property Schema: Blue.Print.Open.API.Schema.v20.TSchema read GetSchema write FSchema stored GetSchemaStored;
+    property Schema: Blue.Print.Open.API.Schema.v20.TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
   end;
 
   [SingleObject]
   Items = class
   private
-    FSchema: Blue.Print.Open.API.Schema.v20.TSchema;
+    FSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
     FSchemaArray: schemaArray;
 
-    function GetSchema: Blue.Print.Open.API.Schema.v20.TSchema;
+    function GetSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
     function GetSchemaStored: Boolean;
     function GetSchemaArrayStored: Boolean;
   public
     destructor Destroy; override;
 
-    function AddSchemaArray: Blue.Print.Open.API.Schema.v20.TSchema;
+    function AddSchemaArray: Blue.Print.Open.API.Schema.v20.TJSONSchema;
 
     property IsSchemaStored: Boolean read GetSchemaStored;
     property IsSchemaArrayStored: Boolean read GetSchemaArrayStored;
   published
-    property Schema: Blue.Print.Open.API.Schema.v20.TSchema read GetSchema write FSchema stored GetSchemaStored;
+    property Schema: Blue.Print.Open.API.Schema.v20.TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
     property schemaArray: schemaArray read FSchemaArray write FSchemaArray stored GetSchemaArrayStored;
   end;
 
@@ -362,7 +362,7 @@ type
     property &array: TArray<simpleTypes> read FArray write FArray stored GetArrayStored;
   end;
 
-  TSchemaOpenAPI20 = class
+  TOpenAPIDefinition = class
   private
     FExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
     FTags: TArray<Blue.Print.Open.API.Schema.v20.Tag>;
@@ -448,11 +448,10 @@ type
   private
     FHeaders: TMap<System.String, Blue.Print.Open.API.Schema.v20.Header>;
     FDescription: System.String;
-    FSchema: Blue.Print.Open.API.Schema.v20.Schema;
+    FSchema: TArray<any>;
     FExamples: TMap<System.String, any>;
 
     function GetHeaders: TMap<System.String, Blue.Print.Open.API.Schema.v20.Header>;
-    function GetSchema: Blue.Print.Open.API.Schema.v20.Schema;
     function GetExamples: TMap<System.String, any>;
     function GetHeadersStored: Boolean;
     function GetSchemaStored: Boolean;
@@ -466,7 +465,7 @@ type
   published
     property headers: TMap<System.String, Blue.Print.Open.API.Schema.v20.Header> read GetHeaders write FHeaders stored GetHeadersStored;
     property description: System.String read FDescription write FDescription;
-    property schema: Blue.Print.Open.API.Schema.v20.Schema read GetSchema write FSchema stored GetSchemaStored;
+    property schema: TArray<any> read FSchema write FSchema stored GetSchemaStored;
     property examples: TMap<System.String, any> read GetExamples write FExamples stored GetExamplesStored;
   end;
 
@@ -555,86 +554,6 @@ type
     property multipleOf: System.Double read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
     [FieldName('type')]
     property &type: Blue.Print.Open.API.Schema.v20.&Type read GetType write FType;
-  end;
-
-  [SingleObject]
-  Schema = class
-  private
-    FSchema: Blue.Print.Open.API.Schema.v20.Schema;
-    FFileSchema: Blue.Print.Open.API.Schema.v20.FileSchema;
-
-    function GetSchema: Blue.Print.Open.API.Schema.v20.Schema;
-    function GetFileSchema: Blue.Print.Open.API.Schema.v20.FileSchema;
-    function GetSchemaStored: Boolean;
-    function GetFileSchemaStored: Boolean;
-  public
-    destructor Destroy; override;
-
-    property IsSchemaStored: Boolean read GetSchemaStored;
-    property IsFileSchemaStored: Boolean read GetFileSchemaStored;
-  published
-    property schema: Blue.Print.Open.API.Schema.v20.Schema read GetSchema write FSchema stored GetSchemaStored;
-    property fileSchema: Blue.Print.Open.API.Schema.v20.FileSchema read GetFileSchema write FFileSchema stored GetFileSchemaStored;
-  end;
-
-  FileSchema = class
-  private
-    FFormat: System.String;
-    FDescription: System.String;
-    FDefault: any;
-    FReadOnly: System.Boolean;
-    FTitle: System.String;
-    FExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
-    FRequired: stringArray;
-    FType: Blue.Print.Open.API.Schema.v20.&Type;
-    FExample: any;
-    FReadOnlyIsStored: Boolean;
-
-    function GetExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
-    function GetType: Blue.Print.Open.API.Schema.v20.&Type;
-    function GetFormatStored: Boolean;
-    function GetDescriptionStored: Boolean;
-    function GetDefaultStored: Boolean;
-    function GetTitleStored: Boolean;
-    function GetExternalDocsStored: Boolean;
-    function GetRequiredStored: Boolean;
-    function GetExampleStored: Boolean;
-    procedure SetReadOnly(const Value: System.Boolean);
-  public
-    destructor Destroy; override;
-
-    property IsFormatStored: Boolean read GetFormatStored;
-    property IsDescriptionStored: Boolean read GetDescriptionStored;
-    property IsDefaultStored: Boolean read GetDefaultStored;
-    property IsReadOnlyStored: Boolean read FReadOnlyIsStored;
-    property IsTitleStored: Boolean read GetTitleStored;
-    property IsExternalDocsStored: Boolean read GetExternalDocsStored;
-    property IsRequiredStored: Boolean read GetRequiredStored;
-    property IsExampleStored: Boolean read GetExampleStored;
-  published
-    property format: System.String read FFormat write FFormat stored GetFormatStored;
-    property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-    property default: any read FDefault write FDefault stored GetDefaultStored;
-    property readOnly: System.Boolean read FReadOnly write SetReadOnly stored FReadOnlyIsStored;
-    property title: System.String read FTitle write FTitle stored GetTitleStored;
-    property externalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
-    property required: stringArray read FRequired write FRequired stored GetRequiredStored;
-    [FieldName('type')]
-    property &type: Blue.Print.Open.API.Schema.v20.&Type read GetType write FType;
-    property example: any read FExample write FExample stored GetExampleStored;
-  end;
-
-  ExternalDocs = class
-  private
-    FDescription: System.String;
-    FUrl: System.String;
-
-    function GetDescriptionStored: Boolean;
-  public
-    property IsDescriptionStored: Boolean read GetDescriptionStored;
-  published
-    property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-    property url: System.String read FUrl write FUrl;
   end;
 
   Operation = class
@@ -777,6 +696,194 @@ type
     property schema: Blue.Print.Open.API.Schema.v20.Schema read GetSchema write FSchema;
   end;
 
+  Schema = class
+  private
+    FExample: any;
+    FExclusiveMaximum: System.Boolean;
+    FMinimum: System.Double;
+    FFormat: System.String;
+    FExclusiveMinimum: System.Boolean;
+    FAdditionalProperties: Blue.Print.Open.API.Schema.v20.AdditionalProperties;
+    FAllOf: TArray<Blue.Print.Open.API.Schema.v20.Schema>;
+    FProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.Schema>;
+    FDiscriminator: System.String;
+    FMaxLength: positiveInteger;
+    FEnum: TArray<any>;
+    FRef: System.String;
+    FMaxProperties: positiveInteger;
+    FXml: Blue.Print.Open.API.Schema.v20.Xml;
+    FMaxItems: positiveInteger;
+    FUniqueItems: System.Boolean;
+    FDescription: System.String;
+    FMaximum: System.Double;
+    FDefault: any;
+    FPattern: System.String;
+    FMinProperties: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+    FMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+    FItems: Blue.Print.Open.API.Schema.v20.Items;
+    FTitle: System.String;
+    FReadOnly: System.Boolean;
+    FMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+    FExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
+    FMultipleOf: System.Double;
+    FRequired: stringArray;
+    FType: Blue.Print.Open.API.Schema.v20.&Type;
+    FExclusiveMaximumIsStored: Boolean;
+    FExclusiveMinimumIsStored: Boolean;
+    FUniqueItemsIsStored: Boolean;
+    FReadOnlyIsStored: Boolean;
+
+    function GetAdditionalProperties: Blue.Print.Open.API.Schema.v20.AdditionalProperties;
+    function GetProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.Schema>;
+    function GetXml: Blue.Print.Open.API.Schema.v20.Xml;
+    function GetMinProperties: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+    function GetMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+    function GetItems: Blue.Print.Open.API.Schema.v20.Items;
+    function GetMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+    function GetExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
+    function GetType: Blue.Print.Open.API.Schema.v20.&Type;
+    function GetExampleStored: Boolean;
+    function GetMinimumStored: Boolean;
+    function GetFormatStored: Boolean;
+    function GetAdditionalPropertiesStored: Boolean;
+    function GetAllOfStored: Boolean;
+    function GetPropertiesStored: Boolean;
+    function GetDiscriminatorStored: Boolean;
+    function GetMaxLengthStored: Boolean;
+    function GetEnumStored: Boolean;
+    function GetRefStored: Boolean;
+    function GetMaxPropertiesStored: Boolean;
+    function GetXmlStored: Boolean;
+    function GetMaxItemsStored: Boolean;
+    function GetDescriptionStored: Boolean;
+    function GetMaximumStored: Boolean;
+    function GetDefaultStored: Boolean;
+    function GetPatternStored: Boolean;
+    function GetMinPropertiesStored: Boolean;
+    function GetMinLengthStored: Boolean;
+    function GetItemsStored: Boolean;
+    function GetTitleStored: Boolean;
+    function GetMinItemsStored: Boolean;
+    function GetExternalDocsStored: Boolean;
+    function GetMultipleOfStored: Boolean;
+    function GetRequiredStored: Boolean;
+    function GetTypeStored: Boolean;
+    procedure SetExclusiveMaximum(const Value: System.Boolean);
+    procedure SetExclusiveMinimum(const Value: System.Boolean);
+    procedure SetUniqueItems(const Value: System.Boolean);
+    procedure SetReadOnly(const Value: System.Boolean);
+  public
+    destructor Destroy; override;
+
+    function AddAllOf: Blue.Print.Open.API.Schema.v20.Schema;
+
+    property IsExampleStored: Boolean read GetExampleStored;
+    property IsExclusiveMaximumStored: Boolean read FExclusiveMaximumIsStored;
+    property IsMinimumStored: Boolean read GetMinimumStored;
+    property IsFormatStored: Boolean read GetFormatStored;
+    property IsExclusiveMinimumStored: Boolean read FExclusiveMinimumIsStored;
+    property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+    property IsAllOfStored: Boolean read GetAllOfStored;
+    property IsPropertiesStored: Boolean read GetPropertiesStored;
+    property IsDiscriminatorStored: Boolean read GetDiscriminatorStored;
+    property IsMaxLengthStored: Boolean read GetMaxLengthStored;
+    property IsEnumStored: Boolean read GetEnumStored;
+    property IsRefStored: Boolean read GetRefStored;
+    property IsMaxPropertiesStored: Boolean read GetMaxPropertiesStored;
+    property IsXmlStored: Boolean read GetXmlStored;
+    property IsMaxItemsStored: Boolean read GetMaxItemsStored;
+    property IsUniqueItemsStored: Boolean read FUniqueItemsIsStored;
+    property IsDescriptionStored: Boolean read GetDescriptionStored;
+    property IsMaximumStored: Boolean read GetMaximumStored;
+    property IsDefaultStored: Boolean read GetDefaultStored;
+    property IsPatternStored: Boolean read GetPatternStored;
+    property IsMinPropertiesStored: Boolean read GetMinPropertiesStored;
+    property IsMinLengthStored: Boolean read GetMinLengthStored;
+    property IsItemsStored: Boolean read GetItemsStored;
+    property IsTitleStored: Boolean read GetTitleStored;
+    property IsReadOnlyStored: Boolean read FReadOnlyIsStored;
+    property IsMinItemsStored: Boolean read GetMinItemsStored;
+    property IsExternalDocsStored: Boolean read GetExternalDocsStored;
+    property IsMultipleOfStored: Boolean read GetMultipleOfStored;
+    property IsRequiredStored: Boolean read GetRequiredStored;
+    property IsTypeStored: Boolean read GetTypeStored;
+  published
+    property example: any read FExample write FExample stored GetExampleStored;
+    property exclusiveMaximum: System.Boolean read FExclusiveMaximum write SetExclusiveMaximum stored FExclusiveMaximumIsStored;
+    property minimum: System.Double read FMinimum write FMinimum stored GetMinimumStored;
+    property format: System.String read FFormat write FFormat stored GetFormatStored;
+    property exclusiveMinimum: System.Boolean read FExclusiveMinimum write SetExclusiveMinimum stored FExclusiveMinimumIsStored;
+    property additionalProperties: Blue.Print.Open.API.Schema.v20.AdditionalProperties read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+    property allOf: TArray<Blue.Print.Open.API.Schema.v20.Schema> read FAllOf write FAllOf stored GetAllOfStored;
+    property properties: TMap<System.String, Blue.Print.Open.API.Schema.v20.Schema> read GetProperties write FProperties stored GetPropertiesStored;
+    property discriminator: System.String read FDiscriminator write FDiscriminator stored GetDiscriminatorStored;
+    property maxLength: positiveInteger read FMaxLength write FMaxLength stored GetMaxLengthStored;
+    property enum: TArray<any> read FEnum write FEnum stored GetEnumStored;
+    [FieldName('$ref')]
+    property ref: System.String read FRef write FRef stored GetRefStored;
+    property maxProperties: positiveInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
+    property xml: Blue.Print.Open.API.Schema.v20.Xml read GetXml write FXml stored GetXmlStored;
+    property maxItems: positiveInteger read FMaxItems write FMaxItems stored GetMaxItemsStored;
+    property uniqueItems: System.Boolean read FUniqueItems write SetUniqueItems stored FUniqueItemsIsStored;
+    property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+    property maximum: System.Double read FMaximum write FMaximum stored GetMaximumStored;
+    property default: any read FDefault write FDefault stored GetDefaultStored;
+    property pattern: System.String read FPattern write FPattern stored GetPatternStored;
+    property minProperties: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
+    property minLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
+    property items: Blue.Print.Open.API.Schema.v20.Items read GetItems write FItems stored GetItemsStored;
+    property title: System.String read FTitle write FTitle stored GetTitleStored;
+    property readOnly: System.Boolean read FReadOnly write SetReadOnly stored FReadOnlyIsStored;
+    property minItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
+    property externalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
+    property multipleOf: System.Double read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
+    property required: stringArray read FRequired write FRequired stored GetRequiredStored;
+    [FieldName('type')]
+    property &type: Blue.Print.Open.API.Schema.v20.&Type read GetType write FType stored GetTypeStored;
+  end;
+
+  Xml = class
+  private
+    FAttribute: System.Boolean;
+    FName: System.String;
+    FPrefix: System.String;
+    FWrapped: System.Boolean;
+    FNamespace: System.String;
+    FAttributeIsStored: Boolean;
+    FWrappedIsStored: Boolean;
+
+    function GetNameStored: Boolean;
+    function GetPrefixStored: Boolean;
+    function GetNamespaceStored: Boolean;
+    procedure SetAttribute(const Value: System.Boolean);
+    procedure SetWrapped(const Value: System.Boolean);
+  public
+    property IsAttributeStored: Boolean read FAttributeIsStored;
+    property IsNameStored: Boolean read GetNameStored;
+    property IsPrefixStored: Boolean read GetPrefixStored;
+    property IsWrappedStored: Boolean read FWrappedIsStored;
+    property IsNamespaceStored: Boolean read GetNamespaceStored;
+  published
+    property attribute: System.Boolean read FAttribute write SetAttribute stored FAttributeIsStored;
+    property name: System.String read FName write FName stored GetNameStored;
+    property prefix: System.String read FPrefix write FPrefix stored GetPrefixStored;
+    property wrapped: System.Boolean read FWrapped write SetWrapped stored FWrappedIsStored;
+    property namespace: System.String read FNamespace write FNamespace stored GetNamespaceStored;
+  end;
+
+  ExternalDocs = class
+  private
+    FDescription: System.String;
+    FUrl: System.String;
+
+    function GetDescriptionStored: Boolean;
+  public
+    property IsDescriptionStored: Boolean read GetDescriptionStored;
+  published
+    property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+    property url: System.String read FUrl write FUrl;
+  end;
+
   [SingleObject]
   Produces = class
   private
@@ -850,6 +957,53 @@ type
     property email: System.String read FEmail write FEmail stored GetEmailStored;
     property name: System.String read FName write FName stored GetNameStored;
     property url: System.String read FUrl write FUrl stored GetUrlStored;
+  end;
+
+  FileSchema = class
+  private
+    FFormat: System.String;
+    FDescription: System.String;
+    FDefault: any;
+    FReadOnly: System.Boolean;
+    FTitle: System.String;
+    FExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
+    FRequired: stringArray;
+    FType: Blue.Print.Open.API.Schema.v20.&Type;
+    FExample: any;
+    FReadOnlyIsStored: Boolean;
+
+    function GetExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
+    function GetType: Blue.Print.Open.API.Schema.v20.&Type;
+    function GetFormatStored: Boolean;
+    function GetDescriptionStored: Boolean;
+    function GetDefaultStored: Boolean;
+    function GetTitleStored: Boolean;
+    function GetExternalDocsStored: Boolean;
+    function GetRequiredStored: Boolean;
+    function GetExampleStored: Boolean;
+    procedure SetReadOnly(const Value: System.Boolean);
+  public
+    destructor Destroy; override;
+
+    property IsFormatStored: Boolean read GetFormatStored;
+    property IsDescriptionStored: Boolean read GetDescriptionStored;
+    property IsDefaultStored: Boolean read GetDefaultStored;
+    property IsReadOnlyStored: Boolean read FReadOnlyIsStored;
+    property IsTitleStored: Boolean read GetTitleStored;
+    property IsExternalDocsStored: Boolean read GetExternalDocsStored;
+    property IsRequiredStored: Boolean read GetRequiredStored;
+    property IsExampleStored: Boolean read GetExampleStored;
+  published
+    property format: System.String read FFormat write FFormat stored GetFormatStored;
+    property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+    property default: any read FDefault write FDefault stored GetDefaultStored;
+    property readOnly: System.Boolean read FReadOnly write SetReadOnly stored FReadOnlyIsStored;
+    property title: System.String read FTitle write FTitle stored GetTitleStored;
+    property externalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
+    property required: stringArray read FRequired write FRequired stored GetRequiredStored;
+    [FieldName('type')]
+    property &type: Blue.Print.Open.API.Schema.v20.&Type read GetType write FType;
+    property example: any read FExample write FExample stored GetExampleStored;
   end;
 
   Oauth2PasswordSecurity = class
@@ -1122,35 +1276,6 @@ type
     property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
   end;
 
-  Xml = class
-  private
-    FAttribute: System.Boolean;
-    FName: System.String;
-    FPrefix: System.String;
-    FWrapped: System.Boolean;
-    FNamespace: System.String;
-    FAttributeIsStored: Boolean;
-    FWrappedIsStored: Boolean;
-
-    function GetNameStored: Boolean;
-    function GetPrefixStored: Boolean;
-    function GetNamespaceStored: Boolean;
-    procedure SetAttribute(const Value: System.Boolean);
-    procedure SetWrapped(const Value: System.Boolean);
-  public
-    property IsAttributeStored: Boolean read FAttributeIsStored;
-    property IsNameStored: Boolean read GetNameStored;
-    property IsPrefixStored: Boolean read GetPrefixStored;
-    property IsWrappedStored: Boolean read FWrappedIsStored;
-    property IsNamespaceStored: Boolean read GetNamespaceStored;
-  published
-    property attribute: System.Boolean read FAttribute write SetAttribute stored FAttributeIsStored;
-    property name: System.String read FName write FName stored GetNameStored;
-    property prefix: System.String read FPrefix write FPrefix stored GetPrefixStored;
-    property wrapped: System.Boolean read FWrapped write SetWrapped stored FWrappedIsStored;
-    property namespace: System.String read FNamespace write FNamespace stored GetNamespaceStored;
-  end;
-
   [SingleObject]
   ResponseValue = class
   private
@@ -1250,9 +1375,9 @@ implementation
 
 uses System.SysUtils;
 
-{ TSchema }
+{ TJSONSchema }
 
-destructor TSchema.Destroy;
+destructor TJSONSchema.Destroy;
 begin
   for var AObject in FAnyOf do
     AObject.Free;
@@ -1290,89 +1415,89 @@ begin
   inherited;
 end;
 
-function TSchema.AddAnyOf: Blue.Print.Open.API.Schema.v20.TSchema;
+function TJSONSchema.AddAnyOf: Blue.Print.Open.API.Schema.v20.TJSONSchema;
 begin
-  Result := Blue.Print.Open.API.Schema.v20.TSchema.Create;
+  Result := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
 
   FAnyOf := FAnyOf + [Result];
 end;
 
-function TSchema.GetAnyOfStored: Boolean;
+function TJSONSchema.GetAnyOfStored: Boolean;
 begin
   Result := Assigned(FAnyOf);
 end;
 
-procedure TSchema.SetExclusiveMaximum(const Value: System.Boolean);
+procedure TJSONSchema.SetExclusiveMaximum(const Value: System.Boolean);
 begin
   FExclusiveMaximum := Value;
   FExclusiveMaximumIsStored := True;
 end;
 
-function TSchema.GetFormatStored: Boolean;
+function TJSONSchema.GetFormatStored: Boolean;
 begin
   Result := not FFormat.IsEmpty;
 end;
 
-procedure TSchema.SetExclusiveMinimum(const Value: System.Boolean);
+procedure TJSONSchema.SetExclusiveMinimum(const Value: System.Boolean);
 begin
   FExclusiveMinimum := Value;
   FExclusiveMinimumIsStored := True;
 end;
 
-function TSchema.AddAllOf: Blue.Print.Open.API.Schema.v20.TSchema;
+function TJSONSchema.AddAllOf: Blue.Print.Open.API.Schema.v20.TJSONSchema;
 begin
-  Result := Blue.Print.Open.API.Schema.v20.TSchema.Create;
+  Result := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
 
   FAllOf := FAllOf + [Result];
 end;
 
-function TSchema.GetAllOfStored: Boolean;
+function TJSONSchema.GetAllOfStored: Boolean;
 begin
   Result := Assigned(FAllOf);
 end;
 
-function TSchema.GetSchemaStored: Boolean;
+function TJSONSchema.GetSchemaStored: Boolean;
 begin
   Result := not FSchema.IsEmpty;
 end;
 
-function TSchema.GetProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
+function TJSONSchema.GetProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TJSONSchema>;
 begin
   if not Assigned(FProperties) then
-    FProperties := TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>.Create;
+    FProperties := TMap<System.String, Blue.Print.Open.API.Schema.v20.TJSONSchema>.Create;
 
   Result := FProperties;
 end;
 
-function TSchema.GetPropertiesStored: Boolean;
+function TJSONSchema.GetPropertiesStored: Boolean;
 begin
   Result := Assigned(FProperties);
 end;
 
-function TSchema.GetNot: Blue.Print.Open.API.Schema.v20.TSchema;
+function TJSONSchema.GetNot: Blue.Print.Open.API.Schema.v20.TJSONSchema;
 begin
   if not Assigned(FNot) then
-    FNot := Blue.Print.Open.API.Schema.v20.TSchema.Create;
+    FNot := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
 
   Result := FNot;
 end;
 
-function TSchema.GetNotStored: Boolean;
+function TJSONSchema.GetNotStored: Boolean;
 begin
   Result := Assigned(FNot);
 end;
 
-function TSchema.GetMaxLengthStored: Boolean;
+function TJSONSchema.GetMaxLengthStored: Boolean;
 begin
   Result := FMaxLength <> 0;
 end;
 
-function TSchema.GetEnumStored: Boolean;
+function TJSONSchema.GetEnumStored: Boolean;
 begin
   Result := Assigned(FEnum);
 end;
 
-function TSchema.GetAdditionalItems: Blue.Print.Open.API.Schema.v20.AdditionalItems;
+function TJSONSchema.GetAdditionalItems: Blue.Print.Open.API.Schema.v20.AdditionalItems;
 begin
   if not Assigned(FAdditionalItems) then
     FAdditionalItems := Blue.Print.Open.API.Schema.v20.AdditionalItems.Create;
@@ -1380,27 +1505,27 @@ begin
   Result := FAdditionalItems;
 end;
 
-function TSchema.GetAdditionalItemsStored: Boolean;
+function TJSONSchema.GetAdditionalItemsStored: Boolean;
 begin
   Result := Assigned(FAdditionalItems);
 end;
 
-function TSchema.GetIdStored: Boolean;
+function TJSONSchema.GetIdStored: Boolean;
 begin
   Result := not FId.IsEmpty;
 end;
 
-function TSchema.GetPatternStored: Boolean;
+function TJSONSchema.GetPatternStored: Boolean;
 begin
   Result := not FPattern.IsEmpty;
 end;
 
-function TSchema.GetDefaultStored: Boolean;
+function TJSONSchema.GetDefaultStored: Boolean;
 begin
   Result := False;
 end;
 
-function TSchema.GetMinProperties: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function TJSONSchema.GetMinProperties: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinProperties) then
     FMinProperties := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
@@ -1408,12 +1533,12 @@ begin
   Result := FMinProperties;
 end;
 
-function TSchema.GetMinPropertiesStored: Boolean;
+function TJSONSchema.GetMinPropertiesStored: Boolean;
 begin
   Result := Assigned(FMinProperties);
 end;
 
-function TSchema.GetMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function TJSONSchema.GetMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinLength) then
     FMinLength := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
@@ -1421,52 +1546,52 @@ begin
   Result := FMinLength;
 end;
 
-function TSchema.GetMinLengthStored: Boolean;
+function TJSONSchema.GetMinLengthStored: Boolean;
 begin
   Result := Assigned(FMinLength);
 end;
 
-function TSchema.GetTitleStored: Boolean;
+function TJSONSchema.GetTitleStored: Boolean;
 begin
   Result := not FTitle.IsEmpty;
 end;
 
-function TSchema.GetMultipleOfStored: Boolean;
+function TJSONSchema.GetMultipleOfStored: Boolean;
 begin
   Result := FMultipleOf <> 0;
 end;
 
-function TSchema.GetPatternProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
+function TJSONSchema.GetPatternProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TJSONSchema>;
 begin
   if not Assigned(FPatternProperties) then
-    FPatternProperties := TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>.Create;
+    FPatternProperties := TMap<System.String, Blue.Print.Open.API.Schema.v20.TJSONSchema>.Create;
 
   Result := FPatternProperties;
 end;
 
-function TSchema.GetPatternPropertiesStored: Boolean;
+function TJSONSchema.GetPatternPropertiesStored: Boolean;
 begin
   Result := Assigned(FPatternProperties);
 end;
 
-function TSchema.AddOneOf: Blue.Print.Open.API.Schema.v20.TSchema;
+function TJSONSchema.AddOneOf: Blue.Print.Open.API.Schema.v20.TJSONSchema;
 begin
-  Result := Blue.Print.Open.API.Schema.v20.TSchema.Create;
+  Result := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
 
   FOneOf := FOneOf + [Result];
 end;
 
-function TSchema.GetOneOfStored: Boolean;
+function TJSONSchema.GetOneOfStored: Boolean;
 begin
   Result := Assigned(FOneOf);
 end;
 
-function TSchema.GetMinimumStored: Boolean;
+function TJSONSchema.GetMinimumStored: Boolean;
 begin
   Result := FMinimum <> 0;
 end;
 
-function TSchema.GetDependencies: TMap<System.String, Blue.Print.Open.API.Schema.v20.DependenciesAdditionalProperties>;
+function TJSONSchema.GetDependencies: TMap<System.String, Blue.Print.Open.API.Schema.v20.DependenciesAdditionalProperties>;
 begin
   if not Assigned(FDependencies) then
     FDependencies := TMap<System.String, Blue.Print.Open.API.Schema.v20.DependenciesAdditionalProperties>.Create;
@@ -1474,12 +1599,12 @@ begin
   Result := FDependencies;
 end;
 
-function TSchema.GetDependenciesStored: Boolean;
+function TJSONSchema.GetDependenciesStored: Boolean;
 begin
   Result := Assigned(FDependencies);
 end;
 
-function TSchema.GetAdditionalProperties: Blue.Print.Open.API.Schema.v20.AdditionalProperties;
+function TJSONSchema.GetAdditionalProperties: Blue.Print.Open.API.Schema.v20.AdditionalProperties;
 begin
   if not Assigned(FAdditionalProperties) then
     FAdditionalProperties := Blue.Print.Open.API.Schema.v20.AdditionalProperties.Create;
@@ -1487,51 +1612,51 @@ begin
   Result := FAdditionalProperties;
 end;
 
-function TSchema.GetAdditionalPropertiesStored: Boolean;
+function TJSONSchema.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-function TSchema.GetDefinitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
+function TJSONSchema.GetDefinitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.TJSONSchema>;
 begin
   if not Assigned(FDefinitions) then
-    FDefinitions := TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>.Create;
+    FDefinitions := TMap<System.String, Blue.Print.Open.API.Schema.v20.TJSONSchema>.Create;
 
   Result := FDefinitions;
 end;
 
-function TSchema.GetDefinitionsStored: Boolean;
+function TJSONSchema.GetDefinitionsStored: Boolean;
 begin
   Result := Assigned(FDefinitions);
 end;
 
-function TSchema.GetMaxPropertiesStored: Boolean;
+function TJSONSchema.GetMaxPropertiesStored: Boolean;
 begin
   Result := FMaxProperties <> 0;
 end;
 
-function TSchema.GetMaxItemsStored: Boolean;
+function TJSONSchema.GetMaxItemsStored: Boolean;
 begin
   Result := FMaxItems <> 0;
 end;
 
-procedure TSchema.SetUniqueItems(const Value: System.Boolean);
+procedure TJSONSchema.SetUniqueItems(const Value: System.Boolean);
 begin
   FUniqueItems := Value;
   FUniqueItemsIsStored := True;
 end;
 
-function TSchema.GetDescriptionStored: Boolean;
+function TJSONSchema.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TSchema.GetMaximumStored: Boolean;
+function TJSONSchema.GetMaximumStored: Boolean;
 begin
   Result := FMaximum <> 0;
 end;
 
-function TSchema.GetItems: Blue.Print.Open.API.Schema.v20.Items;
+function TJSONSchema.GetItems: Blue.Print.Open.API.Schema.v20.Items;
 begin
   if not Assigned(FItems) then
     FItems := Blue.Print.Open.API.Schema.v20.Items.Create;
@@ -1539,12 +1664,12 @@ begin
   Result := FItems;
 end;
 
-function TSchema.GetItemsStored: Boolean;
+function TJSONSchema.GetItemsStored: Boolean;
 begin
   Result := Assigned(FItems);
 end;
 
-function TSchema.GetMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function TJSONSchema.GetMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinItems) then
     FMinItems := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
@@ -1552,17 +1677,17 @@ begin
   Result := FMinItems;
 end;
 
-function TSchema.GetMinItemsStored: Boolean;
+function TJSONSchema.GetMinItemsStored: Boolean;
 begin
   Result := Assigned(FMinItems);
 end;
 
-function TSchema.GetRequiredStored: Boolean;
+function TJSONSchema.GetRequiredStored: Boolean;
 begin
   Result := Assigned(FRequired);
 end;
 
-function TSchema.GetType: Blue.Print.Open.API.Schema.v20.&Type;
+function TJSONSchema.GetType: Blue.Print.Open.API.Schema.v20.&Type;
 begin
   if not Assigned(FType) then
     FType := Blue.Print.Open.API.Schema.v20.&Type.Create;
@@ -1570,7 +1695,7 @@ begin
   Result := FType;
 end;
 
-function TSchema.GetTypeStored: Boolean;
+function TJSONSchema.GetTypeStored: Boolean;
 begin
   Result := Assigned(FType);
 end;
@@ -1597,10 +1722,10 @@ begin
   FBooleanIsStored := True;
 end;
 
-function AdditionalItems.GetSchema: Blue.Print.Open.API.Schema.v20.TSchema;
+function AdditionalItems.GetSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v20.TSchema.Create;
+    FSchema := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
 
   Result := FSchema;
 end;
@@ -1619,10 +1744,10 @@ begin
   inherited;
 end;
 
-function DependenciesAdditionalProperties.GetSchema: Blue.Print.Open.API.Schema.v20.TSchema;
+function DependenciesAdditionalProperties.GetSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v20.TSchema.Create;
+    FSchema := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
 
   Result := FSchema;
 end;
@@ -1652,10 +1777,10 @@ begin
   FBooleanIsStored := True;
 end;
 
-function AdditionalProperties.GetSchema: Blue.Print.Open.API.Schema.v20.TSchema;
+function AdditionalProperties.GetSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v20.TSchema.Create;
+    FSchema := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
 
   Result := FSchema;
 end;
@@ -1677,10 +1802,10 @@ begin
   inherited;
 end;
 
-function Items.GetSchema: Blue.Print.Open.API.Schema.v20.TSchema;
+function Items.GetSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v20.TSchema.Create;
+    FSchema := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
 
   Result := FSchema;
 end;
@@ -1690,9 +1815,9 @@ begin
   Result := Assigned(FSchema);
 end;
 
-function Items.AddSchemaArray: Blue.Print.Open.API.Schema.v20.TSchema;
+function Items.AddSchemaArray: Blue.Print.Open.API.Schema.v20.TJSONSchema;
 begin
-  Result := Blue.Print.Open.API.Schema.v20.TSchema.Create;
+  Result := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
 
   FSchemaArray := FSchemaArray + [Result];
 end;
@@ -1715,9 +1840,9 @@ begin
   Result := Assigned(FArray);
 end;
 
-{ TSchemaOpenAPI20 }
+{ TOpenAPIDefinition }
 
-destructor TSchemaOpenAPI20.Destroy;
+destructor TOpenAPIDefinition.Destroy;
 begin
   FExternalDocs.Free;
 
@@ -1746,7 +1871,7 @@ begin
   inherited;
 end;
 
-function TSchemaOpenAPI20.GetExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
+function TOpenAPIDefinition.GetExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
 begin
   if not Assigned(FExternalDocs) then
     FExternalDocs := Blue.Print.Open.API.Schema.v20.ExternalDocs.Create;
@@ -1754,29 +1879,29 @@ begin
   Result := FExternalDocs;
 end;
 
-function TSchemaOpenAPI20.GetExternalDocsStored: Boolean;
+function TOpenAPIDefinition.GetExternalDocsStored: Boolean;
 begin
   Result := Assigned(FExternalDocs);
 end;
 
-function TSchemaOpenAPI20.AddTags: Blue.Print.Open.API.Schema.v20.Tag;
+function TOpenAPIDefinition.AddTags: Blue.Print.Open.API.Schema.v20.Tag;
 begin
   Result := Blue.Print.Open.API.Schema.v20.Tag.Create;
 
   FTags := FTags + [Result];
 end;
 
-function TSchemaOpenAPI20.GetTagsStored: Boolean;
+function TOpenAPIDefinition.GetTagsStored: Boolean;
 begin
   Result := Assigned(FTags);
 end;
 
-function TSchemaOpenAPI20.GetBasePathStored: Boolean;
+function TOpenAPIDefinition.GetBasePathStored: Boolean;
 begin
   Result := not FBasePath.IsEmpty;
 end;
 
-function TSchemaOpenAPI20.GetConsumes: Blue.Print.Open.API.Schema.v20.Consumes;
+function TOpenAPIDefinition.GetConsumes: Blue.Print.Open.API.Schema.v20.Consumes;
 begin
   if not Assigned(FConsumes) then
     FConsumes := Blue.Print.Open.API.Schema.v20.Consumes.Create;
@@ -1784,12 +1909,12 @@ begin
   Result := FConsumes;
 end;
 
-function TSchemaOpenAPI20.GetConsumesStored: Boolean;
+function TOpenAPIDefinition.GetConsumesStored: Boolean;
 begin
   Result := Assigned(FConsumes);
 end;
 
-function TSchemaOpenAPI20.GetPaths: TMap<System.String, any>;
+function TOpenAPIDefinition.GetPaths: TMap<System.String, any>;
 begin
   if not Assigned(FPaths) then
     FPaths := TMap<System.String, any>.Create;
@@ -1797,7 +1922,7 @@ begin
   Result := FPaths;
 end;
 
-function TSchemaOpenAPI20.GetResponses: TMap<System.String, any>;
+function TOpenAPIDefinition.GetResponses: TMap<System.String, any>;
 begin
   if not Assigned(FResponses) then
     FResponses := TMap<System.String, any>.Create;
@@ -1805,12 +1930,12 @@ begin
   Result := FResponses;
 end;
 
-function TSchemaOpenAPI20.GetResponsesStored: Boolean;
+function TOpenAPIDefinition.GetResponsesStored: Boolean;
 begin
   Result := Assigned(FResponses);
 end;
 
-function TSchemaOpenAPI20.GetInfo: Blue.Print.Open.API.Schema.v20.Info;
+function TOpenAPIDefinition.GetInfo: Blue.Print.Open.API.Schema.v20.Info;
 begin
   if not Assigned(FInfo) then
     FInfo := Blue.Print.Open.API.Schema.v20.Info.Create;
@@ -1818,17 +1943,17 @@ begin
   Result := FInfo;
 end;
 
-function TSchemaOpenAPI20.GetSchemesStored: Boolean;
+function TOpenAPIDefinition.GetSchemesStored: Boolean;
 begin
   Result := Assigned(FSchemes);
 end;
 
-function TSchemaOpenAPI20.GetSecurityStored: Boolean;
+function TOpenAPIDefinition.GetSecurityStored: Boolean;
 begin
   Result := Assigned(FSecurity);
 end;
 
-function TSchemaOpenAPI20.GetParameters: TMap<System.String, Blue.Print.Open.API.Schema.v20.Parameter>;
+function TOpenAPIDefinition.GetParameters: TMap<System.String, Blue.Print.Open.API.Schema.v20.Parameter>;
 begin
   if not Assigned(FParameters) then
     FParameters := TMap<System.String, Blue.Print.Open.API.Schema.v20.Parameter>.Create;
@@ -1836,12 +1961,12 @@ begin
   Result := FParameters;
 end;
 
-function TSchemaOpenAPI20.GetParametersStored: Boolean;
+function TOpenAPIDefinition.GetParametersStored: Boolean;
 begin
   Result := Assigned(FParameters);
 end;
 
-function TSchemaOpenAPI20.GetDefinitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.Schema>;
+function TOpenAPIDefinition.GetDefinitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.Schema>;
 begin
   if not Assigned(FDefinitions) then
     FDefinitions := TMap<System.String, Blue.Print.Open.API.Schema.v20.Schema>.Create;
@@ -1849,12 +1974,12 @@ begin
   Result := FDefinitions;
 end;
 
-function TSchemaOpenAPI20.GetDefinitionsStored: Boolean;
+function TOpenAPIDefinition.GetDefinitionsStored: Boolean;
 begin
   Result := Assigned(FDefinitions);
 end;
 
-function TSchemaOpenAPI20.GetProduces: Blue.Print.Open.API.Schema.v20.Produces;
+function TOpenAPIDefinition.GetProduces: Blue.Print.Open.API.Schema.v20.Produces;
 begin
   if not Assigned(FProduces) then
     FProduces := Blue.Print.Open.API.Schema.v20.Produces.Create;
@@ -1862,17 +1987,17 @@ begin
   Result := FProduces;
 end;
 
-function TSchemaOpenAPI20.GetProducesStored: Boolean;
+function TOpenAPIDefinition.GetProducesStored: Boolean;
 begin
   Result := Assigned(FProduces);
 end;
 
-function TSchemaOpenAPI20.GetHostStored: Boolean;
+function TOpenAPIDefinition.GetHostStored: Boolean;
 begin
   Result := not FHost.IsEmpty;
 end;
 
-function TSchemaOpenAPI20.GetSecurityDefinitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.SecurityDefinitionsAdditionalProperties>;
+function TOpenAPIDefinition.GetSecurityDefinitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.SecurityDefinitionsAdditionalProperties>;
 begin
   if not Assigned(FSecurityDefinitions) then
     FSecurityDefinitions := TMap<System.String, Blue.Print.Open.API.Schema.v20.SecurityDefinitionsAdditionalProperties>.Create;
@@ -1880,7 +2005,7 @@ begin
   Result := FSecurityDefinitions;
 end;
 
-function TSchemaOpenAPI20.GetSecurityDefinitionsStored: Boolean;
+function TOpenAPIDefinition.GetSecurityDefinitionsStored: Boolean;
 begin
   Result := Assigned(FSecurityDefinitions);
 end;
@@ -1890,8 +2015,6 @@ end;
 destructor Response.Destroy;
 begin
   FHeaders.Free;
-
-  FSchema.Free;
 
   FExamples.Free;
 
@@ -1909,14 +2032,6 @@ end;
 function Response.GetHeadersStored: Boolean;
 begin
   Result := Assigned(FHeaders);
-end;
-
-function Response.GetSchema: Blue.Print.Open.API.Schema.v20.Schema;
-begin
-  if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v20.Schema.Create;
-
-  Result := FSchema;
 end;
 
 function Response.GetSchemaStored: Boolean;
@@ -2070,118 +2185,6 @@ begin
     FType := Blue.Print.Open.API.Schema.v20.&Type.Create;
 
   Result := FType;
-end;
-
-{ Schema }
-
-destructor Schema.Destroy;
-begin
-  FSchema.Free;
-
-  FFileSchema.Free;
-
-  inherited;
-end;
-
-function Schema.GetSchema: Blue.Print.Open.API.Schema.v20.Schema;
-begin
-  if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v20.Schema.Create;
-
-  Result := FSchema;
-end;
-
-function Schema.GetSchemaStored: Boolean;
-begin
-  Result := Assigned(FSchema);
-end;
-
-function Schema.GetFileSchema: Blue.Print.Open.API.Schema.v20.FileSchema;
-begin
-  if not Assigned(FFileSchema) then
-    FFileSchema := Blue.Print.Open.API.Schema.v20.FileSchema.Create;
-
-  Result := FFileSchema;
-end;
-
-function Schema.GetFileSchemaStored: Boolean;
-begin
-  Result := Assigned(FFileSchema);
-end;
-
-{ FileSchema }
-
-destructor FileSchema.Destroy;
-begin
-  FExternalDocs.Free;
-
-  FType.Free;
-
-  inherited;
-end;
-
-function FileSchema.GetFormatStored: Boolean;
-begin
-  Result := not FFormat.IsEmpty;
-end;
-
-function FileSchema.GetDescriptionStored: Boolean;
-begin
-  Result := not FDescription.IsEmpty;
-end;
-
-function FileSchema.GetDefaultStored: Boolean;
-begin
-  Result := False;
-end;
-
-procedure FileSchema.SetReadOnly(const Value: System.Boolean);
-begin
-  FReadOnly := Value;
-  FReadOnlyIsStored := True;
-end;
-
-function FileSchema.GetTitleStored: Boolean;
-begin
-  Result := not FTitle.IsEmpty;
-end;
-
-function FileSchema.GetExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
-begin
-  if not Assigned(FExternalDocs) then
-    FExternalDocs := Blue.Print.Open.API.Schema.v20.ExternalDocs.Create;
-
-  Result := FExternalDocs;
-end;
-
-function FileSchema.GetExternalDocsStored: Boolean;
-begin
-  Result := Assigned(FExternalDocs);
-end;
-
-function FileSchema.GetRequiredStored: Boolean;
-begin
-  Result := Assigned(FRequired);
-end;
-
-function FileSchema.GetType: Blue.Print.Open.API.Schema.v20.&Type;
-begin
-  if not Assigned(FType) then
-    FType := Blue.Print.Open.API.Schema.v20.&Type.Create;
-
-  Result := FType;
-end;
-
-function FileSchema.GetExampleStored: Boolean;
-begin
-  Result := False;
-end;
-
-{ ExternalDocs }
-
-function ExternalDocs.GetDescriptionStored: Boolean;
-begin
-  Result := not FDescription.IsEmpty;
 end;
 
 { Operation }
@@ -2409,6 +2412,303 @@ begin
   Result := FSchema;
 end;
 
+{ Schema }
+
+destructor Schema.Destroy;
+begin
+  FAdditionalProperties.Free;
+
+  for var AObject in FAllOf do
+    AObject.Free;
+
+  FProperties.Free;
+
+  FXml.Free;
+
+  FMinProperties.Free;
+
+  FMinLength.Free;
+
+  FItems.Free;
+
+  FMinItems.Free;
+
+  FExternalDocs.Free;
+
+  FType.Free;
+
+  inherited;
+end;
+
+function Schema.GetExampleStored: Boolean;
+begin
+  Result := False;
+end;
+
+procedure Schema.SetExclusiveMaximum(const Value: System.Boolean);
+begin
+  FExclusiveMaximum := Value;
+  FExclusiveMaximumIsStored := True;
+end;
+
+function Schema.GetMinimumStored: Boolean;
+begin
+  Result := FMinimum <> 0;
+end;
+
+function Schema.GetFormatStored: Boolean;
+begin
+  Result := not FFormat.IsEmpty;
+end;
+
+procedure Schema.SetExclusiveMinimum(const Value: System.Boolean);
+begin
+  FExclusiveMinimum := Value;
+  FExclusiveMinimumIsStored := True;
+end;
+
+function Schema.GetAdditionalProperties: Blue.Print.Open.API.Schema.v20.AdditionalProperties;
+begin
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := Blue.Print.Open.API.Schema.v20.AdditionalProperties.Create;
+
+  Result := FAdditionalProperties;
+end;
+
+function Schema.GetAdditionalPropertiesStored: Boolean;
+begin
+  Result := Assigned(FAdditionalProperties);
+end;
+
+function Schema.AddAllOf: Blue.Print.Open.API.Schema.v20.Schema;
+begin
+  Result := Blue.Print.Open.API.Schema.v20.Schema.Create;
+
+  FAllOf := FAllOf + [Result];
+end;
+
+function Schema.GetAllOfStored: Boolean;
+begin
+  Result := Assigned(FAllOf);
+end;
+
+function Schema.GetProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.Schema>;
+begin
+  if not Assigned(FProperties) then
+    FProperties := TMap<System.String, Blue.Print.Open.API.Schema.v20.Schema>.Create;
+
+  Result := FProperties;
+end;
+
+function Schema.GetPropertiesStored: Boolean;
+begin
+  Result := Assigned(FProperties);
+end;
+
+function Schema.GetDiscriminatorStored: Boolean;
+begin
+  Result := not FDiscriminator.IsEmpty;
+end;
+
+function Schema.GetMaxLengthStored: Boolean;
+begin
+  Result := FMaxLength <> 0;
+end;
+
+function Schema.GetEnumStored: Boolean;
+begin
+  Result := Assigned(FEnum);
+end;
+
+function Schema.GetRefStored: Boolean;
+begin
+  Result := not FRef.IsEmpty;
+end;
+
+function Schema.GetMaxPropertiesStored: Boolean;
+begin
+  Result := FMaxProperties <> 0;
+end;
+
+function Schema.GetXml: Blue.Print.Open.API.Schema.v20.Xml;
+begin
+  if not Assigned(FXml) then
+    FXml := Blue.Print.Open.API.Schema.v20.Xml.Create;
+
+  Result := FXml;
+end;
+
+function Schema.GetXmlStored: Boolean;
+begin
+  Result := Assigned(FXml);
+end;
+
+function Schema.GetMaxItemsStored: Boolean;
+begin
+  Result := FMaxItems <> 0;
+end;
+
+procedure Schema.SetUniqueItems(const Value: System.Boolean);
+begin
+  FUniqueItems := Value;
+  FUniqueItemsIsStored := True;
+end;
+
+function Schema.GetDescriptionStored: Boolean;
+begin
+  Result := not FDescription.IsEmpty;
+end;
+
+function Schema.GetMaximumStored: Boolean;
+begin
+  Result := FMaximum <> 0;
+end;
+
+function Schema.GetDefaultStored: Boolean;
+begin
+  Result := False;
+end;
+
+function Schema.GetPatternStored: Boolean;
+begin
+  Result := not FPattern.IsEmpty;
+end;
+
+function Schema.GetMinProperties: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+begin
+  if not Assigned(FMinProperties) then
+    FMinProperties := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+
+  Result := FMinProperties;
+end;
+
+function Schema.GetMinPropertiesStored: Boolean;
+begin
+  Result := Assigned(FMinProperties);
+end;
+
+function Schema.GetMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+begin
+  if not Assigned(FMinLength) then
+    FMinLength := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+
+  Result := FMinLength;
+end;
+
+function Schema.GetMinLengthStored: Boolean;
+begin
+  Result := Assigned(FMinLength);
+end;
+
+function Schema.GetItems: Blue.Print.Open.API.Schema.v20.Items;
+begin
+  if not Assigned(FItems) then
+    FItems := Blue.Print.Open.API.Schema.v20.Items.Create;
+
+  Result := FItems;
+end;
+
+function Schema.GetItemsStored: Boolean;
+begin
+  Result := Assigned(FItems);
+end;
+
+function Schema.GetTitleStored: Boolean;
+begin
+  Result := not FTitle.IsEmpty;
+end;
+
+procedure Schema.SetReadOnly(const Value: System.Boolean);
+begin
+  FReadOnly := Value;
+  FReadOnlyIsStored := True;
+end;
+
+function Schema.GetMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+begin
+  if not Assigned(FMinItems) then
+    FMinItems := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+
+  Result := FMinItems;
+end;
+
+function Schema.GetMinItemsStored: Boolean;
+begin
+  Result := Assigned(FMinItems);
+end;
+
+function Schema.GetExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
+begin
+  if not Assigned(FExternalDocs) then
+    FExternalDocs := Blue.Print.Open.API.Schema.v20.ExternalDocs.Create;
+
+  Result := FExternalDocs;
+end;
+
+function Schema.GetExternalDocsStored: Boolean;
+begin
+  Result := Assigned(FExternalDocs);
+end;
+
+function Schema.GetMultipleOfStored: Boolean;
+begin
+  Result := FMultipleOf <> 0;
+end;
+
+function Schema.GetRequiredStored: Boolean;
+begin
+  Result := Assigned(FRequired);
+end;
+
+function Schema.GetType: Blue.Print.Open.API.Schema.v20.&Type;
+begin
+  if not Assigned(FType) then
+    FType := Blue.Print.Open.API.Schema.v20.&Type.Create;
+
+  Result := FType;
+end;
+
+function Schema.GetTypeStored: Boolean;
+begin
+  Result := Assigned(FType);
+end;
+
+{ Xml }
+
+procedure Xml.SetAttribute(const Value: System.Boolean);
+begin
+  FAttribute := Value;
+  FAttributeIsStored := True;
+end;
+
+function Xml.GetNameStored: Boolean;
+begin
+  Result := not FName.IsEmpty;
+end;
+
+function Xml.GetPrefixStored: Boolean;
+begin
+  Result := not FPrefix.IsEmpty;
+end;
+
+procedure Xml.SetWrapped(const Value: System.Boolean);
+begin
+  FWrapped := Value;
+  FWrappedIsStored := True;
+end;
+
+function Xml.GetNamespaceStored: Boolean;
+begin
+  Result := not FNamespace.IsEmpty;
+end;
+
+{ ExternalDocs }
+
+function ExternalDocs.GetDescriptionStored: Boolean;
+begin
+  Result := not FDescription.IsEmpty;
+end;
+
 { Produces }
 
 function Produces.GetMediaTypeListStored: Boolean;
@@ -2485,6 +2785,74 @@ end;
 function Contact.GetUrlStored: Boolean;
 begin
   Result := not FUrl.IsEmpty;
+end;
+
+{ FileSchema }
+
+destructor FileSchema.Destroy;
+begin
+  FExternalDocs.Free;
+
+  FType.Free;
+
+  inherited;
+end;
+
+function FileSchema.GetFormatStored: Boolean;
+begin
+  Result := not FFormat.IsEmpty;
+end;
+
+function FileSchema.GetDescriptionStored: Boolean;
+begin
+  Result := not FDescription.IsEmpty;
+end;
+
+function FileSchema.GetDefaultStored: Boolean;
+begin
+  Result := False;
+end;
+
+procedure FileSchema.SetReadOnly(const Value: System.Boolean);
+begin
+  FReadOnly := Value;
+  FReadOnlyIsStored := True;
+end;
+
+function FileSchema.GetTitleStored: Boolean;
+begin
+  Result := not FTitle.IsEmpty;
+end;
+
+function FileSchema.GetExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
+begin
+  if not Assigned(FExternalDocs) then
+    FExternalDocs := Blue.Print.Open.API.Schema.v20.ExternalDocs.Create;
+
+  Result := FExternalDocs;
+end;
+
+function FileSchema.GetExternalDocsStored: Boolean;
+begin
+  Result := Assigned(FExternalDocs);
+end;
+
+function FileSchema.GetRequiredStored: Boolean;
+begin
+  Result := Assigned(FRequired);
+end;
+
+function FileSchema.GetType: Blue.Print.Open.API.Schema.v20.&Type;
+begin
+  if not Assigned(FType) then
+    FType := Blue.Print.Open.API.Schema.v20.&Type.Create;
+
+  Result := FType;
+end;
+
+function FileSchema.GetExampleStored: Boolean;
+begin
+  Result := False;
 end;
 
 { Oauth2PasswordSecurity }
@@ -2909,35 +3277,6 @@ begin
     FType := Blue.Print.Open.API.Schema.v20.&Type.Create;
 
   Result := FType;
-end;
-
-{ Xml }
-
-procedure Xml.SetAttribute(const Value: System.Boolean);
-begin
-  FAttribute := Value;
-  FAttributeIsStored := True;
-end;
-
-function Xml.GetNameStored: Boolean;
-begin
-  Result := not FName.IsEmpty;
-end;
-
-function Xml.GetPrefixStored: Boolean;
-begin
-  Result := not FPrefix.IsEmpty;
-end;
-
-procedure Xml.SetWrapped(const Value: System.Boolean);
-begin
-  FWrapped := Value;
-  FWrappedIsStored := True;
-end;
-
-function Xml.GetNamespaceStored: Boolean;
-begin
-  Result := not FNamespace.IsEmpty;
 end;
 
 { ResponseValue }

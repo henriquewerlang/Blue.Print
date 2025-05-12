@@ -7,11 +7,11 @@
          "Files": [
             {
                "Reference": "http://json-schema.org/draft-04/schema#",
-               "UnitClassName": "TSchema"
+               "UnitClassName": "TJSONSchema"
             },
             {
                "Reference": "http://swagger.io/v2/schema.json#",
-               "UnitClassName": "TSchemaOpenAPI20"
+               "UnitClassName": "TOpenAPIDefinition"
             }            
          ]
       }
