@@ -2131,7 +2131,7 @@ begin
   Result := TPropertyDefinition.Create;
   Result.Optional := True;
   Result.Name := PropertyName;
-  Result.PropertyType := GenerateTypeDefinition(ClassDefinition.UnitDefinition, PropertySchemaType, Result.Name);
+  Result.PropertyType := GenerateTypeDefinition(ClassDefinition.UnitDefinition, PropertySchemaType, Result.Name + 'Property');
 
   if FormatPropertyName(Result.Name) <> Result.Name then
     Result.AddFieldAttribute(Result.Name);
