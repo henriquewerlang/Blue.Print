@@ -16,7 +16,7 @@ type
   // Forward class declaration
   TSchema = class;
   NonNegativeIntegerDefault0 = class;
-  Dependencies = class;
+  DependenciesProperties = class;
   Items = class;
   &Type = class;
 
@@ -24,7 +24,7 @@ type
   nonNegativeInteger = System.Integer;
   schemaArray = TArray<Blue.Print.JSON.Schema.TSchema>;
   stringArray = TArray<System.String>;
-  any = TValue;
+  any = System.Rtti.TValue;
 
   TSchema = class
   private
@@ -55,7 +55,7 @@ type
     FOneOf: schemaArray;
     FThen: Blue.Print.JSON.Schema.TSchema;
     FMinimum: System.Double;
-    FDependencies: TMap<System.String, Blue.Print.JSON.Schema.Dependencies>;
+    FDependencies: TMap<System.String, Blue.Print.JSON.Schema.DependenciesProperties>;
     FAdditionalProperties: Blue.Print.JSON.Schema.TSchema;
     FContains: Blue.Print.JSON.Schema.TSchema;
     FWriteOnly: System.Boolean;
@@ -79,13 +79,17 @@ type
     FUniqueItemsIsStored: Boolean;
 
     function GetPropertyNames: Blue.Print.JSON.Schema.TSchema;
+    function GetProperties: TMap<System.String, Blue.Print.JSON.Schema.TSchema>;
     function GetNot: Blue.Print.JSON.Schema.TSchema;
     function GetAdditionalItems: Blue.Print.JSON.Schema.TSchema;
     function GetMinProperties: Blue.Print.JSON.Schema.NonNegativeIntegerDefault0;
     function GetMinLength: Blue.Print.JSON.Schema.NonNegativeIntegerDefault0;
+    function GetPatternProperties: TMap<System.String, Blue.Print.JSON.Schema.TSchema>;
     function GetThen: Blue.Print.JSON.Schema.TSchema;
+    function GetDependencies: TMap<System.String, Blue.Print.JSON.Schema.DependenciesProperties>;
     function GetAdditionalProperties: Blue.Print.JSON.Schema.TSchema;
     function GetContains: Blue.Print.JSON.Schema.TSchema;
+    function GetDefinitions: TMap<System.String, Blue.Print.JSON.Schema.TSchema>;
     function GetElse: Blue.Print.JSON.Schema.TSchema;
     function GetItems: Blue.Print.JSON.Schema.Items;
     function GetMinItems: Blue.Print.JSON.Schema.NonNegativeIntegerDefault0;
@@ -199,7 +203,7 @@ type
     property allOf: schemaArray read FAllOf write FAllOf stored GetAllOfStored;
     [FieldName('$schema')]
     property schema: System.String read FSchema write FSchema stored GetSchemaStored;
-    property properties: TMap<System.String, Blue.Print.JSON.Schema.TSchema> read FProperties write FProperties stored GetPropertiesStored;
+    property properties: TMap<System.String, Blue.Print.JSON.Schema.TSchema> read GetProperties write FProperties stored GetPropertiesStored;
     [FieldName('not')]
     property &not: Blue.Print.JSON.Schema.TSchema read GetNot write FNot stored GetNotStored;
     property maxLength: nonNegativeInteger read FMaxLength write FMaxLength stored GetMaxLengthStored;
@@ -216,7 +220,7 @@ type
     property title: System.String read FTitle write FTitle stored GetTitleStored;
     [FieldName('$comment')]
     property comment: System.String read FComment write FComment stored GetCommentStored;
-    property patternProperties: TMap<System.String, Blue.Print.JSON.Schema.TSchema> read FPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
+    property patternProperties: TMap<System.String, Blue.Print.JSON.Schema.TSchema> read GetPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
     property multipleOf: System.Double read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
     [FieldName('const')]
     property &const: any read FConst write FConst stored GetConstStored;
@@ -224,11 +228,11 @@ type
     [FieldName('then')]
     property &then: Blue.Print.JSON.Schema.TSchema read GetThen write FThen stored GetThenStored;
     property minimum: System.Double read FMinimum write FMinimum stored GetMinimumStored;
-    property dependencies: TMap<System.String, Blue.Print.JSON.Schema.Dependencies> read FDependencies write FDependencies stored GetDependenciesStored;
+    property dependencies: TMap<System.String, Blue.Print.JSON.Schema.DependenciesProperties> read GetDependencies write FDependencies stored GetDependenciesStored;
     property additionalProperties: Blue.Print.JSON.Schema.TSchema read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
     property contains: Blue.Print.JSON.Schema.TSchema read GetContains write FContains stored GetContainsStored;
     property writeOnly: System.Boolean read FWriteOnly write SetWriteOnly stored FWriteOnlyIsStored;
-    property definitions: TMap<System.String, Blue.Print.JSON.Schema.TSchema> read FDefinitions write FDefinitions stored GetDefinitionsStored;
+    property definitions: TMap<System.String, Blue.Print.JSON.Schema.TSchema> read GetDefinitions write FDefinitions stored GetDefinitionsStored;
     property maxProperties: nonNegativeInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
     [FieldName('else')]
     property &else: Blue.Print.JSON.Schema.TSchema read GetElse write FElse stored GetElseStored;
@@ -262,7 +266,7 @@ type
   end;
 
   [SingleObject]
-  Dependencies = class
+  DependenciesProperties = class
   private
     FSchema: Blue.Print.JSON.Schema.TSchema;
     FStringArray: stringArray;
@@ -335,6 +339,8 @@ begin
   for var AObject in FAllOf do
     AObject.Free;
 
+  FProperties.Free;
+
   FNot.Free;
 
   FAdditionalItems.Free;
@@ -343,14 +349,20 @@ begin
 
   FMinLength.Free;
 
+  FPatternProperties.Free;
+
   for var AObject in FOneOf do
     AObject.Free;
 
   FThen.Free;
 
+  FDependencies.Free;
+
   FAdditionalProperties.Free;
 
   FContains.Free;
+
+  FDefinitions.Free;
 
   FElse.Free;
 
@@ -422,9 +434,17 @@ begin
   Result := not FSchema.IsEmpty;
 end;
 
+function TSchema.GetProperties: TMap<System.String, Blue.Print.JSON.Schema.TSchema>;
+begin
+  if not Assigned(FProperties) then
+    FProperties := TMap<System.String, Blue.Print.JSON.Schema.TSchema>.Create;
+
+  Result := FProperties;
+end;
+
 function TSchema.GetPropertiesStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FProperties);
 end;
 
 function TSchema.GetNot: Blue.Print.JSON.Schema.TSchema;
@@ -525,9 +545,17 @@ begin
   Result := not FComment.IsEmpty;
 end;
 
+function TSchema.GetPatternProperties: TMap<System.String, Blue.Print.JSON.Schema.TSchema>;
+begin
+  if not Assigned(FPatternProperties) then
+    FPatternProperties := TMap<System.String, Blue.Print.JSON.Schema.TSchema>.Create;
+
+  Result := FPatternProperties;
+end;
+
 function TSchema.GetPatternPropertiesStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FPatternProperties);
 end;
 
 function TSchema.GetMultipleOfStored: Boolean;
@@ -570,9 +598,17 @@ begin
   Result := FMinimum <> 0;
 end;
 
+function TSchema.GetDependencies: TMap<System.String, Blue.Print.JSON.Schema.DependenciesProperties>;
+begin
+  if not Assigned(FDependencies) then
+    FDependencies := TMap<System.String, Blue.Print.JSON.Schema.DependenciesProperties>.Create;
+
+  Result := FDependencies;
+end;
+
 function TSchema.GetDependenciesStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FDependencies);
 end;
 
 function TSchema.GetAdditionalProperties: Blue.Print.JSON.Schema.TSchema;
@@ -607,9 +643,17 @@ begin
   FWriteOnlyIsStored := True;
 end;
 
+function TSchema.GetDefinitions: TMap<System.String, Blue.Print.JSON.Schema.TSchema>;
+begin
+  if not Assigned(FDefinitions) then
+    FDefinitions := TMap<System.String, Blue.Print.JSON.Schema.TSchema>.Create;
+
+  Result := FDefinitions;
+end;
+
 function TSchema.GetDefinitionsStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FDefinitions);
 end;
 
 function TSchema.GetMaxPropertiesStored: Boolean;
@@ -730,16 +774,16 @@ begin
   Result := FNonNegativeInteger <> 0;
 end;
 
-{ Dependencies }
+{ DependenciesProperties }
 
-destructor Dependencies.Destroy;
+destructor DependenciesProperties.Destroy;
 begin
   FSchema.Free;
 
   inherited;
 end;
 
-function Dependencies.GetSchema: Blue.Print.JSON.Schema.TSchema;
+function DependenciesProperties.GetSchema: Blue.Print.JSON.Schema.TSchema;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.JSON.Schema.TSchema.Create;
@@ -747,12 +791,12 @@ begin
   Result := FSchema;
 end;
 
-function Dependencies.GetSchemaStored: Boolean;
+function DependenciesProperties.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function Dependencies.GetStringArrayStored: Boolean;
+function DependenciesProperties.GetStringArrayStored: Boolean;
 begin
   Result := Assigned(FStringArray);
 end;

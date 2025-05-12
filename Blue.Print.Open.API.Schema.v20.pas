@@ -128,11 +128,15 @@ type
     FExclusiveMinimumIsStored: Boolean;
     FUniqueItemsIsStored: Boolean;
 
+    function GetProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
     function GetNot: Blue.Print.Open.API.Schema.v20.TSchema;
     function GetAdditionalItems: Blue.Print.Open.API.Schema.v20.AdditionalItems;
     function GetMinProperties: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
     function GetMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+    function GetPatternProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
+    function GetDependencies: TMap<System.String, Blue.Print.Open.API.Schema.v20.DependenciesProperties>;
     function GetAdditionalProperties: Blue.Print.Open.API.Schema.v20.AdditionalProperties;
+    function GetDefinitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
     function GetItems: Blue.Print.Open.API.Schema.v20.Items;
     function GetMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
     function GetType: Blue.Print.Open.API.Schema.v20.&Type;
@@ -217,7 +221,7 @@ type
     property allOf: schemaArray read FAllOf write FAllOf stored GetAllOfStored;
     [FieldName('$schema')]
     property schema: System.String read FSchema write FSchema stored GetSchemaStored;
-    property properties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema> read FProperties write FProperties stored GetPropertiesStored;
+    property properties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema> read GetProperties write FProperties stored GetPropertiesStored;
     [FieldName('not')]
     property &not: Blue.Print.Open.API.Schema.v20.TSchema read GetNot write FNot stored GetNotStored;
     property maxLength: positiveInteger read FMaxLength write FMaxLength stored GetMaxLengthStored;
@@ -230,12 +234,12 @@ type
     property minLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
     property title: System.String read FTitle write FTitle stored GetTitleStored;
     property multipleOf: System.Double read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
-    property patternProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema> read FPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
+    property patternProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema> read GetPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
     property oneOf: schemaArray read FOneOf write FOneOf stored GetOneOfStored;
     property minimum: System.Double read FMinimum write FMinimum stored GetMinimumStored;
-    property dependencies: TMap<System.String, Blue.Print.Open.API.Schema.v20.DependenciesProperties> read FDependencies write FDependencies stored GetDependenciesStored;
+    property dependencies: TMap<System.String, Blue.Print.Open.API.Schema.v20.DependenciesProperties> read GetDependencies write FDependencies stored GetDependenciesStored;
     property additionalProperties: Blue.Print.Open.API.Schema.v20.AdditionalProperties read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
-    property definitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema> read FDefinitions write FDefinitions stored GetDefinitionsStored;
+    property definitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema> read GetDefinitions write FDefinitions stored GetDefinitionsStored;
     property maxProperties: positiveInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
     property maxItems: positiveInteger read FMaxItems write FMaxItems stored GetMaxItemsStored;
     property uniqueItems: System.Boolean read FUniqueItems write SetUniqueItems stored FUniqueItemsIsStored;
@@ -376,8 +380,15 @@ type
     FHost: System.String;
     FSecurityDefinitions: securityDefinitions;
 
+    function GetExternalDocs: externalDocs;
     function GetConsumes: Blue.Print.Open.API.Schema.v20.Consumes;
+    function GetPaths: paths;
+    function GetResponses: responses;
+    function GetInfo: info;
+    function GetParameters: parameterDefinitions;
+    function GetDefinitions: definitions;
     function GetProduces: Blue.Print.Open.API.Schema.v20.Produces;
+    function GetSecurityDefinitions: securityDefinitions;
     function GetExternalDocsStored: Boolean;
     function GetTagsStored: Boolean;
     function GetBasePathStored: Boolean;
@@ -406,21 +417,21 @@ type
     property IsHostStored: Boolean read GetHostStored;
     property IsSecurityDefinitionsStored: Boolean read GetSecurityDefinitionsStored;
   published
-    property externalDocs: externalDocs read FExternalDocs write FExternalDocs stored GetExternalDocsStored;
+    property externalDocs: externalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
     property tags: TArray<tag> read FTags write FTags stored GetTagsStored;
     property basePath: System.String read FBasePath write FBasePath stored GetBasePathStored;
     property swagger: System.String read FSwagger write FSwagger;
     property consumes: Blue.Print.Open.API.Schema.v20.Consumes read GetConsumes write FConsumes stored GetConsumesStored;
-    property paths: paths read FPaths write FPaths;
-    property responses: responses read FResponses write FResponses stored GetResponsesStored;
-    property info: info read FInfo write FInfo;
+    property paths: paths read GetPaths write FPaths;
+    property responses: responses read GetResponses write FResponses stored GetResponsesStored;
+    property info: info read GetInfo write FInfo;
     property schemes: schemesList read FSchemes write FSchemes stored GetSchemesStored;
     property security: security read FSecurity write FSecurity stored GetSecurityStored;
-    property parameters: parameterDefinitions read FParameters write FParameters stored GetParametersStored;
-    property definitions: definitions read FDefinitions write FDefinitions stored GetDefinitionsStored;
+    property parameters: parameterDefinitions read GetParameters write FParameters stored GetParametersStored;
+    property definitions: definitions read GetDefinitions write FDefinitions stored GetDefinitionsStored;
     property produces: Blue.Print.Open.API.Schema.v20.Produces read GetProduces write FProduces stored GetProducesStored;
     property host: System.String read FHost write FHost stored GetHostStored;
-    property securityDefinitions: securityDefinitions read FSecurityDefinitions write FSecurityDefinitions stored GetSecurityDefinitionsStored;
+    property securityDefinitions: securityDefinitions read GetSecurityDefinitions write FSecurityDefinitions stored GetSecurityDefinitionsStored;
   end;
 
   [SingleObject]
@@ -429,14 +440,18 @@ type
     FBodyParameter: TMap<System.String, any>;
     FNonBodyParameter: nonBodyParameter;
 
+    function GetBodyParameter: TMap<System.String, any>;
+    function GetNonBodyParameter: nonBodyParameter;
     function GetBodyParameterStored: Boolean;
     function GetNonBodyParameterStored: Boolean;
   public
+    destructor Destroy; override;
+
     property IsBodyParameterStored: Boolean read GetBodyParameterStored;
     property IsNonBodyParameterStored: Boolean read GetNonBodyParameterStored;
   published
-    property bodyParameter: TMap<System.String, any> read FBodyParameter write FBodyParameter stored GetBodyParameterStored;
-    property nonBodyParameter: nonBodyParameter read FNonBodyParameter write FNonBodyParameter stored GetNonBodyParameterStored;
+    property bodyParameter: TMap<System.String, any> read GetBodyParameter write FBodyParameter stored GetBodyParameterStored;
+    property nonBodyParameter: nonBodyParameter read GetNonBodyParameter write FNonBodyParameter stored GetNonBodyParameterStored;
   end;
 
   [SingleObject]
@@ -449,6 +464,12 @@ type
     FOauth2ApplicationSecurity: oauth2ApplicationSecurity;
     FOauth2AccessCodeSecurity: oauth2AccessCodeSecurity;
 
+    function GetBasicAuthenticationSecurity: basicAuthenticationSecurity;
+    function GetApiKeySecurity: apiKeySecurity;
+    function GetOauth2ImplicitSecurity: TMap<System.String, any>;
+    function GetOauth2PasswordSecurity: oauth2PasswordSecurity;
+    function GetOauth2ApplicationSecurity: oauth2ApplicationSecurity;
+    function GetOauth2AccessCodeSecurity: oauth2AccessCodeSecurity;
     function GetBasicAuthenticationSecurityStored: Boolean;
     function GetApiKeySecurityStored: Boolean;
     function GetOauth2ImplicitSecurityStored: Boolean;
@@ -456,6 +477,8 @@ type
     function GetOauth2ApplicationSecurityStored: Boolean;
     function GetOauth2AccessCodeSecurityStored: Boolean;
   public
+    destructor Destroy; override;
+
     property IsBasicAuthenticationSecurityStored: Boolean read GetBasicAuthenticationSecurityStored;
     property IsApiKeySecurityStored: Boolean read GetApiKeySecurityStored;
     property IsOauth2ImplicitSecurityStored: Boolean read GetOauth2ImplicitSecurityStored;
@@ -463,12 +486,12 @@ type
     property IsOauth2ApplicationSecurityStored: Boolean read GetOauth2ApplicationSecurityStored;
     property IsOauth2AccessCodeSecurityStored: Boolean read GetOauth2AccessCodeSecurityStored;
   published
-    property basicAuthenticationSecurity: basicAuthenticationSecurity read FBasicAuthenticationSecurity write FBasicAuthenticationSecurity stored GetBasicAuthenticationSecurityStored;
-    property apiKeySecurity: apiKeySecurity read FApiKeySecurity write FApiKeySecurity stored GetApiKeySecurityStored;
-    property oauth2ImplicitSecurity: TMap<System.String, any> read FOauth2ImplicitSecurity write FOauth2ImplicitSecurity stored GetOauth2ImplicitSecurityStored;
-    property oauth2PasswordSecurity: oauth2PasswordSecurity read FOauth2PasswordSecurity write FOauth2PasswordSecurity stored GetOauth2PasswordSecurityStored;
-    property oauth2ApplicationSecurity: oauth2ApplicationSecurity read FOauth2ApplicationSecurity write FOauth2ApplicationSecurity stored GetOauth2ApplicationSecurityStored;
-    property oauth2AccessCodeSecurity: oauth2AccessCodeSecurity read FOauth2AccessCodeSecurity write FOauth2AccessCodeSecurity stored GetOauth2AccessCodeSecurityStored;
+    property basicAuthenticationSecurity: basicAuthenticationSecurity read GetBasicAuthenticationSecurity write FBasicAuthenticationSecurity stored GetBasicAuthenticationSecurityStored;
+    property apiKeySecurity: apiKeySecurity read GetApiKeySecurity write FApiKeySecurity stored GetApiKeySecurityStored;
+    property oauth2ImplicitSecurity: TMap<System.String, any> read GetOauth2ImplicitSecurity write FOauth2ImplicitSecurity stored GetOauth2ImplicitSecurityStored;
+    property oauth2PasswordSecurity: oauth2PasswordSecurity read GetOauth2PasswordSecurity write FOauth2PasswordSecurity stored GetOauth2PasswordSecurityStored;
+    property oauth2ApplicationSecurity: oauth2ApplicationSecurity read GetOauth2ApplicationSecurity write FOauth2ApplicationSecurity stored GetOauth2ApplicationSecurityStored;
+    property oauth2AccessCodeSecurity: oauth2AccessCodeSecurity read GetOauth2AccessCodeSecurity write FOauth2AccessCodeSecurity stored GetOauth2AccessCodeSecurityStored;
   end;
 
   [SingleObject]
@@ -478,6 +501,7 @@ type
     FJsonReference: jsonReference;
 
     function GetParameter: Blue.Print.Open.API.Schema.v20.Parameter;
+    function GetJsonReference: jsonReference;
     function GetParameterStored: Boolean;
     function GetJsonReferenceStored: Boolean;
   public
@@ -487,7 +511,7 @@ type
     property IsJsonReferenceStored: Boolean read GetJsonReferenceStored;
   published
     property parameter: Blue.Print.Open.API.Schema.v20.Parameter read GetParameter write FParameter stored GetParameterStored;
-    property jsonReference: jsonReference read FJsonReference write FJsonReference stored GetJsonReferenceStored;
+    property jsonReference: jsonReference read GetJsonReference write FJsonReference stored GetJsonReferenceStored;
   end;
 
   [SingleObject]
@@ -496,14 +520,18 @@ type
     FResponse: TMap<System.String, any>;
     FJsonReference: jsonReference;
 
+    function GetResponse: TMap<System.String, any>;
+    function GetJsonReference: jsonReference;
     function GetResponseStored: Boolean;
     function GetJsonReferenceStored: Boolean;
   public
+    destructor Destroy; override;
+
     property IsResponseStored: Boolean read GetResponseStored;
     property IsJsonReferenceStored: Boolean read GetJsonReferenceStored;
   published
-    property response: TMap<System.String, any> read FResponse write FResponse stored GetResponseStored;
-    property jsonReference: jsonReference read FJsonReference write FJsonReference stored GetJsonReferenceStored;
+    property response: TMap<System.String, any> read GetResponse write FResponse stored GetResponseStored;
+    property jsonReference: jsonReference read GetJsonReference write FJsonReference stored GetJsonReferenceStored;
   end;
 
   [SingleObject]
@@ -544,6 +572,8 @@ begin
   for var AObject in FAllOf do
     AObject.Free;
 
+  FProperties.Free;
+
   FNot.Free;
 
   FAdditionalItems.Free;
@@ -552,10 +582,16 @@ begin
 
   FMinLength.Free;
 
+  FPatternProperties.Free;
+
   for var AObject in FOneOf do
     AObject.Free;
 
+  FDependencies.Free;
+
   FAdditionalProperties.Free;
+
+  FDefinitions.Free;
 
   FItems.Free;
 
@@ -612,9 +648,17 @@ begin
   Result := not FSchema.IsEmpty;
 end;
 
+function TSchema.GetProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
+begin
+  if not Assigned(FProperties) then
+    FProperties := TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>.Create;
+
+  Result := FProperties;
+end;
+
 function TSchema.GetPropertiesStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FProperties);
 end;
 
 function TSchema.GetNot: Blue.Print.Open.API.Schema.v20.TSchema;
@@ -704,9 +748,17 @@ begin
   Result := FMultipleOf <> 0;
 end;
 
+function TSchema.GetPatternProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
+begin
+  if not Assigned(FPatternProperties) then
+    FPatternProperties := TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>.Create;
+
+  Result := FPatternProperties;
+end;
+
 function TSchema.GetPatternPropertiesStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FPatternProperties);
 end;
 
 function TSchema.AddOneOf: Blue.Print.Open.API.Schema.v20.TSchema;
@@ -726,9 +778,17 @@ begin
   Result := FMinimum <> 0;
 end;
 
+function TSchema.GetDependencies: TMap<System.String, Blue.Print.Open.API.Schema.v20.DependenciesProperties>;
+begin
+  if not Assigned(FDependencies) then
+    FDependencies := TMap<System.String, Blue.Print.Open.API.Schema.v20.DependenciesProperties>.Create;
+
+  Result := FDependencies;
+end;
+
 function TSchema.GetDependenciesStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FDependencies);
 end;
 
 function TSchema.GetAdditionalProperties: Blue.Print.Open.API.Schema.v20.AdditionalProperties;
@@ -744,9 +804,17 @@ begin
   Result := Assigned(FAdditionalProperties);
 end;
 
+function TSchema.GetDefinitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
+begin
+  if not Assigned(FDefinitions) then
+    FDefinitions := TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>.Create;
+
+  Result := FDefinitions;
+end;
+
 function TSchema.GetDefinitionsStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FDefinitions);
 end;
 
 function TSchema.GetMaxPropertiesStored: Boolean;
@@ -963,16 +1031,44 @@ end;
 
 destructor TSchemaOpenAPI20.Destroy;
 begin
+  FExternalDocs.Free;
+
+  for var AObject in FTags do
+    AObject.Free;
+
   FConsumes.Free;
 
+  FPaths.Free;
+
+  FResponses.Free;
+
+  FInfo.Free;
+
+  for var AObject in FSecurity do
+    AObject.Free;
+
+  FParameters.Free;
+
+  FDefinitions.Free;
+
   FProduces.Free;
+
+  FSecurityDefinitions.Free;
 
   inherited;
 end;
 
+function TSchemaOpenAPI20.GetExternalDocs: TMap<System.String, any>;
+begin
+  if not Assigned(FExternalDocs) then
+    FExternalDocs := TMap<System.String, any>.Create;
+
+  Result := FExternalDocs;
+end;
+
 function TSchemaOpenAPI20.GetExternalDocsStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FExternalDocs);
 end;
 
 function TSchemaOpenAPI20.GetTagsStored: Boolean;
@@ -998,9 +1094,33 @@ begin
   Result := Assigned(FConsumes);
 end;
 
+function TSchemaOpenAPI20.GetPaths: TMap<System.String, any>;
+begin
+  if not Assigned(FPaths) then
+    FPaths := TMap<System.String, any>.Create;
+
+  Result := FPaths;
+end;
+
+function TSchemaOpenAPI20.GetResponses: TMap<System.String, any>;
+begin
+  if not Assigned(FResponses) then
+    FResponses := TMap<System.String, any>.Create;
+
+  Result := FResponses;
+end;
+
 function TSchemaOpenAPI20.GetResponsesStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FResponses);
+end;
+
+function TSchemaOpenAPI20.GetInfo: TMap<System.String, any>;
+begin
+  if not Assigned(FInfo) then
+    FInfo := TMap<System.String, any>.Create;
+
+  Result := FInfo;
 end;
 
 function TSchemaOpenAPI20.GetSchemesStored: Boolean;
@@ -1013,14 +1133,30 @@ begin
   Result := Assigned(FSecurity);
 end;
 
+function TSchemaOpenAPI20.GetParameters: TMap<System.String, Blue.Print.Open.API.Schema.v20.Parameter>;
+begin
+  if not Assigned(FParameters) then
+    FParameters := TMap<System.String, Blue.Print.Open.API.Schema.v20.Parameter>.Create;
+
+  Result := FParameters;
+end;
+
 function TSchemaOpenAPI20.GetParametersStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FParameters);
+end;
+
+function TSchemaOpenAPI20.GetDefinitions: TMap<System.String, TMap<System.String, any>>;
+begin
+  if not Assigned(FDefinitions) then
+    FDefinitions := TMap<System.String, TMap<System.String, any>>.Create;
+
+  Result := FDefinitions;
 end;
 
 function TSchemaOpenAPI20.GetDefinitionsStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FDefinitions);
 end;
 
 function TSchemaOpenAPI20.GetProduces: Blue.Print.Open.API.Schema.v20.Produces;
@@ -1041,53 +1177,151 @@ begin
   Result := not FHost.IsEmpty;
 end;
 
+function TSchemaOpenAPI20.GetSecurityDefinitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.SecurityDefinitionsProperties>;
+begin
+  if not Assigned(FSecurityDefinitions) then
+    FSecurityDefinitions := TMap<System.String, Blue.Print.Open.API.Schema.v20.SecurityDefinitionsProperties>.Create;
+
+  Result := FSecurityDefinitions;
+end;
+
 function TSchemaOpenAPI20.GetSecurityDefinitionsStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FSecurityDefinitions);
 end;
 
 { Parameter }
 
+destructor Parameter.Destroy;
+begin
+  FBodyParameter.Free;
+
+  FNonBodyParameter.Free;
+
+  inherited;
+end;
+
+function Parameter.GetBodyParameter: TMap<System.String, any>;
+begin
+  if not Assigned(FBodyParameter) then
+    FBodyParameter := TMap<System.String, any>.Create;
+
+  Result := FBodyParameter;
+end;
+
 function Parameter.GetBodyParameterStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FBodyParameter);
+end;
+
+function Parameter.GetNonBodyParameter: TMap<System.String, any>;
+begin
+  if not Assigned(FNonBodyParameter) then
+    FNonBodyParameter := TMap<System.String, any>.Create;
+
+  Result := FNonBodyParameter;
 end;
 
 function Parameter.GetNonBodyParameterStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FNonBodyParameter);
 end;
 
 { SecurityDefinitionsProperties }
 
+destructor SecurityDefinitionsProperties.Destroy;
+begin
+  FBasicAuthenticationSecurity.Free;
+
+  FApiKeySecurity.Free;
+
+  FOauth2ImplicitSecurity.Free;
+
+  FOauth2PasswordSecurity.Free;
+
+  FOauth2ApplicationSecurity.Free;
+
+  FOauth2AccessCodeSecurity.Free;
+
+  inherited;
+end;
+
+function SecurityDefinitionsProperties.GetBasicAuthenticationSecurity: TMap<System.String, any>;
+begin
+  if not Assigned(FBasicAuthenticationSecurity) then
+    FBasicAuthenticationSecurity := TMap<System.String, any>.Create;
+
+  Result := FBasicAuthenticationSecurity;
+end;
+
 function SecurityDefinitionsProperties.GetBasicAuthenticationSecurityStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FBasicAuthenticationSecurity);
+end;
+
+function SecurityDefinitionsProperties.GetApiKeySecurity: TMap<System.String, any>;
+begin
+  if not Assigned(FApiKeySecurity) then
+    FApiKeySecurity := TMap<System.String, any>.Create;
+
+  Result := FApiKeySecurity;
 end;
 
 function SecurityDefinitionsProperties.GetApiKeySecurityStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FApiKeySecurity);
+end;
+
+function SecurityDefinitionsProperties.GetOauth2ImplicitSecurity: TMap<System.String, any>;
+begin
+  if not Assigned(FOauth2ImplicitSecurity) then
+    FOauth2ImplicitSecurity := TMap<System.String, any>.Create;
+
+  Result := FOauth2ImplicitSecurity;
 end;
 
 function SecurityDefinitionsProperties.GetOauth2ImplicitSecurityStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FOauth2ImplicitSecurity);
+end;
+
+function SecurityDefinitionsProperties.GetOauth2PasswordSecurity: TMap<System.String, any>;
+begin
+  if not Assigned(FOauth2PasswordSecurity) then
+    FOauth2PasswordSecurity := TMap<System.String, any>.Create;
+
+  Result := FOauth2PasswordSecurity;
 end;
 
 function SecurityDefinitionsProperties.GetOauth2PasswordSecurityStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FOauth2PasswordSecurity);
+end;
+
+function SecurityDefinitionsProperties.GetOauth2ApplicationSecurity: TMap<System.String, any>;
+begin
+  if not Assigned(FOauth2ApplicationSecurity) then
+    FOauth2ApplicationSecurity := TMap<System.String, any>.Create;
+
+  Result := FOauth2ApplicationSecurity;
 end;
 
 function SecurityDefinitionsProperties.GetOauth2ApplicationSecurityStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FOauth2ApplicationSecurity);
+end;
+
+function SecurityDefinitionsProperties.GetOauth2AccessCodeSecurity: TMap<System.String, any>;
+begin
+  if not Assigned(FOauth2AccessCodeSecurity) then
+    FOauth2AccessCodeSecurity := TMap<System.String, any>.Create;
+
+  Result := FOauth2AccessCodeSecurity;
 end;
 
 function SecurityDefinitionsProperties.GetOauth2AccessCodeSecurityStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FOauth2AccessCodeSecurity);
 end;
 
 { ParametersList }
@@ -1095,6 +1329,8 @@ end;
 destructor ParametersList.Destroy;
 begin
   FParameter.Free;
+
+  FJsonReference.Free;
 
   inherited;
 end;
@@ -1112,21 +1348,54 @@ begin
   Result := Assigned(FParameter);
 end;
 
+function ParametersList.GetJsonReference: TMap<System.String, any>;
+begin
+  if not Assigned(FJsonReference) then
+    FJsonReference := TMap<System.String, any>.Create;
+
+  Result := FJsonReference;
+end;
+
 function ParametersList.GetJsonReferenceStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FJsonReference);
 end;
 
 { ResponseValue }
 
+destructor ResponseValue.Destroy;
+begin
+  FResponse.Free;
+
+  FJsonReference.Free;
+
+  inherited;
+end;
+
+function ResponseValue.GetResponse: TMap<System.String, any>;
+begin
+  if not Assigned(FResponse) then
+    FResponse := TMap<System.String, any>.Create;
+
+  Result := FResponse;
+end;
+
 function ResponseValue.GetResponseStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FResponse);
+end;
+
+function ResponseValue.GetJsonReference: TMap<System.String, any>;
+begin
+  if not Assigned(FJsonReference) then
+    FJsonReference := TMap<System.String, any>.Create;
+
+  Result := FJsonReference;
 end;
 
 function ResponseValue.GetJsonReferenceStored: Boolean;
 begin
-  Result := False;
+  Result := Assigned(FJsonReference);
 end;
 
 { Consumes }

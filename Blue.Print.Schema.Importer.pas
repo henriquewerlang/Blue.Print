@@ -1366,12 +1366,12 @@ var
 
       function GetNeedDestructor(const PropertyType: TTypeDefinition): Boolean;
       begin
-        Result := PropertyType.IsClassDefinition and not PropertyType.IsObjectType or PropertyType.IsArrayType and GetNeedDestructor(GetArrayItemBaseType(PropertyType));
+        Result := PropertyType.IsClassDefinition and not PropertyType.IsObjectType or PropertyType.IsMapType or PropertyType.IsArrayType and GetNeedDestructor(GetArrayItemBaseType(PropertyType));
       end;
 
       function GetNeedGetFunction(const PropertyType: TTypeDefinition): Boolean;
       begin
-        Result := PropertyType.IsClassDefinition and not PropertyType.IsArrayType and not PropertyType.IsObjectType;
+        Result := PropertyType.IsClassDefinition and not PropertyType.IsArrayType and not PropertyType.IsObjectType or PropertyType.IsMapType;
       end;
 
       procedure AppendInformation(const NeedAdd: Boolean; const &Property: TPropertyDefinition; const Information: TImplementationInformation);
@@ -1504,7 +1504,7 @@ var
 
   function GetIsStoredFunctionValue(const &Property: TPropertyDefinition; const PropertyType: TTypeDefinition): String;
   begin
-    if PropertyType.IsClassDefinition or PropertyType.IsArrayType then
+    if PropertyType.IsClassDefinition or PropertyType.IsArrayType or PropertyType.IsMapType then
       Result := Format('Assigned(%s)', [GetPropertyFieldName(&Property)])
     else if PropertyType.IsStringType then
       Result := Format('not %s.IsEmpty', [GetPropertyFieldName(&Property)])
