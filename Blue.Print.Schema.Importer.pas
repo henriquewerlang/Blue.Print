@@ -343,6 +343,7 @@ type
     procedure LoadUnitFromReference(const Reference: String);
 
     property BooleanType: TTypeDefinition read FBooleanType;
+    property BuildInType: TDictionary<String, TTypeDefinition> read FBuildInType;
     property CardinalType: TTypeDefinition read FCardinalType;
     property DateType: TTypeDefinition read FDateType;
     property DateTimeType: TTypeDefinition read FDateTimeType;
@@ -432,7 +433,7 @@ end;
 
 function CheckReservedName(const Name: String): String;
 const
-  SPECIAL_NAMES: array[0..12] of String = ('type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'string', 'const', 'not');
+  SPECIAL_NAMES: array[0..13] of String = ('type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'string', 'const', 'not', 'in');
 
 begin
   Result := Name;
@@ -544,7 +545,7 @@ begin
   if FTypeExternal.TryGetValue(TypeName, Result) then
     Exit;
 
-  if FBuildInType.TryGetValue(TypeName, Result) then
+  if BuildInType.TryGetValue(TypeName, Result) then
     Exit;
 
   var ClassModule := Module;
@@ -716,9 +717,9 @@ procedure TSchemaImporter.LoadInternalTypes;
     Result := TypeDefinition;
     Result.Name := Format('%s.%s', [UnitName, TypeName]);
 
-    FBuildInType.Add(Result.Name, Result);
+    BuildInType.Add(Result.Name, Result);
 
-    FBuildInType.Add(TypeName, CreateTypeAlias(nil, TypeName, Result));
+    BuildInType.Add(TypeName, CreateTypeAlias(nil, TypeName, Result));
   end;
 
   function AddType(const UnitName, TypeName: String): TTypeDefinition; overload;
@@ -2226,8 +2227,27 @@ begin
         simpleTypes.null: Result := nil;
         simpleTypes.integer: Result := IntegerType;
         simpleTypes.number: Result := DoubleType;
-        simpleTypes.&object: Result := TTypeMapDefinition.Create(UnitDefinition, StringType, GenerateTypeDefinition(Module, Schema.additionalProperties, TypeName + 'Properties'));
         simpleTypes.&string: Result := StringType;
+
+        simpleTypes.&object:
+        begin
+          var MapType: TTypeDefinition;
+
+          if Schema.IsPropertiesStored then
+          begin
+            var InnerClassDefinition := CreateClassDefinition(Module, TypeName);
+
+            GenerateProperties(InnerClassDefinition, Schema);
+
+            Result := InnerClassDefinition;
+          end
+          else
+          begin
+            MapType := GenerateTypeDefinition(Module, Schema.additionalProperties, TypeName + 'AdditionalProperties');
+
+            Result := TTypeMapDefinition.Create(UnitDefinition, StringType, MapType);
+          end;
+        end;
       end
       else
       begin
@@ -2272,7 +2292,7 @@ begin
 
     if TypeDefinition.IsEnumeration then
     begin
-      if not FBuildInType.ContainsKey(TypeDefinition.Name) then
+      if not BuildInType.ContainsKey(TypeDefinition.Name) then
         UnitDefinition.Enumerations.Add(TypeDefinition.AsTypeEnumeration)
     end
     else if not TypeDefinition.IsClassDefinition then
