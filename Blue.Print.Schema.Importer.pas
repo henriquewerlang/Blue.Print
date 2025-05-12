@@ -2226,7 +2226,7 @@ begin
         simpleTypes.null: Result := nil;
         simpleTypes.integer: Result := IntegerType;
         simpleTypes.number: Result := DoubleType;
-        simpleTypes.&object: Result := TTypeMapDefinition.Create(UnitDefinition, StringType, GenerateTypeDefinition(Module, Schema.additionalProperties, TypeName));
+        simpleTypes.&object: Result := TTypeMapDefinition.Create(UnitDefinition, StringType, GenerateTypeDefinition(Module, Schema.additionalProperties, TypeName + 'Properties'));
         simpleTypes.&string: Result := StringType;
       end
       else

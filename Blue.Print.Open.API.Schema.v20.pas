@@ -17,13 +17,13 @@ type
   TSchema = class;
   PositiveIntegerDefault0 = class;
   AdditionalItems = class;
-  Dependencies = class;
+  DependenciesProperties = class;
   AdditionalProperties = class;
   Items = class;
   &Type = class;
   TSchemaOpenAPI20 = class;
   Parameter = class;
-  SecurityDefinitions = class;
+  SecurityDefinitionsProperties = class;
   ParametersList = class;
   ResponseValue = class;
   Consumes = class;
@@ -70,7 +70,7 @@ type
   vendorExtension = System.Rtti.TValue;
   definitions = TMap<System.String, TMap<System.String, System.Rtti.TValue>>;
   bodyParameter = TMap<System.String, System.Rtti.TValue>;
-  securityDefinitions = TMap<System.String, Blue.Print.Open.API.Schema.v20.SecurityDefinitions>;
+  securityDefinitions = TMap<System.String, Blue.Print.Open.API.Schema.v20.SecurityDefinitionsProperties>;
   parametersList = TArray<Blue.Print.Open.API.Schema.v20.ParametersList>;
   oauth2ImplicitSecurity = TMap<System.String, System.Rtti.TValue>;
   header = TMap<System.String, System.Rtti.TValue>;
@@ -112,7 +112,7 @@ type
     FPatternProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
     FOneOf: schemaArray;
     FMinimum: System.Double;
-    FDependencies: TMap<System.String, Blue.Print.Open.API.Schema.v20.Dependencies>;
+    FDependencies: TMap<System.String, Blue.Print.Open.API.Schema.v20.DependenciesProperties>;
     FAdditionalProperties: Blue.Print.Open.API.Schema.v20.AdditionalProperties;
     FDefinitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema>;
     FMaxProperties: positiveInteger;
@@ -233,7 +233,7 @@ type
     property patternProperties: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema> read FPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
     property oneOf: schemaArray read FOneOf write FOneOf stored GetOneOfStored;
     property minimum: System.Double read FMinimum write FMinimum stored GetMinimumStored;
-    property dependencies: TMap<System.String, Blue.Print.Open.API.Schema.v20.Dependencies> read FDependencies write FDependencies stored GetDependenciesStored;
+    property dependencies: TMap<System.String, Blue.Print.Open.API.Schema.v20.DependenciesProperties> read FDependencies write FDependencies stored GetDependenciesStored;
     property additionalProperties: Blue.Print.Open.API.Schema.v20.AdditionalProperties read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
     property definitions: TMap<System.String, Blue.Print.Open.API.Schema.v20.TSchema> read FDefinitions write FDefinitions stored GetDefinitionsStored;
     property maxProperties: positiveInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
@@ -281,7 +281,7 @@ type
   end;
 
   [SingleObject]
-  Dependencies = class
+  DependenciesProperties = class
   private
     FSchema: Blue.Print.Open.API.Schema.v20.TSchema;
     FStringArray: stringArray;
@@ -374,11 +374,10 @@ type
     FDefinitions: definitions;
     FProduces: Blue.Print.Open.API.Schema.v20.Produces;
     FHost: System.String;
-    FSecurityDefinitions: Blue.Print.Open.API.Schema.v20.SecurityDefinitions;
+    FSecurityDefinitions: securityDefinitions;
 
     function GetConsumes: Blue.Print.Open.API.Schema.v20.Consumes;
     function GetProduces: Blue.Print.Open.API.Schema.v20.Produces;
-    function GetSecurityDefinitions: Blue.Print.Open.API.Schema.v20.SecurityDefinitions;
     function GetExternalDocsStored: Boolean;
     function GetTagsStored: Boolean;
     function GetBasePathStored: Boolean;
@@ -421,7 +420,7 @@ type
     property definitions: definitions read FDefinitions write FDefinitions stored GetDefinitionsStored;
     property produces: Blue.Print.Open.API.Schema.v20.Produces read GetProduces write FProduces stored GetProducesStored;
     property host: System.String read FHost write FHost stored GetHostStored;
-    property securityDefinitions: Blue.Print.Open.API.Schema.v20.SecurityDefinitions read GetSecurityDefinitions write FSecurityDefinitions stored GetSecurityDefinitionsStored;
+    property securityDefinitions: securityDefinitions read FSecurityDefinitions write FSecurityDefinitions stored GetSecurityDefinitionsStored;
   end;
 
   [SingleObject]
@@ -441,7 +440,7 @@ type
   end;
 
   [SingleObject]
-  SecurityDefinitions = class
+  SecurityDefinitionsProperties = class
   private
     FBasicAuthenticationSecurity: basicAuthenticationSecurity;
     FApiKeySecurity: apiKeySecurity;
@@ -855,16 +854,16 @@ begin
   Result := Assigned(FSchema);
 end;
 
-{ Dependencies }
+{ DependenciesProperties }
 
-destructor Dependencies.Destroy;
+destructor DependenciesProperties.Destroy;
 begin
   FSchema.Free;
 
   inherited;
 end;
 
-function Dependencies.GetSchema: Blue.Print.Open.API.Schema.v20.TSchema;
+function DependenciesProperties.GetSchema: Blue.Print.Open.API.Schema.v20.TSchema;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.Open.API.Schema.v20.TSchema.Create;
@@ -872,12 +871,12 @@ begin
   Result := FSchema;
 end;
 
-function Dependencies.GetSchemaStored: Boolean;
+function DependenciesProperties.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function Dependencies.GetStringArrayStored: Boolean;
+function DependenciesProperties.GetStringArrayStored: Boolean;
 begin
   Result := Assigned(FStringArray);
 end;
@@ -968,8 +967,6 @@ begin
 
   FProduces.Free;
 
-  FSecurityDefinitions.Free;
-
   inherited;
 end;
 
@@ -1044,17 +1041,9 @@ begin
   Result := not FHost.IsEmpty;
 end;
 
-function TSchemaOpenAPI20.GetSecurityDefinitions: Blue.Print.Open.API.Schema.v20.SecurityDefinitions;
-begin
-  if not Assigned(FSecurityDefinitions) then
-    FSecurityDefinitions := Blue.Print.Open.API.Schema.v20.SecurityDefinitions.Create;
-
-  Result := FSecurityDefinitions;
-end;
-
 function TSchemaOpenAPI20.GetSecurityDefinitionsStored: Boolean;
 begin
-  Result := Assigned(FSecurityDefinitions);
+  Result := False;
 end;
 
 { Parameter }
@@ -1069,34 +1058,34 @@ begin
   Result := False;
 end;
 
-{ SecurityDefinitions }
+{ SecurityDefinitionsProperties }
 
-function SecurityDefinitions.GetBasicAuthenticationSecurityStored: Boolean;
+function SecurityDefinitionsProperties.GetBasicAuthenticationSecurityStored: Boolean;
 begin
   Result := False;
 end;
 
-function SecurityDefinitions.GetApiKeySecurityStored: Boolean;
+function SecurityDefinitionsProperties.GetApiKeySecurityStored: Boolean;
 begin
   Result := False;
 end;
 
-function SecurityDefinitions.GetOauth2ImplicitSecurityStored: Boolean;
+function SecurityDefinitionsProperties.GetOauth2ImplicitSecurityStored: Boolean;
 begin
   Result := False;
 end;
 
-function SecurityDefinitions.GetOauth2PasswordSecurityStored: Boolean;
+function SecurityDefinitionsProperties.GetOauth2PasswordSecurityStored: Boolean;
 begin
   Result := False;
 end;
 
-function SecurityDefinitions.GetOauth2ApplicationSecurityStored: Boolean;
+function SecurityDefinitionsProperties.GetOauth2ApplicationSecurityStored: Boolean;
 begin
   Result := False;
 end;
 
-function SecurityDefinitions.GetOauth2AccessCodeSecurityStored: Boolean;
+function SecurityDefinitionsProperties.GetOauth2AccessCodeSecurityStored: Boolean;
 begin
   Result := False;
 end;
