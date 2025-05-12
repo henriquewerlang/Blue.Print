@@ -24,7 +24,7 @@ type
   TSchemaOpenAPI20 = class;
   Parameter = class;
   SecurityDefinitionsProperties = class;
-  ParametersList = class;
+  ParametersListArrayItem = class;
   ResponseValue = class;
   Consumes = class;
   Produces = class;
@@ -71,7 +71,7 @@ type
   definitions = TMap<System.String, TMap<System.String, System.Rtti.TValue>>;
   bodyParameter = TMap<System.String, System.Rtti.TValue>;
   securityDefinitions = TMap<System.String, Blue.Print.Open.API.Schema.v20.SecurityDefinitionsProperties>;
-  parametersList = TArray<Blue.Print.Open.API.Schema.v20.ParametersList>;
+  parametersList = TArray<Blue.Print.Open.API.Schema.v20.ParametersListArrayItem>;
   oauth2ImplicitSecurity = TMap<System.String, System.Rtti.TValue>;
   header = TMap<System.String, System.Rtti.TValue>;
   xml = TMap<System.String, System.Rtti.TValue>;
@@ -495,7 +495,7 @@ type
   end;
 
   [SingleObject]
-  ParametersList = class
+  ParametersListArrayItem = class
   private
     FParameter: Blue.Print.Open.API.Schema.v20.Parameter;
     FJsonReference: jsonReference;
@@ -1324,9 +1324,9 @@ begin
   Result := Assigned(FOauth2AccessCodeSecurity);
 end;
 
-{ ParametersList }
+{ ParametersListArrayItem }
 
-destructor ParametersList.Destroy;
+destructor ParametersListArrayItem.Destroy;
 begin
   FParameter.Free;
 
@@ -1335,7 +1335,7 @@ begin
   inherited;
 end;
 
-function ParametersList.GetParameter: Blue.Print.Open.API.Schema.v20.Parameter;
+function ParametersListArrayItem.GetParameter: Blue.Print.Open.API.Schema.v20.Parameter;
 begin
   if not Assigned(FParameter) then
     FParameter := Blue.Print.Open.API.Schema.v20.Parameter.Create;
@@ -1343,12 +1343,12 @@ begin
   Result := FParameter;
 end;
 
-function ParametersList.GetParameterStored: Boolean;
+function ParametersListArrayItem.GetParameterStored: Boolean;
 begin
   Result := Assigned(FParameter);
 end;
 
-function ParametersList.GetJsonReference: TMap<System.String, any>;
+function ParametersListArrayItem.GetJsonReference: TMap<System.String, any>;
 begin
   if not Assigned(FJsonReference) then
     FJsonReference := TMap<System.String, any>.Create;
@@ -1356,7 +1356,7 @@ begin
   Result := FJsonReference;
 end;
 
-function ParametersList.GetJsonReferenceStored: Boolean;
+function ParametersListArrayItem.GetJsonReferenceStored: Boolean;
 begin
   Result := Assigned(FJsonReference);
 end;

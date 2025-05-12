@@ -2165,7 +2165,7 @@ var
 
   function GetItemArrayTypeDefinition: TTypeDefinition;
   begin
-    Result := GenerateTypeDefinition(Module, Schema.items.Schema, TypeName);
+    Result := GenerateTypeDefinition(Module, Schema.items.Schema, TypeName + 'ArrayItem');
   end;
 
   function CreateEnumerator: TTypeEnumeration;
