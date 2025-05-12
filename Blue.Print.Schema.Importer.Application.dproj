@@ -131,6 +131,10 @@
         <DCCReference Include="Blue.Print.Serializer.pas"/>
         <DCCReference Include="Blue.Print.Types.pas"/>
         <DCCReference Include="Blue.Print.JSON.Schema.pas"/>
+        <DCCReference Include="Blue.Print.Open.API.Schema.v20.pas"/>
+        <DCCReference Include="Blue.Print.Schema.Importer.Open.API.v20.pas"/>
+        <DCCReference Include="Blue.Print.Schema.Importer.Open.API.v30.pas"/>
+        <DCCReference Include="Blue.Print.Schema.Importer.Open.API.v31.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

@@ -94,16 +94,6 @@ object Main: TMain
     TabOrder = 5
     OnClick = SelectOutputFolderClick
   end
-  object ImportOpenAPI30: TButton
-    Left = 214
-    Top = 158
-    Width = 121
-    Height = 25
-    Caption = 'Import Open API 3.0'
-    Default = True
-    TabOrder = 7
-    OnClick = ImportOpenAPI30Click
-  end
   object ImportJSONSchema: TButton
     Left = 87
     Top = 158
@@ -111,8 +101,18 @@ object Main: TMain
     Height = 25
     Caption = 'Import JSON Schema'
     Default = True
-    TabOrder = 8
+    TabOrder = 7
     OnClick = ImportJSONSchemaClick
+  end
+  object ImportOpenAPI: TButton
+    Left = 214
+    Top = 158
+    Width = 107
+    Height = 25
+    Caption = 'Import Open API'
+    Default = True
+    TabOrder = 8
+    OnClick = ImportOpenAPIClick
   end
   object OpenSchemaFile: TFileOpenDialog
     FavoriteLinks = <>
@@ -142,5 +142,21 @@ object Main: TMain
     Options = [fdoPickFolders, fdoPathMustExist]
     Left = 296
     Top = 16
+  end
+  object OpenAPI: TPopupMenu
+    Left = 392
+    Top = 16
+    object OpenAPI20: TMenuItem
+      Caption = '2.0'
+      OnClick = OpenAPI20Click
+    end
+    object OpenAPI30: TMenuItem
+      Caption = '3.0'
+      OnClick = OpenAPI30Click
+    end
+    object OpenAPI31: TMenuItem
+      Caption = '3.1'
+      OnClick = OpenAPI31Click
+    end
   end
 end
