@@ -426,11 +426,6 @@ uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, System.Ne
 const
   WHITE_SPACE_IDENT = '  ';
 
-function GetTypePrefixName(const Name: String): String;
-begin
-  Result := 'T' + Name;
-end;
-
 function CheckReservedName(const Name: String): String;
 const
   SPECIAL_NAMES: array[0..13] of String = ('type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'string', 'const', 'not', 'in');
@@ -450,6 +445,11 @@ begin
   for var Char in Value do
     if CharInSet(Char, ['0'..'9', 'a'..'z', 'A'..'Z', '_']) then
       Result := Result + Char;
+end;
+
+function GetTypePrefixName(const Name: String): String;
+begin
+  Result := 'T' + OnlyValidChars(Name);
 end;
 
 function FormatName(Name: String): String;
