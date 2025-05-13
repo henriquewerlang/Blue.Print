@@ -2183,11 +2183,11 @@ var
     ANY_TYPE_NAME = 'any';
 
   begin
-    Result := FindType(ANY_TYPE_NAME, Module);
+    Result := FindType(ANY_TYPE_NAME, UnitDefinition);
 
     if not Assigned(Result) then
     begin
-      var AliasType := CreateTypeAlias(Module, ANY_TYPE_NAME, TValueType);
+      var AliasType := CreateTypeAlias(UnitDefinition, ANY_TYPE_NAME, TValueType);
       Result := AliasType;
 
       UnitDefinition.AddTypeAlias(AliasType);
