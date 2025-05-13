@@ -405,6 +405,7 @@ type
 
     function CreateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String): TClassDefinition;
     function DefineProperty(const ClassDefinition: TClassDefinition; const PropertyName: String; const PropertySchemaType: TSchema): TPropertyDefinition;
+    function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const Schema: TSchema; const ClassTypeName: String): TClassDefinition;
     function GetReferenceName(const Schema: TSchema): String;
     function GetReferenceSchema(const Schema: TSchema): TSchema;
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
@@ -1674,7 +1675,7 @@ var
         else if TypeDefinition.IsEnumeration and TypeDefinition.ParentModule.IsUnitDefinition then
           AddUnitDefinition(TypeDefinition.ParentModule.AsUnitDefinition)
         else if TypeDefinition.IsTypeAlias and Assigned(TypeDefinition.AsTypeAlias.ParentModule) then
-          AddUnitDefinition(TypeDefinition.AsTypeAlias.ParentModule.AsUnitDefinition);
+          AddUnitDefinition(TypeDefinition.ParentModule.AsUnitDefinition);
       end;
 
     begin
@@ -2131,7 +2132,7 @@ begin
   Result := TPropertyDefinition.Create;
   Result.Optional := True;
   Result.Name := PropertyName;
-  Result.PropertyType := GenerateTypeDefinition(ClassDefinition.UnitDefinition, PropertySchemaType, Result.Name + 'Property');
+  Result.PropertyType := GenerateTypeDefinition(ClassDefinition, PropertySchemaType, Result.Name + 'Property');
 
   if FormatPropertyName(Result.Name) <> Result.Name then
     Result.AddFieldAttribute(Result.Name);
@@ -2147,6 +2148,14 @@ begin
   FSchemas.Free;
 
   inherited;
+end;
+
+function TJSONSchemaImport.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const Schema: TSchema; const ClassTypeName: String): TClassDefinition;
+begin
+  var InnerClassDefinition := CreateClassDefinition(ParentModule, ClassTypeName);
+  Result := InnerClassDefinition;
+
+  GenerateProperties(InnerClassDefinition, Schema);
 end;
 
 procedure TJSONSchemaImport.GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
@@ -2217,7 +2226,12 @@ begin
       UnitDefinition := Module.AsClassDefinition.UnitDefinition;
 
     if not Schema.ref.IsEmpty then
-      Result := GenerateTypeDefinition(Module, GetReferenceSchema(Schema), GetReferenceName(Schema))
+    begin
+      Result := GenerateTypeDefinition(Module, GetReferenceSchema(Schema), GetReferenceName(Schema));
+
+      if not Assigned(Result) then
+        Result := Module.AddDelayedType(GetReferenceName(Schema));
+    end
     else if Schema = FJSONSchema then
       Result := FReferenceClassDefinition
     else if Schema.IsTypeStored then
@@ -2234,13 +2248,7 @@ begin
           var MapType: TTypeDefinition;
 
           if Schema.IsPropertiesStored then
-          begin
-            var InnerClassDefinition := CreateClassDefinition(Module, TypeName);
-
-            GenerateProperties(InnerClassDefinition, Schema);
-
-            Result := InnerClassDefinition;
-          end
+            Result := GenerateClassDefinition(Module, Schema, TypeName)
           else
           begin
             MapType := GenerateTypeDefinition(Module, Schema.additionalProperties, TypeName + 'AdditionalProperties');
@@ -2266,6 +2274,8 @@ begin
 
           Result := InnerClassDefinition;
         end
+        else if Schema.IsPropertiesStored then
+          Result := GenerateClassDefinition(Module, Schema, TypeName)
         else
           Result := GetAnyTypeDefinition;
       end;
@@ -2336,11 +2346,10 @@ begin
       List := Result.definitions
     else if ReferenceName = 'properties' then
       List := Result.properties
+    else if List.ContainsKey(ReferenceName) then
+      Result := List[ReferenceName]
     else
-      Result := List[ReferenceName];
-
-  if not Assigned(Result) then
-    raise Exception.CreateFmt('Reference not found %s', [Schema.ref]);
+      Exit(nil);
 end;
 
 function TJSONSchemaImport.LoadSchema(const UnitFileConfiguration: TUnitFileConfiguration): TSchema;
