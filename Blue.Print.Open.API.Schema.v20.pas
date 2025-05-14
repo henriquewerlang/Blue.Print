@@ -2702,7 +2702,7 @@ end;
 function TOpenAPIDefinition.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -2847,7 +2847,7 @@ end;
 function Operation.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -2898,7 +2898,7 @@ end;
 function Responses.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -3065,7 +3065,7 @@ end;
 function FormDataParameterSubSchema.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -3127,7 +3127,7 @@ end;
 function Info.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -3200,7 +3200,7 @@ end;
 function FileSchema.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -3309,7 +3309,7 @@ end;
 function Oauth2PasswordSecurity.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -3351,7 +3351,7 @@ end;
 function Oauth2AccessCodeSecurity.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -3378,7 +3378,7 @@ end;
 function BasicAuthenticationSecurity.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -3405,7 +3405,7 @@ end;
 function License.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -3442,7 +3442,7 @@ end;
 function Paths.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -3506,7 +3506,7 @@ end;
 function ApiKeySecurity.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -3667,7 +3667,7 @@ end;
 function HeaderParameterSubSchema.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -3807,7 +3807,7 @@ end;
 function PrimitivesItems.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -3974,7 +3974,7 @@ end;
 function QueryParameterSubSchema.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -4016,7 +4016,7 @@ end;
 function Oauth2ApplicationSecurity.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -4059,7 +4059,7 @@ end;
 function BodyParameter.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -4235,7 +4235,7 @@ end;
 function Oauth2ImplicitSecurity.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -4375,7 +4375,7 @@ end;
 function Header.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -4424,7 +4424,7 @@ end;
 function Xml.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -4616,7 +4616,7 @@ end;
 function PathParameterSubSchema.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -4763,7 +4763,7 @@ end;
 function PathItem.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -5039,7 +5039,7 @@ end;
 function Schema.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -5171,7 +5171,7 @@ end;
 function Response.GetExamples: TMap<System.String, any>;
 begin
   if not Assigned(FExamples) then
-    FExamples := TMap<System.String, any>.Create;
+    FExamples := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FExamples;
 end;
@@ -5184,7 +5184,7 @@ end;
 function Response.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -5226,7 +5226,7 @@ end;
 function Tag.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -5253,7 +5253,7 @@ end;
 function ExternalDocs.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;
@@ -5290,7 +5290,7 @@ end;
 function Contact.GetVendorExtension: TMap<System.String, vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TMap<System.String, vendorExtension>.Create;
+    FVendorExtension := TMap<System.String, System.Rtti.TValue>.Create;
 
   Result := FVendorExtension;
 end;

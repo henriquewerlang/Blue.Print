@@ -1525,7 +1525,7 @@ var
 
   function CreateObjectClass(const TypeDefinition: TTypeDefinition): String;
   begin
-    Result := Format('%s.Create', [GetTypeName(TypeDefinition)]);
+    Result := Format('%s.Create', [GetBaseTypeName(TypeDefinition)]);
   end;
 
   procedure GenerateClassImplementation(const ClassDefinition: TClassDefinition);
