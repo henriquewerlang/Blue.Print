@@ -422,7 +422,7 @@ type
 
 implementation
 
-uses System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, System.Generics.Defaults, XML.XMLDom, Xml.XMLSchemaTags, Blue.Print.Serializer;
+uses System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, System.Generics.Defaults, Xml.XMLIntf, XML.XMLDom, Xml.XMLSchemaTags, Blue.Print.Serializer;
 
 const
   WHITE_SPACE_IDENT = '  ';
@@ -962,12 +962,22 @@ procedure TXSDImporter.GenerateProperty(const ClassDefinition: TClassDefinition;
   function IsOptional(const ElementDefinition: IXMLElementDef): Boolean;
   var
     Compositor: IXMLElementCompositor;
+    ParentNode: IXMLNode;
 
   begin
-    Result := ElementDefinition.MinOccurs <= 0;
+    Result := (ElementDefinition.MinOccurs <= 0);
 
-    if not Result and Supports(ElementDefinition.ParentNode, IXMLElementCompositor, Compositor) then
-      Result := (Compositor.CompositorType = ctChoice) or (Compositor.MinOccurs <= 0);
+    if not Result then
+    begin
+      ParentNode := ElementDefinition.ParentNode;
+
+      while Assigned(ParentNode) and not Supports(ParentNode, IXMLComplexTypeDef) and not Result do
+      begin
+        Result := Assigned(ParentNode) and Supports(ParentNode, IXMLElementCompositor, Compositor) and ((Compositor.CompositorType = ctChoice) or (Compositor.MinOccurs <= 0));
+
+        ParentNode := ParentNode.ParentNode;
+      end;
+    end;
   end;
 
 begin
