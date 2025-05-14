@@ -16,9 +16,6 @@ type
   // Forward class declaration
   TSchema = class;
   NonNegativeIntegerDefault0 = class;
-  DependenciesProperties = class;
-  Items = class;
-  &Type = class;
 
   // Forward type alias
   nonNegativeInteger = System.Integer;
@@ -27,6 +24,63 @@ type
   any = System.Rtti.TValue;
 
   TSchema = class
+  public type
+    TDependencies = class
+    private
+      FSchema: Blue.Print.JSON.Schema.TSchema;
+      FStringArray: stringArray;
+
+      function GetSchema: Blue.Print.JSON.Schema.TSchema;
+      function GetSchemaStored: Boolean;
+      function GetStringArrayStored: Boolean;
+    public
+      destructor Destroy; override;
+
+      property IsSchemaStored: Boolean read GetSchemaStored;
+      property IsStringArrayStored: Boolean read GetStringArrayStored;
+    published
+      property Schema: Blue.Print.JSON.Schema.TSchema read GetSchema write FSchema stored GetSchemaStored;
+      property stringArray: stringArray read FStringArray write FStringArray stored GetStringArrayStored;
+    end;
+
+    [SingleObject]
+    TItems = class
+    private
+      FSchema: Blue.Print.JSON.Schema.TSchema;
+      FSchemaArray: schemaArray;
+
+      function GetSchema: Blue.Print.JSON.Schema.TSchema;
+      function GetSchemaStored: Boolean;
+      function GetSchemaArrayStored: Boolean;
+    public
+      destructor Destroy; override;
+
+      function AddSchemaArray: Blue.Print.JSON.Schema.TSchema;
+
+      property IsSchemaStored: Boolean read GetSchemaStored;
+      property IsSchemaArrayStored: Boolean read GetSchemaArrayStored;
+    published
+      property Schema: Blue.Print.JSON.Schema.TSchema read GetSchema write FSchema stored GetSchemaStored;
+      property schemaArray: schemaArray read FSchemaArray write FSchemaArray stored GetSchemaArrayStored;
+    end;
+
+    [SingleObject]
+    TType = class
+    private
+      FSimpleTypes: simpleTypes;
+      FArray: TArray<simpleTypes>;
+      FSimpleTypesIsStored: Boolean;
+
+      function GetArrayStored: Boolean;
+      procedure SetSimpleTypes(const Value: simpleTypes);
+    public
+      property IsSimpleTypesStored: Boolean read FSimpleTypesIsStored;
+      property IsArrayStored: Boolean read GetArrayStored;
+    published
+      property simpleTypes: simpleTypes read FSimpleTypes write SetSimpleTypes stored FSimpleTypesIsStored;
+      [FieldName('array')]
+      property &array: TArray<simpleTypes> read FArray write FArray stored GetArrayStored;
+    end;
   private
     FPropertyNames: Blue.Print.JSON.Schema.TSchema;
     FAnyOf: schemaArray;
@@ -55,7 +109,7 @@ type
     FOneOf: schemaArray;
     FThen: Blue.Print.JSON.Schema.TSchema;
     FMinimum: System.Double;
-    FDependencies: TMap<System.String, Blue.Print.JSON.Schema.DependenciesProperties>;
+    FDependencies: Blue.Print.JSON.Schema.TSchema.TDependencies;
     FAdditionalProperties: Blue.Print.JSON.Schema.TSchema;
     FContains: Blue.Print.JSON.Schema.TSchema;
     FWriteOnly: System.Boolean;
@@ -68,11 +122,11 @@ type
     FDescription: System.String;
     FMaximum: System.Double;
     FContentEncoding: System.String;
-    FItems: Blue.Print.JSON.Schema.Items;
+    FItems: Blue.Print.JSON.Schema.TSchema.TItems;
     FMinItems: Blue.Print.JSON.Schema.NonNegativeIntegerDefault0;
     FIf: Blue.Print.JSON.Schema.TSchema;
     FRequired: stringArray;
-    FType: Blue.Print.JSON.Schema.&Type;
+    FType: Blue.Print.JSON.Schema.TSchema.TType;
     FExamples: TArray<any>;
     FReadOnlyIsStored: Boolean;
     FWriteOnlyIsStored: Boolean;
@@ -86,15 +140,15 @@ type
     function GetMinLength: Blue.Print.JSON.Schema.NonNegativeIntegerDefault0;
     function GetPatternProperties: TMap<System.String, Blue.Print.JSON.Schema.TSchema>;
     function GetThen: Blue.Print.JSON.Schema.TSchema;
-    function GetDependencies: TMap<System.String, Blue.Print.JSON.Schema.DependenciesProperties>;
+    function GetDependencies: Blue.Print.JSON.Schema.TSchema.TDependencies;
     function GetAdditionalProperties: Blue.Print.JSON.Schema.TSchema;
     function GetContains: Blue.Print.JSON.Schema.TSchema;
     function GetDefinitions: TMap<System.String, Blue.Print.JSON.Schema.TSchema>;
     function GetElse: Blue.Print.JSON.Schema.TSchema;
-    function GetItems: Blue.Print.JSON.Schema.Items;
+    function GetItems: Blue.Print.JSON.Schema.TSchema.TItems;
     function GetMinItems: Blue.Print.JSON.Schema.NonNegativeIntegerDefault0;
     function GetIf: Blue.Print.JSON.Schema.TSchema;
-    function GetType: Blue.Print.JSON.Schema.&Type;
+    function GetType: Blue.Print.JSON.Schema.TSchema.TType;
     function GetPropertyNamesStored: Boolean;
     function GetAnyOfStored: Boolean;
     function GetExclusiveMaximumStored: Boolean;
@@ -228,7 +282,7 @@ type
     [FieldName('then')]
     property &then: Blue.Print.JSON.Schema.TSchema read GetThen write FThen stored GetThenStored;
     property minimum: System.Double read FMinimum write FMinimum stored GetMinimumStored;
-    property dependencies: TMap<System.String, Blue.Print.JSON.Schema.DependenciesProperties> read GetDependencies write FDependencies stored GetDependenciesStored;
+    property dependencies: Blue.Print.JSON.Schema.TSchema.TDependencies read GetDependencies write FDependencies stored GetDependenciesStored;
     property additionalProperties: Blue.Print.JSON.Schema.TSchema read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
     property contains: Blue.Print.JSON.Schema.TSchema read GetContains write FContains stored GetContainsStored;
     property writeOnly: System.Boolean read FWriteOnly write SetWriteOnly stored FWriteOnlyIsStored;
@@ -243,13 +297,13 @@ type
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property maximum: System.Double read FMaximum write FMaximum stored GetMaximumStored;
     property contentEncoding: System.String read FContentEncoding write FContentEncoding stored GetContentEncodingStored;
-    property items: Blue.Print.JSON.Schema.Items read GetItems write FItems stored GetItemsStored;
+    property items: Blue.Print.JSON.Schema.TSchema.TItems read GetItems write FItems stored GetItemsStored;
     property minItems: Blue.Print.JSON.Schema.NonNegativeIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
     [FieldName('if')]
     property &if: Blue.Print.JSON.Schema.TSchema read GetIf write FIf stored GetIfStored;
     property required: stringArray read FRequired write FRequired stored GetRequiredStored;
     [FieldName('type')]
-    property &type: Blue.Print.JSON.Schema.&Type read GetType write FType stored GetTypeStored;
+    property &type: Blue.Print.JSON.Schema.TSchema.TType read GetType write FType stored GetTypeStored;
     property examples: TArray<any> read FExamples write FExamples stored GetExamplesStored;
   end;
 
@@ -263,64 +317,6 @@ type
     property IsNonNegativeIntegerStored: Boolean read GetNonNegativeIntegerStored;
   published
     property nonNegativeInteger: nonNegativeInteger read FNonNegativeInteger write FNonNegativeInteger stored GetNonNegativeIntegerStored;
-  end;
-
-  [SingleObject]
-  DependenciesProperties = class
-  private
-    FSchema: Blue.Print.JSON.Schema.TSchema;
-    FStringArray: stringArray;
-
-    function GetSchema: Blue.Print.JSON.Schema.TSchema;
-    function GetSchemaStored: Boolean;
-    function GetStringArrayStored: Boolean;
-  public
-    destructor Destroy; override;
-
-    property IsSchemaStored: Boolean read GetSchemaStored;
-    property IsStringArrayStored: Boolean read GetStringArrayStored;
-  published
-    property Schema: Blue.Print.JSON.Schema.TSchema read GetSchema write FSchema stored GetSchemaStored;
-    property stringArray: stringArray read FStringArray write FStringArray stored GetStringArrayStored;
-  end;
-
-  [SingleObject]
-  Items = class
-  private
-    FSchema: Blue.Print.JSON.Schema.TSchema;
-    FSchemaArray: schemaArray;
-
-    function GetSchema: Blue.Print.JSON.Schema.TSchema;
-    function GetSchemaStored: Boolean;
-    function GetSchemaArrayStored: Boolean;
-  public
-    destructor Destroy; override;
-
-    function AddSchemaArray: Blue.Print.JSON.Schema.TSchema;
-
-    property IsSchemaStored: Boolean read GetSchemaStored;
-    property IsSchemaArrayStored: Boolean read GetSchemaArrayStored;
-  published
-    property Schema: Blue.Print.JSON.Schema.TSchema read GetSchema write FSchema stored GetSchemaStored;
-    property schemaArray: schemaArray read FSchemaArray write FSchemaArray stored GetSchemaArrayStored;
-  end;
-
-  [SingleObject]
-  &Type = class
-  private
-    FSimpleTypes: simpleTypes;
-    FArray: TArray<simpleTypes>;
-    FSimpleTypesIsStored: Boolean;
-
-    function GetArrayStored: Boolean;
-    procedure SetSimpleTypes(const Value: simpleTypes);
-  public
-    property IsSimpleTypesStored: Boolean read FSimpleTypesIsStored;
-    property IsArrayStored: Boolean read GetArrayStored;
-  published
-    property simpleTypes: simpleTypes read FSimpleTypes write SetSimpleTypes stored FSimpleTypesIsStored;
-    [FieldName('array')]
-    property &array: TArray<simpleTypes> read FArray write FArray stored GetArrayStored;
   end;
 
 implementation
@@ -598,10 +594,10 @@ begin
   Result := FMinimum <> 0;
 end;
 
-function TSchema.GetDependencies: TMap<System.String, Blue.Print.JSON.Schema.DependenciesProperties>;
+function TSchema.GetDependencies: Blue.Print.JSON.Schema.TSchema.TDependencies;
 begin
   if not Assigned(FDependencies) then
-    FDependencies := TMap<System.String, Blue.Print.JSON.Schema.DependenciesProperties>.Create;
+    FDependencies := Blue.Print.JSON.Schema.TSchema.TDependencies.Create;
 
   Result := FDependencies;
 end;
@@ -705,10 +701,10 @@ begin
   Result := not FContentEncoding.IsEmpty;
 end;
 
-function TSchema.GetItems: Blue.Print.JSON.Schema.Items;
+function TSchema.GetItems: Blue.Print.JSON.Schema.TSchema.TItems;
 begin
   if not Assigned(FItems) then
-    FItems := Blue.Print.JSON.Schema.Items.Create;
+    FItems := Blue.Print.JSON.Schema.TSchema.TItems.Create;
 
   Result := FItems;
 end;
@@ -749,10 +745,10 @@ begin
   Result := Assigned(FRequired);
 end;
 
-function TSchema.GetType: Blue.Print.JSON.Schema.&Type;
+function TSchema.GetType: Blue.Print.JSON.Schema.TSchema.TType;
 begin
   if not Assigned(FType) then
-    FType := Blue.Print.JSON.Schema.&Type.Create;
+    FType := Blue.Print.JSON.Schema.TSchema.TType.Create;
 
   Result := FType;
 end;
@@ -767,23 +763,16 @@ begin
   Result := Assigned(FExamples);
 end;
 
-{ NonNegativeIntegerDefault0 }
+{ TSchema.TDependencies }
 
-function NonNegativeIntegerDefault0.GetNonNegativeIntegerStored: Boolean;
-begin
-  Result := FNonNegativeInteger <> 0;
-end;
-
-{ DependenciesProperties }
-
-destructor DependenciesProperties.Destroy;
+destructor TSchema.TDependencies.Destroy;
 begin
   FSchema.Free;
 
   inherited;
 end;
 
-function DependenciesProperties.GetSchema: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TDependencies.GetSchema: Blue.Print.JSON.Schema.TSchema;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.JSON.Schema.TSchema.Create;
@@ -791,19 +780,19 @@ begin
   Result := FSchema;
 end;
 
-function DependenciesProperties.GetSchemaStored: Boolean;
+function TSchema.TDependencies.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function DependenciesProperties.GetStringArrayStored: Boolean;
+function TSchema.TDependencies.GetStringArrayStored: Boolean;
 begin
   Result := Assigned(FStringArray);
 end;
 
-{ Items }
+{ TSchema.TItems }
 
-destructor Items.Destroy;
+destructor TSchema.TItems.Destroy;
 begin
   FSchema.Free;
 
@@ -813,7 +802,7 @@ begin
   inherited;
 end;
 
-function Items.GetSchema: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TItems.GetSchema: Blue.Print.JSON.Schema.TSchema;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.JSON.Schema.TSchema.Create;
@@ -821,34 +810,41 @@ begin
   Result := FSchema;
 end;
 
-function Items.GetSchemaStored: Boolean;
+function TSchema.TItems.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function Items.AddSchemaArray: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TItems.AddSchemaArray: Blue.Print.JSON.Schema.TSchema;
 begin
   Result := Blue.Print.JSON.Schema.TSchema.Create;
 
   FSchemaArray := FSchemaArray + [Result];
 end;
 
-function Items.GetSchemaArrayStored: Boolean;
+function TSchema.TItems.GetSchemaArrayStored: Boolean;
 begin
   Result := Assigned(FSchemaArray);
 end;
 
-{ &Type }
+{ TSchema.TType }
 
-procedure &Type.SetSimpleTypes(const Value: simpleTypes);
+procedure TSchema.TType.SetSimpleTypes(const Value: simpleTypes);
 begin
   FSimpleTypes := Value;
   FSimpleTypesIsStored := True;
 end;
 
-function &Type.GetArrayStored: Boolean;
+function TSchema.TType.GetArrayStored: Boolean;
 begin
   Result := Assigned(FArray);
+end;
+
+{ NonNegativeIntegerDefault0 }
+
+function NonNegativeIntegerDefault0.GetNonNegativeIntegerStored: Boolean;
+begin
+  Result := FNonNegativeInteger <> 0;
 end;
 
 end.

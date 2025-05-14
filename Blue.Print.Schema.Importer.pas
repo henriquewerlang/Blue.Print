@@ -4,7 +4,7 @@ interface
 
 {$SCOPEDENUMS ON}
 
-uses System.Generics.Collections, Xml.XMLSchema, Blue.Print.JSON.Schema, Blue.Print.Types;
+uses System.Generics.Collections, System.SysUtils, Xml.XMLSchema, Blue.Print.JSON.Schema, Blue.Print.Types;
 
 type
   TClassDefinition = class;
@@ -403,12 +403,14 @@ type
     FReferenceClassDefinition: TClassDefinition;
     FSchemas: TDictionary<String, TSchema>;
 
+    function CanGenerateClass(const Schema: TSchema): Boolean;
     function CreateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String): TClassDefinition;
-    function DefineProperty(const ClassDefinition: TClassDefinition; const PropertyName: String; const PropertySchemaType: TSchema): TPropertyDefinition;
+    function CreateMapType(const ParentModule: TTypeModuleDefinition; const ValueType: TTypeDefinition): TTypeMapDefinition;
     function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const Schema: TSchema; const ClassTypeName: String): TClassDefinition;
     function GetReferenceName(const Schema: TSchema): String;
-    function GetReferenceSchema(const Schema: TSchema): TSchema;
+    function GetReferenceSchema(const Schema: TSchema; var ReferenceSchema: TSchema): Boolean;
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
+    function IsSingleObjectSchema(const Schema: TSchema): Boolean;
     function LoadSchema(const UnitFileConfiguration: TUnitFileConfiguration): TSchema;
 
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
@@ -422,7 +424,7 @@ type
 
 implementation
 
-uses System.SysUtils, System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, System.Generics.Defaults, XML.XMLDom, Xml.XMLSchemaTags, Blue.Print.Serializer;
+uses System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, System.Generics.Defaults, XML.XMLDom, Xml.XMLSchemaTags, Blue.Print.Serializer;
 
 const
   WHITE_SPACE_IDENT = '  ';
@@ -1409,6 +1411,9 @@ var
         AppendInformation(GetNeedDestructor(PropertyType), &Property, TImplementationInformation.NeedDestructor);
 
         AppendInformation(GetNeedGetFunction(PropertyType), &Property, TImplementationInformation.NeedGetFunction);
+
+        if FormatPropertyName(&Property.Name) <> &Property.Name then
+          &Property.AddFieldAttribute(&Property.Name);
       end;
     end;
 
@@ -2112,6 +2117,11 @@ end;
 
 { TJSONSchemaImport }
 
+function TJSONSchemaImport.CanGenerateClass(const Schema: TSchema): Boolean;
+begin
+  Result := Schema.IsPropertiesStored or IsSingleObjectSchema(Schema) or Schema.IsAdditionalPropertiesStored and CanGenerateClass(Schema.additionalProperties) or Schema.IsPatternPropertiesStored;
+end;
+
 constructor TJSONSchemaImport.Create;
 begin
   inherited;
@@ -2127,20 +2137,9 @@ begin
   ParentModule.Classes.Add(Result);
 end;
 
-function TJSONSchemaImport.DefineProperty(const ClassDefinition: TClassDefinition; const PropertyName: String; const PropertySchemaType: TSchema): TPropertyDefinition;
+function TJSONSchemaImport.CreateMapType(const ParentModule: TTypeModuleDefinition; const ValueType: TTypeDefinition): TTypeMapDefinition;
 begin
-  Result := TPropertyDefinition.Create;
-  Result.Optional := True;
-  Result.Name := PropertyName;
-  Result.PropertyType := GenerateTypeDefinition(ClassDefinition, PropertySchemaType, Result.Name + 'Property');
-
-  if FormatPropertyName(Result.Name) <> Result.Name then
-    Result.AddFieldAttribute(Result.Name);
-
-  if not Assigned(Result.PropertyType) then
-    raise Exception.Create('Property type not found!');
-
-  ClassDefinition.Properties.Add(Result);
+  Result := TTypeMapDefinition.Create(ParentModule, StringType, ValueType);
 end;
 
 destructor TJSONSchemaImport.Destroy;
@@ -2152,26 +2151,77 @@ end;
 
 function TJSONSchemaImport.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const Schema: TSchema; const ClassTypeName: String): TClassDefinition;
 begin
-  var InnerClassDefinition := CreateClassDefinition(ParentModule, ClassTypeName);
-  Result := InnerClassDefinition;
+  var ClassDefinition := CreateClassDefinition(ParentModule, ClassTypeName);
+  Result := ClassDefinition;
 
-  GenerateProperties(InnerClassDefinition, Schema);
+  if IsSingleObjectSchema(Schema) then
+    ClassDefinition.AddAtribute('SingleObject');
+
+  GenerateProperties(ClassDefinition, Schema);
 end;
 
 procedure TJSONSchemaImport.GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
+
+  function GetPropertyName(const Schema: TSchema; var PropertyName: String): Boolean;
+  begin
+    if not Schema.ref.IsEmpty then
+      PropertyName := GetReferenceName(Schema)
+    else if Schema.IsTypeStored then
+      PropertyName := TRttiEnumerationType.GetName(Schema.&type.simpleTypes)
+    else
+      PropertyName := EmptyStr;
+
+    Result := not PropertyName.IsEmpty;
+  end;
+
+  procedure DefineProperty(const Schema: TSchema; const PropertyName: String; const PropertyType: TTypeDefinition);
+  begin
+    var NewProperty := TPropertyDefinition.Create;
+    NewProperty.Optional := True;
+    NewProperty.Name := PropertyName;
+    NewProperty.PropertyType := PropertyType;
+
+    if not Assigned(NewProperty.PropertyType) then
+      raise Exception.Create('Property type not found!');
+
+    for var Required in Schema.required do
+      if NewProperty.Name = Required then
+        NewProperty.Optional := False;
+
+    ClassDefinition.Properties.Add(NewProperty);
+  end;
+
+  procedure DefineProperties(const Schemas: TArray<TSchema>; const GetPropertyType: TFunc<TSchema, String, TTypeDefinition>);
+  begin
+    var PropertyName := EmptyStr;
+
+    for var AnonymousSchema in Schemas do
+      if GetPropertyName(AnonymousSchema, PropertyName) then
+        DefineProperty(AnonymousSchema, PropertyName, GetPropertyType(AnonymousSchema, PropertyName));
+  end;
+
 begin
   for var Pair in Schema.Properties do
-    DefineProperty(ClassDefinition, Pair.Key, Pair.Value);
+    DefineProperty(Schema, Pair.Key, GenerateTypeDefinition(ClassDefinition, Pair.Value, Pair.Key));
 
-  for var Required in Schema.required do
-    for var &Property in ClassDefinition.Properties do
-      if &Property.Name = Required then
-        &Property.Optional := False;
+  DefineProperties(Schema.allOf + Schema.oneOf + Schema.anyOf,
+    function (Schema: TSchema; PropertyName: String): TTypeDefinition
+    begin
+      Result := GenerateTypeDefinition(ClassDefinition, Schema, PropertyName);
+    end);
+
+  if Schema.IsAdditionalPropertiesStored then
+    GenerateProperties(ClassDefinition, Schema.additionalProperties);
+
+  if Schema.IsPatternPropertiesStored then
+    DefineProperties(Schema.patternProperties.Values.ToArray,
+      function (Schema: TSchema; PropertyName: String): TTypeDefinition
+      begin
+        Result := CreateMapType(ClassDefinition, GenerateTypeDefinition(ClassDefinition, Schema, PropertyName));
+      end);
 end;
 
 function TJSONSchemaImport.GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
-var
-  UnitDefinition: TUnitDefinition;
 
   function GetItemArrayTypeDefinition: TTypeDefinition;
   begin
@@ -2191,11 +2241,19 @@ var
   const
     ANY_TYPE_NAME = 'any';
 
+  var
+    UnitDefinition: TUnitDefinition;
+
   begin
-    Result := FindType(ANY_TYPE_NAME, UnitDefinition);
+    Result := FindType(ANY_TYPE_NAME, Module);
 
     if not Assigned(Result) then
     begin
+      if Module.IsUnitDefinition then
+        UnitDefinition := Module.AsUnitDefinition
+      else
+        UnitDefinition := Module.AsClassDefinition.UnitDefinition;
+
       var AliasType := CreateTypeAlias(UnitDefinition, ANY_TYPE_NAME, TValueType);
       Result := AliasType;
 
@@ -2203,40 +2261,26 @@ var
     end;
   end;
 
-  function GetPropertyName(const Schema: TSchema; var PropertyName: String): Boolean;
-  begin
-    if not Schema.ref.IsEmpty then
-      PropertyName := GetReferenceName(Schema)
-    else if Schema.IsTypeStored then
-      PropertyName := TRttiEnumerationType.GetName(Schema.&type.simpleTypes)
-    else
-      PropertyName := EmptyStr;
-
-    Result := not PropertyName.IsEmpty;
-  end;
-
 begin
   Result := FindType(TypeName, Module);
 
   if not Assigned(Result) then
-  begin
-    if Module.IsUnitDefinition then
-      UnitDefinition := Module.AsUnitDefinition
-    else
-      UnitDefinition := Module.AsClassDefinition.UnitDefinition;
-
     if not Schema.ref.IsEmpty then
     begin
-      Result := GenerateTypeDefinition(Module, GetReferenceSchema(Schema), GetReferenceName(Schema));
+      var ReferenceName := GetReferenceName(Schema);
+      var ReferenteSchema: TSchema := nil;
+
+      if GetReferenceSchema(Schema, ReferenteSchema) then
+        Result := GenerateTypeDefinition(Module, ReferenteSchema, ReferenceName);
 
       if not Assigned(Result) then
-        Result := Module.AddDelayedType(GetReferenceName(Schema));
+        Result := Module.AddDelayedType(ReferenceName);
     end
     else if Schema = FJSONSchema then
       Result := FReferenceClassDefinition
     else if Schema.IsTypeStored then
       case Schema.&type.simpleTypes of
-        simpleTypes.&array: Result := TTypeArrayDefinition.Create(UnitDefinition, GetItemArrayTypeDefinition);
+        simpleTypes.&array: Result := TTypeArrayDefinition.Create(Module, GetItemArrayTypeDefinition);
         simpleTypes.boolean: Result := BooleanType;
         simpleTypes.null: Result := nil;
         simpleTypes.integer: Result := IntegerType;
@@ -2244,53 +2288,32 @@ begin
         simpleTypes.&string: Result := StringType;
 
         simpleTypes.&object:
-        begin
-          var MapType: TTypeDefinition;
-
-          if Schema.IsPropertiesStored then
+          if CanGenerateClass(Schema) then
             Result := GenerateClassDefinition(Module, Schema, TypeName)
           else
-          begin
-            MapType := GenerateTypeDefinition(Module, Schema.additionalProperties, TypeName + 'AdditionalProperties');
-
-            Result := TTypeMapDefinition.Create(UnitDefinition, StringType, MapType);
-          end;
-        end;
+            Result := CreateMapType(Module, GenerateTypeDefinition(Module, Schema.additionalProperties, TypeName));
       end
       else
       begin
         if Assigned(Schema.enum) then
           Result := CreateEnumerator
-        else if Assigned(Schema.allOf + Schema.oneOf + Schema.anyOf) then
-        begin
-          var InnerClassDefinition := CreateClassDefinition(Module, TypeName);
-          var PropertyName := EmptyStr;
-
-          InnerClassDefinition.AddAtribute('SingleObject');
-
-          for var SchemaProperty in Schema.allOf + Schema.oneOf + Schema.anyOf do
-            if GetPropertyName(SchemaProperty, PropertyName) then
-              DefineProperty(InnerClassDefinition, PropertyName, SchemaProperty).Optional := True;
-
-          Result := InnerClassDefinition;
-        end
-        else if Schema.IsPropertiesStored then
+        else if CanGenerateClass(Schema) then
           Result := GenerateClassDefinition(Module, Schema, TypeName)
         else
           Result := GetAnyTypeDefinition;
       end;
-  end;
 end;
 
 procedure TJSONSchemaImport.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
 begin
+  var CurrentSchema := LoadSchema(UnitFileConfiguration);
+
+  if not CurrentSchema.schema.IsEmpty then
+    LoadUnitFromReference(CurrentSchema.schema);
+
+  FJSONSchema := CurrentSchema;
   var UnitClass := TClassDefinition.Create(UnitDefinition);
   UnitClass.Name := UnitFileConfiguration.UnitClassName;
-
-  FJSONSchema := LoadSchema(UnitFileConfiguration);
-
-  if not FJSONSchema.schema.IsEmpty then
-    LoadUnitFromReference(FJSONSchema.schema);
 
   UnitDefinition.Classes.Add(UnitClass);
 
@@ -2300,11 +2323,8 @@ begin
   begin
     var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
 
-    if TypeDefinition.IsEnumeration then
-    begin
-      if not BuildInType.ContainsKey(TypeDefinition.Name) then
-        UnitDefinition.Enumerations.Add(TypeDefinition.AsTypeEnumeration)
-    end
+    if TypeDefinition.IsEnumeration and not BuildInType.ContainsKey(TypeDefinition.Name) then
+      UnitDefinition.Enumerations.Add(TypeDefinition.AsTypeEnumeration)
     else if not TypeDefinition.IsClassDefinition then
       UnitDefinition.AddTypeAlias(CreateTypeAlias(UnitDefinition, Definition.Key, TypeDefinition));
   end;
@@ -2322,34 +2342,39 @@ begin
     Result := 'Schema';
 end;
 
-function TJSONSchemaImport.GetReferenceSchema(const Schema: TSchema): TSchema;
+function TJSONSchemaImport.GetReferenceSchema(const Schema: TSchema; var ReferenceSchema: TSchema): Boolean;
 const
   REFERENCE_SEPARATOR = '#';
 
 begin
   var BaseSchema: TSchema := nil;
   var List: TMap<String, TSchema> := nil;
-  Result := nil;
   var References := Schema.ref.Split([REFERENCE_SEPARATOR]);
+  ReferenceSchema := nil;
 
   var Reference := REFERENCE_SEPARATOR + References[High(References)];
 
-  if FSchemas.TryGetValue(References[Low(References)] + REFERENCE_SEPARATOR, BaseSchema) then
-    Result := nil
-  else
+  if not FSchemas.TryGetValue(References[Low(References)] + REFERENCE_SEPARATOR, BaseSchema) then
     BaseSchema := FJSONSchema;
 
   for var ReferenceName in Reference.Split(['/']) do
     if ReferenceName = REFERENCE_SEPARATOR then
-      Result := BaseSchema
+      ReferenceSchema := BaseSchema
     else if (ReferenceName = 'definitions') or (ReferenceName = 'defs') then
-      List := Result.definitions
+      Exit(False)
     else if ReferenceName = 'properties' then
-      List := Result.properties
+      List := ReferenceSchema.properties
     else if List.ContainsKey(ReferenceName) then
-      Result := List[ReferenceName]
+      ReferenceSchema := List[ReferenceName]
     else
-      Exit(nil);
+      Exit(False);
+
+  Result := Assigned(ReferenceSchema);
+end;
+
+function TJSONSchemaImport.IsSingleObjectSchema(const Schema: TSchema): Boolean;
+begin
+  Result := Schema.IsAllOfStored or Schema.IsOneOfStored or Schema.IsAnyOfStored;
 end;
 
 function TJSONSchemaImport.LoadSchema(const UnitFileConfiguration: TUnitFileConfiguration): TSchema;
