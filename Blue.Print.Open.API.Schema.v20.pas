@@ -88,7 +88,7 @@ type
 
   TJSONSchema = class
   public type
-    [SingleObject]
+    [Flat]
     TAdditionalItems = class
     private
       FBoolean: Boolean;
@@ -108,7 +108,7 @@ type
       property Schema: Blue.Print.Open.API.Schema.v20.TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
     end;
 
-    [SingleObject]
+    [Flat]
     TItems = class
     private
       FSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
@@ -129,7 +129,7 @@ type
       property schemaArray: schemaArray read FSchemaArray write FSchemaArray stored GetSchemaArrayStored;
     end;
 
-    [SingleObject]
+    [Flat]
     TAdditionalProperties = class
     private
       FBoolean: Boolean;
@@ -167,7 +167,7 @@ type
       property stringArray: stringArray read FStringArray write FStringArray stored GetStringArrayStored;
     end;
 
-    [SingleObject]
+    [Flat]
     TType = class
     private
       FSimpleTypes: simpleTypes;
@@ -346,7 +346,7 @@ type
     property &not: Blue.Print.Open.API.Schema.v20.TJSONSchema read GetNot write FNot stored GetNotStored;
   end;
 
-  [SingleObject]
+  [Flat]
   PositiveIntegerDefault0 = class
   private
     FPositiveInteger: positiveInteger;
@@ -360,7 +360,7 @@ type
 
   TOpenAPIDefinition = class
   public type
-    [SingleObject]
+    [Flat]
     TConsumes = class
     private
       FMediaTypeList: mediaTypeList;
@@ -372,7 +372,7 @@ type
       property mediaTypeList: mediaTypeList read FMediaTypeList write FMediaTypeList stored GetMediaTypeListStored;
     end;
 
-    [SingleObject]
+    [Flat]
     TProduces = class
     private
       FMediaTypeList: mediaTypeList;
@@ -584,7 +584,7 @@ type
 
   Operation = class
   public type
-    [SingleObject]
+    [Flat]
     TProduces = class
     private
       FMediaTypeList: mediaTypeList;
@@ -596,7 +596,7 @@ type
       property mediaTypeList: mediaTypeList read FMediaTypeList write FMediaTypeList stored GetMediaTypeListStored;
     end;
 
-    [SingleObject]
+    [Flat]
     TConsumes = class
     private
       FMediaTypeList: mediaTypeList;
@@ -752,7 +752,7 @@ type
     property vendorExtension: TMap<vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
-  [SingleObject]
+  [Flat]
   ResponseValue = class
   private
     FResponse: Blue.Print.Open.API.Schema.v20.Response;
@@ -774,7 +774,7 @@ type
 
   Response = class
   public type
-    [SingleObject]
+    [Flat]
     TSchema = class
     private
       FSchema: Blue.Print.Open.API.Schema.v20.Response.TSchema;
@@ -1380,7 +1380,7 @@ type
     property vendorExtension: TMap<vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
-  [SingleObject]
+  [Flat]
   NonBodyParameter = class
   private
     FHeaderParameterSubSchema: Blue.Print.Open.API.Schema.v20.HeaderParameterSubSchema;
@@ -1410,7 +1410,7 @@ type
     property pathParameterSubSchema: Blue.Print.Open.API.Schema.v20.PathParameterSubSchema read GetPathParameterSubSchema write FPathParameterSubSchema stored GetPathParameterSubSchemaStored;
   end;
 
-  [SingleObject]
+  [Flat]
   Parameter = class
   private
     FBodyParameter: Blue.Print.Open.API.Schema.v20.BodyParameter;
@@ -1432,7 +1432,7 @@ type
 
   Schema = class
   public type
-    [SingleObject]
+    [Flat]
     TAdditionalProperties = class
     private
       FSchema: Blue.Print.Open.API.Schema.v20.Schema;
@@ -1452,7 +1452,7 @@ type
       property boolean: Boolean read FBoolean write SetBoolean stored FBooleanIsStored;
     end;
 
-    [SingleObject]
+    [Flat]
     TType = class
     private
       FSimpleTypes: simpleTypes;
@@ -1470,7 +1470,7 @@ type
       property &array: TArray<simpleTypes> read FArray write FArray stored GetArrayStored;
     end;
 
-    [SingleObject]
+    [Flat]
     TItems = class
     private
       FSchema: Blue.Print.Open.API.Schema.v20.Schema;
@@ -2050,7 +2050,7 @@ type
     property vendorExtension: TMap<vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
-  [SingleObject]
+  [Flat]
   ParametersListArrayItem = class
   private
     FParameter: Blue.Print.Open.API.Schema.v20.Parameter;

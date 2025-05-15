@@ -25,7 +25,7 @@ type
 
   TSchema = class
   public type
-    [SingleObject]
+    [Flat]
     TItems = class
     private
       FSchema: Blue.Print.JSON.Schema.TSchema;
@@ -64,7 +64,7 @@ type
       property stringArray: stringArray read FStringArray write FStringArray stored GetStringArrayStored;
     end;
 
-    [SingleObject]
+    [Flat]
     TType = class
     private
       FSimpleTypes: simpleTypes;
@@ -307,7 +307,7 @@ type
     property &not: Blue.Print.JSON.Schema.TSchema read GetNot write FNot stored GetNotStored;
   end;
 
-  [SingleObject]
+  [Flat]
   NonNegativeIntegerDefault0 = class
   private
     FNonNegativeInteger: nonNegativeInteger;
