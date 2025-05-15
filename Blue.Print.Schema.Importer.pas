@@ -279,12 +279,10 @@ type
 
   TTypeMapDefinition = class(TTypeDefinition)
   private
-    FKeyType: TTypeDefinition;
     FValueType: TTypeDefinition;
   public
-    constructor Create(const Module: TTypeModuleDefinition; const KeyType, ValueType: TTypeDefinition);
+    constructor Create(const Module: TTypeModuleDefinition; const ValueType: TTypeDefinition);
 
-    property KeyType: TTypeDefinition read FKeyType write FKeyType;
     property ValueType: TTypeDefinition read FValueType write FValueType;
   end;
 
@@ -1246,7 +1244,7 @@ var
     if TypeDefinition.IsArrayType then
       Result := Format('TArray<%s>', [GetTypeName(GetArrayItemType(TypeDefinition))])
     else if TypeDefinition.IsMapType then
-      Result := Format('TMap<%s, %s>', [GetTypeName(ResolveTypeDefinition(TypeDefinition.AsMapType.KeyType)), GetTypeName(ResolveTypeDefinition(TypeDefinition.AsMapType.ValueType))])
+      Result := Format('TMap<%s>', [GetTypeName(ResolveTypeDefinition(TypeDefinition.AsMapType.ValueType))])
     else if TypeDefinition.IsClassDefinition then
       Result := Format('%s.%s', [TypeDefinition.AsClassDefinition.UnitDefinition.Name, GetClassImplementationName(TypeDefinition.AsClassDefinition)])
     else if TypeDefinition.IsEnumeration then
@@ -1264,7 +1262,7 @@ var
     if ResolvedTypeDefinition.IsArrayType then
       Result := Format('TArray<%s>', [GetBaseTypeName(GetArrayItemType(ResolvedTypeDefinition))])
     else if ResolvedTypeDefinition.IsMapType then
-      Result := Format('TMap<%s, %s>', [GetBaseTypeName(ResolvedTypeDefinition.AsMapType.KeyType), GetBaseTypeName(ResolvedTypeDefinition.AsMapType.ValueType)])
+      Result := Format('TMap<%s>', [GetBaseTypeName(ResolvedTypeDefinition.AsMapType.ValueType)])
     else
       Result := GetTypeName(ResolvedTypeDefinition);
   end;
@@ -2139,7 +2137,7 @@ end;
 
 function TJSONSchemaImport.CreateMapType(const ParentModule: TTypeModuleDefinition; const ValueType: TTypeDefinition): TTypeMapDefinition;
 begin
-  Result := TTypeMapDefinition.Create(ParentModule, StringType, ValueType);
+  Result := TTypeMapDefinition.Create(ParentModule, ValueType);
 end;
 
 destructor TJSONSchemaImport.Destroy;
@@ -2214,7 +2212,7 @@ begin
     GenerateProperties(ClassDefinition, Schema.additionalProperties);
 
   if Schema.IsPatternPropertiesStored then
-    DefineProperties(Schema.patternProperties.Values.ToArray,
+    DefineProperties(Schema.patternProperties.Values,
       function (Schema: TSchema; PropertyName: String): TTypeDefinition
       begin
         Result := CreateMapType(ClassDefinition, GenerateTypeDefinition(ClassDefinition, Schema, PropertyName));
@@ -2348,7 +2346,7 @@ const
 
 begin
   var BaseSchema: TSchema := nil;
-  var List: TMap<String, TSchema> := nil;
+  var List: TMap<TSchema> := nil;
   var References := Schema.ref.Split([REFERENCE_SEPARATOR]);
   ReferenceSchema := nil;
 
@@ -2461,11 +2459,10 @@ end;
 
 { TTypeMapDefinition }
 
-constructor TTypeMapDefinition.Create(const Module: TTypeModuleDefinition; const KeyType, ValueType: TTypeDefinition);
+constructor TTypeMapDefinition.Create(const Module: TTypeModuleDefinition; const ValueType: TTypeDefinition);
 begin
   inherited Create(Module);
 
-  FKeyType := KeyType;
   FName := 'Map';
   FValueType := ValueType;
 end;

@@ -308,12 +308,20 @@ type
     constructor Create(const Parameter: TRttiParameter; const Body: TValue);
   end;
 
-  TMap<K, V> = class(TObjectDictionary<K, V>)
+  TMap<V> = class(TList<TPair<String, V>>)
   private
-    function GetMapItem(const Key: K): V;
-    procedure SetMapItem(const Key: K; const Value: V);
+    function GetMapItem(const Key: String): V;
+    function GetValues: TArray<V>;
+
+    procedure SetMapItem(const Key: String; const Value: V);
   public
-    property Map[const Key: K]: V read GetMapItem write SetMapItem; default;
+    function ContainsKey(const Key: String): Boolean;
+    function IndexOf(const Key: String): NativeInt;
+
+    procedure Add(const Key: String; const Value: V);
+
+    property Map[const Key: String]: V read GetMapItem write SetMapItem; default;
+    property Values: TArray<V> read GetValues;
   end;
 
   TRttiTypeHelper = class helper for TRttiType
@@ -674,16 +682,53 @@ begin
   FName := Name;
 end;
 
-{ TMap<K, V> }
+{ TMap<V> }
 
-function TMap<K, V>.GetMapItem(const Key: K): V;
+procedure TMap<V>.Add(const Key: String; const Value: V);
 begin
-  Result := inherited Items[Key];
+  inherited Add(TPair<String, V>.Create(Key, Value));
 end;
 
-procedure TMap<K, V>.SetMapItem(const Key: K; const Value: V);
+function TMap<V>.ContainsKey(const Key: String): Boolean;
 begin
-  AddOrSetValue(Key, Value);
+  Result := IndexOf(Key) > -1;
+end;
+
+function TMap<V>.GetMapItem(const Key: String): V;
+begin
+  var ItemIndex := IndexOf(Key);
+
+  if ItemIndex > -1 then
+    Result := Items[ItemIndex].Value
+  else
+    Result := Default(V);
+end;
+
+function TMap<V>.GetValues: TArray<V>;
+begin
+  Result := nil;
+
+  for var Item in Self do
+    Result := Result + [Item.Value];
+end;
+
+function TMap<V>.IndexOf(const Key: String): NativeInt;
+begin
+  for var A := 0 to Pred(Count) do
+    if Items[A].Key = Key then
+      Exit(A);
+
+  Result := -1;
+end;
+
+procedure TMap<V>.SetMapItem(const Key: String; const Value: V);
+begin
+  var ItemIndex := IndexOf(Key);
+
+  if ItemIndex > -1 then
+    Items[ItemIndex] := TPair<String, V>.Create(Key, Value)
+  else
+    Add(Key, Value);
 end;
 
 end.

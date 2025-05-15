@@ -49,7 +49,7 @@ type
   TBluePrintJsonSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
   private
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
-    function GenerateMap(const JSONValue: TJSONObject): TMap<String, TValue>;
+    function GenerateMap(const JSONValue: TJSONObject): TMap<TValue>;
     function GetFieldName(const RttiObject: TRttiNamedObject): String;
     function GetJSONValue(const JSONValue: TJSONValue): String; inline;
     function Serialize(const Value: TValue): String;
@@ -621,9 +621,9 @@ begin
   end;
 end;
 
-function TBluePrintJsonSerializer.GenerateMap(const JSONValue: TJSONObject): TMap<String, TValue>;
+function TBluePrintJsonSerializer.GenerateMap(const JSONValue: TJSONObject): TMap<TValue>;
 begin
-  Result := TMap<String, TValue>.Create;
+  Result := TMap<TValue>.Create;
 
   DeserializeMap(FContext.GetType(Result.ClassType).AsInstance, Result, JSONValue as TJSONObject);
 end;

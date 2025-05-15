@@ -478,11 +478,11 @@ type
 
   TMyClassWithMap = class
   private
-    FMap: TMap<String, String>;
+    FMap: TMap<String>;
   public
     destructor Destroy; override;
   published
-    property Map: TMap<String, String> read FMap write FMap;
+    property Map: TMap<String> read FMap write FMap;
   end;
 
   TClassWithConstructor = class
@@ -960,7 +960,7 @@ procedure TBluePrintJsonSerializerTest.WhenDeserializeATValueAndTheJSONValueIsAn
 begin
   var Value := FSerializer.Deserialize('{"Value":{"Field1":"abc","Field2":123}}', TypeInfo(TMyTValueClass)).AsType<TMyTValueClass>;
 
-  Assert.IsTrue(Value.Value.AsObject is TMap<String, TValue>);
+  Assert.IsTrue(Value.Value.AsObject is TMap<TValue>);
 
   Value.Value.AsObject.Free;
 
@@ -971,7 +971,7 @@ procedure TBluePrintJsonSerializerTest.WhenDeserializeATValueAndTheJSONValueIsAn
 begin
   var Value := FSerializer.Deserialize('{"Value":{"Field1":"abc","Field2":123}}', TypeInfo(TMyTValueClass)).AsType<TMyTValueClass>;
 
-  var Map := Value.Value.AsType<TMap<String, TValue>>;
+  var Map := Value.Value.AsType<TMap<TValue>>;
 
   Assert.IsTrue(Map.ContainsKey('Field1'));
   Assert.IsTrue(Map.ContainsKey('Field2'));
@@ -985,7 +985,7 @@ procedure TBluePrintJsonSerializerTest.WhenDeserializeATValueAndTheJSONValueIsAn
 begin
   var Value := FSerializer.Deserialize('{"Value":{"Field1":"abc","Field2":123}}', TypeInfo(TMyTValueClass)).AsType<TMyTValueClass>;
 
-  var Map := Value.Value.AsType<TMap<String, TValue>>;
+  var Map := Value.Value.AsType<TMap<TValue>>;
 
   Assert.AreEqual('abc', Map['Field1'].AsString);
   Assert.AreEqual(123, Map['Field2'].AsExtended);
@@ -1115,7 +1115,7 @@ end;
 procedure TBluePrintJsonSerializerTest.WhenSerializeAPropertyTypeOfTMapMustLoadTheKeyValueFromTheMapInTheFieldValueOfTheJSONAndTheValueInTheValueOfTheField;
 begin
   var MyClass := TMyClassWithMap.Create;
-  MyClass.Map := TMap<String, String>.Create;
+  MyClass.Map := TMap<String>.Create;
   MyClass.Map.Add('Field1', 'Value1');
   MyClass.Map.Add('Field2', 'Value2');
   MyClass.Map.Add('Field3', 'Value3');
