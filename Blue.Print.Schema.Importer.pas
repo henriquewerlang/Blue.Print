@@ -607,7 +607,7 @@ begin
     if Assigned(CurrentModule) then
     begin
       if not FindTypeDefinitionInModule(CurrentModule, SplitTypeName, Result) then
-        raise Exception.CreateFmt('Type name not found %s!', [TypeName]);
+        Break;
     end
     else if not Assigned(Result) then
       for var UnitDefinition in Units do
