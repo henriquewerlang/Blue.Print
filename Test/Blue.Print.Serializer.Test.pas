@@ -117,23 +117,23 @@ type
     [Test]
     procedure WhenDeserializeATValueAndTheJSONValueIsAnObjectMustLoadTheValuesInTheMap;
     [Test]
-    procedure WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnArrayMustLoadTheArrayProperty;
+    procedure WhenDeserializeAClassWithFlatAttributeAndTheJSONIsAnArrayMustLoadTheArrayProperty;
     [Test]
-    procedure WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnStringMustLoadTheStringProperty;
+    procedure WhenDeserializeAClassWithFlatAttributeAndTheJSONIsAnStringMustLoadTheStringProperty;
     [Test]
-    procedure WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnNumberMustLoadTheNumberProperty;
+    procedure WhenDeserializeAClassWithFlatAttributeAndTheJSONIsAnNumberMustLoadTheNumberProperty;
     [Test]
-    procedure WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnObjectMustLoadTheObjectProperty;
+    procedure WhenDeserializeAClassWithFlatAttributeAndTheJSONIsAnObjectMustLoadTheObjectProperty;
     [Test]
-    procedure WhenDeserializeAClassWithSingleObjectAttributeAndNotFoundThePropertyByTypeCantRaiseAnyError;
+    procedure WhenDeserializeAClassWithFlatAttributeAndNotFoundThePropertyByTypeCantRaiseAnyError;
     [Test]
-    procedure WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnStringMustLoadTheEnumeratorProperty;
+    procedure WhenDeserializeAClassWithFlatAttributeAndTheJSONIsAnStringMustLoadTheEnumeratorProperty;
     [Test]
-    procedure WhenDeserializeAClassWithSingleObjectAttributeAndFoundMoreThanOnePropertyForTheTypeMustRaiseError;
+    procedure WhenDeserializeAClassWithFlatAttributeAndFoundMoreThanOnePropertyForTheTypeMustRaiseError;
     [Test]
-    procedure WhenDeserializeAClassWithSingleObjectAttributeOnlyThePublishedPropertiesMustBeLoaded;
+    procedure WhenDeserializeAClassWithFlatAttributeOnlyThePublishedPropertiesMustBeLoaded;
     [Test]
-    procedure WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsBooleanValueMustLoadTheBooleanProperty;
+    procedure WhenDeserializeAClassWithFlatAttributeAndTheJSONIsBooleanValueMustLoadTheBooleanProperty;
     [Test]
     procedure WhenTryToDeserializeAInvalidValueToADoublePropertyCannotRaiseAnyError;
   end;
@@ -512,8 +512,8 @@ type
     property MyProperty: Integer read FMyProperty write FMyProperty;
   end;
 
-  [SingleObject]
-  TClassWithSingleObjectAttribute = class
+  [Flat]
+  TClassWithFlatAttribute = class
   private
     FMyArray: TArray<Integer>;
     FMyProperty: String;
@@ -526,8 +526,8 @@ type
     property MyProperty: String read FMyProperty write FMyProperty;
   end;
 
-  [SingleObject]
-  TClassWithSingleObjectAttributeAndEnumerator = class
+  [Flat]
+  TClassWithFlatAttributeAndEnumerator = class
   private
     FMyEnumerator: TMyEnum;
     FMyInteger: Integer;
@@ -538,16 +538,16 @@ type
     property MyInteger: Integer read FMyInteger write FMyInteger;
   end;
 
-  [SingleObject]
-  TClassWithSingleObjectAttributeAndBoolean = class
+  [Flat]
+  TClassWithFlatAttributeAndBoolean = class
   private
     FMyBoolean: Boolean;
   published
     property MyBoolean: Boolean read FMyBoolean write FMyBoolean;
   end;
 
-  [SingleObject]
-  TMyPublishedClassSingleObject = class
+  [Flat]
+  TMyPublishedClassFlat = class
   private
     FMyPublic: Integer;
     FMyPublished: Integer;
@@ -802,81 +802,81 @@ begin
   Value.AsObject.Free;
 end;
 
-procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndFoundMoreThanOnePropertyForTheTypeMustRaiseError;
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithFlatAttributeAndFoundMoreThanOnePropertyForTheTypeMustRaiseError;
 begin
   Assert.WillRaise(
     procedure
     begin
-      FSerializer.Deserialize('1234', TypeInfo(TClassWithSingleObjectAttributeAndEnumerator)).AsType<TClassWithSingleObjectAttributeAndEnumerator>;
+      FSerializer.Deserialize('1234', TypeInfo(TClassWithFlatAttributeAndEnumerator)).AsType<TClassWithFlatAttributeAndEnumerator>;
     end, EJSONTypeCompatibleWithMoreThanOneProperty);
 end;
 
-procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndNotFoundThePropertyByTypeCantRaiseAnyError;
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithFlatAttributeAndNotFoundThePropertyByTypeCantRaiseAnyError;
 begin
   Assert.WillNotRaise(
     procedure
     begin
-      FSerializer.Deserialize('{}', TypeInfo(TClassWithSingleObjectAttributeAndEnumerator)).AsType<TClassWithSingleObjectAttributeAndEnumerator>;
+      FSerializer.Deserialize('{}', TypeInfo(TClassWithFlatAttributeAndEnumerator)).AsType<TClassWithFlatAttributeAndEnumerator>;
     end);
 end;
 
-procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnArrayMustLoadTheArrayProperty;
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithFlatAttributeAndTheJSONIsAnArrayMustLoadTheArrayProperty;
 begin
-  var Value := FSerializer.Deserialize('[123,456,789]', TypeInfo(TClassWithSingleObjectAttribute)).AsType<TClassWithSingleObjectAttribute>;
+  var Value := FSerializer.Deserialize('[123,456,789]', TypeInfo(TClassWithFlatAttribute)).AsType<TClassWithFlatAttribute>;
 
   Assert.AreEqual(3, Length(Value.MyArray));
 
   Value.Free;
 end;
 
-procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnNumberMustLoadTheNumberProperty;
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithFlatAttributeAndTheJSONIsAnNumberMustLoadTheNumberProperty;
 begin
-  var Value := FSerializer.Deserialize('1234', TypeInfo(TClassWithSingleObjectAttribute)).AsType<TClassWithSingleObjectAttribute>;
+  var Value := FSerializer.Deserialize('1234', TypeInfo(TClassWithFlatAttribute)).AsType<TClassWithFlatAttribute>;
 
   Assert.AreEqual(1234, Value.MyInteger);
 
   Value.Free;
 end;
 
-procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnObjectMustLoadTheObjectProperty;
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithFlatAttributeAndTheJSONIsAnObjectMustLoadTheObjectProperty;
 begin
-  var Value := FSerializer.Deserialize('{}', TypeInfo(TClassWithSingleObjectAttribute)).AsType<TClassWithSingleObjectAttribute>;
+  var Value := FSerializer.Deserialize('{}', TypeInfo(TClassWithFlatAttribute)).AsType<TClassWithFlatAttribute>;
 
   Assert.IsNotNil(Value.MyObject);
 
   Value.Free;
 end;
 
-procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnStringMustLoadTheEnumeratorProperty;
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithFlatAttributeAndTheJSONIsAnStringMustLoadTheEnumeratorProperty;
 begin
-  var Value := FSerializer.Deserialize('"MyValue2"', TypeInfo(TClassWithSingleObjectAttributeAndEnumerator)).AsType<TClassWithSingleObjectAttributeAndEnumerator>;
+  var Value := FSerializer.Deserialize('"MyValue2"', TypeInfo(TClassWithFlatAttributeAndEnumerator)).AsType<TClassWithFlatAttributeAndEnumerator>;
 
   Assert.AreEqual(TMyEnum.MyValue2, Value.MyEnumerator);
 
   Value.Free;
 end;
 
-procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsAnStringMustLoadTheStringProperty;
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithFlatAttributeAndTheJSONIsAnStringMustLoadTheStringProperty;
 begin
-  var Value := FSerializer.Deserialize('"String"', TypeInfo(TClassWithSingleObjectAttribute)).AsType<TClassWithSingleObjectAttribute>;
+  var Value := FSerializer.Deserialize('"String"', TypeInfo(TClassWithFlatAttribute)).AsType<TClassWithFlatAttribute>;
 
   Assert.AreEqual('String', Value.MyProperty);
 
   Value.Free;
 end;
 
-procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeAndTheJSONIsBooleanValueMustLoadTheBooleanProperty;
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithFlatAttributeAndTheJSONIsBooleanValueMustLoadTheBooleanProperty;
 begin
-  var Value := FSerializer.Deserialize('true', TypeInfo(TClassWithSingleObjectAttributeAndBoolean)).AsType<TClassWithSingleObjectAttributeAndBoolean>;
+  var Value := FSerializer.Deserialize('true', TypeInfo(TClassWithFlatAttributeAndBoolean)).AsType<TClassWithFlatAttributeAndBoolean>;
 
   Assert.IsTrue(Value.MyBoolean);
 
   Value.Free;
 end;
 
-procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithSingleObjectAttributeOnlyThePublishedPropertiesMustBeLoaded;
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithFlatAttributeOnlyThePublishedPropertiesMustBeLoaded;
 begin
-  var Value := FSerializer.Deserialize('555', TypeInfo(TMyPublishedClassSingleObject)).AsType<TMyPublishedClassSingleObject>;
+  var Value := FSerializer.Deserialize('555', TypeInfo(TMyPublishedClassFlat)).AsType<TMyPublishedClassFlat>;
 
   Assert.AreEqual(0, Value.MyPrivate);
   Assert.AreEqual(0, Value.MyProtected);

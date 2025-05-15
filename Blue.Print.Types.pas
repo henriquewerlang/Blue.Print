@@ -114,7 +114,7 @@ type
   NodeNameAttribute = class(FieldNameAttribute)
   end;
 
-  SingleObjectAttribute = class(TCustomAttribute)
+  FlatAttribute = class(TCustomAttribute)
   end;
 
   XMLAttributeAttribute = class(TCustomAttribute)

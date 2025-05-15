@@ -61,9 +61,9 @@ type
     function SerializeType(const RttiType: TRttiType; const Value: TValue): TJSONValue; virtual;
 
     procedure DeserializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
+    procedure DeserializeFlatObject(const RttiType: TRttiType; const Instance: TValue; const JSONValue: TJSONValue);
     procedure DeserializeMap(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
     procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
-    procedure DeserializeSingleObject(const RttiType: TRttiType; const Instance: TValue; const JSONValue: TJSONValue);
     procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
     procedure SerializeMap(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
     procedure SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
@@ -466,86 +466,6 @@ begin
   end;
 end;
 
-procedure TBluePrintJsonSerializer.DeserializeSingleObject(const RttiType: TRttiType; const Instance: TValue; const JSONValue: TJSONValue);
-var
-  &Property: TRttiProperty;
-
-  function LocateProperty(const CompareFunction: TFunc<TRttiProperty, Boolean>): TRttiProperty;
-  var
-    &Property: TRttiProperty;
-
-  begin
-    Result := nil;
-
-    for &Property in GetProperties(RttiType) do
-      if CompareFunction(&Property) then
-        if Assigned(Result) then
-          raise EJSONTypeCompatibleWithMoreThanOneProperty.Create('More than one property found for this JSON type!')
-        else
-          Result := &Property;
-  end;
-
-  function FindPropety(const Types: TTypeKinds): TRttiProperty;
-  begin
-    Result := LocateProperty(
-      function (&Property: TRttiProperty): Boolean
-      begin
-        Result := &Property.PropertyType.TypeKind in Types;
-      end);
-  end;
-
-  function GetStringProperty: TRttiProperty;
-  begin
-    Result := FindPropety([{$IFDEF DCC}tkLString, tkUString, tkWChar, tkWString, {$ENDIF}tkChar, tkString, tkEnumeration]);
-  end;
-
-  function GetArrayProperty: TRttiProperty;
-  begin
-    Result := FindPropety([tkDynArray, tkArray]);
-  end;
-
-  function GetNumberProperty: TRttiProperty;
-  begin
-    Result := FindPropety([{$IFDEF DCC}tkInt64, {$ENDIF}tkFloat, tkInteger]);
-  end;
-
-  function GetObjectProperty: TRttiProperty;
-  begin
-    Result := FindPropety([tkClass]);
-  end;
-
-  function GetBooleanProperty: TRttiProperty;
-  begin
-    Result := LocateProperty(
-      function (&Property: TRttiProperty): Boolean
-      begin
-        Result := &Property.PropertyType.Handle = TypeInfo(Boolean);
-      end);
-  end;
-
-  function IsBooleanValue: Boolean;
-  begin
-    Result := {$IFDEF DCC}JSONValue is TJSONBool{$ELSE}IsBoolean(JSONValue){$ENDIF};
-  end;
-
-begin
-  &Property := nil;
-
-  if IsBooleanValue then
-    &Property := GetBooleanProperty
-  else if JSONValue is TJSONNumber then
-    &Property := GetNumberProperty
-  else if JSONValue is TJSONString then
-    &Property := GetStringProperty
-  else if JSONValue is TJSONArray then
-    &Property := GetArrayProperty
-  else if JSONValue is TJSONObject then
-    &Property := GetObjectProperty;
-
-  if Assigned(&Property) then
-    &Property.SetValue(Instance.AsObject, DeserializeType(&Property.PropertyType, JSONValue));
-end;
-
 function TBluePrintJsonSerializer.DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
 begin
   case RttiType.TypeKind of
@@ -589,8 +509,8 @@ begin
 
         if RttiType.IsMap then
           DeserializeMap(RttiType.AsInstance, Result.AsObject, TJSONObject(JSONValue))
-        else if RttiType.HasAttribute(SingleObjectAttribute) then
-          DeserializeSingleObject(RttiType, Result, JSONValue)
+        else if RttiType.HasAttribute(FlatAttribute) then
+          DeserializeFlatObject(RttiType, Result, JSONValue)
         else if JSONValue is TJSONObject then
           DeserializeProperties(RttiType, Result.AsObject, TJSONObject(JSONValue));
       end;
@@ -719,6 +639,86 @@ begin
     if Assigned(Field) then
       Field.SetValue(Instance.GetReferenceToRawData, DeserializeType(Field.FieldType, {$IFDEF PAS2JS}JSONObject[Key]{$ELSE}Key.JsonValue{$ENDIF}));
   end;
+end;
+
+procedure TBluePrintJsonSerializer.DeserializeFlatObject(const RttiType: TRttiType; const Instance: TValue; const JSONValue: TJSONValue);
+var
+  &Property: TRttiProperty;
+
+  function LocateProperty(const CompareFunction: TFunc<TRttiProperty, Boolean>): TRttiProperty;
+  var
+    &Property: TRttiProperty;
+
+  begin
+    Result := nil;
+
+    for &Property in GetProperties(RttiType) do
+      if CompareFunction(&Property) then
+        if Assigned(Result) then
+          raise EJSONTypeCompatibleWithMoreThanOneProperty.Create('More than one property found for this JSON type!')
+        else
+          Result := &Property;
+  end;
+
+  function FindPropety(const Types: TTypeKinds): TRttiProperty;
+  begin
+    Result := LocateProperty(
+      function (&Property: TRttiProperty): Boolean
+      begin
+        Result := &Property.PropertyType.TypeKind in Types;
+      end);
+  end;
+
+  function GetStringProperty: TRttiProperty;
+  begin
+    Result := FindPropety([{$IFDEF DCC}tkLString, tkUString, tkWChar, tkWString, {$ENDIF}tkChar, tkString, tkEnumeration]);
+  end;
+
+  function GetArrayProperty: TRttiProperty;
+  begin
+    Result := FindPropety([tkDynArray, tkArray]);
+  end;
+
+  function GetNumberProperty: TRttiProperty;
+  begin
+    Result := FindPropety([{$IFDEF DCC}tkInt64, {$ENDIF}tkFloat, tkInteger]);
+  end;
+
+  function GetObjectProperty: TRttiProperty;
+  begin
+    Result := FindPropety([tkClass]);
+  end;
+
+  function GetBooleanProperty: TRttiProperty;
+  begin
+    Result := LocateProperty(
+      function (&Property: TRttiProperty): Boolean
+      begin
+        Result := &Property.PropertyType.Handle = TypeInfo(Boolean);
+      end);
+  end;
+
+  function IsBooleanValue: Boolean;
+  begin
+    Result := {$IFDEF DCC}JSONValue is TJSONBool{$ELSE}IsBoolean(JSONValue){$ENDIF};
+  end;
+
+begin
+  &Property := nil;
+
+  if IsBooleanValue then
+    &Property := GetBooleanProperty
+  else if JSONValue is TJSONNumber then
+    &Property := GetNumberProperty
+  else if JSONValue is TJSONString then
+    &Property := GetStringProperty
+  else if JSONValue is TJSONArray then
+    &Property := GetArrayProperty
+  else if JSONValue is TJSONObject then
+    &Property := GetObjectProperty;
+
+  if Assigned(&Property) then
+    &Property.SetValue(Instance.AsObject, DeserializeType(&Property.PropertyType, JSONValue));
 end;
 
 procedure TBluePrintJsonSerializer.DeserializeMap(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
