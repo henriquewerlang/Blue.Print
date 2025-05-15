@@ -1386,21 +1386,26 @@ var
         Result := PropertyType.IsClassDefinition and not PropertyType.IsArrayType and not PropertyType.IsObjectType or PropertyType.IsMapType;
       end;
 
-      procedure AppendInformation(const NeedAdd: Boolean; const &Property: TPropertyDefinition; const Information: TImplementationInformation);
+      procedure AppendInformations(const NeedAdd: Boolean; const &Property: TPropertyDefinition; const Informations: TImplementationInformations);
       begin
         if NeedAdd then
         begin
-          ClassDefinition.Informations := ClassDefinition.Informations + [Information];
-          &Property.Informations := &Property.Informations + [Information];
+          ClassDefinition.Informations := ClassDefinition.Informations + Informations;
+          &Property.Informations := &Property.Informations + Informations;
         end;
       end;
 
-      function GetStoredInformation(const PropertyType: TTypeDefinition): TImplementationInformation;
+      procedure AppendInformation(const NeedAdd: Boolean; const &Property: TPropertyDefinition; const Information: TImplementationInformation);
       begin
-        if PropertyType.IsEnumeration then
-          Result := TImplementationInformation.NeedIsStoredField
+        AppendInformations(NeedAdd, &Property, [Information]);
+      end;
+
+      function GetStoredInformation(const PropertyType: TTypeDefinition): TImplementationInformations;
+      begin
+        if PropertyType.IsEnumeration or PropertyType.IsExternal then
+          Result := [TImplementationInformation.NeedIsStoredField, TImplementationInformation.NeedSetProcedure]
         else
-          Result := TImplementationInformation.NeedIsStoredFunction;
+          Result := [TImplementationInformation.NeedIsStoredFunction];
       end;
 
     begin
@@ -1412,9 +1417,7 @@ var
 
         AppendInformation(GetNeedAddFunction(PropertyType), &Property, TImplementationInformation.NeedAddFunction);
 
-        AppendInformation(&Property.Optional, &Property, GetStoredInformation(PropertyType));
-
-        AppendInformation(&Property.Optional and PropertyType.IsEnumeration, &Property, TImplementationInformation.NeedSetProcedure);
+        AppendInformations(&Property.Optional, &Property, GetStoredInformation(PropertyType));
 
         AppendInformation(GetNeedDestructor(PropertyType), &Property, TImplementationInformation.NeedDestructor);
 
