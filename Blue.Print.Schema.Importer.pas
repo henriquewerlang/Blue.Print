@@ -406,7 +406,7 @@ type
     function GetReferenceName(const Schema: TSchema): String;
     function GetReferenceSchema(const Schema: TSchema; var ReferenceSchema: TSchema): Boolean;
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
-    function IsSingleObjectSchema(const Schema: TSchema): Boolean;
+    function IsFlatSchema(const Schema: TSchema): Boolean;
     function LoadSchema(const UnitFileConfiguration: TUnitFileConfiguration): TSchema;
 
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
@@ -2128,7 +2128,7 @@ end;
 
 function TJSONSchemaImport.CanGenerateClass(const Schema: TSchema): Boolean;
 begin
-  Result := Schema.IsPropertiesStored or IsSingleObjectSchema(Schema) or Schema.IsAdditionalPropertiesStored and CanGenerateClass(Schema.additionalProperties) or Schema.IsPatternPropertiesStored;
+  Result := Schema.IsPropertiesStored or IsFlatSchema(Schema) or Schema.IsAdditionalPropertiesStored and CanGenerateClass(Schema.additionalProperties) or Schema.IsPatternPropertiesStored;
 end;
 
 constructor TJSONSchemaImport.Create;
@@ -2163,8 +2163,8 @@ begin
   var ClassDefinition := CreateClassDefinition(ParentModule, ClassTypeName);
   Result := ClassDefinition;
 
-  if IsSingleObjectSchema(Schema) then
-    ClassDefinition.AddAtribute('SingleObject');
+  if IsFlatSchema(Schema) then
+    ClassDefinition.AddAtribute('Flat');
 
   GenerateProperties(ClassDefinition, Schema);
 end;
@@ -2381,7 +2381,7 @@ begin
   Result := Assigned(ReferenceSchema);
 end;
 
-function TJSONSchemaImport.IsSingleObjectSchema(const Schema: TSchema): Boolean;
+function TJSONSchemaImport.IsFlatSchema(const Schema: TSchema): Boolean;
 begin
   Result := Schema.IsAllOfStored or Schema.IsOneOfStored or Schema.IsAnyOfStored;
 end;
