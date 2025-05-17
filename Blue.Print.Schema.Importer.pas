@@ -371,10 +371,8 @@ type
   private
     FXMLBuildInType: TDictionary<String, TTypeDefinition>;
 
-    function AddProperty(const ClassDefinition: TClassDefinition; const Name: String): TPropertyDefinition;
-    function AddPropertyWithType(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef; const IsReferenceType: Boolean): TPropertyDefinition;
+    function AddProperty(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef; const IsReferenceType: Boolean): TPropertyDefinition;
     function CanGenerateClass(const Element: IXMLElementDef): Boolean;
-    function CheckPropertyTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition; const IsReferenceType: Boolean): TTypeDefinition;
     function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
     function CheckEnumeration(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeEnumeration;
     function FindBaseType(const TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
@@ -791,11 +789,6 @@ end;
 
 { TXSDImporter }
 
-function TXSDImporter.AddProperty(const ClassDefinition: TClassDefinition; const Name: String): TPropertyDefinition;
-begin
-  Result := ClassDefinition.AddProperty(Name);
-end;
-
 procedure TXSDImporter.AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
 begin
   if Attribute.Fixed = NULL then
@@ -806,10 +799,35 @@ begin
   &Property.Optional := (Attribute.Use <> NULL) and (Attribute.Use = 'optional');
 end;
 
-function TXSDImporter.AddPropertyWithType(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef; const IsReferenceType: Boolean): TPropertyDefinition;
+function TXSDImporter.AddProperty(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef; const IsReferenceType: Boolean): TPropertyDefinition;
+
+  function CheckPropertyTypeDefinition: TTypeDefinition;
+  begin
+    Result := CheckChangeTypeName(Name, ClassDefinition);
+
+    if not Assigned(Result) then
+      if IsReferenceType then
+      begin
+        Result := FindType(&Type.Name, ClassDefinition);
+
+        if not Assigned(Result) then
+          Result := ClassDefinition.AddDelayedType(&Type.Name);
+      end
+      else
+      begin
+        Result := CheckEnumeration(&Type, ClassDefinition);
+
+        if not Assigned(Result) then
+          Result := FindType(&Type.Name, ClassDefinition);
+
+        if not Assigned(Result) then
+          Result := FindBaseType(&Type, ClassDefinition);
+      end;
+  end;
+
 begin
-  Result := AddProperty(ClassDefinition, Name);
-  Result.PropertyType := CheckPropertyTypeDefinition(&Type, ClassDefinition, IsReferenceType);
+  Result := ClassDefinition.AddProperty(Name);
+  Result.PropertyType := CheckPropertyTypeDefinition;
 end;
 
 function TXSDImporter.CanGenerateClass(const Element: IXMLElementDef): Boolean;
@@ -883,27 +901,6 @@ begin
     Result := nil;
 end;
 
-function TXSDImporter.CheckPropertyTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition; const IsReferenceType: Boolean): TTypeDefinition;
-begin
-  if IsReferenceType then
-  begin
-    Result := FindType(&Type.Name, Module);
-
-    if not Assigned(Result) then
-      Result := Module.AddDelayedType(&Type.Name);
-  end
-  else
-  begin
-    Result := CheckEnumeration(&Type, Module);
-
-    if not Assigned(Result) then
-      Result := FindType(&Type.Name, Module);
-
-    if not Assigned(Result) then
-      Result := FindBaseType(&Type, Module);
-  end;
-end;
-
 function TXSDImporter.CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
 begin
   Result := FindType(&Type.Name, UnitDefinition);
@@ -935,14 +932,14 @@ begin
     for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
     begin
       var Attribute := ComplexType.AttributeDefs[A];
-      var &Property := AddPropertyWithType(ClassDefinition, Attribute.Name, Attribute.DataType, IsReferenceType(Attribute));
+      var &Property := AddProperty(ClassDefinition, Attribute.Name, Attribute.DataType, IsReferenceType(Attribute));
 
       AddPropertyAttribute(&Property, Attribute);
     end;
 
     if Assigned(ComplexType.BaseType) then
     begin
-      var &Property := AddPropertyWithType(ClassDefinition, 'Value', ComplexType.BaseType, False);
+      var &Property := AddProperty(ClassDefinition, 'Value', ComplexType.BaseType, False);
 
       &Property.AddXMLValueAttribute;
     end;
@@ -980,11 +977,16 @@ procedure TXSDImporter.GenerateProperty(const ClassDefinition: TClassDefinition;
     end;
   end;
 
-begin
-  var NewProperty := AddProperty(ClassDefinition, ElementDefinition.Name);
-  NewProperty.Optional := IsOptional(ElementDefinition);
-  var PropertyType := ElementDefinition.DataType;
+  function CreateProperty(const TypeDefinition: IXMLTypeDef): TPropertyDefinition;
+  begin
+    Result := AddProperty(ClassDefinition, ElementDefinition.Name, TypeDefinition, IsReferenceType(ElementDefinition));
+    Result.Optional := IsOptional(ElementDefinition);
 
+    if ElementDefinition.IsRepeating then
+      Result.PropertyType := TTypeArrayDefinition.Create(ClassDefinition, Result.PropertyType);
+  end;
+
+begin
   if CanGenerateClass(ElementDefinition) then
   begin
     var ComplexType := ElementDefinition.DataType as IXMLComplexTypeDef;
@@ -992,22 +994,18 @@ begin
     if (ComplexType.ElementDefs.Count = 0) and (ComplexType.AttributeDefs.Count = 1) and ComplexType.AttributeDefs[0].HasAttribute(SFixed) then
     begin
       var Attribute := ComplexType.AttributeDefs[0];
-      PropertyType := Attribute.DataType;
 
-      AddPropertyAttribute(NewProperty, Attribute);
+      AddPropertyAttribute(CreateProperty(Attribute.DataType), Attribute);
     end
     else
     begin
-      PropertyType := ComplexType;
-
       GenerateClassDefinition(ClassDefinition, ComplexType, TargetNamespace);
+
+      CreateProperty(ComplexType);
     end;
-  end;
-
-  NewProperty.PropertyType := CheckPropertyTypeDefinition(PropertyType, ClassDefinition, IsReferenceType(ElementDefinition));
-
-  if ElementDefinition.IsRepeating then
-    NewProperty.PropertyType := TTypeArrayDefinition.Create(ClassDefinition, NewProperty.PropertyType);
+  end
+  else
+    CreateProperty(ElementDefinition.DataType);
 end;
 
 procedure TXSDImporter.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
