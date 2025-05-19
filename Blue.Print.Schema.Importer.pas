@@ -13,9 +13,9 @@ type
   TTypeArrayDefinition = class;
   TTypeDefinition = class;
   TTypeDelayedDefinition = class;
+  TTypeDynamicPropertyDefinition = class;
   TTypeEnumeration = class;
   TTypeExternal = class;
-  TTypeMapDefinition = class;
   TTypeModuleDefinition = class;
   TUnitDefinition = class;
   TXSDImporter = class;
@@ -131,7 +131,7 @@ type
     function GetAsArrayType: TTypeArrayDefinition;
     function GetAsClassDefinition: TClassDefinition;
     function GetAsDelayedType: TTypeDelayedDefinition;
-    function GetAsMapType: TTypeMapDefinition;
+    function GetAsDynamicPropertyType: TTypeDynamicPropertyDefinition;
     function GetAsTypeAlias: TTypeAlias;
     function GetAsTypeEnumeration: TTypeEnumeration;
     function GetAsTypeExternal: TTypeExternal;
@@ -139,9 +139,9 @@ type
     function GetIsArrayType: Boolean;
     function GetIsClassDefinition: Boolean;
     function GetIsDelayedType: Boolean;
+    function GetIsDynamicPropertyType: Boolean;
     function GetIsEnumeration: Boolean;
     function GetIsExternal: Boolean;
-    function GetIsMapType: Boolean;
     function GetIsTypeAlias: Boolean;
     function GetIsUnitDefinition: Boolean;
   public
@@ -152,7 +152,7 @@ type
     property AsArrayType: TTypeArrayDefinition read GetAsArrayType;
     property AsClassDefinition: TClassDefinition read GetAsClassDefinition;
     property AsDelayedType: TTypeDelayedDefinition read GetAsDelayedType;
-    property AsMapType: TTypeMapDefinition read GetAsMapType;
+    property AsDynamicPropertyType: TTypeDynamicPropertyDefinition read GetAsDynamicPropertyType;
     property AsTypeAlias: TTypeAlias read GetAsTypeAlias;
     property AsTypeEnumeration: TTypeEnumeration read GetAsTypeEnumeration;
     property AsTypeExternal: TTypeExternal read GetAsTypeExternal;
@@ -161,9 +161,9 @@ type
     property IsArrayType: Boolean read GetIsArrayType;
     property IsClassDefinition: Boolean read GetIsClassDefinition;
     property IsDelayedType: Boolean read GetIsDelayedType;
+    property IsDynamicPropertyType: Boolean read GetIsDynamicPropertyType;
     property IsEnumeration: Boolean read GetIsEnumeration;
     property IsExternal: Boolean read GetIsExternal;
-    property IsMapType: Boolean read GetIsMapType;
     property IsNumericType: Boolean read FIsNumericType;
     property IsObjectType: Boolean read FIsObjectType;
     property IsStringType: Boolean read FIsStringType;
@@ -277,7 +277,7 @@ type
     property ArrayType: TTypeDefinition read FArrayType write FArrayType;
   end;
 
-  TTypeMapDefinition = class(TTypeDefinition)
+  TTypeDynamicPropertyDefinition = class(TTypeDefinition)
   private
     FValueType: TTypeDefinition;
   public
@@ -401,7 +401,7 @@ type
 
     function CanGenerateClass(const Schema: TSchema): Boolean;
     function CreateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String): TClassDefinition;
-    function CreateMapType(const ParentModule: TTypeModuleDefinition; const ValueType: TTypeDefinition): TTypeMapDefinition;
+    function CreateDynamicPropertyType(const ParentModule: TTypeModuleDefinition; const ValueType: TTypeDefinition): TTypeDynamicPropertyDefinition;
     function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const Schema: TSchema; const ClassTypeName: String): TClassDefinition;
     function GetReferenceName(const Schema: TSchema): String;
     function GetReferenceSchema(const Schema: TSchema; var ReferenceSchema: TSchema): Boolean;
@@ -1251,8 +1251,8 @@ var
   begin
     if TypeDefinition.IsArrayType then
       Result := Format('TArray<%s>', [GetTypeName(GetArrayItemType(TypeDefinition))])
-    else if TypeDefinition.IsMapType then
-      Result := Format('TMap<%s>', [GetTypeName(ResolveTypeDefinition(TypeDefinition.AsMapType.ValueType))])
+    else if TypeDefinition.IsDynamicPropertyType then
+      Result := Format('TDynamicProperty<%s>', [GetTypeName(ResolveTypeDefinition(TypeDefinition.AsDynamicPropertyType.ValueType))])
     else if TypeDefinition.IsClassDefinition then
       Result := Format('%s.%s', [TypeDefinition.AsClassDefinition.UnitDefinition.Name, GetClassImplementationName(TypeDefinition.AsClassDefinition)])
     else if TypeDefinition.IsEnumeration then
@@ -1269,8 +1269,8 @@ var
 
     if ResolvedTypeDefinition.IsArrayType then
       Result := Format('TArray<%s>', [GetBaseTypeName(GetArrayItemType(ResolvedTypeDefinition))])
-    else if ResolvedTypeDefinition.IsMapType then
-      Result := Format('TMap<%s>', [GetBaseTypeName(ResolvedTypeDefinition.AsMapType.ValueType)])
+    else if ResolvedTypeDefinition.IsDynamicPropertyType then
+      Result := Format('TDynamicProperty<%s>', [GetBaseTypeName(ResolvedTypeDefinition.AsDynamicPropertyType.ValueType)])
     else
       Result := GetTypeName(ResolvedTypeDefinition);
   end;
@@ -1376,12 +1376,12 @@ var
 
       function GetNeedDestructor(const PropertyType: TTypeDefinition): Boolean;
       begin
-        Result := PropertyType.IsClassDefinition and not PropertyType.IsObjectType or PropertyType.IsMapType or PropertyType.IsArrayType and GetNeedDestructor(GetArrayItemBaseType(PropertyType));
+        Result := PropertyType.IsClassDefinition and not PropertyType.IsObjectType or PropertyType.IsDynamicPropertyType or PropertyType.IsArrayType and GetNeedDestructor(GetArrayItemBaseType(PropertyType));
       end;
 
       function GetNeedGetFunction(const PropertyType: TTypeDefinition): Boolean;
       begin
-        Result := PropertyType.IsClassDefinition and not PropertyType.IsArrayType and not PropertyType.IsObjectType or PropertyType.IsMapType;
+        Result := PropertyType.IsClassDefinition and not PropertyType.IsArrayType and not PropertyType.IsObjectType or PropertyType.IsDynamicPropertyType;
       end;
 
       procedure AppendInformations(const NeedAdd: Boolean; const &Property: TPropertyDefinition; const Informations: TImplementationInformations);
@@ -1520,7 +1520,7 @@ var
 
   function GetIsStoredFunctionValue(const &Property: TPropertyDefinition; const PropertyType: TTypeDefinition): String;
   begin
-    if PropertyType.IsClassDefinition or PropertyType.IsArrayType or PropertyType.IsMapType then
+    if PropertyType.IsClassDefinition or PropertyType.IsArrayType or PropertyType.IsDynamicPropertyType then
       Result := Format('Assigned(%s)', [GetPropertyFieldName(&Property)])
     else if PropertyType.IsStringType then
       Result := Format('not %s.IsEmpty', [GetPropertyFieldName(&Property)])
@@ -2010,9 +2010,9 @@ begin
   Result := Self as TTypeDelayedDefinition;
 end;
 
-function TTypeDefinition.GetAsMapType: TTypeMapDefinition;
+function TTypeDefinition.GetAsDynamicPropertyType: TTypeDynamicPropertyDefinition;
 begin
-  Result := Self as TTypeMapDefinition;
+  Result := Self as TTypeDynamicPropertyDefinition;
 end;
 
 function TTypeDefinition.GetAsTypeAlias: TTypeAlias;
@@ -2050,6 +2050,11 @@ begin
   Result := Self is TTypeDelayedDefinition;
 end;
 
+function TTypeDefinition.GetIsDynamicPropertyType: Boolean;
+begin
+  Result := Self is TTypeDynamicPropertyDefinition;
+end;
+
 function TTypeDefinition.GetIsEnumeration: Boolean;
 begin
   Result := Self is TTypeEnumeration;
@@ -2058,11 +2063,6 @@ end;
 function TTypeDefinition.GetIsExternal: Boolean;
 begin
   Result := Self is TTypeExternal;
-end;
-
-function TTypeDefinition.GetIsMapType: Boolean;
-begin
-  Result := Self is TTypeMapDefinition;
 end;
 
 function TTypeDefinition.GetIsTypeAlias: Boolean;
@@ -2128,7 +2128,7 @@ end;
 
 function TJSONSchemaImport.CanGenerateClass(const Schema: TSchema): Boolean;
 begin
-  Result := Schema.IsPropertiesStored or IsFlatSchema(Schema) or Schema.IsAdditionalPropertiesStored and CanGenerateClass(Schema.additionalProperties) or Schema.IsPatternPropertiesStored;
+  Result := Schema.IsPropertiesStored or IsFlatSchema(Schema) or Schema.IsPatternPropertiesStored or Schema.IsAdditionalPropertiesStored;
 end;
 
 constructor TJSONSchemaImport.Create;
@@ -2146,9 +2146,9 @@ begin
   ParentModule.Classes.Add(Result);
 end;
 
-function TJSONSchemaImport.CreateMapType(const ParentModule: TTypeModuleDefinition; const ValueType: TTypeDefinition): TTypeMapDefinition;
+function TJSONSchemaImport.CreateDynamicPropertyType(const ParentModule: TTypeModuleDefinition; const ValueType: TTypeDefinition): TTypeDynamicPropertyDefinition;
 begin
-  Result := TTypeMapDefinition.Create(ParentModule, ValueType);
+  Result := TTypeDynamicPropertyDefinition.Create(ParentModule, ValueType);
 end;
 
 destructor TJSONSchemaImport.Destroy;
@@ -2210,7 +2210,7 @@ procedure TJSONSchemaImport.GenerateProperties(const ClassDefinition: TClassDefi
   end;
 
 begin
-  for var Pair in Schema.Properties do
+  for var Pair in Schema.Properties.Schema do
     DefineProperty(Schema, Pair.Key, GenerateTypeDefinition(ClassDefinition, Pair.Value, Pair.Key));
 
   DefineProperties(Schema.allOf + Schema.oneOf + Schema.anyOf,
@@ -2220,13 +2220,20 @@ begin
     end);
 
   if Schema.IsAdditionalPropertiesStored then
+  begin
+    var PropertyName := EmptyStr;
+
     GenerateProperties(ClassDefinition, Schema.additionalProperties);
 
+    if GetPropertyName(Schema.additionalProperties, PropertyName) then
+      DefineProperty(Schema.additionalProperties, PropertyName, CreateDynamicPropertyType(ClassDefinition, GenerateTypeDefinition(ClassDefinition, Schema.additionalProperties, PropertyName)));
+  end;
+
   if Schema.IsPatternPropertiesStored then
-    DefineProperties(Schema.patternProperties.Values,
+    DefineProperties(Schema.patternProperties.Schema.Values,
       function (Schema: TSchema; PropertyName: String): TTypeDefinition
       begin
-        Result := CreateMapType(ClassDefinition, GenerateTypeDefinition(ClassDefinition, Schema, PropertyName));
+        Result := CreateDynamicPropertyType(ClassDefinition, GenerateTypeDefinition(ClassDefinition, Schema, PropertyName));
       end);
 end;
 
@@ -2300,17 +2307,17 @@ begin
           if CanGenerateClass(Schema) then
             Result := GenerateClassDefinition(Module, Schema, TypeName)
           else
-            Result := CreateMapType(Module, GenerateTypeDefinition(Module, Schema.additionalProperties, TypeName));
+            Result := CreateDynamicPropertyType(Module, GenerateTypeDefinition(Module, Schema.additionalProperties, TypeName));
       end
+    else
+    begin
+      if Assigned(Schema.enum) then
+        Result := CreateEnumerator
+      else if CanGenerateClass(Schema) then
+        Result := GenerateClassDefinition(Module, Schema, TypeName)
       else
-      begin
-        if Assigned(Schema.enum) then
-          Result := CreateEnumerator
-        else if CanGenerateClass(Schema) then
-          Result := GenerateClassDefinition(Module, Schema, TypeName)
-        else
-          Result := GetAnyTypeDefinition;
-      end;
+        Result := GetAnyTypeDefinition;
+    end;
 end;
 
 procedure TJSONSchemaImport.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
@@ -2328,7 +2335,7 @@ begin
 
   FReferenceClassDefinition := UnitClass;
 
-  for var Definition in FJSONSchema.definitions do
+  for var Definition in FJSONSchema.definitions.Schema do
   begin
     var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
 
@@ -2357,7 +2364,7 @@ const
 
 begin
   var BaseSchema: TSchema := nil;
-  var List: TMap<TSchema> := nil;
+  var List: TDynamicProperty<TSchema> := nil;
   var References := Schema.ref.Split([REFERENCE_SEPARATOR]);
   ReferenceSchema := nil;
 
@@ -2372,7 +2379,7 @@ begin
     else if (ReferenceName = 'definitions') or (ReferenceName = 'defs') then
       Exit(False)
     else if ReferenceName = 'properties' then
-      List := ReferenceSchema.properties
+      List := ReferenceSchema.properties.Schema
     else if List.ContainsKey(ReferenceName) then
       ReferenceSchema := List[ReferenceName]
     else
@@ -2468,13 +2475,13 @@ begin
   inherited;
 end;
 
-{ TTypeMapDefinition }
+{ TTypeDynamicPropertyDefinition }
 
-constructor TTypeMapDefinition.Create(const Module: TTypeModuleDefinition; const ValueType: TTypeDefinition);
+constructor TTypeDynamicPropertyDefinition.Create(const Module: TTypeModuleDefinition; const ValueType: TTypeDefinition);
 begin
   inherited Create(Module);
 
-  FName := 'Map';
+  FName := 'DynamicProperty';
   FValueType := ValueType;
 end;
 

@@ -46,6 +46,48 @@ type
       property schemaArray: schemaArray read FSchemaArray write FSchemaArray stored GetSchemaArrayStored;
     end;
 
+    TDefinitions = class
+    private
+      FSchema: TDynamicProperty<Blue.Print.JSON.Schema.TSchema>;
+
+      function GetSchema: TDynamicProperty<Blue.Print.JSON.Schema.TSchema>;
+      function GetSchemaStored: Boolean;
+    public
+      destructor Destroy; override;
+
+      property IsSchemaStored: Boolean read GetSchemaStored;
+    published
+      property Schema: TDynamicProperty<Blue.Print.JSON.Schema.TSchema> read GetSchema write FSchema stored GetSchemaStored;
+    end;
+
+    TProperties = class
+    private
+      FSchema: TDynamicProperty<Blue.Print.JSON.Schema.TSchema>;
+
+      function GetSchema: TDynamicProperty<Blue.Print.JSON.Schema.TSchema>;
+      function GetSchemaStored: Boolean;
+    public
+      destructor Destroy; override;
+
+      property IsSchemaStored: Boolean read GetSchemaStored;
+    published
+      property Schema: TDynamicProperty<Blue.Print.JSON.Schema.TSchema> read GetSchema write FSchema stored GetSchemaStored;
+    end;
+
+    TPatternProperties = class
+    private
+      FSchema: TDynamicProperty<Blue.Print.JSON.Schema.TSchema>;
+
+      function GetSchema: TDynamicProperty<Blue.Print.JSON.Schema.TSchema>;
+      function GetSchemaStored: Boolean;
+    public
+      destructor Destroy; override;
+
+      property IsSchemaStored: Boolean read GetSchemaStored;
+    published
+      property Schema: TDynamicProperty<Blue.Print.JSON.Schema.TSchema> read GetSchema write FSchema stored GetSchemaStored;
+    end;
+
     TDependencies = class
     private
       FSchema: Blue.Print.JSON.Schema.TSchema;
@@ -110,9 +152,9 @@ type
     FMinProperties: Blue.Print.JSON.Schema.NonNegativeIntegerDefault0;
     FRequired: stringArray;
     FAdditionalProperties: Blue.Print.JSON.Schema.TSchema;
-    FDefinitions: TMap<Blue.Print.JSON.Schema.TSchema>;
-    FProperties: TMap<Blue.Print.JSON.Schema.TSchema>;
-    FPatternProperties: TMap<Blue.Print.JSON.Schema.TSchema>;
+    FDefinitions: Blue.Print.JSON.Schema.TSchema.TDefinitions;
+    FProperties: Blue.Print.JSON.Schema.TSchema.TProperties;
+    FPatternProperties: Blue.Print.JSON.Schema.TSchema.TPatternProperties;
     FDependencies: Blue.Print.JSON.Schema.TSchema.TDependencies;
     FPropertyNames: Blue.Print.JSON.Schema.TSchema;
     FConst: any;
@@ -128,9 +170,11 @@ type
     FAnyOf: schemaArray;
     FOneOf: schemaArray;
     FNot: Blue.Print.JSON.Schema.TSchema;
+    FDefaultIsStored: Boolean;
     FReadOnlyIsStored: Boolean;
     FWriteOnlyIsStored: Boolean;
     FUniqueItemsIsStored: Boolean;
+    FConstIsStored: Boolean;
 
     function GetMinLength: Blue.Print.JSON.Schema.NonNegativeIntegerDefault0;
     function GetAdditionalItems: Blue.Print.JSON.Schema.TSchema;
@@ -139,9 +183,9 @@ type
     function GetContains: Blue.Print.JSON.Schema.TSchema;
     function GetMinProperties: Blue.Print.JSON.Schema.NonNegativeIntegerDefault0;
     function GetAdditionalProperties: Blue.Print.JSON.Schema.TSchema;
-    function GetDefinitions: TMap<Blue.Print.JSON.Schema.TSchema>;
-    function GetProperties: TMap<Blue.Print.JSON.Schema.TSchema>;
-    function GetPatternProperties: TMap<Blue.Print.JSON.Schema.TSchema>;
+    function GetDefinitions: Blue.Print.JSON.Schema.TSchema.TDefinitions;
+    function GetProperties: Blue.Print.JSON.Schema.TSchema.TProperties;
+    function GetPatternProperties: Blue.Print.JSON.Schema.TSchema.TPatternProperties;
     function GetDependencies: Blue.Print.JSON.Schema.TSchema.TDependencies;
     function GetPropertyNames: Blue.Print.JSON.Schema.TSchema;
     function GetType: Blue.Print.JSON.Schema.TSchema.TType;
@@ -155,7 +199,6 @@ type
     function GetCommentStored: Boolean;
     function GetTitleStored: Boolean;
     function GetDescriptionStored: Boolean;
-    function GetDefaultStored: Boolean;
     function GetExamplesStored: Boolean;
     function GetMultipleOfStored: Boolean;
     function GetMaximumStored: Boolean;
@@ -179,7 +222,6 @@ type
     function GetPatternPropertiesStored: Boolean;
     function GetDependenciesStored: Boolean;
     function GetPropertyNamesStored: Boolean;
-    function GetConstStored: Boolean;
     function GetEnumStored: Boolean;
     function GetTypeStored: Boolean;
     function GetFormatStored: Boolean;
@@ -192,9 +234,11 @@ type
     function GetAnyOfStored: Boolean;
     function GetOneOfStored: Boolean;
     function GetNotStored: Boolean;
+    procedure SetDefault(const Value: any);
     procedure SetReadOnly(const Value: System.Boolean);
     procedure SetWriteOnly(const Value: System.Boolean);
     procedure SetUniqueItems(const Value: System.Boolean);
+    procedure SetConst(const Value: any);
   public
     destructor Destroy; override;
 
@@ -208,7 +252,7 @@ type
     property IsCommentStored: Boolean read GetCommentStored;
     property IsTitleStored: Boolean read GetTitleStored;
     property IsDescriptionStored: Boolean read GetDescriptionStored;
-    property IsDefaultStored: Boolean read GetDefaultStored;
+    property IsDefaultStored: Boolean read FDefaultIsStored;
     property IsReadOnlyStored: Boolean read FReadOnlyIsStored;
     property IsWriteOnlyStored: Boolean read FWriteOnlyIsStored;
     property IsExamplesStored: Boolean read GetExamplesStored;
@@ -235,7 +279,7 @@ type
     property IsPatternPropertiesStored: Boolean read GetPatternPropertiesStored;
     property IsDependenciesStored: Boolean read GetDependenciesStored;
     property IsPropertyNamesStored: Boolean read GetPropertyNamesStored;
-    property IsConstStored: Boolean read GetConstStored;
+    property IsConstStored: Boolean read FConstIsStored;
     property IsEnumStored: Boolean read GetEnumStored;
     property IsTypeStored: Boolean read GetTypeStored;
     property IsFormatStored: Boolean read GetFormatStored;
@@ -259,7 +303,7 @@ type
     property comment: System.String read FComment write FComment stored GetCommentStored;
     property title: System.String read FTitle write FTitle stored GetTitleStored;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-    property default: any read FDefault write FDefault stored GetDefaultStored;
+    property default: any read FDefault write SetDefault stored FDefaultIsStored;
     property readOnly: System.Boolean read FReadOnly write SetReadOnly stored FReadOnlyIsStored;
     property writeOnly: System.Boolean read FWriteOnly write SetWriteOnly stored FWriteOnlyIsStored;
     property examples: TArray<any> read FExamples write FExamples stored GetExamplesStored;
@@ -281,13 +325,13 @@ type
     property minProperties: Blue.Print.JSON.Schema.NonNegativeIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
     property required: stringArray read FRequired write FRequired stored GetRequiredStored;
     property additionalProperties: Blue.Print.JSON.Schema.TSchema read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
-    property definitions: TMap<Blue.Print.JSON.Schema.TSchema> read GetDefinitions write FDefinitions stored GetDefinitionsStored;
-    property properties: TMap<Blue.Print.JSON.Schema.TSchema> read GetProperties write FProperties stored GetPropertiesStored;
-    property patternProperties: TMap<Blue.Print.JSON.Schema.TSchema> read GetPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
+    property definitions: Blue.Print.JSON.Schema.TSchema.TDefinitions read GetDefinitions write FDefinitions stored GetDefinitionsStored;
+    property properties: Blue.Print.JSON.Schema.TSchema.TProperties read GetProperties write FProperties stored GetPropertiesStored;
+    property patternProperties: Blue.Print.JSON.Schema.TSchema.TPatternProperties read GetPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
     property dependencies: Blue.Print.JSON.Schema.TSchema.TDependencies read GetDependencies write FDependencies stored GetDependenciesStored;
     property propertyNames: Blue.Print.JSON.Schema.TSchema read GetPropertyNames write FPropertyNames stored GetPropertyNamesStored;
     [FieldName('const')]
-    property &const: any read FConst write FConst stored GetConstStored;
+    property &const: any read FConst write SetConst stored FConstIsStored;
     property enum: TArray<any> read FEnum write FEnum stored GetEnumStored;
     [FieldName('type')]
     property &type: Blue.Print.JSON.Schema.TSchema.TType read GetType write FType stored GetTypeStored;
@@ -403,9 +447,10 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TSchema.GetDefaultStored: Boolean;
+procedure TSchema.SetDefault(const Value: any);
 begin
-  Result := False;
+  FDefault := Value;
+  FDefaultIsStored := True;
 end;
 
 procedure TSchema.SetReadOnly(const Value: System.Boolean);
@@ -572,10 +617,10 @@ begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-function TSchema.GetDefinitions: TMap<Blue.Print.JSON.Schema.TSchema>;
+function TSchema.GetDefinitions: Blue.Print.JSON.Schema.TSchema.TDefinitions;
 begin
   if not Assigned(FDefinitions) then
-    FDefinitions := TMap<Blue.Print.JSON.Schema.TSchema>.Create;
+    FDefinitions := Blue.Print.JSON.Schema.TSchema.TDefinitions.Create;
 
   Result := FDefinitions;
 end;
@@ -585,10 +630,10 @@ begin
   Result := Assigned(FDefinitions);
 end;
 
-function TSchema.GetProperties: TMap<Blue.Print.JSON.Schema.TSchema>;
+function TSchema.GetProperties: Blue.Print.JSON.Schema.TSchema.TProperties;
 begin
   if not Assigned(FProperties) then
-    FProperties := TMap<Blue.Print.JSON.Schema.TSchema>.Create;
+    FProperties := Blue.Print.JSON.Schema.TSchema.TProperties.Create;
 
   Result := FProperties;
 end;
@@ -598,10 +643,10 @@ begin
   Result := Assigned(FProperties);
 end;
 
-function TSchema.GetPatternProperties: TMap<Blue.Print.JSON.Schema.TSchema>;
+function TSchema.GetPatternProperties: Blue.Print.JSON.Schema.TSchema.TPatternProperties;
 begin
   if not Assigned(FPatternProperties) then
-    FPatternProperties := TMap<Blue.Print.JSON.Schema.TSchema>.Create;
+    FPatternProperties := Blue.Print.JSON.Schema.TSchema.TPatternProperties.Create;
 
   Result := FPatternProperties;
 end;
@@ -637,9 +682,10 @@ begin
   Result := Assigned(FPropertyNames);
 end;
 
-function TSchema.GetConstStored: Boolean;
+procedure TSchema.SetConst(const Value: any);
 begin
-  Result := False;
+  FConst := Value;
+  FConstIsStored := True;
 end;
 
 function TSchema.GetEnumStored: Boolean;
@@ -798,6 +844,72 @@ end;
 function TSchema.TItems.GetSchemaArrayStored: Boolean;
 begin
   Result := Assigned(FSchemaArray);
+end;
+
+{ TSchema.TDefinitions }
+
+destructor TSchema.TDefinitions.Destroy;
+begin
+  FSchema.Free;
+
+  inherited;
+end;
+
+function TSchema.TDefinitions.GetSchema: TDynamicProperty<Blue.Print.JSON.Schema.TSchema>;
+begin
+  if not Assigned(FSchema) then
+    FSchema := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
+
+  Result := FSchema;
+end;
+
+function TSchema.TDefinitions.GetSchemaStored: Boolean;
+begin
+  Result := Assigned(FSchema);
+end;
+
+{ TSchema.TProperties }
+
+destructor TSchema.TProperties.Destroy;
+begin
+  FSchema.Free;
+
+  inherited;
+end;
+
+function TSchema.TProperties.GetSchema: TDynamicProperty<Blue.Print.JSON.Schema.TSchema>;
+begin
+  if not Assigned(FSchema) then
+    FSchema := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
+
+  Result := FSchema;
+end;
+
+function TSchema.TProperties.GetSchemaStored: Boolean;
+begin
+  Result := Assigned(FSchema);
+end;
+
+{ TSchema.TPatternProperties }
+
+destructor TSchema.TPatternProperties.Destroy;
+begin
+  FSchema.Free;
+
+  inherited;
+end;
+
+function TSchema.TPatternProperties.GetSchema: TDynamicProperty<Blue.Print.JSON.Schema.TSchema>;
+begin
+  if not Assigned(FSchema) then
+    FSchema := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
+
+  Result := FSchema;
+end;
+
+function TSchema.TPatternProperties.GetSchemaStored: Boolean;
+begin
+  Result := Assigned(FSchema);
 end;
 
 { TSchema.TDependencies }
