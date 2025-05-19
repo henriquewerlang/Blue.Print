@@ -580,7 +580,7 @@ end;
 
 function TBluePrintJsonSerializer.FindPropertyByType(const RttiType: TRttiType; const JSONValue: TJSONValue; const GetPropertyType: TFunc<TRttiProperty, TRttiType>): TRttiProperty;
 
-  function LocateProperty(const CompareFunction: TFunc<TRttiType, Boolean>): TRttiProperty;
+  function LocateProperties(const CompareFunction: TFunc<TRttiType, Boolean>): TArray<TRttiProperty>;
   var
     &Property: TRttiProperty;
     PropertyType: TRttiType;
@@ -593,11 +593,36 @@ function TBluePrintJsonSerializer.FindPropertyByType(const RttiType: TRttiType; 
       PropertyType := GetPropertyType(&Property);
 
       if Assigned(PropertyType) and CompareFunction(PropertyType) then
-        if Assigned(Result) then
-          raise EJSONTypeCompatibleWithMoreThanOneProperty.Create('More than one property found for this JSON type!')
-        else
-          Result := &Property;
+        Result := Result + [&Property];
     end;
+  end;
+
+  function FindInProperties(const Properties: TArray<TRttiProperty>; const FilterProperties: TFunc<TRttiType, Boolean>): TRttiProperty;
+  var
+    &Property: TRttiProperty;
+
+  begin
+    if Length(Properties) = 0 then
+      Result := nil
+    else if Length(Properties) = 1 then
+      Result := Properties[0]
+    else
+    begin
+      for &Property in Properties do
+        if FilterProperties(GetPropertyType(&Property)) then
+          Exit(&Property);
+
+      raise EJSONTypeCompatibleWithMoreThanOneProperty.Create('More than one property found for this JSON type!')
+    end;
+  end;
+
+  function LocateProperty(const CompareFunction: TFunc<TRttiType, Boolean>): TRttiProperty;
+  begin
+    Result := FindInProperties(LocateProperties(CompareFunction),
+      function (Properties: TRttiType): Boolean
+      begin
+        Result := False;
+      end);
   end;
 
   function FindPropety(const Types: TTypeKinds): TRttiProperty;
@@ -631,13 +656,17 @@ function TBluePrintJsonSerializer.FindPropertyByType(const RttiType: TRttiType; 
 
   function GetObjectProperty: TRttiProperty;
   begin
-    Result := LocateProperty(
+    Result := FindInProperties(LocateProperties(
+      function (PropertyType: TRttiType): Boolean
+      begin
+        Result := PropertyType.TypeKind = tkClass;
+      end),
       function (PropertyType: TRttiType): Boolean
       var
         JSONObject: TJSONObject absolute JSONValue;
 
       begin
-        Result := (PropertyType.TypeKind = tkClass) and (JSONValue is TJSONObject) and (JSONObject.Count > 0) and Assigned(FindPropertyByName(PropertyType, JSONObject.Pairs[0].JsonString.Value));
+        Result := (JSONValue is TJSONObject) and (JSONObject.Count > 0) and Assigned(FindPropertyByName(PropertyType, JSONObject.Pairs[0].JsonString.Value));
       end);
   end;
 

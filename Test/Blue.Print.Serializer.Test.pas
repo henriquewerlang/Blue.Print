@@ -573,11 +573,11 @@ type
     FMyArray: TArray<Integer>;
     FMyProperty: String;
     FMyInteger: Integer;
-    FMyObject: TMyObject;
+    FMyObject: TObject;
   published
     property MyArray: TArray<Integer> read FMyArray write FMyArray;
     property MyInteger: Integer read FMyInteger write FMyInteger;
-    property MyObject: TMyObject read FMyObject write FMyObject;
+    property MyObject: TObject read FMyObject write FMyObject;
     property MyProperty: String read FMyProperty write FMyProperty;
   end;
 
@@ -925,7 +925,7 @@ end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithFlatAttributeAndTheJSONIsAnObjectMustLoadTheObjectProperty;
 begin
-  var Value := FSerializer.Deserialize('{"MyProp1":"Value"}', TypeInfo(TClassWithFlatAttribute)).AsType<TClassWithFlatAttribute>;
+  var Value := FSerializer.Deserialize('{}', TypeInfo(TClassWithFlatAttribute)).AsType<TClassWithFlatAttribute>;
 
   Assert.IsNotNil(Value.MyObject);
 
