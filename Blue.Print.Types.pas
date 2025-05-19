@@ -308,27 +308,27 @@ type
     constructor Create(const Parameter: TRttiParameter; const Body: TValue);
   end;
 
-  TMap<V> = class(TList<TPair<String, V>>)
+  TDynamicProperty<V> = class(TList<TPair<String, V>>)
   private
-    function GetMapItem(const Key: String): V;
+    function GetDynamicPropertyItem(const Key: String): V;
     function GetValues: TArray<V>;
 
-    procedure SetMapItem(const Key: String; const Value: V);
+    procedure SetDynamicPropertyItem(const Key: String; const Value: V);
   public
     function ContainsKey(const Key: String): Boolean;
     function IndexOf(const Key: String): NativeInt;
 
     procedure Add(const Key: String; const Value: V);
 
-    property Map[const Key: String]: V read GetMapItem write SetMapItem; default;
+    property DynamicProperty[const Key: String]: V read GetDynamicPropertyItem write SetDynamicPropertyItem; default;
     property Values: TArray<V> read GetValues;
   end;
 
   TRttiTypeHelper = class helper for TRttiType
   public
     function AsInterface: TRttiInterfaceType;
+    function IsDynamicProperty: Boolean;
     function IsInterface: Boolean;
-    function IsMap: Boolean;
   end;
 
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
@@ -654,14 +654,14 @@ begin
   Result := Self as TRttiInterfaceType;
 end;
 
+function TRttiTypeHelper.IsDynamicProperty: Boolean;
+begin
+  Result := Self.QualifiedName.StartsWith('Blue.Print.Types.TDynamicProperty<');
+end;
+
 function TRttiTypeHelper.IsInterface: Boolean;
 begin
   Result := Self is TRttiInterfaceType;
-end;
-
-function TRttiTypeHelper.IsMap: Boolean;
-begin
-  Result := Self.QualifiedName.StartsWith('Blue.Print.Types.TMap<');
 end;
 
 { TFormatAttribute }
@@ -682,19 +682,19 @@ begin
   FName := Name;
 end;
 
-{ TMap<V> }
+{ TDynamicProperty<V> }
 
-procedure TMap<V>.Add(const Key: String; const Value: V);
+procedure TDynamicProperty<V>.Add(const Key: String; const Value: V);
 begin
   inherited Add(TPair<String, V>.Create(Key, Value));
 end;
 
-function TMap<V>.ContainsKey(const Key: String): Boolean;
+function TDynamicProperty<V>.ContainsKey(const Key: String): Boolean;
 begin
   Result := IndexOf(Key) > -1;
 end;
 
-function TMap<V>.GetMapItem(const Key: String): V;
+function TDynamicProperty<V>.GetDynamicPropertyItem(const Key: String): V;
 begin
   var ItemIndex := IndexOf(Key);
 
@@ -704,7 +704,7 @@ begin
     Result := Default(V);
 end;
 
-function TMap<V>.GetValues: TArray<V>;
+function TDynamicProperty<V>.GetValues: TArray<V>;
 begin
   Result := nil;
 
@@ -712,7 +712,7 @@ begin
     Result := Result + [Item.Value];
 end;
 
-function TMap<V>.IndexOf(const Key: String): NativeInt;
+function TDynamicProperty<V>.IndexOf(const Key: String): NativeInt;
 begin
   for var A := 0 to Pred(Count) do
     if Items[A].Key = Key then
@@ -721,7 +721,7 @@ begin
   Result := -1;
 end;
 
-procedure TMap<V>.SetMapItem(const Key: String; const Value: V);
+procedure TDynamicProperty<V>.SetDynamicPropertyItem(const Key: String; const Value: V);
 begin
   var ItemIndex := IndexOf(Key);
 
