@@ -49,7 +49,7 @@ begin
   ClassDefinition.Name := ClassName;
   Result := ClassDefinition;
 
-  for var Prop in Schema.properties do
+  for var Prop in Schema.properties.schema do
   begin
     var NewProperty := TPropertyDefinition.Create;
     NewProperty.Optional := True;
@@ -100,7 +100,7 @@ procedure TOpenAPI20Import.GenerateUnitFileDefinition(const UnitDefinition: TUni
 begin
   FOpenAPIDefinition := LoadOpenAPIDefinition(UnitFileConfiguration);
 
-  for var Definition in FOpenAPIDefinition.definitions do
+  for var Definition in FOpenAPIDefinition.definitions.schema do
   begin
     var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
 
@@ -116,16 +116,16 @@ end;
 
 function TOpenAPI20Import.GetSchemaReference(const Schema: Schema): Schema;
 begin
-  var List: definitions := nil;
+  var List: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Schema> := nil;
   Result := nil;
 
   for var ReferenceName in Schema.ref.Split(['/']) do
     if ReferenceName = '#' then
       Result := nil
     else if (ReferenceName = 'definitions') or (ReferenceName = 'defs') then
-      List := FOpenAPIDefinition.definitions
+      List := FOpenAPIDefinition.definitions.schema
     else if ReferenceName = 'properties' then
-      List := Result.properties
+      List := Result.properties.schema
     else
       Result := List[ReferenceName];
 
