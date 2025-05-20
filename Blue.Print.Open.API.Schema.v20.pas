@@ -1547,7 +1547,7 @@ type
     property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
-  [Flat]
+  [Flat('in')]
   NonBodyParameter = class
   private
     FHeaderParameterSubSchema: Blue.Print.Open.API.Schema.v20.HeaderParameterSubSchema;
@@ -1577,7 +1577,7 @@ type
     property pathParameterSubSchema: Blue.Print.Open.API.Schema.v20.PathParameterSubSchema read GetPathParameterSubSchema write FPathParameterSubSchema stored GetPathParameterSubSchemaStored;
   end;
 
-  [Flat]
+  [Flat('in')]
   Parameter = class
   private
     FBodyParameter: Blue.Print.Open.API.Schema.v20.BodyParameter;

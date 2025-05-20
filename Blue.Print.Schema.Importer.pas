@@ -51,10 +51,12 @@ type
     FInheritance: String;
     FChangeType: String;
     FParentAttribute: String;
+    FFlatEnumerator: String;
   public
     property Name: String read FName write FName;
     property Attribute: String read FAttribute write FAttribute;
     property ChangeType: String read FChangeType write FChangeType;
+    property FlatEnumerator: String read FFlatEnumerator write FFlatEnumerator;
     property Inheritance: String read FInheritance write FInheritance;
     property ModuleName: String read FModuleName write FModuleName;
     property ParentAttribute: String read FParentAttribute write FParentAttribute;
@@ -210,7 +212,8 @@ type
     function AddProperty(const Name: String): TPropertyDefinition;
 
     procedure AddAtribute(const Value: String);
-    procedure AddFlatAttribute;
+    procedure AddFlatAttribute; overload;
+    procedure AddFlatAttribute(const EnumeratorPropertyName: String); overload;
     procedure AddNamespaceAttribute(const Namespace: String);
 
     property Informations: TImplementationInformations read FInformations write FInformations;
@@ -1846,7 +1849,17 @@ end;
 
 procedure TClassDefinition.AddFlatAttribute;
 begin
-  AddAtribute('Flat');
+  AddFlatAttribute(EmptyStr);
+end;
+
+procedure TClassDefinition.AddFlatAttribute(const EnumeratorPropertyName: String);
+begin
+  var Parameter := EmptyStr;
+
+  if not EnumeratorPropertyName.IsEmpty then
+    Parameter := Format('(''%s'')', [EnumeratorPropertyName]);
+
+  AddAtribute(Format('Flat%s', [Parameter]));
 end;
 
 procedure TClassDefinition.AddNamespaceAttribute(const Namespace: String);
@@ -2174,12 +2187,22 @@ begin
 end;
 
 function TJSONSchemaImport.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const Schema: TSchema; const ClassTypeName: String): TClassDefinition;
+
+  function GetFlatAttributeParameter: String;
+  begin
+    Result := EmptyStr;
+
+    for var TypeConfiguration in Configuration.TypeDefinition do
+      if not TypeConfiguration.FlatEnumerator.IsEmpty and (TypeConfiguration.Name = ClassTypeName) then
+        Exit(TypeConfiguration.FlatEnumerator);
+  end;
+
 begin
   var ClassDefinition := CreateClassDefinition(ParentModule, ClassTypeName);
   Result := ClassDefinition;
 
   if IsFlatSchema(Schema) then
-    ClassDefinition.AddFlatAttribute;
+    ClassDefinition.AddFlatAttribute(GetFlatAttributeParameter);
 
   GenerateProperties(ClassDefinition, Schema);
 end;

@@ -1,6 +1,16 @@
 {
    "OutputFolder": ".\\",
    "SchemaFolder": ".\\Schemas",
+   "TypeDefinition": [
+      {
+         "Name": "nonBodyParameter",
+         "FlatEnumerator": "in"
+      },
+      {
+         "Name": "parameter",
+         "FlatEnumerator": "in"
+      }
+   ],
    "UnitConfiguration": [
       {
          "Name": "Blue.Print.Open.API.Schema.v20",
@@ -12,7 +22,7 @@
             {
                "Reference": "http://swagger.io/v2/schema.json#",
                "UnitClassName": "TOpenAPIDefinition"
-            }            
+            }
          ]
       }
    ]
