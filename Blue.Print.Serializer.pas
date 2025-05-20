@@ -580,7 +580,29 @@ end;
 
 function TBluePrintJsonSerializer.FindPropertyByType(const RttiType: TRttiType; const JSONValue: TJSONValue; const GetPropertyType: TFunc<TRttiProperty, TRttiType>): TRttiProperty;
 
-  function LocateProperties(const CompareFunction: TFunc<TRttiType, Boolean>): TArray<TRttiProperty>;
+  function FindInProperties(const Properties: TArray<TRttiProperty>; const FilterProperties: TFunc<TRttiType, Boolean>): TRttiProperty;
+  var
+    &Property: TRttiProperty;
+
+  begin
+    case Length(Properties) of
+      0: Result := nil;
+      1: Result := Properties[0];
+      else
+      begin
+        Result := nil;
+
+        for &Property in Properties do
+          if FilterProperties(GetPropertyType(&Property)) then
+            if Assigned(Result) then
+              raise EJSONTypeCompatibleWithMoreThanOneProperty.Create('More than one property found for this JSON type!')
+            else
+              Result := &Property;
+      end;
+    end;
+  end;
+
+  function FindProperties(const Types: TTypeKinds): TArray<TRttiProperty>;
   var
     &Property: TRttiProperty;
     PropertyType: TRttiType;
@@ -592,46 +614,18 @@ function TBluePrintJsonSerializer.FindPropertyByType(const RttiType: TRttiType; 
     begin
       PropertyType := GetPropertyType(&Property);
 
-      if Assigned(PropertyType) and CompareFunction(PropertyType) then
+      if Assigned(PropertyType) and (PropertyType.TypeKind in Types) then
         Result := Result + [&Property];
     end;
   end;
 
-  function FindInProperties(const Properties: TArray<TRttiProperty>; const FilterProperties: TFunc<TRttiType, Boolean>): TRttiProperty;
-  var
-    &Property: TRttiProperty;
-
-  begin
-    if Length(Properties) = 0 then
-      Result := nil
-    else if Length(Properties) = 1 then
-      Result := Properties[0]
-    else
-    begin
-      for &Property in Properties do
-        if FilterProperties(GetPropertyType(&Property)) then
-          Exit(&Property);
-
-      raise EJSONTypeCompatibleWithMoreThanOneProperty.Create('More than one property found for this JSON type!')
-    end;
-  end;
-
-  function LocateProperty(const CompareFunction: TFunc<TRttiType, Boolean>): TRttiProperty;
-  begin
-    Result := FindInProperties(LocateProperties(CompareFunction),
-      function (Properties: TRttiType): Boolean
-      begin
-        Result := False;
-      end);
-  end;
-
   function FindPropety(const Types: TTypeKinds): TRttiProperty;
   begin
-    Result := LocateProperty(
+    Result := FindInProperties(FindProperties(Types),
       function (PropertyType: TRttiType): Boolean
       begin
-        Result := PropertyType.TypeKind in Types;
-      end);
+        Result := True;
+      end)
   end;
 
   function GetStringProperty: TRttiProperty;
@@ -656,11 +650,7 @@ function TBluePrintJsonSerializer.FindPropertyByType(const RttiType: TRttiType; 
 
   function GetObjectProperty: TRttiProperty;
   begin
-    Result := FindInProperties(LocateProperties(
-      function (PropertyType: TRttiType): Boolean
-      begin
-        Result := PropertyType.TypeKind = tkClass;
-      end),
+    Result := FindInProperties(FindProperties([tkClass]),
       function (PropertyType: TRttiType): Boolean
       var
         Flat: FlatAttribute;
@@ -683,11 +673,11 @@ function TBluePrintJsonSerializer.FindPropertyByType(const RttiType: TRttiType; 
 
   function GetBooleanProperty: TRttiProperty;
   begin
-    Result := LocateProperty(
+    Result := FindInProperties(FindProperties([tkEnumeration]),
       function (PropertyType: TRttiType): Boolean
       begin
         Result := PropertyType.Handle = TypeInfo(Boolean);
-      end);
+      end)
   end;
 
   function IsBooleanValue: Boolean;
