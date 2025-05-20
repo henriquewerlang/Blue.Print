@@ -2247,6 +2247,11 @@ function TJSONSchemaImport.GenerateTypeDefinition(const Module: TTypeModuleDefin
     Result := TTypeEnumeration.Create(Module);
     Result.Name := TypeName;
 
+    Module.Enumerations.Add(Result);
+
+    if not Module.IsUnitDefinition then
+      Result.Name := FormatName(Result.Name);
+
     for var EnumeratorValue in Schema.&Object.enum do
       Result.Values.Add(EnumeratorValue.ToString);
   end;
@@ -2322,6 +2327,8 @@ begin
       if not Assigned(Result) then
         Result := Module.AddDelayedType(ReferenceName);
     end
+    else if Schema.&Object.IsEnumStored then
+      Result := CreateEnumerator
     else if Schema.&Object.IsTypeStored then
       if Schema.&Object.&type.IsSimpleTypesStored then
         Result := GenerateFromSimpleType(Module, Schema.&Object.&type.simpleTypes, TypeName)
@@ -2339,15 +2346,10 @@ begin
           DefineProperty(ClassDefinition, Schema, PropertyName, GenerateFromSimpleType(ClassDefinition, SimpleType, PropertyName))
         end;
       end
+    else if CanGenerateClass(Schema) then
+      Result := GenerateClassDefinition(Module, Schema, TypeName)
     else
-    begin
-      if Assigned(Schema.&Object.enum) then
-        Result := CreateEnumerator
-      else if CanGenerateClass(Schema) then
-        Result := GenerateClassDefinition(Module, Schema, TypeName)
-      else
-        Result := GetAnyTypeDefinition;
-    end;
+      Result := GetAnyTypeDefinition;
 end;
 
 procedure TJSONSchemaImport.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
@@ -2365,9 +2367,7 @@ begin
   begin
     var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
 
-    if TypeDefinition.IsEnumeration and not BuildInType.ContainsKey(TypeDefinition.Name) then
-      UnitDefinition.Enumerations.Add(TypeDefinition.AsTypeEnumeration)
-    else if not TypeDefinition.IsClassDefinition then
+    if TypeDefinition.Name <> Definition.Key then
       UnitDefinition.AddTypeAlias(CreateTypeAlias(UnitDefinition, Definition.Key, TypeDefinition));
   end;
 end;
