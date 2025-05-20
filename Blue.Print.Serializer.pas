@@ -663,10 +663,21 @@ function TBluePrintJsonSerializer.FindPropertyByType(const RttiType: TRttiType; 
       end),
       function (PropertyType: TRttiType): Boolean
       var
+        Flat: FlatAttribute;
         JSONObject: TJSONObject absolute JSONValue;
 
       begin
-        Result := (JSONValue is TJSONObject) and (JSONObject.Count > 0) and Assigned(FindPropertyByName(PropertyType, JSONObject.Pairs[0].JsonString.Value));
+        Result := JSONObject.Count > 0;
+
+        if Result then
+        begin
+          Flat := RttiType.GetAttribute<FlatAttribute>;
+
+          if Assigned(Flat) and not Flat.EnumeratorPropertyName.IsEmpty then
+            Result := (PropertyType.GetProperty(Flat.EnumeratorPropertyName).PropertyType as TRttiEnumerationType).GetNames[0] = JSONObject.Get(Flat.EnumeratorPropertyName).JsonValue.Value
+          else
+            Result := Assigned(FindPropertyByName(PropertyType, JSONObject.Pairs[0].JsonString.Value));
+        end;
       end);
   end;
 

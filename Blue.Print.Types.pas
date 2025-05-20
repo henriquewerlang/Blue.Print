@@ -115,6 +115,13 @@ type
   end;
 
   FlatAttribute = class(TCustomAttribute)
+  private
+    FEnumeratorPropertyName: String;
+  public
+    constructor Create; overload;
+    constructor Create(const EnumeratorPropertyName: String); overload;
+
+    property EnumeratorPropertyName: String read FEnumeratorPropertyName write FEnumeratorPropertyName;
   end;
 
   XMLAttributeAttribute = class(TCustomAttribute)
@@ -729,6 +736,20 @@ begin
     Items[ItemIndex] := TPair<String, V>.Create(Key, Value)
   else
     Add(Key, Value);
+end;
+
+{ FlatAttribute }
+
+constructor FlatAttribute.Create(const EnumeratorPropertyName: String);
+begin
+  Create;
+
+  FEnumeratorPropertyName := EnumeratorPropertyName;
+end;
+
+constructor FlatAttribute.Create;
+begin
+  inherited;
 end;
 
 end.

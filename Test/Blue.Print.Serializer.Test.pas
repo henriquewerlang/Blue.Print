@@ -152,6 +152,8 @@ type
     procedure WhenDeserializeADynamicPropertyObjectWithMoreThanOnePropertiesWithObjectCantRaiseErrorOfDuplicateProperty;
     [Test]
     procedure WhenDeserializeADynamicPropertyObjectWithMoreThanOnePropertiesWithObjectThePropertySelectedMustBeDoneByPropertiesNames;
+    [Test]
+    procedure WhenDeserializeAClassWithFlatEnumeratorPropertyMustUseThisInformationToLoadTheJSONValueInTheCorrectObject;
   end;
 
   [TestFixture]
@@ -244,6 +246,10 @@ type
   TMyEnum = (MyValue, MyValue2);
   [EnumValue('1, 2, abc')]
   TMyEnumWithAttribute = (MyValue, MyValue2, MyValue3);
+
+  TSeparatorEnum1 = (Value1);
+  TSeparatorEnum2 = (Value2);
+  TSeparatorEnum3 = (Value3);
 
   TMyObject = class
   private
@@ -628,6 +634,45 @@ type
     property MyObject: TMyObject read FMyObject write FMyObject;
   end;
 
+  TMySeparatorClass1 = class
+  private
+    FSeparator: TSeparatorEnum1;
+    FValue: String;
+  published
+    property Separator: TSeparatorEnum1 read FSeparator write FSeparator;
+    property Value: String read FValue write FValue;
+  end;
+
+  TMySeparatorClass2 = class
+  private
+    FSeparator: TSeparatorEnum2;
+    FValue: String;
+  published
+    property Separator: TSeparatorEnum2 read FSeparator write FSeparator;
+    property Value: String read FValue write FValue;
+  end;
+
+  TMySeparatorClass3 = class
+  private
+    FSeparator: TSeparatorEnum3;
+    FValue: String;
+  published
+    property Separator: TSeparatorEnum3 read FSeparator write FSeparator;
+    property Value: String read FValue write FValue;
+  end;
+
+  [Flat('Separator')]
+  TMyGroupingClass = class
+  private
+    FSeparator1: TMySeparatorClass1;
+    FSeparator2: TMySeparatorClass2;
+    FSeparator3: TMySeparatorClass3;
+  published
+    property Separator1: TMySeparatorClass1 read FSeparator1 write FSeparator1;
+    property Separator2: TMySeparatorClass2 read FSeparator2 write FSeparator2;
+    property Separator3: TMySeparatorClass3 read FSeparator3 write FSeparator3;
+  end;
+
   TMyClassWithDynamicPropertyWithMoreThanOneObject = class
   private
     FMyDateTimeDynamic: TDynamicProperty<TMyDateAndTimeClass>;
@@ -969,6 +1014,19 @@ begin
   Assert.AreEqual(0, Value.MyProtected);
   Assert.AreEqual(0, Value.MyPublic);
   Assert.AreEqual(555, Value.MyPublished);
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithFlatEnumeratorPropertyMustUseThisInformationToLoadTheJSONValueInTheCorrectObject;
+begin
+  var Value := FSerializer.Deserialize('{"Separator":"Value2","Value":"TheValue"}', TypeInfo(TMyGroupingClass)).AsType<TMyGroupingClass>;
+
+  Assert.IsNil(Value.Separator1);
+  Assert.IsNotNil(Value.Separator2);
+  Assert.IsNil(Value.Separator3);
+
+  Value.Separator2.Free;
 
   Value.Free;
 end;
