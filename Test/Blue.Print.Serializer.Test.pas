@@ -142,6 +142,8 @@ type
     procedure WhenAClassAsTheFlatAttributeMustLoadOnlyPublishedProperties;
     [Test]
     procedure WhenDeserializeAFlatObjectWithFlatObjectPropertiesMustLoadTheObjectPathUntilTheObjectToBeLoaded;
+    [Test]
+    procedure WhenAFlatClassHasFlatPropertiesMustLoadTheCorrectValueAsExpected;
   end;
 
   [TestFixture]
@@ -641,6 +643,14 @@ type
   end;
 
   [Flat]
+  TFlatFirstLevel = class
+  private
+    FMyObject: TFlatSecondLevel;
+  published
+    property MyObject: TFlatSecondLevel read FMyObject write FMyObject;
+  end;
+
+  [Flat]
   TPublishedFlatClass = class
   private
     FMyProp1: Integer;
@@ -655,14 +665,6 @@ type
     property MyProp3: Integer read FMyProp3 write FMyProp3;
   published
     property MyProp4: Integer read FMyProp4 write FMyProp4;
-  end;
-
-  [Flat]
-  TFlatFirstLevel = class
-  private
-    FMyObject: TFlatSecondLevel;
-  published
-    property MyObject: TFlatSecondLevel read FMyObject write FMyObject;
   end;
 
   ISOAPService = interface(IInvokable)
@@ -853,6 +855,21 @@ begin
 
       Value.Free;
     end);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenAFlatClassHasFlatPropertiesMustLoadTheCorrectValueAsExpected;
+begin
+  var Value := FSerializer.Deserialize('{"Separator":"Value2"}', TypeInfo(TFlatFirstLevel)).AsType<TFlatFirstLevel>;
+
+  Assert.IsNotNil(Value.MyObject.Another.Separator2);
+
+  Value.MyObject.Another.Separator2.Free;
+
+  Value.MyObject.Another.Free;
+
+  Value.MyObject.Free;
+
+  Value.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenAPropertyHasTheFieldNameAttributeMustDeserializeTheValueAsExpected;

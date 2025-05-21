@@ -730,15 +730,12 @@ var
     end;
 
   begin
-    Result := False;
-
     for FlatProperty in GetPublishedProperties(RttiType) do
       if not FlatProperty.PropertyType.HasAttribute<FlatAttribute> then
       begin
         FlatInfo := RttiType.GetAttribute<FlatAttribute>;
-        Result := (FlatProperty.PropertyType.TypeKind in JSONType) and (FlatInfo.EnumeratorPropertyName.IsEmpty or (GetJSONEnumeratorValue = GetPropertyEnumeratorValue));
 
-        if Result then
+        if (FlatProperty.PropertyType.TypeKind in JSONType) and (FlatInfo.EnumeratorPropertyName.IsEmpty or (GetJSONEnumeratorValue = GetPropertyEnumeratorValue)) then
           if PropertyPath.IsEmpty then
             PropertyPath.Add(FlatProperty)
           else
@@ -748,8 +745,10 @@ var
       begin
         PropertyPath.Insert(0, FlatProperty);
 
-        Exit(True);
+        Break;
       end;
+
+    Result := not PropertyPath.IsEmpty;
   end;
 
   function IsBooleanValue: Boolean;
