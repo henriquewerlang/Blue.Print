@@ -144,6 +144,8 @@ type
     procedure WhenDeserializeAFlatObjectWithFlatObjectPropertiesMustLoadTheObjectPathUntilTheObjectToBeLoaded;
     [Test]
     procedure WhenAFlatClassHasFlatPropertiesMustLoadTheCorrectValueAsExpected;
+    [Test]
+    procedure WhenANestedFlatClassDontHaveTheEnumerationPropertyLoadedMustDefineThePropertyToLoadByThePropertyName;
   end;
 
   [TestFixture]
@@ -870,6 +872,23 @@ begin
   Value.MyObject.Free;
 
   Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenANestedFlatClassDontHaveTheEnumerationPropertyLoadedMustDefineThePropertyToLoadByThePropertyName;
+begin
+  Assert.WillNotRaise(
+    procedure
+    begin
+      var Value := FSerializer.Deserialize('{"MyProp1":"Value"}', TypeInfo(TFlatFirstLevel)).AsType<TFlatFirstLevel>;
+
+      Value.MyObject.MyObject.MyObject.Free;
+
+      Value.MyObject.MyObject.Free;
+
+      Value.MyObject.Free;
+
+      Value.Free;
+    end);
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenAPropertyHasTheFieldNameAttributeMustDeserializeTheValueAsExpected;

@@ -708,20 +708,24 @@ var
 
   function LoadPropertyPath(const RttiType: TRttiType): Boolean;
   var
-    FlatInfo: FlatAttribute;
     FlatProperty: TRttiProperty;
 
-    function GetPropertyEnumeratorValue: String;
+    function GetJSONObject: TJSONObject;
     begin
-      Result := (FlatProperty.PropertyType.GetProperty(FlatInfo.EnumeratorPropertyName).PropertyType as TRttiEnumerationType).GetNames[0];
+      Result := (JSONValue as TJSONObject);
     end;
 
-    function GetJSONEnumeratorValue: String;
+    function GetPropertyEnumeratorValue(const PropertyName: String): String;
+    begin
+      Result := (FlatProperty.PropertyType.GetProperty(PropertyName).PropertyType as TRttiEnumerationType).GetNames[0];
+    end;
+
+    function GetJSONEnumeratorValue(const FieldName: String): String;
     var
       JSONPair: JSONKeyType;
 
     begin
-      JSONPair := (JSONValue as TJSONObject).Get(FlatInfo.EnumeratorPropertyName);
+      JSONPair := GetJSONObject.Get(FieldName);
 
       if Assigned(JSONPair) then
         Result := JSONPair.JsonValue.Value
@@ -729,13 +733,29 @@ var
         Result := EmptyStr;
     end;
 
+    function CheckProperty: Boolean;
+    var
+      FlatInfo: FlatAttribute;
+
+    begin
+      Result := not FlatProperty.PropertyType.IsInstance;
+
+      if not Result then
+      begin
+        FlatInfo := RttiType.GetAttribute<FlatAttribute>;
+
+        if FlatInfo.EnumeratorPropertyName.IsEmpty then
+          Result := (GetJSONObject.Count = 0) or Assigned(FindPropertyByName(FlatProperty.PropertyType, GetJSONObject.Pairs[0].JsonString.Value))
+        else
+          Result := GetJSONEnumeratorValue(FlatInfo.EnumeratorPropertyName) = GetPropertyEnumeratorValue(FlatInfo.EnumeratorPropertyName);
+      end;
+    end;
+
   begin
     for FlatProperty in GetPublishedProperties(RttiType) do
       if not FlatProperty.PropertyType.HasAttribute<FlatAttribute> then
       begin
-        FlatInfo := RttiType.GetAttribute<FlatAttribute>;
-
-        if (FlatProperty.PropertyType.TypeKind in JSONType) and (FlatInfo.EnumeratorPropertyName.IsEmpty or (GetJSONEnumeratorValue = GetPropertyEnumeratorValue)) then
+        if (FlatProperty.PropertyType.TypeKind in JSONType) and CheckProperty then
           if PropertyPath.IsEmpty then
             PropertyPath.Add(FlatProperty)
           else
