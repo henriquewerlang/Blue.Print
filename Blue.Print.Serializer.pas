@@ -41,7 +41,7 @@ type
     function GetEnumerationNames(const TypeInfo: PTypeInfo): TArray<String>;
     function GetEnumerationValue(const TypeInfo: PTypeInfo; const Value: String): TValue;
     function GetFieldName(const RttiObject: TRttiObject; const DefaultValue: String): String;
-    function GetProperties(const RttiType: TRttiType): TArray<TRttiProperty>;
+    function GetPublishedProperties(const RttiType: TRttiType): TArray<TRttiProperty>;
   public
     constructor Create;
 
@@ -256,7 +256,7 @@ begin
     Result := DefaultValue;
 end;
 
-function TBluePrintSerializer.GetProperties(const RttiType: TRttiType): TArray<TRttiProperty>;
+function TBluePrintSerializer.GetPublishedProperties(const RttiType: TRttiType): TArray<TRttiProperty>;
 var
   &Property: TRttiProperty;
 
@@ -365,7 +365,7 @@ var
   &Property: TRttiProperty;
 
 begin
-  for &Property in GetProperties(RttiType) do
+  for &Property in GetPublishedProperties(RttiType) do
     if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).{$IFDEF DCC}PropInfo{$ELSE}PropertyTypeInfo{$ENDIF}) then
       JSONObject.AddPair(GetFieldName(&Property), SerializeType(&Property.PropertyType, &Property.GetValue(Instance)));
 end;
@@ -732,7 +732,7 @@ var
   begin
     Result := False;
 
-    for FlatProperty in RttiType.GetProperties do
+    for FlatProperty in GetPublishedProperties(RttiType) do
       if not FlatProperty.PropertyType.HasAttribute<FlatAttribute> then
       begin
         FlatInfo := RttiType.GetAttribute<FlatAttribute>;
@@ -1122,7 +1122,7 @@ end;
 procedure TBluePrintXMLSerializer.SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode; const Namespace: String);
 begin
 {$IFDEF DCC}
-  for var &Property in GetProperties(RttiType) do
+  for var &Property in GetPublishedProperties(RttiType) do
     if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).PropInfo) and not LoadAttributeValue(&Property, Instance, Node) then
     begin
       var PropertyValue := &Property.GetValue(Instance);

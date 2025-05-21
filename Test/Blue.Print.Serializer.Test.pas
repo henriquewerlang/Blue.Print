@@ -135,9 +135,13 @@ type
     [Test]
     procedure WhenDeserializeAFlatObjectWithEnumeratorAttributeCantRaiseAnyErrorIfTheJSONDontHaveTheFieldEnumeratorValue;
     [Test]
-    procedure WhenDeserializeAFlatObjectWithFlatPropertiesMustLoadAllPropertiesPathUntilTheRealObjectToBeLoaded;
-    [Test]
     procedure WhenTheDynamicPropertyHasThePatternPropertyAttributeAndTheFieldPassInTheRegexValidationMustLoadTheValueInThisProperty;
+    [Test]
+    procedure WhenAClassAsTheFlatAttributeMustLoadOnlyPublishedPropertiesAndCantRaiseAnyError;
+    [Test]
+    procedure WhenAClassAsTheFlatAttributeMustLoadOnlyPublishedProperties;
+    [Test]
+    procedure WhenDeserializeAFlatObjectWithFlatObjectPropertiesMustLoadTheObjectPathUntilTheObjectToBeLoaded;
   end;
 
   [TestFixture]
@@ -637,6 +641,23 @@ type
   end;
 
   [Flat]
+  TPublishedFlatClass = class
+  private
+    FMyProp1: Integer;
+    FMyProp2: Integer;
+    FMyProp3: Integer;
+    FMyProp4: Integer;
+  private
+    property MyProp1: Integer read FMyProp1 write FMyProp1;
+  protected
+    property MyProp2: Integer read FMyProp2 write FMyProp2;
+  public
+    property MyProp3: Integer read FMyProp3 write FMyProp3;
+  published
+    property MyProp4: Integer read FMyProp4 write FMyProp4;
+  end;
+
+  [Flat]
   TFlatFirstLevel = class
   private
     FMyObject: TFlatSecondLevel;
@@ -809,6 +830,29 @@ end;
 procedure TBluePrintJsonSerializerTest.Setup;
 begin
   FSerializer := TBluePrintJsonSerializer.Create;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenAClassAsTheFlatAttributeMustLoadOnlyPublishedProperties;
+begin
+  var Value := FSerializer.Deserialize('1234', TypeInfo(TPublishedFlatClass)).AsType<TPublishedFlatClass>;
+
+  Assert.AreEqual(0, Value.MyProp1);
+  Assert.AreEqual(0, Value.MyProp2);
+  Assert.AreEqual(0, Value.MyProp3);
+  Assert.AreEqual(1234, Value.MyProp4);
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenAClassAsTheFlatAttributeMustLoadOnlyPublishedPropertiesAndCantRaiseAnyError;
+begin
+  Assert.WillNotRaise(
+    procedure
+    begin
+      var Value := FSerializer.Deserialize('1234', TypeInfo(TPublishedFlatClass)).AsType<TPublishedFlatClass>;
+
+      Value.Free;
+    end);
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenAPropertyHasTheFieldNameAttributeMustDeserializeTheValueAsExpected;
@@ -1005,7 +1049,7 @@ begin
     end);
 end;
 
-procedure TBluePrintJsonSerializerTest.WhenDeserializeAFlatObjectWithFlatPropertiesMustLoadAllPropertiesPathUntilTheRealObjectToBeLoaded;
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAFlatObjectWithFlatObjectPropertiesMustLoadTheObjectPathUntilTheObjectToBeLoaded;
 begin
   var Value := FSerializer.Deserialize('{"Separator":"Value3"}', TypeInfo(TFlatFirstLevel)).AsType<TFlatFirstLevel>;
 
