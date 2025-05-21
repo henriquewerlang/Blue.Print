@@ -52,6 +52,8 @@ type
   end;
 
   EJSONTypeCompatibleWithMoreThanOneProperty = class(Exception)
+  public
+    constructor Create;
   end;
 
   TRequestMethodAttribute = class(TCustomAttribute)
@@ -122,6 +124,15 @@ type
     constructor Create(const EnumeratorPropertyName: String); overload;
 
     property EnumeratorPropertyName: String read FEnumeratorPropertyName write FEnumeratorPropertyName;
+  end;
+
+  PatternPropertyAttribute = class(TCustomAttribute)
+  private
+    FRegex: String;
+  public
+    constructor Create(const Regex: String);
+
+    property Regex: String read FRegex write FRegex;
   end;
 
   XMLAttributeAttribute = class(TCustomAttribute)
@@ -750,6 +761,22 @@ end;
 constructor FlatAttribute.Create;
 begin
   inherited;
+end;
+
+{ EJSONTypeCompatibleWithMoreThanOneProperty }
+
+constructor EJSONTypeCompatibleWithMoreThanOneProperty.Create;
+begin
+  inherited Create('More than one property found for this JSON type!');
+end;
+
+{ PatternPropertyAttribute }
+
+constructor PatternPropertyAttribute.Create(const Regex: String);
+begin
+  inherited Create;
+
+  FRegex := Regex;
 end;
 
 end.
