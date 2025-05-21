@@ -14,14 +14,26 @@ type
   [EnumValue('array, boolean, integer, null, number, object, string')]
   simpleTypes = (&array, boolean, integer, null, number, &object, &string);
   // Forward class declaration
-  TSchema = class;
   NonNegativeIntegerDefault0 = class;
+  TSchema = class;
 
   // Forward type alias
-  any = System.Rtti.TValue;
   schemaArray = TArray<Blue.Print.JSON.Schema.TSchema>;
   nonNegativeInteger = System.Integer;
   stringArray = TArray<System.String>;
+  any = System.Rtti.TValue;
+
+  [Flat]
+  NonNegativeIntegerDefault0 = class
+  private
+    FNonNegativeInteger: nonNegativeInteger;
+
+    function GetNonNegativeIntegerStored: Boolean;
+  public
+    property IsNonNegativeIntegerStored: Boolean read GetNonNegativeIntegerStored;
+  published
+    property nonNegativeInteger: nonNegativeInteger read FNonNegativeInteger write FNonNegativeInteger stored GetNonNegativeIntegerStored;
+  end;
 
   [Flat]
   TSchema = class
@@ -133,6 +145,7 @@ type
       FComment: System.String;
       FTitle: System.String;
       FDescription: System.String;
+      FDefault: any;
       FReadOnly: System.Boolean;
       FWriteOnly: System.Boolean;
       FExamples: TArray<any>;
@@ -159,6 +172,7 @@ type
       FPatternProperties: Blue.Print.JSON.Schema.TSchema.TObject.TPatternProperties;
       FDependencies: Blue.Print.JSON.Schema.TSchema.TObject.TDependencies;
       FPropertyNames: Blue.Print.JSON.Schema.TSchema;
+      FConst: any;
       FEnum: TArray<any>;
       FType: Blue.Print.JSON.Schema.TSchema.TObject.TType;
       FFormat: System.String;
@@ -171,9 +185,11 @@ type
       FAnyOf: schemaArray;
       FOneOf: schemaArray;
       FNot: Blue.Print.JSON.Schema.TSchema;
+      FDefaultIsStored: Boolean;
       FReadOnlyIsStored: Boolean;
       FWriteOnlyIsStored: Boolean;
       FUniqueItemsIsStored: Boolean;
+      FConstIsStored: Boolean;
 
       function GetMinLength: Blue.Print.JSON.Schema.NonNegativeIntegerDefault0;
       function GetAdditionalItems: Blue.Print.JSON.Schema.TSchema;
@@ -233,9 +249,11 @@ type
       function GetAnyOfStored: Boolean;
       function GetOneOfStored: Boolean;
       function GetNotStored: Boolean;
+      procedure SetDefault(const Value: any);
       procedure SetReadOnly(const Value: System.Boolean);
       procedure SetWriteOnly(const Value: System.Boolean);
       procedure SetUniqueItems(const Value: System.Boolean);
+      procedure SetConst(const Value: any);
     public
       destructor Destroy; override;
 
@@ -249,6 +267,7 @@ type
       property IsCommentStored: Boolean read GetCommentStored;
       property IsTitleStored: Boolean read GetTitleStored;
       property IsDescriptionStored: Boolean read GetDescriptionStored;
+      property IsDefaultStored: Boolean read FDefaultIsStored;
       property IsReadOnlyStored: Boolean read FReadOnlyIsStored;
       property IsWriteOnlyStored: Boolean read FWriteOnlyIsStored;
       property IsExamplesStored: Boolean read GetExamplesStored;
@@ -275,6 +294,7 @@ type
       property IsPatternPropertiesStored: Boolean read GetPatternPropertiesStored;
       property IsDependenciesStored: Boolean read GetDependenciesStored;
       property IsPropertyNamesStored: Boolean read GetPropertyNamesStored;
+      property IsConstStored: Boolean read FConstIsStored;
       property IsEnumStored: Boolean read GetEnumStored;
       property IsTypeStored: Boolean read GetTypeStored;
       property IsFormatStored: Boolean read GetFormatStored;
@@ -298,6 +318,7 @@ type
       property comment: System.String read FComment write FComment stored GetCommentStored;
       property title: System.String read FTitle write FTitle stored GetTitleStored;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+      property default: any read FDefault write SetDefault stored FDefaultIsStored;
       property readOnly: System.Boolean read FReadOnly write SetReadOnly stored FReadOnlyIsStored;
       property writeOnly: System.Boolean read FWriteOnly write SetWriteOnly stored FWriteOnlyIsStored;
       property examples: TArray<any> read FExamples write FExamples stored GetExamplesStored;
@@ -324,6 +345,8 @@ type
       property patternProperties: Blue.Print.JSON.Schema.TSchema.TObject.TPatternProperties read GetPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
       property dependencies: Blue.Print.JSON.Schema.TSchema.TObject.TDependencies read GetDependencies write FDependencies stored GetDependenciesStored;
       property propertyNames: Blue.Print.JSON.Schema.TSchema read GetPropertyNames write FPropertyNames stored GetPropertyNamesStored;
+      [FieldName('const')]
+      property &const: any read FConst write SetConst stored FConstIsStored;
       property enum: TArray<any> read FEnum write FEnum stored GetEnumStored;
       [FieldName('type')]
       property &type: Blue.Print.JSON.Schema.TSchema.TObject.TType read GetType write FType stored GetTypeStored;
@@ -361,21 +384,16 @@ type
     property Boolean: System.Boolean read FBoolean write SetBoolean stored FBooleanIsStored;
   end;
 
-  [Flat]
-  NonNegativeIntegerDefault0 = class
-  private
-    FNonNegativeInteger: nonNegativeInteger;
-
-    function GetNonNegativeIntegerStored: Boolean;
-  public
-    property IsNonNegativeIntegerStored: Boolean read GetNonNegativeIntegerStored;
-  published
-    property nonNegativeInteger: nonNegativeInteger read FNonNegativeInteger write FNonNegativeInteger stored GetNonNegativeIntegerStored;
-  end;
-
 implementation
 
 uses System.SysUtils;
+
+{ NonNegativeIntegerDefault0 }
+
+function NonNegativeIntegerDefault0.GetNonNegativeIntegerStored: Boolean;
+begin
+  Result := FNonNegativeInteger <> 0;
+end;
 
 { TSchema }
 
@@ -483,6 +501,12 @@ end;
 function TSchema.TObject.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
+end;
+
+procedure TSchema.TObject.SetDefault(const Value: any);
+begin
+  FDefault := Value;
+  FDefaultIsStored := True;
 end;
 
 procedure TSchema.TObject.SetReadOnly(const Value: System.Boolean);
@@ -712,6 +736,12 @@ end;
 function TSchema.TObject.GetPropertyNamesStored: Boolean;
 begin
   Result := Assigned(FPropertyNames);
+end;
+
+procedure TSchema.TObject.SetConst(const Value: any);
+begin
+  FConst := Value;
+  FConstIsStored := True;
 end;
 
 function TSchema.TObject.GetEnumStored: Boolean;
@@ -976,13 +1006,6 @@ end;
 function TSchema.TObject.TType.GetArrayStored: Boolean;
 begin
   Result := Assigned(FArray);
-end;
-
-{ NonNegativeIntegerDefault0 }
-
-function NonNegativeIntegerDefault0.GetNonNegativeIntegerStored: Boolean;
-begin
-  Result := FNonNegativeInteger <> 0;
 end;
 
 end.
