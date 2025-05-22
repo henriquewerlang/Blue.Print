@@ -263,7 +263,7 @@ var
 begin
   Result := nil;
 
-  for &Property in RttiType.AsInstance.GetProperties do
+  for &Property in RttiType.GetProperties do
     if &Property.Visibility = mvPublished then
       Result := Result + [&Property];
 end;
@@ -716,8 +716,16 @@ var
     end;
 
     function GetPropertyEnumeratorValue(const PropertyName: String): String;
+    var
+      &Property: TRttiProperty;
+
     begin
-      Result := (FlatProperty.PropertyType.GetProperty(PropertyName).PropertyType as TRttiEnumerationType).GetNames[0];
+      &Property := FlatProperty.PropertyType.GetProperty(PropertyName);
+
+      if Assigned(&Property) then
+        Result := (&Property.PropertyType as TRttiEnumerationType).GetNames[0]
+      else
+        Result := EmptyStr;
     end;
 
     function GetJSONEnumeratorValue(const FieldName: String): String;
@@ -753,15 +761,14 @@ var
 
   begin
     for FlatProperty in GetPublishedProperties(RttiType) do
-      if not FlatProperty.PropertyType.HasAttribute<FlatAttribute> then
+      if (FlatProperty.PropertyType.TypeKind in JSONType) and CheckProperty then
       begin
-        if (FlatProperty.PropertyType.TypeKind in JSONType) and CheckProperty then
-          if PropertyPath.IsEmpty then
-            PropertyPath.Add(FlatProperty)
-          else
-            raise EJSONTypeCompatibleWithMoreThanOneProperty.Create;
+        if PropertyPath.IsEmpty then
+          PropertyPath.Add(FlatProperty)
+        else
+          raise EJSONTypeCompatibleWithMoreThanOneProperty.Create;
       end
-      else if LoadPropertyPath(FlatProperty.PropertyType) then
+      else if PropertyPath.IsEmpty and FlatProperty.PropertyType.HasAttribute<FlatAttribute> and LoadPropertyPath(FlatProperty.PropertyType) then
       begin
         PropertyPath.Insert(0, FlatProperty);
 

@@ -146,6 +146,8 @@ type
     procedure WhenAFlatClassHasFlatPropertiesMustLoadTheCorrectValueAsExpected;
     [Test]
     procedure WhenANestedFlatClassDontHaveTheEnumerationPropertyLoadedMustDefineThePropertyToLoadByThePropertyName;
+    [Test]
+    procedure WhenFoundTheCorrectPropertyToLoadCantIgnoreItAndLoadAnotherClass;
   end;
 
   [TestFixture]
@@ -589,10 +591,10 @@ type
   TMyClassWithMoreThanOneObjectFlat = class
   private
     FMyObject: TMyObject;
-    FMyDateTime: TMyDateAndTimeClass;
+    FAnother: TClassWithFlatAttributeAndEnumerator;
   published
-    property MyDateTime: TMyDateAndTimeClass read FMyDateTime write FMyDateTime;
     property MyObject: TMyObject read FMyObject write FMyObject;
+    property Another: TClassWithFlatAttributeAndEnumerator read FAnother write FAnother;
   end;
 
   TMySeparatorClass1 = class
@@ -637,11 +639,11 @@ type
   [Flat]
   TFlatSecondLevel = class
   private
-    FMyObject: TMyClassWithMoreThanOneObjectFlat;
+    FMyObject: TMyObject;
     FAnother: TMyGroupingClass;
   published
     property Another: TMyGroupingClass read FAnother write FAnother;
-    property MyObject: TMyClassWithMoreThanOneObjectFlat read FMyObject write FMyObject;
+    property MyObject: TMyObject read FMyObject write FMyObject;
   end;
 
   [Flat]
@@ -880,8 +882,6 @@ begin
     procedure
     begin
       var Value := FSerializer.Deserialize('{"MyProp1":"Value"}', TypeInfo(TFlatFirstLevel)).AsType<TFlatFirstLevel>;
-
-      Value.MyObject.MyObject.MyObject.Free;
 
       Value.MyObject.MyObject.Free;
 
@@ -1185,6 +1185,17 @@ begin
 
       Value.Free;
     end);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenFoundTheCorrectPropertyToLoadCantIgnoreItAndLoadAnotherClass;
+begin
+  var Value := FSerializer.Deserialize('{"MyProp1":"Value"}', TypeInfo(TMyClassWithMoreThanOneObjectFlat)).AsType<TMyClassWithMoreThanOneObjectFlat>;
+
+  Assert.IsNotNil(Value.MyObject);
+
+  Value.MyObject.Free;
+
+  Value.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenSerializeABooleanPropertyMustGenerateTheJSONAsExpected;
