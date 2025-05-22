@@ -14,6 +14,7 @@ type
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: Schema; const TypeName: String): TTypeDefinition;
     function GetSchemaReference(const Schema: Schema): Schema;
     function GetSchemaReferenceName(const Schema: Schema): String;
+    function GetSimpleType(const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems): TTypeDefinition;
     function LoadOpenAPIDefinition(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;
   protected
     procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration); override;
@@ -84,34 +85,98 @@ begin
     else if Schema.IsTypeStored then
       case Schema.&type.simpleTypes of
         simpleTypes.&array: Result := TTypeArrayDefinition.Create(UnitDefinition, GenerateTypeDefinition(Module, Schema.items.schema, TypeName + 'ArrayItem'));
-        simpleTypes.boolean: Result := BooleanType;
-        simpleTypes.null: Result := nil;
-        simpleTypes.integer: Result := IntegerType;
-        simpleTypes.number: Result := DoubleType;
         simpleTypes.&object: Result := GenerateClassDefintion(Module, Schema, TypeName);
-        simpleTypes.&string: Result := StringType;
+        else Result := GetSimpleType(Schema.&type.simpleTypes, nil);
       end
-      else
-        Abort;
+    else
+      Abort;
   end;
 end;
 
 procedure TOpenAPI20Import.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+var
+  Service: TTypeServiceDefinition;
+
+  procedure AddMethod(const Operation: Operation);
+  var
+    Method: TTypeMethodDefinition;
+
+    procedure AddParameter(const Name: String; const ParameterType: TTypeDefinition); overload;
+    begin
+      var Parameter := Method.AddParameter;
+      Parameter.Name := Name;
+      Parameter.ParameterType := ParameterType;
+    end;
+
+    procedure AddParameter(const Name: String; const Schema: Schema); overload;
+    begin
+      AddParameter(Name, GenerateTypeDefinition(UnitDefinition, Schema, Name));
+    end;
+
+  begin
+    Method := TTypeMethodDefinition.Create;
+    Method.Name := Operation.operationId;
+
+    for var Return in Operation.responses.responseValue.Values do
+      if Return.response.IsSchemaStored then
+        Method.Return := GenerateTypeDefinition(UnitDefinition, Return.response.schema, Method.Name + 'Return');
+
+    for var ParameterDefinitionItem in Operation.parameters do
+    begin
+      var ParameterDefinition := ParameterDefinitionItem.parameter;
+
+      if ParameterDefinition.IsBodyParameterStored then
+        AddParameter(ParameterDefinition.bodyParameter.name, ParameterDefinition.bodyParameter.schema)
+      else if ParameterDefinition.IsNonBodyParameterStored then
+      begin
+        var NoBodyParameter := ParameterDefinition.nonBodyParameter;
+
+        if NoBodyParameter.IsHeaderParameterSubSchemaStored then
+          AddParameter(NoBodyParameter.headerParameterSubSchema.name, GetSimpleType(NoBodyParameter.headerParameterSubSchema.&type.simpleTypes, NoBodyParameter.headerParameterSubSchema.items))
+        else if NoBodyParameter.IsQueryParameterSubSchemaStored then
+          AddParameter(NoBodyParameter.queryParameterSubSchema.name, GetSimpleType(NoBodyParameter.queryParameterSubSchema.&type.simpleTypes, NoBodyParameter.queryParameterSubSchema.items))
+        else if NoBodyParameter.IsPathParameterSubSchemaStored then
+          AddParameter(NoBodyParameter.pathParameterSubSchema.name, GetSimpleType(NoBodyParameter.pathParameterSubSchema.&type.simpleTypes, NoBodyParameter.pathParameterSubSchema.items))
+        else if NoBodyParameter.IsFormDataParameterSubSchemaStored then
+          AddParameter(NoBodyParameter.formDataParameterSubSchema.name, GetSimpleType(NoBodyParameter.formDataParameterSubSchema.&type.simpleTypes, NoBodyParameter.formDataParameterSubSchema.items));
+      end;
+    end;
+
+    Service.Methods.Add(Method);
+  end;
+
 begin
   FOpenAPIDefinition := LoadOpenAPIDefinition(UnitFileConfiguration);
+  Service := TTypeServiceDefinition.Create(UnitDefinition);
+  Service.Name := UnitDefinition.UnitConfiguration.ServiceName;
+
+  UnitDefinition.Services.Add(Service);
 
   for var Definition in FOpenAPIDefinition.definitions.schema do
   begin
     var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
 
-    if TypeDefinition.IsEnumeration then
-    begin
-      if not BuildInType.ContainsKey(TypeDefinition.Name) then
-        UnitDefinition.Enumerations.Add(TypeDefinition.AsTypeEnumeration)
-    end
+    if TypeDefinition.IsEnumeration and not BuildInType.ContainsKey(TypeDefinition.Name) then
+      UnitDefinition.Enumerations.Add(TypeDefinition.AsTypeEnumeration)
     else if not TypeDefinition.IsClassDefinition then
       UnitDefinition.AddTypeAlias(CreateTypeAlias(UnitDefinition, Definition.Key, TypeDefinition));
   end;
+
+  for var PathItem in FOpenAPIDefinition.paths.pathItem do
+    if PathItem.Value.IsGetStored then
+      AddMethod(PathItem.Value.get)
+    else if PathItem.Value.IsPostStored then
+      AddMethod(PathItem.Value.post)
+    else if PathItem.Value.IsPutStored then
+      AddMethod(PathItem.Value.put)
+    else if PathItem.Value.IsDeleteStored then
+      AddMethod(PathItem.Value.delete)
+    else if PathItem.Value.IsOptionsStored then
+      AddMethod(PathItem.Value.options)
+    else if PathItem.Value.IsPatchStored then
+      AddMethod(PathItem.Value.patch)
+    else if PathItem.Value.IsHeadStored then
+      AddMethod(PathItem.Value.head);
 end;
 
 function TOpenAPI20Import.GetSchemaReference(const Schema: Schema): Schema;
@@ -138,6 +203,19 @@ begin
   var Values := Schema.ref.Split(['/']);
 
   Result := Values[High(Values)];
+end;
+
+function TOpenAPI20Import.GetSimpleType(const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems): TTypeDefinition;
+begin
+  case SimpleType of
+    simpleTypes.array: Result := nil;
+    simpleTypes.boolean: Result := BooleanType;
+    simpleTypes.null: Result := nil;
+    simpleTypes.integer: Result := IntegerType;
+    simpleTypes.number: Result := DoubleType;
+    simpleTypes.&string: Result := StringType;
+    else Abort;
+  end
 end;
 
 function TOpenAPI20Import.LoadOpenAPIDefinition(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;

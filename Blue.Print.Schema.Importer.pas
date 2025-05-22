@@ -17,6 +17,7 @@ type
   TTypeEnumeration = class;
   TTypeExternal = class;
   TTypeModuleDefinition = class;
+  TTypeServiceDefinition = class;
   TUnitDefinition = class;
   TXSDImporter = class;
 
@@ -36,11 +37,13 @@ type
   private
     FName: String;
     FFiles: TArray<TUnitFileConfiguration>;
+    FServiceName: String;
   public
     destructor Destroy; override;
 
     property Files: TArray<TUnitFileConfiguration> read FFiles write FFiles;
     property Name: String read FName write FName;
+    property ServiceName: String read FServiceName write FServiceName;
   end;
 
   TTypeDefinitionConfiguration = class
@@ -181,6 +184,7 @@ type
     FClasses: TList<TClassDefinition>;
     FDelayedTypes: TDictionary<String, TTypeDelayedDefinition>;
     FEnumerations: TList<TTypeEnumeration>;
+    FServices: TList<TTypeServiceDefinition>;
   public
     constructor Create(const Module: TTypeModuleDefinition);
 
@@ -191,6 +195,7 @@ type
     property Classes: TList<TClassDefinition> read FClasses;
     property DelayedTypes: TDictionary<String, TTypeDelayedDefinition> read FDelayedTypes;
     property Enumerations: TList<TTypeEnumeration> read FEnumerations write FEnumerations;
+    property Services: TList<TTypeServiceDefinition> read FServices write FServices;
   end;
 
   TClassDefinition = class(TTypeModuleDefinition)
@@ -224,6 +229,43 @@ type
     property Properties: TList<TPropertyDefinition> read FProperties write FProperties;
     property TargetNamespace: String read FTargetNamespace write FTargetNamespace;
     property UnitDefinition: TUnitDefinition read GetUnitDefinition;
+  end;
+
+  TTypeParameterDefinition = class
+  private
+    FName: String;
+    FParameterType: TTypeDefinition;
+  public
+    property Name: String read FName write FName;
+    property ParameterType: TTypeDefinition read FParameterType write FParameterType;
+  end;
+
+  TTypeMethodDefinition = class
+  private
+    FName: String;
+    FReturn: TTypeDefinition;
+    FParameters: TList<TTypeParameterDefinition>;
+  public
+    constructor Create;
+
+    destructor Destroy; override;
+
+    function AddParameter: TTypeParameterDefinition;
+
+    property Name: String read FName write FName;
+    property Parameters: TList<TTypeParameterDefinition> read FParameters;
+    property Return: TTypeDefinition read FReturn write FReturn;
+  end;
+
+  TTypeServiceDefinition = class(TTypeDefinition)
+  private
+    FMethods: TList<TTypeMethodDefinition>;
+  public
+    constructor Create(const Module: TTypeModuleDefinition);
+
+    destructor Destroy; override;
+
+    property Methods: TList<TTypeMethodDefinition> read FMethods write FMethods;
   end;
 
   TTypeAlias = class(TTypeDefinition)
@@ -1763,6 +1805,47 @@ var
     end;
   end;
 
+  procedure DeclareMethod(const Method: TTypeMethodDefinition);
+
+    function GetMethodType: String;
+    begin
+      if Assigned(Method.Return) then
+        Result := 'function'
+      else
+        Result := 'procedure';
+    end;
+
+    function GetMethodReturn: String;
+    begin
+      if Assigned(Method.Return) then
+        Result := Format(': %s', [GetTypeName(Method.Return)])
+      else
+        Result := EmptyStr;
+    end;
+
+    function GetParameters: String;
+    begin
+      Result := EmptyStr;
+
+      for var Parameter in Method.Parameters do
+      begin
+        if not Result.IsEmpty then
+          Result := Result + '; ';
+
+        Result := Result + Format('%s: %s', [Parameter.Name, GetTypeName(Parameter.ParameterType)]);
+      end;
+
+      if not Result.IsEmpty then
+        Result := Format('(%s)', [Result]);
+
+      if Assigned(Method.Return) then
+        Result := Result + Format(': %s', [GetTypeName(Method.Return)]);
+    end;
+
+  begin
+    AddLine('    %s %s%s;', [GetMethodType, Method.Name, GetParameters, GetMethodReturn]);
+  end;
+
 begin
   UnitDefinition := TStringList.Create;
 
@@ -1825,6 +1908,19 @@ begin
 
     AddLine;
   end;
+
+  for var Service in Services do
+  begin
+    AddLine('  %s = interface', [Service.Name]);
+
+    for var Method in Service.Methods do
+      DeclareMethod(Method);
+
+    AddLine('  end;');
+  end;
+
+  if not Services.IsEmpty then
+    AddLine;
 
   AddLine('implementation');
 
@@ -2510,6 +2606,7 @@ begin
   FClasses := TObjectList<TClassDefinition>.Create;
   FDelayedTypes := TDictionary<String, TTypeDelayedDefinition>.Create(TIStringComparer.Ordinal);
   FEnumerations := TObjectList<TTypeEnumeration>.Create;
+  FServices := TObjectList<TTypeServiceDefinition>.Create;
 end;
 
 destructor TTypeModuleDefinition.Destroy;
@@ -2519,6 +2616,8 @@ begin
   FDelayedTypes.Free;
 
   FEnumerations.Free;
+
+  FServices.Free;
 
   inherited;
 end;
@@ -2550,6 +2649,45 @@ begin
 
   FName := 'DynamicProperty';
   FValueType := ValueType;
+end;
+
+{ TTypeServiceDefinition }
+
+constructor TTypeServiceDefinition.Create(const Module: TTypeModuleDefinition);
+begin
+  inherited;
+
+  FMethods := TObjectList<TTypeMethodDefinition>.Create;
+end;
+
+destructor TTypeServiceDefinition.Destroy;
+begin
+  FMethods.Free;
+
+  inherited;
+end;
+
+{ TTypeMethodDefinition }
+
+function TTypeMethodDefinition.AddParameter: TTypeParameterDefinition;
+begin
+  Result := TTypeParameterDefinition.Create;
+
+  Parameters.Add(Result);
+end;
+
+constructor TTypeMethodDefinition.Create;
+begin
+  inherited;
+
+  FParameters := TList<TTypeParameterDefinition>.Create;
+end;
+
+destructor TTypeMethodDefinition.Destroy;
+begin
+  FParameters.Free;
+
+  inherited;
 end;
 
 end.
