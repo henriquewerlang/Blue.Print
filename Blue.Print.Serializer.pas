@@ -722,8 +722,8 @@ var
     begin
       &Property := FlatProperty.PropertyType.GetProperty(PropertyName);
 
-      if Assigned(&Property) then
-        Result := (&Property.PropertyType as TRttiEnumerationType).GetNames[0]
+      if Assigned(&Property) and (&Property.PropertyType is TRttiEnumerationType) then
+        Result := TRttiEnumerationType(&Property.PropertyType).GetNames[0]
       else
         Result := EmptyStr;
     end;

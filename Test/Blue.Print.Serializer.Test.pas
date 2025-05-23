@@ -148,6 +148,8 @@ type
     procedure WhenANestedFlatClassDontHaveTheEnumerationPropertyLoadedMustDefineThePropertyToLoadByThePropertyName;
     [Test]
     procedure WhenFoundTheCorrectPropertyToLoadCantIgnoreItAndLoadAnotherClass;
+    [Test]
+    procedure WhenDeserializingAFlatClassWithEnumerationNameLoadedAndThePropertyIsntAnEnumeratorCantRaiseAnyError;
   end;
 
   [TestFixture]
@@ -671,6 +673,14 @@ type
     property MyProp4: Integer read FMyProp4 write FMyProp4;
   end;
 
+  [Flat('MyProp1')]
+  TMyClassWithNotEnumeratorProperty = class
+  private
+    FMyObject: TMyObject;
+  published
+    property MyObject: TMyObject read FMyObject write FMyObject;
+  end;
+
   ISOAPService = interface(IInvokable)
     ['{BBBBC6F3-1730-40F4-A1B1-CC7CA6F08F5D}']
     procedure MyMethod(const MyParam: Integer);
@@ -1174,6 +1184,17 @@ begin
   Assert.AreEqual('abc', Value.Value.AsString);
 
   Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializingAFlatClassWithEnumerationNameLoadedAndThePropertyIsntAnEnumeratorCantRaiseAnyError;
+begin
+  Assert.WillNotRaise(
+    procedure
+    begin
+      var Value := FSerializer.Deserialize('{"MyProp1":"Value"}', TypeInfo(TMyClassWithNotEnumeratorProperty)).AsObject;
+
+      Value.Free;
+    end);
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializingAnObjectAndTheJSONValueIsNotAJSONObjectCanRaiseAnyError;
