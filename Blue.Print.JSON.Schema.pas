@@ -309,6 +309,7 @@ type
       property IsNotStored: Boolean read GetNotStored;
     published
       [FieldName('$id')]
+      property _id: System.String read FId write FId stored GetIdStored;
       property id: System.String read FId write FId stored GetIdStored;
       [FieldName('$schema')]
       property schema: System.String read FSchema write FSchema stored GetSchemaStored;

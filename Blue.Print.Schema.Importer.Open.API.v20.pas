@@ -10,10 +10,10 @@ type
     FOpenAPIDefinition: TOpenAPIDefinition;
     FOpenAPIDefinitions: TDictionary<String, TOpenAPIDefinition>;
 
-    function GenerateClassDefintion(const Module: TTypeModuleDefinition; const Schema: Schema; const ClassName: String): TTypeDefinition;
-    function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: Schema; const TypeName: String): TTypeDefinition;
-    function GetSchemaReference(const Schema: Schema): Schema;
-    function GetSchemaReferenceName(const Schema: Schema): String;
+    function GenerateClassDefintion(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const ClassName: String): TTypeDefinition;
+    function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const TypeName: String): TTypeDefinition;
+    function GetSchemaReference(const OpenAPISchema: Schema): Schema;
+    function GetSchemaReferenceName(const OpenAPISchema: Schema): String;
     function GetSimpleType(const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems): TTypeDefinition;
     function LoadOpenAPIDefinition(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;
   protected
@@ -22,6 +22,34 @@ type
     constructor Create;
 
     destructor Destroy; override;
+  end;
+
+  THeaderParameterSubSchemaHelper = class helper for HeaderParameterSubSchema
+  private
+    function GetSimpleType: simpleTypes;
+  public
+    property SimpleType: simpleTypes read GetSimpleType;
+  end;
+
+  TQueryParameterSubSchemaHelper = class helper for QueryParameterSubSchema
+  private
+    function GetSimpleType: simpleTypes;
+  public
+    property SimpleType: simpleTypes read GetSimpleType;
+  end;
+
+  TPathParameterSubSchema = class helper for PathParameterSubSchema
+  private
+    function GetSimpleType: simpleTypes;
+  public
+    property SimpleType: simpleTypes read GetSimpleType;
+  end;
+
+  TFormDataParameterSubSchema = class helper for FormDataParameterSubSchema
+  private
+    function GetSimpleType: simpleTypes;
+  public
+    property SimpleType: simpleTypes read GetSimpleType;
   end;
 
 implementation
@@ -44,13 +72,13 @@ begin
   inherited;
 end;
 
-function TOpenAPI20Import.GenerateClassDefintion(const Module: TTypeModuleDefinition; const Schema: Schema; const ClassName: String): TTypeDefinition;
+function TOpenAPI20Import.GenerateClassDefintion(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const ClassName: String): TTypeDefinition;
 begin
   var ClassDefinition := TClassDefinition.Create(Module);
   ClassDefinition.Name := ClassName;
   Result := ClassDefinition;
 
-  for var Prop in Schema.properties.schema do
+  for var Prop in OpenAPISchema.properties.schema do
   begin
     var NewProperty := TPropertyDefinition.Create;
     NewProperty.Optional := True;
@@ -66,7 +94,7 @@ begin
   Module.Classes.Add(ClassDefinition);
 end;
 
-function TOpenAPI20Import.GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: Schema; const TypeName: String): TTypeDefinition;
+function TOpenAPI20Import.GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const TypeName: String): TTypeDefinition;
 var
   UnitDefinition: TUnitDefinition;
 
@@ -80,13 +108,13 @@ begin
     else
       UnitDefinition := Module.AsClassDefinition.UnitDefinition;
 
-    if not Schema.ref.IsEmpty then
-      Result := GenerateTypeDefinition(Module, GetSchemaReference(Schema), GetSchemaReferenceName(Schema))
-    else if Schema.IsTypeStored then
-      case Schema.&type.simpleTypes of
-        simpleTypes.&array: Result := TTypeArrayDefinition.Create(UnitDefinition, GenerateTypeDefinition(Module, Schema.items.schema, TypeName + 'ArrayItem'));
-        simpleTypes.&object: Result := GenerateClassDefintion(Module, Schema, TypeName);
-        else Result := GetSimpleType(Schema.&type.simpleTypes, nil);
+    if not OpenAPISchema.ref.IsEmpty then
+      Result := GenerateTypeDefinition(Module, GetSchemaReference(OpenAPISchema), GetSchemaReferenceName(OpenAPISchema))
+    else if OpenAPISchema.IsTypeStored then
+      case OpenAPISchema.&type.simpleTypes of
+        simpleTypes.&array: Result := TTypeArrayDefinition.Create(UnitDefinition, GenerateTypeDefinition(Module, OpenAPISchema.items.schema, TypeName + 'ArrayItem'));
+        simpleTypes.&object: Result := GenerateClassDefintion(Module, OpenAPISchema, TypeName);
+        else Result := GetSimpleType(OpenAPISchema.&type.simpleTypes, nil);
       end
     else
       Abort;
@@ -108,9 +136,9 @@ var
       Parameter.ParameterType := ParameterType;
     end;
 
-    procedure AddParameter(const Name: String; const Schema: Schema); overload;
+    procedure AddParameter(const Name: String; const OpenAPISchema: Schema); overload;
     begin
-      AddParameter(Name, GenerateTypeDefinition(UnitDefinition, Schema, Name));
+      AddParameter(Name, GenerateTypeDefinition(UnitDefinition, OpenAPISchema, Name));
     end;
 
   begin
@@ -119,7 +147,7 @@ var
 
     for var Return in Operation.responses.responseValue.Values do
       if Return.response.IsSchemaStored then
-        Method.Return := GenerateTypeDefinition(UnitDefinition, Return.response.schema, Method.Name + 'Return');
+        Method.Return := GenerateTypeDefinition(UnitDefinition, Return.response.schema.schema, Method.Name + 'Return');
 
     for var ParameterDefinitionItem in Operation.parameters do
     begin
@@ -132,13 +160,29 @@ var
         var NoBodyParameter := ParameterDefinition.nonBodyParameter;
 
         if NoBodyParameter.IsHeaderParameterSubSchemaStored then
-          AddParameter(NoBodyParameter.headerParameterSubSchema.name, GetSimpleType(NoBodyParameter.headerParameterSubSchema.&type.simpleTypes, NoBodyParameter.headerParameterSubSchema.items))
+        begin
+          var Header := NoBodyParameter.headerParameterSubSchema;
+
+          AddParameter(Header.name, GetSimpleType(Header.SimpleType, Header.items));
+        end
         else if NoBodyParameter.IsQueryParameterSubSchemaStored then
-          AddParameter(NoBodyParameter.queryParameterSubSchema.name, GetSimpleType(NoBodyParameter.queryParameterSubSchema.&type.simpleTypes, NoBodyParameter.queryParameterSubSchema.items))
+        begin
+          var Query := NoBodyParameter.queryParameterSubSchema;
+
+          AddParameter(Query.name, GetSimpleType(Query.SimpleType, Query.items));
+        end
         else if NoBodyParameter.IsPathParameterSubSchemaStored then
-          AddParameter(NoBodyParameter.pathParameterSubSchema.name, GetSimpleType(NoBodyParameter.pathParameterSubSchema.&type.simpleTypes, NoBodyParameter.pathParameterSubSchema.items))
+        begin
+          var Path := NoBodyParameter.pathParameterSubSchema;
+
+          AddParameter(Path.name, GetSimpleType(Path.SimpleType, Path.items));
+        end
         else if NoBodyParameter.IsFormDataParameterSubSchemaStored then
-          AddParameter(NoBodyParameter.formDataParameterSubSchema.name, GetSimpleType(NoBodyParameter.formDataParameterSubSchema.&type.simpleTypes, NoBodyParameter.formDataParameterSubSchema.items));
+        begin
+          var Form := NoBodyParameter.formDataParameterSubSchema;
+
+          AddParameter(Form.name, GetSimpleType(Form.SimpleType, Form.items));
+        end;
       end;
     end;
 
@@ -179,12 +223,12 @@ begin
       AddMethod(PathItem.Value.head);
 end;
 
-function TOpenAPI20Import.GetSchemaReference(const Schema: Schema): Schema;
+function TOpenAPI20Import.GetSchemaReference(const OpenAPISchema: Schema): Schema;
 begin
   var List: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Schema> := nil;
   Result := nil;
 
-  for var ReferenceName in Schema.ref.Split(['/']) do
+  for var ReferenceName in OpenAPISchema.ref.Split(['/']) do
     if ReferenceName = '#' then
       Result := nil
     else if (ReferenceName = 'definitions') or (ReferenceName = 'defs') then
@@ -195,12 +239,12 @@ begin
       Result := List[ReferenceName];
 
   if not Assigned(Result) then
-    raise Exception.CreateFmt('Reference not found %s', [Schema.ref]);
+    raise Exception.CreateFmt('Reference not found %s', [OpenAPISchema.ref]);
 end;
 
-function TOpenAPI20Import.GetSchemaReferenceName(const Schema: Schema): String;
+function TOpenAPI20Import.GetSchemaReferenceName(const OpenAPISchema: Schema): String;
 begin
-  var Values := Schema.ref.Split(['/']);
+  var Values := OpenAPISchema.ref.Split(['/']);
 
   Result := Values[High(Values)];
 end;
@@ -214,7 +258,7 @@ begin
     simpleTypes.integer: Result := IntegerType;
     simpleTypes.number: Result := DoubleType;
     simpleTypes.&string: Result := StringType;
-    else Abort;
+    else Result := nil;
   end
 end;
 
@@ -228,6 +272,46 @@ begin
 
     FOpenAPIDefinitions.Add(UnitFileConfiguration.Reference, Result);
   end;
+end;
+
+{ THeaderParameterSubSchemaHelper }
+
+function THeaderParameterSubSchemaHelper.GetSimpleType: simpleTypes;
+const
+  SIMPLE_TYPE_CONVERTION: array[TType] of simpleTypes = (simpleTypes.&string, simpleTypes.number, simpleTypes.boolean, simpleTypes.integer, simpleTypes.&array);
+
+begin
+  Result := SIMPLE_TYPE_CONVERTION[&type];
+end;
+
+{ TQueryParameterSubSchemaHelper }
+
+function TQueryParameterSubSchemaHelper.GetSimpleType: simpleTypes;
+const
+  SIMPLE_TYPE_CONVERTION: array[TType] of simpleTypes = (simpleTypes.&string, simpleTypes.number, simpleTypes.boolean, simpleTypes.integer, simpleTypes.&array);
+
+begin
+  Result := SIMPLE_TYPE_CONVERTION[&type];
+end;
+
+{ TPathParameterSubSchema }
+
+function TPathParameterSubSchema.GetSimpleType: simpleTypes;
+const
+  SIMPLE_TYPE_CONVERTION: array[TType] of simpleTypes = (simpleTypes.&string, simpleTypes.number, simpleTypes.boolean, simpleTypes.integer, simpleTypes.&array);
+
+begin
+  Result := SIMPLE_TYPE_CONVERTION[&type];
+end;
+
+{ TFormDataParameterSubSchema }
+
+function TFormDataParameterSubSchema.GetSimpleType: simpleTypes;
+const
+  SIMPLE_TYPE_CONVERTION: array[TType] of simpleTypes = (simpleTypes.&string, simpleTypes.number, simpleTypes.boolean, simpleTypes.integer, simpleTypes.&array, simpleTypes.null);
+
+begin
+  Result := SIMPLE_TYPE_CONVERTION[&type];
 end;
 
 end.

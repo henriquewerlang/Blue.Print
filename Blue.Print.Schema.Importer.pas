@@ -182,7 +182,7 @@ type
   TTypeModuleDefinition = class(TTypeDefinition)
   private
     FClasses: TList<TClassDefinition>;
-    FDelayedTypes: TDictionary<String, TTypeDelayedDefinition>;
+    FDelayedTypes: TList<TTypeDelayedDefinition>;
     FEnumerations: TList<TTypeEnumeration>;
     FServices: TList<TTypeServiceDefinition>;
   public
@@ -193,7 +193,7 @@ type
     function AddDelayedType(const TypeName: String): TTypeDelayedDefinition;
 
     property Classes: TList<TClassDefinition> read FClasses;
-    property DelayedTypes: TDictionary<String, TTypeDelayedDefinition> read FDelayedTypes;
+    property DelayedTypes: TList<TTypeDelayedDefinition> read FDelayedTypes;
     property Enumerations: TList<TTypeEnumeration> read FEnumerations write FEnumerations;
     property Services: TList<TTypeServiceDefinition> read FServices write FServices;
   end;
@@ -279,9 +279,12 @@ type
   private
     FTypeResolved: TTypeDefinition;
     FUnresolvedType: String;
+
+    function GetIsResolved: Boolean;
   public
     constructor Create(const TypeName: String; const Module: TTypeModuleDefinition);
 
+    property IsResolved: Boolean read GetIsResolved;
     property TypeResolved: TTypeDefinition read FTypeResolved write FTypeResolved;
     property UnresolvedType: String read FUnresolvedType write FUnresolvedType;
   end;
@@ -441,8 +444,8 @@ type
 
   TJSONSchemaImport = class(TSchemaImporter)
   private
-    FJSONSchema: TSchema;
     FSchemaClass: TTypeDelayedDefinition;
+    FFileClass: TDictionary<String, TTypeDelayedDefinition>;
     FSchemas: TDictionary<String, TSchema>;
 
     function CanGenerateClass(const Schema: TSchema): Boolean;
@@ -450,9 +453,9 @@ type
     function CreateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
     function DefineProperty(const ClassDefinition: TClassDefinition; const Schema: TSchema; const PropertyName: String; const PropertyType: TTypeDefinition): TPropertyDefinition;
     function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const Schema: TSchema; const ClassTypeName: String): TClassDefinition;
-    function GetReferenceName(const Schema: TSchema): String;
-    function GetReferenceSchema(const Schema: TSchema; var ReferenceSchema: TSchema): Boolean;
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
+    function GetReferenceName(const Schema: TSchema): String;
+    function FindAllTypes(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
     function IsFlatSchema(const Schema: TSchema): Boolean;
     function LoadSchema(const UnitFileConfiguration: TUnitFileConfiguration): TSchema;
 
@@ -470,6 +473,8 @@ implementation
 uses System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, System.Generics.Defaults, Xml.XMLIntf, XML.XMLDom, Xml.XMLSchemaTags, Blue.Print.Serializer;
 
 const
+  DEFAULT_SCHEMA_CLASS_NAME = 'Schema';
+  REFERENCE_SEPARATOR = '#';
   WHITE_SPACE_IDENT = '  ';
 
 function CheckReservedName(const Name: String): String;
@@ -1200,17 +1205,17 @@ var
     begin
       var DelayedType := Result.AsDelayedType;
 
-      if not Assigned(DelayedType.TypeResolved) then
+      if not DelayedType.IsResolved then
       begin
         var TypeName := DelayedType.UnresolvedType;
 
         DelayedType.TypeResolved := Importer.FindType(TypeName, DelayedType.ParentModule);
 
-        if not Assigned(DelayedType.TypeResolved) then
+        if not DelayedType.IsResolved then
         begin
           DelayedType.TypeResolved := Importer.FindTypeInUnits(TypeName);
 
-          if not Assigned(DelayedType.TypeResolved) then
+          if not DelayedType.IsResolved then
             DelayedType.TypeResolved := TUndefinedType.Create(TypeName);
         end;
 
@@ -2202,6 +2207,11 @@ begin
   FUnresolvedType := TypeName;
 end;
 
+function TTypeDelayedDefinition.GetIsResolved: Boolean;
+begin
+  Result := Assigned(FTypeResolved);
+end;
+
 { TUndefinedType }
 
 constructor TUndefinedType.Create(const TypeName: String);
@@ -2252,6 +2262,7 @@ constructor TJSONSchemaImport.Create;
 begin
   inherited;
 
+  FFileClass := TDictionary<String, TTypeDelayedDefinition>.Create;
   FSchemas := TDictionary<String, TSchema>.Create(TIStringComparer.Ordinal);
 end;
 
@@ -2324,32 +2335,8 @@ function TJSONSchemaImport.CreateTypeDefinition(const Module: TTypeModuleDefinit
     end
   end;
 
-  function GetParentModuleFromReference: TTypeModuleDefinition;
-  begin
-    Result := Module;
-
-    while Assigned(Result.ParentModule) do
-      Result := Result.ParentModule;
-  end;
-
 begin
-  if not Schema.&Object.ref.IsEmpty then
-  begin
-    var ReferenceName := GetReferenceName(Schema);
-    var ReferenteSchema: TSchema := nil;
-
-    if GetReferenceSchema(Schema, ReferenteSchema) then
-      if ReferenteSchema = FJSONSchema then
-        Result := FSchemaClass
-      else
-        Result := GenerateTypeDefinition(GetParentModuleFromReference, ReferenteSchema, ReferenceName)
-    else
-      Result := nil;
-
-    if not Assigned(Result) then
-      Result := Module.AddDelayedType(ReferenceName);
-  end
-  else if Schema.&Object.IsEnumStored then
+  if Schema.&Object.IsEnumStored then
     Result := CreateEnumerator
   else if Schema.&Object.IsTypeStored then
     if Schema.&Object.&type.IsSimpleTypesStored then
@@ -2395,7 +2382,24 @@ destructor TJSONSchemaImport.Destroy;
 begin
   FSchemas.Free;
 
+  FFileClass.Free;
+
   inherited;
+end;
+
+function TJSONSchemaImport.FindAllTypes(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
+begin
+  Result := FindType(TypeName, Module);
+
+  if not Assigned(Result) then
+    for var DelayedType in Module.DelayedTypes do
+      if DelayedType.UnresolvedType = TypeName then
+        Exit(DelayedType);
+
+  if not Assigned(Result) and Module.IsClassDefinition then
+    for var PropertyDefinition in Module.AsClassDefinition.Properties do
+      if PropertyDefinition.Name = TypeName then
+        Exit(PropertyDefinition.PropertyType);
 end;
 
 function TJSONSchemaImport.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const Schema: TSchema; const ClassTypeName: String): TClassDefinition;
@@ -2483,24 +2487,65 @@ begin
 end;
 
 function TJSONSchemaImport.GenerateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
-begin
-  Result := FindType(TypeName, Module);
+var
+  ReferencePath: TArray<String>;
+  References: TArray<String>;
 
-  if not Assigned(Result) then
+  function GetFirstClassDeclaration(const Module: TTypeModuleDefinition): TTypeModuleDefinition;
+  begin
+    Result := Module;
+
+    while Assigned(Result.ParentModule) do
+      Result := Result.ParentModule;
+
+    Result := Result.AsUnitDefinition;
+  end;
+
+begin
+  if not Schema.&Object.ref.IsEmpty then
+  begin
+    var ParentModule := Module;
+    var ReferenceName := GetReferenceName(Schema);
+    var ReferenceModule: TTypeDelayedDefinition;
+
+    References := Schema.&Object.ref.Split([REFERENCE_SEPARATOR]);
+
+    if References[0].IsEmpty then
+      ReferenceModule := FSchemaClass
+    else
+      ReferenceModule := FFileClass[References[0] + REFERENCE_SEPARATOR];
+
+    ReferencePath := References[1].Split(['/']);
+
+    if not Assigned(ReferencePath) then
+      Exit(FSchemaClass)
+    else if (ReferencePath[1] = 'definitions') or (ReferencePath[1] = 'def') then
+      ParentModule := FSchemaClass.FParentModule;
+
+    if ReferenceModule.IsResolved then
+      Result := FindAllTypes(ReferenceName, ReferenceModule.TypeResolved.AsClassDefinition)
+    else
+      Result := nil;
+
+    if not Assigned(Result) then
+      Result := ParentModule.AddDelayedType(ReferenceName);
+  end
+  else
     Result := CreateTypeDefinition(Module, Schema, TypeName);
 end;
 
 procedure TJSONSchemaImport.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
 begin
-  var CurrentSchema := LoadSchema(UnitFileConfiguration);
+  var CurrenSchema := LoadSchema(UnitFileConfiguration);
 
-  if not CurrentSchema.&Object.Schema.IsEmpty then
-    LoadUnitFromReference(CurrentSchema.&Object.Schema);
+  if not CurrenSchema.&Object.Schema.IsEmpty then
+    LoadUnitFromReference(CurrenSchema.&Object.Schema);
 
-  FJSONSchema := CurrentSchema;
   FSchemaClass := UnitDefinition.AddDelayedType(UnitFileConfiguration.UnitClassName);
 
-  for var Definition in FJSONSchema.&Object.definitions.Schema do
+  FFileClass.Add(CurrenSchema.&Object.Id, FSchemaClass);
+
+  for var Definition in CurrenSchema.&Object.definitions.Schema do
   begin
     var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
 
@@ -2508,7 +2553,7 @@ begin
       UnitDefinition.AddTypeAlias(CreateTypeAlias(UnitDefinition, Definition.Key, TypeDefinition));
   end;
 
-  FSchemaClass.TypeResolved := CreateTypeDefinition(UnitDefinition, CurrentSchema, UnitFileConfiguration.UnitClassName);
+  FSchemaClass.TypeResolved := CreateTypeDefinition(UnitDefinition, CurrenSchema, UnitFileConfiguration.UnitClassName);
 end;
 
 function TJSONSchemaImport.GetReferenceName(const Schema: TSchema): String;
@@ -2517,38 +2562,8 @@ begin
 
   Result := Values[High(Values)];
 
-  if Result = '#' then
-    Result := 'Schema';
-end;
-
-function TJSONSchemaImport.GetReferenceSchema(const Schema: TSchema; var ReferenceSchema: TSchema): Boolean;
-const
-  REFERENCE_SEPARATOR = '#';
-
-begin
-  var BaseSchema: TSchema := nil;
-  var List: TDynamicProperty<TSchema> := nil;
-  var References := Schema.&Object.ref.Split([REFERENCE_SEPARATOR]);
-  ReferenceSchema := nil;
-
-  var Reference := REFERENCE_SEPARATOR + References[High(References)];
-
-  if not FSchemas.TryGetValue(References[Low(References)] + REFERENCE_SEPARATOR, BaseSchema) then
-    BaseSchema := FJSONSchema;
-
-  for var ReferenceName in Reference.Split(['/']) do
-    if ReferenceName = REFERENCE_SEPARATOR then
-      ReferenceSchema := BaseSchema
-    else if (ReferenceName = 'definitions') or (ReferenceName = 'defs') then
-      List := ReferenceSchema.&Object.Definitions.Schema
-    else if ReferenceName = 'properties' then
-      List := ReferenceSchema.&Object.properties.Schema
-    else if List.ContainsKey(ReferenceName) then
-      ReferenceSchema := List[ReferenceName]
-    else
-      Exit(False);
-
-  Result := Assigned(ReferenceSchema);
+  if Result = REFERENCE_SEPARATOR then
+    Result := DEFAULT_SCHEMA_CLASS_NAME;
 end;
 
 function TJSONSchemaImport.IsFlatSchema(const Schema: TSchema): Boolean;
@@ -2597,6 +2612,8 @@ end;
 function TTypeModuleDefinition.AddDelayedType(const TypeName: String): TTypeDelayedDefinition;
 begin
   Result := TTypeDelayedDefinition.Create(TypeName, Self);
+
+  DelayedTypes.Add(Result);
 end;
 
 constructor TTypeModuleDefinition.Create(const Module: TTypeModuleDefinition);
@@ -2604,7 +2621,7 @@ begin
   inherited;
 
   FClasses := TObjectList<TClassDefinition>.Create;
-  FDelayedTypes := TDictionary<String, TTypeDelayedDefinition>.Create(TIStringComparer.Ordinal);
+  FDelayedTypes := TObjectList<TTypeDelayedDefinition>.Create;
   FEnumerations := TObjectList<TTypeEnumeration>.Create;
   FServices := TObjectList<TTypeServiceDefinition>.Create;
 end;
