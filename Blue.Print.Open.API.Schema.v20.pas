@@ -777,7 +777,7 @@ type
 
   Response = class
   public type
-    [Flat]
+    [Flat('type')]
     TSchema = class
     private
       FSchema: Blue.Print.Open.API.Schema.v20.Schema;

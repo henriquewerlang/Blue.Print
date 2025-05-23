@@ -2406,10 +2406,19 @@ function TJSONSchemaImport.GenerateClassDefinition(const ParentModule: TTypeModu
 
   function GetFlatAttributeParameter: String;
   begin
+    var ParentClass := ParentModule;
     Result := EmptyStr;
+    var TypeName := ClassTypeName;
+
+    while ParentClass.IsClassDefinition do
+    begin
+      TypeName := Format('%s.%s', [ParentClass.Name, TypeName]);
+
+      ParentClass := ParentClass.ParentModule;
+    end;
 
     for var TypeConfiguration in Configuration.TypeDefinition do
-      if not TypeConfiguration.FlatEnumerator.IsEmpty and (TypeConfiguration.Name = ClassTypeName) then
+      if not TypeConfiguration.FlatEnumerator.IsEmpty and (TypeConfiguration.Name = TypeName) then
         Exit(TypeConfiguration.FlatEnumerator);
   end;
 

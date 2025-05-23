@@ -9,7 +9,11 @@
       {
          "Name": "parameter",
          "FlatEnumerator": "in"
-      }
+      },
+      {
+         "Name": "response.schema",
+         "FlatEnumerator": "type"
+      }      
    ],
    "UnitConfiguration": [
       {
