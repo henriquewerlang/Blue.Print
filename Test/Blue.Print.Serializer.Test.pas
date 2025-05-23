@@ -150,6 +150,10 @@ type
     procedure WhenFoundTheCorrectPropertyToLoadCantIgnoreItAndLoadAnotherClass;
     [Test]
     procedure WhenDeserializingAFlatClassWithEnumerationNameLoadedAndThePropertyIsntAnEnumeratorCantRaiseAnyError;
+    [Test]
+    procedure WhenDeserializeAClassWithAnEnumeratorPropertyWithMoreThanOneValueMustCheckIfTheValueInTheJSONIsEqualToEnumeratorValueToLoadTheProperty;
+    [Test]
+    procedure WhenDeserializeAClassWithANamedEnumeratorPropertyMustUseTheNameEnumeratorToLoadTheProperty;
   end;
 
   [TestFixture]
@@ -681,6 +685,22 @@ type
     property MyObject: TMyObject read FMyObject write FMyObject;
   end;
 
+  [Flat('MyProp4')]
+  TMyClassWithFlatEnumeratorWithMoreThanOneValue = class
+  private
+    FMyEnum: TMyObject;
+  published
+    property MyEnum: TMyObject read FMyEnum write FMyEnum;
+  end;
+
+  [Flat('MyProp')]
+  TMyClassWithFlatEnumeratorWithMoreThanOneValueNamed = class
+  private
+    FMyEnum: TMyClassWithEnumValues;
+  published
+    property MyEnum: TMyClassWithEnumValues read FMyEnum write FMyEnum;
+  end;
+
   ISOAPService = interface(IInvokable)
     ['{BBBBC6F3-1730-40F4-A1B1-CC7CA6F08F5D}']
     procedure MyMethod(const MyParam: Integer);
@@ -964,6 +984,28 @@ begin
   var Value := FSerializer.Deserialize('"Blue.Print.Serializer.Test.TMyObject"', TypeInfo(TClass));
 
   Assert.AreEqual(TMyObject, Value.AsClass);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithANamedEnumeratorPropertyMustUseTheNameEnumeratorToLoadTheProperty;
+begin
+  var Value := FSerializer.Deserialize('{"MyProp":"abc"}', TypeInfo(TMyClassWithFlatEnumeratorWithMoreThanOneValueNamed)).AsType<TMyClassWithFlatEnumeratorWithMoreThanOneValueNamed>;
+
+  Assert.IsNotNil(Value.MyEnum);
+
+  Value.MyEnum.Free;
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithAnEnumeratorPropertyWithMoreThanOneValueMustCheckIfTheValueInTheJSONIsEqualToEnumeratorValueToLoadTheProperty;
+begin
+  var Value := FSerializer.Deserialize('{"MyProp4":"MyValue2"}', TypeInfo(TMyClassWithFlatEnumeratorWithMoreThanOneValue)).AsType<TMyClassWithFlatEnumeratorWithMoreThanOneValue>;
+
+  Assert.IsNotNil(Value.MyEnum);
+
+  Value.MyEnum.Free;
+
+  Value.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithAnEnumeratorWithEnumValueAttributeMustLoadTheEnumaratorValueAsExpected;

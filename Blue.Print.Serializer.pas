@@ -38,7 +38,8 @@ type
     function CheckPropertyInstance(const Instance: TValue; const &Property: TRttiProperty): TValue;
     function CreateObject(const RttiType: TRttiInstanceType): TObject; virtual;
     function GetContentType: String;
-    function GetEnumerationNames(const TypeInfo: PTypeInfo): TArray<String>;
+    function GetEnumerationNames(const Enumeration: TRttiEnumerationType): TArray<String>; overload;
+    function GetEnumerationNames(const TypeInfo: PTypeInfo): TArray<String>; overload;
     function GetEnumerationValue(const TypeInfo: PTypeInfo; const Value: String): TValue;
     function GetFieldName(const RttiObject: TRttiObject; const DefaultValue: String): String;
     function GetPublishedProperties(const RttiType: TRttiType): TArray<TRttiProperty>;
@@ -208,14 +209,15 @@ begin
 end;
 
 function TBluePrintSerializer.GetEnumerationNames(const TypeInfo: PTypeInfo): TArray<String>;
+begin
+  Result := GetEnumerationNames(TRttiEnumerationType(FContext.GetType(TypeInfo)));
+end;
+
+function TBluePrintSerializer.GetEnumerationNames(const Enumeration: TRttiEnumerationType): TArray<String>;
 var
   Attribute: EnumValueAttribute;
 
-  Enumeration: TRttiEnumerationType;
-
 begin
-  Enumeration := TRttiEnumerationType(FContext.GetType(TypeInfo));
-
   Attribute := Enumeration.GetAttribute<EnumValueAttribute>;
 
   if Assigned(Attribute) then
@@ -715,7 +717,19 @@ var
       Result := (JSONValue as TJSONObject);
     end;
 
-    function GetPropertyEnumeratorValue(const PropertyName: String): String;
+    function CheckEnumerationValue(const JSONValue: String; const Values: TArray<String>): Boolean;
+    var
+      Value: String;
+
+    begin
+      Result := False;
+
+      for Value in Values do
+        if Value = JSONValue then
+          Exit(True);
+    end;
+
+    function GetPropertyEnumeratorValue(const PropertyName: String): TArray<String>;
     var
       &Property: TRttiProperty;
 
@@ -723,9 +737,9 @@ var
       &Property := FlatProperty.PropertyType.GetProperty(PropertyName);
 
       if Assigned(&Property) and (&Property.PropertyType is TRttiEnumerationType) then
-        Result := TRttiEnumerationType(&Property.PropertyType).GetNames[0]
+        Result := GetEnumerationNames(TRttiEnumerationType(&Property.PropertyType))
       else
-        Result := EmptyStr;
+        Result := nil;
     end;
 
     function GetJSONEnumeratorValue(const FieldName: String): String;
@@ -755,7 +769,7 @@ var
         if FlatInfo.EnumeratorPropertyName.IsEmpty then
           Result := (GetJSONObject.Count = 0) or Assigned(FindPropertyByName(FlatProperty.PropertyType, GetJSONObject.Pairs[0].JsonString.Value))
         else
-          Result := GetJSONEnumeratorValue(FlatInfo.EnumeratorPropertyName) = GetPropertyEnumeratorValue(FlatInfo.EnumeratorPropertyName);
+          Result := CheckEnumerationValue(GetJSONEnumeratorValue(FlatInfo.EnumeratorPropertyName), GetPropertyEnumeratorValue(FlatInfo.EnumeratorPropertyName));
       end;
     end;
 
