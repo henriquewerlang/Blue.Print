@@ -28,7 +28,9 @@ type
   private
     FUnitClassName: String;
     FReference: String;
+    FAppendClassName: String;
   public
+    property AppendClassName: String read FAppendClassName write FAppendClassName;
     property Reference: String read FReference write FReference;
     property UnitClassName: String read FUnitClassName write FUnitClassName;
   end;
@@ -378,7 +380,7 @@ type
     function CheckChangeTypeName(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition; virtual;
     function FindTypeDefinitionInModule(const Module: TTypeModuleDefinition; const TypeName: String; var TypeDefinition: TTypeDefinition): Boolean;
-    function FindTypeInUnits(const TypeName: String): TTypeDefinition;
+    function FindTypeInUnits(const Module: TTypeModuleDefinition; const TypeName: String): TTypeDefinition;
     function GetFileNameFromSchemaFolder(const FileName: String): String;
     function LoadFile(const UnitFile: TUnitFileConfiguration): String;
     function LoadUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
@@ -425,11 +427,11 @@ type
     function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
     function CheckEnumeration(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeEnumeration;
     function FindBaseType(const TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
+    function GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef; const TargetNamespace: String): TPropertyDefinition;
     function IsReferenceType(const Element: IXMLTypedSchemaItem): Boolean;
 
     procedure AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
     procedure GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String);
-    procedure GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef; const TargetNamespace: String);
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList; const TargetNamespace: String);
     procedure LoadXSDTypes;
   protected
@@ -655,9 +657,9 @@ begin
     end;
 end;
 
-function TSchemaImporter.FindTypeInUnits(const TypeName: String): TTypeDefinition;
+function TSchemaImporter.FindTypeInUnits(const Module: TTypeModuleDefinition; const TypeName: String): TTypeDefinition;
 begin
-  var CurrentModule: TTypeModuleDefinition := nil;
+  var CurrentModule: TTypeModuleDefinition := Module;
   Result := nil;
 
   for var SplitTypeName in TypeName.Split(['.']) do
@@ -699,7 +701,7 @@ begin
 
   for var TypeDefinitionConfig in Configuration.TypeDefinition do
   begin
-    var TypeDefinition := FindTypeInUnits(TypeDefinitionConfig.Name);
+    var TypeDefinition := FindTypeInUnits(nil, TypeDefinitionConfig.Name);
 
     if Assigned(TypeDefinition) then
     begin
@@ -1013,7 +1015,7 @@ begin
     GenerateProperty(ClassDefinition, ElementDefs[A], TargetNamespace);
 end;
 
-procedure TXSDImporter.GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef; const TargetNamespace: String);
+function TXSDImporter.GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef; const TargetNamespace: String): TPropertyDefinition;
 
   function IsOptional(const ElementDefinition: IXMLElementDef): Boolean;
   var
@@ -1054,17 +1056,19 @@ begin
     begin
       var Attribute := ComplexType.AttributeDefs[0];
 
-      AddPropertyAttribute(CreateProperty(Attribute.DataType), Attribute);
+      Result := CreateProperty(Attribute.DataType);
+
+      AddPropertyAttribute(Result, Attribute);
     end
     else
     begin
       GenerateClassDefinition(ClassDefinition, ComplexType, TargetNamespace);
 
-      CreateProperty(ComplexType);
+      Result := CreateProperty(ComplexType);
     end;
   end
   else
-    CreateProperty(ElementDefinition.DataType);
+    Result := CreateProperty(ElementDefinition.DataType);
 end;
 
 procedure TXSDImporter.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
@@ -1094,10 +1098,18 @@ begin
 
   if Schema.SchemaDef.ElementDefs.Count > 0 then
   begin
-    var ClassDefinition := CreateClassDefinition(UnitDefinition, UnitFileConfiguration.UnitClassName);
+    var ClassDefinition: TClassDefinition := nil;
+
+    if not UnitFileConfiguration.UnitClassName.IsEmpty then
+      ClassDefinition := CreateClassDefinition(UnitDefinition, UnitFileConfiguration.UnitClassName)
+    else if not UnitFileConfiguration.AppendClassName.IsEmpty then
+      ClassDefinition := FindTypeInUnits(UnitDefinition, UnitFileConfiguration.AppendClassName).AsClassDefinition;
 
     for var A := 0 to Pred(Schema.SchemaDef.ElementDefs.Count) do
-      GenerateProperty(ClassDefinition, Schema.SchemaDef.ElementDefs[A], Schema.SchemaDef.TargetNamespace);
+    begin
+      var &Property := GenerateProperty(ClassDefinition, Schema.SchemaDef.ElementDefs[A], Schema.SchemaDef.TargetNamespace);
+      &Property.Optional := &Property.Optional or not UnitFileConfiguration.AppendClassName.IsEmpty;
+    end;
   end;
 end;
 
@@ -1209,7 +1221,7 @@ var
 
         if not DelayedType.IsResolved then
         begin
-          DelayedType.TypeResolved := Importer.FindTypeInUnits(TypeName);
+          DelayedType.TypeResolved := Importer.FindTypeInUnits(nil, TypeName);
 
           if not DelayedType.IsResolved then
             DelayedType.TypeResolved := TUndefinedType.Create(TypeName);
