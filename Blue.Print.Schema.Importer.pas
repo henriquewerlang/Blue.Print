@@ -1004,8 +1004,6 @@ begin
 
       &Property.AddXMLValueAttribute;
     end;
-
-    ParentModule.Classes.Add(ClassDefinition);
   end;
 end;
 
@@ -1100,8 +1098,6 @@ begin
 
     for var A := 0 to Pred(Schema.SchemaDef.ElementDefs.Count) do
       GenerateProperty(ClassDefinition, Schema.SchemaDef.ElementDefs[A], Schema.SchemaDef.TargetNamespace);
-
-    UnitDefinition.Classes.Add(ClassDefinition);
   end;
 end;
 
