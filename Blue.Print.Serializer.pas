@@ -86,8 +86,8 @@ type
     function DeserializeType(const RttiType: TRttiType; const Node: IXMLNode): TValue;
 
     procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
-    procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode; const Namespace: String);
     procedure SerializeArray(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace, ValueFormat: String);
+    procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode; const Namespace: String);
     procedure SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode; const Namespace: String);
     procedure SerializeType(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace, ValueFormat: String);
   public
@@ -98,7 +98,7 @@ type
 
 implementation
 
-uses System.Classes, System.DateUtils, System.RegularExpressions, {$IFDEF DCC}System.SysConst, Xml.XMLDoc, REST.Types{$ELSE}System.RTLConsts{$ENDIF};
+uses System.Classes, System.DateUtils, {$IFDEF DCC}System.SysConst, System.RegularExpressions, Xml.XMLDoc, REST.Types{$ELSE}System.RTLConsts{$ENDIF};
 
 {$IFDEF PAS2JS}
 type
@@ -132,6 +132,15 @@ const
   CONTENTTYPE_TEXT_PLAIN = 'text/plain';
 {$ENDIF}
 
+function CheckRegularExpression(const Value, Pattern: String): Boolean; inline;
+begin
+{$IFDEF DCC}
+  Result := TRegEx.IsMatch(Value, Pattern);
+{$ELSE}
+  Result := False;
+{$ENDIF}
+end;
+
 type
   TValueHelper = record helper for TValue
   public
@@ -146,7 +155,7 @@ begin
 
   if Result.IsEmpty then
   begin
-    Result := CreateObject(&Property.PropertyType.AsInstance);
+    Result := TValue.From(CreateObject(&Property.PropertyType.AsInstance));
 
     &Property.SetValue(Instance.AsObject, Result);
   end;
@@ -484,7 +493,7 @@ begin
     if Assigned(Prop) then
       if Prop.PropertyType.IsDynamicProperty then
       begin
-        DynamicPropertyInstance := CheckPropertyInstance(Instance, Prop);
+        DynamicPropertyInstance := CheckPropertyInstance(TValue.From(Instance), Prop);
 
         DeserializeDynamicPropertyValue(Prop.PropertyType.AsInstance, DynamicPropertyInstance.AsObject, GetKeyValue, GetValue);
       end
@@ -578,7 +587,7 @@ begin
 
     if Assigned(PatternProperty) then
     begin
-      if TRegEx.IsMatch(PropertyName, PatternProperty.Regex) then
+      if CheckRegularExpression(PropertyName, PatternProperty.Regex) then
         Exit(&Property);
     end
     else if &Property.PropertyType.IsDynamicProperty then
@@ -714,7 +723,7 @@ var
 
     function GetJSONObject: TJSONObject;
     begin
-      Result := (JSONValue as TJSONObject);
+      Result := {$IFDEF DCC}(JSONValue as TJSONObject){$ELSE}TJSONObject(JSONValue){$ENDIF};
     end;
 
     function CheckEnumerationValue(const JSONValue: String; const Values: TArray<String>): Boolean;
@@ -743,16 +752,36 @@ var
     end;
 
     function GetJSONEnumeratorValue(const FieldName: String): String;
-    var
-      JSONPair: JSONKeyType;
-
     begin
-      JSONPair := GetJSONObject.Get(FieldName);
+{$IFDEF DCC}
+      var JSONPair := GetJSONObject.Get(FieldName);
 
       if Assigned(JSONPair) then
         Result := JSONPair.JsonValue.Value
+{$ELSE}
+      if GetJSONObject.hasOwnProperty(FieldName) then
+        Result := String(GetJSONObject[FieldName])
+{$ENDIF}
       else
         Result := EmptyStr;
+    end;
+
+    function CheckObjectHasProperties: Boolean;
+    begin
+{$IFDEF DCC}
+      Result := (GetJSONObject.Count > 0);
+{$ELSE}
+      Result := Length(TJSObject.Keys(GetJSONObject)) > 0;
+{$ENDIF}
+    end;
+
+    function GetValueFromFirstProperty: String;
+    begin
+{$IFDEF DCC}
+      Result := GetJSONObject.Pairs[0].JsonString.Value;
+{$ELSE}
+      raise Exception.Create('Must implement this!');
+{$ENDIF}
     end;
 
     function CheckProperty: Boolean;
@@ -767,7 +796,7 @@ var
         FlatInfo := RttiType.GetAttribute<FlatAttribute>;
 
         if FlatInfo.EnumeratorPropertyName.IsEmpty then
-          Result := (GetJSONObject.Count = 0) or Assigned(FindPropertyByName(FlatProperty.PropertyType, GetJSONObject.Pairs[0].JsonString.Value))
+          Result := not CheckObjectHasProperties or Assigned(FindPropertyByName(FlatProperty.PropertyType, GetValueFromFirstProperty))
         else
           Result := CheckEnumerationValue(GetJSONEnumeratorValue(FlatInfo.EnumeratorPropertyName), GetPropertyEnumeratorValue(FlatInfo.EnumeratorPropertyName));
       end;
@@ -802,7 +831,7 @@ var
     if IsBooleanValue then
       JSONType := [tkEnumeration]
     else if JSONValue is TJSONNumber then
-      JSONType := [tkInteger, tkInt64, tkFloat]
+      JSONType := [tkInteger, {$IFDEF DCC}tkInt64, {$ENDIF}tkFloat]
     else if JSONValue is TJSONString then
       JSONType := [{$IFDEF DCC}tkLString, tkUString, tkWChar, tkWString, {$ENDIF}tkChar, tkString, tkEnumeration]
     else if JSONValue is TJSONArray then

@@ -713,8 +713,11 @@ begin
 end;
 
 function TDynamicProperty<V>.GetDynamicPropertyItem(const Key: String): V;
+var
+  ItemIndex: NativeInt;
+
 begin
-  var ItemIndex := IndexOf(Key);
+  ItemIndex := IndexOf(Key);
 
   if ItemIndex > -1 then
     Result := Items[ItemIndex].Value
@@ -723,16 +726,22 @@ begin
 end;
 
 function TDynamicProperty<V>.GetValues: TArray<V>;
+var
+  Item: TPair<String, V>;
+
 begin
   Result := nil;
 
-  for var Item in Self do
+  for Item in Self do
     Result := Result + [Item.Value];
 end;
 
 function TDynamicProperty<V>.IndexOf(const Key: String): NativeInt;
+var
+  A: NativeInt;
+
 begin
-  for var A := 0 to Pred(Count) do
+  for A := 0 to Pred(Count) do
     if Items[A].Key = Key then
       Exit(A);
 
@@ -740,8 +749,11 @@ begin
 end;
 
 procedure TDynamicProperty<V>.SetDynamicPropertyItem(const Key: String; const Value: V);
+var
+  ItemIndex: NativeInt;
+
 begin
-  var ItemIndex := IndexOf(Key);
+  ItemIndex := IndexOf(Key);
 
   if ItemIndex > -1 then
     Items[ItemIndex] := TPair<String, V>.Create(Key, Value)
