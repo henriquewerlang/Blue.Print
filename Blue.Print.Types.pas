@@ -116,6 +116,15 @@ type
   NodeNameAttribute = class(FieldNameAttribute)
   end;
 
+  DocumentNameAttribute = class(TCustomAttribute)
+  private
+    FName: String;
+  public
+    constructor Create(const Name: String);
+
+    property Name: String read FName write FName;
+  end;
+
   FlatAttribute = class(TCustomAttribute)
   private
     FEnumeratorPropertyName: String;
@@ -314,7 +323,7 @@ type
     Parameter: TRttiParameter;
   end;
 
-  [NodeName(SOAP_ENVELOP_NODENAME)]
+  [DocumentName(SOAP_ENVELOP_NODENAME)]
   [XMLAttribute('xmlns:SOAP-ENV', 'http://www.w3.org/2003/05/soap-envelope')]
   [XMLAttribute('xmlns:xsd', 'http://www.w3.org/2001/XMLSchema')]
   [XMLAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance')]
@@ -789,6 +798,15 @@ begin
   inherited Create;
 
   FRegex := Regex;
+end;
+
+{ DocumentNameAttribute }
+
+constructor DocumentNameAttribute.Create(const Name: String);
+begin
+  inherited Create;
+
+  FName := Name;
 end;
 
 end.

@@ -41,6 +41,8 @@ type
     procedure WhenTheClassHasMoreThanOneConstructorCantRaiseAnyError;
     [Test]
     procedure WhenTheClassHasMoreThanOneConstructorMustCallTheConstructorWithoutParameters;
+    [Test]
+    procedure WhenDeserializeAnObjectThePropertyNameMustBeCaseInsensitive;
   end;
 
   [TestFixture]
@@ -166,6 +168,8 @@ type
     [Test]
     procedure WhenThePropertyHasTheNodeNameAttributeMustGenerateTheXMLWithTheNameInTheAttribute;
     [Test]
+    procedure WhenThePropertyHasTheNodeNameAttributeMustLoadTheValueOfTheXMLInThePropertyHasExpected;
+    [Test]
     procedure WhenSerializeAnRecordMustLoadAllFieldsFromTheRecordAsExpected;
     [Test]
     procedure WhenSerializeATValueRecordMustSerializeTheValueFromTheRecord;
@@ -272,7 +276,7 @@ type
     property MyProperty: String read FMyProperty write FMyProperty;
   end;
 
-  [NodeName('MyDocument')]
+  [DocumentName('MyDocument')]
   TMyClassWithNodeNameAttribute = class
   private
     FMyProperty: String;
@@ -701,6 +705,19 @@ type
     property MyEnum: TMyClassWithEnumValues read FMyEnum write FMyEnum;
   end;
 
+  TMyObjectLowercase = class
+  private
+    FMyProp1: String;
+    FMyProp2: Integer;
+    FMyProp3: Double;
+    FMyProp4: TMyEnum;
+  published
+    property myprop1: String read FMyProp1 write FMyProp1;
+    property myprop2: Integer read FMyProp2 write FMyProp2;
+    property myprop3: Double read FMyProp3 write FMyProp3;
+    property myprop4: TMyEnum read FMyProp4 write FMyProp4;
+  end;
+
   ISOAPService = interface(IInvokable)
     ['{BBBBC6F3-1730-40F4-A1B1-CC7CA6F08F5D}']
     procedure MyMethod(const MyParam: Integer);
@@ -752,6 +769,25 @@ begin
   var Value := FSerializer.Deserialize('123', TypeInfo(Integer));
 
   Assert.AreEqual(123, Value.AsInteger);
+end;
+
+procedure TBluePrintSerializerTest.WhenDeserializeAnObjectThePropertyNameMustBeCaseInsensitive;
+begin
+  var Source := TMyObjectLowercase.Create;
+  Source.myprop1 := 'abc';
+  Source.myprop2 := 12345;
+  Source.myprop3 := 12.34;
+
+  var Value := FSerializer.Deserialize(FSerializer.Serialize(TValue.From(Source)), TypeInfo(TMyObject)).AsType<TMyObject>;
+
+  Assert.AreEqual(Source.myprop1, Value.MyProp1);
+  Assert.AreEqual(Source.myprop2, Value.MyProp2);
+  Assert.AreEqual(Source.myprop3, Value.MyProp3);
+  Assert.AreEqual(Source.myprop4, Value.MyProp4);
+
+  Source.Free;
+
+  Value.Free;
 end;
 
 procedure TBluePrintSerializerTest.WhenDeserializeAStringMustReturnTheStringInTheReturnValue;
@@ -1840,6 +1876,15 @@ begin
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyNode>abc</MyNode></Document>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheNodeNameAttributeMustLoadTheValueOfTheXMLInThePropertyHasExpected;
+begin
+  var Value := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyNode>abc</MyNode></Document>'#13#10, TypeInfo(TMyClassWithNode)).AsType<TMyClassWithNode>;
+
+  Assert.AreEqual('abc', Value.MyProperty);
+
+  Value.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheStoredPropertyTheValueMustBeSerializedOnlyIfThisPropertyIsTrue;

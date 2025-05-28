@@ -37,11 +37,12 @@ type
 
     function CheckPropertyInstance(const Instance: TValue; const &Property: TRttiProperty): TValue;
     function CreateObject(const RttiType: TRttiInstanceType): TObject; virtual;
+    function FindPropertyByName(const RttiType: TRttiType; const PropertyName: String): TRttiProperty;
     function GetContentType: String;
     function GetEnumerationNames(const Enumeration: TRttiEnumerationType): TArray<String>; overload;
     function GetEnumerationNames(const TypeInfo: PTypeInfo): TArray<String>; overload;
     function GetEnumerationValue(const TypeInfo: PTypeInfo; const Value: String): TValue;
-    function GetFieldName(const RttiObject: TRttiObject; const DefaultValue: String): String;
+    function GetFieldName(const RttiObject: TRttiNamedObject): String;
     function GetPublishedProperties(const RttiType: TRttiType): TArray<TRttiProperty>;
   public
     constructor Create;
@@ -52,8 +53,6 @@ type
   TBluePrintJsonSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
   private
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
-    function FindPropertyByName(const RttiType: TRttiType; const PropertyName: String): TRttiProperty;
-    function GetFieldName(const RttiObject: TRttiNamedObject): String;
     function GetJSONValue(const JSONValue: TJSONValue): String; inline;
     function Serialize(const Value: TValue): String;
   protected
@@ -76,7 +75,6 @@ type
   private
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function GetFormatValue(const RttiMember: TRttiMember): String;
-    function GetNodeName(const RttiMember: TRttiMember): String;
     function GetNamespaceValue(const RttiObject: TRttiObject; const Namespace: String): String;
     function LoadAttributes(const RttiObject: TRttiObject; const Node: IXMLNode): IXMLNode;
     function LoadAttributeValue(const Member: TRttiDataMember; const Instance: TObject; const Node: IXMLNode): Boolean;
@@ -212,6 +210,30 @@ begin
   inherited;
 end;
 
+function TBluePrintSerializer.FindPropertyByName(const RttiType: TRttiType; const PropertyName: String): TRttiProperty;
+var
+  PatternProperty: PatternPropertyAttribute;
+  &Property: TRttiProperty;
+
+begin
+  Result := nil;
+
+  for &Property in RttiType.GetProperties do
+  begin
+    PatternProperty := &Property.GetAttribute<PatternPropertyAttribute>;
+
+    if Assigned(PatternProperty) then
+    begin
+      if CheckRegularExpression(PropertyName, PatternProperty.Regex) then
+        Exit(&Property);
+    end
+    else if &Property.PropertyType.IsDynamicProperty then
+      Result := &Property
+    else if AnsiSameText(GetFieldName(&Property), PropertyName) then
+      Exit(&Property);
+  end;
+end;
+
 function TBluePrintSerializer.GetContentType: String;
 begin
   Result := FContentType;
@@ -254,7 +276,7 @@ begin
   Result := TValue.FromOrdinal(TypeInfo, CurrentValue);
 end;
 
-function TBluePrintSerializer.GetFieldName(const RttiObject: TRttiObject; const DefaultValue: String): String;
+function TBluePrintSerializer.GetFieldName(const RttiObject: TRttiNamedObject): String;
 var
   FieldName: FieldNameAttribute;
 
@@ -264,7 +286,7 @@ begin
   if Assigned(FieldName) then
     Result := FieldName.Name
   else
-    Result := DefaultValue;
+    Result := RttiObject.Name;
 end;
 
 function TBluePrintSerializer.GetPublishedProperties(const RttiType: TRttiType): TArray<TRttiProperty>;
@@ -571,35 +593,6 @@ begin
 
     else Result := TValue.Empty;
   end;
-end;
-
-function TBluePrintJsonSerializer.FindPropertyByName(const RttiType: TRttiType; const PropertyName: String): TRttiProperty;
-var
-  PatternProperty: PatternPropertyAttribute;
-  &Property: TRttiProperty;
-
-begin
-  Result := nil;
-
-  for &Property in RttiType.GetProperties do
-  begin
-    PatternProperty := &Property.GetAttribute<PatternPropertyAttribute>;
-
-    if Assigned(PatternProperty) then
-    begin
-      if CheckRegularExpression(PropertyName, PatternProperty.Regex) then
-        Exit(&Property);
-    end
-    else if &Property.PropertyType.IsDynamicProperty then
-      Result := &Property
-    else if GetFieldName(&Property) = PropertyName then
-      Exit(&Property);
-  end;
-end;
-
-function TBluePrintJsonSerializer.GetFieldName(const RttiObject: TRttiNamedObject): String;
-begin
-  Result := inherited GetFieldName(RttiObject, RttiObject.Name);
 end;
 
 function TBluePrintJsonSerializer.GetJSONValue(const JSONValue: TJSONValue): String;
@@ -957,7 +950,7 @@ const
       FindPropertyValue.SetValue(Instance, TValue.FromVariant(Node.NodeValue))
     else
     begin
-      var Prop := RttiType.GetProperty(Node.NodeName);
+      var Prop := FindPropertyByName(RttiType, Node.NodeName);
 
       if Assigned(Prop) then
       begin
@@ -1086,11 +1079,6 @@ begin
 {$ENDIF}
 end;
 
-function TBluePrintXMLSerializer.GetNodeName(const RttiMember: TRttiMember): String;
-begin
-  Result := inherited GetFieldName(RttiMember, RttiMember.Name);
-end;
-
 function TBluePrintXMLSerializer.LoadAttributes(const RttiObject: TRttiObject; const Node: IXMLNode): IXMLNode;
 begin
 {$IFDEF DCC}
@@ -1128,8 +1116,15 @@ var
   XMLDocument: IXMLDocument;
 
   function GetDocumentName: String;
+  var
+    DocumentName: DocumentNameAttribute;
   begin
-    Result := GetFieldName(ValueType, 'Document');
+    DocumentName := ValueType.GetAttribute<DocumentNameAttribute>;
+
+    if Assigned(DocumentName) then
+      Result := DocumentName.Name
+    else
+      Result := 'Document';
   end;
 {$ENDIF}
 
@@ -1184,7 +1179,7 @@ procedure TBluePrintXMLSerializer.SerializeFields(const RttiType: TRttiType; con
 begin
 {$IFDEF DCC}
   for var Field in RttiType.GetFields do
-    SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetNodeName(Field)), Namespace, '');
+    SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetFieldName(Field)), Namespace, '');
 {$ENDIF}
 end;
 
@@ -1202,7 +1197,7 @@ begin
         var NodeValue := Node;
 
         if not &Property.HasAttribute<XMLValueAttribute> then
-          NodeValue := Node.AddChild(GetNodeName(&Property), CurrentNamespace);
+          NodeValue := Node.AddChild(GetFieldName(&Property), CurrentNamespace);
 
         SerializeType(&Property.PropertyType, PropertyValue, LoadAttributes(&Property, NodeValue), CurrentNamespace, GetFormatValue(&Property));
       end;
