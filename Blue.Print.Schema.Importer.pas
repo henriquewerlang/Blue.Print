@@ -1084,7 +1084,7 @@ procedure TXSDImporter.GenerateUnitFileDefinition(const UnitDefinition: TUnitDef
   end;
 
 begin
-  var Schema := LoadXMLSchema(GetFileNameFromSchemaFolder(UnitFileConfiguration.Reference));
+  var Schema := LoadXMLSchemaStr(LoadFile(UnitFileConfiguration));
 
   ProcessReferences(UnitDefinition, Schema.SchemaDef.SchemaIncludes);
 
@@ -1131,17 +1131,42 @@ begin
   AddBuildInType('anyURI', StringType);
   AddBuildInType('base64Binary', StringType);
   AddBuildInType('boolean', BooleanType);
+  AddBuildInType('byte', IntegerType);
   AddBuildInType('date', DateType);
   AddBuildInType('dateTime', DateTimeType);
   AddBuildInType('decimal', DoubleType);
+  AddBuildInType('double', DoubleType);
+  AddBuildInType('ENTITIES', StringType);
+  AddBuildInType('ENTITY', StringType);
+  AddBuildInType('float', DoubleType);
+  AddBuildInType('gDay', StringType);
+  AddBuildInType('gMonth', StringType);
+  AddBuildInType('gMonthDay', StringType);
+  AddBuildInType('gYear', StringType);
+  AddBuildInType('gYearMonth', StringType);
   AddBuildInType('ID', StringType);
+  AddBuildInType('IDREF', StringType);
+  AddBuildInType('IDREFS', StringType);
   AddBuildInType('int', IntegerType);
+  AddBuildInType('integer', IntegerType);
+  AddBuildInType('lang', StringType);
+  AddBuildInType('language', StringType);
   AddBuildInType('long', Int64Type);
+  AddBuildInType('Name', StringType);
+  AddBuildInType('NCName', StringType);
+  AddBuildInType('NMTOKEN', StringType);
+  AddBuildInType('NMTOKENS', StringType);
+  AddBuildInType('normalizedString', StringType);
+  AddBuildInType('NOTATION', StringType);
+  AddBuildInType('QName', StringType);
+  AddBuildInType('short', IntegerType);
   AddBuildInType('string', StringType);
   AddBuildInType('time', TimeType);
   AddBuildInType('token', StringType);
-  AddBuildInType('unsignedShort', WordType);
+  AddBuildInType('unsignedByte', IntegerType);
   AddBuildInType('unsignedInt', CardinalType);
+  AddBuildInType('unsignedLong', Int64Type);
+  AddBuildInType('unsignedShort', WordType);
 end;
 
 { TUnitDefinition }
