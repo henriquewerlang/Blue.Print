@@ -839,7 +839,7 @@ procedure TSchemaImporter.LoadUnitFromReference(const Reference: String);
 begin
   for var UnitConfiguration in Configuration.UnitConfiguration do
     for var UnitFileConfiguration in UnitConfiguration.Files do
-      if UnitFileConfiguration.Reference = Reference then
+      if TPath.GetFileName(UnitFileConfiguration.Reference) = Reference then
       begin
         LoadUnitFileDefinition(LoadUnit(UnitConfiguration), UnitFileConfiguration);
 
