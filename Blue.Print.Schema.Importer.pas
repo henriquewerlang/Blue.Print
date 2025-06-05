@@ -22,14 +22,21 @@ type
 
   TImplementationInformation = (NeedDestructor, NeedGetFunction, NeedSetProcedure, NeedAddFunction, NeedIsStoredFunction, NeedIsStoredField);
   TImplementationInformations = set of TImplementationInformation;
+  TSchemaType = (XSD, JSON, OpenAPI20, OpenAPI30, OpenAPI31, WSDL);
 
   TUnitFileConfiguration = class
   private
     FAppendClassName: String;
     FReference: String;
     FUnitClassName: String;
+    FFileType: TSchemaType;
+    FIsFileTypeStored: Boolean;
+
+    procedure SetFileType(const Value: TSchemaType);
   public
     property AppendClassName: String read FAppendClassName write FAppendClassName;
+    property FileType: TSchemaType read FFileType write SetFileType stored FIsFileTypeStored;
+    property IsFileTypeStored: Boolean read FIsFileTypeStored write FIsFileTypeStored;
     property Reference: String read FReference write FReference;
     property UnitClassName: String read FUnitClassName write FUnitClassName;
   end;
@@ -589,21 +596,34 @@ begin
 end;
 
 function TSchemaImporter.CreateSchemaLoader(const UnitFileConfiguration: TUnitFileConfiguration): ISchemaLoader;
+const
+  FILE_SCHEMA_EXTENSION: array[TSchemaType] of String = ('xsd', 'json', 'oas2', 'oas3', 'oas31', 'wsdl');
+
+  function GetFileType: TSchemaType;
+  begin
+    var FileExtension := TPath.GetExtension(UnitFileConfiguration.Reference);
+
+    for var SchemaExtension := Low(TSchemaType) to High(TSchemaType) do
+      if FileExtension = '.' + FILE_SCHEMA_EXTENSION[SchemaExtension] then
+        Exit(SchemaExtension);
+
+    raise Exception.Create('Unable to define the file type schema!');
+  end;
+
 begin
-  if TPath.GetExtension(UnitFileConfiguration.Reference) = '.xsd' then
-    Result := TXSDSchemaLoader.Create(Self)
-  else if TPath.GetExtension(UnitFileConfiguration.Reference) = '.wsdl' then
-    Result := TWSDLSchemaLoader.Create(Self)
-  else if TPath.GetExtension(UnitFileConfiguration.Reference) = '.json' then
-    Result := TJSONSchemaLoader.Create(Self)
-  else if TPath.GetExtension(UnitFileConfiguration.Reference) = '.oas2' then
-    Result := TOpenAPI20SchemaLoader.Create(Self)
-  else if TPath.GetExtension(UnitFileConfiguration.Reference) = '.oas3' then
-    Result := TOpenAPI30SchemaLoader.Create(Self)
-  else if TPath.GetExtension(UnitFileConfiguration.Reference) = '.oas31' then
-    Result := TOpenAPI31SchemaLoader.Create(Self)
-  else
-    Result := nil;
+  var FileType := UnitFileConfiguration.FileType;
+
+  if not UnitFileConfiguration.IsFileTypeStored then
+    FileType := GetFileType;
+
+  case FileType of
+    TSchemaType.XSD: Result := TXSDSchemaLoader.Create(Self);
+    TSchemaType.JSON: Result := TJSONSchemaLoader.Create(Self);
+    TSchemaType.OpenAPI20: Result := TOpenAPI20SchemaLoader.Create(Self);
+    TSchemaType.OpenAPI30: Result := TOpenAPI30SchemaLoader.Create(Self);
+    TSchemaType.OpenAPI31: Result := TOpenAPI31SchemaLoader.Create(Self);
+    TSchemaType.WSDL: Result := TWSDLSchemaLoader.Create(Self);
+  end;
 end;
 
 function TSchemaImporter.CreateTypeAlias(const Module: TTypeModuleDefinition; const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
@@ -2803,6 +2823,14 @@ begin
   var WSDLDocument := NewWSDLDoc;
 
   WSDLDocument.LoadFromXML(FImporter.LoadFile(UnitFileConfiguration));
+end;
+
+{ TUnitFileConfiguration }
+
+procedure TUnitFileConfiguration.SetFileType(const Value: TSchemaType);
+begin
+  FFileType := Value;
+  FIsFileTypeStored := True;
 end;
 
 end.
