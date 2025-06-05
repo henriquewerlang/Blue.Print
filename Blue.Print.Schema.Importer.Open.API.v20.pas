@@ -5,8 +5,9 @@ interface
 uses System.Generics.Collections, Blue.Print.Schema.Importer, Blue.Print.Open.API.Schema.v20;
 
 type
-  TOpenAPI20Import = class(TSchemaImporter)
+  TOpenAPI20SchemaLoader = class(TInterfacedObject, ISchemaLoader)
   private
+    FImporter: TSchemaImporter;
     FOpenAPIDefinition: TOpenAPIDefinition;
     FOpenAPIDefinitions: TDictionary<String, TOpenAPIDefinition>;
 
@@ -16,10 +17,10 @@ type
     function GetSchemaReferenceName(const OpenAPISchema: Schema): String;
     function GetSimpleType(const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems): TTypeDefinition;
     function LoadOpenAPIDefinition(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;
-  protected
-    procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration); override;
+
+    procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
   public
-    constructor Create;
+    constructor Create(const Importer: TSchemaImporter);
 
     destructor Destroy; override;
   end;
@@ -56,23 +57,24 @@ implementation
 
 uses System.SysUtils, System.Generics.Defaults, Blue.Print.Serializer, Blue.Print.Types;
 
-{ TOpenAPI20Import }
+{ TOpenAPI20SchemaLoader }
 
-constructor TOpenAPI20Import.Create;
+constructor TOpenAPI20SchemaLoader.Create(const Importer: TSchemaImporter);
 begin
-  inherited;
+  inherited Create;
 
+  FImporter := Importer;
   FOpenAPIDefinitions := TDictionary<String, TOpenAPIDefinition>.Create(TIStringComparer.Ordinal);
 end;
 
-destructor TOpenAPI20Import.Destroy;
+destructor TOpenAPI20SchemaLoader.Destroy;
 begin
   FOpenAPIDefinitions.Free;
 
   inherited;
 end;
 
-function TOpenAPI20Import.GenerateClassDefintion(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const ClassName: String): TTypeDefinition;
+function TOpenAPI20SchemaLoader.GenerateClassDefintion(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const ClassName: String): TTypeDefinition;
 begin
   var ClassDefinition := TClassDefinition.Create(Module);
   ClassDefinition.Name := ClassName;
@@ -94,12 +96,12 @@ begin
   Module.Classes.Add(ClassDefinition);
 end;
 
-function TOpenAPI20Import.GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const TypeName: String): TTypeDefinition;
+function TOpenAPI20SchemaLoader.GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const TypeName: String): TTypeDefinition;
 var
   UnitDefinition: TUnitDefinition;
 
 begin
-  Result := FindType(TypeName, Module);
+  Result := FImporter.FindType(TypeName, Module);
 
   if not Assigned(Result) then
   begin
@@ -121,9 +123,9 @@ begin
   end;
 end;
 
-procedure TOpenAPI20Import.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+procedure TOpenAPI20SchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
 var
-  Service: TTypeServiceDefinition;
+  Service: TTypeInterfaceDefinition;
 
   procedure AddMethod(const Operation: Operation);
   var
@@ -191,19 +193,18 @@ var
 
 begin
   FOpenAPIDefinition := LoadOpenAPIDefinition(UnitFileConfiguration);
-  Service := TTypeServiceDefinition.Create(UnitDefinition);
-  Service.Name := UnitDefinition.UnitConfiguration.ServiceName;
+  Service := FImporter.CreateInterfaceDefinition(UnitDefinition, UnitFileConfiguration.UnitClassName);
 
-  UnitDefinition.Services.Add(Service);
+  UnitDefinition.Interfaces.Add(Service);
 
   for var Definition in FOpenAPIDefinition.definitions.schema do
   begin
     var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
 
-    if TypeDefinition.IsEnumeration and not BuildInType.ContainsKey(TypeDefinition.Name) then
+    if TypeDefinition.IsEnumeration and not FImporter.BuildInType.ContainsKey(TypeDefinition.Name) then
       UnitDefinition.Enumerations.Add(TypeDefinition.AsTypeEnumeration)
     else if not TypeDefinition.IsClassDefinition then
-      UnitDefinition.AddTypeAlias(CreateTypeAlias(UnitDefinition, Definition.Key, TypeDefinition));
+      UnitDefinition.AddTypeAlias(FImporter.CreateTypeAlias(UnitDefinition, Definition.Key, TypeDefinition));
   end;
 
   for var PathItem in FOpenAPIDefinition.paths.pathItem do
@@ -223,7 +224,7 @@ begin
       AddMethod(PathItem.Value.head);
 end;
 
-function TOpenAPI20Import.GetSchemaReference(const OpenAPISchema: Schema): Schema;
+function TOpenAPI20SchemaLoader.GetSchemaReference(const OpenAPISchema: Schema): Schema;
 begin
   var List: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Schema> := nil;
   Result := nil;
@@ -242,33 +243,33 @@ begin
     raise Exception.CreateFmt('Reference not found %s', [OpenAPISchema.ref]);
 end;
 
-function TOpenAPI20Import.GetSchemaReferenceName(const OpenAPISchema: Schema): String;
+function TOpenAPI20SchemaLoader.GetSchemaReferenceName(const OpenAPISchema: Schema): String;
 begin
   var Values := OpenAPISchema.ref.Split(['/']);
 
   Result := Values[High(Values)];
 end;
 
-function TOpenAPI20Import.GetSimpleType(const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems): TTypeDefinition;
+function TOpenAPI20SchemaLoader.GetSimpleType(const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems): TTypeDefinition;
 begin
   case SimpleType of
     simpleTypes.array: Result := nil;
-    simpleTypes.boolean: Result := BooleanType;
+    simpleTypes.boolean: Result := FImporter.BooleanType;
     simpleTypes.null: Result := nil;
-    simpleTypes.integer: Result := IntegerType;
-    simpleTypes.number: Result := DoubleType;
-    simpleTypes.&string: Result := StringType;
+    simpleTypes.integer: Result := FImporter.IntegerType;
+    simpleTypes.number: Result := FImporter.DoubleType;
+    simpleTypes.&string: Result := FImporter.StringType;
     else Result := nil;
   end
 end;
 
-function TOpenAPI20Import.LoadOpenAPIDefinition(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;
+function TOpenAPI20SchemaLoader.LoadOpenAPIDefinition(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;
 begin
   if not FOpenAPIDefinitions.TryGetValue(UnitFileConfiguration.Reference, Result) then
   begin
     var Serializer := TBluePrintJsonSerializer.Create as IBluePrintSerializer;
 
-    Result := Serializer.Deserialize(LoadFile(UnitFileConfiguration), TypeInfo(TOpenAPIDefinition)).AsType<TOpenAPIDefinition>;
+    Result := Serializer.Deserialize(FImporter.LoadFile(UnitFileConfiguration), TypeInfo(TOpenAPIDefinition)).AsType<TOpenAPIDefinition>;
 
     FOpenAPIDefinitions.Add(UnitFileConfiguration.Reference, Result);
   end;

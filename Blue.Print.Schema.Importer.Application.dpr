@@ -18,10 +18,6 @@ uses
 begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
-
-  if FindCmdLineSwitch('XSD') then
-    ImportCommandLine
-  else
-    Application.CreateForm(TMain, Main);
+  Application.CreateForm(TMain, Main);
   Application.Run;
 end.

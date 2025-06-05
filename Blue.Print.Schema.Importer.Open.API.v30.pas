@@ -5,16 +5,23 @@ interface
 uses Blue.Print.Schema.Importer;
 
 type
-  TOpenAPI30Import = class(TSchemaImporter)
-  protected
-    procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration); override;
+  TOpenAPI30SchemaLoader = class(TInterfacedObject, ISchemaLoader)
+  private
+    procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+  public
+    constructor Create(const Importer: TSchemaImporter);
   end;
 
 implementation
 
-{ TOpenAPI30Import }
+{ TOpenAPI30SchemaLoader }
 
-procedure TOpenAPI30Import.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+constructor TOpenAPI30SchemaLoader.Create(const Importer: TSchemaImporter);
+begin
+  inherited Create;
+end;
+
+procedure TOpenAPI30SchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
 begin
   inherited;
 
