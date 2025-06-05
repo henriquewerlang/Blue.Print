@@ -1142,8 +1142,16 @@ procedure TXSDSchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUni
     end;
   end;
 
+  function LoadFile: IXMLSchemaDoc;
+  begin
+    if UnitFileConfiguration.Reference.StartsWith('http') then
+      Result := LoadXMLSchemaStr(FImporter.LoadFile(UnitFileConfiguration))
+    else
+      Result := LoadXMLSchema(FImporter.GetFileNameFromSchemaFolder(UnitFileConfiguration.Reference))
+  end;
+
 begin
-  var Schema := LoadXMLSchema(FImporter.GetFileNameFromSchemaFolder(UnitFileConfiguration.Reference));
+  var Schema := LoadFile;
 
   ProcessReferences(UnitDefinition, Schema.SchemaDef.SchemaIncludes);
 
