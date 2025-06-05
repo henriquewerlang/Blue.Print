@@ -433,8 +433,8 @@ type
 
     function AddProperty(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef; const IsReferenceType: Boolean): TPropertyDefinition;
     function CanGenerateClass(const Element: IXMLElementDef): Boolean;
+    function CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
     function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
-    function CheckEnumeration(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeEnumeration;
     function FindBaseType(const TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
     function GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef; const TargetNamespace: String): TPropertyDefinition;
@@ -935,7 +935,7 @@ function TXSDSchemaLoader.AddProperty(const ClassDefinition: TClassDefinition; c
       end
       else
       begin
-        Result := CheckEnumeration(&Type, ClassDefinition);
+        Result := CheckTypeDefinition(&Type, ClassDefinition);
 
         if not Assigned(Result) then
           Result := FindType(&Type.Name, ClassDefinition);
@@ -987,18 +987,20 @@ end;
 
 function TXSDSchemaLoader.FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
 begin
-  if FXMLBuildInType.TryGetValue(TypeName, Result) then
+  if FXMLBuildInType.TryGetValue(TypeName, Result) or FXMLBuildInType.TryGetValue(TypeName.Substring(Succ(SXMLSchemaPrefix.Length)), Result) then
     Exit;
 
   Result := FImporter.FindType(TypeName, Module);
 end;
 
-function TXSDSchemaLoader.CheckEnumeration(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeEnumeration;
+function TXSDSchemaLoader.CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
 var
-  EnumValues: TStringList;
+  SimpleType: IXMLSimpleTypeDef;
 
-begin
-  if &Type.Enumerations.Count > 0 then
+  function CreateEnumeration: TTypeEnumeration;
+  var
+    EnumValues: TStringList;
+
   begin
     EnumValues := TStringList.Create(dupIgnore, False, False);
     Result := TTypeEnumeration.Create(Module);
@@ -1017,9 +1019,25 @@ begin
 
     if Assigned(Module) then
       Module.Enumerations.Add(Result);
-  end
-  else
-    Result := nil;
+  end;
+
+  function CreateArray: TTypeAlias;
+  begin
+    Result := FImporter.CreateTypeAlias(Module, &Type.Name, TTypeArrayDefinition.Create(Module, FindType((SimpleType.ContentNode as IXMLSimpleTypeList).ItemType, Module)));
+
+    Module.AsUnitDefinition.AddTypeAlias(Result);
+  end;
+
+begin
+  Result := nil;
+
+  if Supports(&Type, IXMLSimpleTypeDef, SimpleType) then
+    case SimpleType.DerivationMethod of
+      sdmNone: ;
+      sdmRestriction: Result := CreateEnumeration;
+      sdmList: Result := CreateArray;
+      sdmUnion: Abort;
+    end;
 end;
 
 function TXSDSchemaLoader.CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
@@ -1027,15 +1045,13 @@ begin
   Result := FindType(&Type.Name, UnitDefinition);
 
   if not Assigned(Result) then
-    Result := CheckEnumeration(&Type, UnitDefinition);
+    Result := CheckTypeDefinition(&Type, UnitDefinition);
 
   if not Assigned(Result) then
   begin
-    var TypeAlias := FImporter.CreateTypeAlias(UnitDefinition, &Type.Name, FindBaseType(&Type, UnitDefinition));
+    Result := FImporter.CreateTypeAlias(UnitDefinition, &Type.Name, FindBaseType(&Type, UnitDefinition));
 
-    Result := TypeAlias;
-
-    UnitDefinition.AddTypeAlias(TypeAlias);
+    UnitDefinition.AddTypeAlias(Result.AsTypeAlias);
   end;
 end;
 
