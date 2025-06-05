@@ -943,6 +943,9 @@ function TXSDSchemaLoader.AddProperty(const ClassDefinition: TClassDefinition; c
         if not Assigned(Result) then
           Result := FindBaseType(&Type, ClassDefinition);
       end;
+
+    if not Assigned(Result) then
+      raise Exception.CreateFmt('Type %s not found for the property %s!', [&Type.Name, Name]);
   end;
 
 begin
@@ -1169,10 +1172,10 @@ procedure TXSDSchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUni
 begin
   var Schema := LoadFile;
 
-  ProcessReferences(UnitDefinition, Schema.SchemaDef.SchemaIncludes);
-
-  ProcessReferences(UnitDefinition, Schema.SchemaDef.SchemaImports);
-
+//  ProcessReferences(UnitDefinition, Schema.SchemaDef.SchemaIncludes);
+//
+//  ProcessReferences(UnitDefinition, Schema.SchemaDef.SchemaImports);
+//
   for var A := 0 to Pred(Schema.SchemaDef.SimpleTypes.Count) do
     CheckUnitTypeDefinition(Schema.SchemaDef.SimpleTypes[A], UnitDefinition);
 
