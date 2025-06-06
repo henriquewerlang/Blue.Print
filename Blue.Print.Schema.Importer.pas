@@ -1005,23 +1005,28 @@ var
     EnumValues: TStringList;
 
   begin
-    EnumValues := TStringList.Create(dupIgnore, False, False);
-    Result := TTypeEnumeration.Create(Module);
-    Result.Name := &Type.Name;
-
-    for var A := 0 to Pred(&Type.Enumerations.Count) do
+    if &Type.Enumerations.Count > 0 then
     begin
-      var EnumValue := &Type.Enumerations[A].Value;
+      EnumValues := TStringList.Create(dupIgnore, False, False);
+      Result := TTypeEnumeration.Create(Module);
+      Result.Name := &Type.Name;
 
-      if EnumValues.IndexOf(EnumValue) = -1 then
-        EnumValues.Add(EnumValue);
-    end;
+      for var A := 0 to Pred(&Type.Enumerations.Count) do
+      begin
+        var EnumValue := &Type.Enumerations[A].Value;
 
-    for var EnumValue in EnumValues do
-      Result.Values.Add(EnumValue);
+        if EnumValues.IndexOf(EnumValue) = -1 then
+          EnumValues.Add(EnumValue);
+      end;
 
-    if Assigned(Module) then
-      Module.Enumerations.Add(Result);
+      for var EnumValue in EnumValues do
+        Result.Values.Add(EnumValue);
+
+      if Assigned(Module) then
+        Module.Enumerations.Add(Result);
+    end
+    else
+      Result := nil;
   end;
 
   function CreateArray: TTypeAlias;
