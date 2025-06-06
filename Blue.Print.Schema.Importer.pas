@@ -563,12 +563,12 @@ begin
   for var TypeDefinitionConfig in Configuration.TypeDefinition do
     if (TypeDefinitionConfig.Name = TypeName) and not TypeDefinitionConfig.ChangeType.IsEmpty then
     begin
-      var ChangeType := FindType(TypeDefinitionConfig.ChangeType, UnitDefinition);
+      var TypeToChange := FindType(TypeDefinitionConfig.ChangeType, UnitDefinition);
 
-      if not Assigned(ChangeType) then
-        ChangeType := UnitDefinition.AddDelayedType(TypeDefinitionConfig.ChangeType);
+      if not Assigned(TypeToChange) then
+        TypeToChange := UnitDefinition.AddDelayedType(TypeDefinitionConfig.ChangeType);
 
-      Result := CreateTypeAlias(UnitDefinition, TypeName, ChangeType);
+      Result := CreateTypeAlias(UnitDefinition, TypeName, TypeToChange);
 
       UnitDefinition.AddTypeAlias(Result.AsTypeAlias);
     end;
@@ -676,6 +676,9 @@ begin
 
   while Assigned(ClassModule) and not FindTypeDefinitionInModule(ClassModule, TypeName, Result) do
     ClassModule := ClassModule.ParentModule;
+
+  if not Assigned(Result) then
+    Result := FindTypeInUnits(nil, TypeName);
 
   if not Assigned(Result) and Module.IsUnitDefinition then
     Result := CheckChangeTypeName(TypeName, Module.AsUnitDefinition);
