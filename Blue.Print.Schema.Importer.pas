@@ -666,9 +666,6 @@ function TSchemaImporter.FindType(const TypeName: String; const Module: TTypeMod
 begin
   Result := nil;
 
-  if Module.IsUnitDefinition then
-    Result := CheckChangeTypeName(TypeName, Module.AsUnitDefinition);
-
   if FTypeExternal.TryGetValue(TypeName, Result) then
     Exit;
 
@@ -679,6 +676,9 @@ begin
 
   while Assigned(ClassModule) and not FindTypeDefinitionInModule(ClassModule, TypeName, Result) do
     ClassModule := ClassModule.ParentModule;
+
+  if not Assigned(Result) and Module.IsUnitDefinition then
+    Result := CheckChangeTypeName(TypeName, Module.AsUnitDefinition);
 end;
 
 function TSchemaImporter.FindTypeDefinitionInModule(const Module: TTypeModuleDefinition; const TypeName: String; var TypeDefinition: TTypeDefinition): Boolean;
