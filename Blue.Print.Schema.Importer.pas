@@ -90,9 +90,22 @@ type
     property UnitConfiguration: TArray<TUnitDefinitionConfiguration> read FUnitConfiguration write FUnitConfiguration;
   end;
 
-  TPropertyDefinition = class
+  TTypeCommonDefinition = class
   private
     FAttributes: TList<String>;
+  public
+    constructor Create;
+
+    destructor Destroy; override;
+
+    property Attributes: TList<String> read FAttributes write FAttributes;
+
+    procedure AddAtribute(const Attribute: String); overload;
+    procedure AddAtribute(const Attribute: String; const Params: array of const); overload;
+  end;
+
+  TPropertyDefinition = class(TTypeCommonDefinition)
+  private
     FInformations: TImplementationInformations;
     FName: String;
     FOptional: Boolean;
@@ -105,18 +118,11 @@ type
     function GetNeedIsStoredFunction: Boolean;
     function GetNeedSetProcedure: Boolean;
   public
-    constructor Create;
-
-    destructor Destroy; override;
-
-    procedure AddAtribute(const Attribute: String); overload;
-    procedure AddAtribute(const Attribute: String; const Params: array of const); overload;
     procedure AddFieldAttribute(const Name: String);
     procedure AddXMLAttributeFixed(const Name, Value: String);
     procedure AddXMLAttributeValue;
     procedure AddXMLValueAttribute;
 
-    property Attributes: TList<String> read FAttributes write FAttributes;
     property Informations: TImplementationInformations read FInformations write FInformations;
     property Name: String read FName write FName;
     property NeedAddFunction: Boolean read GetNeedAddFunction;
@@ -129,9 +135,8 @@ type
     property PropertyType: TTypeDefinition read FPropertyType write FPropertyType;
   end;
 
-  TTypeDefinition = class
+  TTypeDefinition = class(TTypeCommonDefinition)
   private
-    FAttributes: TList<String>;
     FIsNumericType: Boolean;
     FIsObjectType: Boolean;
     FIsStringType: Boolean;
@@ -168,7 +173,6 @@ type
     property AsTypeEnumeration: TTypeEnumeration read GetAsTypeEnumeration;
     property AsTypeExternal: TTypeExternal read GetAsTypeExternal;
     property AsUnitDefinition: TUnitDefinition read GetAsUnitDefinition;
-    property Attributes: TList<String> read FAttributes write FAttributes;
     property IsArrayType: Boolean read GetIsArrayType;
     property IsClassDefinition: Boolean read GetIsClassDefinition;
     property IsDelayedType: Boolean read GetIsDelayedType;
@@ -244,7 +248,7 @@ type
     property ParameterType: TTypeDefinition read FParameterType write FParameterType;
   end;
 
-  TTypeMethodDefinition = class
+  TTypeMethodDefinition = class(TTypeCommonDefinition)
   private
     FName: String;
     FReturn: TTypeDefinition;
@@ -486,8 +490,8 @@ type
 
 implementation
 
-uses System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, System.Generics.Defaults, Xml.XMLIntf, XML.XMLDom, Xml.XMLSchemaTags, Soap.WSDLBind, Blue.Print.Serializer, Blue.Print.Schema.Importer.Open.API.v20,
-  Blue.Print.Schema.Importer.Open.API.v30, Blue.Print.Schema.Importer.Open.API.v31;
+uses System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, System.Generics.Defaults, Xml.XMLIntf, XML.XMLDom, Xml.XMLSchemaTags, Soap.WSDLBind, Soap.WSDLIntf, Blue.Print.Serializer,
+  Blue.Print.Schema.Importer.Open.API.v20, Blue.Print.Schema.Importer.Open.API.v30, Blue.Print.Schema.Importer.Open.API.v31;
 
 const
   DEFAULT_SCHEMA_CLASS_NAME = 'Schema';
@@ -775,7 +779,7 @@ begin
     if Assigned(TypeDefinition) then
     begin
       if not TypeDefinitionConfig.Attribute.IsEmpty then
-        TypeDefinition.Attributes.Add(TypeDefinitionConfig.Attribute);
+        TypeDefinition.AddAtribute(TypeDefinitionConfig.Attribute);
 
       if not TypeDefinitionConfig.ParentAttribute.IsEmpty then
         TypeDefinition.ParentAttributes.Add(TypeDefinitionConfig.ParentAttribute);
@@ -1482,10 +1486,15 @@ var
     Result := Format('Add%s: %s', [FormatName(&Property.Name), GetTypeName(GetArrayItemType(GetPropertyType(&Property)))]);
   end;
 
-  procedure LoadAttributes(const Ident: String; const AttributesList: TArray<String>);
+  procedure LoadAttributesList(const Ident: String; const Attributes: TArray<String>);
   begin
-    for var Attribute in AttributesList do
+    for var Attribute in Attributes do
       AddLine('%s[%s]', [Ident, Attribute]);
+  end;
+
+  procedure LoadAttributes(const Ident: String; const TypeDefinition: TTypeCommonDefinition);
+  begin
+    LoadAttributesList(Ident, TypeDefinition.Attributes.ToArray);
   end;
 
   procedure GenerateEnumerators(const Ident: String; const Module: TTypeModuleDefinition);
@@ -1521,7 +1530,7 @@ var
       if not FirstEnumerator then
         AddLine;
 
-      LoadAttributes(Ident, Enumerator.Attributes.ToArray);
+      LoadAttributes(Ident, Enumerator);
 
       AddLine('%s[EnumValue(''%s'')]', [Ident, GetEnumeratorValues(Enumerator, ''' +' + sLineBreak + Ident + WHITE_SPACE_IDENT + '''', NotFormatEnumeratorValue)]);
 
@@ -1627,7 +1636,7 @@ var
   begin
     LoadClassInformation;
 
-    LoadAttributes(Ident, ClassDefinition.Attributes.ToArray);
+    LoadAttributes(Ident, ClassDefinition);
 
     AddLine('%s%s = class%s', [Ident, GetClassName(ClassDefinition), GetInheritence]);
 
@@ -1700,7 +1709,7 @@ var
 
       for var &Property in ClassDefinition.Properties do
       begin
-        LoadAttributes(Ident + WHITE_SPACE_IDENT, &Property.Attributes.ToArray + GetPropertyType(&Property).ParentAttributes.ToArray);
+        LoadAttributesList(Ident + WHITE_SPACE_IDENT, &Property.Attributes.ToArray + GetPropertyType(&Property).ParentAttributes.ToArray);
 
         AddLine('%s  property %s: %s read %s write %s%s;', [Ident, FormatPropertyName(&Property.Name), GetPropertyTypeName(&Property), GetPropertyReadMethod(&Property), GetPropertyWriteMethod(&Property),
           GetStoredPropertyDeclaration(&Property)]);
@@ -1980,6 +1989,8 @@ var
     end;
 
   begin
+    LoadAttributes('    ', Method);
+
     AddLine('    %s %s%s;', [GetMethodType, Method.Name, GetParameters, GetMethodReturn]);
   end;
 
@@ -2048,6 +2059,8 @@ begin
 
   for var &Interface in Interfaces do
   begin
+    LoadAttributes('  ', &Interface);
+
     AddLine('  %s = interface(IInvokable)', [&Interface.Name]);
 
     AddLine('    [%s]', [TGUID.NewGuid.ToString]);
@@ -2158,16 +2171,6 @@ end;
 
 { TPropertyDefinition }
 
-procedure TPropertyDefinition.AddAtribute(const Attribute: String; const Params: array of const);
-begin
-  AddAtribute(Format(Attribute, Params));
-end;
-
-procedure TPropertyDefinition.AddAtribute(const Attribute: String);
-begin
-  Attributes.Add(Attribute);
-end;
-
 procedure TPropertyDefinition.AddFieldAttribute(const Name: String);
 begin
   AddAtribute('FieldName(''%s'')', [Name]);
@@ -2186,18 +2189,6 @@ end;
 procedure TPropertyDefinition.AddXMLValueAttribute;
 begin
   AddAtribute('XMLValue');
-end;
-
-constructor TPropertyDefinition.Create;
-begin
-  FAttributes := TList<String>.Create;
-end;
-
-destructor TPropertyDefinition.Destroy;
-begin
-  FAttributes.Free;
-
-  inherited;
 end;
 
 function TPropertyDefinition.GetNeedAddFunction: Boolean;
@@ -2236,15 +2227,12 @@ constructor TTypeDefinition.Create(const ParentModule: TTypeModuleDefinition);
 begin
   inherited Create;
 
-  FAttributes := TList<String>.Create;
   FParentAttributes := TList<String>.Create;
   FParentModule := ParentModule;
 end;
 
 destructor TTypeDefinition.Destroy;
 begin
-  FAttributes.Free;
-
   FParentAttributes.Free;
 
   inherited;
@@ -3017,6 +3005,8 @@ begin
     var ServiceInterface := TTypeInterfaceDefinition.Create(UnitDefinition);
     ServiceInterface.Name := Service.Name;
 
+    ServiceInterface.AddAtribute('RemoteName('''')');
+
     UnitDefinition.Interfaces.Add(ServiceInterface);
 
     for var B := 0 to Pred(Service.Ports.Count) do
@@ -3034,6 +3024,11 @@ begin
         ServiceMethod.Name := Operation.Name;
         ServiceMethod.Return := LoadReturnType(PortTypeOperation.Output);
 
+        var SOAPOperation := Operation.ChildNodes.FindNode(SOperation, Soap12ns);
+        var SOAPAction := SOAPOperation.AttributeNodes.FindNode(SSoapAction);
+
+        ServiceMethod.AddAtribute('SOAPAction(''%s'')', [SOAPAction.Text]);
+
         ServiceInterface.Methods.Add(ServiceMethod);
 
         CreateParameters(PortTypeOperation.Input);
@@ -3048,6 +3043,32 @@ procedure TUnitFileConfiguration.SetFileType(const Value: TSchemaType);
 begin
   FFileType := Value;
   FIsFileTypeStored := True;
+end;
+
+{ TTypeCommonDefinition }
+
+procedure TTypeCommonDefinition.AddAtribute(const Attribute: String);
+begin
+  Attributes.Add(Attribute);
+end;
+
+procedure TTypeCommonDefinition.AddAtribute(const Attribute: String; const Params: array of const);
+begin
+  AddAtribute(Format(Attribute, Params));
+end;
+
+constructor TTypeCommonDefinition.Create;
+begin
+  inherited;
+
+  FAttributes := TList<String>.Create;
+end;
+
+destructor TTypeCommonDefinition.Destroy;
+begin
+  FAttributes.Free;
+
+  inherited;
 end;
 
 end.

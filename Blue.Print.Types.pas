@@ -240,7 +240,7 @@ type
     property Value: String read FValue;
   end;
 
-  SoapServiceAttribute = class(ContentTypeAttribute)
+  SOAPServiceAttribute = class(ContentTypeAttribute)
   private
     FBaseAction: String;
   public
@@ -249,7 +249,7 @@ type
     property BaseAction: String read FBaseAction;
   end;
 
-  SoapActionAttribute = class(TCustomAttribute)
+  SOAPActionAttribute = class(TCustomAttribute)
   private
     FActionName: String;
   public
@@ -524,18 +524,18 @@ begin
   inherited Create(HTTP_STATUS_BAD_REQUEST, ErrorMessage);
 end;
 
-{ SoapActionAttribute }
+{ SOAPActionAttribute }
 
-constructor SoapActionAttribute.Create(const ActionName: String);
+constructor SOAPActionAttribute.Create(const ActionName: String);
 begin
   inherited Create;
 
   FActionName := ActionName;
 end;
 
-{ SoapServiceAttribute }
+{ SOAPServiceAttribute }
 
-constructor SoapServiceAttribute.Create(const BaseAction: String);
+constructor SOAPServiceAttribute.Create(const BaseAction: String);
 begin
   inherited Create('text/xml');
 
