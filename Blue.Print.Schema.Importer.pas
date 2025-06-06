@@ -209,7 +209,6 @@ type
     FInformations: TImplementationInformations;
     FInheritedFrom: TTypeDefinition;
     FProperties: TList<TPropertyDefinition>;
-    FTargetNamespace: String;
 
     function GetNeedAddFunction: Boolean;
     function GetNeedDestructor: Boolean;
@@ -233,7 +232,6 @@ type
     property NeedImplementation: Boolean read GetNeedImplementation;
     property NeedDestructor: Boolean read GetNeedDestructor;
     property Properties: TList<TPropertyDefinition> read FProperties write FProperties;
-    property TargetNamespace: String read FTargetNamespace write FTargetNamespace;
     property UnitDefinition: TUnitDefinition read GetUnitDefinition;
   end;
 
@@ -437,12 +435,12 @@ type
     function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
     function FindBaseType(const TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
-    function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TTypeDefinition;
-    function GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef; const TargetNamespace: String): TPropertyDefinition;
+    function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef): TTypeDefinition;
+    function GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef): TPropertyDefinition;
     function IsReferenceType(const Element: IXMLTypedSchemaItem): Boolean;
 
     procedure AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
-    procedure GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList; const TargetNamespace: String);
+    procedure GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList);
     procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
     procedure LoadXSDTypes;
   public
@@ -1047,7 +1045,7 @@ begin
   Result := nil;
 
   if &Type.IsComplex then
-    Result := GenerateClassDefinition(Module, &Type as IXMLComplexTypeDef, VarToStr(&Type.SchemaDef.TargetNamespace))
+    Result := GenerateClassDefinition(Module, &Type as IXMLComplexTypeDef)
   else if Supports(&Type, IXMLSimpleTypeDef, SimpleType) then
     case SimpleType.DerivationMethod of
       sdmNone: ;
@@ -1072,16 +1070,16 @@ begin
   end;
 end;
 
-function TXSDSchemaLoader.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TTypeDefinition;
+function TXSDSchemaLoader.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef): TTypeDefinition;
 begin
   var ClassName := ComplexType.Name;
 
   var ClassDefinition := FImporter.CreateClassDefinition(ParentModule, ClassName);
   Result := ClassDefinition;
 
-  ClassDefinition.AddNamespaceAttribute(TargetNamespace);
+  ClassDefinition.AddNamespaceAttribute(VarToStr(ComplexType.SchemaDef.TargetNamespace));
 
-  GenerateProperties(ClassDefinition, ComplexType.ElementDefList, TargetNamespace);
+  GenerateProperties(ClassDefinition, ComplexType.ElementDefList);
 
   for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
   begin
@@ -1099,13 +1097,13 @@ begin
   end;
 end;
 
-procedure TXSDSchemaLoader.GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList; const TargetNamespace: String);
+procedure TXSDSchemaLoader.GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList);
 begin
   for var A := 0 to Pred(ElementDefs.Count) do
-    GenerateProperty(ClassDefinition, ElementDefs[A], TargetNamespace);
+    GenerateProperty(ClassDefinition, ElementDefs[A]);
 end;
 
-function TXSDSchemaLoader.GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef; const TargetNamespace: String): TPropertyDefinition;
+function TXSDSchemaLoader.GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef): TPropertyDefinition;
 
   function IsOptional(const ElementDefinition: IXMLElementDef): Boolean;
   var
@@ -1152,7 +1150,7 @@ begin
     end
     else
     begin
-      GenerateClassDefinition(ClassDefinition, ComplexType, TargetNamespace);
+      GenerateClassDefinition(ClassDefinition, ComplexType);
 
       Result := CreateProperty(ComplexType);
     end;
@@ -1205,7 +1203,7 @@ begin
 
     for var A := 0 to Pred(Schema.SchemaDef.ElementDefs.Count) do
     begin
-      var &Property := GenerateProperty(ClassDefinition, Schema.SchemaDef.ElementDefs[A], Schema.SchemaDef.TargetNamespace);
+      var &Property := GenerateProperty(ClassDefinition, Schema.SchemaDef.ElementDefs[A]);
       &Property.Optional := &Property.Optional or not UnitFileConfiguration.AppendClassName.IsEmpty;
     end;
   end;
@@ -2121,7 +2119,6 @@ begin
   inherited Create(Module);
 
   FProperties := TObjectList<TPropertyDefinition>.Create;
-  FTargetNamespace := TargetNamespace;
 end;
 
 destructor TClassDefinition.Destroy;
