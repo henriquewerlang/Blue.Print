@@ -93,15 +93,23 @@ type
   TTypeCommonDefinition = class
   private
     FAttributes: TList<String>;
+    FParentAttributes: TList<String>;
+
+    function GetIsClassDefinition: Boolean;
   public
     constructor Create;
 
     destructor Destroy; override;
 
-    property Attributes: TList<String> read FAttributes write FAttributes;
+    function FormatNamespaceAttribute(const Namespace: String): String;
 
     procedure AddAtribute(const Attribute: String); overload;
     procedure AddAtribute(const Attribute: String; const Params: array of const); overload;
+    procedure AddNamespaceAttribute(const Namespace: String);
+
+    property Attributes: TList<String> read FAttributes;
+    property IsClassDefinition: Boolean read GetIsClassDefinition;
+    property ParentAttributes: TList<String> read FParentAttributes;
   end;
 
   TPropertyDefinition = class(TTypeCommonDefinition)
@@ -141,7 +149,6 @@ type
     FIsObjectType: Boolean;
     FIsStringType: Boolean;
     FName: String;
-    FParentAttributes: TList<String>;
     FParentModule: TTypeModuleDefinition;
 
     function GetAsArrayType: TTypeArrayDefinition;
@@ -153,7 +160,6 @@ type
     function GetAsTypeExternal: TTypeExternal;
     function GetAsUnitDefinition: TUnitDefinition;
     function GetIsArrayType: Boolean;
-    function GetIsClassDefinition: Boolean;
     function GetIsDelayedType: Boolean;
     function GetIsDynamicPropertyType: Boolean;
     function GetIsEnumeration: Boolean;
@@ -162,8 +168,6 @@ type
     function GetIsUnitDefinition: Boolean;
   public
     constructor Create(const ParentModule: TTypeModuleDefinition);
-
-    destructor Destroy; override;
 
     property AsArrayType: TTypeArrayDefinition read GetAsArrayType;
     property AsClassDefinition: TClassDefinition read GetAsClassDefinition;
@@ -174,7 +178,6 @@ type
     property AsTypeExternal: TTypeExternal read GetAsTypeExternal;
     property AsUnitDefinition: TUnitDefinition read GetAsUnitDefinition;
     property IsArrayType: Boolean read GetIsArrayType;
-    property IsClassDefinition: Boolean read GetIsClassDefinition;
     property IsDelayedType: Boolean read GetIsDelayedType;
     property IsDynamicPropertyType: Boolean read GetIsDynamicPropertyType;
     property IsEnumeration: Boolean read GetIsEnumeration;
@@ -185,7 +188,6 @@ type
     property IsTypeAlias: Boolean read GetIsTypeAlias;
     property IsUnitDefinition: Boolean read GetIsUnitDefinition;
     property Name: String read FName write FName;
-    property ParentAttributes: TList<String> read FParentAttributes;
     property ParentModule: TTypeModuleDefinition read FParentModule;
   end;
 
@@ -228,7 +230,6 @@ type
     procedure AddAtribute(const Value: String);
     procedure AddFlatAttribute; overload;
     procedure AddFlatAttribute(const EnumeratorPropertyName: String); overload;
-    procedure AddNamespaceAttribute(const Namespace: String);
 
     property Informations: TImplementationInformations read FInformations write FInformations;
     property InheritedFrom: TTypeDefinition read FInheritedFrom write FInheritedFrom;
@@ -239,7 +240,7 @@ type
     property UnitDefinition: TUnitDefinition read GetUnitDefinition;
   end;
 
-  TTypeParameterDefinition = class
+  TTypeParameterDefinition = class(TTypeCommonDefinition)
   private
     FName: String;
     FParameterType: TTypeDefinition;
@@ -1486,15 +1487,20 @@ var
     Result := Format('Add%s: %s', [FormatName(&Property.Name), GetTypeName(GetArrayItemType(GetPropertyType(&Property)))]);
   end;
 
-  procedure LoadAttributesList(const Ident: String; const Attributes: TArray<String>);
+  procedure LoadAtrributesList(const Ident: String; const List: TList<String>);
   begin
-    for var Attribute in Attributes do
+    for var Attribute in List do
       AddLine('%s[%s]', [Ident, Attribute]);
+  end;
+
+  procedure LoadParentAttributes(const Ident: String; const TypeDefinition: TTypeCommonDefinition);
+  begin
+    LoadAtrributesList(Ident, TypeDefinition.ParentAttributes);
   end;
 
   procedure LoadAttributes(const Ident: String; const TypeDefinition: TTypeCommonDefinition);
   begin
-    LoadAttributesList(Ident, TypeDefinition.Attributes.ToArray);
+    LoadAtrributesList(Ident, TypeDefinition.Attributes);
   end;
 
   procedure GenerateEnumerators(const Ident: String; const Module: TTypeModuleDefinition);
@@ -1709,7 +1715,9 @@ var
 
       for var &Property in ClassDefinition.Properties do
       begin
-        LoadAttributesList(Ident + WHITE_SPACE_IDENT, &Property.Attributes.ToArray + GetPropertyType(&Property).ParentAttributes.ToArray);
+        LoadAttributes(Ident + WHITE_SPACE_IDENT, &Property);
+
+        LoadParentAttributes(Ident + WHITE_SPACE_IDENT, GetPropertyType(&Property));
 
         AddLine('%s  property %s: %s read %s write %s%s;', [Ident, FormatPropertyName(&Property.Name), GetPropertyTypeName(&Property), GetPropertyReadMethod(&Property), GetPropertyWriteMethod(&Property),
           GetStoredPropertyDeclaration(&Property)]);
@@ -1970,15 +1978,34 @@ var
     end;
 
     function GetParameters: String;
+    var
+      Parameter: TTypeParameterDefinition;
+
+      function LoadAttributes: String;
+      begin
+        Result := EmptyStr;
+
+        for var Attribute in Parameter.Attributes.ToArray + Parameter.ParentAttributes.ToArray do
+        begin
+          if not Result.IsEmpty then
+            Result := Result + ', ';
+
+          Result := Result + Attribute;
+        end;
+
+        if not Result.IsEmpty then
+          Result := Format('[%s] ', [Result]);
+      end;
+
     begin
       Result := EmptyStr;
 
-      for var Parameter in Method.Parameters do
+      for Parameter in Method.Parameters do
       begin
         if not Result.IsEmpty then
           Result := Result + '; ';
 
-        Result := Result + Format('%s: %s', [Parameter.Name, GetTypeName(Parameter.ParameterType)]);
+        Result := Result + Format('%s%s: %s', [LoadAttributes, Parameter.Name, GetTypeName(Parameter.ParameterType)]);
       end;
 
       if not Result.IsEmpty then
@@ -2112,12 +2139,6 @@ begin
   AddAtribute(Format('Flat%s', [Parameter]));
 end;
 
-procedure TClassDefinition.AddNamespaceAttribute(const Namespace: String);
-begin
-  if not Namespace.IsEmpty then
-   AddAtribute(Format('XMLNamespace(''%s'')', [Namespace]));
-end;
-
 function TClassDefinition.AddProperty(const Name: String): TPropertyDefinition;
 begin
   for var &Property in Properties do
@@ -2227,15 +2248,7 @@ constructor TTypeDefinition.Create(const ParentModule: TTypeModuleDefinition);
 begin
   inherited Create;
 
-  FParentAttributes := TList<String>.Create;
   FParentModule := ParentModule;
-end;
-
-destructor TTypeDefinition.Destroy;
-begin
-  FParentAttributes.Free;
-
-  inherited;
 end;
 
 function TTypeDefinition.GetAsArrayType: TTypeArrayDefinition;
@@ -2281,11 +2294,6 @@ end;
 function TTypeDefinition.GetIsArrayType: Boolean;
 begin
   Result := Self is TTypeArrayDefinition;
-end;
-
-function TTypeDefinition.GetIsClassDefinition: Boolean;
-begin
-  Result := Self is TClassDefinition;
 end;
 
 function TTypeDefinition.GetIsDelayedType: Boolean;
@@ -2942,15 +2950,17 @@ var
     end;
   end;
 
-  function CheckPartType(const Part: IPart): TTypeDefinition;
-  var
-    ParameterType: IXMLTypeDef;
-
+  function GetPartType(const Part: IPart): IXMLTypeDef;
   begin
     if Part.Element.IsEmpty then
-      ParameterType := FindType(Part.Type_)
+      Result := FindType(Part.Type_)
     else
-      ParameterType := FindTypeElement(Part.Element);
+      Result := FindTypeElement(Part.Element);
+  end;
+
+  function CheckPartType(const Part: IPart): TTypeDefinition;
+  begin
+    var ParameterType := GetPartType(Part);
 
     Result := SchemaLoader.CheckUnitTypeDefinition(ParameterType, UnitDefinition);
   end;
@@ -2971,6 +2981,11 @@ var
         var MethodParameter := TTypeParameterDefinition.Create;
         MethodParameter.Name := Part.Name;
         MethodParameter.ParameterType := CheckPartType(Part);
+        var PartType := GetPartType(Part);
+
+        MethodParameter.AddAtribute('Body');
+
+        MethodParameter.ParentAttributes.Add(MethodParameter.FormatNamespaceAttribute(PartType.SchemaDef.TargetNamespace));
 
         ServiceMethod.Parameters.Add(MethodParameter);
       end;
@@ -3057,18 +3072,37 @@ begin
   AddAtribute(Format(Attribute, Params));
 end;
 
+procedure TTypeCommonDefinition.AddNamespaceAttribute(const Namespace: String);
+begin
+  if not Namespace.IsEmpty then
+    AddAtribute(FormatNamespaceAttribute(Namespace));
+end;
+
 constructor TTypeCommonDefinition.Create;
 begin
   inherited;
 
   FAttributes := TList<String>.Create;
+  FParentAttributes := TList<String>.Create;
 end;
 
 destructor TTypeCommonDefinition.Destroy;
 begin
   FAttributes.Free;
 
+  FParentAttributes.Free;
+
   inherited;
+end;
+
+function TTypeCommonDefinition.FormatNamespaceAttribute(const Namespace: String): String;
+begin
+  Result := Format('XMLNamespace(''%s'')', [Namespace]);
+end;
+
+function TTypeCommonDefinition.GetIsClassDefinition: Boolean;
+begin
+  Result := Self is TClassDefinition;
 end;
 
 end.
