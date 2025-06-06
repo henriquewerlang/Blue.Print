@@ -386,7 +386,7 @@ type
     function CreateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String): TClassDefinition;
     function CreateSchemaLoader(const UnitFileConfiguration: TUnitFileConfiguration): ISchemaLoader;
     function CreateUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
-    function CheckChangeTypeName(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
+    function CheckChangeTypeName(const TypeName: String; const UnitDefinition: TUnitDefinition): TTypeDefinition;
     function FindTypeDefinitionInModule(const Module: TTypeModuleDefinition; const TypeName: String; var TypeDefinition: TTypeDefinition): Boolean;
     function FindTypeInUnits(const Module: TTypeModuleDefinition; const TypeName: String): TTypeDefinition;
     function GetFileNameFromSchemaFolder(const FileName: String): String;
@@ -558,13 +558,22 @@ begin
   FTypeExternal.Add(TypeName, Result);
 end;
 
-function TSchemaImporter.CheckChangeTypeName(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
+function TSchemaImporter.CheckChangeTypeName(const TypeName: String; const UnitDefinition: TUnitDefinition): TTypeDefinition;
 begin
   Result := nil;
 
   for var TypeDefinitionConfig in Configuration.TypeDefinition do
     if (TypeDefinitionConfig.Name = TypeName) and not TypeDefinitionConfig.ChangeType.IsEmpty then
-      Result := Module.AddDelayedType(TypeDefinitionConfig.ChangeType);
+    begin
+      var ChangeType := FindType(TypeDefinitionConfig.ChangeType, UnitDefinition);
+
+      if not Assigned(ChangeType) then
+        ChangeType := UnitDefinition.AddDelayedType(TypeDefinitionConfig.ChangeType);
+
+      Result := CreateTypeAlias(UnitDefinition, TypeName, ChangeType);
+
+      UnitDefinition.AddTypeAlias(Result.AsTypeAlias);
+    end;
 end;
 
 constructor TSchemaImporter.Create;
@@ -658,6 +667,9 @@ end;
 function TSchemaImporter.FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
 begin
   Result := nil;
+
+  if Module.IsUnitDefinition then
+    Result := CheckChangeTypeName(TypeName, Module.AsUnitDefinition);
 
   if FTypeExternal.TryGetValue(TypeName, Result) then
     Exit;
@@ -923,22 +935,14 @@ function TXSDSchemaLoader.AddProperty(const ClassDefinition: TClassDefinition; c
 
   function CheckPropertyTypeDefinition: TTypeDefinition;
   begin
-    Result := FImporter.CheckChangeTypeName(Name, ClassDefinition);
+    Result := FindType(&Type.Name, ClassDefinition);
 
     if not Assigned(Result) then
       if IsReferenceType then
-      begin
-        Result := FindType(&Type.Name, ClassDefinition);
-
-        if not Assigned(Result) then
-          Result := ClassDefinition.AddDelayedType(&Type.Name);
-      end
+        Result := ClassDefinition.UnitDefinition.AddDelayedType(&Type.Name)
       else
       begin
         Result := CheckTypeDefinition(&Type, ClassDefinition);
-
-        if not Assigned(Result) then
-          Result := FindType(&Type.Name, ClassDefinition);
 
         if not Assigned(Result) then
           Result := FindBaseType(&Type, ClassDefinition);
@@ -977,23 +981,26 @@ end;
 
 function TXSDSchemaLoader.FindBaseType(const TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
 begin
-  Result := FImporter.CheckChangeTypeName(TypeDefinition.Name, Module);
-
-  if not Assigned(Result) and Assigned(TypeDefinition.BaseType) then
+  if Assigned(TypeDefinition.BaseType) then
   begin
     Result := FindType(TypeDefinition.BaseType.Name, Module);
 
     if not Assigned(Result) then
       Result := Module.AddDelayedType(TypeDefinition.BaseType.Name);
-  end;
+  end
+  else
+    Result := nil;
 end;
 
 function TXSDSchemaLoader.FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
-begin
-  if FXMLBuildInType.TryGetValue(TypeName, Result) or FXMLBuildInType.TryGetValue(TypeName.Substring(Succ(SXMLSchemaPrefix.Length)), Result) then
-    Exit;
+var
+  BuildInType: TTypeDefinition;
 
+begin
   Result := FImporter.FindType(TypeName, Module);
+
+  if not Assigned(Result) and FXMLBuildInType.TryGetValue(ExtractLocalName(TypeName), BuildInType)  then
+    Result := BuildInType;
 end;
 
 function TXSDSchemaLoader.CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
@@ -1039,7 +1046,9 @@ var
 begin
   Result := nil;
 
-  if Supports(&Type, IXMLSimpleTypeDef, SimpleType) then
+  if &Type.IsComplex then
+    Result := GenerateClassDefinition(Module, &Type as IXMLComplexTypeDef, VarToStr(&Type.SchemaDef.TargetNamespace))
+  else if Supports(&Type, IXMLSimpleTypeDef, SimpleType) then
     case SimpleType.DerivationMethod of
       sdmNone: ;
       sdmRestriction: Result := CreateEnumeration;
@@ -1055,9 +1064,6 @@ begin
   if not Assigned(Result) then
     Result := CheckTypeDefinition(&Type, UnitDefinition);
 
-  if &Type.IsComplex then
-    Result := GenerateClassDefinition(UnitDefinition, &Type as IXMLComplexTypeDef, VarToStr(&Type.SchemaDef.TargetNamespace));
-
   if not Assigned(Result) then
   begin
     Result := FImporter.CreateTypeAlias(UnitDefinition, &Type.Name, FindBaseType(&Type, UnitDefinition));
@@ -1070,31 +1076,26 @@ function TXSDSchemaLoader.GenerateClassDefinition(const ParentModule: TTypeModul
 begin
   var ClassName := ComplexType.Name;
 
-  Result := FindType(ClassName, ParentModule);
+  var ClassDefinition := FImporter.CreateClassDefinition(ParentModule, ClassName);
+  Result := ClassDefinition;
 
-  if not Assigned(Result) then
+  ClassDefinition.AddNamespaceAttribute(TargetNamespace);
+
+  GenerateProperties(ClassDefinition, ComplexType.ElementDefList, TargetNamespace);
+
+  for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
   begin
-    var ClassDefinition := FImporter.CreateClassDefinition(ParentModule, ClassName);
-    Result := ClassDefinition;
+    var Attribute := ComplexType.AttributeDefs[A];
+    var &Property := AddProperty(ClassDefinition, Attribute.Name, Attribute.DataType, IsReferenceType(Attribute));
 
-    ClassDefinition.AddNamespaceAttribute(TargetNamespace);
+    AddPropertyAttribute(&Property, Attribute);
+  end;
 
-    GenerateProperties(ClassDefinition, ComplexType.ElementDefList, TargetNamespace);
+  if Assigned(ComplexType.BaseType) then
+  begin
+    var &Property := AddProperty(ClassDefinition, 'Value', ComplexType.BaseType, False);
 
-    for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
-    begin
-      var Attribute := ComplexType.AttributeDefs[A];
-      var &Property := AddProperty(ClassDefinition, Attribute.Name, Attribute.DataType, IsReferenceType(Attribute));
-
-      AddPropertyAttribute(&Property, Attribute);
-    end;
-
-    if Assigned(ComplexType.BaseType) then
-    begin
-      var &Property := AddProperty(ClassDefinition, 'Value', ComplexType.BaseType, False);
-
-      &Property.AddXMLValueAttribute;
-    end;
+    &Property.AddXMLValueAttribute;
   end;
 end;
 
@@ -2046,7 +2047,9 @@ begin
 
   for var &Interface in Interfaces do
   begin
-    AddLine('  %s = interface', [&Interface.Name]);
+    AddLine('  %s = interface(IInvokable)', [&Interface.Name]);
+
+    AddLine('    [%s]', [TGUID.NewGuid.ToString]);
 
     for var Method in &Interface.Methods do
       DeclareMethod(Method);
@@ -2964,7 +2967,7 @@ var
     Result := SchemaLoader.CheckUnitTypeDefinition(ParameterType, UnitDefinition);
   end;
 
-  procedure CreateParameter(const Parameter: IParam);
+  procedure CreateParameters(const Parameter: IParam);
   var
     Message: IMessage;
 
@@ -3033,7 +3036,7 @@ begin
 
         ServiceInterface.Methods.Add(ServiceMethod);
 
-        CreateParameter(PortTypeOperation.Input);
+        CreateParameters(PortTypeOperation.Input);
       end;
     end;
   end;
