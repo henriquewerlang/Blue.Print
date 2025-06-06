@@ -437,11 +437,11 @@ type
     function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
     function FindBaseType(const TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
+    function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TTypeDefinition;
     function GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef; const TargetNamespace: String): TPropertyDefinition;
     function IsReferenceType(const Element: IXMLTypedSchemaItem): Boolean;
 
     procedure AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
-    procedure GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String);
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList; const TargetNamespace: String);
     procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
     procedure LoadXSDTypes;
@@ -1055,6 +1055,9 @@ begin
   if not Assigned(Result) then
     Result := CheckTypeDefinition(&Type, UnitDefinition);
 
+  if &Type.IsComplex then
+    Result := GenerateClassDefinition(UnitDefinition, &Type as IXMLComplexTypeDef, VarToStr(&Type.SchemaDef.TargetNamespace));
+
   if not Assigned(Result) then
   begin
     Result := FImporter.CreateTypeAlias(UnitDefinition, &Type.Name, FindBaseType(&Type, UnitDefinition));
@@ -1063,13 +1066,16 @@ begin
   end;
 end;
 
-procedure TXSDSchemaLoader.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String);
+function TXSDSchemaLoader.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef; const TargetNamespace: String): TTypeDefinition;
 begin
   var ClassName := ComplexType.Name;
 
-  if FindType(ClassName, ParentModule) = nil then
+  Result := FindType(ClassName, ParentModule);
+
+  if not Assigned(Result) then
   begin
     var ClassDefinition := FImporter.CreateClassDefinition(ParentModule, ClassName);
+    Result := ClassDefinition;
 
     ClassDefinition.AddNamespaceAttribute(TargetNamespace);
 
@@ -1177,15 +1183,15 @@ procedure TXSDSchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUni
 begin
   var Schema := LoadFile;
 
-//  ProcessReferences(UnitDefinition, Schema.SchemaDef.SchemaIncludes);
-//
-//  ProcessReferences(UnitDefinition, Schema.SchemaDef.SchemaImports);
-//
+  ProcessReferences(UnitDefinition, Schema.SchemaDef.SchemaIncludes);
+
+  ProcessReferences(UnitDefinition, Schema.SchemaDef.SchemaImports);
+
   for var A := 0 to Pred(Schema.SchemaDef.SimpleTypes.Count) do
     CheckUnitTypeDefinition(Schema.SchemaDef.SimpleTypes[A], UnitDefinition);
 
   for var A := 0 to Pred(Schema.SchemaDef.ComplexTypes.Count) do
-    GenerateClassDefinition(UnitDefinition, Schema.SchemaDef.ComplexTypes[A], VarToStr(Schema.SchemaDef.TargetNamespace));
+    CheckUnitTypeDefinition(Schema.SchemaDef.ComplexTypes[A], UnitDefinition);
 
   if Schema.SchemaDef.ElementDefs.Count > 0 then
   begin
@@ -2851,10 +2857,186 @@ begin
 end;
 
 procedure TWSDLSchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+var
+  ServiceMethod: TTypeMethodDefinition;
+  SchemaLoader: TXSDSchemaLoader;
+  WSDLDocument: IWSDLDocument;
+
+  function CompareNames(const Name1, Name2: String): Boolean;
+  begin
+    Result := SameText(ExtractLocalName(Name1), ExtractLocalName(Name2));
+  end;
+
+  function FindBinding(const Name: String): IBinding;
+  begin
+    for var A := 0 to Pred(WSDLDocument.Definition.Bindings.Count) do
+    begin
+      var Binding := WSDLDocument.Definition.Bindings[A];
+
+      if CompareNames(Binding.Name, ExtractLocalName(Name)) then
+        Exit(Binding);
+    end;
+  end;
+
+  function FindMessage(const Name: String): IMessage;
+  begin
+    for var A := 0 to Pred(WSDLDocument.Definition.Messages.Count) do
+    begin
+      var Message := WSDLDocument.Definition.Messages[A];
+
+      if CompareNames(Message.Name, Name) then
+        Exit(Message);
+    end;
+  end;
+
+  function FindPortType(const Name: String): IPortType;
+  begin
+    for var A := 0 to Pred(WSDLDocument.Definition.PortTypes.Count) do
+    begin
+      var PortType := WSDLDocument.Definition.PortTypes[A];
+
+      if CompareNames(PortType.Name, Name) then
+        Exit(PortType);
+    end;
+  end;
+
+  function FindOperationInPortType(const Name: String; const PortType: IPortType): IOperation;
+  begin
+    for var A := 0 to Pred(PortType.Operations.Count) do
+    begin
+      var Operation := PortType.Operations[A];
+
+      if CompareNames(Operation.Name, Name) then
+        Exit(Operation);
+    end;
+  end;
+
+  function FindType(const Name: String): IXMLTypeDef;
+  begin
+    for var A := 0 to Pred(WSDLDocument.Definition.Types.SchemaDefs.Count) do
+    begin
+      var Schema := WSDLDocument.Definition.Types.SchemaDefs[A];
+
+      for var B := 0 to Pred(Schema.ComplexTypes.Count) do
+      begin
+        var ComplexType := Schema.ComplexTypes[B];
+
+        if CompareNames(ComplexType.Name, Name) then
+          Exit(ComplexType);
+      end;
+
+      for var B := 0 to Pred(Schema.SimpleTypes.Count) do
+      begin
+        var SimpleType := Schema.SimpleTypes[B];
+
+        if CompareNames(SimpleType.Name, Name) then
+          Exit(SimpleType);
+      end;
+    end;
+  end;
+
+  function FindTypeElement(const Name: String): IXMLTypeDef;
+  begin
+    for var A := 0 to Pred(WSDLDocument.Definition.Types.SchemaDefs.Count) do
+    begin
+      var Schema := WSDLDocument.Definition.Types.SchemaDefs[A];
+
+      for var B := 0 to Pred(Schema.ElementDefs.Count) do
+      begin
+        var Element := Schema.ElementDefs[B];
+
+        if CompareNames(Element.Name, Name) then
+          Exit(Element.DataType);
+      end;
+    end;
+  end;
+
+  function CheckPartType(const Part: IPart): TTypeDefinition;
+  var
+    ParameterType: IXMLTypeDef;
+
+  begin
+    if Part.Element.IsEmpty then
+      ParameterType := FindType(Part.Type_)
+    else
+      ParameterType := FindTypeElement(Part.Element);
+
+    Result := SchemaLoader.CheckUnitTypeDefinition(ParameterType, UnitDefinition);
+  end;
+
+  procedure CreateParameter(const Parameter: IParam);
+  var
+    Message: IMessage;
+
+  begin
+    if Assigned(Parameter) then
+    begin
+      Message := FindMessage(Parameter.Message);
+
+      for var A := 0 to Pred(Message.Parts.Count) do
+      begin
+        var Part := Message.Parts[A];
+
+        var MethodParameter := TTypeParameterDefinition.Create;
+        MethodParameter.Name := Part.Name;
+        MethodParameter.ParameterType := CheckPartType(Part);
+
+        ServiceMethod.Parameters.Add(MethodParameter);
+      end;
+    end;
+  end;
+
+  function LoadReturnType(const Return: IParam): TTypeDefinition;
+  var
+    Message: IMessage;
+
+  begin
+    Message := FindMessage(Return.Message);
+    Result := nil;
+
+    for var A := 0 to Pred(Message.Parts.Count) do
+    begin
+      var Part := Message.Parts[A];
+
+      Exit(CheckPartType(Part));
+    end;
+  end;
+
 begin
-  var WSDLDocument := NewWSDLDoc;
+  SchemaLoader := TXSDSchemaLoader.Create(FImporter);
+  WSDLDocument := NewWSDLDoc;
 
   WSDLDocument.LoadFromXML(FImporter.LoadFile(UnitFileConfiguration));
+
+  for var A := 0 to Pred(WSDLDocument.Definition.Services.Count) do
+  begin
+    var Service := WSDLDocument.Definition.Services[A];
+    var ServiceInterface := TTypeInterfaceDefinition.Create(UnitDefinition);
+    ServiceInterface.Name := Service.Name;
+
+    UnitDefinition.Interfaces.Add(ServiceInterface);
+
+    for var B := 0 to Pred(Service.Ports.Count) do
+    begin
+      var Port := Service.Ports[B];
+
+      var Binding := FindBinding(Port.Binding);
+      var PortType := FindPortType(Binding.Type_);
+
+      for var C := 0 to Pred(Binding.BindingOperations.Count) do
+      begin
+        var Operation := Binding.BindingOperations[C];
+        var PortTypeOperation := FindOperationInPortType(Operation.Name, PortType);
+        ServiceMethod := TTypeMethodDefinition.Create;
+        ServiceMethod.Name := Operation.Name;
+        ServiceMethod.Return := LoadReturnType(PortTypeOperation.Output);
+
+        ServiceInterface.Methods.Add(ServiceMethod);
+
+        CreateParameter(PortTypeOperation.Input);
+      end;
+    end;
+  end;
 end;
 
 { TUnitFileConfiguration }
