@@ -272,13 +272,16 @@ type
 
   TTypeInterfaceDefinition = class(TTypeDefinition)
   private
+    FDefaultURL: String;
     FMethods: TList<TTypeMethodDefinition>;
+
     function GetUnitDefinition: TUnitDefinition;
   public
     constructor Create(const Module: TTypeModuleDefinition);
 
     destructor Destroy; override;
 
+    property DefaultURL: String read FDefaultURL write FDefaultURL;
     property Methods: TList<TTypeMethodDefinition> read FMethods write FMethods;
     property UnitDefinition: TUnitDefinition read GetUnitDefinition;
   end;
@@ -1879,7 +1882,32 @@ var
       GenerateClassImplementation(SubClassDefinition);
   end;
 
-  function LoadUnitUses: String;
+  procedure LoadUses(const UnitList: TArray<String>);
+  begin
+    var UsesValue := EmptyStr;
+
+    for var UnitName in UnitList do
+    begin
+      if not UsesValue.IsEmpty then
+        UsesValue := UsesValue + ', ';
+
+      UsesValue := UsesValue + UnitName;
+    end;
+
+    AddLine('uses %s;', [UsesValue]);
+  end;
+
+  procedure LoadUsesForImplementation;
+  begin
+    var UnitList: TArray<String> := ['System.SysUtils'];
+
+    if not Interfaces.IsEmpty then
+      UnitList := UnitList + ['Blue.Print.Remote.Service'];
+
+    LoadUses(UnitList);
+  end;
+
+  procedure LoadInterfaceUses;
   var
     UsesList: TList<String>;
 
@@ -1934,7 +1962,6 @@ var
     end;
 
   begin
-    Result := EmptyStr;
     UsesList := TList<String>.Create;
 
     AddUses('Blue.Print.Types');
@@ -1949,13 +1976,7 @@ var
 
     UsesList.Remove(Name);
 
-    for var Value in UsesList do
-    begin
-      if not Result.IsEmpty then
-        Result := Result + ', ';
-
-      Result := Result + Value;
-    end;
+    LoadUses(UsesList.ToArray);
 
     UsesList.Free;
   end;
@@ -2035,6 +2056,16 @@ var
     AddLine('    %s %s%s;', [GetMethodType, Method.Name, GetParameters, GetMethodReturn]);
   end;
 
+  function GetInterfaceFunction(const &Interface: TTypeInterfaceDefinition; const LoadDefaultURL: Boolean): String;
+  begin
+    var DefaultValue := EmptyStr;
+
+    if LoadDefaultURL and not &Interface.DefaultURL.IsEmpty then
+      DefaultValue := Format(' = ''%s''', [&Interface.DefaultURL]);
+
+    Result := Format('function Get%0:s(const URL: String%s): %0:s;', [&Interface.Name, DefaultValue]);
+  end;
+
 begin
   UnitDefinition := TStringList.Create;
 
@@ -2057,7 +2088,7 @@ begin
 
   AddLine;
 
-  AddLine('uses %s;', [LoadUnitUses]);
+  LoadInterfaceUses;
 
   AddLine;
 
@@ -2115,13 +2146,36 @@ begin
   end;
 
   if not Interfaces.IsEmpty then
+  begin
     AddLine;
+
+    for var &Interface in Interfaces do
+      AddLine(GetInterfaceFunction(&Interface, True));
+
+    AddLine;
+  end;
 
   AddLine('implementation');
 
   AddLine;
 
-  AddLine('uses System.SysUtils;');
+  LoadUsesForImplementation;
+
+  if not Interfaces.IsEmpty then
+  begin
+    AddLine;
+
+    for var &Interface in Interfaces do
+    begin
+      AddLine(GetInterfaceFunction(&Interface, False));
+
+      AddLine('begin');
+
+      AddLine('  Result := TRemoteService.CreateService<%s>(URL);', [&Interface.Name]);
+
+      AddLine('end;');
+    end;
+  end;
 
   AddLine;
 
@@ -3048,12 +3102,9 @@ begin
   for var A := 0 to Pred(WSDLDocument.Definition.Services.Count) do
   begin
     var Service := WSDLDocument.Definition.Services[A];
-    var ServiceInterface := TTypeInterfaceDefinition.Create(UnitDefinition);
-    ServiceInterface.Name := Service.Name;
+    var ServiceInterface := FImporter.CreateInterfaceDefinition(UnitDefinition, Service.Name);
 
     ServiceInterface.AddAtribute('RemoteName('''')');
-
-    UnitDefinition.Interfaces.Add(ServiceInterface);
 
     for var B := 0 to Pred(Service.Ports.Count) do
     begin
@@ -3061,6 +3112,11 @@ begin
 
       var Binding := FindBinding(Port.Binding);
       var PortType := FindPortType(Binding.Type_);
+
+      var ServiceAddress := Port.ChildNodes.FindNode(SAddress, Soap12ns);
+
+      if Assigned(ServiceAddress) then
+        ServiceInterface.DefaultURL := ServiceAddress.Attributes[SLocation];
 
       for var C := 0 to Pred(Binding.BindingOperations.Count) do
       begin
