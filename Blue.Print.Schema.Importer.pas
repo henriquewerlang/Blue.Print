@@ -155,6 +155,7 @@ type
     function GetAsClassDefinition: TClassDefinition;
     function GetAsDelayedType: TTypeDelayedDefinition;
     function GetAsDynamicPropertyType: TTypeDynamicPropertyDefinition;
+    function GetAsInterfaceType: TTypeInterfaceDefinition;
     function GetAsTypeAlias: TTypeAlias;
     function GetAsTypeEnumeration: TTypeEnumeration;
     function GetAsTypeExternal: TTypeExternal;
@@ -164,6 +165,7 @@ type
     function GetIsDynamicPropertyType: Boolean;
     function GetIsEnumeration: Boolean;
     function GetIsExternal: Boolean;
+    function GetIsInterfaceType: Boolean;
     function GetIsTypeAlias: Boolean;
     function GetIsUnitDefinition: Boolean;
   public
@@ -171,6 +173,7 @@ type
 
     property AsArrayType: TTypeArrayDefinition read GetAsArrayType;
     property AsClassDefinition: TClassDefinition read GetAsClassDefinition;
+    property AsInterfaceType: TTypeInterfaceDefinition read GetAsInterfaceType;
     property AsDelayedType: TTypeDelayedDefinition read GetAsDelayedType;
     property AsDynamicPropertyType: TTypeDynamicPropertyDefinition read GetAsDynamicPropertyType;
     property AsTypeAlias: TTypeAlias read GetAsTypeAlias;
@@ -182,6 +185,7 @@ type
     property IsDynamicPropertyType: Boolean read GetIsDynamicPropertyType;
     property IsEnumeration: Boolean read GetIsEnumeration;
     property IsExternal: Boolean read GetIsExternal;
+    property IsInterfaceType: Boolean read GetIsInterfaceType;
     property IsNumericType: Boolean read FIsNumericType;
     property IsObjectType: Boolean read FIsObjectType;
     property IsStringType: Boolean read FIsStringType;
@@ -269,12 +273,14 @@ type
   TTypeInterfaceDefinition = class(TTypeDefinition)
   private
     FMethods: TList<TTypeMethodDefinition>;
+    function GetUnitDefinition: TUnitDefinition;
   public
     constructor Create(const Module: TTypeModuleDefinition);
 
     destructor Destroy; override;
 
     property Methods: TList<TTypeMethodDefinition> read FMethods write FMethods;
+    property UnitDefinition: TUnitDefinition read GetUnitDefinition;
   end;
 
   TTypeAlias = class(TTypeDefinition)
@@ -491,7 +497,7 @@ type
 
 implementation
 
-uses System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, System.Generics.Defaults, Xml.XMLIntf, XML.XMLDom, Xml.XMLSchemaTags, Soap.WSDLBind, Soap.WSDLIntf, Blue.Print.Serializer,
+uses System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, System.Generics.Defaults, Xml.XMLIntf, XML.XMLDom, Xml.XMLSchemaTags, Soap.WSDLBind, Soap.WSDLIntf, System.Hash, Blue.Print.Serializer,
   Blue.Print.Schema.Importer.Open.API.v20, Blue.Print.Schema.Importer.Open.API.v30, Blue.Print.Schema.Importer.Open.API.v31;
 
 const
@@ -1465,7 +1471,9 @@ var
     Result := GetTypeName(TypeDefinition);
 
     if TypeDefinition.IsClassDefinition then
-      Result := Format('%s.%s', [TypeDefinition.AsClassDefinition.UnitDefinition.Name, Result]);
+      Result := Format('%s.%s', [TypeDefinition.AsClassDefinition.UnitDefinition.Name, Result])
+    else if TypeDefinition.IsInterfaceType then
+      Result := Format('%s.%s', [TypeDefinition.AsInterfaceType.UnitDefinition.Name, Result])
   end;
 
   function GetBaseTypeFullName(const TypeDefinition: TTypeDefinition): String;
@@ -2096,7 +2104,9 @@ begin
 
     AddLine('  %s = interface(IInvokable)', [&Interface.Name]);
 
-    AddLine('    [''%s'']', [TGUID.NewGuid.ToString]);
+    var GUIDValue := THashSHA2.GetHashString(GetFullTypeName(&Interface)).ToUpper;
+
+    AddLine('    [''{%s-%s-%s-%s-%s}'']', [GUIDValue.Substring(0, 8), GUIDValue.Substring(8, 4), GUIDValue.Substring(12, 4), GUIDValue.Substring(16, 4), GUIDValue.Substring(20, 12)]);
 
     for var Method in &Interface.Methods do
       DeclareMethod(Method);
@@ -2277,6 +2287,11 @@ begin
   Result := Self as TTypeDynamicPropertyDefinition;
 end;
 
+function TTypeDefinition.GetAsInterfaceType: TTypeInterfaceDefinition;
+begin
+  Result := Self as TTypeInterfaceDefinition;
+end;
+
 function TTypeDefinition.GetAsTypeAlias: TTypeAlias;
 begin
   Result := Self as TTypeAlias;
@@ -2320,6 +2335,11 @@ end;
 function TTypeDefinition.GetIsExternal: Boolean;
 begin
   Result := Self is TTypeExternal;
+end;
+
+function TTypeDefinition.GetIsInterfaceType: Boolean;
+begin
+  Result := Self is TTypeInterfaceDefinition;
 end;
 
 function TTypeDefinition.GetIsTypeAlias: Boolean;
@@ -2827,6 +2847,11 @@ begin
   FMethods.Free;
 
   inherited;
+end;
+
+function TTypeInterfaceDefinition.GetUnitDefinition: TUnitDefinition;
+begin
+  Result := ParentModule.AsUnitDefinition;
 end;
 
 { TTypeMethodDefinition }
