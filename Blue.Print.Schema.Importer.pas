@@ -1451,7 +1451,7 @@ var
     else if TypeDefinition.IsDynamicPropertyType then
       Result := Format('TDynamicProperty<%s>', [GetTypeName(ResolveTypeDefinition(TypeDefinition.AsDynamicPropertyType.ValueType))])
     else if TypeDefinition.IsClassDefinition then
-      Result := Format('%s.%s', [TypeDefinition.AsClassDefinition.UnitDefinition.Name, GetClassImplementationName(TypeDefinition.AsClassDefinition)])
+      Result := Format('%s', [GetClassImplementationName(TypeDefinition.AsClassDefinition)])
     else if TypeDefinition.IsEnumeration then
       Result := TypeDefinition.AsTypeEnumeration.EnumeratorName
     else if TypeDefinition is TUndefinedType then
@@ -1460,16 +1460,24 @@ var
       Result := ResolveTypeDefinition(TypeDefinition).Name;
   end;
 
-  function GetBaseTypeName(const TypeDefinition: TTypeDefinition): String;
+  function GetFullTypeName(const TypeDefinition: TTypeDefinition): String;
+  begin
+    Result := GetTypeName(TypeDefinition);
+
+    if TypeDefinition.IsClassDefinition then
+      Result := Format('%s.%s', [TypeDefinition.AsClassDefinition.UnitDefinition.Name, Result]);
+  end;
+
+  function GetBaseTypeFullName(const TypeDefinition: TTypeDefinition): String;
   begin
     var ResolvedTypeDefinition := ResolveTypeAlias(TypeDefinition);
 
     if ResolvedTypeDefinition.IsArrayType then
-      Result := Format('TArray<%s>', [GetBaseTypeName(GetArrayItemType(ResolvedTypeDefinition))])
+      Result := Format('TArray<%s>', [GetBaseTypeFullName(GetArrayItemType(ResolvedTypeDefinition))])
     else if ResolvedTypeDefinition.IsDynamicPropertyType then
-      Result := Format('TDynamicProperty<%s>', [GetBaseTypeName(ResolvedTypeDefinition.AsDynamicPropertyType.ValueType)])
+      Result := Format('TDynamicProperty<%s>', [GetBaseTypeFullName(ResolvedTypeDefinition.AsDynamicPropertyType.ValueType)])
     else
-      Result := GetTypeName(ResolvedTypeDefinition);
+      Result := GetFullTypeName(ResolvedTypeDefinition);
   end;
 
   function GetPropertyTypeName(const &Property: TPropertyDefinition): String;
@@ -1484,7 +1492,7 @@ var
 
   function GetAddFuntionName(const &Property: TPropertyDefinition): String;
   begin
-    Result := Format('Add%s: %s', [FormatName(&Property.Name), GetTypeName(GetArrayItemType(GetPropertyType(&Property)))]);
+    Result := Format('Add%s', [FormatName(&Property.Name)]);
   end;
 
   procedure LoadAtrributesList(const Ident: String; const List: TList<String>);
@@ -1493,14 +1501,14 @@ var
       AddLine('%s[%s]', [Ident, Attribute]);
   end;
 
-  procedure LoadParentAttributes(const Ident: String; const TypeDefinition: TTypeCommonDefinition);
-  begin
-    LoadAtrributesList(Ident, TypeDefinition.ParentAttributes);
-  end;
-
   procedure LoadAttributes(const Ident: String; const TypeDefinition: TTypeCommonDefinition);
   begin
     LoadAtrributesList(Ident, TypeDefinition.Attributes);
+  end;
+
+  procedure LoadParentAttributes(const Ident: String; const TypeDefinition: TTypeCommonDefinition);
+  begin
+    LoadAtrributesList(Ident, TypeDefinition.ParentAttributes);
   end;
 
   procedure GenerateEnumerators(const Ident: String; const Module: TTypeModuleDefinition);
@@ -1698,7 +1706,7 @@ var
 
         for var &Property in ClassDefinition.Properties do
           if &Property.NeedAddFunction then
-            AddLine('%s  function %s;', [Ident, GetAddFuntionName(&Property)]);
+            AddLine('%s  function %s: %s;', [Ident, GetAddFuntionName(&Property), GetTypeName(GetArrayItemType(GetPropertyType(&Property)))]);
 
         CheckAddLine(TImplementationInformation.NeedIsStoredFunction, [TImplementationInformation.NeedDestructor, TImplementationInformation.NeedAddFunction]);
 
@@ -1743,7 +1751,7 @@ var
 
   function CreateObjectClass(const TypeDefinition: TTypeDefinition): String;
   begin
-    Result := Format('%s.Create', [GetBaseTypeName(TypeDefinition)]);
+    Result := Format('%s.Create', [GetBaseTypeFullName(TypeDefinition)]);
   end;
 
   procedure GenerateClassImplementation(const ClassDefinition: TClassDefinition);
@@ -1794,9 +1802,7 @@ var
 
         if &Property.NeedGetFunction then
         begin
-          var PropertyTypeName := GetTypeName(PropertyType);
-
-          AddLine('function %s.%s: %s;', [GetClassImplementationName(ClassDefinition), GetPropertyGetFunctionName(&Property), PropertyTypeName]);
+          AddLine('function %s.%s: %s;', [GetClassImplementationName(ClassDefinition), GetPropertyGetFunctionName(&Property), GetFullTypeName(PropertyType)]);
 
           AddLine('begin');
 
@@ -1815,7 +1821,7 @@ var
 
         if &Property.NeedAddFunction then
         begin
-          AddLine('function %s.%s;', [GetClassImplementationName(ClassDefinition), GetAddFuntionName(&Property)]);
+          AddLine('function %s.%s: %s;', [GetClassImplementationName(ClassDefinition), GetAddFuntionName(&Property), GetFullTypeName(GetArrayItemType(PropertyType))]);
 
           AddLine('begin');
 
@@ -2072,7 +2078,7 @@ begin
     AddLine('  // Forward type alias');
 
     for var TypeAlias in TypeAlias do
-      AddLine('  %s = %s;', [TypeAlias.Name, GetBaseTypeName(TypeAlias)]);
+      AddLine('  %s = %s;', [TypeAlias.Name, GetBaseTypeFullName(TypeAlias)]);
 
     AddLine;
   end;
@@ -2090,7 +2096,7 @@ begin
 
     AddLine('  %s = interface(IInvokable)', [&Interface.Name]);
 
-    AddLine('    [%s]', [TGUID.NewGuid.ToString]);
+    AddLine('    [''%s'']', [TGUID.NewGuid.ToString]);
 
     for var Method in &Interface.Methods do
       DeclareMethod(Method);
