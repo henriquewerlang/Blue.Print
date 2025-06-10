@@ -1216,7 +1216,14 @@ begin
     if not UnitFileConfiguration.UnitClassName.IsEmpty then
       ClassDefinition := FImporter.CreateClassDefinition(UnitDefinition, UnitFileConfiguration.UnitClassName)
     else if not UnitFileConfiguration.AppendClassName.IsEmpty then
-      ClassDefinition := FImporter.FindTypeInUnits(UnitDefinition, UnitFileConfiguration.AppendClassName).AsClassDefinition;
+    begin
+      var ClassType := FImporter.FindTypeInUnits(UnitDefinition, UnitFileConfiguration.AppendClassName);
+
+      if not Assigned(ClassType) then
+        ClassType := FImporter.CreateClassDefinition(UnitDefinition, UnitFileConfiguration.AppendClassName);
+
+      ClassDefinition := ClassType.AsClassDefinition;
+    end;
 
     for var A := 0 to Pred(Schema.SchemaDef.ElementDefs.Count) do
     begin
