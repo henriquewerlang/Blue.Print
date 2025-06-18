@@ -398,7 +398,8 @@ type
     function CreateClassDefinition(const ParentModule: TTypeModuleDefinition; const ClassTypeName: String): TClassDefinition;
     function CreateSchemaLoader(const UnitFileConfiguration: TUnitFileConfiguration): ISchemaLoader;
     function CreateUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
-    function CheckChangeTypeName(const TypeName: String; const UnitDefinition: TUnitDefinition): TTypeDefinition;
+    function CheckChangeTypeName(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
+    function FindChangeTypeName(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
     function FindTypeDefinitionInModule(const Module: TTypeModuleDefinition; const TypeName: String; var TypeDefinition: TTypeDefinition): Boolean;
     function FindTypeInUnits(const Module: TTypeModuleDefinition; const TypeName: String): TTypeDefinition;
     function GetFileNameFromSchemaFolder(const FileName: String): String;
@@ -570,21 +571,26 @@ begin
   FTypeExternal.Add(TypeName, Result);
 end;
 
-function TSchemaImporter.CheckChangeTypeName(const TypeName: String; const UnitDefinition: TUnitDefinition): TTypeDefinition;
+function TSchemaImporter.CheckChangeTypeName(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
 begin
   Result := nil;
 
   for var TypeDefinitionConfig in Configuration.TypeDefinition do
     if (TypeDefinitionConfig.Name = TypeName) and not TypeDefinitionConfig.ChangeType.IsEmpty then
     begin
-      var TypeToChange := FindType(TypeDefinitionConfig.ChangeType, UnitDefinition);
+      var TypeToChange := FindChangeTypeName(TypeName, Module);
 
       if not Assigned(TypeToChange) then
-        TypeToChange := UnitDefinition.AddDelayedType(TypeDefinitionConfig.ChangeType);
+        TypeToChange := Module.AddDelayedType(TypeDefinitionConfig.ChangeType);
 
-      Result := CreateTypeAlias(UnitDefinition, TypeName, TypeToChange);
+      if Module.IsUnitDefinition then
+      begin
+        Result := CreateTypeAlias(Module.AsUnitDefinition, TypeName, TypeToChange);
 
-      UnitDefinition.AddTypeAlias(Result.AsTypeAlias);
+        Module.AsUnitDefinition.AddTypeAlias(Result.AsTypeAlias);
+      end
+      else
+        Result := TypeToChange;
     end;
 end;
 
@@ -676,6 +682,15 @@ begin
   inherited;
 end;
 
+function TSchemaImporter.FindChangeTypeName(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
+begin
+  Result := nil;
+
+  for var TypeDefinitionConfig in Configuration.TypeDefinition do
+    if (TypeDefinitionConfig.Name = TypeName) and not TypeDefinitionConfig.ChangeType.IsEmpty then
+      Exit(FindType(TypeDefinitionConfig.ChangeType, Module));
+end;
+
 function TSchemaImporter.FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
 begin
   Result := nil;
@@ -694,8 +709,8 @@ begin
   if not Assigned(Result) then
     Result := FindTypeInUnits(nil, TypeName);
 
-  if not Assigned(Result) and Module.IsUnitDefinition then
-    Result := CheckChangeTypeName(TypeName, Module.AsUnitDefinition);
+  if not Assigned(Result) then
+    Result := CheckChangeTypeName(TypeName, Module);
 end;
 
 function TSchemaImporter.FindTypeDefinitionInModule(const Module: TTypeModuleDefinition; const TypeName: String; var TypeDefinition: TTypeDefinition): Boolean;
@@ -1389,7 +1404,10 @@ var
 
   function GetPropertyType(const &Property: TPropertyDefinition): TTypeDefinition;
   begin
-    Result := ResolveTypeDefinition(&Property.PropertyType);
+    Result := Importer.FindChangeTypeName(&Property.Name, nil);
+
+    if not Assigned(Result) then
+      Result := ResolveTypeDefinition(&Property.PropertyType);
   end;
 
   function GetPropertyBaseType(const &Property: TPropertyDefinition): TTypeDefinition;
@@ -1460,6 +1478,14 @@ var
       Result := GetPropertyFieldName(&Property);
   end;
 
+  function GetEnumerationName(const TypeEnumeration: TTypeEnumeration): String;
+  begin
+    Result := TypeEnumeration.EnumeratorName;
+
+    if TypeEnumeration.ParentModule.IsClassDefinition then
+      Result := Format('%s.%s', [GetClassName(TypeEnumeration.ParentModule.AsClassDefinition), Result]);
+  end;
+
   function GetTypeName(const TypeDefinition: TTypeDefinition): String;
   begin
     if TypeDefinition.IsArrayType then
@@ -1469,7 +1495,7 @@ var
     else if TypeDefinition.IsClassDefinition then
       Result := Format('%s', [GetClassImplementationName(TypeDefinition.AsClassDefinition)])
     else if TypeDefinition.IsEnumeration then
-      Result := TypeDefinition.AsTypeEnumeration.EnumeratorName
+      Result := GetEnumerationName(TypeDefinition.AsTypeEnumeration)
     else if TypeDefinition is TUndefinedType then
       Result := Format('Undefined { %s }', [TypeDefinition.Name])
     else
@@ -3077,7 +3103,8 @@ var
 
         MethodParameter.AddAtribute('Body');
 
-        MethodParameter.ParentAttributes.Add(MethodParameter.FormatNamespaceAttribute(PartType.SchemaDef.TargetNamespace));
+        if Assigned(PartType.SchemaDef) then
+          MethodParameter.ParentAttributes.Add(MethodParameter.FormatNamespaceAttribute(PartType.SchemaDef.TargetNamespace));
 
         ServiceMethod.Parameters.Add(MethodParameter);
       end;
