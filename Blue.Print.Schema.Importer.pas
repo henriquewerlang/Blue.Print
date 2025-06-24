@@ -1483,7 +1483,7 @@ var
     Result := TypeEnumeration.EnumeratorName;
 
     if TypeEnumeration.ParentModule.IsClassDefinition then
-      Result := Format('%s.%s', [GetClassName(TypeEnumeration.ParentModule.AsClassDefinition), Result]);
+      Result := Format('%s.%s', [GetClassImplementationName(TypeEnumeration.ParentModule.AsClassDefinition), Result]);
   end;
 
   function GetTypeName(const TypeDefinition: TTypeDefinition): String;
