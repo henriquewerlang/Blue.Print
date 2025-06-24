@@ -78,7 +78,7 @@ type
     [Test]
     procedure WhenTheMethodHasTheSOAPActionAttributeMustLoadTheHeaderWithTheAttributeName;
     [Test]
-    procedure WhenTheInterfaceHasTheSOAPServiceAttributeTheMethodCallCantBeLoadedInTheURLPath;
+    procedure WhenTheInterfaceHasTheSOAPServiceAttributeCantLoadAnyInformationInTheURLPath;
     [Test]
     procedure WhenSendASOAPRequestMustSerializeTheSOAPEnvelopInTheRequest;
     [Test]
@@ -285,12 +285,13 @@ type
     procedure Execute;
   end;
 
-  [SoapService('MyService')]
+  [SoapService]
   ISOAPService = interface(IInvokable)
     ['{29F73745-0A70-4C1A-9617-45A8711D7173}']
     procedure SoapBodyMethod(const [Body] Body: String);
+    [SoapAction('MyService/SoapMethod')]
     procedure SoapMethod;
-    [SoapAction('MyAction')]
+    [SoapAction('MyService/MyAction')]
     procedure SoapNamedMethod;
   end;
 
@@ -639,6 +640,15 @@ begin
   Assert.AreEqual('/AnotherName/Proc', FCommunication.URL);
 end;
 
+procedure TRemoteServiceTest.WhenTheInterfaceHasTheSOAPServiceAttributeCantLoadAnyInformationInTheURLPath;
+begin
+  var Service := GetRemoteService<ISOAPService>('Host.Service');
+
+  Service.SoapMethod;
+
+  Assert.AreEqual('Host.Service', FCommunication.URL);
+end;
+
 procedure TRemoteServiceTest.WhenTheInterfaceHasTheSoapServiceAttributeMustConcatTheBaseServiceNameInTheSOAPActionHeader;
 begin
   var Service := GetRemoteService<ISOAPService>(EmptyStr);
@@ -664,15 +674,6 @@ begin
   Assert.AreEqual(TBluePrintXMLSerializer, TObject(RemoteClass.Serializer).ClassType);
 
   RemoteClass.Free;
-end;
-
-procedure TRemoteServiceTest.WhenTheInterfaceHasTheSOAPServiceAttributeTheMethodCallCantBeLoadedInTheURLPath;
-begin
-  var Service := GetRemoteService<ISOAPService>('Host');
-
-  Service.SoapMethod;
-
-  Assert.AreEqual('Host/ISOAPService', FCommunication.URL);
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasTheSoapServiceAttributeTheMethodNameMustBeLoadedInTheSoapActionHeader;

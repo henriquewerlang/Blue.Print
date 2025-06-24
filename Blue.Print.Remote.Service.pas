@@ -289,7 +289,10 @@ end;
 
 function TRemoteService.GetRemoteServiceName: String;
 begin
-  Result := GetRemoteName(InterfaceType, InterfaceType.Name);
+  if IsSOAPRequest then
+    Result := EmptyStr
+  else
+    Result := GetRemoteName(InterfaceType, InterfaceType.Name);
 end;
 
 function TRemoteService.GetRequestMethod(const Method: TRttiMethod): TRequestMethod;
@@ -328,7 +331,7 @@ var
   SOAPAction: SoapActionAttribute;
 
 begin
-  Result := GetAttribute<SoapServiceAttribute>(FInterfaceType).BaseAction + '/' ;
+  Result := EmptyStr;
   SOAPAction := GetAttribute<SoapActionAttribute>(Method);
 
   if Assigned(SOAPAction) then

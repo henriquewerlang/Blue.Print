@@ -241,12 +241,8 @@ type
   end;
 
   SOAPServiceAttribute = class(ContentTypeAttribute)
-  private
-    FBaseAction: String;
   public
-    constructor Create(const BaseAction: String);
-
-    property BaseAction: String read FBaseAction;
+    constructor Create;
   end;
 
   SOAPActionAttribute = class(TCustomAttribute)
@@ -368,6 +364,8 @@ const
   HTTP_STATUS_SERVER_ERROR = 500;
 
 implementation
+
+uses REST.Types;
 
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
 begin
@@ -535,11 +533,9 @@ end;
 
 { SOAPServiceAttribute }
 
-constructor SOAPServiceAttribute.Create(const BaseAction: String);
+constructor SOAPServiceAttribute.Create;
 begin
-  inherited Create('text/xml');
-
-  FBaseAction := BaseAction;
+  inherited Create(CONTENTTYPE_APPLICATION_SOAP_XML);
 end;
 
 { TSOAPEnvelop }

@@ -3138,7 +3138,7 @@ begin
     var Service := WSDLDocument.Definition.Services[A];
     var ServiceInterface := FImporter.CreateInterfaceDefinition(UnitDefinition, Service.Name);
 
-    ServiceInterface.AddAtribute('RemoteName('''')');
+    ServiceInterface.AddAtribute('SOAPService');
 
     for var B := 0 to Pred(Service.Ports.Count) do
     begin
