@@ -1524,6 +1524,16 @@ var
       Result := GetFullTypeName(ResolvedTypeDefinition);
   end;
 
+  function GetParameterTypeName(const Parameter: TTypeParameterDefinition): String;
+  begin
+    var TypeDefinition := Importer.FindChangeTypeName(Parameter.Name, nil);
+
+    if not Assigned(TypeDefinition) then
+      TypeDefinition := Parameter.ParameterType;
+
+    Result := GetTypeName(TypeDefinition);
+  end;
+
   function GetPropertyTypeName(const &Property: TPropertyDefinition): String;
   begin
     Result := GetTypeName(GetPropertyType(&Property));
@@ -2073,7 +2083,7 @@ var
         if not Result.IsEmpty then
           Result := Result + '; ';
 
-        Result := Result + Format('%s%s: %s', [LoadAttributes, Parameter.Name, GetTypeName(Parameter.ParameterType)]);
+        Result := Result + Format('%s%s: %s', [LoadAttributes, Parameter.Name, GetParameterTypeName(Parameter)]);
       end;
 
       if not Result.IsEmpty then
