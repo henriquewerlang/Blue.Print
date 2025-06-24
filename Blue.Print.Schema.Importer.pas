@@ -2176,12 +2176,12 @@ begin
       DeclareMethod(Method);
 
     AddLine('  end;');
+
+    AddLine;
   end;
 
   if not Interfaces.IsEmpty then
   begin
-    AddLine;
-
     for var &Interface in Interfaces do
       AddLine(GetInterfaceFunction(&Interface, True));
 
