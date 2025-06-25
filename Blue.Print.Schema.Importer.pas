@@ -3106,17 +3106,14 @@ var
       begin
         var Part := Message.Parts[A];
 
-        var MethodParameter := TTypeParameterDefinition.Create;
+        var MethodParameter := ServiceMethod.AddParameter;
         MethodParameter.Name := Part.Name;
         MethodParameter.ParameterType := CheckPartType(Part);
         var PartType := GetPartType(Part);
 
         MethodParameter.AddAtribute('Body');
 
-        if Assigned(PartType.SchemaDef) then
-          MethodParameter.ParentAttributes.Add(MethodParameter.FormatNamespaceAttribute(PartType.SchemaDef.TargetNamespace));
-
-        ServiceMethod.Parameters.Add(MethodParameter);
+        MethodParameter.ParentAttributes.Add(MethodParameter.FormatNamespaceAttribute(WSDLDocument.Definition.TargetNameSpace));
       end;
     end;
   end;
