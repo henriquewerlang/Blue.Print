@@ -118,6 +118,7 @@ type
     FName: String;
     FOptional: Boolean;
     FPropertyType: TTypeDefinition;
+    FFixedValue: String;
 
     function GetNeedAddFunction: Boolean;
     function GetNeedDestructor: Boolean;
@@ -131,6 +132,7 @@ type
     procedure AddXMLAttributeValue;
     procedure AddXMLValueAttribute;
 
+    property FixedValue: String read FFixedValue write FFixedValue;
     property Informations: TImplementationInformations read FInformations write FInformations;
     property Name: String read FName write FName;
     property NeedAddFunction: Boolean read GetNeedAddFunction;
@@ -1188,7 +1190,14 @@ begin
     end;
   end
   else
+  begin
     Result := CreateProperty(ElementDefinition.DataType);
+
+    var FixedValue := ElementDefinition.AttributeNodes.FindNode(SFixed);
+
+    if Assigned(FixedValue) then
+      Result.FixedValue := VarToStr(FixedValue.NodeValue);
+  end;
 end;
 
 procedure TXSDSchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
@@ -1688,7 +1697,7 @@ var
 
         AppendInformation(GetNeedDestructor(PropertyType), &Property, TImplementationInformation.NeedDestructor);
 
-        AppendInformation(GetNeedGetFunction(PropertyType), &Property, TImplementationInformation.NeedGetFunction);
+        AppendInformation(GetNeedGetFunction(PropertyType) or not &Property.FixedValue.IsEmpty, &Property, TImplementationInformation.NeedGetFunction);
 
         if FormatPropertyName(&Property.Name) <> &Property.Name then
           &Property.AddFieldAttribute(&Property.Name);
@@ -1808,6 +1817,14 @@ var
     Result := Format('%s.Create', [GetBaseTypeFullName(TypeDefinition)]);
   end;
 
+  function GetPropertyFixedValue(const &Property: TPropertyDefinition): String;
+  begin
+    if GetPropertyBaseType(&Property).IsStringType then
+      Result := Format('''%s''', [&Property.FixedValue])
+    else
+      Result := &Property.FixedValue;
+  end;
+
   procedure GenerateClassImplementation(const ClassDefinition: TClassDefinition);
   begin
     if ClassDefinition.NeedImplementation then
@@ -1860,13 +1877,18 @@ var
 
           AddLine('begin');
 
-          AddLine('  if not Assigned(%s) then', [PropertyFieldName]);
+          if &Property.FixedValue.IsEmpty then
+          begin
+            AddLine('  if not Assigned(%s) then', [PropertyFieldName]);
 
-          AddLine('    %s := %s;', [PropertyFieldName, CreateObjectClass(PropertyType)]);
+            AddLine('    %s := %s;', [PropertyFieldName, CreateObjectClass(PropertyType)]);
 
-          AddLine;
+            AddLine;
 
-          AddLine('  Result := %s;', [PropertyFieldName]);
+            AddLine('  Result := %s;', [PropertyFieldName]);
+          end
+          else
+            AddLine('  Result := %s;', [GetPropertyFixedValue(&Property)]);
 
           AddLine('end;');
 
