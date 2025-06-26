@@ -245,6 +245,8 @@ type
     procedure WhenSerializeAClassWithXMLValueAttributeMustLoadTheXMLWithOnlyThePropertyValue;
     [Test]
     procedure WhenSerializeAPropertyWithAnEnumeratorMustLoadTheValueOfTheAttributeWithTheCorrectValue;
+    [Test]
+    procedure WhenSerializingAClassWithOutDocumentNameAttributeMustLoadTheClassNameInTheRootNode;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -1458,7 +1460,7 @@ begin
   MyClass.MyPublished := 4;
   var Value := FSerializer.Serialize(MyClass);
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyPublished>4</MyPublished></Document>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyPublishedClass><MyPublished>4</MyPublished></TMyPublishedClass>'#13#10, Value);
 
   MyClass.Free;
 end;
@@ -1473,7 +1475,7 @@ begin
   var MyClass := TMyClassWithNamespaceParent.Create;
   MyClass.MyProp := TMyClassWithNamespace.Create;
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document xmlns="Another"><MyProp xmlns="MyNamespace"/></Document>'#13#10, FSerializer.Serialize(MyClass));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithNamespaceParent xmlns="Another"><MyProp xmlns="MyNamespace"/></TMyClassWithNamespaceParent>'#13#10, FSerializer.Serialize(MyClass));
 
   MyClass.MyProp.Free;
 
@@ -1487,7 +1489,7 @@ begin
 
   var Value := FSerializer.Serialize(MyClass);
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyProp MyAttribute="MyValue"><MyProperty/></MyProp></Document>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithChildWithXMLAttribute><MyProp MyAttribute="MyValue"><MyProperty/></MyProp></TMyClassWithChildWithXMLAttribute>'#13#10, Value);
 
   MyClass.MyProp.Free;
 
@@ -1500,7 +1502,7 @@ begin
   MyClass.MyArray := [1, 2, 3];
   var Value := FSerializer.Serialize(MyClass);
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyArray>1</MyArray><MyArray>2</MyArray><MyArray>3</MyArray></Document>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithArray><MyArray>1</MyArray><MyArray>2</MyArray><MyArray>3</MyArray></TMyClassWithArray>'#13#10, Value);
 
   MyClass.Free;
 end;
@@ -1513,7 +1515,7 @@ begin
 
   var Value := FSerializer.Serialize(MyClass);
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document xmlns="MyNamespace"><MyProp><MyProp MyAttribute="MyValue"><MyProperty/></MyProp></MyProp></Document>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithNamespace xmlns="MyNamespace"><MyProp><MyProp MyAttribute="MyValue"><MyProperty/></MyProp></MyProp></TMyClassWithNamespace>'#13#10, Value);
 
   MyClass.MyProp.MyProp.Free;
 
@@ -1526,14 +1528,14 @@ procedure TBluePrintXMLSerializerTest.WhenAnObjectPropertyIsNilCantLoadTheNodeIn
 begin
   var MyObject := TMyObjectParent.Create;
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><Error/></Document>'#13#10, FSerializer.Serialize(MyObject));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyObjectParent><Error/></TMyObjectParent>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenDeserializeAClassWithAnArrayPropertyMustLoadTheClassAsExpected;
 begin
-  var Value := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyArray>1</MyArray><MyArray>2</MyArray><MyArray>3</MyArray></Document>'#13#10, TypeInfo(TMyClassWithArray)).AsType<TMyClassWithArray>;
+  var Value := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithArray><MyArray>1</MyArray><MyArray>2</MyArray><MyArray>3</MyArray></TMyClassWithArray>'#13#10, TypeInfo(TMyClassWithArray)).AsType<TMyClassWithArray>;
 
   Assert.AreEqual(3, Length(Value.MyArray));
   Assert.AreEqual(1, Value.MyArray[0]);
@@ -1664,7 +1666,7 @@ begin
   MyObject.MyProp3 := 123.456;
   var Value := FSerializer.Serialize(MyObject);
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyProp1>abc</MyProp1><MyProp2>123</MyProp2><MyProp3>123.456</MyProp3><MyProp4>MyValue</MyProp4></Document>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyObject><MyProp1>abc</MyProp1><MyProp2>123</MyProp2><MyProp3>123.456</MyProp3><MyProp4>MyValue</MyProp4></TMyObject>'#13#10, Value);
 
   MyObject.Free;
 end;
@@ -1686,7 +1688,7 @@ begin
   var Value := FSerializer.Serialize(MyObject);
 
   Assert.AreEqual(Format(
-    '<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><DateFormat>01-04-2025</DateFormat><DateTimeFormat>01-04-2025T08.00.00%s</DateTimeFormat><TimeFormat>08.00.00.000</TimeFormat><NumberFormat>001;000-1000</NumberFormat><IntegerFormat>000012</IntegerFormat></Document>'#13#10,
+    '<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithFormatAttribute><DateFormat>01-04-2025</DateFormat><DateTimeFormat>01-04-2025T08.00.00%s</DateTimeFormat><TimeFormat>08.00.00.000</TimeFormat><NumberFormat>001;000-1000</NumberFormat><IntegerFormat>000012</IntegerFormat></TMyClassWithFormatAttribute>'#13#10,
     [TBluePrintXMLSerializer.GetCurrentTimeZone]), Value);
 
   MyObject.Free;
@@ -1699,7 +1701,7 @@ begin
   MyObject.MyValue.Value := 'MyValue';
   var Value := FSerializer.Serialize(MyObject);
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyValue>MyValue</MyValue></Document>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithXMLValueAttributeParent><MyValue>MyValue</MyValue></TMyClassWithXMLValueAttributeParent>'#13#10, Value);
 
   MyObject.MyValue.Free;
 
@@ -1726,7 +1728,7 @@ begin
 
   var Value := FSerializer.Serialize(MyObject);
 
-  Assert.AreEqual(Format('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyDate>2024-05-21</MyDate><MyTime>01:02:03</MyTime><MyDateTime>2024-05-21T01:02:03%s</MyDateTime></Document>'#13#10,
+  Assert.AreEqual(Format('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyDateAndTimeClass><MyDate>2024-05-21</MyDate><MyTime>01:02:03</MyTime><MyDateTime>2024-05-21T01:02:03%s</MyDateTime></TMyDateAndTimeClass>'#13#10,
     [TBluePrintXMLSerializer.GetCurrentTimeZone]), Value);
 
   MyObject.Free;
@@ -1750,7 +1752,7 @@ begin
   var MyObject := TMyObjectParent.Create;
   MyObject.MyObject := TMyObject.Create;
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><Error/><MyObject><MyProp1/><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></Document>'#13#10, FSerializer.Serialize(MyObject));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyObjectParent><Error/><MyObject><MyProp1/><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></TMyObjectParent>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.MyObject.Free;
 
@@ -1765,7 +1767,7 @@ begin
   MyRecord.MyField3 := 123.456;
   var Value := FSerializer.Serialize(TValue.From(MyRecord));
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyField1>abc</MyField1><MyField2>123</MyField2><MyField3>123.456</MyField3><MyField4>MyValue</MyField4></Document>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyRecord><MyField1>abc</MyField1><MyField2>123</MyField2><MyField3>123.456</MyField3><MyField4>MyValue</MyField4></TMyRecord>'#13#10, Value);
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenSerializeAPropertyObjectMustLoadThePropertyFromTheObjectTypeAndNotTheProperyType;
@@ -1775,7 +1777,7 @@ begin
 
   var Value := FSerializer.Serialize(MyClass);
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><Error/><MyObject><Another>0</Another><MyProp1/><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></Document>'#13#10, FSerializer.Serialize(MyClass));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyObjectParent><Error/><MyObject><Another>0</Another><MyProp1/><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></TMyObjectParent>'#13#10, FSerializer.Serialize(MyClass));
 
   MyClass.MyObject.Free;
 
@@ -1787,7 +1789,7 @@ begin
   var MyClass := TMyClassWithEnumValuesXML.Create;
   MyClass.MyProp := TMyEnumWithAttribute.MyValue3;
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document MyProp="abc"/>'#13#10, FSerializer.Serialize(MyClass));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithEnumValuesXML MyProp="abc"/>'#13#10, FSerializer.Serialize(MyClass));
 
   MyClass.Free;
 end;
@@ -1799,7 +1801,7 @@ begin
 
   var Value := FSerializer.Serialize(MyClass);
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document MyProp="MyValue"/>'#13#10, Value);
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithPropertyAttribute MyProp="MyValue"/>'#13#10, Value);
 
   MyClass.Free;
 end;
@@ -1822,7 +1824,16 @@ procedure TBluePrintXMLSerializerTest.WhenSerializeATValueRecordMustSerializeThe
 begin
   var Value: TValue := 'abc';
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document>abc</Document>'#13#10, FSerializer.Serialize(TValue.From(Value)));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TValue>abc</TValue>'#13#10, FSerializer.Serialize(TValue.From(Value)));
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenSerializingAClassWithOutDocumentNameAttributeMustLoadTheClassNameInTheRootNode;
+begin
+  var MyClass := TMyPublishedClass.Create;
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyPublishedClass><MyPublished>0</MyPublished></TMyPublishedClass>'#13#10, FSerializer.Serialize(MyClass));
+
+  MyClass.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenTheClassHasTheNodeNameAttributeTheDocumentMustBeChangedToTheNameInTheAttribute;
@@ -1840,7 +1851,7 @@ begin
   var MyObject := TMyClassWithXMLAttribute.Create;
   MyObject.MyProperty := 'abc';
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document MyAttribute="MyValue"><MyProperty>abc</MyProperty></Document>'#13#10, FSerializer.Serialize(MyObject));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithXMLAttribute MyAttribute="MyValue"><MyProperty>abc</MyProperty></TMyClassWithXMLAttribute>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.Free;
 end;
@@ -1863,7 +1874,7 @@ procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheNamespaceAttributeMus
 begin
   var MyClass := TMyClassWithPropertyWithNamespaceAttribute.Create;
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyProp MyAtt="MyValue"/></Document>'#13#10, FSerializer.Serialize(MyClass));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithPropertyWithNamespaceAttribute><MyProp MyAtt="MyValue"/></TMyClassWithPropertyWithNamespaceAttribute>'#13#10, FSerializer.Serialize(MyClass));
 
   MyClass.Free;
 end;
@@ -1873,14 +1884,14 @@ begin
   var MyObject := TMyClassWithNode.Create;
   MyObject.MyProperty := 'abc';
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyNode>abc</MyNode></Document>'#13#10, FSerializer.Serialize(MyObject));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithNode><MyNode>abc</MyNode></TMyClassWithNode>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheNodeNameAttributeMustLoadTheValueOfTheXMLInThePropertyHasExpected;
 begin
-  var Value := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyNode>abc</MyNode></Document>'#13#10, TypeInfo(TMyClassWithNode)).AsType<TMyClassWithNode>;
+  var Value := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithNode><MyNode>abc</MyNode></TMyClassWithNode>'#13#10, TypeInfo(TMyClassWithNode)).AsType<TMyClassWithNode>;
 
   Assert.AreEqual('abc', Value.MyProperty);
 
@@ -1892,7 +1903,7 @@ begin
   var MyObject := TMyClassWithStoredProperty.Create;
   MyObject.MyProperty := 123;
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document/>'#13#10, FSerializer.Serialize(MyObject));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithStoredProperty/>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.Free;
 end;
@@ -1923,7 +1934,7 @@ begin
   var MyRecord: TMyRecordWithAttribute;
   MyRecord.MyField := 'abc';
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><AnotherName>abc</AnotherName></Document>'#13#10, FSerializer.Serialize(TValue.From(MyRecord)));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyRecordWithAttribute><AnotherName>abc</AnotherName></TMyRecordWithAttribute>'#13#10, FSerializer.Serialize(TValue.From(MyRecord)));
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenTheSOAPParamHasTheNamespaceAttributeMustLoadThisNamespaceInTheXML;

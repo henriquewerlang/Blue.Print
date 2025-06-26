@@ -1118,13 +1118,14 @@ var
   function GetDocumentName: String;
   var
     DocumentName: DocumentNameAttribute;
+
   begin
     DocumentName := ValueType.GetAttribute<DocumentNameAttribute>;
 
     if Assigned(DocumentName) then
       Result := DocumentName.Name
     else
-      Result := 'Document';
+      Result := ValueType.Name;
   end;
 {$ENDIF}
 
