@@ -1251,6 +1251,9 @@ begin
 
     for var A := 0 to Pred(Schema.SchemaDef.ElementDefs.Count) do
     begin
+      if not Assigned(ClassDefinition) then
+        raise Exception.CreateFmt('The file %s must have a "UnitClassName" in the configuration!', [UnitFileConfiguration.Reference]);
+
       var &Property := GenerateProperty(ClassDefinition, Schema.SchemaDef.ElementDefs[A]);
       &Property.Optional := &Property.Optional or not UnitFileConfiguration.AppendClassName.IsEmpty;
     end;
