@@ -31,11 +31,13 @@ type
     FUnitClassName: String;
     FFileType: TSchemaType;
     FIsFileTypeStored: Boolean;
+    FInterfaceName: String;
 
     procedure SetFileType(const Value: TSchemaType);
   public
     property AppendClassName: String read FAppendClassName write FAppendClassName;
     property FileType: TSchemaType read FFileType write SetFileType stored FIsFileTypeStored;
+    property InterfaceName: String read FInterfaceName write FInterfaceName;
     property IsFileTypeStored: Boolean read FIsFileTypeStored write FIsFileTypeStored;
     property Reference: String read FReference write FReference;
     property UnitClassName: String read FUnitClassName write FUnitClassName;
@@ -2230,11 +2232,10 @@ begin
   LoadUsesForImplementation;
 
   if not Interfaces.IsEmpty then
-  begin
-    AddLine;
-
     for var &Interface in Interfaces do
     begin
+      AddLine;
+
       AddLine(GetInterfaceFunction(&Interface, False));
 
       AddLine('begin');
@@ -2243,7 +2244,6 @@ begin
 
       AddLine('end;');
     end;
-  end;
 
   AddLine;
 
