@@ -125,8 +125,6 @@ type
     [Test]
     procedure WhenDeserializeAClassWithFlatAttributeAndTheJSONIsAnStringMustLoadTheEnumeratorProperty;
     [Test]
-    procedure WhenDeserializeAClassWithFlatAttributeAndFoundMoreThanOnePropertyForTheTypeMustRaiseError;
-    [Test]
     procedure WhenDeserializeAClassWithFlatAttributeAndTheJSONIsBooleanValueMustLoadTheBooleanProperty;
     [Test]
     procedure WhenTryToDeserializeAInvalidValueToADoublePropertyCannotRaiseAnyError;
@@ -156,6 +154,8 @@ type
     procedure WhenDeserializeAClassWithAnEnumeratorPropertyWithMoreThanOneValueMustCheckIfTheValueInTheJSONIsEqualToEnumeratorValueToLoadTheProperty;
     [Test]
     procedure WhenDeserializeAClassWithANamedEnumeratorPropertyMustUseTheNameEnumeratorToLoadTheProperty;
+    [Test]
+    procedure WhenDeserializeAFlatClassWithAPropertyToAFlatEnumeratorClassMustCreateTheObjectsAsExpected;
   end;
 
   [TestFixture]
@@ -720,6 +720,21 @@ type
     property myprop4: TMyEnum read FMyProp4 write FMyProp4;
   end;
 
+  TClassToEnumerator = class
+  private
+    FMyEnum: TClassWithFlatAttributeAndEnumerator;
+  published
+    property MyEnum: TClassWithFlatAttributeAndEnumerator read FMyEnum write FMyEnum;
+  end;
+
+  [Flat('MyEnum')]
+  TFlatClassToEnumerator = class
+  private
+    FTheClass: TClassToEnumerator;
+  published
+    property TheClass: TClassToEnumerator read FTheClass write FTheClass;
+  end;
+
   ISOAPService = interface(IInvokable)
     ['{BBBBC6F3-1730-40F4-A1B1-CC7CA6F08F5D}']
     procedure MyMethod(const MyParam: Integer);
@@ -1064,15 +1079,6 @@ begin
   Value.AsObject.Free;
 end;
 
-procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithFlatAttributeAndFoundMoreThanOnePropertyForTheTypeMustRaiseError;
-begin
-  Assert.WillRaise(
-    procedure
-    begin
-      FSerializer.Deserialize('1234', TypeInfo(TClassWithFlatAttributeAndEnumerator)).AsType<TClassWithFlatAttributeAndEnumerator>;
-    end, EJSONTypeCompatibleWithMoreThanOneProperty);
-end;
-
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithFlatAttributeAndNotFoundThePropertyByTypeCantRaiseAnyError;
 begin
   Assert.WillNotRaise(
@@ -1162,6 +1168,21 @@ begin
   Assert.AreEqual(TimeToStr(EncodeTime(01, 02, 03, 000)), TimeToStr(MyObject.Mytime));
 
   MyObject.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAFlatClassWithAPropertyToAFlatEnumeratorClassMustCreateTheObjectsAsExpected;
+begin
+  var Value := FSerializer.Deserialize('{"MyEnum":"MyValue2"}', TypeInfo(TFlatClassToEnumerator)).AsType<TFlatClassToEnumerator>;
+
+  Assert.IsNotNil(Value.TheClass);
+
+  Assert.IsNotNil(Value.TheClass.MyEnum);
+
+  Value.TheClass.MyEnum.Free;
+
+  Value.TheClass.Free;
+
+  Value.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAFlatObjectWithEnumeratorAttributeCantRaiseAnyErrorIfTheJSONDontHaveTheFieldEnumeratorValue;

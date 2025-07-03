@@ -51,11 +51,6 @@ type
     constructor Create(const ErrorMessage: String);
   end;
 
-  EJSONTypeCompatibleWithMoreThanOneProperty = class(Exception)
-  public
-    constructor Create;
-  end;
-
   TRequestMethodAttribute = class(TCustomAttribute)
   private
     FMethod: TRequestMethod;
@@ -778,13 +773,6 @@ end;
 constructor FlatAttribute.Create;
 begin
   inherited;
-end;
-
-{ EJSONTypeCompatibleWithMoreThanOneProperty }
-
-constructor EJSONTypeCompatibleWithMoreThanOneProperty.Create;
-begin
-  inherited Create('More than one property found for this JSON type!');
 end;
 
 { PatternPropertyAttribute }
