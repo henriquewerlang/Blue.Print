@@ -156,6 +156,10 @@ type
     procedure WhenDeserializeAClassWithANamedEnumeratorPropertyMustUseTheNameEnumeratorToLoadTheProperty;
     [Test]
     procedure WhenDeserializeAFlatClassWithAPropertyToAFlatEnumeratorClassMustCreateTheObjectsAsExpected;
+    [Test]
+    procedure WhenDeserializeAFlatClassWithEnumeratorNameAndTheJSONDontHaveTheEnumeratorValueMustGetTheFirstPropertyFromTheFlatClassAndLoadTheClass;
+    [Test]
+    procedure WhenLoadAFlatEnumeratorClassWithAnotherEnumeratorClassMustLoadTheObjectAsExpected;
   end;
 
   [TestFixture]
@@ -646,6 +650,16 @@ type
     property Separator1: TMySeparatorClass1 read FSeparator1 write FSeparator1;
     property Separator2: TMySeparatorClass2 read FSeparator2 write FSeparator2;
     property Separator3: TMySeparatorClass3 read FSeparator3 write FSeparator3;
+  end;
+
+  [Flat('Separator')]
+  TMyFlatToGroupClass = class
+  private
+    FMyProp: TMyGroupingClass;
+    FMyValue: String;
+  published
+    property MyValue: String read FMyValue write FMyValue;
+    property MyProp: TMyGroupingClass read FMyProp write FMyProp;
   end;
 
   [Flat]
@@ -1185,6 +1199,17 @@ begin
   Value.Free;
 end;
 
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAFlatClassWithEnumeratorNameAndTheJSONDontHaveTheEnumeratorValueMustGetTheFirstPropertyFromTheFlatClassAndLoadTheClass;
+begin
+  var Value := FSerializer.Deserialize('{"Value":"MyValue"}', TypeInfo(TMyGroupingClass)).AsType<TMyGroupingClass>;
+
+  Assert.IsNotNil(Value.Separator1);
+
+  Assert.AreEqual('MyValue', Value.Separator1.Value);
+
+  Value.Free;
+end;
+
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAFlatObjectWithEnumeratorAttributeCantRaiseAnyErrorIfTheJSONDontHaveTheFieldEnumeratorValue;
 begin
   Assert.WillNotRaise(
@@ -1316,6 +1341,22 @@ begin
   Assert.IsNotNil(Value.MyObject);
 
   Value.MyObject.Free;
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenLoadAFlatEnumeratorClassWithAnotherEnumeratorClassMustLoadTheObjectAsExpected;
+begin
+  var Value := FSerializer.Deserialize('{"Separator":"Value2"}', TypeInfo(TMyFlatToGroupClass)).AsType<TMyFlatToGroupClass>;
+
+  Assert.IsNotNil(Value.MyProp);
+  Assert.IsNil(Value.MyProp.Separator1);
+  Assert.IsNotNil(Value.MyProp.Separator2);
+  Assert.IsNil(Value.MyProp.Separator3);
+//
+  Value.MyProp.Separator2.Free;
+
+  Value.MyProp.Free;
 
   Value.Free;
 end;

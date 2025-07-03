@@ -806,7 +806,9 @@ var
             if Result then
               PropertyPath.Push(EnumeratorProperty);
           end;
-        end;
+        end
+      else
+        Result := FlatProperty.PropertyType.HasAttribute<FlatAttribute> and FindPropertyPath(FlatProperty.PropertyType, JSONValue);
 
       if Result then
         PropertyPath.Push(FlatProperty);
@@ -832,6 +834,13 @@ var
 
           Exit(True)
         end;
+
+      if not FlatInfo.EnumeratorPropertyName.IsEmpty then
+      begin
+        PropertyPath.Push(GetPublishedProperties(RttiType)[0]);
+
+        Exit(True)
+      end;
     end;
   end;
 
