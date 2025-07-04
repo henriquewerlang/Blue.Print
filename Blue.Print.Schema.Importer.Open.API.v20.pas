@@ -13,7 +13,6 @@ type
 
     function GenerateClassDefintion(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const ClassName: String): TTypeDefinition;
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const TypeName: String): TTypeDefinition;
-    function GetSchemaReference(const OpenAPISchema: Schema): Schema;
     function GetSchemaReferenceName(const OpenAPISchema: Schema): String;
     function GetSimpleType(const Module: TTypeModuleDefinition; const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems): TTypeDefinition;
     function LoadOpenAPIDefinition(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;
@@ -97,30 +96,20 @@ begin
 end;
 
 function TOpenAPI20SchemaLoader.GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const TypeName: String): TTypeDefinition;
-var
-  UnitDefinition: TUnitDefinition;
-
 begin
   Result := FImporter.FindType(TypeName, Module);
 
   if not Assigned(Result) then
-  begin
-    if Module.IsUnitDefinition then
-      UnitDefinition := Module.AsUnitDefinition
-    else
-      UnitDefinition := Module.AsClassDefinition.UnitDefinition;
-
     if not OpenAPISchema.ref.IsEmpty then
-      Result := GenerateTypeDefinition(Module, GetSchemaReference(OpenAPISchema), GetSchemaReferenceName(OpenAPISchema))
+      Result := Module.AddDelayedType(GetSchemaReferenceName(OpenAPISchema))
     else if OpenAPISchema.IsTypeStored then
       case OpenAPISchema.&type.simpleTypes of
-        simpleTypes.&array: Result := TTypeArrayDefinition.Create(UnitDefinition, GenerateTypeDefinition(Module, OpenAPISchema.items.schema, TypeName + 'ArrayItem'));
+        simpleTypes.&array: Result := TTypeArrayDefinition.Create(Module, GenerateTypeDefinition(Module, OpenAPISchema.items.schema, TypeName + 'ArrayItem'));
         simpleTypes.&object: Result := GenerateClassDefintion(Module, OpenAPISchema, TypeName);
         else Result := GetSimpleType(Module, OpenAPISchema.&type.simpleTypes, nil);
       end
     else
       Abort;
-  end;
 end;
 
 procedure TOpenAPI20SchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
@@ -222,25 +211,6 @@ begin
       AddMethod(PathItem.Value.patch)
     else if PathItem.Value.IsHeadStored then
       AddMethod(PathItem.Value.head);
-end;
-
-function TOpenAPI20SchemaLoader.GetSchemaReference(const OpenAPISchema: Schema): Schema;
-begin
-  var List: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Schema> := nil;
-  Result := nil;
-
-  for var ReferenceName in OpenAPISchema.ref.Split(['/']) do
-    if ReferenceName = '#' then
-      Result := nil
-    else if (ReferenceName = 'definitions') or (ReferenceName = 'defs') then
-      List := FOpenAPIDefinition.definitions.schema
-    else if ReferenceName = 'properties' then
-      List := Result.properties.schema
-    else
-      Result := List[ReferenceName];
-
-  if not Assigned(Result) then
-    raise Exception.CreateFmt('Reference not found %s', [OpenAPISchema.ref]);
 end;
 
 function TOpenAPI20SchemaLoader.GetSchemaReferenceName(const OpenAPISchema: Schema): String;
