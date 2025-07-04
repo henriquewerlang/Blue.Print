@@ -184,8 +184,6 @@ begin
   FOpenAPIDefinition := LoadOpenAPIDefinition(UnitFileConfiguration);
   Service := FImporter.CreateInterfaceDefinition(UnitDefinition, UnitFileConfiguration.InterfaceName);
 
-  UnitDefinition.Interfaces.Add(Service);
-
   for var Definition in FOpenAPIDefinition.definitions.schema do
   begin
     var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
