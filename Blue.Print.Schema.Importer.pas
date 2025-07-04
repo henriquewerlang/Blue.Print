@@ -63,9 +63,11 @@ type
     FChangeType: String;
     FParentAttribute: String;
     FFlatEnumerator: String;
+    FChangeName: String;
   public
     property Name: String read FName write FName;
     property Attribute: String read FAttribute write FAttribute;
+    property ChangeName: String read FChangeName write FChangeName;
     property ChangeType: String read FChangeType write FChangeType;
     property FlatEnumerator: String read FFlatEnumerator write FFlatEnumerator;
     property Inheritance: String read FInheritance write FInheritance;
@@ -1372,8 +1374,18 @@ var
   end;
 
   function GetClassName(const ClassDefinition: TClassDefinition): String;
+
+    function GetName: String;
+    begin
+      for var TypeConfiguration in Importer.Configuration.TypeDefinition do
+        if TypeConfiguration.Name = ClassDefinition.Name then
+          Exit(TypeConfiguration.ChangeName);
+
+      Result := ClassDefinition.Name;
+    end;
+
   begin
-    Result := CheckReservedName(FormatName(ClassDefinition.Name));
+    Result := CheckReservedName(FormatName(GetName));
 
     if Assigned(ClassDefinition.ParentModule) and ClassDefinition.ParentModule.IsClassDefinition then
       Result := GetTypePrefixName(Result);
