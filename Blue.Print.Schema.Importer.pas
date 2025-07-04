@@ -2122,7 +2122,7 @@ var
         if not Result.IsEmpty then
           Result := Result + '; ';
 
-        Result := Result + Format('%s%s: %s', [LoadAttributes, Parameter.Name, GetParameterTypeName(Parameter)]);
+        Result := Result + Format('%s%s: %s', [LoadAttributes, OnlyValidChars(Parameter.Name), GetParameterTypeName(Parameter)]);
       end;
 
       if not Result.IsEmpty then
