@@ -130,6 +130,11 @@ const
   CONTENTTYPE_TEXT_PLAIN = 'text/plain';
 {$ENDIF}
 
+function GetJSONString(const JSONValue: TJSONValue): String;
+begin
+  Result := {$IFDEF PAS2JS}String(JSONValue){$ELSE}TJSONString(JSONValue).Value{$ENDIF};
+end;
+
 function CheckRegularExpression(const Value, Pattern: String): Boolean; inline;
 begin
 {$IFDEF DCC}
@@ -582,7 +587,7 @@ begin
         if JSONValue is TJSONNumber then
           Result := TValue.From({$IFDEF PAS2JS}Double(JSONValue){$ELSE}TJSONNumber(JSONValue).AsDouble{$ENDIF})
         else
-          Result := TValue.From({$IFDEF PAS2JS}String(JSONValue){$ELSE}TJSONString(JSONValue).Value{$ENDIF})
+          Result := TValue.From(GetJSONString(JSONValue))
       else
       begin
         TValue.Make(nil, RttiType.Handle, Result);
@@ -772,7 +777,7 @@ var
       if Assigned(FieldValue) then
         Result := FieldValue.Value
 {$ELSE}
-      Result := String(GetJSONFieldValue(FieldName)
+      Result := String(GetJSONFieldValue(FieldName));
 {$ENDIF}
     end;
 
@@ -785,7 +790,7 @@ var
       Result := (PropertyKind in JSONType);
 
       if Result and (PropertyKind = tkEnumeration) then
-        Result := CheckEnumerationValue(TJSONString(JSONValue).Value, GetEnumerationNames(FlatProperty.PropertyType));
+        Result := CheckEnumerationValue(GetJSONString(JSONValue), GetEnumerationNames(FlatProperty.PropertyType));
     end;
 
     function FindEnumeratorProperty: Boolean;

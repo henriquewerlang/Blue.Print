@@ -357,10 +357,15 @@ const
   HTTP_STATUS_NO_CONTENT = 204;
   HTTP_STATUS_NOT_FOUND = 404;
   HTTP_STATUS_SERVER_ERROR = 500;
+{$IFDEF PAS2JS}
+  CONTENTTYPE_APPLICATION_SOAP_XML = '';
+{$ENDIF}
 
 implementation
 
+{$IFDEF DCC}
 uses REST.Types;
+{$ENDIF}
 
 function IsTypeKindString(const TypeKind: TTypeKind): Boolean;
 begin
