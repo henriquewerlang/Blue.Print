@@ -1378,7 +1378,7 @@ var
     function GetName: String;
     begin
       for var TypeConfiguration in Importer.Configuration.TypeDefinition do
-        if TypeConfiguration.Name = ClassDefinition.Name then
+        if (TypeConfiguration.Name = ClassDefinition.Name) and not TypeConfiguration.ChangeName.IsEmpty then
           Exit(TypeConfiguration.ChangeName);
 
       Result := ClassDefinition.Name;
