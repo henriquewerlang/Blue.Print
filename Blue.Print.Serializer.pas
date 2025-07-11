@@ -10,9 +10,7 @@ type
   IXMLNode = TJSNode;
   PTypeInfo = TTypeInfo;
   TJSONArray = TJSArray;
-  TJSONNumber = TJSNumber;
   TJSONObject = TJSObject;
-  TJSONString = TJSString;
   TJSONValue = JSValue;
 {$ELSE}
   TJSONValue = System.JSON.TJSONValue;
@@ -52,8 +50,13 @@ type
 
   TBluePrintJsonSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
   private
+    function CreateNumber(const Value: Double): TJSONValue;
+    function CreateString(const Value: String): TJSONValue;
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
-    function GetJSONValue(const JSONValue: TJSONValue): String; inline;
+    function GetNumber(const JSONValue: TJSONValue): Double;
+    function GetString(const JSONValue: TJSONValue): String; inline;
+    function IsNumber(const JSONValue: TJSONValue): Boolean;
+    function IsString(const JSONValue: TJSONValue): Boolean;
     function Serialize(const Value: TValue): String;
   protected
     function DeserializeArray(const RttiType: TRttiType; const JSONArray: TJSONArray): TValue;
@@ -129,11 +132,6 @@ const
   CONTENTTYPE_APPLICATION_XML = 'application/xml';
   CONTENTTYPE_TEXT_PLAIN = 'text/plain';
 {$ENDIF}
-
-function GetJSONString(const JSONValue: TJSONValue): String;
-begin
-  Result := {$IFDEF PAS2JS}String(JSONValue){$ELSE}TJSONString(JSONValue).Value{$ENDIF};
-end;
 
 function CheckRegularExpression(const Value, Pattern: String): Boolean; inline;
 begin
@@ -415,11 +413,6 @@ function TBluePrintJsonSerializer.SerializeType(const RttiType: TRttiType; const
     Result := TJSONObject.{$IFDEF PAS2JS}New{$ELSE}Create{$ENDIF};
   end;
 
-  function NewString(const Value: String): TJSONString;
-  begin
-    Result := TJSONString.{$IFDEF PAS2JS}New{$ELSE}Create{$ENDIF}(Value);
-  end;
-
 begin
   Result := nil;
 
@@ -431,7 +424,7 @@ begin
     tkWString,
 {$ENDIF}
     tkChar,
-    tkString: Result := NewString(Value.AsString);
+    tkString: Result := CreateString(Value.AsString);
 
 {$IFDEF PAS2JS}
     tkBool,
@@ -441,21 +434,22 @@ begin
       if Value.TypeInfo = TypeInfo(Boolean) then
         Result := {$IFDEF DCC}TJSONBool.Create{$ENDIF}(Value.AsBoolean)
       else
-        Result := NewString(inherited Serialize(Value));
+        Result := CreateString(inherited Serialize(Value));
     end;
 
     tkFloat:
     begin
       if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
-        Result := NewString(DateToISO8601(Value.AsExtended))
+        Result := CreateString(DateToISO8601(Value.AsExtended))
       else
-        Result := TJSONNumber.{$IFDEF PAS2JS}New{$ELSE}Create{$ENDIF}(Value.AsExtended);
+        Result := CreateNumber(Value.AsExtended);
     end;
 
 {$IFDEF DCC}
-    tkInt64,
+    tkInt64: Result := CreateNumber(Value.AsInt64);
+
 {$ENDIF}
-    tkInteger: Result := TJSONNumber.{$IFDEF PAS2JS}New{$ELSE}Create{$ENDIF}(Value.{$IFDEF PAS2JS}AsInteger{$ELSE}AsInt64{$ENDIF});
+    tkInteger: Result := CreateNumber(Value.AsInteger);
 
     tkClassRef: Result := SerializeType(FContext.GetType(TypeInfo(String)), TValue.From(Value.AsClass.QualifiedClassName));
 
@@ -539,7 +533,7 @@ begin
     tkWString,
 {$ENDIF}
     tkChar,
-    tkString: Result := TValue.From(GetJSONValue(JSONValue));
+    tkString: Result := TValue.From(GetString(JSONValue));
 
 {$IFDEF PAS2JS}
     tkBool: Result := TValue.From<Boolean>(JSONValue = True);
@@ -550,16 +544,16 @@ begin
     tkFloat:
     begin
       if (RttiType.Handle = TypeInfo(TDateTime)) or (RttiType.Handle = TypeInfo(TDate)) or (RttiType.Handle = TypeInfo(TTime)) then
-        Result := TValue.From(ISO8601ToDate(GetJSONValue(JSONValue)))
-      else if JSONValue is TJSONNumber then
-        Result := TValue.From({$IFDEF PAS2JS}Double(JSONValue){$ELSE}(JSONValue as TJSONNumber).AsDouble{$ENDIF});
+        Result := TValue.From(ISO8601ToDate(GetString(JSONValue)))
+      else if IsNumber(JSONValue) then
+        Result := TValue.From(GetNumber(JSONValue));
     end;
 
 {$IFDEF DCC}
     tkInt64: Result := (JSONValue as TJSONNumber).AsInt64;
 {$ENDIF}
 
-    tkInteger: Result := TValue.From({$IFDEF PAS2JS}Integer(JSONValue){$ELSE}(JSONValue as TJSONNumber).AsInt{$ENDIF});
+    tkInteger: Result := TValue.From(Trunc(GetNumber(JSONValue)));
 
     tkClassRef: Result := DeserializeClassReference(RttiType, JSONValue);
 
@@ -584,10 +578,10 @@ begin
     tkRecord:
     begin
       if RttiType.Handle = TypeInfo(TValue) then
-        if JSONValue is TJSONNumber then
-          Result := TValue.From({$IFDEF PAS2JS}Double(JSONValue){$ELSE}TJSONNumber(JSONValue).AsDouble{$ENDIF})
+        if IsNumber(JSONValue) then
+          Result := TValue.From(GetNumber(JSONValue))
         else
-          Result := TValue.From(GetJSONString(JSONValue))
+          Result := TValue.From(GetString(JSONValue))
       else
       begin
         TValue.Make(nil, RttiType.Handle, Result);
@@ -600,9 +594,58 @@ begin
   end;
 end;
 
-function TBluePrintJsonSerializer.GetJSONValue(const JSONValue: TJSONValue): String;
+function TBluePrintJsonSerializer.GetNumber(const JSONValue: TJSONValue): Double;
 begin
-  Result := String(JSONValue{$IFDEF DCC}.Value{$ENDIF});
+{$IFDEF DCC}
+  Result := TJSONNumber(JSONValue).AsDouble;
+{$ELSE}
+  Result := ToNumber(JSONValue);
+{$ENDIF}
+end;
+
+function TBluePrintJsonSerializer.GetString(const JSONValue: TJSONValue): String;
+begin
+{$IFDEF DCC}
+  Result := TJSONString(JSONValue).Value;
+{$ELSE}
+  Result := String(JSONValue);
+{$ENDIF}
+end;
+
+function TBluePrintJsonSerializer.IsNumber(const JSONValue: TJSONValue): Boolean;
+begin
+{$IFDEF DCC}
+  Result := JSONValue is TJSONNumber;
+{$ELSE}
+  Result := JSApi.JS.IsNumber(JSONValue);
+{$ENDIF}
+end;
+
+function TBluePrintJsonSerializer.IsString(const JSONValue: TJSONValue): Boolean;
+begin
+{$IFDEF DCC}
+  Result := JSONValue is TJSONString;
+{$ELSE}
+  Result := JSApi.JS.IsString(JSONValue);
+{$ENDIF}
+end;
+
+function TBluePrintJsonSerializer.CreateNumber(const Value: Double): TJSONValue;
+begin
+{$IFDEF DCC}
+  Result := TJSONNumber.Create(Value);
+{$ELSE}
+  Result := TJSNumber.New(Value);
+{$ENDIF}
+end;
+
+function TBluePrintJsonSerializer.CreateString(const Value: String): TJSONValue;
+begin
+{$IFDEF DCC}
+  Result := TJSONString.Create(Value);
+{$ELSE}
+  Result := TJSString.New(Value);
+{$ENDIF}
 end;
 
 function TBluePrintJsonSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
@@ -667,7 +710,7 @@ var
   ClassReferenceType: TRttiInstanceType;
 
 begin
-  ClassReferenceType := FContext.FindType(GetJSONValue(JSONValue)) as TRttiInstanceType;
+  ClassReferenceType := FContext.FindType(GetString(JSONValue)) as TRttiInstanceType;
 
   if Assigned(ClassReferenceType) then
     Result := TValue.From(ClassReferenceType.MetaclassType)
@@ -725,9 +768,9 @@ var
 
     procedure LoadJSONType;
     begin
-      if JSONValue is TJSONNumber then
+      if IsNumber(JSONValue) then
         JSONType := [tkInteger, {$IFDEF DCC}tkInt64, {$ENDIF}tkFloat]
-      else if (JSONValue is TJSONString) or IsBooleanValue then
+      else if IsString(JSONValue) or IsBooleanValue then
         JSONType := [{$IFDEF DCC}tkLString, tkUString, tkWChar, tkWString, {$ENDIF}tkChar, tkString, tkEnumeration]
       else if JSONValue is TJSONArray then
         JSONType := [tkArray, tkDynArray]
@@ -790,7 +833,7 @@ var
       Result := (PropertyKind in JSONType);
 
       if Result and (PropertyKind = tkEnumeration) then
-        Result := CheckEnumerationValue(GetJSONString(JSONValue), GetEnumerationNames(FlatProperty.PropertyType));
+        Result := CheckEnumerationValue(GetString(JSONValue), GetEnumerationNames(FlatProperty.PropertyType));
     end;
 
     function FindEnumeratorProperty: Boolean;
