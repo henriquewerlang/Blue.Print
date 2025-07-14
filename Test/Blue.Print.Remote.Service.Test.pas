@@ -135,6 +135,8 @@ type
     procedure WhenTheFunctionReturnAStreamMustLoadTheReturnValueWithTheBluePrintStream;
     [Test]
     procedure TheReturningStreamMustLoadTheResponseStreamValue;
+    [Test]
+    procedure WhenTheParameterHasTheHeaderValueAttributeMustLoadTheParameterValueInTheHeaderRequest;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -238,6 +240,7 @@ type
     [Header('MethodHeader', 'Method Header')]
     [Header('MethodHeader2', 'Method Header 2')]
     procedure TestHeader;
+    procedure HeaderValue(const [HeaderValue('My Header')] Value: String);
   end;
 
   IInheritedServiceTest = interface(IServiceTest)
@@ -773,6 +776,15 @@ begin
   Assert.IsNotNil(FCommunication.Body);
 
   Assert.AreEqual(FSerializer.ReturnValue.AsString, FCommunication.GetBodyAsString);
+end;
+
+procedure TRemoteServiceTest.WhenTheParameterHasTheHeaderValueAttributeMustLoadTheParameterValueInTheHeaderRequest;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.HeaderValue('My Value');
+
+  Assert.AreEqual('My Value', FCommunication.Header['My Header']);
 end;
 
 procedure TRemoteServiceTest.WhenTheParamHasLocaleCharsMustEncodeTheName;

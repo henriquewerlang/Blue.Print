@@ -177,7 +177,7 @@ begin
   if Assigned(RttiObject) then
   begin
     for Attribute in RttiObject.GetAttributes do
-      if Attribute.InheritsFrom(T) then
+      if Attribute is T then
         Result := Result + [Attribute as T];
 
     Result := Result + GetAttributes<T>(RttiObject.Parent);
