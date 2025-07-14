@@ -50,6 +50,8 @@ type
 
   TBluePrintJsonSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
   private
+    function CreateInteger(const Value: Integer): TJSONValue;
+    function CreateInt64(const Value: Int64): TJSONValue;
     function CreateNumber(const Value: Double): TJSONValue;
     function CreateString(const Value: String): TJSONValue;
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
@@ -446,10 +448,10 @@ begin
     end;
 
 {$IFDEF DCC}
-    tkInt64: Result := CreateNumber(Value.AsInt64);
+    tkInt64: Result := CreateInteger(Value.AsInt64);
 
 {$ENDIF}
-    tkInteger: Result := CreateNumber(Value.AsInteger);
+    tkInteger: Result := CreateInteger(Value.AsInteger);
 
     tkClassRef: Result := SerializeType(FContext.GetType(TypeInfo(String)), TValue.From(Value.AsClass.QualifiedClassName));
 
@@ -627,6 +629,24 @@ begin
   Result := JSONValue is TJSONString;
 {$ELSE}
   Result := JSApi.JS.IsString(JSONValue);
+{$ENDIF}
+end;
+
+function TBluePrintJsonSerializer.CreateInt64(const Value: Int64): TJSONValue;
+begin
+{$IFDEF DCC}
+  Result := TJSONNumber.Create(Value);
+{$ELSE}
+  Result := TJSBigInt.New(Value);
+{$ENDIF}
+end;
+
+function TBluePrintJsonSerializer.CreateInteger(const Value: Integer): TJSONValue;
+begin
+{$IFDEF DCC}
+  Result := TJSONNumber.Create(Value);
+{$ELSE}
+  Result := TJSNumber.New(Value);
 {$ENDIF}
 end;
 
