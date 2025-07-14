@@ -48,7 +48,7 @@ type
     destructor Destroy; override;
   end;
 
-  TBluePrintJsonSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
+  TBluePrintJSONSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
   private
     function CreateInteger(const Value: Integer): TJSONValue;
     function CreateInt64(const Value: Int64): TJSONValue;
@@ -337,9 +337,9 @@ begin
   FFormatSettings := Value;
 end;
 
-{ TBluePrintJsonSerializer }
+{ TBluePrintJSONSerializer }
 
-function TBluePrintJsonSerializer.Serialize(const Value: TValue): String;
+function TBluePrintJSONSerializer.Serialize(const Value: TValue): String;
 var
   JSON: TJSONValue;
 
@@ -367,7 +367,7 @@ begin
   end;
 end;
 
-function TBluePrintJsonSerializer.SerializeArray(const RttiType: TRttiType; const Value: TValue): TJSONArray;
+function TBluePrintJSONSerializer.SerializeArray(const RttiType: TRttiType; const Value: TValue): TJSONArray;
 var
   A: NativeInt;
   ElementValue: TValue;
@@ -383,7 +383,7 @@ begin
   end;
 end;
 
-procedure TBluePrintJsonSerializer.SerializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
+procedure TBluePrintJSONSerializer.SerializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
 var
   Field: TRttiField;
 
@@ -393,12 +393,12 @@ begin
       JSONObject.AddPair(Field.Name, SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData)));
 end;
 
-procedure TBluePrintJsonSerializer.SerializeDynamicProperty(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
+procedure TBluePrintJSONSerializer.SerializeDynamicProperty(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
 begin
   raise Exception.Create('Not implemented yet!');
 end;
 
-procedure TBluePrintJsonSerializer.SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
+procedure TBluePrintJSONSerializer.SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
 var
   &Property: TRttiProperty;
 
@@ -408,7 +408,7 @@ begin
       JSONObject.AddPair(GetFieldName(&Property), SerializeType(&Property.PropertyType, &Property.GetValue(Instance)));
 end;
 
-function TBluePrintJsonSerializer.SerializeType(const RttiType: TRttiType; const Value: TValue): TJSONValue;
+function TBluePrintJSONSerializer.SerializeType(const RttiType: TRttiType; const Value: TValue): TJSONValue;
 
   function CreateJSONObject: TJSONObject;
   begin
@@ -487,7 +487,7 @@ begin
   end;
 end;
 
-procedure TBluePrintJsonSerializer.DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
+procedure TBluePrintJSONSerializer.DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
 var
   DynamicPropertyInstance: TValue;
   Key: JSONKeyType;
@@ -525,7 +525,7 @@ begin
   end;
 end;
 
-function TBluePrintJsonSerializer.DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
+function TBluePrintJSONSerializer.DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
 begin
   case RttiType.TypeKind of
 {$IFDEF DCC}
@@ -596,7 +596,7 @@ begin
   end;
 end;
 
-function TBluePrintJsonSerializer.GetNumber(const JSONValue: TJSONValue): Double;
+function TBluePrintJSONSerializer.GetNumber(const JSONValue: TJSONValue): Double;
 begin
 {$IFDEF DCC}
   Result := TJSONNumber(JSONValue).AsDouble;
@@ -605,7 +605,7 @@ begin
 {$ENDIF}
 end;
 
-function TBluePrintJsonSerializer.GetString(const JSONValue: TJSONValue): String;
+function TBluePrintJSONSerializer.GetString(const JSONValue: TJSONValue): String;
 begin
 {$IFDEF DCC}
   Result := TJSONString(JSONValue).Value;
@@ -614,7 +614,7 @@ begin
 {$ENDIF}
 end;
 
-function TBluePrintJsonSerializer.IsNumber(const JSONValue: TJSONValue): Boolean;
+function TBluePrintJSONSerializer.IsNumber(const JSONValue: TJSONValue): Boolean;
 begin
 {$IFDEF DCC}
   Result := JSONValue is TJSONNumber;
@@ -623,7 +623,7 @@ begin
 {$ENDIF}
 end;
 
-function TBluePrintJsonSerializer.IsString(const JSONValue: TJSONValue): Boolean;
+function TBluePrintJSONSerializer.IsString(const JSONValue: TJSONValue): Boolean;
 begin
 {$IFDEF DCC}
   Result := JSONValue is TJSONString;
@@ -632,7 +632,7 @@ begin
 {$ENDIF}
 end;
 
-function TBluePrintJsonSerializer.CreateInt64(const Value: Int64): TJSONValue;
+function TBluePrintJSONSerializer.CreateInt64(const Value: Int64): TJSONValue;
 begin
 {$IFDEF DCC}
   Result := TJSONNumber.Create(Value);
@@ -641,7 +641,7 @@ begin
 {$ENDIF}
 end;
 
-function TBluePrintJsonSerializer.CreateInteger(const Value: Integer): TJSONValue;
+function TBluePrintJSONSerializer.CreateInteger(const Value: Integer): TJSONValue;
 begin
 {$IFDEF DCC}
   Result := TJSONNumber.Create(Value);
@@ -650,7 +650,7 @@ begin
 {$ENDIF}
 end;
 
-function TBluePrintJsonSerializer.CreateNumber(const Value: Double): TJSONValue;
+function TBluePrintJSONSerializer.CreateNumber(const Value: Double): TJSONValue;
 begin
 {$IFDEF DCC}
   Result := TJSONNumber.Create(Value);
@@ -659,7 +659,7 @@ begin
 {$ENDIF}
 end;
 
-function TBluePrintJsonSerializer.CreateString(const Value: String): TJSONValue;
+function TBluePrintJSONSerializer.CreateString(const Value: String): TJSONValue;
 begin
 {$IFDEF DCC}
   Result := TJSONString.Create(Value);
@@ -668,7 +668,7 @@ begin
 {$ENDIF}
 end;
 
-function TBluePrintJsonSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+function TBluePrintJSONSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
 var
   JSON: TJSONValue;
 
@@ -700,7 +700,7 @@ begin
   end;
 end;
 
-function TBluePrintJsonSerializer.DeserializeArray(const RttiType: TRttiType; const JSONArray: TJSONArray): TValue;
+function TBluePrintJSONSerializer.DeserializeArray(const RttiType: TRttiType; const JSONArray: TJSONArray): TValue;
 var
   ArrayElementType: TRttiType;
   ArrayItems: TArray<TValue>;
@@ -725,7 +725,7 @@ begin
   Result := TValue.FromArray(RttiType.Handle, ArrayItems);
 end;
 
-function TBluePrintJsonSerializer.DeserializeClassReference(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
+function TBluePrintJSONSerializer.DeserializeClassReference(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
 var
   ClassReferenceType: TRttiInstanceType;
 
@@ -738,7 +738,7 @@ begin
     Result := TValue.Empty;
 end;
 
-procedure TBluePrintJsonSerializer.DeserializeDynamicPropertyValue(const RttiType: TRttiInstanceType; const Instance: TObject; const PropertyName: String; const Value: TJSONValue);
+procedure TBluePrintJSONSerializer.DeserializeDynamicPropertyValue(const RttiType: TRttiInstanceType; const Instance: TObject; const PropertyName: String; const Value: TJSONValue);
 var
   Parameters: TArray<TRttiParameter>;
   WriteMethod: TRttiMethod;
@@ -753,7 +753,7 @@ begin
 {$ENDIF}
 end;
 
-procedure TBluePrintJsonSerializer.DeserializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
+procedure TBluePrintJSONSerializer.DeserializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
 var
   Field: TRttiField;
   Key: JSONKeyType;
@@ -768,7 +768,7 @@ begin
   end;
 end;
 
-procedure TBluePrintJsonSerializer.DeserializeFlatObject(const RttiType: TRttiType; const Instance: TValue; const JSONValue: TJSONValue);
+procedure TBluePrintJSONSerializer.DeserializeFlatObject(const RttiType: TRttiType; const Instance: TValue; const JSONValue: TJSONValue);
 type
   TJSONTypes = set of TTypeKind;
 

@@ -77,7 +77,7 @@ type
     procedure ForEachParam(const Method: TRttiMethod; const Args: TArray<TValue>; const Proc: TProc<TRttiParameter, TValue>);
     procedure LoadAuthorization(const Method: TRttiMethod; const Args: TArray<TValue>);
     procedure LoadParams(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
-    procedure LoadRequestHeaders(const Method: TRttiMethod; const LoadBodyContentType: Boolean);
+    procedure LoadRequestHeaders(const Method: TRttiMethod; const Args: TArray<TValue>);
     procedure SetAuthorizationValue(const Value: String);
     procedure SetCertificate(const FileName, Password: String); overload;
     procedure SetCertificate(const Value: TStream; const Password: String); overload;
@@ -314,7 +314,7 @@ begin
     if IsSOAPRequest then
       FSerializer := TBluePrintXMLSerializer.Create
     else
-      FSerializer := TBluePrintJsonSerializer.Create;
+      FSerializer := TBluePrintJSONSerializer.Create;
 
   Result := FSerializer;
 end;
@@ -392,11 +392,9 @@ end;
 function TRemoteService.LoadRequestBodyAndHeaders(const Method: TRttiMethod; const Args: TArray<TValue>): String;
 begin
   Result := LoadRequestBody(Method, Args);
-
-  LoadRequestHeaders(Method, not Result.IsEmpty);
 end;
 
-procedure TRemoteService.LoadRequestHeaders(const Method: TRttiMethod; const LoadBodyContentType: Boolean);
+procedure TRemoteService.LoadRequestHeaders(const Method: TRttiMethod; const Args: TArray<TValue>);
 var
   Attribute: HeaderAttribute;
   CharSet: String;
@@ -415,7 +413,7 @@ begin
     ContentTypeText := Format('%s;action=%s', [CONTENTTYPE_APPLICATION_SOAP_XML, GetSOAPActionName(Method)])
   else if Assigned(ContentTypeAttr) then
     ContentTypeText := ContentTypeAttr.ContentType
-  else if LoadBodyContentType then
+  else if Assigned(FSerializer) then
     ContentTypeText := FSerializer.ContentType
   else
     ContentTypeText := CONTENTTYPE_TEXT_PLAIN;
@@ -429,6 +427,8 @@ begin
     CharSet := ';charset=' + CharSet;
 
   Header[CONTENT_TYPE_HEADER] := ContentTypeText + CharSet;
+
+  LoadAuthorization(Method, Args);
 end;
 
 procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
@@ -483,7 +483,7 @@ end;
 
 function TRemoteService.SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>; const AsyncRequest: Boolean; const ReturnEvent: TProc<TValue>; const ErrorEvent: TProc<Exception>): TValue;
 begin
-  LoadAuthorization(Method, Args);
+  LoadRequestHeaders(Method, Args);
 
   Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBodyAndHeaders(Method, Args), AsyncRequest,
     Assigned(Method.ReturnType) and Method.ReturnType.IsInstance and (Method.ReturnType.AsInstance.MetaclassType = TStream),
