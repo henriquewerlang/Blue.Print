@@ -447,7 +447,7 @@ begin
     end;
 
 {$IFDEF DCC}
-    tkInt64: Result := CreateInteger(Value.AsInt64);
+    tkInt64: Result := CreateInt64(Value.AsInt64);
 
 {$ENDIF}
     tkInteger: Result := CreateInteger(Value.AsInteger);
