@@ -71,11 +71,11 @@ type
     function GetSOAPActionName(const Method: TRttiMethod): String;
     function IsSOAPRequest: Boolean;
     function LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
-    function LoadRequestBodyAndHeaders(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>; const AsyncRequest: Boolean; const ReturnEvent: TProc<TValue>; const ErrorEvent: TProc<Exception>): TValue;
 
     procedure ForEachParam(const Method: TRttiMethod; const Args: TArray<TValue>; const Proc: TProc<TRttiParameter, TValue>);
     procedure LoadAuthorization(const Method: TRttiMethod; const Args: TArray<TValue>);
+    procedure LoadContentType(const Method: TRttiMethod);
     procedure LoadParams(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
     procedure LoadRequestHeaders(const Method: TRttiMethod; const Args: TArray<TValue>);
     procedure SetAuthorizationValue(const Value: String);
@@ -360,6 +360,37 @@ begin
     end);
 end;
 
+procedure TRemoteService.LoadContentType(const Method: TRttiMethod);
+var
+  CharSet: String;
+  CharSetAttr: CharSetAttribute;
+  ContentTypeAttr: ContentTypeAttribute;
+  ContentTypeText: String;
+
+begin
+  ContentTypeAttr := GetAttribute<ContentTypeAttribute>(Method);
+  CharSetAttr := GetAttribute<CharSetAttribute>(Method);
+
+  if IsSOAPRequest then
+    ContentTypeText := Format('%s;action=%s', [CONTENTTYPE_APPLICATION_SOAP_XML, GetSOAPActionName(Method)])
+  else if Assigned(ContentTypeAttr) then
+    ContentTypeText := ContentTypeAttr.ContentType
+  else if Assigned(FSerializer) then
+    ContentTypeText := FSerializer.ContentType
+  else
+    ContentTypeText := CONTENTTYPE_TEXT_PLAIN;
+
+  if Assigned(CharSetAttr) then
+    CharSet := CharSetAttr.CharSet
+  else
+    CharSet := 'utf-8';
+
+  if not CharSet.IsEmpty then
+    CharSet := ';charset=' + CharSet;
+
+  Header[CONTENT_TYPE_HEADER] := ContentTypeText + CharSet;
+end;
+
 procedure TRemoteService.LoadParams(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
 begin
   ForEachParam(Method, Args,
@@ -384,49 +415,20 @@ begin
         Value := TValue.From(TSOAPEnvelop.Create(Parameter, Value));
 
       Body := Serializer.Serialize(Value);
+
+      LoadContentType(Method);
     end, TParameterType.Body, Args);
 
   Result := Body;
 end;
 
-function TRemoteService.LoadRequestBodyAndHeaders(const Method: TRttiMethod; const Args: TArray<TValue>): String;
-begin
-  Result := LoadRequestBody(Method, Args);
-end;
-
 procedure TRemoteService.LoadRequestHeaders(const Method: TRttiMethod; const Args: TArray<TValue>);
 var
   Attribute: HeaderAttribute;
-  CharSet: String;
-  CharSetAttr: CharSetAttribute;
-  ContentTypeAttr: ContentTypeAttribute;
-  ContentTypeText: String;
 
 begin
-  ContentTypeAttr := GetAttribute<ContentTypeAttribute>(Method);
-  CharSetAttr := GetAttribute<CharSetAttribute>(Method);
-
   for Attribute in GetAttributes<HeaderAttribute>(Method) do
     Header[Attribute.Name] := Attribute.Value;
-
-  if IsSOAPRequest then
-    ContentTypeText := Format('%s;action=%s', [CONTENTTYPE_APPLICATION_SOAP_XML, GetSOAPActionName(Method)])
-  else if Assigned(ContentTypeAttr) then
-    ContentTypeText := ContentTypeAttr.ContentType
-  else if Assigned(FSerializer) then
-    ContentTypeText := FSerializer.ContentType
-  else
-    ContentTypeText := CONTENTTYPE_TEXT_PLAIN;
-
-  if Assigned(CharSetAttr) then
-    CharSet := CharSetAttr.CharSet
-  else
-    CharSet := 'utf-8';
-
-  if not CharSet.IsEmpty then
-    CharSet := ';charset=' + CharSet;
-
-  Header[CONTENT_TYPE_HEADER] := ContentTypeText + CharSet;
 
   LoadAuthorization(Method, Args);
 end;
@@ -485,7 +487,7 @@ function TRemoteService.SendRequest(const Method: TRttiMethod; const Args: TArra
 begin
   LoadRequestHeaders(Method, Args);
 
-  Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBodyAndHeaders(Method, Args), AsyncRequest,
+  Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBody(Method, Args), AsyncRequest,
     Assigned(Method.ReturnType) and Method.ReturnType.IsInstance and (Method.ReturnType.AsInstance.MetaclassType = TStream),
     procedure(ContentString: String; ContentStream: TStream)
     begin

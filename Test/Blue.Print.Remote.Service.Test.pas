@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Rtti, System.Classes, System.TypInfo, System.Generics.Collections, System.SysUtils, Test.Insight.Framework, Blue.Print.Remote.Service, Blue.Print.Types;
+uses System.Rtti, System.Classes, System.TypInfo, System.Generics.Collections, System.SysUtils, Test.Insight.Framework, Blue.Print.Remote.Service, Blue.Print.Serializer, Blue.Print.Types;
 
 type
   TCommunicationMock = class;
@@ -176,17 +176,14 @@ type
     property URL: String read FURL;
   end;
 
-  TSerializerMock = class(TInterfacedObject, IBluePrintSerializer)
+  TSerializerMock = class(TBluePrintSerializer, IBluePrintSerializer)
   private
     FDeserializeCalled: Boolean;
     FReturnValue: TValue;
     FSerializeValue: TValue;
 
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
-    function GetContentType: String;
     function Serialize(const Value: TValue): String;
-
-    procedure SetFormatSettings(const Value: TFormatSettings);
   public
     property DeserializeCalled: Boolean read FDeserializeCalled;
     property ReturnValue: TValue read FReturnValue write FReturnValue;
@@ -217,8 +214,8 @@ type
 
     procedure AuthorizationProcedure([Authorization]const AuthorizationValue: String);
     [ContentType('MyContent-Type')]
-    procedure FillContentType;
-    procedure ParameterInBody([Body]Param1: String);
+    procedure FillContentType([Body]Value: String);
+    procedure ParameterInBody([Body]Body: String);
     procedure ParameterInPath([Path]Param1: String; [Path]Param2: Integer);
     procedure ParameterMyObject([Body]Param1: TMyObject);
     [ContentType('MyContent-Type')]
@@ -276,13 +273,13 @@ type
   [ContentType('MyContent')]
   ICharSetService = interface(IInvokable)
     ['{2364944D-3643-4650-840C-A0237661E7AD}']
-    procedure Execute;
+    procedure Execute(const [Body] Body: String);
   end;
 
   [CharSet('')]
   ICharSetEmpty = interface(IInvokable)
     ['{95A575E8-13E7-4604-8FCF-307A288C8E09}']
-    procedure Execute;
+    procedure Execute(const [Body] Body: String);
   end;
 
   [SoapService]
@@ -290,14 +287,14 @@ type
     ['{29F73745-0A70-4C1A-9617-45A8711D7173}']
     procedure SoapBodyMethod(const [Body] Body: String);
     [SoapAction('MyService/SoapMethod')]
-    procedure SoapMethod;
+    procedure SoapMethod(const [Body] Body: String);
     [SoapAction('MyService/MyAction')]
-    procedure SoapNamedMethod;
+    procedure SoapNamedMethod(const [Body] Body: String);
   end;
 
 implementation
 
-uses Blue.Print.Serializer, Web.ReqFiles{$IFDEF DCC}, REST.Types{$ENDIF};
+uses Web.ReqFiles{$IFDEF DCC}, REST.Types{$ENDIF};
 
 { TRemoteServiceTest }
 
@@ -339,7 +336,7 @@ procedure TRemoteServiceTest.TheDefaultCharSetMustBeUTF8;
 begin
   var Service := GetRemoteService<IServiceTest>(EmptyStr);
 
-  Service.ParameterInPath('', 0);
+  Service.ParameterInBody(EmptyStr);
 
   Assert.IsTrue(FCommunication.Header['Content-Type'].EndsWith(';charset=utf-8'));
 end;
@@ -348,9 +345,9 @@ procedure TRemoteServiceTest.TheDefaultContentTypeMustBeTextPlain;
 begin
   var Service := GetRemoteService<IServiceTest>(EmptyStr);
 
-  Service.ParameterInPath('', 0);
+  Service.ParameterInBody(EmptyStr);
 
-  Assert.IsTrue(FCommunication.Header['Content-Type'].StartsWith(CONTENTTYPE_TEXT_PLAIN));
+  Assert.AreEqual(CONTENTTYPE_TEXT_PLAIN, FCommunication.Header['Content-Type'].Substring(0, Length(CONTENTTYPE_TEXT_PLAIN)));
 end;
 
 procedure TRemoteServiceTest.TheParamsOfTheProcedureMustBeLoadedInTheQueryByDefault;
@@ -406,7 +403,7 @@ procedure TRemoteServiceTest.TheSOAPContentTypeMustBeAppendedTheActionValue;
 begin
   var Service := GetRemoteService<ISOAPService>(EmptyStr);
 
-  Service.SoapNamedMethod;
+  Service.SoapNamedMethod(EmptyStr);
 
   Assert.AreEqual('application/soap+xml;action=MyService/MyAction;charset=utf-8', FCommunication.Header['Content-Type']);
 end;
@@ -560,7 +557,7 @@ procedure TRemoteServiceTest.WhenTheCharSetAttributeIsEmptyCantLoadTheCharSetInT
 begin
   var Service := GetRemoteService<ICharSetEmpty>(EmptyStr);
 
-  Service.Execute;
+  Service.Execute(EmptyStr);
 
   Assert.AreEqual('text/plain', FCommunication.Header['Content-Type']);
 end;
@@ -616,7 +613,7 @@ procedure TRemoteServiceTest.WhenTheInterfaceHasTheCharSetAttributeMustLoadTheCh
 begin
   var Service := GetRemoteService<ICharSetService>(EmptyStr);
 
-  Service.Execute;
+  Service.Execute(EmptyStr);
 
   Assert.AreEqual('MyContent;charset=MyCharSet', FCommunication.Header['Content-Type']);
 end;
@@ -644,7 +641,7 @@ procedure TRemoteServiceTest.WhenTheInterfaceHasTheSOAPServiceAttributeCantLoadA
 begin
   var Service := GetRemoteService<ISOAPService>('Host.Service');
 
-  Service.SoapMethod;
+  Service.SoapMethod(EmptyStr);
 
   Assert.AreEqual('Host.Service', FCommunication.URL);
 end;
@@ -653,7 +650,7 @@ procedure TRemoteServiceTest.WhenTheInterfaceHasTheSoapServiceAttributeMustConca
 begin
   var Service := GetRemoteService<ISOAPService>(EmptyStr);
 
-  Service.SoapNamedMethod;
+  Service.SoapNamedMethod(EmptyStr);
 
   Assert.AreEqual('application/soap+xml;action=MyService/MyAction;charset=utf-8', FCommunication.Header['Content-Type']);
 end;
@@ -662,7 +659,7 @@ procedure TRemoteServiceTest.WhenTheInterfaceHasTheSoapServiceAttributeMustLoadT
 begin
   var Service := GetRemoteService<ISOAPService>(EmptyStr);
 
-  Service.SoapMethod;
+  Service.SoapMethod(EmptyStr);
 
   Assert.StartWith(CONTENTTYPE_APPLICATION_SOAP_XML, FCommunication.Header['Content-Type']);
 end;
@@ -680,7 +677,7 @@ procedure TRemoteServiceTest.WhenTheInterfaceHasTheSoapServiceAttributeTheMethod
 begin
   var Service := GetRemoteService<ISOAPService>(EmptyStr);
 
-  Service.SoapMethod;
+  Service.SoapMethod(EmptyStr);
 
   Assert.AreEqual('application/soap+xml;action=MyService/SoapMethod;charset=utf-8', FCommunication.Header['Content-Type']);
 end;
@@ -689,7 +686,7 @@ procedure TRemoteServiceTest.WhenTheInterfaceIsASOAPServiceTheContentTypeMustBeT
 begin
   var Service := GetRemoteService<ISOAPService>(EmptyStr);
 
-  Service.SoapMethod;
+  Service.SoapMethod(EmptyStr);
 
   Assert.StartWith('application/soap+xml', FCommunication.Header['Content-Type']);
 end;
@@ -735,7 +732,7 @@ procedure TRemoteServiceTest.WhenTheMethodHasTheSOAPActionAttributeMustLoadTheHe
 begin
   var Service := GetRemoteService<ISOAPService>(EmptyStr);
 
-  Service.SoapNamedMethod;
+  Service.SoapNamedMethod(EmptyStr);
 
   Assert.AreEqual('application/soap+xml;action=MyService/MyAction;charset=utf-8', FCommunication.Header['Content-Type']);
 end;
@@ -811,7 +808,7 @@ procedure TRemoteServiceTest.WhenTheProcedureHasTheContentTypeAttributeMustFillT
 begin
   var Service := GetRemoteService<IServiceTest>(EmptyStr);
 
-  Service.FillContentType;
+  Service.FillContentType(EmptyStr);
 
   Assert.AreEqual('MyContent-Type;charset=utf-8', FCommunication.Header['Content-Type']);
 end;
@@ -958,20 +955,26 @@ begin
     raise Exception.Create('Types mismatch!');
 end;
 
-function TSerializerMock.GetContentType: String;
-begin
-  Result := 'serializer/content';
-end;
-
 function TSerializerMock.Serialize(const Value: TValue): String;
 begin
   FSerializeValue := Value;
+
+  case Value.Kind of
+{$IFDEF DCC}
+    tkMRecord,
+{$ENDIF}
+    tkArray,
+    tkClass,
+    tkClassRef,
+    tkDynArray,
+    tkRecord:
+    begin
+      FContentType := 'serializer/content';
+    end;
+    else inherited;
+  end;
+
   Result := FReturnValue.AsString;
-end;
-
-procedure TSerializerMock.SetFormatSettings(const Value: TFormatSettings);
-begin
-
 end;
 
 end.

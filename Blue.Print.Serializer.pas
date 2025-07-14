@@ -23,11 +23,6 @@ type
   end;
 
   TBluePrintSerializer = class(TInterfacedObject)
-  private
-    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
-    function Serialize(const Value: TValue): String;
-
-    procedure SetFormatSettings(const Value: TFormatSettings);
   protected
     FContext: TRttiContext;
     FContentType: String;
@@ -35,6 +30,7 @@ type
 
     function CheckPropertyInstance(const Instance: TValue; const &Property: TRttiProperty): TValue;
     function CreateObject(const RttiType: TRttiInstanceType): TObject; virtual;
+    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function FindPropertyByName(const RttiType: TRttiType; const PropertyName: String): TRttiProperty;
     function GetContentType: String;
     function GetEnumerationNames(const Enumeration: TRttiType): TArray<String>; overload;
@@ -42,6 +38,9 @@ type
     function GetEnumerationValue(const TypeInfo: PTypeInfo; const Value: String): TValue;
     function GetFieldName(const RttiObject: TRttiNamedObject): String;
     function GetPublishedProperties(const RttiType: TRttiType): TArray<TRttiProperty>;
+    function Serialize(const Value: TValue): String;
+
+    procedure SetFormatSettings(const Value: TFormatSettings);
   public
     constructor Create;
 
