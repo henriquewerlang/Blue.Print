@@ -14,7 +14,7 @@ type
 {$IFDEF PAS2JS}
   PTypeInfo = TTypeInfo;
 {$ENDIF}
-  TParameterType = (Body, Query, Path);
+  TParameterType = (Body, Query, Path, Header);
   TRequestFile = {$IFDEF PAS2JS}TJSHTMLFile{$ELSE}TAbstractWebRequestFile{$ENDIF};
   TRequestMethod = (Delete, Get, Patch, Post, Put, Options);
   TResponseFile = {$IFDEF PAS2JS}TJSBlob{$ELSE}TStream{$ENDIF};
@@ -188,6 +188,31 @@ type
     constructor Create;
   end;
 
+  HeaderValueAttribute = class(TParameterAttribute)
+  private
+    FName: String;
+  public
+    constructor Create(const HeaderName: String);
+
+    property Name: String read FName write FName;
+  end;
+
+  AuthorizationAttribute = class(HeaderValueAttribute)
+  public
+    constructor Create;
+  end;
+
+  HeaderAttribute = class(TCustomAttribute)
+  private
+    FName: String;
+    FValue: String;
+  public
+    constructor Create(const Name, Value: String);
+
+    property Name: String read FName;
+    property Value: String read FValue;
+  end;
+
   RemoteNameAttribute = class(TCustomAttribute)
   private
     FRemoteName: String;
@@ -224,17 +249,6 @@ type
     property FileName: String read FFileName;
   end;
 
-  HeaderAttribute = class(TCustomAttribute)
-  private
-    FName: String;
-    FValue: String;
-  public
-    constructor Create(const Name, Value: String);
-
-    property Name: String read FName;
-    property Value: String read FValue;
-  end;
-
   SOAPServiceAttribute = class(ContentTypeAttribute)
   public
     constructor Create;
@@ -248,8 +262,6 @@ type
 
     property ActionName: String read FActionName;
   end;
-
-  AuthorizationAttribute = class(TCustomAttribute);
 
   TFormatAttribute = class(TCustomAttribute)
   private
@@ -796,6 +808,22 @@ begin
   inherited Create;
 
   FName := Name;
+end;
+
+{ AuthorizationAttribute }
+
+constructor AuthorizationAttribute.Create;
+begin
+  inherited Create('Authorization');
+end;
+
+{ HeaderValueAttribute }
+
+constructor HeaderValueAttribute.Create(const HeaderName: String);
+begin
+  inherited Create(TParameterType.Header);
+
+  FName := HeaderName;
 end;
 
 end.

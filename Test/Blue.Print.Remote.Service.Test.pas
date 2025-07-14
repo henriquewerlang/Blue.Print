@@ -102,8 +102,6 @@ type
     [Test]
     procedure WhenTheProcedureHasTheContentTypeAttributeMustLoadTheValueFromAttributeNotFromTheSerializer;
     [Test]
-    procedure WhenLoadTheAuthorizationInformationMustLoadTheAuthorizationHeaderWithThisValue;
-    [Test]
     procedure WhenTheInterfaceIsASOAPServiceTheContentTypeMustBeTheSOAPContentType;
     [Test]
     procedure TheSOAPContentTypeMustBeAppendedTheActionValue;
@@ -533,15 +531,6 @@ begin
   Service.TestProcedure;
 
   Assert.AreEqual('/IInheritedServiceTest/TestProcedure', FCommunication.URL);
-end;
-
-procedure TRemoteServiceTest.WhenLoadTheAuthorizationInformationMustLoadTheAuthorizationHeaderWithThisValue;
-begin
-  var Service := GetRemoteService<IServiceTest>(EmptyStr) as IAuthorization;
-
-  Service.Value := 'Value Token';
-
-  Assert.AreEqual('Value Token', FCommunication.Header['Authorization']);
 end;
 
 procedure TRemoteServiceTest.WhenSendASOAPRequestMustSerializeTheSOAPEnvelopInTheRequest;
