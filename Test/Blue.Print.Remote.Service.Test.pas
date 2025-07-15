@@ -145,6 +145,10 @@ type
     procedure WhenAParameterHasTheOutDirectiveCantBeLoadedInHeaderValueOfTheRequest;
     [Test]
     procedure WhenAParameterHasTheOutDirectiveCantBeLoadedInBodyValueOfTheRequest;
+    [Test]
+    procedure WhenTheParameterHasTheOutDirectiveMustLoadTheHeaderValueInTheParameterValue;
+    [Test]
+    procedure WhenTheParameterHasTheVarDirectiveMustLoadTheHeaderValueInTheParamterValue;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -159,6 +163,7 @@ type
     FCertificateStream: TStream;
     FCertificateFileName: String;
     FCertificatePassword: String;
+    FReturnHeaders: TDictionary<String, String>;
 
     function GetHeader(const HeaderName: String): String;
 
@@ -166,6 +171,7 @@ type
     procedure SetCertificate(const FileName, Password: String); overload;
     procedure SetCertificate(const Value: TStream; const Password: String); overload;
     procedure SetHeader(const HeaderName, Value: String);
+    procedure SetReturnHeader(const HeaderName, Value: String);
   public
     constructor Create;
 
@@ -182,6 +188,7 @@ type
     property ResponseValueString: String read FResponseValueString write FResponseValueString;
     property RequestMethod: TRequestMethod read FRequestMethod;
     property RequestSended: Boolean read FRequestSended;
+    property ReturnHeader[const HeaderName: String]: String write SetReturnHeader;
     property URL: String read FURL;
   end;
 
@@ -251,6 +258,8 @@ type
     procedure TestHeader;
     procedure HeaderValue(const [HeaderValue('My Header')] Value: String);
     procedure OutputParameterChecking(out [Path] ValuePath: String; out [Query] ValueQuery: String; out [Body] ValueBody: String; out [HeaderValue('Value')] ValueHeader: String);
+    procedure GetHeaderValue(out [HeaderValue('My Header')] MyHeader: String);
+    procedure GetHeaderValueFromVarParameter(var [HeaderValue('My Header')] MyHeader: String);
   end;
 
   IInheritedServiceTest = interface(IServiceTest)
@@ -850,6 +859,28 @@ begin
   Assert.AreEqual('My Value', FCommunication.Header['My Header']);
 end;
 
+procedure TRemoteServiceTest.WhenTheParameterHasTheOutDirectiveMustLoadTheHeaderValueInTheParameterValue;
+begin
+  FCommunication.ReturnHeader['My Header'] := 'Value';
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+  var ValueHeader := EmptyStr;
+
+  Service.GetHeaderValue(ValueHeader);
+
+  Assert.AreEqual('Value', ValueHeader);
+end;
+
+procedure TRemoteServiceTest.WhenTheParameterHasTheVarDirectiveMustLoadTheHeaderValueInTheParamterValue;
+begin
+  FCommunication.ReturnHeader['My Header'] := 'Value';
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+  var ValueHeader := EmptyStr;
+
+  Service.GetHeaderValueFromVarParameter(ValueHeader);
+
+  Assert.AreEqual('Value', ValueHeader);
+end;
+
 procedure TRemoteServiceTest.WhenTheParamHasLocaleCharsMustEncodeTheName;
 begin
   var Service := GetRemoteService<ILocaleCharsService>(EmptyStr);
@@ -946,6 +977,7 @@ begin
 
   FHeaders := TDictionary<String, String>.Create;
   FResponseValueStream := TMemoryStream.Create;
+  FReturnHeaders := TDictionary<String, String>.Create;
 end;
 
 destructor TCommunicationMock.Destroy;
@@ -955,6 +987,8 @@ begin
   FHeaders.Free;
 
   FResponseValueStream.Free;
+
+  FReturnHeaders.Free;
 
   inherited;
 end;
@@ -989,6 +1023,9 @@ begin
     FBody := TStringStream.Create(Body);
 
   CompleteEvent(ResponseValueString, Stream);
+
+  for var HeaderValue in FReturnHeaders do
+    Header[HeaderValue.Key] := HeaderValue.Value;
 end;
 
 procedure TCommunicationMock.SetCertificate(const Value: TStream; const Password: String);
@@ -1006,6 +1043,11 @@ end;
 procedure TCommunicationMock.SetHeader(const HeaderName, Value: String);
 begin
   FHeaders.AddOrSetValue(HeaderName, Value);
+end;
+
+procedure TCommunicationMock.SetReturnHeader(const HeaderName, Value: String);
+begin
+  FReturnHeaders.AddOrSetValue(HeaderName, Value);
 end;
 
 { TSerializerMock }

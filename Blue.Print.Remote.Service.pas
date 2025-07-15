@@ -20,12 +20,14 @@ type
 
   IHTTPCommunication = interface
     ['{8E39F66A-C72B-4314-80B1-D24F1AF4F247}']
+    function GetHeader(const HeaderName: String): String;
+
     procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
     procedure SetCertificate(const FileName, Password: String); overload;
     procedure SetCertificate(const Value: TStream; const Password: String); overload;
     procedure SetHeader(const HeaderName, Value: String);
 
-    property Header[const HeaderName: String]: String write SetHeader;
+    property Header[const HeaderName: String]: String read GetHeader write SetHeader;
   end;
 
   THTTPCommunication = class(TInterfacedObject, IHTTPCommunication)
@@ -34,6 +36,8 @@ type
     FCertificatePassword: String;
     FCertificateValue: TStream;
     FHeaders: TStringList;
+
+    function GetHeader(const HeaderName: String): String;
 
     procedure SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
     procedure SetCertificate(const FileName, Password: String); overload;
@@ -70,9 +74,10 @@ type
     function LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>; const AsyncRequest: Boolean; const ReturnEvent: TProc<TValue>; const ErrorEvent: TProc<Exception>): TValue;
 
+    procedure ForEachParameter(const Method: TRttiMethod; const ParameterType: TParameterType; const LoadFunction: TProc<TRttiParameter, NativeInt>; const CheckParameterFlags: TFunc<TRttiParameter, Boolean>);
     procedure LoadContentType(const Method: TRttiMethod);
     procedure LoadRequestHeaders(const Method: TRttiMethod; const Args: TArray<TValue>);
-    procedure LoadValueFromParameters(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
+    procedure LoadValuesFromParameters(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
     procedure SetCertificate(const FileName, Password: String); overload;
     procedure SetCertificate(const Value: TStream; const Password: String); overload;
     procedure SetHeader(const HeaderName, Value: String);
@@ -154,6 +159,24 @@ begin
   Result := {$IFDEF PAS2JS}EncodeURIComponent{$ELSE}TNetEncoding.URL.Encode{$ENDIF}(Value);
 end;
 
+procedure TRemoteService.ForEachParameter(const Method: TRttiMethod; const ParameterType: TParameterType; const LoadFunction: TProc<TRttiParameter, NativeInt>; const CheckParameterFlags: TFunc<TRttiParameter, Boolean>);
+var
+  Parameter: TRttiParameter;
+
+  ValueIndex: Integer;
+
+begin
+  ValueIndex := COMPILER_OFFSET;
+
+  for Parameter in Method.GetParameters do
+  begin
+    if CheckParameterFlags(Parameter) and (GetParameterType(Parameter) = ParameterType) then
+      LoadFunction(Parameter, ValueIndex);
+
+    Inc(ValueIndex);
+  end;
+end;
+
 function TRemoteService.GetAttribute<T>(RttiObject: TRttiObject): T;
 var
   Attributes: TArray<T>;
@@ -206,7 +229,7 @@ var
 begin
   PathParams := EmptyStr;
 
-  LoadValueFromParameters(Method,
+  LoadValuesFromParameters(Method,
     procedure (Parameter: TRttiParameter; Value: TValue)
     begin
       PathParams := PathParams + '/' + EncodeValue(Value.ToString);
@@ -222,7 +245,7 @@ var
 begin
   QueryParams := EmptyStr;
 
-  LoadValueFromParameters(Method,
+  LoadValuesFromParameters(Method,
     procedure(Parameter: TRttiParameter; Value: TValue)
     begin
       if not QueryParams.IsEmpty then
@@ -359,7 +382,7 @@ var
 begin
   Body := EmptyStr;
 
-  LoadValueFromParameters(Method,
+  LoadValuesFromParameters(Method,
     procedure(Parameter: TRttiParameter; Value: TValue)
     begin
       if IsSOAPRequest then
@@ -381,7 +404,7 @@ begin
   for Attribute in GetAttributes<HeaderAttribute>(Method) do
     Header[Attribute.Name] := Attribute.Value;
 
-  LoadValueFromParameters(Method,
+  LoadValuesFromParameters(Method,
     procedure (Parameter: TRttiParameter; Value: TValue)
     var
       HeaderValue: HeaderValueAttribute;
@@ -393,23 +416,17 @@ begin
     end, TParameterType.Header, Args);
 end;
 
-procedure TRemoteService.LoadValueFromParameters(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
-var
-  Parameter: TRttiParameter;
-
-  ValueIndex: Integer;
-
+procedure TRemoteService.LoadValuesFromParameters(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
 begin
-  ValueIndex := COMPILER_OFFSET;
-
-  for Parameter in Method.GetParameters do
-    if Parameter.Flags * [pfOut] = [] then
+  ForEachParameter(Method, ParameterType,
+    procedure (Parameter: TRttiParameter; ValueIndex: NativeInt)
     begin
-      if GetParameterType(Parameter) = ParameterType then
-        LoadFunction(Parameter, Args[ValueIndex]);
-
-      Inc(ValueIndex);
-    end;
+      LoadFunction(Parameter, Args[ValueIndex]);
+    end,
+    function (Parameter: TRttiParameter): Boolean
+    begin
+      Result := Parameter.Flags * [pfOut] = [];
+    end);
 end;
 
 procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
@@ -477,6 +494,16 @@ begin
       else
         ReturnEvent(TValue.Empty);
     end, ErrorEvent);
+
+  ForEachParameter(Method, TParameterType.Header,
+    procedure (Parameter: TRttiParameter; ValueIndex: NativeInt)
+    begin
+      Args[ValueIndex] := TValue.From(Communication.Header[GetAttribute<HeaderValueAttribute>(Parameter).Name]);
+    end,
+    function (Parameter: TRttiParameter): Boolean
+    begin
+      Result := Parameter.Flags * [pfOut, pfVar] <> [];
+    end);
 end;
 
 procedure TRemoteService.SetCertificate(const FileName, Password: String);
@@ -508,6 +535,11 @@ begin
   FHeaders.Free;
 
   inherited;
+end;
+
+function THTTPCommunication.GetHeader(const HeaderName: String): String;
+begin
+  Result := FHeaders.Values[HeaderName];
 end;
 
 procedure THTTPCommunication.SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
@@ -593,6 +625,9 @@ begin
       ContentStream := Response.ContentStream
     else
       ContentString := Response.ContentAsString;
+
+    for var HeaderValue in Response.Headers do
+      SetHeader(HeaderValue.Name, HeaderValue.Value);
 
     CheckStatusCode(Response.StatusCode);
   finally
