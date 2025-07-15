@@ -137,6 +137,14 @@ type
     procedure TheReturningStreamMustLoadTheResponseStreamValue;
     [Test]
     procedure WhenTheParameterHasTheHeaderValueAttributeMustLoadTheParameterValueInTheHeaderRequest;
+    [Test]
+    procedure WhenAParameterHasTheOutDirectiveCantBeLoadedInPathOfTheRequest;
+    [Test]
+    procedure WhenAParameterHasTheOutDirectiveCantBeLoadedInQueryOfTheRequest;
+    [Test]
+    procedure WhenAParameterHasTheOutDirectiveCantBeLoadedInHeaderValueOfTheRequest;
+    [Test]
+    procedure WhenAParameterHasTheOutDirectiveCantBeLoadedInBodyValueOfTheRequest;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -170,6 +178,7 @@ type
     property CertificatePassword: String read FCertificatePassword write FCertificatePassword;
     property CertificateStream: TStream read FCertificateStream write FCertificateStream;
     property Header[const HeaderName: String]: String read GetHeader write SetHeader;
+    property Headers: TDictionary<String, String> read FHeaders;
     property ResponseValueString: String read FResponseValueString write FResponseValueString;
     property RequestMethod: TRequestMethod read FRequestMethod;
     property RequestSended: Boolean read FRequestSended;
@@ -241,6 +250,7 @@ type
     [Header('MethodHeader2', 'Method Header 2')]
     procedure TestHeader;
     procedure HeaderValue(const [HeaderValue('My Header')] Value: String);
+    procedure OutputParameterChecking(out [Path] ValuePath: String; out [Query] ValueQuery: String; out [Body] ValueBody: String; out [HeaderValue('Value')] ValueHeader: String);
   end;
 
   IInheritedServiceTest = interface(IServiceTest)
@@ -431,6 +441,59 @@ begin
   var ReturnValue := Service.TestFunction;
 
   Assert.AreEqual('abc', ReturnValue);
+end;
+
+procedure TRemoteServiceTest.WhenAParameterHasTheOutDirectiveCantBeLoadedInBodyValueOfTheRequest;
+begin
+  FSerializer.ReturnValue := 'Body';
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+  var ValuePath := 'Path';
+  var ValueQuery := 'Query';
+  var ValueBody := 'Body';
+  var ValueHeader := 'Header';
+
+  Service.OutputParameterChecking(ValuePath, ValueQuery, ValueBody, ValueHeader);
+
+  Assert.IsNil(FCommunication.Body);
+end;
+
+procedure TRemoteServiceTest.WhenAParameterHasTheOutDirectiveCantBeLoadedInHeaderValueOfTheRequest;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+  var ValuePath := 'Path';
+  var ValueQuery := 'Query';
+  var ValueBody := 'Body';
+  var ValueHeader := 'Header';
+
+  Service.OutputParameterChecking(ValuePath, ValueQuery, ValueBody, ValueHeader);
+
+  Assert.IsFalse(FCommunication.Headers.ContainsKey('Value'));
+end;
+
+procedure TRemoteServiceTest.WhenAParameterHasTheOutDirectiveCantBeLoadedInPathOfTheRequest;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+  var ValuePath := 'Path';
+  var ValueQuery := 'Query';
+  var ValueBody := 'Body';
+  var ValueHeader := 'Header';
+
+  Service.OutputParameterChecking(ValuePath, ValueQuery, ValueBody, ValueHeader);
+
+  Assert.AreEqual('/IServiceTest/OutputParameterChecking', FCommunication.URL);
+end;
+
+procedure TRemoteServiceTest.WhenAParameterHasTheOutDirectiveCantBeLoadedInQueryOfTheRequest;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+  var ValuePath := 'Path';
+  var ValueQuery := 'Query';
+  var ValueBody := 'Body';
+  var ValueHeader := 'Header';
+
+  Service.OutputParameterChecking(ValuePath, ValueQuery, ValueBody, ValueHeader);
+
+  Assert.AreEqual('/IServiceTest/OutputParameterChecking', FCommunication.URL);
 end;
 
 procedure TRemoteServiceTest.WhenAParamHasTheBodyAttributeMustLoadTheParamValueInTheBodyOfTheRequest;

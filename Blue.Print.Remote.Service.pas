@@ -71,8 +71,8 @@ type
     function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>; const AsyncRequest: Boolean; const ReturnEvent: TProc<TValue>; const ErrorEvent: TProc<Exception>): TValue;
 
     procedure LoadContentType(const Method: TRttiMethod);
-    procedure LoadParams(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
     procedure LoadRequestHeaders(const Method: TRttiMethod; const Args: TArray<TValue>);
+    procedure LoadValueFromParameters(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
     procedure SetCertificate(const FileName, Password: String); overload;
     procedure SetCertificate(const Value: TStream; const Password: String); overload;
     procedure SetHeader(const HeaderName, Value: String);
@@ -206,7 +206,7 @@ var
 begin
   PathParams := EmptyStr;
 
-  LoadParams(Method,
+  LoadValueFromParameters(Method,
     procedure (Parameter: TRttiParameter; Value: TValue)
     begin
       PathParams := PathParams + '/' + EncodeValue(Value.ToString);
@@ -222,7 +222,7 @@ var
 begin
   QueryParams := EmptyStr;
 
-  LoadParams(Method,
+  LoadValueFromParameters(Method,
     procedure(Parameter: TRttiParameter; Value: TValue)
     begin
       if not QueryParams.IsEmpty then
@@ -352,24 +352,6 @@ begin
   Header[CONTENT_TYPE_HEADER] := ContentTypeText + CharSet;
 end;
 
-procedure TRemoteService.LoadParams(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
-var
-  Parameter: TRttiParameter;
-
-  ValueIndex: Integer;
-
-begin
-  ValueIndex := COMPILER_OFFSET;
-
-  for Parameter in Method.GetParameters do
-  begin
-    if GetParameterType(Parameter) = ParameterType then
-      LoadFunction(Parameter, Args[ValueIndex]);
-
-    Inc(ValueIndex);
-  end;
-end;
-
 function TRemoteService.LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
 var
   Body: String;
@@ -377,7 +359,7 @@ var
 begin
   Body := EmptyStr;
 
-  LoadParams(Method,
+  LoadValueFromParameters(Method,
     procedure(Parameter: TRttiParameter; Value: TValue)
     begin
       if IsSOAPRequest then
@@ -399,7 +381,7 @@ begin
   for Attribute in GetAttributes<HeaderAttribute>(Method) do
     Header[Attribute.Name] := Attribute.Value;
 
-  LoadParams(Method,
+  LoadValueFromParameters(Method,
     procedure (Parameter: TRttiParameter; Value: TValue)
     var
       HeaderValue: HeaderValueAttribute;
@@ -409,6 +391,25 @@ begin
 
       Header[HeaderValue.Name] := Value.ToString;
     end, TParameterType.Header, Args);
+end;
+
+procedure TRemoteService.LoadValueFromParameters(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
+var
+  Parameter: TRttiParameter;
+
+  ValueIndex: Integer;
+
+begin
+  ValueIndex := COMPILER_OFFSET;
+
+  for Parameter in Method.GetParameters do
+    if Parameter.Flags * [pfOut] = [] then
+    begin
+      if GetParameterType(Parameter) = ParameterType then
+        LoadFunction(Parameter, Args[ValueIndex]);
+
+      Inc(ValueIndex);
+    end;
 end;
 
 procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
