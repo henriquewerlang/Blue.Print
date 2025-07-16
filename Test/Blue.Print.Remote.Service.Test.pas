@@ -149,6 +149,8 @@ type
     procedure WhenTheParameterHasTheOutDirectiveMustLoadTheHeaderValueInTheParameterValue;
     [Test]
     procedure WhenTheParameterHasTheVarDirectiveMustLoadTheHeaderValueInTheParamterValue;
+    [Test]
+    procedure WhenTheQueryParameterHasANameMustLoadThisNameInTheQueryList;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -260,6 +262,7 @@ type
     procedure OutputParameterChecking(out [Path] ValuePath: String; out [Query] ValueQuery: String; out [Body] ValueBody: String; out [HeaderValue('Value')] ValueHeader: String);
     procedure GetHeaderValue(out [HeaderValue('My Header')] MyHeader: String);
     procedure GetHeaderValueFromVarParameter(var [HeaderValue('My Header')] MyHeader: String);
+    procedure QueryParameterWithName(const [Query('My-Name')] Parameter: String);
   end;
 
   IInheritedServiceTest = interface(IServiceTest)
@@ -927,6 +930,15 @@ begin
   Service.WithName;
 
   Assert.AreEqual('/AnotherName/ProcedureWithAnotherName', FCommunication.URL);
+end;
+
+procedure TRemoteServiceTest.WhenTheQueryParameterHasANameMustLoadThisNameInTheQueryList;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.QueryParameterWithName('abc');
+
+  Assert.AreEqual('/IServiceTest/QueryParameterWithName/?My-Name=abc', FCommunication.URL);
 end;
 
 procedure TRemoteServiceTest.WhenTheRemoteNameAttributeInTheInterfaceIsEmptyCantPutTheBackslashInTheURL;

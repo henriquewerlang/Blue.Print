@@ -179,8 +179,13 @@ type
   end;
 
   QueryAttribute = class(TParameterAttribute)
+  private
+    FName: String;
   public
-    constructor Create;
+    constructor Create; overload;
+    constructor Create(const Name: String); overload;
+
+    property Name: String read FName write FName;
   end;
 
   PathAttribute = class(TParameterAttribute)
@@ -474,6 +479,13 @@ end;
 constructor QueryAttribute.Create;
 begin
   inherited Create(TParameterType.Query);
+end;
+
+constructor QueryAttribute.Create(const Name: String);
+begin
+  Create;
+
+  FName := Name;
 end;
 
 { PathAttribute }

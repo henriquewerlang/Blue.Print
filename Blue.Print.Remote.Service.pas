@@ -61,7 +61,6 @@ type
     function EncodeValue(const Value: String): String;
     function GetAttribute<T: TCustomAttribute>(RttiObject: TRttiObject): T;
     function GetAttributes<T: TCustomAttribute>(RttiObject: TRttiObject): TArray<T>;
-    function GetParameterType(const Parameter: TRttiParameter): TParameterType;
     function GetRemoteMethodName(const Method: TRttiMethod): String;
     function GetRemoteName(const RttiObject: TRttiObject; const DefaultName: String): String;
     function GetRemoteServiceName: String;
@@ -74,10 +73,10 @@ type
     function LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>; const AsyncRequest: Boolean; const ReturnEvent: TProc<TValue>; const ErrorEvent: TProc<Exception>): TValue;
 
-    procedure ForEachParameter(const Method: TRttiMethod; const ParameterType: TParameterType; const LoadFunction: TProc<TRttiParameter, NativeInt>; const CheckParameterFlags: TFunc<TRttiParameter, Boolean>);
+    procedure ForEachParameter(const Method: TRttiMethod; const ParameterType: TParameterType; const LoadFunction: TProc<TRttiParameter, NativeInt, TParameterAttribute>; const CheckParameterFlags: TFunc<TRttiParameter, Boolean>);
     procedure LoadContentType(const Method: TRttiMethod);
     procedure LoadRequestHeaders(const Method: TRttiMethod; const Args: TArray<TValue>);
-    procedure LoadValuesFromParameters(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
+    procedure LoadValuesFromParameters(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TParameterAttribute, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
     procedure SetCertificate(const FileName, Password: String); overload;
     procedure SetCertificate(const Value: TStream; const Password: String); overload;
     procedure SetHeader(const HeaderName, Value: String);
@@ -159,19 +158,31 @@ begin
   Result := {$IFDEF PAS2JS}EncodeURIComponent{$ELSE}TNetEncoding.URL.Encode{$ENDIF}(Value);
 end;
 
-procedure TRemoteService.ForEachParameter(const Method: TRttiMethod; const ParameterType: TParameterType; const LoadFunction: TProc<TRttiParameter, NativeInt>; const CheckParameterFlags: TFunc<TRttiParameter, Boolean>);
+procedure TRemoteService.ForEachParameter(const Method: TRttiMethod; const ParameterType: TParameterType; const LoadFunction: TProc<TRttiParameter, NativeInt, TParameterAttribute>; const CheckParameterFlags: TFunc<TRttiParameter, Boolean>);
 var
   Parameter: TRttiParameter;
-
+  ParameterAttribute: TParameterAttribute;
   ValueIndex: Integer;
+
+  function SameParameterType: Boolean;
+  begin
+    if Assigned(ParameterAttribute) then
+      Result := ParameterType = ParameterAttribute.ParamType
+    else if Parameter.ParamType.IsInstance then
+      Result := ParameterType = TParameterType.Body
+    else
+      Result := ParameterType = TParameterType.Query;
+  end;
 
 begin
   ValueIndex := COMPILER_OFFSET;
 
   for Parameter in Method.GetParameters do
   begin
-    if CheckParameterFlags(Parameter) and (GetParameterType(Parameter) = ParameterType) then
-      LoadFunction(Parameter, ValueIndex);
+    ParameterAttribute := GetAttribute<TParameterAttribute>(Parameter);
+
+    if CheckParameterFlags(Parameter) and SameParameterType then
+      LoadFunction(Parameter, ValueIndex, ParameterAttribute);
 
     Inc(ValueIndex);
   end;
@@ -207,21 +218,6 @@ begin
   end;
 end;
 
-function TRemoteService.GetParameterType(const Parameter: TRttiParameter): TParameterType;
-var
-  ParameterAttribute: TParameterAttribute;
-
-begin
-  ParameterAttribute := GetAttribute<TParameterAttribute>(Parameter);
-
-  if Assigned(ParameterAttribute) then
-    Result := ParameterAttribute.ParamType
-  else if Parameter.ParamType.IsInstance then
-    Result := TParameterType.Body
-  else
-    Result := TParameterType.Query;
-end;
-
 function TRemoteService.GetPathParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
 var
   PathParams: String;
@@ -230,7 +226,7 @@ begin
   PathParams := EmptyStr;
 
   LoadValuesFromParameters(Method,
-    procedure (Parameter: TRttiParameter; Value: TValue)
+    procedure (Parameter: TRttiParameter; ParameterAttribute: TParameterAttribute; Value: TValue)
     begin
       PathParams := PathParams + '/' + EncodeValue(Value.ToString);
     end, TParameterType.Path, Args);
@@ -246,12 +242,25 @@ begin
   QueryParams := EmptyStr;
 
   LoadValuesFromParameters(Method,
-    procedure(Parameter: TRttiParameter; Value: TValue)
+    procedure(Parameter: TRttiParameter; ParameterAttribute: TParameterAttribute; Value: TValue)
+    var
+      Query: QueryAttribute absolute ParameterAttribute;
+
+      function GetQueryName: String;
+      begin
+        if not Assigned(Query) or Query.Name.IsEmpty then
+          Result := Parameter.Name
+        else
+          Result := Query.Name;
+
+        Result := EncodeValue(Result);
+      end;
+
     begin
       if not QueryParams.IsEmpty then
         QueryParams := QueryParams + '&';
 
-      QueryParams := QueryParams + Format('%s=%s', [EncodeValue(Parameter.Name), EncodeValue(Value.ToString)]);
+      QueryParams := QueryParams + Format('%s=%s', [GetQueryName, EncodeValue(Value.ToString)]);
     end, TParameterType.Query, Args);
 
   if not QueryParams.IsEmpty then
@@ -383,7 +392,7 @@ begin
   Body := EmptyStr;
 
   LoadValuesFromParameters(Method,
-    procedure(Parameter: TRttiParameter; Value: TValue)
+    procedure(Parameter: TRttiParameter; ParameterAttribute: TParameterAttribute; Value: TValue)
     begin
       if IsSOAPRequest then
         Value := TValue.From(TSOAPEnvelop.Create(Parameter, Value));
@@ -405,23 +414,21 @@ begin
     Header[Attribute.Name] := Attribute.Value;
 
   LoadValuesFromParameters(Method,
-    procedure (Parameter: TRttiParameter; Value: TValue)
+    procedure (Parameter: TRttiParameter; ParameterAttribute: TParameterAttribute; Value: TValue)
     var
-      HeaderValue: HeaderValueAttribute;
+      HeaderValue: HeaderValueAttribute absolute ParameterAttribute;
 
     begin
-      HeaderValue := GetAttribute<HeaderValueAttribute>(Parameter);
-
       Header[HeaderValue.Name] := Value.ToString;
     end, TParameterType.Header, Args);
 end;
 
-procedure TRemoteService.LoadValuesFromParameters(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
+procedure TRemoteService.LoadValuesFromParameters(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TParameterAttribute, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
 begin
   ForEachParameter(Method, ParameterType,
-    procedure (Parameter: TRttiParameter; ValueIndex: NativeInt)
+    procedure (Parameter: TRttiParameter; ValueIndex: NativeInt; ParameterAttribute: TParameterAttribute)
     begin
-      LoadFunction(Parameter, Args[ValueIndex]);
+      LoadFunction(Parameter, ParameterAttribute, Args[ValueIndex]);
     end,
     function (Parameter: TRttiParameter): Boolean
     begin
@@ -496,9 +503,12 @@ begin
     end, ErrorEvent);
 
   ForEachParameter(Method, TParameterType.Header,
-    procedure (Parameter: TRttiParameter; ValueIndex: NativeInt)
+    procedure (Parameter: TRttiParameter; ValueIndex: NativeInt; ParameterAttribute: TParameterAttribute)
+    var
+      HeaderValue: HeaderValueAttribute absolute ParameterAttribute;
+
     begin
-      Args[ValueIndex] := TValue.From(Communication.Header[GetAttribute<HeaderValueAttribute>(Parameter).Name]);
+      Args[ValueIndex] := TValue.From(Communication.Header[HeaderValue.Name]);
     end,
     function (Parameter: TRttiParameter): Boolean
     begin
