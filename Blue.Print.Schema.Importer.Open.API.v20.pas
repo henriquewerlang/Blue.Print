@@ -120,16 +120,16 @@ var
   var
     Method: TTypeMethodDefinition;
 
-    procedure AddParameter(const Name: String; const ParameterType: TTypeDefinition); overload;
+    function AddParameter(const Name: String; const ParameterType: TTypeDefinition): TTypeParameterDefinition; overload;
     begin
-      var Parameter := Method.AddParameter;
-      Parameter.Name := Name;
-      Parameter.ParameterType := ParameterType;
+      Result := Method.AddParameter;
+      Result.Name := Name;
+      Result.ParameterType := ParameterType;
     end;
 
-    procedure AddParameter(const Name: String; const OpenAPISchema: Schema); overload;
+    function AddParameter(const Name: String; const OpenAPISchema: Schema): TTypeParameterDefinition; overload;
     begin
-      AddParameter(Name, GenerateTypeDefinition(UnitDefinition, OpenAPISchema, Name));
+      Result := AddParameter(Name, GenerateTypeDefinition(UnitDefinition, OpenAPISchema, Name));
     end;
 
   begin
@@ -154,7 +154,8 @@ var
         begin
           var Header := NoBodyParameter.headerParameterSubSchema;
 
-          AddParameter(Header.name, GetSimpleType(UnitDefinition, Header.SimpleType, Header.items));
+          var Parameter := AddParameter(Header.name, GetSimpleType(UnitDefinition, Header.SimpleType, Header.items));
+          Parameter.AddAtribute('HeaderValue(''%s'')', [Header.name]);
         end
         else if NoBodyParameter.IsQueryParameterSubSchemaStored then
         begin
