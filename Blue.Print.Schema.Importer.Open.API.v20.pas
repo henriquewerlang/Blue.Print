@@ -116,7 +116,15 @@ procedure TOpenAPI20SchemaLoader.GenerateUnitFileDefinition(const UnitDefinition
 var
   Service: TTypeInterfaceDefinition;
 
-  procedure AddMethod(const Operation: Operation);
+  procedure AddRemoteName(const TypeDefinition: TTypeCommonDefinition; RemoteName: String);
+  begin
+    if RemoteName.StartsWith('/') then
+      RemoteName := RemoteName.Substring(1);
+
+    TypeDefinition.AddAtribute('RemoteName(''%s'')', [RemoteName]);
+  end;
+
+  procedure AddMethod(const Operation: Operation; const RemoteName: String);
   var
     Method: TTypeMethodDefinition;
 
@@ -135,6 +143,8 @@ var
   begin
     Method := TTypeMethodDefinition.Create;
     Method.Name := Operation.operationId;
+
+    AddRemoteName(Method, RemoteName);
 
     for var Return in Operation.responses.responseValue.Values do
       if Return.response.IsSchemaStored then
@@ -185,6 +195,8 @@ begin
   FOpenAPIDefinition := LoadOpenAPIDefinition(UnitFileConfiguration);
   Service := FImporter.CreateInterfaceDefinition(UnitDefinition, UnitFileConfiguration.InterfaceName);
 
+  AddRemoteName(Service, FOpenAPIDefinition.basePath);
+
   for var Definition in FOpenAPIDefinition.definitions.schema do
   begin
     var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
@@ -197,19 +209,19 @@ begin
 
   for var PathItem in FOpenAPIDefinition.paths.pathItem do
     if PathItem.Value.IsGetStored then
-      AddMethod(PathItem.Value.get)
+      AddMethod(PathItem.Value.get, PathItem.Key)
     else if PathItem.Value.IsPostStored then
-      AddMethod(PathItem.Value.post)
+      AddMethod(PathItem.Value.post, PathItem.Key)
     else if PathItem.Value.IsPutStored then
-      AddMethod(PathItem.Value.put)
+      AddMethod(PathItem.Value.put, PathItem.Key)
     else if PathItem.Value.IsDeleteStored then
-      AddMethod(PathItem.Value.delete)
+      AddMethod(PathItem.Value.delete, PathItem.Key)
     else if PathItem.Value.IsOptionsStored then
-      AddMethod(PathItem.Value.options)
+      AddMethod(PathItem.Value.options, PathItem.Key)
     else if PathItem.Value.IsPatchStored then
-      AddMethod(PathItem.Value.patch)
+      AddMethod(PathItem.Value.patch, PathItem.Key)
     else if PathItem.Value.IsHeadStored then
-      AddMethod(PathItem.Value.head);
+      AddMethod(PathItem.Value.head, PathItem.Key);
 end;
 
 function TOpenAPI20SchemaLoader.GetSchemaReferenceName(const OpenAPISchema: Schema): String;
