@@ -289,8 +289,6 @@ begin
   else
     Result := DefaultName;
 
-  Result := EncodeValue(Result);
-
   if not Result.IsEmpty then
     Result := '/' + Result;
 end;

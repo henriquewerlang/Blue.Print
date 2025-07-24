@@ -44,12 +44,6 @@ type
     [Test]
     procedure WhenTheParamValueHasLocaleCharsMustEncodeTheURL;
     [Test]
-    procedure WhenTheProcedureHasRemoteNameWithLocaleCharsMustEncodeTheName;
-    [Test]
-    procedure WhenTheInterfaceHasRemoteNameWithLocaleCharsMustEncodeTheName;
-    [Test]
-    procedure WhenTheParamHasLocaleCharsMustEncodeTheName;
-    [Test]
     procedure WhenTheParamHasThePathAttributeTheValueOfTheParamMustBeLoadedInTheURLOfTheRequest;
     [Test]
     procedure WhenAParamHasTheBodyAttributeMustLoadTheParamValueInTheBodyOfTheRequest;
@@ -667,15 +661,6 @@ begin
   RemoteClass.Free;
 end;
 
-procedure TRemoteServiceTest.WhenTheInterfaceHasRemoteNameWithLocaleCharsMustEncodeTheName;
-begin
-  var Service := GetRemoteService<ILocaleCharsService>(EmptyStr);
-
-  Service.Proc;
-
-  Assert.AreEqual('/Servi%C3%A7e/Proc', FCommunication.URL);
-end;
-
 procedure TRemoteServiceTest.WhenTheInterfaceHasTheCharSetAttributeMustLoadTheCharSetInTheContentTypeHeader;
 begin
   var Service := GetRemoteService<ICharSetService>(EmptyStr);
@@ -882,24 +867,6 @@ begin
   Service.GetHeaderValueFromVarParameter(ValueHeader);
 
   Assert.AreEqual('Value', ValueHeader);
-end;
-
-procedure TRemoteServiceTest.WhenTheParamHasLocaleCharsMustEncodeTheName;
-begin
-  var Service := GetRemoteService<ILocaleCharsService>(EmptyStr);
-
-  Service.Service('abc');
-
-  Assert.AreEqual('/Servi%C3%A7e/Service/?Servi%C3%A7e=abc', FCommunication.URL);
-end;
-
-procedure TRemoteServiceTest.WhenTheProcedureHasRemoteNameWithLocaleCharsMustEncodeTheName;
-begin
-  var Service := GetRemoteService<IServiceTest>(EmptyStr);
-
-  Service.ProcedureWithRemoteNameLocaleChars;
-
-  Assert.AreEqual('/IServiceTest/P%C3%A3ram', FCommunication.URL);
 end;
 
 procedure TRemoteServiceTest.WhenTheProcedureHasTheContentTypeAttributeMustFillTheHeaderInTheRequest;
