@@ -778,25 +778,10 @@ var
   var
     FlatInfo: FlatAttribute;
     FlatProperty: TRttiProperty;
-    JSONType: TJSONTypes;
 
     function IsBooleanValue: Boolean;
     begin
       Result := {$IFDEF DCC}JSONValue is TJSONBool{$ELSE}IsBoolean(JSONValue){$ENDIF};
-    end;
-
-    procedure LoadJSONType;
-    begin
-      if IsNumber(JSONValue) then
-        JSONType := [tkInteger, {$IFDEF DCC}tkInt64, {$ENDIF}tkFloat]
-      else if IsString(JSONValue) or IsBooleanValue then
-        JSONType := [{$IFDEF DCC}tkLString, tkUString, tkWChar, tkWString, {$ENDIF}tkChar, tkString, tkEnumeration]
-      else if JSONValue is TJSONArray then
-        JSONType := [tkArray, tkDynArray]
-      else if JSONValue is TJSONObject then
-        JSONType := [tkClass]
-      else
-        JSONType := [];
     end;
 
     function GetJSONObject: TJSONObject;
@@ -831,51 +816,86 @@ var
         Result := nil;
     end;
 
-    function GetJSONEnumeratorValue(const FieldName: String): String;
-    begin
-{$IFDEF DCC}
-      var FieldValue := GetJSONFieldValue(FieldName);
-
-      if Assigned(FieldValue) then
-        Result := FieldValue.Value
-{$ELSE}
-      Result := String(GetJSONFieldValue(FieldName));
-{$ENDIF}
-    end;
-
     function CheckProperty: Boolean;
+
+      function GetJSONType: TTypeKinds;
+      begin
+        if IsNumber(JSONValue) then
+          Result := [tkInteger, {$IFDEF DCC}tkInt64, {$ENDIF}tkFloat]
+        else if IsString(JSONValue) or IsBooleanValue then
+          Result := [{$IFDEF DCC}tkLString, tkUString, tkWChar, tkWString, {$ENDIF}tkChar, tkString, tkEnumeration]
+        else if JSONValue is TJSONArray then
+          Result := [tkArray, tkDynArray]
+        else if JSONValue is TJSONObject then
+          Result := [tkClass]
+        else
+          Result := [];
+      end;
+
+      function CheckFieldExists: Boolean;
+      var
+        JSONFieldName: TJSONValue;
+
+        function HasFields: Boolean;
+        begin
+{$IFDEF DCC}
+          Result := GetJSONObject.Count > 0;
+{$ELSE}
+          Result := Assigned(TJSObject.Keys(GetJSONObject));
+{$ENDIF}
+        end;
+
+      begin
+        JSONFieldName := nil;
+
+        if HasFields then
+{$IFDEF DCC}
+          JSONFieldName := GetJSONObject.Pairs[0].JsonString;
+{$ELSE}
+          JSONFieldName := TJSObject.Keys(GetJSONObject)[0];
+{$ENDIF}
+
+        Result := not HasFields or Assigned(FindPropertyByName(RttiType, GetString(JSONFieldName)));
+      end;
+
     var
-      PropertyKind: TTypeKind;
+      TypeKind: TTypeKind;
 
     begin
-      PropertyKind := FlatProperty.PropertyType.TypeKind;
-      Result := (PropertyKind in JSONType);
+      Result := False;
+      TypeKind := RttiType.TypeKind;
 
-      if Result and (PropertyKind = tkEnumeration) then
-        Result := CheckEnumerationValue(GetString(JSONValue), GetEnumerationNames(FlatProperty.PropertyType));
+      if TypeKind in GetJSONType then
+        case TypeKind of
+          tkEnumeration: Result := CheckEnumerationValue(GetString(JSONValue), GetEnumerationNames(RttiType));
+          tkClass: Result := CheckFieldExists;
+          else Result := True;
+        end;
     end;
 
     function FindEnumeratorProperty: Boolean;
     var
       EnumeratorProperty: TRttiProperty;
+      JSONPropertyValue: TJSONValue;
 
     begin
       EnumeratorProperty := FindPropertyByName(FlatProperty.PropertyType, FlatInfo.EnumeratorPropertyName);
+      JSONPropertyValue := GetJSONFieldValue(FlatInfo.EnumeratorPropertyName);
       Result := False;
 
-      if Assigned(EnumeratorProperty) then
+      if Assigned(EnumeratorProperty) and Assigned(JSONPropertyValue) then
         case EnumeratorProperty.PropertyType.TypeKind of
-          tkEnumeration: Result := CheckEnumerationValue(GetJSONEnumeratorValue(FlatInfo.EnumeratorPropertyName), GetEnumerationNames(EnumeratorProperty.PropertyType));
+          tkEnumeration: Result := CheckEnumerationValue(GetString(JSONPropertyValue), GetEnumerationNames(EnumeratorProperty.PropertyType));
           tkClass:
           begin
-            Result := EnumeratorProperty.PropertyType.HasAttribute<FlatAttribute> and FindPropertyPath(EnumeratorProperty.PropertyType, GetJSONFieldValue(FlatInfo.EnumeratorPropertyName));
+            Result := EnumeratorProperty.PropertyType.HasAttribute<FlatAttribute> and FindPropertyPath(EnumeratorProperty.PropertyType, JSONPropertyValue);
 
             if Result then
               PropertyPath.Push(EnumeratorProperty);
           end;
         end
       else
-        Result := FlatProperty.PropertyType.HasAttribute<FlatAttribute> and FindPropertyPath(FlatProperty.PropertyType, JSONValue);
+        Result := FindPropertyPath(FlatProperty.PropertyType, JSONValue);
 
       if Result then
         PropertyPath.Push(FlatProperty);
@@ -887,28 +907,28 @@ var
 
     if Assigned(FlatInfo) then
     begin
-      LoadJSONType;
-
       for FlatProperty in GetPublishedProperties(RttiType) do
         if not FlatInfo.EnumeratorPropertyName.IsEmpty then
         begin
           if FindEnumeratorProperty then
             Exit(True)
         end
-        else if CheckProperty or FindPropertyPath(FlatProperty.PropertyType, JSONValue) then
+        else if FindPropertyPath(FlatProperty.PropertyType, JSONValue) then
         begin
           PropertyPath.Push(FlatProperty);
 
           Exit(True)
         end;
 
-      if not FlatInfo.EnumeratorPropertyName.IsEmpty then
-      begin
-        PropertyPath.Push(GetPublishedProperties(RttiType)[0]);
-
-        Exit(True)
-      end;
-    end;
+//      if not FlatInfo.EnumeratorPropertyName.IsEmpty then
+//      begin
+//        PropertyPath.Push(GetPublishedProperties(RttiType)[0]);
+//
+//        Exit(True)
+//      end;
+    end
+    else
+      Result := CheckProperty;
   end;
 
 var

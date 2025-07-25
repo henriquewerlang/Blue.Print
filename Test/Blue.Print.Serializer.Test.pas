@@ -145,6 +145,10 @@ type
     [Test]
     procedure WhenAFlatClassHasFlatPropertiesMustLoadTheCorrectValueAsExpected;
     [Test]
+    procedure WhenANestedFlatClassWithClassPropertyNameOnlyCantRaiseAnyErroWhenLoading;
+    [Test]
+    procedure WhenANestedFlatClassWithClassPropertyNameOnlyMustLoadAllObjectsInThePathAsExpected;
+    [Test]
     procedure WhenANestedFlatClassDontHaveTheEnumerationPropertyLoadedMustDefineThePropertyToLoadByThePropertyName;
     [Test]
     procedure WhenFoundTheCorrectPropertyToLoadCantIgnoreItAndLoadAnotherClass;
@@ -975,6 +979,19 @@ end;
 
 procedure TBluePrintJsonSerializerTest.WhenANestedFlatClassDontHaveTheEnumerationPropertyLoadedMustDefineThePropertyToLoadByThePropertyName;
 begin
+  var Value := FSerializer.Deserialize('{"MyProp1":"Value"}', TypeInfo(TFlatFirstLevel)).AsType<TFlatFirstLevel>;
+
+  Assert.AreEqual('Value', Value.MyObject.MyObject.MyProp1);
+
+  Value.MyObject.MyObject.Free;
+
+  Value.MyObject.Free;
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenANestedFlatClassWithClassPropertyNameOnlyCantRaiseAnyErroWhenLoading;
+begin
   Assert.WillNotRaise(
     procedure
     begin
@@ -986,6 +1003,21 @@ begin
 
       Value.Free;
     end);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenANestedFlatClassWithClassPropertyNameOnlyMustLoadAllObjectsInThePathAsExpected;
+begin
+  var Value := FSerializer.Deserialize('{"MyProp1":"Value"}', TypeInfo(TFlatFirstLevel)).AsType<TFlatFirstLevel>;
+
+  Assert.IsNotNil(Value);
+  Assert.IsNotNil(Value.MyObject);
+  Assert.IsNotNil(Value.MyObject.MyObject);
+
+  Value.MyObject.MyObject.Free;
+
+  Value.MyObject.Free;
+
+  Value.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenAPropertyHasTheFieldNameAttributeMustDeserializeTheValueAsExpected;
@@ -1206,6 +1238,8 @@ begin
   Assert.IsNotNil(Value.Separator1);
 
   Assert.AreEqual('MyValue', Value.Separator1.Value);
+
+  Value.Separator1.Free;
 
   Value.Free;
 end;
