@@ -2790,16 +2790,6 @@ var
   ReferencePath: TArray<String>;
   References: TArray<String>;
 
-  function GetFirstClassDeclaration(const Module: TTypeModuleDefinition): TTypeModuleDefinition;
-  begin
-    Result := Module;
-
-    while Assigned(Result.ParentModule) do
-      Result := Result.ParentModule;
-
-    Result := Result.AsUnitDefinition;
-  end;
-
 begin
   if not Schema.&Object.ref.IsEmpty then
   begin
