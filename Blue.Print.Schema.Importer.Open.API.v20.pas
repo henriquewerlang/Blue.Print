@@ -15,7 +15,8 @@ type
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const TypeName: String): TTypeDefinition;
     function GetSchemaReferenceName(const OpenAPISchema: Schema): String;
     function GetSimpleType(const Module: TTypeModuleDefinition; const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems): TTypeDefinition;
-    function LoadOpenAPIDefinition(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;
+    function LoadOpenAPIDefinition(const Reference: String): TOpenAPIDefinition;
+    function LoadOpenAPIDefinitionFromConfiguration(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;
 
     procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
   public
@@ -55,6 +56,9 @@ type
 implementation
 
 uses System.SysUtils, System.Generics.Defaults, Blue.Print.Serializer, Blue.Print.Types;
+
+const
+  REFERENCE_SEPARATOR = '#';
 
 { TOpenAPI20SchemaLoader }
 
@@ -140,6 +144,26 @@ var
       Result := AddParameter(Name, GenerateTypeDefinition(UnitDefinition, OpenAPISchema, Name));
     end;
 
+    function FindParameterDefinition(const Reference: JsonReference): Parameter;
+    begin
+      var ReferenceDefinition: TOpenAPIDefinition;
+      var References := Reference.ref.Split([REFERENCE_SEPARATOR]);
+      Result := nil;
+
+      if References[0].IsEmpty then
+        ReferenceDefinition := FOpenAPIDefinition
+      else
+        ReferenceDefinition := LoadOpenAPIDefinition(References[0]);
+
+      References := References[1].Split(['/']);
+
+      var ReferenceName := References[High(References)];
+
+      for var ParameterInfo in ReferenceDefinition.parameters.parameter do
+        if ParameterInfo.Key = ReferenceName then
+          Exit(ParameterInfo.Value);
+    end;
+
   begin
     Method := TTypeMethodDefinition.Create;
     Method.Name := Operation.operationId;
@@ -152,7 +176,12 @@ var
 
     for var ParameterDefinitionItem in Operation.parameters do
     begin
-      var ParameterDefinition := ParameterDefinitionItem.parameter;
+      var ParameterDefinition: Parameter;
+
+      if ParameterDefinitionItem.IsJsonReferenceStored then
+        ParameterDefinition := FindParameterDefinition(ParameterDefinitionItem.jsonReference)
+      else
+        ParameterDefinition := ParameterDefinitionItem.parameter;
 
       if ParameterDefinition.IsBodyParameterStored then
         AddParameter(ParameterDefinition.bodyParameter.name, ParameterDefinition.bodyParameter.schema)
@@ -192,7 +221,7 @@ var
   end;
 
 begin
-  FOpenAPIDefinition := LoadOpenAPIDefinition(UnitFileConfiguration);
+  FOpenAPIDefinition := LoadOpenAPIDefinitionFromConfiguration(UnitFileConfiguration);
   Service := FImporter.CreateInterfaceDefinition(UnitDefinition, UnitFileConfiguration.InterfaceName);
 
   AddRemoteName(Service, FOpenAPIDefinition.basePath);
@@ -257,16 +286,21 @@ begin
   end
 end;
 
-function TOpenAPI20SchemaLoader.LoadOpenAPIDefinition(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;
+function TOpenAPI20SchemaLoader.LoadOpenAPIDefinition(const Reference: String): TOpenAPIDefinition;
 begin
-  if not FOpenAPIDefinitions.TryGetValue(UnitFileConfiguration.Reference, Result) then
+  if not FOpenAPIDefinitions.TryGetValue(Reference, Result) then
   begin
     var Serializer := TBluePrintJsonSerializer.Create as IBluePrintSerializer;
 
-    Result := Serializer.Deserialize(FImporter.LoadFile(UnitFileConfiguration), TypeInfo(TOpenAPIDefinition)).AsType<TOpenAPIDefinition>;
+    Result := Serializer.Deserialize(FImporter.LoadFile(Reference), TypeInfo(TOpenAPIDefinition)).AsType<TOpenAPIDefinition>;
 
-    FOpenAPIDefinitions.Add(UnitFileConfiguration.Reference, Result);
+    FOpenAPIDefinitions.Add(Reference, Result);
   end;
+end;
+
+function TOpenAPI20SchemaLoader.LoadOpenAPIDefinitionFromConfiguration(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;
+begin
+  Result := LoadOpenAPIDefinition(UnitFileConfiguration.Reference);
 end;
 
 { THeaderParameterSubSchemaHelper }

@@ -423,7 +423,8 @@ type
     function CreateInterfaceDefinition(const ParentUnit: TUnitDefinition; const InterfaceName: String): TTypeInterfaceDefinition;
     function CreateTypeAlias(const Module: TTypeModuleDefinition; const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
-    function LoadFile(const UnitFile: TUnitFileConfiguration): String;
+    function LoadFile(const Reference: String): String;
+    function LoadFileFromConfiguration(const UnitFile: TUnitFileConfiguration): String;
 
     procedure Import;
     procedure LoadConfig(const FileName: String);
@@ -853,7 +854,7 @@ begin
   end;
 end;
 
-function TSchemaImporter.LoadFile(const UnitFile: TUnitFileConfiguration): String;
+function TSchemaImporter.LoadFile(const Reference: String): String;
 
   function DownloadFile(const URL: String): String;
   begin
@@ -869,10 +870,15 @@ function TSchemaImporter.LoadFile(const UnitFile: TUnitFileConfiguration): Strin
   end;
 
 begin
-  if UnitFile.Reference.StartsWith('http') then
-    Result := DownloadFile(UnitFile.Reference)
+  if Reference.StartsWith('http') then
+    Result := DownloadFile(Reference)
   else
-    Result := TFile.ReadAllText(GetFileNameFromSchemaFolder(UnitFile.Reference));
+    Result := TFile.ReadAllText(GetFileNameFromSchemaFolder(Reference));
+end;
+
+function TSchemaImporter.LoadFileFromConfiguration(const UnitFile: TUnitFileConfiguration): String;
+begin
+  Result := LoadFile(UnitFile.Reference);
 end;
 
 procedure TSchemaImporter.LoadInternalTypes;
@@ -1219,7 +1225,7 @@ procedure TXSDSchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUni
   function LoadFile: IXMLSchemaDoc;
   begin
     if UnitFileConfiguration.Reference.StartsWith('http') then
-      Result := LoadXMLSchemaStr(FImporter.LoadFile(UnitFileConfiguration))
+      Result := LoadXMLSchemaStr(FImporter.LoadFileFromConfiguration(UnitFileConfiguration))
     else
       Result := LoadXMLSchema(FImporter.GetFileNameFromSchemaFolder(UnitFileConfiguration.Reference))
   end;
@@ -2866,7 +2872,7 @@ begin
   begin
     var Serializer := TBluePrintJsonSerializer.Create as IBluePrintSerializer;
 
-    Result := Serializer.Deserialize(FImporter.LoadFile(UnitFileConfiguration), TypeInfo(TSchema)).AsType<TSchema>;
+    Result := Serializer.Deserialize(FImporter.LoadFileFromConfiguration(UnitFileConfiguration), TypeInfo(TSchema)).AsType<TSchema>;
 
     FSchemas.Add(UnitFileConfiguration.Reference, Result);
   end;
@@ -3165,7 +3171,7 @@ begin
   SchemaLoader := TXSDSchemaLoader.Create(FImporter);
   WSDLDocument := NewWSDLDoc;
 
-  WSDLDocument.LoadFromXML(FImporter.LoadFile(UnitFileConfiguration));
+  WSDLDocument.LoadFromXML(FImporter.LoadFileFromConfiguration(UnitFileConfiguration));
 
   for var A := 0 to Pred(WSDLDocument.Definition.Services.Count) do
   begin
