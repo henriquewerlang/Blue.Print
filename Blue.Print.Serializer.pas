@@ -53,16 +53,16 @@ type
     function CreateInt64(const Value: Int64): TJSONValue;
     function CreateNumber(const Value: Double): TJSONValue;
     function CreateString(const Value: String): TJSONValue;
-    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function GetNumber(const JSONValue: TJSONValue): Double;
     function GetString(const JSONValue: TJSONValue): String; inline;
     function IsNumber(const JSONValue: TJSONValue): Boolean;
     function IsString(const JSONValue: TJSONValue): Boolean;
-    function Serialize(const Value: TValue): String;
   protected
+    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function DeserializeArray(const RttiType: TRttiType; const JSONArray: TJSONArray): TValue;
     function DeserializeClassReference(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
     function DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue; virtual;
+    function Serialize(const Value: TValue): String;
     function SerializeArray(const RttiType: TRttiType; const Value: TValue): TJSONArray;
     function SerializeType(const RttiType: TRttiType; const Value: TValue): TJSONValue; virtual;
 
@@ -77,15 +77,15 @@ type
 
   TBluePrintXMLSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
   private
-    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function GetFormatValue(const RttiMember: TRttiMember): String;
     function GetNamespaceValue(const RttiObject: TRttiObject; const Namespace: String): String;
     function LoadAttributes(const RttiObject: TRttiObject; const Node: IXMLNode): IXMLNode;
     function LoadAttributeValue(const Member: TRttiDataMember; const Instance: TObject; const Node: IXMLNode): Boolean;
-    function Serialize(const Value: TValue): String;
   protected
+    function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function DeserializeArray(const RttiType: TRttiType; const Node: IXMLNode): TValue;
     function DeserializeType(const RttiType: TRttiType; const Node: IXMLNode): TValue;
+    function Serialize(const Value: TValue): String;
 
     procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
     procedure SerializeArray(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace, ValueFormat: String);
