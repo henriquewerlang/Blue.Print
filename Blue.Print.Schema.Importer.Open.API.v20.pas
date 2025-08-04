@@ -17,6 +17,7 @@ type
     function GetSimpleType(const Module: TTypeModuleDefinition; const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems): TTypeDefinition;
     function LoadOpenAPIDefinition(const Reference: String): TOpenAPIDefinition;
     function LoadOpenAPIDefinitionFromConfiguration(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;
+    function LoadSchemaReference(const Reference: String; out ReferenceName: String): TOpenAPIDefinition;
 
     procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
   public
@@ -144,20 +145,12 @@ var
       Result := AddParameter(Name, GenerateTypeDefinition(UnitDefinition, OpenAPISchema, Name));
     end;
 
-    function FindParameterDefinition(const Reference: JsonReference): Parameter;
+    function FindParameterDefinition(const JSONReference: JsonReference): Parameter;
     begin
-      var ReferenceDefinition: TOpenAPIDefinition;
-      var References := Reference.ref.Split([REFERENCE_SEPARATOR]);
+      var ReferenceName := EmptyStr;
       Result := nil;
 
-      if References[0].IsEmpty then
-        ReferenceDefinition := FOpenAPIDefinition
-      else
-        ReferenceDefinition := LoadOpenAPIDefinition(References[0]);
-
-      References := References[1].Split(['/']);
-
-      var ReferenceName := References[High(References)];
+      var ReferenceDefinition := LoadSchemaReference(JSONReference.ref, ReferenceName);
 
       for var ParameterInfo in ReferenceDefinition.parameters.parameter do
         if ParameterInfo.Key = ReferenceName then
@@ -222,9 +215,14 @@ var
 
 begin
   FOpenAPIDefinition := LoadOpenAPIDefinitionFromConfiguration(UnitFileConfiguration);
-  Service := FImporter.CreateInterfaceDefinition(UnitDefinition, UnitFileConfiguration.InterfaceName);
+  Service := nil;
 
-  AddRemoteName(Service, FOpenAPIDefinition.basePath);
+  if not UnitFileConfiguration.InterfaceName.IsEmpty then
+  begin
+    Service := FImporter.CreateInterfaceDefinition(UnitDefinition, UnitFileConfiguration.InterfaceName);
+
+    AddRemoteName(Service, FOpenAPIDefinition.basePath);
+  end;
 
   for var Definition in FOpenAPIDefinition.definitions.schema do
   begin
@@ -255,9 +253,7 @@ end;
 
 function TOpenAPI20SchemaLoader.GetSchemaReferenceName(const OpenAPISchema: Schema): String;
 begin
-  var Values := OpenAPISchema.ref.Split(['/']);
-
-  Result := Values[High(Values)];
+  LoadSchemaReference(OpenAPISchema.ref, Result);
 end;
 
 function TOpenAPI20SchemaLoader.GetSimpleType(const Module: TTypeModuleDefinition; const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems): TTypeDefinition;
@@ -301,6 +297,19 @@ end;
 function TOpenAPI20SchemaLoader.LoadOpenAPIDefinitionFromConfiguration(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;
 begin
   Result := LoadOpenAPIDefinition(UnitFileConfiguration.Reference);
+end;
+
+function TOpenAPI20SchemaLoader.LoadSchemaReference(const Reference: String; out ReferenceName: String): TOpenAPIDefinition;
+begin
+  var References := Reference.Split([REFERENCE_SEPARATOR]);
+  var Values := References[1].Split(['/']);
+
+  if References[0].IsEmpty then
+    Result := FOpenAPIDefinition
+  else
+    Result := LoadOpenAPIDefinition(References[0]);
+
+  ReferenceName := Values[High(Values)];
 end;
 
 { THeaderParameterSubSchemaHelper }
