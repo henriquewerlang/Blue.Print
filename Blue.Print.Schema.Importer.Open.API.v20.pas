@@ -237,20 +237,28 @@ begin
   end;
 
   for var PathItem in FOpenAPIDefinition.paths.pathItem do
+  begin
     if PathItem.Value.IsGetStored then
-      AddMethod(PathItem.Value.get, PathItem.Key)
-    else if PathItem.Value.IsPostStored then
-      AddMethod(PathItem.Value.post, PathItem.Key)
-    else if PathItem.Value.IsPutStored then
-      AddMethod(PathItem.Value.put, PathItem.Key)
-    else if PathItem.Value.IsDeleteStored then
-      AddMethod(PathItem.Value.delete, PathItem.Key)
-    else if PathItem.Value.IsOptionsStored then
-      AddMethod(PathItem.Value.options, PathItem.Key)
-    else if PathItem.Value.IsPatchStored then
-      AddMethod(PathItem.Value.patch, PathItem.Key)
-    else if PathItem.Value.IsHeadStored then
+      AddMethod(PathItem.Value.get, PathItem.Key);
+
+    if PathItem.Value.IsPostStored then
+      AddMethod(PathItem.Value.post, PathItem.Key);
+
+    if PathItem.Value.IsPutStored then
+      AddMethod(PathItem.Value.put, PathItem.Key);
+
+    if PathItem.Value.IsDeleteStored then
+      AddMethod(PathItem.Value.delete, PathItem.Key);
+
+    if PathItem.Value.IsOptionsStored then
+      AddMethod(PathItem.Value.options, PathItem.Key);
+
+    if PathItem.Value.IsPatchStored then
+      AddMethod(PathItem.Value.patch, PathItem.Key);
+
+    if PathItem.Value.IsHeadStored then
       AddMethod(PathItem.Value.head, PathItem.Key);
+  end;
 end;
 
 function TOpenAPI20SchemaLoader.GetSchemaReferenceName(const OpenAPISchema: Schema): String;
