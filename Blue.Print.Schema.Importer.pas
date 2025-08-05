@@ -408,7 +408,6 @@ type
     function FindChangeTypeName(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
     function FindTypeDefinitionInModule(const Module: TTypeModuleDefinition; const TypeName: String; var TypeDefinition: TTypeDefinition): Boolean;
     function FindTypeInUnits(const Module: TTypeModuleDefinition; const TypeName: String): TTypeDefinition;
-    function GetFileNameFromSchemaFolder(const FileName: String): String;
     function LoadUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
 
     procedure GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration);
@@ -423,8 +422,10 @@ type
     function CreateInterfaceDefinition(const ParentUnit: TUnitDefinition; const InterfaceName: String): TTypeInterfaceDefinition;
     function CreateTypeAlias(const Module: TTypeModuleDefinition; const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
-    function LoadFile(const Reference: String): String;
+    function GetFileNameFromSchemaFolder(const FileName: String): String;
+    function LoadFile(Reference: String): String;
     function LoadFileFromConfiguration(const UnitFile: TUnitFileConfiguration): String;
+    function LoadRelativePath(const RelativeFolder, FileName: String): String;
 
     procedure Import;
     procedure LoadConfig(const FileName: String);
@@ -796,7 +797,7 @@ end;
 
 function TSchemaImporter.GetFileNameFromSchemaFolder(const FileName: String): String;
 begin
-  Result := Format('%s\%s', [Configuration.SchemaFolder, FileName]);
+  Result := TPath.GetFullPath(Configuration.SchemaFolder + '\' + FileName);
 end;
 
 procedure TSchemaImporter.Import;
@@ -830,23 +831,14 @@ begin
 end;
 
 procedure TSchemaImporter.LoadConfig(const FileName: String);
-
-  function FixFolderPath(const Folder: String): String;
-  begin
-    Result := Folder;
-
-    if TDirectory.IsRelativePath(Result) then
-      Result := TPath.GetFullPath(Format('%s%s', [ExtractFilePath(FileName), Result]));
-  end;
-
 begin
   if TFile.Exists(FileName) then
   begin
     var Serializer: IBluePrintSerializer := TBluePrintJsonSerializer.Create;
 
     Configuration := Serializer.Deserialize(TFile.ReadAllText(FileName), TypeInfo(TConfiguration)).AsType<TConfiguration>;
-    Configuration.OutputFolder := FixFolderPath(Configuration.OutputFolder);
-    Configuration.SchemaFolder := FixFolderPath(Configuration.SchemaFolder);
+    Configuration.OutputFolder := LoadRelativePath(Configuration.OutputFolder, FileName);
+    Configuration.SchemaFolder := LoadRelativePath(Configuration.SchemaFolder, FileName);
 
     for var TypeExternal in Configuration.TypeDefinition do
       if not TypeExternal.ModuleName.IsEmpty then
@@ -854,7 +846,7 @@ begin
   end;
 end;
 
-function TSchemaImporter.LoadFile(const Reference: String): String;
+function TSchemaImporter.LoadFile(Reference: String): String;
 
   function DownloadFile(const URL: String): String;
   begin
@@ -873,7 +865,12 @@ begin
   if Reference.StartsWith('http') then
     Result := DownloadFile(Reference)
   else
-    Result := TFile.ReadAllText(GetFileNameFromSchemaFolder(Reference));
+  begin
+    if TPath.IsRelativePath(Reference) then
+      Reference := GetFileNameFromSchemaFolder(Reference);
+
+    Result := TFile.ReadAllText(Reference);
+  end;
 end;
 
 function TSchemaImporter.LoadFileFromConfiguration(const UnitFile: TUnitFileConfiguration): String;
@@ -924,6 +921,11 @@ begin
   FTimeType := AddNumberType('TTime');
   FTValueType := AddTypeDefinition(AddTypeExternal('System.Rtti', 'System.Rtti.TValue'), 'System.Rtti', 'TValue');
   FWordType := AddNumberType('Word');
+end;
+
+function TSchemaImporter.LoadRelativePath(const RelativeFolder, FileName: String): String;
+begin
+  Result := TPath.GetFullPath(TPath.GetDirectoryName(FileName) + '\' + RelativeFolder);
 end;
 
 function TSchemaImporter.LoadUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;

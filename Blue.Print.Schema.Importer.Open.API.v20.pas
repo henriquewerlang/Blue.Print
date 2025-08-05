@@ -10,6 +10,7 @@ type
     FImporter: TSchemaImporter;
     FOpenAPIDefinition: TOpenAPIDefinition;
     FOpenAPIDefinitions: TDictionary<String, TOpenAPIDefinition>;
+    FUnitFileConfiguration: TUnitFileConfiguration;
 
     function GenerateClassDefintion(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const ClassName: String): TTypeDefinition;
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const TypeName: String): TTypeDefinition;
@@ -56,7 +57,7 @@ type
 
 implementation
 
-uses System.SysUtils, System.Generics.Defaults, Blue.Print.Serializer, Blue.Print.Types;
+uses System.SysUtils, System.Generics.Defaults, System.IOUtils, Blue.Print.Serializer, Blue.Print.Types;
 
 const
   REFERENCE_SEPARATOR = '#';
@@ -215,6 +216,7 @@ var
 
 begin
   FOpenAPIDefinition := LoadOpenAPIDefinitionFromConfiguration(UnitFileConfiguration);
+  FUnitFileConfiguration := UnitFileConfiguration;
   Service := nil;
 
   if not UnitFileConfiguration.InterfaceName.IsEmpty then
@@ -307,7 +309,7 @@ begin
   if References[0].IsEmpty then
     Result := FOpenAPIDefinition
   else
-    Result := LoadOpenAPIDefinition(References[0]);
+    Result := LoadOpenAPIDefinition(FImporter.LoadRelativePath(References[0], FImporter.GetFileNameFromSchemaFolder(FUnitFileConfiguration.Reference)));
 
   ReferenceName := Values[High(Values)];
 end;
