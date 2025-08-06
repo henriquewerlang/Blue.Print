@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Generics.Collections, Blue.Print.Schema.Importer, Blue.Print.Open.API.Schema.v20;
+uses System.Rtti, System.Generics.Collections, Blue.Print.Schema.Importer, Blue.Print.Open.API.Schema.v20;
 
 type
   TOpenAPI20SchemaLoader = class(TInterfacedObject, ISchemaLoader)
@@ -13,9 +13,9 @@ type
     FUnitFileConfiguration: TUnitFileConfiguration;
 
     function GenerateClassDefintion(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const ClassName: String): TTypeDefinition;
+    function GenerateSimpleType(const Module: TTypeModuleDefinition; const TypeName: String; const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems; const Enumeration: TArray<TValue>): TTypeDefinition;
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const TypeName: String): TTypeDefinition;
     function GetSchemaReferenceName(const OpenAPISchema: Schema): String;
-    function GetSimpleType(const Module: TTypeModuleDefinition; const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems): TTypeDefinition;
     function LoadOpenAPIDefinition(const Reference: String): TOpenAPIDefinition;
     function LoadOpenAPIDefinitionFromConfiguration(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;
     function LoadSchemaReference(const Reference: String; out ReferenceName: String): TOpenAPIDefinition;
@@ -90,7 +90,7 @@ begin
     var NewProperty := TPropertyDefinition.Create;
     NewProperty.Optional := True;
     NewProperty.Name := Prop.Key;
-    NewProperty.PropertyType := GenerateTypeDefinition(Module, Prop.Value, NewProperty.Name + 'Property');
+    NewProperty.PropertyType := GenerateTypeDefinition(ClassDefinition, Prop.Value, NewProperty.Name);
 
     if not Assigned(NewProperty.PropertyType) then
       raise Exception.Create('Property type not found!');
@@ -99,6 +99,55 @@ begin
   end;
 
   Module.Classes.Add(ClassDefinition);
+end;
+
+function TOpenAPI20SchemaLoader.GenerateSimpleType(const Module: TTypeModuleDefinition; const TypeName: String; const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems; const Enumeration: TArray<TValue>): TTypeDefinition;
+
+  function CreateArrayDefinition(const TypeName: String; const ArrayItemType: TTypeDefinition): TTypeArrayDefinition;
+  begin
+    Result := TTypeArrayDefinition.Create(Module, ArrayItemType);
+    Result.Name := TypeName;
+  end;
+
+  function CreateEnumerator: TTypeEnumeration;
+  begin
+    Result := TTypeEnumeration.Create(Module);
+    Result.Name := TypeName;
+
+    for var EnumeratorValue in Enumeration do
+      Result.Values.Add(EnumeratorValue.AsString);
+
+    Module.Enumerations.Add(Result);
+  end;
+
+  function GetArrayType(const ArrayType: PrimitivesItems): TTypeDefinition;
+  begin
+    case ArrayItems.&type of
+      PrimitivesItems.TType.array: Result := CreateArrayDefinition(TypeName, GetArrayType(ArrayItems.items));
+      PrimitivesItems.TType.boolean: Result := FImporter.BooleanType;
+      PrimitivesItems.TType.integer: Result := FImporter.IntegerType;
+      PrimitivesItems.TType.number: Result := FImporter.DoubleType;
+      PrimitivesItems.TType.string: Result := FImporter.StringType;
+      else Result := nil;
+    end;
+  end;
+
+begin
+  Result := FImporter.FindType(TypeName, Module);
+
+  if not Assigned(Result) then
+    if Assigned(Enumeration) then
+      Result := CreateEnumerator
+    else
+      case SimpleType of
+        simpleTypes.array: Result := CreateArrayDefinition(TypeName, GetArrayType(ArrayItems));
+        simpleTypes.boolean: Result := FImporter.BooleanType;
+        simpleTypes.integer: Result := FImporter.IntegerType;
+        simpleTypes.null: Result := nil;
+        simpleTypes.number: Result := FImporter.DoubleType;
+        simpleTypes.string: Result := FImporter.StringType;
+        else Result := nil;
+      end;
 end;
 
 function TOpenAPI20SchemaLoader.GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const TypeName: String): TTypeDefinition;
@@ -110,9 +159,9 @@ begin
       Result := Module.AddDelayedType(GetSchemaReferenceName(OpenAPISchema))
     else if OpenAPISchema.IsTypeStored then
       case OpenAPISchema.&type.simpleTypes of
-        simpleTypes.&array: Result := TTypeArrayDefinition.Create(Module, GenerateTypeDefinition(Module, OpenAPISchema.items.schema, TypeName + 'ArrayItem'));
+        simpleTypes.array: Result := TTypeArrayDefinition.Create(Module, GenerateTypeDefinition(Module, OpenAPISchema.items.schema, TypeName + 'ArrayItem'));
         simpleTypes.&object: Result := GenerateClassDefintion(Module, OpenAPISchema, TypeName);
-        else Result := GetSimpleType(Module, OpenAPISchema.&type.simpleTypes, nil);
+        else Result := GenerateSimpleType(Module, TypeName, OpenAPISchema.&type.simpleTypes, nil, OpenAPISchema.enum);
       end
     else
       Abort;
@@ -187,26 +236,26 @@ var
         begin
           var Header := NoBodyParameter.headerParameterSubSchema;
 
-          var Parameter := AddParameter(Header.name, GetSimpleType(UnitDefinition, Header.SimpleType, Header.items));
+          var Parameter := AddParameter(Header.name, GenerateSimpleType(UnitDefinition, Header.Name + 'Header', Header.SimpleType, Header.items, Header.enum));
           Parameter.AddAtribute('HeaderValue(''%s'')', [Header.name]);
         end
         else if NoBodyParameter.IsQueryParameterSubSchemaStored then
         begin
           var Query := NoBodyParameter.queryParameterSubSchema;
 
-          AddParameter(Query.name, GetSimpleType(UnitDefinition, Query.SimpleType, Query.items));
+          AddParameter(Query.name, GenerateSimpleType(UnitDefinition, Query.Name + 'Query', Query.SimpleType, Query.items, Query.enum));
         end
         else if NoBodyParameter.IsPathParameterSubSchemaStored then
         begin
           var Path := NoBodyParameter.pathParameterSubSchema;
 
-          AddParameter(Path.name, GetSimpleType(UnitDefinition, Path.SimpleType, Path.items));
+          AddParameter(Path.name, GenerateSimpleType(UnitDefinition, Path.Name + 'Path', Path.SimpleType, Path.items, Path.enum));
         end
         else if NoBodyParameter.IsFormDataParameterSubSchemaStored then
         begin
           var Form := NoBodyParameter.formDataParameterSubSchema;
 
-          AddParameter(Form.name, GetSimpleType(UnitDefinition, Form.SimpleType, Form.items));
+          AddParameter(Form.name, GenerateSimpleType(UnitDefinition, Form.Name + 'Form', Form.SimpleType, Form.items, Form.enum));
         end;
       end;
     end;
@@ -230,9 +279,7 @@ begin
   begin
     var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
 
-    if TypeDefinition.IsEnumeration and not FImporter.BuildInType.ContainsKey(TypeDefinition.Name) then
-      UnitDefinition.Enumerations.Add(TypeDefinition.AsTypeEnumeration)
-    else if not TypeDefinition.IsClassDefinition then
+    if not TypeDefinition.IsEnumeration and not TypeDefinition.IsClassDefinition then
       UnitDefinition.AddTypeAlias(FImporter.CreateTypeAlias(UnitDefinition, Definition.Key, TypeDefinition));
   end;
 
@@ -264,32 +311,6 @@ end;
 function TOpenAPI20SchemaLoader.GetSchemaReferenceName(const OpenAPISchema: Schema): String;
 begin
   LoadSchemaReference(OpenAPISchema.ref, Result);
-end;
-
-function TOpenAPI20SchemaLoader.GetSimpleType(const Module: TTypeModuleDefinition; const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems): TTypeDefinition;
-
-  function GetArrayType(const ArrayType: PrimitivesItems): TTypeDefinition;
-  begin
-    case ArrayItems.&type of
-      PrimitivesItems.TType.&string: Result := FImporter.StringType;
-      PrimitivesItems.TType.number: Result := FImporter.DoubleType;
-      PrimitivesItems.TType.integer: Result := FImporter.IntegerType;
-      PrimitivesItems.TType.boolean: Result := FImporter.BooleanType;
-      &PrimitivesItems.TType.array: Result := TTypeArrayDefinition.Create(Module, GetArrayType(ArrayItems.items));
-      else Result := nil;
-    end;
-  end;
-
-begin
-  case SimpleType of
-    simpleTypes.array: Result := TTypeArrayDefinition.Create(Module, GetArrayType(ArrayItems));
-    simpleTypes.boolean: Result := FImporter.BooleanType;
-    simpleTypes.null: Result := nil;
-    simpleTypes.integer: Result := FImporter.IntegerType;
-    simpleTypes.number: Result := FImporter.DoubleType;
-    simpleTypes.&string: Result := FImporter.StringType;
-    else Result := nil;
-  end
 end;
 
 function TOpenAPI20SchemaLoader.LoadOpenAPIDefinition(const Reference: String): TOpenAPIDefinition;
@@ -326,7 +347,7 @@ end;
 
 function THeaderParameterSubSchemaHelper.GetSimpleType: simpleTypes;
 const
-  SIMPLE_TYPE_CONVERTION: array[TType] of simpleTypes = (simpleTypes.&string, simpleTypes.number, simpleTypes.boolean, simpleTypes.integer, simpleTypes.&array);
+  SIMPLE_TYPE_CONVERTION: array[TType] of simpleTypes = (simpleTypes.string, simpleTypes.number, simpleTypes.boolean, simpleTypes.integer, simpleTypes.array);
 
 begin
   Result := SIMPLE_TYPE_CONVERTION[&type];
@@ -336,7 +357,7 @@ end;
 
 function TQueryParameterSubSchemaHelper.GetSimpleType: simpleTypes;
 const
-  SIMPLE_TYPE_CONVERTION: array[TType] of simpleTypes = (simpleTypes.&string, simpleTypes.number, simpleTypes.boolean, simpleTypes.integer, simpleTypes.&array);
+  SIMPLE_TYPE_CONVERTION: array[TType] of simpleTypes = (simpleTypes.string, simpleTypes.number, simpleTypes.boolean, simpleTypes.integer, simpleTypes.array);
 
 begin
   Result := SIMPLE_TYPE_CONVERTION[&type];
@@ -346,7 +367,7 @@ end;
 
 function TPathParameterSubSchema.GetSimpleType: simpleTypes;
 const
-  SIMPLE_TYPE_CONVERTION: array[TType] of simpleTypes = (simpleTypes.&string, simpleTypes.number, simpleTypes.boolean, simpleTypes.integer, simpleTypes.&array);
+  SIMPLE_TYPE_CONVERTION: array[TType] of simpleTypes = (simpleTypes.string, simpleTypes.number, simpleTypes.boolean, simpleTypes.integer, simpleTypes.array);
 
 begin
   Result := SIMPLE_TYPE_CONVERTION[&type];
@@ -356,7 +377,7 @@ end;
 
 function TFormDataParameterSubSchema.GetSimpleType: simpleTypes;
 const
-  SIMPLE_TYPE_CONVERTION: array[TType] of simpleTypes = (simpleTypes.&string, simpleTypes.number, simpleTypes.boolean, simpleTypes.integer, simpleTypes.&array, simpleTypes.null);
+  SIMPLE_TYPE_CONVERTION: array[TType] of simpleTypes = (simpleTypes.string, simpleTypes.number, simpleTypes.boolean, simpleTypes.integer, simpleTypes.array, simpleTypes.null);
 
 begin
   Result := SIMPLE_TYPE_CONVERTION[&type];
