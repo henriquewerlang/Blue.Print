@@ -1675,7 +1675,17 @@ var
     function GetInheritence: String;
     begin
       if Assigned(ClassDefinition.InheritedFrom) then
-        Result := Format('(%s)', [GetClassImplementationName(ResolveTypeDefinition(ClassDefinition.InheritedFrom).AsClassDefinition)])
+      begin
+        var Inheritence := ResolveTypeDefinition(ClassDefinition.InheritedFrom);
+        var InheritenceName := EmptyStr;
+
+        if Inheritence.IsClassDefinition then
+          InheritenceName := GetClassImplementationName(Inheritence.AsClassDefinition)
+        else if Inheritence.IsExternal then
+          InheritenceName := Inheritence.AsTypeExternal.Name;
+
+        Result := Format('(%s)', [InheritenceName]);
+      end
       else
         Result := EmptyStr;
     end;
@@ -2035,7 +2045,14 @@ var
           AddUnitDefinition(ClassDefinition.UnitDefinition);
 
           if Assigned(ClassDefinition.InheritedFrom) then
-            AddUnitDefinition(ResolveTypeDefinition(ClassDefinition.InheritedFrom).AsClassDefinition.UnitDefinition);
+          begin
+            var InheritedFrom := ResolveTypeDefinition(ClassDefinition.InheritedFrom);
+
+            if InheritedFrom.IsClassDefinition then
+              AddUnitDefinition(InheritedFrom.AsClassDefinition.UnitDefinition)
+            else if InheritedFrom.IsExternal then
+              AddUses(InheritedFrom.AsTypeExternal.ModuleName);
+          end;
         end
         else if TypeDefinition.IsEnumeration and TypeDefinition.ParentModule.IsUnitDefinition then
           AddUnitDefinition(TypeDefinition.ParentModule.AsUnitDefinition)
