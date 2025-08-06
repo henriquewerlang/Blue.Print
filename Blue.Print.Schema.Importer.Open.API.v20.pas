@@ -12,6 +12,7 @@ type
     FOpenAPIDefinitions: TDictionary<String, TOpenAPIDefinition>;
     FUnitFileConfiguration: TUnitFileConfiguration;
 
+    function CreateArrayDefinition(const Module: TTypeModuleDefinition; const TypeName: String; const ArrayItemType: TTypeDefinition): TTypeDefinition;
     function GenerateClassDefintion(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const ClassName: String): TTypeDefinition;
     function GenerateSimpleType(const Module: TTypeModuleDefinition; const TypeName: String; const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems; const Enumeration: TArray<TValue>): TTypeDefinition;
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const TypeName: String): TTypeDefinition;
@@ -72,6 +73,18 @@ begin
   FOpenAPIDefinitions := TDictionary<String, TOpenAPIDefinition>.Create(TIStringComparer.Ordinal);
 end;
 
+function TOpenAPI20SchemaLoader.CreateArrayDefinition(const Module: TTypeModuleDefinition; const TypeName: String; const ArrayItemType: TTypeDefinition): TTypeDefinition;
+begin
+  Result := TTypeArrayDefinition.Create(Module, ArrayItemType);
+
+  if Module.IsUnitDefinition then
+  begin
+    Result := FImporter.CreateTypeAlias(Module, TypeName, Result);
+
+    Module.AsUnitDefinition.AddTypeAlias(Result.AsTypeAlias);
+  end;
+end;
+
 destructor TOpenAPI20SchemaLoader.Destroy;
 begin
   FOpenAPIDefinitions.Free;
@@ -103,12 +116,6 @@ end;
 
 function TOpenAPI20SchemaLoader.GenerateSimpleType(const Module: TTypeModuleDefinition; const TypeName: String; const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems; const Enumeration: TArray<TValue>): TTypeDefinition;
 
-  function CreateArrayDefinition(const TypeName: String; const ArrayItemType: TTypeDefinition): TTypeArrayDefinition;
-  begin
-    Result := TTypeArrayDefinition.Create(Module, ArrayItemType);
-    Result.Name := TypeName;
-  end;
-
   function CreateEnumerator: TTypeEnumeration;
   begin
     Result := TTypeEnumeration.Create(Module);
@@ -123,7 +130,7 @@ function TOpenAPI20SchemaLoader.GenerateSimpleType(const Module: TTypeModuleDefi
   function GetArrayType(const ArrayType: PrimitivesItems): TTypeDefinition;
   begin
     case ArrayItems.&type of
-      PrimitivesItems.TType.array: Result := CreateArrayDefinition(TypeName, GetArrayType(ArrayItems.items));
+      PrimitivesItems.TType.array: Result := CreateArrayDefinition(Module, TypeName, GetArrayType(ArrayItems.items));
       PrimitivesItems.TType.boolean: Result := FImporter.BooleanType;
       PrimitivesItems.TType.integer: Result := FImporter.IntegerType;
       PrimitivesItems.TType.number: Result := FImporter.DoubleType;
@@ -140,7 +147,7 @@ begin
       Result := CreateEnumerator
     else
       case SimpleType of
-        simpleTypes.array: Result := CreateArrayDefinition(TypeName, GetArrayType(ArrayItems));
+        simpleTypes.array: Result := CreateArrayDefinition(Module, TypeName, GetArrayType(ArrayItems));
         simpleTypes.boolean: Result := FImporter.BooleanType;
         simpleTypes.integer: Result := FImporter.IntegerType;
         simpleTypes.null: Result := nil;
@@ -159,7 +166,7 @@ begin
       Result := Module.AddDelayedType(GetSchemaReferenceName(OpenAPISchema))
     else if OpenAPISchema.IsTypeStored then
       case OpenAPISchema.&type.simpleTypes of
-        simpleTypes.array: Result := TTypeArrayDefinition.Create(Module, GenerateTypeDefinition(Module, OpenAPISchema.items.schema, TypeName + 'ArrayItem'));
+        simpleTypes.array: Result := CreateArrayDefinition(Module, TypeName, GenerateTypeDefinition(Module, OpenAPISchema.items.schema, TypeName + 'ArrayItem'));
         simpleTypes.&object: Result := GenerateClassDefintion(Module, OpenAPISchema, TypeName);
         else Result := GenerateSimpleType(Module, TypeName, OpenAPISchema.&type.simpleTypes, nil, OpenAPISchema.enum);
       end
@@ -279,7 +286,7 @@ begin
   begin
     var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
 
-    if not TypeDefinition.IsEnumeration and not TypeDefinition.IsClassDefinition then
+    if not TypeDefinition.IsEnumeration and not TypeDefinition.IsClassDefinition and not TypeDefinition.IsTypeAlias then
       UnitDefinition.AddTypeAlias(FImporter.CreateTypeAlias(UnitDefinition, Definition.Key, TypeDefinition));
   end;
 
