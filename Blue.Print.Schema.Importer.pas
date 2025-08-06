@@ -1624,6 +1624,15 @@ var
       end;
     end;
 
+    function IsValidValuesNames(const Enumerator: TTypeEnumeration): Boolean;
+    begin
+      Result := True;
+
+      for var EnumeratorValue in Enumerator.Values do
+        if FormatEnumeratorValue(EnumeratorValue) <> NotFormatEnumeratorValue(EnumeratorValue) then
+          Exit(False);
+    end;
+
   begin
     var FirstEnumerator := True;
 
@@ -1634,7 +1643,8 @@ var
 
       LoadAttributes(Ident, Enumerator);
 
-      AddLine('%s[EnumValue(''%s'')]', [Ident, GetEnumeratorValues(Enumerator, ''' +' + sLineBreak + Ident + WHITE_SPACE_IDENT + '''', NotFormatEnumeratorValue)]);
+      if not IsValidValuesNames(Enumerator) then
+        AddLine('%s[EnumValue(''%s'')]', [Ident, GetEnumeratorValues(Enumerator, ''' +' + sLineBreak + Ident + WHITE_SPACE_IDENT + '''', NotFormatEnumeratorValue)]);
 
       AddLine('%s%s = (%s);', [Ident, Enumerator.EnumeratorName, GetEnumeratorValues(Enumerator, sLineBreak + Ident + WHITE_SPACE_IDENT, FormatEnumeratorValue)]);
 
