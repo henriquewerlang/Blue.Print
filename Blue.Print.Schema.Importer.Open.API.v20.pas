@@ -13,7 +13,7 @@ type
     FUnitFileConfiguration: TUnitFileConfiguration;
 
     function CreateArrayDefinition(const Module: TTypeModuleDefinition; const TypeName: String; const ArrayItemType: TTypeDefinition): TTypeDefinition;
-    function GenerateClassDefintion(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const ClassName: String): TTypeDefinition;
+    function GenerateClassDefinition(const Module: TTypeModuleDefinition; const ClassSchema: Schema; const ClassName: String): TTypeDefinition;
     function GenerateSimpleType(const Module: TTypeModuleDefinition; const TypeName: String; const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems; const Enumeration: TArray<TValue>): TTypeDefinition;
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const TypeName: String): TTypeDefinition;
     function GetSchemaReferenceName(const OpenAPISchema: Schema): String;
@@ -92,23 +92,58 @@ begin
   inherited;
 end;
 
-function TOpenAPI20SchemaLoader.GenerateClassDefintion(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const ClassName: String): TTypeDefinition;
-begin
-  var ClassDefinition := TClassDefinition.Create(Module);
-  ClassDefinition.Name := ClassName;
-  Result := ClassDefinition;
+function TOpenAPI20SchemaLoader.GenerateClassDefinition(const Module: TTypeModuleDefinition; const ClassSchema: Schema; const ClassName: String): TTypeDefinition;
+var
+  ClassDefinition: TClassDefinition;
+  AnnonymusIndex: Integer;
 
-  for var Prop in OpenAPISchema.properties.schema do
+  procedure DefinePropety(const PropertyName: String; const PropertyType: TTypeDefinition);
   begin
     var NewProperty := TPropertyDefinition.Create;
     NewProperty.Optional := True;
-    NewProperty.Name := Prop.Key;
-    NewProperty.PropertyType := GenerateTypeDefinition(ClassDefinition, Prop.Value, NewProperty.Name);
+    NewProperty.Name := PropertyName;
+    NewProperty.PropertyType := PropertyType;
 
     if not Assigned(NewProperty.PropertyType) then
       raise Exception.Create('Property type not found!');
 
     ClassDefinition.Properties.Add(NewProperty);
+  end;
+
+  procedure DefineProperties(const Properties: Schema);
+  begin
+    for var Prop in Properties.properties.schema do
+      DefinePropety(Prop.Key, GenerateTypeDefinition(ClassDefinition, Prop.Value, Prop.Key));
+  end;
+
+  function GetPropertyName(const PropertySchema: Schema): String;
+  begin
+    if PropertySchema.IsRefStored then
+      Result := GetSchemaReferenceName(PropertySchema)
+    else
+    begin
+      Inc(AnnonymusIndex);
+
+      Result := Format('Anonymous%d', [AnnonymusIndex]);
+    end;
+  end;
+
+begin
+  AnnonymusIndex := 0;
+  ClassDefinition := TClassDefinition.Create(Module);
+  ClassDefinition.Name := ClassName;
+  Result := ClassDefinition;
+
+  DefineProperties(ClassSchema);
+
+  if ClassSchema.IsAllOfStored then
+    ClassDefinition.AddFlatAttribute;
+
+  for var AllOfSchema in ClassSchema.allOf do
+  begin
+    var PropertyName := GetPropertyName(AllOfSchema);
+
+    DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, AllOfSchema, PropertyName));
   end;
 
   Module.Classes.Add(ClassDefinition);
@@ -167,7 +202,7 @@ begin
     else if OpenAPISchema.IsTypeStored then
       case OpenAPISchema.&type.simpleTypes of
         simpleTypes.array: Result := CreateArrayDefinition(Module, TypeName, GenerateTypeDefinition(Module, OpenAPISchema.items.schema, TypeName + 'ArrayItem'));
-        simpleTypes.&object: Result := GenerateClassDefintion(Module, OpenAPISchema, TypeName);
+        simpleTypes.&object: Result := GenerateClassDefinition(Module, OpenAPISchema, TypeName);
         else Result := GenerateSimpleType(Module, TypeName, OpenAPISchema.&type.simpleTypes, nil, OpenAPISchema.enum);
       end
     else
