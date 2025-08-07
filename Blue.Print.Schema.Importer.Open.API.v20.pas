@@ -252,15 +252,27 @@ var
           Exit(ParameterInfo.Value);
     end;
 
+    function FindReturnType: TTypeDefinition;
+    begin
+      Result := nil;
+
+      for var Return in Operation.responses.responseValue do
+      begin
+        if Return.Value.response.IsSchemaStored then
+          Result := GenerateTypeDefinition(UnitDefinition, Return.Value.response.schema.schema, Method.Name + 'Return');
+
+        if Return.Key = '200' then
+          Break;
+      end;
+    end;
+
   begin
     Method := TTypeMethodDefinition.Create;
     Method.Name := Operation.operationId;
 
     AddRemoteName(Method, RemoteName);
 
-    for var Return in Operation.responses.responseValue.Values do
-      if Return.response.IsSchemaStored then
-        Method.Return := GenerateTypeDefinition(UnitDefinition, Return.response.schema.schema, Method.Name + 'Return');
+    Method.Return := FindReturnType;
 
     for var ParameterDefinitionItem in Operation.parameters do
     begin
