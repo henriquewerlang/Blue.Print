@@ -124,7 +124,10 @@ var
     begin
       Inc(AnnonymusIndex);
 
-      Result := Format('Anonymous%d', [AnnonymusIndex]);
+      Result := ClassName;
+
+      if AnnonymusIndex > 1 then
+        Result := Result + AnnonymusIndex.ToString;
     end;
   end;
 
