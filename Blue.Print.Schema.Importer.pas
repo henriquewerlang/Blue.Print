@@ -54,6 +54,15 @@ type
     property Name: String read FName write FName;
   end;
 
+  TAppendPropertyConfiguration = class
+  private
+    FName: String;
+    FType: String;
+  public
+    property Name: String read FName write FName;
+    property &Type: String read FType write FType;
+  end;
+
   TTypeDefinitionConfiguration = class
   private
     FName: String;
@@ -64,8 +73,10 @@ type
     FParentAttribute: String;
     FFlatEnumerator: String;
     FChangeName: String;
+    FAppendProperty: TArray<TAppendPropertyConfiguration>;
   public
     property Name: String read FName write FName;
+    property AppendProperty: TArray<TAppendPropertyConfiguration> read FAppendProperty write FAppendProperty;
     property Attribute: String read FAttribute write FAttribute;
     property ChangeName: String read FChangeName write FChangeName;
     property ChangeType: String read FChangeType write FChangeType;
@@ -822,6 +833,16 @@ begin
         var ClassDefinition := TypeDefinition.AsClassDefinition;
 
         ClassDefinition.InheritedFrom := ClassDefinition.AddDelayedType(TypeDefinitionConfig.Inheritance);
+      end;
+
+      if Assigned(TypeDefinitionConfig.AppendProperty) then
+      begin
+        var ClassDefinition := TypeDefinition.AsClassDefinition;
+
+        ClassDefinition.AddFlatAttribute;
+
+        for var AppendProperty in TypeDefinitionConfig.AppendProperty do
+          ClassDefinition.AddProperty(AppendProperty.Name).PropertyType := FindTypeInUnits(nil, AppendProperty.&Type);
       end;
     end;
   end;
