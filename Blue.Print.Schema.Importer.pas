@@ -74,11 +74,13 @@ type
     FFlatEnumerator: String;
     FChangeName: String;
     FAppendProperty: TArray<TAppendPropertyConfiguration>;
+    FChangeProperType: String;
   public
     property Name: String read FName write FName;
     property AppendProperty: TArray<TAppendPropertyConfiguration> read FAppendProperty write FAppendProperty;
     property Attribute: String read FAttribute write FAttribute;
     property ChangeName: String read FChangeName write FChangeName;
+    property ChangeProperType: String read FChangeProperType write FChangeProperType;
     property ChangeType: String read FChangeType write FChangeType;
     property FlatEnumerator: String read FFlatEnumerator write FFlatEnumerator;
     property Inheritance: String read FInheritance write FInheritance;
@@ -843,6 +845,17 @@ begin
 
         for var AppendProperty in TypeDefinitionConfig.AppendProperty do
           ClassDefinition.AddProperty(AppendProperty.Name).PropertyType := FindTypeInUnits(nil, AppendProperty.&Type);
+      end;
+
+      if not TypeDefinitionConfig.ChangeProperType.IsEmpty then
+      begin
+        var PropertyDefinition := TypeDefinitionConfig.ChangeProperType.Split(['.']);
+
+        for var PropertyToChange in TypeDefinition.AsClassDefinition.Properties do
+          if PropertyToChange.Name = PropertyDefinition[0] then
+          begin
+            PropertyToChange.PropertyType := FindType(PropertyDefinition[1], nil);
+          end;
       end;
     end;
   end;
