@@ -373,7 +373,7 @@ begin
 
   Service.TestProcedureWithParam('abc', 123);
 
-  Assert.AreEqual('/IServiceTest/TestProcedureWithParam/?Param1=abc&Param2=123', FCommunication.URL);
+  Assert.AreEqual('/IServiceTest/TestProcedureWithParam?Param1=abc&Param2=123', FCommunication.URL);
 end;
 
 procedure TRemoteServiceTest.TheRequestMethodMustBeTheSameOfTheAttributeOfTheMethod;
@@ -823,7 +823,7 @@ begin
 
   Service.TestProcedureWithParam('ããã', 123);
 
-  Assert.AreEqual('/IServiceTest/TestProcedureWithParam/?Param1=%C3%A3%C3%A3%C3%A3&Param2=123', FCommunication.URL);
+  Assert.AreEqual('/IServiceTest/TestProcedureWithParam?Param1=%C3%A3%C3%A3%C3%A3&Param2=123', FCommunication.URL);
 end;
 
 procedure TRemoteServiceTest.WhenTheParameterHasTheBodyAttributeMustSerializeTheValueBeforFillTheBodyValue;
@@ -905,7 +905,7 @@ begin
 
   Service.QueryParameterWithName('abc');
 
-  Assert.AreEqual('/IServiceTest/QueryParameterWithName/?My-Name=abc', FCommunication.URL);
+  Assert.AreEqual('/IServiceTest/QueryParameterWithName?My-Name=abc', FCommunication.URL);
 end;
 
 procedure TRemoteServiceTest.WhenTheRemoteNameAttributeInTheInterfaceIsEmptyCantPutTheBackslashInTheURL;

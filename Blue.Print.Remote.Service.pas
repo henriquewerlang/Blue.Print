@@ -264,7 +264,7 @@ begin
     end, TParameterType.Query, Args);
 
   if not QueryParams.IsEmpty then
-    QueryParams := '/?' + QueryParams;
+    QueryParams := '?' + QueryParams;
 
   Result := QueryParams;
 end;
