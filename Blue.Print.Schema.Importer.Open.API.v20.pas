@@ -100,12 +100,17 @@ var
   procedure DefinePropety(const PropertyName: String; const PropertyType: TTypeDefinition);
   begin
     var NewProperty := TPropertyDefinition.Create;
-    NewProperty.Optional := True;
     NewProperty.Name := PropertyName;
     NewProperty.PropertyType := PropertyType;
+    var Required := False;
 
     if not Assigned(NewProperty.PropertyType) then
       raise Exception.Create('Property type not found!');
+
+    for var RequiredName in ClassSchema.required do
+      Required := Required or (RequiredName = PropertyName);
+
+    NewProperty.Optional := not Required;
 
     ClassDefinition.Properties.Add(NewProperty);
   end;
@@ -113,7 +118,11 @@ var
   procedure DefineProperties(const Properties: Schema);
   begin
     for var Prop in Properties.properties.schema do
-      DefinePropety(Prop.Key, GenerateTypeDefinition(ClassDefinition, Prop.Value, Prop.Key));
+    begin
+      var PropertyName := Prop.Key;
+
+      DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, Prop.Value, PropertyName));
+    end;
   end;
 
   function GetPropertyName(const PropertySchema: Schema): String;
