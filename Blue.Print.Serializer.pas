@@ -64,6 +64,7 @@ type
     function DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue; virtual;
     function Serialize(const Value: TValue): String;
     function SerializeArray(const RttiType: TRttiType; const Value: TValue): TJSONArray;
+    function SerializeFlatObject(const RttiType: TRttiType; const Instance: TValue): TJSONValue;
     function SerializeType(const RttiType: TRttiType; const Value: TValue): TJSONValue; virtual;
 
     procedure DeserializeDynamicPropertyValue(const RttiType: TRttiInstanceType; const Instance: TObject; const PropertyName: String; const Value: TJSONValue);
@@ -392,6 +393,18 @@ begin
       JSONObject.AddPair(Field.Name, SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData)));
 end;
 
+function TBluePrintJSONSerializer.SerializeFlatObject(const RttiType: TRttiType; const Instance: TValue): TJSONValue;
+var
+  &Property: TRttiProperty;
+
+begin
+  Result := nil;
+
+  for &Property in GetPublishedProperties(RttiType) do
+    if System.TypInfo.IsStoredProp(Instance.AsObject, TRttiInstanceProperty(&Property).{$IFDEF DCC}PropInfo{$ELSE}PropertyTypeInfo{$ENDIF}) then
+      Exit(SerializeType(&Property.PropertyType, &Property.GetValue(Instance.AsObject)));
+end;
+
 procedure TBluePrintJSONSerializer.SerializeDynamicProperty(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
 begin
   raise Exception.Create('Not implemented yet!');
@@ -457,6 +470,8 @@ begin
     tkClass:
       if Value.IsEmpty then
         Result := {$IFDEF PAS2JS}NULL{$ELSE}TJSONNull.Create{$ENDIF}
+      else if RttiType.HasAttribute<FlatAttribute> then
+        Result := SerializeFlatObject(RttiType, Value)
       else
       begin
         Result := CreateJSONObject;

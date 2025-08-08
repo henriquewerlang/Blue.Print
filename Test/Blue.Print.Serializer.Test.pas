@@ -164,6 +164,8 @@ type
     procedure WhenDeserializeAFlatClassWithEnumeratorNameAndTheJSONDontHaveTheEnumeratorValueMustGetTheFirstPropertyFromTheFlatClassAndLoadTheClass;
     [Test]
     procedure WhenLoadAFlatEnumeratorClassWithAnotherEnumeratorClassMustLoadTheObjectAsExpected;
+    [Test]
+    procedure WhenSerializeAClassWithTheFlatAttributeMustLoadOnlyThePropertyFromThePropertiesFromTheFlatClass;
   end;
 
   [TestFixture]
@@ -1422,6 +1424,21 @@ begin
   Assert.AreEqual('{"Error":"","MyObject":null}', Value);
 
   MyObject.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenSerializeAClassWithTheFlatAttributeMustLoadOnlyThePropertyFromThePropertiesFromTheFlatClass;
+begin
+  var MyValue := TMyClassWithMoreThanOneObjectFlat.Create;
+  MyValue.MyObject := TMyObject.Create;
+  MyValue.MyObject.MyProp1 := 'abc';
+  MyValue.MyObject.MyProp2 := 123;
+  MyValue.MyObject.MyProp3 := 123.456;
+
+  FSerializer.Serialize(MyValue);
+
+  Assert.AreEqual('{"MyProp1":"abc","MyProp2":123,"MyProp3":123.456,"MyProp4":"MyValue"}', FSerializer.Serialize(MyValue));
+
+  MyValue.MyObject.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenSerializeAComplexTypeMustReturnApplicationJSONInTheContentType;
