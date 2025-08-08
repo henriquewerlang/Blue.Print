@@ -353,9 +353,9 @@ begin
     tkDynArray,
     tkRecord:
     begin
-      FContentType := CONTENTTYPE_APPLICATION_JSON;
       JSON := SerializeType(FContext.GetType(Value.TypeInfo), Value);
 
+      FContentType := CONTENTTYPE_APPLICATION_JSON;
       Result := {$IFDEF DCC}JSON.ToJSON{$ELSE}TJSJSON.stringify(JSON){$ENDIF};
 
 {$IFDEF DCC}

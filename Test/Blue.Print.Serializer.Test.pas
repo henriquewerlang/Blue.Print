@@ -1387,7 +1387,7 @@ begin
   Assert.IsNil(Value.MyProp.Separator1);
   Assert.IsNotNil(Value.MyProp.Separator2);
   Assert.IsNil(Value.MyProp.Separator3);
-//
+
   Value.MyProp.Separator2.Free;
 
   Value.MyProp.Free;
@@ -1426,7 +1426,7 @@ end;
 
 procedure TBluePrintJsonSerializerTest.WhenSerializeAComplexTypeMustReturnApplicationJSONInTheContentType;
 begin
-  var MyObject := TMyBooleanClass.Create;
+  var MyObject := TMyObject.Create;
 
   FSerializer.Serialize(MyObject);
 
