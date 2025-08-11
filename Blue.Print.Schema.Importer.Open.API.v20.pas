@@ -206,19 +206,23 @@ end;
 
 function TOpenAPI20SchemaLoader.GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const TypeName: String): TTypeDefinition;
 begin
-  Result := FImporter.FindType(TypeName, Module);
+  if OpenAPISchema.IsTypeStored and (OpenAPISchema.&type.simpleTypes = simpleTypes.array) then
+    Result := CreateArrayDefinition(Module, TypeName, GenerateTypeDefinition(Module, OpenAPISchema.items.schema, TypeName + 'ArrayItem'))
+  else
+  begin
+    Result := FImporter.FindType(TypeName, Module);
 
-  if not Assigned(Result) then
-    if not OpenAPISchema.ref.IsEmpty then
-      Result := Module.AddDelayedType(GetSchemaReferenceName(OpenAPISchema))
-    else if OpenAPISchema.IsTypeStored then
-      case OpenAPISchema.&type.simpleTypes of
-        simpleTypes.array: Result := CreateArrayDefinition(Module, TypeName, GenerateTypeDefinition(Module, OpenAPISchema.items.schema, TypeName + 'ArrayItem'));
-        simpleTypes.&object: Result := GenerateClassDefinition(Module, OpenAPISchema, TypeName);
-        else Result := GenerateSimpleType(Module, TypeName, OpenAPISchema.&type.simpleTypes, nil, OpenAPISchema.enum);
-      end
-    else
-      Abort;
+    if not Assigned(Result) then
+      if not OpenAPISchema.ref.IsEmpty then
+        Result := Module.AddDelayedType(GetSchemaReferenceName(OpenAPISchema))
+      else if OpenAPISchema.IsTypeStored then
+        case OpenAPISchema.&type.simpleTypes of
+          simpleTypes.&object: Result := GenerateClassDefinition(Module, OpenAPISchema, TypeName);
+          else Result := GenerateSimpleType(Module, TypeName, OpenAPISchema.&type.simpleTypes, nil, OpenAPISchema.enum);
+        end
+      else
+        Abort;
+  end;
 end;
 
 procedure TOpenAPI20SchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
