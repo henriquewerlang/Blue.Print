@@ -2228,10 +2228,8 @@ begin
 
   AddLine;
 
+  AddLine('{$SCOPEDENUMS ON}');
   AddLine('{$M+}');
-
-  if not Enumerations.IsEmpty then
-    AddLine('{$SCOPEDENUMS ON}');
 
   AddLine;
 
