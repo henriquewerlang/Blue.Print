@@ -145,6 +145,10 @@ type
     procedure WhenTheParameterHasTheVarDirectiveMustLoadTheHeaderValueInTheParamterValue;
     [Test]
     procedure WhenTheQueryParameterHasANameMustLoadThisNameInTheQueryList;
+    [Test]
+    procedure WhenTheMethodOfAServiceHasTheXMLAttributeMustCreateTheXMLSerializer;
+    [Test]
+    procedure WhenTheParameterHasTheXMLAttributeMustCreateTheXMLSerializer;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -257,6 +261,9 @@ type
     procedure GetHeaderValue(out [HeaderValue('My Header')] MyHeader: String);
     procedure GetHeaderValueFromVarParameter(var [HeaderValue('My Header')] MyHeader: String);
     procedure QueryParameterWithName(const [Query('My-Name')] Parameter: String);
+    [XML]
+    procedure XMLMethod(const Body: TMyObject);
+    procedure XMLBody(const [XML] Body: TMyObject);
   end;
 
   IInheritedServiceTest = interface(IServiceTest)
@@ -654,11 +661,12 @@ end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasntTheSOAPServiceAttributeTheDefaultSerializerMustBeTheJSONSerializer;
 begin
-  var RemoteClass := TRemoteService.Create(TypeInfo(IServiceNamed), nil);
+  var RemoteClass := TRemoteService.Create(TypeInfo(IServiceTest), nil);
+  RemoteClass.Communication := FCommunication;
+
+  RemoteClass.GetService<IServiceTest>(EmptyStr).ParameterInBody(EmptyStr);
 
   Assert.AreEqual(TBluePrintJsonSerializer, TObject(RemoteClass.Serializer).ClassType);
-
-  RemoteClass.Free;
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasTheCharSetAttributeMustLoadTheCharSetInTheContentTypeHeader;
@@ -719,10 +727,11 @@ end;
 procedure TRemoteServiceTest.WhenTheInterfaceHasTheSOAPServiceAttributeTheDefaultSerializerMustBeTheXMLSerializer;
 begin
   var RemoteClass := TRemoteService.Create(TypeInfo(ISOAPService), nil);
+  RemoteClass.Communication := FCommunication;
+
+  RemoteClass.GetService<ISOAPService>(EmptyStr).SoapBodyMethod(EmptyStr);
 
   Assert.AreEqual(TBluePrintXMLSerializer, TObject(RemoteClass.Serializer).ClassType);
-
-  RemoteClass.Free;
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceHasTheSoapServiceAttributeTheMethodNameMustBeLoadedInTheSoapActionHeader;
@@ -787,6 +796,20 @@ begin
   Service.SoapNamedMethod(EmptyStr);
 
   Assert.AreEqual('application/soap+xml;action=MyService/MyAction;charset=utf-8', FCommunication.Header['Content-Type']);
+end;
+
+procedure TRemoteServiceTest.WhenTheMethodOfAServiceHasTheXMLAttributeMustCreateTheXMLSerializer;
+begin
+  var MyObject := TMyObject.Create;
+  var RemoteClass := TRemoteService.Create(TypeInfo(IServiceTest), nil);
+  RemoteClass.Communication := FCommunication;
+  var Service := RemoteClass.GetService<IServiceTest>(EmptyStr);
+
+  Service.XMLMethod(MyObject);
+
+  Assert.AreEqual(TBluePrintXMLSerializer, TObject(RemoteClass.Serializer).ClassType);
+
+  MyObject.Free;
 end;
 
 procedure TRemoteServiceTest.WhenTheParamHasThePathAttributeTheValueOfTheParamMustBeLoadedInTheURLOfTheRequest;
@@ -867,6 +890,20 @@ begin
   Service.GetHeaderValueFromVarParameter(ValueHeader);
 
   Assert.AreEqual('Value', ValueHeader);
+end;
+
+procedure TRemoteServiceTest.WhenTheParameterHasTheXMLAttributeMustCreateTheXMLSerializer;
+begin
+  var MyObject := TMyObject.Create;
+  var RemoteClass := TRemoteService.Create(TypeInfo(IServiceTest), nil);
+  RemoteClass.Communication := FCommunication;
+  var Service := RemoteClass.GetService<IServiceTest>(EmptyStr);
+
+  Service.XMLBody(MyObject);
+
+  Assert.AreEqual(TBluePrintXMLSerializer, TObject(RemoteClass.Serializer).ClassType);
+
+  MyObject.Free;
 end;
 
 procedure TRemoteServiceTest.WhenTheProcedureHasTheContentTypeAttributeMustFillTheHeaderInTheRequest;

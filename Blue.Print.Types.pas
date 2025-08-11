@@ -139,6 +139,8 @@ type
     property Regex: String read FRegex write FRegex;
   end;
 
+  XMLAttribute = class(TCustomAttribute);
+
   XMLAttributeAttribute = class(TCustomAttribute)
   private
     FAttributeName: String;

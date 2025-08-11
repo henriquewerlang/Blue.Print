@@ -67,7 +67,7 @@ type
     function GetRequestMethod(const Method: TRttiMethod): TRequestMethod;
     function GetPathParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function GetQueryParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
-    function GetSerializer: IBluePrintSerializer;
+    function GetSerializer(const RttiObject: TRttiObject): IBluePrintSerializer;
     function GetSOAPActionName(const Method: TRttiMethod): String;
     function IsSOAPRequest: Boolean;
     function LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
@@ -96,7 +96,7 @@ type
     function GetService<T: IInvokable>(const URL: String): T;
 
     property Communication: IHTTPCommunication read FCommunication write FCommunication;
-    property Serializer: IBluePrintSerializer read GetSerializer write FSerializer;
+    property Serializer: IBluePrintSerializer read FSerializer write FSerializer;
   end;
 
 implementation
@@ -314,10 +314,10 @@ begin
     Result := TRequestMethod.Post;
 end;
 
-function TRemoteService.GetSerializer: IBluePrintSerializer;
+function TRemoteService.GetSerializer(const RttiObject: TRttiObject): IBluePrintSerializer;
 begin
   if not Assigned(FSerializer) then
-    if IsSOAPRequest then
+    if IsSOAPRequest or Assigned(GetAttributes<XMLAttribute>(RttiObject)) then
       FSerializer := TBluePrintXMLSerializer.Create
     else
       FSerializer := TBluePrintJSONSerializer.Create;
@@ -395,7 +395,7 @@ begin
       if IsSOAPRequest then
         Value := TValue.From(TSOAPEnvelop.Create(Parameter, Value));
 
-      Body := Serializer.Serialize(Value);
+      Body := GetSerializer(Parameter).Serialize(Value);
 
       LoadContentType(Method);
     end, TParameterType.Body, Args);
@@ -495,7 +495,7 @@ begin
       if Assigned(ContentStream) then
         ReturnEvent(TValue.From(ContentStream))
       else if not ContentString.IsEmpty then
-        ReturnEvent(Serializer.Deserialize(ContentString, Method.ReturnType.Handle))
+        ReturnEvent(GetSerializer(Method).Deserialize(ContentString, Method.ReturnType.Handle))
       else
         ReturnEvent(TValue.Empty);
     end, ErrorEvent);
