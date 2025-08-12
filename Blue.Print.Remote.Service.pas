@@ -67,7 +67,7 @@ type
     function GetRequestMethod(const Method: TRttiMethod): TRequestMethod;
     function GetPathParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function GetQueryParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
-    function GetSerializer(const RttiObject: TRttiObject): IBluePrintSerializer;
+    function GetSerializer(const XML: Boolean): IBluePrintSerializer;
     function GetSOAPActionName(const Method: TRttiMethod): String;
     function IsSOAPRequest: Boolean;
     function LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
@@ -314,10 +314,10 @@ begin
     Result := TRequestMethod.Post;
 end;
 
-function TRemoteService.GetSerializer(const RttiObject: TRttiObject): IBluePrintSerializer;
+function TRemoteService.GetSerializer(const XML: Boolean): IBluePrintSerializer;
 begin
   if not Assigned(FSerializer) then
-    if IsSOAPRequest or Assigned(GetAttributes<XMLAttribute>(RttiObject)) then
+    if XML then
       FSerializer := TBluePrintXMLSerializer.Create
     else
       FSerializer := TBluePrintJSONSerializer.Create;
@@ -391,11 +391,17 @@ begin
 
   LoadValuesFromParameters(Method,
     procedure(Parameter: TRttiParameter; ParameterAttribute: TParameterAttribute; Value: TValue)
+
+      function GetSerializerType: Boolean;
+      begin
+        Result := Assigned(GetAttributes<XMLAttribute>(Parameter.ParamType)) or Assigned(GetAttributes<XMLAttribute>(Parameter));
+      end;
+
     begin
       if IsSOAPRequest then
         Value := TValue.From(TSOAPEnvelop.Create(Parameter, Value));
 
-      Body := GetSerializer(Parameter).Serialize(Value);
+      Body := GetSerializer(GetSerializerType).Serialize(Value);
 
       LoadContentType(Method);
     end, TParameterType.Body, Args);
@@ -491,11 +497,17 @@ begin
   Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBody(Method, Args), AsyncRequest,
     Assigned(Method.ReturnType) and Method.ReturnType.IsInstance and (Method.ReturnType.AsInstance.MetaclassType = TStream),
     procedure(ContentString: String; ContentStream: TStream)
+
+      function GetSerializerType: Boolean;
+      begin
+        Result := Assigned(Method.ReturnType) and Assigned(GetAttributes<XMLAttribute>(Method.ReturnType)) or Assigned(GetAttributes<XMLAttribute>(Method));
+      end;
+
     begin
       if Assigned(ContentStream) then
         ReturnEvent(TValue.From(ContentStream))
       else if not ContentString.IsEmpty then
-        ReturnEvent(GetSerializer(Method).Deserialize(ContentString, Method.ReturnType.Handle))
+        ReturnEvent(GetSerializer(GetSerializerType).Deserialize(ContentString, Method.ReturnType.Handle))
       else
         ReturnEvent(TValue.Empty);
     end, ErrorEvent);

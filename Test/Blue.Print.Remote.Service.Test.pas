@@ -149,6 +149,10 @@ type
     procedure WhenTheMethodOfAServiceHasTheXMLAttributeMustCreateTheXMLSerializer;
     [Test]
     procedure WhenTheParameterHasTheXMLAttributeMustCreateTheXMLSerializer;
+    [Test]
+    procedure WhenTheParameterTypeHasTheXMLAttributeMustCreateTheXMLSerializer;
+    [Test]
+    procedure WhenTheReturnTypeOfAFunctionHasTheXMLAttributeMustCreateTheXMLSerializer;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -213,6 +217,14 @@ type
     property Value: String read FValue write FValue;
   end;
 
+  [XML]
+  TXMLObject = class
+  private
+    FValue: String;
+  published
+    property Value: String read FValue write FValue;
+  end;
+
   [RemoteName('Serviçe')]
   ILocaleCharsService = interface(IInvokable)
     ['{04EA0C43-7C73-4ED1-A2B6-8B1E64ABC149}']
@@ -264,6 +276,8 @@ type
     [XML]
     procedure XMLMethod(const Body: TMyObject);
     procedure XMLBody(const [XML] Body: TMyObject);
+    procedure XMLParameterType(const Body: TXMLObject);
+    function XMLReturnType: TXMLObject;
   end;
 
   IInheritedServiceTest = interface(IServiceTest)
@@ -906,6 +920,20 @@ begin
   MyObject.Free;
 end;
 
+procedure TRemoteServiceTest.WhenTheParameterTypeHasTheXMLAttributeMustCreateTheXMLSerializer;
+begin
+  var MyObject := TXMLObject.Create;
+  var RemoteClass := TRemoteService.Create(TypeInfo(IServiceTest), nil);
+  RemoteClass.Communication := FCommunication;
+  var Service := RemoteClass.GetService<IServiceTest>(EmptyStr);
+
+  Service.XMLParameterType(MyObject);
+
+  Assert.AreEqual(TBluePrintXMLSerializer, TObject(RemoteClass.Serializer).ClassType);
+
+  MyObject.Free;
+end;
+
 procedure TRemoteServiceTest.WhenTheProcedureHasTheContentTypeAttributeMustFillTheHeaderInTheRequest;
 begin
   var Service := GetRemoteService<IServiceTest>(EmptyStr);
@@ -981,6 +1009,20 @@ begin
   Service.ParameterMyObject(MyObject);
 
   Assert.AreEqual('serializer/content;charset=utf-8', FCommunication.Header['Content-Type']);
+
+  MyObject.Free;
+end;
+
+procedure TRemoteServiceTest.WhenTheReturnTypeOfAFunctionHasTheXMLAttributeMustCreateTheXMLSerializer;
+begin
+  FCommunication.ResponseValueString := '<TXMLObject/>';
+  var RemoteClass := TRemoteService.Create(TypeInfo(IServiceTest), nil);
+  RemoteClass.Communication := FCommunication;
+  var Service := RemoteClass.GetService<IServiceTest>(EmptyStr);
+
+  var MyObject := Service.XMLReturnType;
+
+  Assert.AreEqual(TBluePrintXMLSerializer, TObject(RemoteClass.Serializer).ClassType);
 
   MyObject.Free;
 end;

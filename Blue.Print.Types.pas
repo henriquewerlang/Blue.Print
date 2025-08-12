@@ -256,9 +256,7 @@ type
     property FileName: String read FFileName;
   end;
 
-  SOAPServiceAttribute = class(ContentTypeAttribute)
-  public
-    constructor Create;
+  SOAPServiceAttribute = class(XMLAttribute)
   end;
 
   SOAPActionAttribute = class(TCustomAttribute)
@@ -555,13 +553,6 @@ begin
   inherited Create;
 
   FActionName := ActionName;
-end;
-
-{ SOAPServiceAttribute }
-
-constructor SOAPServiceAttribute.Create;
-begin
-  inherited Create(CONTENTTYPE_APPLICATION_SOAP_XML);
 end;
 
 { TSOAPEnvelop }
