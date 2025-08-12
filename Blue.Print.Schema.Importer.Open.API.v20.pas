@@ -158,6 +158,14 @@ begin
     DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, AllOfSchema, PropertyName));
   end;
 
+  if ClassSchema.IsXmlStored then
+  begin
+    ClassDefinition.AddAtribute('XML');
+
+    if ClassSchema.xml.name <> ClassName then
+      ClassDefinition.AddAtribute('DocumentName(''%s'')', [ClassSchema.xml.name]);
+  end;
+
   Module.Classes.Add(ClassDefinition);
 end;
 

@@ -250,7 +250,8 @@ type
 
     function AddProperty(const Name: String): TPropertyDefinition;
 
-    procedure AddAtribute(const Value: String);
+    procedure AddAtribute(const Value: String); overload;
+    procedure AddAtribute(const Value: String; const Values: array of const); overload;
     procedure AddFlatAttribute; overload;
     procedure AddFlatAttribute(const EnumeratorPropertyName: String); overload;
 
@@ -2344,6 +2345,11 @@ end;
 procedure TClassDefinition.AddFlatAttribute;
 begin
   AddFlatAttribute(EmptyStr);
+end;
+
+procedure TClassDefinition.AddAtribute(const Value: String; const Values: array of const);
+begin
+  AddAtribute(Format(Value, Values));
 end;
 
 procedure TClassDefinition.AddFlatAttribute(const EnumeratorPropertyName: String);
