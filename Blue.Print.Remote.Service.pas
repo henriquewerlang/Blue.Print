@@ -573,10 +573,12 @@ var
 
   procedure CheckStatusCode(const StatusCode: Integer);
   begin
-    if (StatusCode < 200) or (StatusCode > 299) then
-      ErrorEvent(EHTTPStatusError.Create(StatusCode, ContentString))
-    else
-      CompleteEvent(ContentString, ContentStream);
+    case StatusCode of
+      0..299: CompleteEvent(ContentString, ContentStream);
+      400: ErrorEvent(EHTTPErrorBadRequest.Create(ContentString));
+      404: ErrorEvent(EHTTPErrorNotFound.Create);
+      else ErrorEvent(EHTTPStatusError.Create(StatusCode, ContentString))
+    end;
   end;
 
   procedure LoadHeaders;
