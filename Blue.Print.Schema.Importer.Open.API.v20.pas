@@ -142,8 +142,7 @@ var
 
 begin
   AnnonymusIndex := 0;
-  ClassDefinition := TClassDefinition.Create(Module);
-  ClassDefinition.Name := ClassName;
+  ClassDefinition := FImporter.CreateClassDefinition(Module, ClassName);
   Result := ClassDefinition;
 
   DefineProperties(ClassSchema);
@@ -165,8 +164,6 @@ begin
     if ClassSchema.xml.name <> ClassName then
       ClassDefinition.AddAtribute('DocumentName(''%s'')', [ClassSchema.xml.name]);
   end;
-
-  Module.Classes.Add(ClassDefinition);
 end;
 
 function TOpenAPI20SchemaLoader.GenerateSimpleType(const Module: TTypeModuleDefinition; const TypeName: String; const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems; const Enumeration: TArray<TValue>): TTypeDefinition;
