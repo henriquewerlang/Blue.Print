@@ -741,7 +741,7 @@ begin
 
   for var ClassDefinition in Module.Classes do
   begin
-    Result := ClassDefinition.Name = TypeName;
+    Result := AnsiSameText(ClassDefinition.Name, TypeName);
 
     if Result then
     begin
@@ -753,7 +753,7 @@ begin
 
   for var Enumerator in Module.Enumerations do
   begin
-    Result := Enumerator.Name = TypeName;
+    Result := AnsiSameText(Enumerator.Name, TypeName);
 
     if Result then
     begin
@@ -766,7 +766,7 @@ begin
   if Module.IsUnitDefinition then
     for var TypeAlias in Module.AsUnitDefinition.TypeAlias do
     begin
-      Result := TypeAlias.Name = TypeName;
+      Result := AnsiSameText(TypeAlias.Name, TypeName);
 
       if Result then
       begin
@@ -1155,26 +1155,31 @@ function TXSDSchemaLoader.GenerateClassDefinition(const ParentModule: TTypeModul
 begin
   var ClassName := ComplexType.Name;
 
-  var ClassDefinition := FImporter.CreateClassDefinition(ParentModule, ClassName);
-  Result := ClassDefinition;
+  Result := FindType(ClassName, ParentModule);
 
-  ClassDefinition.AddNamespaceAttribute(VarToStr(ComplexType.SchemaDef.TargetNamespace));
-
-  GenerateProperties(ClassDefinition, ComplexType.ElementDefList);
-
-  for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
+  if not Assigned(Result) then
   begin
-    var Attribute := ComplexType.AttributeDefs[A];
-    var &Property := AddProperty(ClassDefinition, Attribute.Name, Attribute.DataType, IsReferenceType(Attribute));
+    var ClassDefinition := FImporter.CreateClassDefinition(ParentModule, ClassName);
+    Result := ClassDefinition;
 
-    AddPropertyAttribute(&Property, Attribute);
-  end;
+    ClassDefinition.AddNamespaceAttribute(VarToStr(ComplexType.SchemaDef.TargetNamespace));
 
-  if Assigned(ComplexType.BaseType) then
-  begin
-    var &Property := AddProperty(ClassDefinition, 'Value', ComplexType.BaseType, False);
+    GenerateProperties(ClassDefinition, ComplexType.ElementDefList);
 
-    &Property.AddXMLValueAttribute;
+    for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
+    begin
+      var Attribute := ComplexType.AttributeDefs[A];
+      var &Property := AddProperty(ClassDefinition, Attribute.Name, Attribute.DataType, IsReferenceType(Attribute));
+
+      AddPropertyAttribute(&Property, Attribute);
+    end;
+
+    if Assigned(ComplexType.BaseType) then
+    begin
+      var &Property := AddProperty(ClassDefinition, 'Value', ComplexType.BaseType, False);
+
+      &Property.AddXMLValueAttribute;
+    end;
   end;
 end;
 

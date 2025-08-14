@@ -141,28 +141,33 @@ var
   end;
 
 begin
-  AnnonymusIndex := 0;
-  ClassDefinition := FImporter.CreateClassDefinition(Module, ClassName);
-  Result := ClassDefinition;
+  Result := FImporter.FindType(ClassName, Module);
 
-  DefineProperties(ClassSchema);
-
-  if ClassSchema.IsAllOfStored then
-    ClassDefinition.AddFlatAttribute;
-
-  for var AllOfSchema in ClassSchema.allOf do
+  if not Assigned(Result) then
   begin
-    var PropertyName := GetPropertyName(AllOfSchema);
+    AnnonymusIndex := 0;
+    ClassDefinition := FImporter.CreateClassDefinition(Module, ClassName);
+    Result := ClassDefinition;
 
-    DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, AllOfSchema, PropertyName));
-  end;
+    DefineProperties(ClassSchema);
 
-  if ClassSchema.IsXmlStored then
-  begin
-    ClassDefinition.AddAtribute('XML');
+    if ClassSchema.IsAllOfStored then
+      ClassDefinition.AddFlatAttribute;
 
-    if ClassSchema.xml.name <> ClassName then
-      ClassDefinition.AddAtribute('DocumentName(''%s'')', [ClassSchema.xml.name]);
+    for var AllOfSchema in ClassSchema.allOf do
+    begin
+      var PropertyName := GetPropertyName(AllOfSchema);
+
+      DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, AllOfSchema, PropertyName));
+    end;
+
+    if ClassSchema.IsXmlStored then
+    begin
+      ClassDefinition.AddAtribute('XML');
+
+      if ClassSchema.xml.name <> ClassName then
+        ClassDefinition.AddAtribute('DocumentName(''%s'')', [ClassSchema.xml.name]);
+    end;
   end;
 end;
 
