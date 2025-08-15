@@ -170,6 +170,7 @@ type
     FReturnHeaders: TDictionary<String, String>;
 
     function GetHeader(const HeaderName: String): String;
+    function GetResponseHeader(const HeaderName: String): String;
 
     procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
     procedure SetCertificate(const FileName, Password: String); overload;
@@ -1067,6 +1068,12 @@ begin
   FHeaders.TryGetValue(HeaderName, Result);
 end;
 
+function TCommunicationMock.GetResponseHeader(const HeaderName: String): String;
+begin
+  if not FReturnHeaders.TryGetValue(HeaderName, Result) then
+    Result := EmptyStr;
+end;
+
 procedure TCommunicationMock.SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
 begin
   FRequestMethod := RequestMethod;
@@ -1081,9 +1088,6 @@ begin
     FBody := TStringStream.Create(Body);
 
   CompleteEvent(ResponseValueString, Stream);
-
-  for var HeaderValue in FReturnHeaders do
-    Header[HeaderValue.Key] := HeaderValue.Value;
 end;
 
 procedure TCommunicationMock.SetCertificate(const Value: TStream; const Password: String);

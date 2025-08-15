@@ -20,14 +20,15 @@ type
 
   IHTTPCommunication = interface
     ['{8E39F66A-C72B-4314-80B1-D24F1AF4F247}']
-    function GetHeader(const HeaderName: String): String;
+    function GetResponseHeader(const HeaderName: String): String;
 
     procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
     procedure SetCertificate(const FileName, Password: String); overload;
     procedure SetCertificate(const Value: TStream; const Password: String); overload;
     procedure SetHeader(const HeaderName, Value: String);
 
-    property Header[const HeaderName: String]: String read GetHeader write SetHeader;
+    property Header[const HeaderName: String]: String write SetHeader;
+    property ResponseHeader[const HeaderName: String]: String read GetResponseHeader;
   end;
 
   THTTPCommunication = class(TInterfacedObject, IHTTPCommunication)
@@ -36,8 +37,9 @@ type
     FCertificatePassword: String;
     FCertificateValue: TStream;
     FHeaders: TStringList;
+    FResponseHeaders: TStringList;
 
-    function GetHeader(const HeaderName: String): String;
+    function GetResponseHeader(const HeaderName: String): String;
 
     procedure SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
     procedure SetCertificate(const FileName, Password: String); overload;
@@ -518,7 +520,7 @@ begin
       HeaderValue: HeaderValueAttribute absolute ParameterAttribute;
 
     begin
-      Args[ValueIndex] := TValue.From(Communication.Header[HeaderValue.Name]);
+      Args[ValueIndex] := TValue.From(Communication.ResponseHeader[HeaderValue.Name]);
     end,
     function (Parameter: TRttiParameter): Boolean
     begin
@@ -548,18 +550,21 @@ begin
   inherited;
 
   FHeaders := TStringList.Create;
+  FResponseHeaders := TStringList.Create;
 end;
 
 destructor THTTPCommunication.Destroy;
 begin
   FHeaders.Free;
 
+  FResponseHeaders.Free;
+
   inherited;
 end;
 
-function THTTPCommunication.GetHeader(const HeaderName: String): String;
+function THTTPCommunication.GetResponseHeader(const HeaderName: String): String;
 begin
-  Result := FHeaders.Values[HeaderName];
+  Result := FResponseHeaders.Values[HeaderName];
 end;
 
 procedure THTTPCommunication.SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
@@ -649,7 +654,7 @@ begin
       ContentString := Response.ContentAsString;
 
     for var HeaderValue in Response.Headers do
-      SetHeader(HeaderValue.Name, HeaderValue.Value);
+      FResponseHeaders.Values[HeaderValue.Name] := HeaderValue.Value;
 
     CheckStatusCode(Response.StatusCode);
   finally
