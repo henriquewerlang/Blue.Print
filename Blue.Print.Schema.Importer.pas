@@ -2234,8 +2234,8 @@ begin
 
   AddLine;
 
-  AddLine('{$SCOPEDENUMS ON}');
   AddLine('{$M+}');
+  AddLine('{$SCOPEDENUMS ON}');
 
   AddLine;
 
