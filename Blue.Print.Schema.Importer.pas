@@ -3090,6 +3090,8 @@ end;
 
 procedure TWSDLSchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
 var
+  Operation: IBindingOperation;
+  Port: IPort;
   ServiceMethod: TTypeMethodDefinition;
   SchemaLoader: TXSDSchemaLoader;
   WSDLDocument: IWSDLDocument;
@@ -3143,8 +3145,10 @@ var
     end;
   end;
 
-  function FindType(const Name: String): IXMLTypeDef;
+  function FindType(Name: String): IXMLTypeDef;
   begin
+    Name := ExtractLocalName(Name);
+
     for var A := 0 to Pred(WSDLDocument.Definition.Types.SchemaDefs.Count) do
     begin
       var Schema := WSDLDocument.Definition.Types.SchemaDefs[A];
@@ -3153,7 +3157,7 @@ var
       begin
         var ComplexType := Schema.ComplexTypes[B];
 
-        if CompareNames(ComplexType.Name, Name) then
+        if CompareNames(ExtractLocalName(ComplexType.Name), Name) then
           Exit(ComplexType);
       end;
 
@@ -3161,14 +3165,11 @@ var
       begin
         var SimpleType := Schema.SimpleTypes[B];
 
-        if CompareNames(SimpleType.Name, Name) then
+        if CompareNames(ExtractLocalName(SimpleType.Name), Name) then
           Exit(SimpleType);
       end;
     end;
-  end;
 
-  function FindTypeElement(const Name: String): IXMLTypeDef;
-  begin
     for var A := 0 to Pred(WSDLDocument.Definition.Types.SchemaDefs.Count) do
     begin
       var Schema := WSDLDocument.Definition.Types.SchemaDefs[A];
@@ -3183,19 +3184,24 @@ var
     end;
   end;
 
-  function GetPartType(const Part: IPart): IXMLTypeDef;
+  function GetPartType(const Part: IPart): String;
   begin
     if Part.Element.IsEmpty then
-      Result := FindType(Part.Type_)
+      Result := Part.Type_
     else
-      Result := FindTypeElement(Part.Element);
+      Result := Part.Element;
   end;
 
   function CheckPartType(const Part: IPart): TTypeDefinition;
   begin
-    var ParameterType := GetPartType(Part);
+    var TypeName := GetPartType(Part);
 
-    Result := SchemaLoader.CheckUnitTypeDefinition(ParameterType, UnitDefinition);
+    var ParameterType := FindType(TypeName);
+
+    if Assigned(ParameterType) then
+      Result := SchemaLoader.CheckUnitTypeDefinition(ParameterType, UnitDefinition)
+    else
+      Result := SchemaLoader.FindType(TypeName, UnitDefinition);
   end;
 
   procedure CreateParameters(const Parameter: IParam);
@@ -3214,7 +3220,6 @@ var
         var MethodParameter := ServiceMethod.AddParameter;
         MethodParameter.Name := Part.Name;
         MethodParameter.ParameterType := CheckPartType(Part);
-        var PartType := GetPartType(Part);
 
         MethodParameter.AddAtribute('Body');
 
@@ -3239,11 +3244,40 @@ var
     end;
   end;
 
+  function FindSOAPNode(const ParentNode: IXMLNode; const Name: String): IXMLNode;
+  begin
+    Result := ParentNode.ChildNodes.FindNode(Name, Soap12ns);
+
+    if not Assigned(Result) then
+      Result := ParentNode.ChildNodes.FindNode(Name, Soapns);
+  end;
+
+  function FindSOAPOperation: IXMLNode;
+  begin
+    Result := FindSOAPNode(Operation, SOperation);
+  end;
+
+  function FindServiceAddress: IXMLNode;
+  begin
+    Result := FindSOAPNode(Port, SAddress);
+  end;
+
 begin
   SchemaLoader := TXSDSchemaLoader.Create(FImporter);
   WSDLDocument := NewWSDLDoc;
 
   WSDLDocument.LoadFromXML(FImporter.LoadFileFromConfiguration(UnitFileConfiguration));
+
+  for var A := 0 to Pred(WSDLDocument.Definition.Types.SchemaDefs.Count) do
+  begin
+    var Schema := WSDLDocument.Definition.Types.SchemaDefs[A];
+
+    for var B := 0 to Pred(Schema.ComplexTypes.Count) do
+      SchemaLoader.CheckUnitTypeDefinition(Schema.ComplexTypes[B], UnitDefinition);
+
+    for var B := 0 to Pred(Schema.SimpleTypes.Count) do
+      SchemaLoader.CheckUnitTypeDefinition(Schema.SimpleTypes[B], UnitDefinition);
+  end;
 
   for var A := 0 to Pred(WSDLDocument.Definition.Services.Count) do
   begin
@@ -3254,25 +3288,25 @@ begin
 
     for var B := 0 to Pred(Service.Ports.Count) do
     begin
-      var Port := Service.Ports[B];
+      Port := Service.Ports[B];
 
       var Binding := FindBinding(Port.Binding);
       var PortType := FindPortType(Binding.Type_);
 
-      var ServiceAddress := Port.ChildNodes.FindNode(SAddress, Soap12ns);
+      var ServiceAddress := FindServiceAddress;
 
       if Assigned(ServiceAddress) then
         ServiceInterface.DefaultURL := ServiceAddress.Attributes[SLocation];
 
       for var C := 0 to Pred(Binding.BindingOperations.Count) do
       begin
-        var Operation := Binding.BindingOperations[C];
+        Operation := Binding.BindingOperations[C];
         var PortTypeOperation := FindOperationInPortType(Operation.Name, PortType);
         ServiceMethod := TTypeMethodDefinition.Create;
         ServiceMethod.Name := Operation.Name;
         ServiceMethod.Return := LoadReturnType(PortTypeOperation.Output);
 
-        var SOAPOperation := Operation.ChildNodes.FindNode(SOperation, Soap12ns);
+        var SOAPOperation := FindSOAPOperation;
         var SOAPAction := SOAPOperation.AttributeNodes.FindNode(SSoapAction);
 
         ServiceMethod.AddAtribute('SOAPAction(''%s'')', [SOAPAction.Text]);
