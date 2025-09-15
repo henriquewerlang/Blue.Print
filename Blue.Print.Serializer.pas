@@ -1344,7 +1344,12 @@ begin
       begin
         var SOAPBody := Value.AsType<TSOAPBody>;
 
-        SerializeType(FContext.GetType(SOAPBody.Body.TypeInfo), SOAPBody.Body, LoadAttributes(SOAPBody.Parameter, Node.AddChild(SOAPBody.Parameter.Name, GetNamespaceValue(SOAPBody.Parameter, Namespace))), Namespace, ValueFormat);
+        for var Part in SOAPBody.Parts do
+        begin
+          var Parameter := Part.Key;
+
+          SerializeType(FContext.GetType(Parameter.ParamType.Handle), Part.Value, LoadAttributes(Parameter, Node.AddChild(Parameter.Name, GetNamespaceValue(Parameter, Namespace))), Namespace, ValueFormat);
+        end;
       end
       else if Value.TypeInfo = TypeInfo(TValue) then
         SerializeType(FContext.GetType(Value.AsType<TValue>.TypeInfo), Value.AsType<TValue>, Node, Namespace, ValueFormat)

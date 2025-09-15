@@ -153,6 +153,8 @@ type
     procedure WhenTheParameterTypeHasTheXMLAttributeMustCreateTheXMLSerializer;
     [Test]
     procedure WhenTheReturnTypeOfAFunctionHasTheXMLAttributeMustCreateTheXMLSerializer;
+    [Test]
+    procedure WhenTheSOAPRequestHasMoreThanOneParameterMustLoadAllValuesInTheSOAPEnvelop;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -321,14 +323,15 @@ type
     procedure Execute(const [Body] Body: String);
   end;
 
-  [SoapService]
+  [SOAPService]
   ISOAPService = interface(IInvokable)
     ['{29F73745-0A70-4C1A-9617-45A8711D7173}']
     procedure SoapBodyMethod(const [Body] Body: String);
-    [SoapAction('MyService/SoapMethod')]
+    [SOAPAction('MyService/SoapMethod')]
     procedure SoapMethod(const [Body] Body: String);
-    [SoapAction('MyService/MyAction')]
+    [SOAPAction('MyService/MyAction')]
     procedure SoapNamedMethod(const [Body] Body: String);
+    procedure MoreThanOneParameter(const [Body] Value1, [Body] Value2, [Body] Value3: String);
   end;
 
 implementation
@@ -1026,6 +1029,17 @@ begin
   Assert.AreEqual(TBluePrintXMLSerializer, TObject(RemoteClass.Serializer).ClassType);
 
   MyObject.Free;
+end;
+
+procedure TRemoteServiceTest.WhenTheSOAPRequestHasMoreThanOneParameterMustLoadAllValuesInTheSOAPEnvelop;
+begin
+  var Service := GetRemoteService<ISOAPService>('Host');
+
+  Service.MoreThanOneParameter('1', '2', '3');
+
+  var Envelop := FSerializer.SerializeValue.AsType<TSOAPEnvelop>;
+
+  Assert.AreEqual(3, Length(Envelop.SOAPBody.Parts));
 end;
 
 { TCommunicationMock }

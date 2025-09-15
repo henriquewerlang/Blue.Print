@@ -350,7 +350,7 @@ end;
 
 function TRemoteService.IsSOAPRequest: Boolean;
 begin
-  Result := Assigned(GetAttribute<SoapServiceAttribute>(FInterfaceType));
+  Result := Assigned(GetAttribute<SOAPServiceAttribute>(FInterfaceType));
 end;
 
 procedure TRemoteService.LoadContentType(const Method: TRttiMethod);
@@ -388,25 +388,44 @@ function TRemoteService.LoadRequestBody(const Method: TRttiMethod; const Args: T
 var
   Body: String;
 
-begin
-  Body := EmptyStr;
+  procedure LoadSOAPRequest;
+  var
+    SOAPEnvelop: TSOAPEnvelop;
 
-  LoadValuesFromParameters(Method,
-    procedure(Parameter: TRttiParameter; ParameterAttribute: TParameterAttribute; Value: TValue)
-
-      function GetSerializerType: Boolean;
+  begin
+    LoadValuesFromParameters(Method,
+      procedure(Parameter: TRttiParameter; ParameterAttribute: TParameterAttribute; Value: TValue)
       begin
-        Result := Assigned(GetAttributes<XMLAttribute>(Parameter.ParamType)) or Assigned(GetAttributes<XMLAttribute>(Parameter));
-      end;
+        SOAPEnvelop.AddPart(Parameter, Value);
+      end, TParameterType.Body, Args);
 
-    begin
-      if IsSOAPRequest then
-        Value := TValue.From(TSOAPEnvelop.Create(Parameter, Value));
+    LoadContentType(Method);
 
-      Body := GetSerializer(GetSerializerType).Serialize(Value);
+    Body := GetSerializer(True).Serialize(TValue.From(SOAPEnvelop));
+  end;
 
-      LoadContentType(Method);
-    end, TParameterType.Body, Args);
+  procedure LoadRESTRequest;
+  begin
+    LoadValuesFromParameters(Method,
+      procedure(Parameter: TRttiParameter; ParameterAttribute: TParameterAttribute; Value: TValue)
+
+        function GetSerializerType: Boolean;
+        begin
+          Result := Assigned(GetAttributes<XMLAttribute>(Parameter.ParamType)) or Assigned(GetAttributes<XMLAttribute>(Parameter));
+        end;
+
+      begin
+        Body := GetSerializer(GetSerializerType).Serialize(Value);
+
+        LoadContentType(Method);
+      end, TParameterType.Body, Args);
+  end;
+
+begin
+  if IsSOAPRequest then
+    LoadSOAPRequest
+  else
+    LoadRESTRequest;
 
   Result := Body;
 end;

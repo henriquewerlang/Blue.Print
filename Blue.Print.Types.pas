@@ -327,8 +327,7 @@ type
 
   TSOAPBody = record
   public
-    Body: TValue;
-    Parameter: TRttiParameter;
+    Parts: TArray<TPair<TRttiParameter, TValue>>;
   end;
 
   [DocumentName(SOAP_ENVELOP_NODENAME)]
@@ -340,7 +339,7 @@ type
     [NodeName(SOAP_BODY_NODENAME)]
     SOAPBody: TSOAPBody;
 
-    constructor Create(const Parameter: TRttiParameter; const Body: TValue);
+    procedure AddPart(const Parameter: TRttiParameter; const Value: TValue);
   end;
 
   TDynamicProperty<V> = class(TList<TPair<String, V>>)
@@ -553,14 +552,6 @@ begin
   inherited Create;
 
   FActionName := ActionName;
-end;
-
-{ TSOAPEnvelop }
-
-constructor TSOAPEnvelop.Create(const Parameter: TRttiParameter; const Body: TValue);
-begin
-  SOAPBody.Body := Body;
-  SOAPBody.Parameter := Parameter;
 end;
 
 { XMLAttributeAttribute }
@@ -829,6 +820,13 @@ begin
   inherited Create(TParameterType.Header);
 
   FName := HeaderName;
+end;
+
+{ TSOAPEnvelop }
+
+procedure TSOAPEnvelop.AddPart(const Parameter: TRttiParameter; const Value: TValue);
+begin
+  SOAPBody.Parts := SOAPBody.Parts + [TPair<TRttiParameter, TValue>.Create(Parameter, Value)];
 end;
 
 end.
