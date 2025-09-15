@@ -3092,8 +3092,10 @@ procedure TWSDLSchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUn
 var
   Operation: IBindingOperation;
   Port: IPort;
+  ServiceInterface: TTypeInterfaceDefinition;
   ServiceMethod: TTypeMethodDefinition;
   SchemaLoader: TXSDSchemaLoader;
+  SOAPNamespace: String;
   WSDLDocument: IWSDLDocument;
 
   function CompareNames(const Name1, Name2: String): Boolean;
@@ -3246,10 +3248,7 @@ var
 
   function FindSOAPNode(const ParentNode: IXMLNode; const Name: String): IXMLNode;
   begin
-    Result := ParentNode.ChildNodes.FindNode(Name, Soap12ns);
-
-    if not Assigned(Result) then
-      Result := ParentNode.ChildNodes.FindNode(Name, Soapns);
+    Result := ParentNode.ChildNodes.FindNode(Name, SOAPNamespace);
   end;
 
   function FindSOAPOperation: IXMLNode;
@@ -3268,6 +3267,11 @@ begin
 
   WSDLDocument.LoadFromXML(FImporter.LoadFileFromConfiguration(UnitFileConfiguration));
 
+  if Assigned(WSDLDocument.Definition.FindNamespaceDecl(Soap12ns)) then
+    SOAPNamespace := Soap12ns
+  else
+    SOAPNamespace := Soapns;
+
   for var A := 0 to Pred(WSDLDocument.Definition.Types.SchemaDefs.Count) do
   begin
     var Schema := WSDLDocument.Definition.Types.SchemaDefs[A];
@@ -3282,7 +3286,7 @@ begin
   for var A := 0 to Pred(WSDLDocument.Definition.Services.Count) do
   begin
     var Service := WSDLDocument.Definition.Services[A];
-    var ServiceInterface := FImporter.CreateInterfaceDefinition(UnitDefinition, Service.Name);
+    ServiceInterface := FImporter.CreateInterfaceDefinition(UnitDefinition, Service.Name);
 
     ServiceInterface.AddAtribute('SOAPService');
 
@@ -3302,18 +3306,24 @@ begin
       begin
         Operation := Binding.BindingOperations[C];
         var PortTypeOperation := FindOperationInPortType(Operation.Name, PortType);
-        ServiceMethod := TTypeMethodDefinition.Create;
-        ServiceMethod.Name := Operation.Name;
-        ServiceMethod.Return := LoadReturnType(PortTypeOperation.Output);
-
         var SOAPOperation := FindSOAPOperation;
-        var SOAPAction := SOAPOperation.AttributeNodes.FindNode(SSoapAction);
 
-        ServiceMethod.AddAtribute('SOAPAction(''%s'')', [SOAPAction.Text]);
+        if Assigned(SOAPOperation) then
+        begin
+          ServiceMethod := TTypeMethodDefinition.Create;
+          ServiceMethod.Name := Operation.Name;
+          ServiceMethod.Return := LoadReturnType(PortTypeOperation.Output);
+          var SOAPAction := SOAPOperation.AttributeNodes.FindNode(SSoapAction);
 
-        ServiceInterface.Methods.Add(ServiceMethod);
+          if SOAPNamespace = Soapns then
+            ServiceMethod.AddAtribute('Header(''SOAPAction'', ''%s'')', [SOAPAction.Text])
+          else
+            ServiceMethod.AddAtribute('SOAPAction(''%s'')', [SOAPAction.Text]);
 
-        CreateParameters(PortTypeOperation.Input);
+          ServiceInterface.Methods.Add(ServiceMethod);
+
+          CreateParameters(PortTypeOperation.Input);
+        end;
       end;
     end;
   end;
