@@ -155,6 +155,10 @@ type
     procedure WhenTheReturnTypeOfAFunctionHasTheXMLAttributeMustCreateTheXMLSerializer;
     [Test]
     procedure WhenTheSOAPRequestHasMoreThanOneParameterMustLoadAllValuesInTheSOAPEnvelop;
+    [Test]
+    procedure IfTheProcedureDontHaveTheSOAPActionAttributeCantLoadTheActionInTheContentType;
+    [Test]
+    procedure IfTheProcedureDontHaveTheSOAPActionMustLoadTheContentTypeWithTextXML;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -358,6 +362,24 @@ end;
 function TRemoteServiceTest.GetRemoteService<T>(const URL: String): T;
 begin
   Result := CreateRemoteService<T>.GetService<T>(URL);
+end;
+
+procedure TRemoteServiceTest.IfTheProcedureDontHaveTheSOAPActionAttributeCantLoadTheActionInTheContentType;
+begin
+  var Service := GetRemoteService<ISOAPService>(EmptyStr);
+
+  Service.MoreThanOneParameter(EmptyStr, EmptyStr, EmptyStr);
+
+  Assert.IsFalse(FCommunication.Header['Content-Type'].Contains('action'));
+end;
+
+procedure TRemoteServiceTest.IfTheProcedureDontHaveTheSOAPActionMustLoadTheContentTypeWithTextXML;
+begin
+  var Service := GetRemoteService<ISOAPService>(EmptyStr);
+
+  Service.MoreThanOneParameter(EmptyStr, EmptyStr, EmptyStr);
+
+  Assert.AreEqual('text/xml;charset=utf-8', FCommunication.Header['Content-Type']);
 end;
 
 procedure TRemoteServiceTest.Setup;

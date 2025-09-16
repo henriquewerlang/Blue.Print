@@ -365,7 +365,10 @@ begin
   CharSetAttr := GetAttribute<CharSetAttribute>(Method);
 
   if IsSOAPRequest then
-    ContentTypeText := Format('%s;action=%s', [CONTENTTYPE_APPLICATION_SOAP_XML, GetSOAPActionName(Method)])
+    if Method.HasAttribute<SOAPActionAttribute> then
+      ContentTypeText := Format('%s;action=%s', [CONTENTTYPE_APPLICATION_SOAP_XML, GetSOAPActionName(Method)])
+    else
+      ContentTypeText := CONTENTTYPE_TEXT_XML
   else if Assigned(ContentTypeAttr) then
     ContentTypeText := ContentTypeAttr.ContentType
   else if Assigned(FSerializer) then
