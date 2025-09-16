@@ -1344,11 +1344,16 @@ begin
       begin
         var SOAPBody := Value.AsType<TSOAPBody>;
 
+        var ParentNode: IXMLNode := nil;
+
         for var Part in SOAPBody.Parts do
         begin
           var Parameter := Part.Key;
 
-          SerializeType(FContext.GetType(Parameter.ParamType.Handle), Part.Value, LoadAttributes(Parameter, Node.AddChild(Parameter.Name, GetNamespaceValue(Parameter, Namespace))), Namespace, ValueFormat);
+          if not Assigned(ParentNode) then
+            ParentNode := Node.AddChild(TRttiMethod(Parameter.Parent).Name, GetNamespaceValue(Parameter.Parent, Namespace));
+
+          SerializeType(FContext.GetType(Parameter.ParamType.Handle), Part.Value, LoadAttributes(Parameter, ParentNode.AddChild(Parameter.Name, GetNamespaceValue(Parameter, Namespace))), Namespace, ValueFormat);
         end;
       end
       else if Value.TypeInfo = TypeInfo(TValue) then
