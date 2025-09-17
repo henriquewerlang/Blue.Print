@@ -81,7 +81,7 @@ type
     function GetFormatValue(const RttiMember: TRttiMember): String;
     function GetNamespaceValue(const RttiObject: TRttiObject; const Namespace: String): String;
     function LoadAttributes(const RttiObject: TRttiObject; const Node: IXMLNode): IXMLNode;
-    function LoadAttributeValue(const Member: TRttiDataMember; const Instance: TObject; const Node: IXMLNode): Boolean;
+    function LoadAttributeValue(const Member: TRttiDataMember; const Instance: Pointer; const Node: IXMLNode): Boolean;
   protected
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function DeserializeArray(const RttiType: TRttiType; const Node: IXMLNode): TValue;
@@ -1205,15 +1205,15 @@ begin
 {$ENDIF}
 end;
 
-function TBluePrintXMLSerializer.LoadAttributeValue(const Member: TRttiDataMember; const Instance: TObject; const Node: IXMLNode): Boolean;
+function TBluePrintXMLSerializer.LoadAttributeValue(const Member: TRttiDataMember; const Instance: Pointer; const Node: IXMLNode): Boolean;
 begin
 {$IFDEF DCC}
-   Result := False;
+  Result := False;
 
   for var Attribute in Member.GetAttributes do
     if Attribute is XMLAttributeValueAttribute then
     begin
-      Node.Attributes[Member.Name] := Serialize(Member.GetValue(Instance));
+      Node.Attributes[GetFieldName(Member)] := Serialize(Member.GetValue(Instance));
       Result := True;
     end;
 {$ENDIF}
@@ -1291,7 +1291,8 @@ procedure TBluePrintXMLSerializer.SerializeFields(const RttiType: TRttiType; con
 begin
 {$IFDEF DCC}
   for var Field in RttiType.GetFields do
-    SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetFieldName(Field)), Namespace, '');
+    if not LoadAttributeValue(Field, Instance.GetReferenceToRawData, Node) then
+      SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetFieldName(Field)), Namespace, '');
 {$ENDIF}
 end;
 
@@ -1319,6 +1320,9 @@ end;
 
 procedure TBluePrintXMLSerializer.SerializeType(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace, ValueFormat: String);
 {$IFDEF DCC}
+var
+  Parameter: TRttiParameter;
+  ParentNode: IXMLNode;
 
   function GetValueFormat: String;
   begin
@@ -1344,11 +1348,11 @@ begin
       begin
         var SOAPBody := Value.AsType<TSOAPBody>;
 
-        var ParentNode: IXMLNode := nil;
+        ParentNode := nil;
 
         for var Part in SOAPBody.Parts do
         begin
-          var Parameter := Part.Key;
+          Parameter := Part.Key;
 
           if not Assigned(ParentNode) then
             ParentNode := Node.AddChild(TRttiMethod(Parameter.Parent).Name, GetNamespaceValue(Parameter.Parent, Namespace));

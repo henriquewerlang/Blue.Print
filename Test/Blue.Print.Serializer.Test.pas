@@ -261,6 +261,10 @@ type
     procedure WhenTheSOAPServiceHaveMoreThanOneParameterMustLoadTheXMLWithTheParametersNamesAndValuesAsExpected;
     [Test]
     procedure WhenSerializeTheSOAPEnvelopMustLoadTheParameterNameInTheXMLDocumentSerialized;
+    [Test]
+    procedure WhenSerializeAFieldWithXMLAttributeValueMustLoadTheValueAttributeFromFieldAndNameInTheXMLNode;
+    [Test]
+    procedure WhenTheFieldAsTheFieldNameAttributeWithTheXMLAttributeValueMustLoadTheAttributeNameWithTheNameInTheFieldAttribute;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -350,6 +354,19 @@ type
   TMyRecordWithAttribute = record
   public
     [NodeName('AnotherName')]
+    MyField: String;
+  end;
+
+  TMyRecordWithXMLAttribute = record
+  public
+    [XMLAttributeValue]
+    MyField: String;
+  end;
+
+  TMyRecordWithXMLAttributeAndFieldName = record
+  public
+    [FieldName('AnotherName')]
+    [XMLAttributeValue]
     MyField: String;
   end;
 
@@ -1852,6 +1869,14 @@ begin
   MyObject.Free;
 end;
 
+procedure TBluePrintXMLSerializerTest.WhenSerializeAFieldWithXMLAttributeValueMustLoadTheValueAttributeFromFieldAndNameInTheXMLNode;
+begin
+  var MyRecord: TMyRecordWithXMLAttribute;
+  MyRecord.MyField := 'abc';
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyRecordWithXMLAttribute MyField="abc"/>'#13#10, FSerializer.Serialize(TValue.From(MyRecord)));
+end;
+
 procedure TBluePrintXMLSerializerTest.WhenSerializeAnObjectWithANilPropertyCanRaiseError;
 begin
   var MyObject := TMyObjectParent.Create;
@@ -1934,7 +1959,7 @@ begin
 
   SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], 'abc');
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SOAP-ENV:Body><MyMethod><MyParam>abc</MyParam></MyMethod></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV=""><SOAP-ENV:Body><MyMethod><MyParam>abc</MyParam></MyMethod></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPEnvelop)));
 
   RttiContext.Free;
@@ -1957,7 +1982,7 @@ begin
 
   SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], 'abc');
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SOAP-ENV:Body><MyMethod><MyParam>abc</MyParam></MyMethod></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV=""><SOAP-ENV:Body><MyMethod><MyParam>abc</MyParam></MyMethod></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPEnvelop)));
 
   RttiContext.Free;
@@ -1992,6 +2017,14 @@ begin
   MyObject.Free;
 end;
 
+procedure TBluePrintXMLSerializerTest.WhenTheFieldAsTheFieldNameAttributeWithTheXMLAttributeValueMustLoadTheAttributeNameWithTheNameInTheFieldAttribute;
+begin
+  var MyRecord: TMyRecordWithXMLAttributeAndFieldName;
+  MyRecord.MyField := 'abc';
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyRecordWithXMLAttributeAndFieldName AnotherName="abc"/>'#13#10, FSerializer.Serialize(TValue.From(MyRecord)));
+end;
+
 procedure TBluePrintXMLSerializerTest.WhenTheParameterHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
 begin
   var RttiContext := TRttiContext.Create;
@@ -2002,7 +2035,7 @@ begin
 
   SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], 'abc');
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SOAP-ENV:Body><MyMethodWithParamAttribute><MyParam MyAttribute="MyValue">abc</MyParam></MyMethodWithParamAttribute></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV=""><SOAP-ENV:Body><MyMethodWithParamAttribute><MyParam MyAttribute="MyValue">abc</MyParam></MyMethodWithParamAttribute></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPEnvelop)));
 
   RttiContext.Free;
@@ -2085,7 +2118,7 @@ begin
 
   SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], nil);
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV="">'
     + '<SOAP-ENV:Body><MyMethodWithNamespace><MyParam xmlns="MySpace"/></MyMethodWithNamespace></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPEnvelop)));
 
   RttiContext.Free;
@@ -2103,7 +2136,7 @@ begin
   SOAPEnvelop.AddPart(RttiMethod.GetParameters[1], 'abc');
   SOAPEnvelop.AddPart(RttiMethod.GetParameters[2], 'def');
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SOAP-ENV:Body><MoreThanOneParameter><Param1>123</Param1><Param2>abc</Param2><Param3>def</Param3></MoreThanOneParameter></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV=""><SOAP-ENV:Body><MoreThanOneParameter><Param1>123</Param1><Param2>abc</Param2><Param3>def</Param3></MoreThanOneParameter></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPEnvelop)));
 
   RttiContext.Free;

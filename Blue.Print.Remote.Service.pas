@@ -72,6 +72,7 @@ type
     function GetSerializer(const XML: Boolean): IBluePrintSerializer;
     function GetSOAPActionName(const Method: TRttiMethod): String;
     function IsSOAPRequest: Boolean;
+    function IsSOAP11Request(const Method: TRttiMethod): Boolean;
     function LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>; const AsyncRequest: Boolean; const ReturnEvent: TProc<TValue>; const ErrorEvent: TProc<Exception>): TValue;
 
@@ -104,7 +105,7 @@ type
 implementation
 
 {$IFDEF DCC}
-uses System.NetEncoding, REST.Types;
+uses System.NetEncoding, REST.Types, Soap.SOAPConst;
 {$ENDIF}
 
 const
@@ -348,6 +349,11 @@ begin
     Result := Result + Method.Name;
 end;
 
+function TRemoteService.IsSOAP11Request(const Method: TRttiMethod): Boolean;
+begin
+  Result := not Method.HasAttribute<SOAPActionAttribute>;
+end;
+
 function TRemoteService.IsSOAPRequest: Boolean;
 begin
   Result := Assigned(GetAttribute<SOAPServiceAttribute>(FInterfaceType));
@@ -365,7 +371,7 @@ begin
   CharSetAttr := GetAttribute<CharSetAttribute>(Method);
 
   if IsSOAPRequest then
-    if Method.HasAttribute<SOAPActionAttribute> then
+    if not IsSOAP11Request(Method) then
       ContentTypeText := Format('%s;action=%s', [CONTENTTYPE_APPLICATION_SOAP_XML, GetSOAPActionName(Method)])
     else
       ContentTypeText := CONTENTTYPE_TEXT_XML
@@ -403,6 +409,11 @@ var
       end, TParameterType.Body, Args);
 
     LoadContentType(Method);
+
+    if IsSOAP11Request(Method) then
+      SOAPEnvelop.SOAPNameSpace := SSoapNamespace
+    else
+      SOAPEnvelop.SOAPNameSpace := SSoap12Namespace;
 
     Body := GetSerializer(True).Serialize(TValue.From(SOAPEnvelop));
   end;

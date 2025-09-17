@@ -2,7 +2,8 @@
 
 interface
 
-uses System.Rtti, System.Classes, System.SysUtils, System.TypInfo, System.Generics.Collections, {$IFDEF PAS2JS}JSApi.JS, BrowserAPI.Web, BrowserApi.WebOrWorker{$ELSE}Web.HTTPApp, System.Net.Mime, System.NetEncoding{$ENDIF};
+uses System.Rtti, System.Classes, System.SysUtils, System.TypInfo, System.Generics.Collections, {$IFDEF PAS2JS}JSApi.JS, BrowserAPI.Web, BrowserApi.WebOrWorker{$ELSE}Web.HTTPApp, System.Net.Mime, System.NetEncoding,
+  Xml.XMLSchema, Soap.SOAPConst{$ENDIF};
 
 {$SCOPEDENUMS ON}
 
@@ -331,13 +332,15 @@ type
   end;
 
   [DocumentName(SOAP_ENVELOP_NODENAME)]
-  [XMLAttribute('xmlns:SOAP-ENV', 'http://www.w3.org/2003/05/soap-envelope')]
-  [XMLAttribute('xmlns:xsd', 'http://www.w3.org/2001/XMLSchema')]
-  [XMLAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance')]
+  [XMLAttribute('xmlns:xsd', SXMLSchemaURI_2001)]
+  [XMLAttribute('xmlns:xsi', SXMLSchemaInstURI)]
   TSOAPEnvelop = record
   public
     [NodeName(SOAP_BODY_NODENAME)]
     SOAPBody: TSOAPBody;
+    [XMLAttributeValue]
+    [FieldName('xmlns:SOAP-ENV')]
+    SOAPNameSpace: String;
 
     procedure AddPart(const Parameter: TRttiParameter; const Value: TValue);
   end;

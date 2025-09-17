@@ -159,6 +159,10 @@ type
     procedure IfTheProcedureDontHaveTheSOAPActionAttributeCantLoadTheActionInTheContentType;
     [Test]
     procedure IfTheProcedureDontHaveTheSOAPActionMustLoadTheContentTypeWithTextXML;
+    [Test]
+    procedure WhenTheProcedureIsSOAPVersion12MustLoadTheNamespaceWithTheValueExpected;
+    [Test]
+    procedure WhenTheProcedureIsSOAPVersion11MustLoadTheNamespaceWithTheValueExpected;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -340,7 +344,7 @@ type
 
 implementation
 
-uses Web.ReqFiles{$IFDEF DCC}, REST.Types{$ENDIF};
+uses Web.ReqFiles{$IFDEF DCC}, REST.Types, Soap.SOAPConst{$ENDIF};
 
 { TRemoteServiceTest }
 
@@ -988,6 +992,24 @@ begin
   Service.WithName;
 
   Assert.AreEqual('/AnotherName/ProcedureWithAnotherName', FCommunication.URL);
+end;
+
+procedure TRemoteServiceTest.WhenTheProcedureIsSOAPVersion11MustLoadTheNamespaceWithTheValueExpected;
+begin
+  var Service := GetRemoteService<ISOAPService>('Host');
+
+  Service.SoapBodyMethod('Value');
+
+  Assert.AreEqual(SSoapNamespace, FSerializer.SerializeValue.AsType<TSOAPEnvelop>.SOAPNameSpace);
+end;
+
+procedure TRemoteServiceTest.WhenTheProcedureIsSOAPVersion12MustLoadTheNamespaceWithTheValueExpected;
+begin
+  var Service := GetRemoteService<ISOAPService>('Host');
+
+  Service.SoapMethod('Value');
+
+  Assert.AreEqual(SSoap12Namespace, FSerializer.SerializeValue.AsType<TSOAPEnvelop>.SOAPNameSpace);
 end;
 
 procedure TRemoteServiceTest.WhenTheQueryParameterHasANameMustLoadThisNameInTheQueryList;
