@@ -3214,8 +3214,6 @@ var
       Result.ParameterType := &Type;
 
       Result.AddAtribute('Body');
-
-      Result.ParentAttributes.Add(Result.FormatNamespaceAttribute(WSDLDocument.Definition.TargetNameSpace));
     end;
 
   begin
@@ -3277,10 +3275,10 @@ begin
 
   WSDLDocument.LoadFromXML(FImporter.LoadFileFromConfiguration(UnitFileConfiguration));
 
-  if Assigned(WSDLDocument.Definition.FindNamespaceDecl(Soap12ns)) then
-    SOAPNamespace := Soap12ns
+  if Assigned(WSDLDocument.Definition.FindNamespaceDecl(Soapns)) then
+    SOAPNamespace := Soapns
   else
-    SOAPNamespace := Soapns;
+    SOAPNamespace := Soap12ns;
 
   for var A := 0 to Pred(WSDLDocument.Definition.Types.SchemaDefs.Count) do
   begin
@@ -3324,6 +3322,8 @@ begin
           ServiceMethod.Name := Operation.Name;
           ServiceMethod.Return := LoadReturnType(PortTypeOperation.Output);
           var SOAPAction := SOAPOperation.AttributeNodes.FindNode(SSoapAction);
+
+          ServiceMethod.Attributes.Add(ServiceMethod.FormatNamespaceAttribute(WSDLDocument.Definition.TargetNameSpace));
 
           if SOAPNamespace = Soapns then
             ServiceMethod.AddAtribute('Header(''SOAPAction'', ''%s'')', [SOAPAction.Text])
