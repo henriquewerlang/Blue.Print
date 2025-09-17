@@ -3186,17 +3186,14 @@ var
     end;
   end;
 
-  function GetPartType(const Part: IPart): String;
-  begin
-    if Part.Element.IsEmpty then
-      Result := Part.Type_
-    else
-      Result := Part.Element;
-  end;
-
   function CheckPartType(const Part: IPart): TTypeDefinition;
   begin
-    var TypeName := GetPartType(Part);
+    var TypeName: String;
+
+    if Part.Element.IsEmpty then
+      TypeName := Part.Type_
+    else
+      TypeName := Part.Element;
 
     var ParameterType := FindType(TypeName);
 
@@ -3210,6 +3207,17 @@ var
   var
     Message: IMessage;
 
+    function AddParameter(const Name: String; const &Type: TTypeDefinition): TTypeParameterDefinition;
+    begin
+      Result := ServiceMethod.AddParameter;
+      Result.Name := Name;
+      Result.ParameterType := &Type;
+
+      Result.AddAtribute('Body');
+
+      Result.ParentAttributes.Add(Result.FormatNamespaceAttribute(WSDLDocument.Definition.TargetNameSpace));
+    end;
+
   begin
     if Assigned(Parameter) then
     begin
@@ -3219,13 +3227,15 @@ var
       begin
         var Part := Message.Parts[A];
 
-        var MethodParameter := ServiceMethod.AddParameter;
-        MethodParameter.Name := Part.Name;
-        MethodParameter.ParameterType := CheckPartType(Part);
+        if Part.Element.IsEmpty then
+          AddParameter(Part.Name, CheckPartType(Part))
+        else
+        begin
+          var ComplexType := FindType(Part.Element) as IXMLComplexTypeDef;
 
-        MethodParameter.AddAtribute('Body');
-
-        MethodParameter.ParentAttributes.Add(MethodParameter.FormatNamespaceAttribute(WSDLDocument.Definition.TargetNameSpace));
+          for var B := 0 to Pred(ComplexType.ElementDefs.Count) do
+            AddParameter(ComplexType.ElementDefs[B].Name, SchemaLoader.CheckUnitTypeDefinition(ComplexType.ElementDefs[B].DataType, UnitDefinition));
+        end;
       end;
     end;
   end;
