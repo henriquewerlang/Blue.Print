@@ -1187,6 +1187,9 @@ begin
   for var Attribute in RttiObject.GetAttributes do
     if Attribute is XMLNamespaceAttribute then
       Exit((Attribute as XMLNamespaceAttribute).Namespace);
+
+  if Assigned(RttiObject.Parent) then
+    Result := GetNamespaceValue(RttiObject.Parent, Namespace);
 {$ENDIF}
 end;
 

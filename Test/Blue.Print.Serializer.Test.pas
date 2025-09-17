@@ -265,6 +265,8 @@ type
     procedure WhenSerializeAFieldWithXMLAttributeValueMustLoadTheValueAttributeFromFieldAndNameInTheXMLNode;
     [Test]
     procedure WhenTheFieldAsTheFieldNameAttributeWithTheXMLAttributeValueMustLoadTheAttributeNameWithTheNameInTheFieldAttribute;
+    [Test]
+    procedure WhenTheProcedureHasTheXMLNamespaceMustLoadAllNodesWithThisValue;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -782,6 +784,8 @@ type
     procedure MyMethodWithParamAttribute([XMLAttribute('MyAttribute', 'MyValue')] const MyParam: Integer);
     procedure MyMethodWithNamespace([XMLNamespace('MySpace')] const MyParam: TMyBooleanClass);
     procedure MoreThanOneParameter(const Param1: Integer; const Param2, Param3: String);
+    [XMLNamespace('MyNamespace')]
+    procedure ProcedureWithNameSpace(const Param1: Integer);
   end;
 
 implementation
@@ -2037,6 +2041,22 @@ begin
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV=""><SOAP-ENV:Body><MyMethodWithParamAttribute><MyParam MyAttribute="MyValue">abc</MyParam></MyMethodWithParamAttribute></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPEnvelop)));
+
+  RttiContext.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenTheProcedureHasTheXMLNamespaceMustLoadAllNodesWithThisValue;
+begin
+  var RttiContext := TRttiContext.Create;
+  var RttiInterface := RttiContext.GetType(TypeInfo(ISOAPService));
+
+  var RttiMethod := RttiInterface.GetMethod('ProcedureWithNameSpace');
+  var SOAPEnvelop: TSOAPEnvelop;
+
+  SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], nil);
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV="">'
+    + '<SOAP-ENV:Body><ProcedureWithNameSpace xmlns="MyNamespace"><Param1/></ProcedureWithNameSpace></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPEnvelop)));
 
   RttiContext.Free;
 end;
