@@ -3244,6 +3244,7 @@ var
   function LoadReturnType(const Return: IParam): TTypeDefinition;
   var
     Message: IMessage;
+    Part: IPart;
 
   begin
     Message := FindMessage(Return.Message);
@@ -3251,9 +3252,17 @@ var
 
     for var A := 0 to Pred(Message.Parts.Count) do
     begin
-      var Part := Message.Parts[A];
+      Part := Message.Parts[A];
 
-      Exit(CheckPartType(Part));
+      if Part.Element.IsEmpty then
+      begin
+        var ClassDefinition := FImporter.CreateClassDefinition(UnitDefinition, Message.Name);
+        var PartProperty := ClassDefinition.AddProperty(Part.Name);
+        PartProperty.PropertyType := CheckPartType(Part);
+        Result := ClassDefinition;
+      end
+      else
+        Exit(CheckPartType(Part));
     end;
   end;
 
