@@ -3231,8 +3231,11 @@ var
         begin
           var ComplexType := FindType(Part.Element) as IXMLComplexTypeDef;
 
-          for var B := 0 to Pred(ComplexType.ElementDefs.Count) do
-            AddParameter(ComplexType.ElementDefs[B].Name, SchemaLoader.CheckUnitTypeDefinition(ComplexType.ElementDefs[B].DataType, UnitDefinition));
+          if ComplexType.ElementDefs.Count = 0 then
+            AddParameter(ComplexType.Name, SchemaLoader.CheckUnitTypeDefinition(ComplexType, UnitDefinition))
+          else
+            for var B := 0 to Pred(ComplexType.ElementDefs.Count) do
+              AddParameter(ComplexType.ElementDefs[B].Name, SchemaLoader.CheckUnitTypeDefinition(ComplexType.ElementDefs[B].DataType, UnitDefinition));
         end;
       end;
     end;
