@@ -1166,6 +1166,9 @@ begin
 
     GenerateProperties(ClassDefinition, ComplexType.ElementDefList);
 
+    if ComplexType.HasAttribute(SMixed) then
+      ClassDefinition.AddFlatAttribute;
+
     for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
     begin
       var Attribute := ComplexType.AttributeDefs[A];
