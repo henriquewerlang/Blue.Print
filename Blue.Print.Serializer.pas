@@ -91,6 +91,7 @@ type
     procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode);
     procedure SerializeArray(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace, ValueFormat: String);
     procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode; const Namespace: String);
+    procedure SerializeFlatObject(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode; const Namespace: String);
     procedure SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode; const Namespace: String);
     procedure SerializeType(const RttiType: TRttiType; const Value: TValue; const Node: IXMLNode; const Namespace, ValueFormat: String);
   public
@@ -1295,8 +1296,18 @@ begin
 {$IFDEF DCC}
   for var Field in RttiType.GetFields do
     if not LoadAttributeValue(Field, Instance.GetReferenceToRawData, Node) then
-      SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetFieldName(Field)), Namespace, '');
+      SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetFieldName(Field)), Namespace, EmptyStr);
 {$ENDIF}
+end;
+
+procedure TBluePrintXMLSerializer.SerializeFlatObject(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode; const Namespace: String);
+var
+  &Property: TRttiProperty;
+
+begin
+  for &Property in GetPublishedProperties(RttiType) do
+    if System.TypInfo.IsStoredProp(Instance.AsObject, TRttiInstanceProperty(&Property).{$IFDEF DCC}PropInfo{$ELSE}PropertyTypeInfo{$ENDIF}) then
+      SerializeType(&Property.PropertyType, &Property.GetValue(Instance.AsObject), Node, Namespace, EmptyStr);
 end;
 
 procedure TBluePrintXMLSerializer.SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const Node: IXMLNode; const Namespace: String);
@@ -1374,11 +1385,14 @@ begin
       LoadAttributes(RttiType, Node);
 
       if not Value.IsEmpty then
-      begin
-        var ClassType := FContext.GetType(Value.TypeInfo);
+        if RttiType.HasAttribute<FlatAttribute> then
+          SerializeFlatObject(RttiType, Value, Node, Namespace)
+        else
+        begin
+          var ClassType := FContext.GetType(Value.TypeInfo);
 
-        SerializeProperties(ClassType, Value.AsObject, Node, GetNamespaceValue(ClassType, Namespace));
-      end;
+          SerializeProperties(ClassType, Value.AsObject, Node, GetNamespaceValue(ClassType, Namespace));
+        end;
     end;
 
     tkInteger,

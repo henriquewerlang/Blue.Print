@@ -267,6 +267,8 @@ type
     procedure WhenTheFieldAsTheFieldNameAttributeWithTheXMLAttributeValueMustLoadTheAttributeNameWithTheNameInTheFieldAttribute;
     [Test]
     procedure WhenTheProcedureHasTheXMLNamespaceMustLoadAllNodesWithThisValue;
+    [Test]
+    procedure WhenSerializeAClassWithTheFlatAttributeMustLoadOnlyThePropertyFromThePropertiesFromTheFlatClass;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -1831,6 +1833,21 @@ begin
     [TBluePrintXMLSerializer.GetCurrentTimeZone]), Value);
 
   MyObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenSerializeAClassWithTheFlatAttributeMustLoadOnlyThePropertyFromThePropertiesFromTheFlatClass;
+begin
+  var MyValue := TMyClassWithMoreThanOneObjectFlat.Create;
+  MyValue.MyObject := TMyObject.Create;
+  MyValue.MyObject.MyProp1 := 'abc';
+  MyValue.MyObject.MyProp2 := 123;
+  MyValue.MyObject.MyProp3 := 123.456;
+
+  FSerializer.Serialize(MyValue);
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithMoreThanOneObjectFlat><MyProp1>abc</MyProp1><MyProp2>123</MyProp2><MyProp3>123.456</MyProp3><MyProp4>MyValue</MyProp4></TMyClassWithMoreThanOneObjectFlat>'#13#10, FSerializer.Serialize(MyValue));
+
+  MyValue.MyObject.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenSerializeAClassWithXMLValueAttributeMustLoadTheXMLWithOnlyThePropertyValue;
