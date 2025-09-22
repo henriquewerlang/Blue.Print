@@ -468,6 +468,7 @@ type
 
     function AddProperty(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef; const IsReferenceType: Boolean): TPropertyDefinition;
     function CanGenerateClass(const Element: IXMLElementDef): Boolean;
+    function CheckClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef): TTypeDefinition;
     function CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
     function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
     function FindBaseType(const TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
@@ -1082,6 +1083,14 @@ begin
     Result := BuildInType;
 end;
 
+function TXSDSchemaLoader.CheckClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef): TTypeDefinition;
+begin
+  Result := FindType(ComplexType.Name, ParentModule);
+
+  if not Assigned(Result) then
+    Result := GenerateClassDefinition(ParentModule, ComplexType);
+end;
+
 function TXSDSchemaLoader.CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
 var
   SimpleType: IXMLSimpleTypeDef;
@@ -1126,7 +1135,7 @@ begin
   Result := nil;
 
   if &Type.IsComplex then
-    Result := GenerateClassDefinition(Module, &Type as IXMLComplexTypeDef)
+    Result := CheckClassDefinition(Module, &Type as IXMLComplexTypeDef)
   else if Supports(&Type, IXMLSimpleTypeDef, SimpleType) then
     case SimpleType.DerivationMethod of
       sdmNone: ;
@@ -1153,36 +1162,26 @@ end;
 
 function TXSDSchemaLoader.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef): TTypeDefinition;
 begin
-  var ClassName := ComplexType.Name;
+  var ClassDefinition := FImporter.CreateClassDefinition(ParentModule, ComplexType.Name);
+  Result := ClassDefinition;
 
-  Result := FindType(ClassName, ParentModule);
+  ClassDefinition.AddNamespaceAttribute(VarToStr(ComplexType.SchemaDef.TargetNamespace));
 
-  if not Assigned(Result) then
+  GenerateProperties(ClassDefinition, ComplexType.ElementDefList);
+
+  for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
   begin
-    var ClassDefinition := FImporter.CreateClassDefinition(ParentModule, ClassName);
-    Result := ClassDefinition;
+    var Attribute := ComplexType.AttributeDefs[A];
+    var &Property := AddProperty(ClassDefinition, Attribute.Name, Attribute.DataType, IsReferenceType(Attribute));
 
-    ClassDefinition.AddNamespaceAttribute(VarToStr(ComplexType.SchemaDef.TargetNamespace));
+    AddPropertyAttribute(&Property, Attribute);
+  end;
 
-    GenerateProperties(ClassDefinition, ComplexType.ElementDefList);
+  if Assigned(ComplexType.BaseType) then
+  begin
+    var &Property := AddProperty(ClassDefinition, 'Value', ComplexType.BaseType, False);
 
-    if ComplexType.HasAttribute(SMixed) then
-      ClassDefinition.AddFlatAttribute;
-
-    for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
-    begin
-      var Attribute := ComplexType.AttributeDefs[A];
-      var &Property := AddProperty(ClassDefinition, Attribute.Name, Attribute.DataType, IsReferenceType(Attribute));
-
-      AddPropertyAttribute(&Property, Attribute);
-    end;
-
-    if Assigned(ComplexType.BaseType) then
-    begin
-      var &Property := AddProperty(ClassDefinition, 'Value', ComplexType.BaseType, False);
-
-      &Property.AddXMLValueAttribute;
-    end;
+    &Property.AddXMLValueAttribute;
   end;
 end;
 
@@ -1239,7 +1238,7 @@ begin
     end
     else
     begin
-      GenerateClassDefinition(ClassDefinition, ComplexType);
+      CheckClassDefinition(ClassDefinition, ComplexType);
 
       Result := CreateProperty(ComplexType);
     end;
@@ -3234,11 +3233,19 @@ var
         begin
           var ComplexType := FindType(Part.Element) as IXMLComplexTypeDef;
 
+          var ClassDefinition := FImporter.CreateClassDefinition(UnitDefinition, ComplexType.Name);
+
           if ComplexType.ElementDefs.Count = 0 then
-            AddParameter(ComplexType.Name, SchemaLoader.CheckUnitTypeDefinition(ComplexType, UnitDefinition))
+            AddParameter(ComplexType.Name, ClassDefinition)
           else
             for var B := 0 to Pred(ComplexType.ElementDefs.Count) do
-              AddParameter(ComplexType.ElementDefs[B].Name, SchemaLoader.CheckUnitTypeDefinition(ComplexType.ElementDefs[B].DataType, UnitDefinition));
+            begin
+              var Element := ComplexType.ElementDefs[0];
+
+              var ElementClassDefinition := SchemaLoader.GenerateClassDefinition(ClassDefinition, Element.DataType as IXMLComplexTypeDef).AsClassDefinition;
+
+              AddParameter(Element.Name, ElementClassDefinition);
+            end;
         end;
       end;
     end;
