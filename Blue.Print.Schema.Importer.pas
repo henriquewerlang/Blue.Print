@@ -1131,22 +1131,18 @@ var
   begin
     if &Type.Enumerations.Count > 0 then
       Result := CreateEnumeration
-    else if &Type.BaseType <> nil then
-    begin
-      Result := FindType(&Type.Name, Module);
-
-      if not Assigned(Result) then
-      begin
-        Result := FImporter.CreateTypeAlias(GetUnitDefinition, &Type.Name, FindType(&Type.BaseType.Name, Module));
-
-        GetUnitDefinition.AsUnitDefinition.AddTypeAlias(Result.AsTypeAlias);
-      end;
-    end
     else
     begin
-      Result := nil;
+      Result := FindBaseType(&Type, Module);
 
-      Abort;
+      if Assigned(Result) then
+      begin
+        Result := FImporter.CreateTypeAlias(GetUnitDefinition, &Type.Name, Result);
+
+        GetUnitDefinition.AsUnitDefinition.AddTypeAlias(Result.AsTypeAlias);
+      end
+      else
+        Abort;
     end;
   end;
 
