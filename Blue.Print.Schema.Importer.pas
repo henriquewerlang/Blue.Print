@@ -1337,6 +1337,7 @@ begin
   AddBuildInType('dateTime', FImporter.DateTimeType);
   AddBuildInType('decimal', FImporter.DoubleType);
   AddBuildInType('double', FImporter.DoubleType);
+  AddBuildInType('duration', FImporter.StringType);
   AddBuildInType('ENTITIES', FImporter.StringType);
   AddBuildInType('ENTITY', FImporter.StringType);
   AddBuildInType('float', FImporter.DoubleType);
@@ -3242,9 +3243,9 @@ var
             begin
               var Element := ComplexType.ElementDefs[0];
 
-              var ElementClassDefinition := SchemaLoader.GenerateClassDefinition(ClassDefinition, Element.DataType as IXMLComplexTypeDef).AsClassDefinition;
+              var ElementTypeDefinition := SchemaLoader.CheckTypeDefinition(Element.DataType, ClassDefinition);
 
-              AddParameter(Element.Name, ElementClassDefinition);
+              AddParameter(Element.Name, ElementTypeDefinition);
             end;
         end;
       end;
