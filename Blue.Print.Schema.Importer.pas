@@ -1100,28 +1100,54 @@ var
     EnumValues: TStringList;
 
   begin
-    if &Type.Enumerations.Count > 0 then
+    EnumValues := TStringList.Create(dupIgnore, False, False);
+    Result := TTypeEnumeration.Create(Module);
+    Result.Name := &Type.Name;
+
+    for var A := 0 to Pred(&Type.Enumerations.Count) do
     begin
-      EnumValues := TStringList.Create(dupIgnore, False, False);
-      Result := TTypeEnumeration.Create(Module);
-      Result.Name := &Type.Name;
+      var EnumValue := &Type.Enumerations[A].Value;
 
-      for var A := 0 to Pred(&Type.Enumerations.Count) do
+      if EnumValues.IndexOf(EnumValue) = -1 then
+        EnumValues.Add(EnumValue);
+    end;
+
+    for var EnumValue in EnumValues do
+      Result.Values.Add(EnumValue);
+
+    if Assigned(Module) then
+      Module.Enumerations.Add(Result);
+  end;
+
+  function GetUnitDefinition: TTypeModuleDefinition;
+  begin
+    Result := Module;
+
+    while not Result.IsUnitDefinition do
+      Result := Result.ParentModule;
+  end;
+
+  function CheckRestriction: TTypeDefinition;
+  begin
+    if &Type.Enumerations.Count > 0 then
+      Result := CreateEnumeration
+    else if &Type.BaseType <> nil then
+    begin
+      Result := FindType(&Type.Name, Module);
+
+      if not Assigned(Result) then
       begin
-        var EnumValue := &Type.Enumerations[A].Value;
+        Result := FImporter.CreateTypeAlias(GetUnitDefinition, &Type.Name, FindType(&Type.BaseType.Name, Module));
 
-        if EnumValues.IndexOf(EnumValue) = -1 then
-          EnumValues.Add(EnumValue);
+        GetUnitDefinition.AsUnitDefinition.AddTypeAlias(Result.AsTypeAlias);
       end;
-
-      for var EnumValue in EnumValues do
-        Result.Values.Add(EnumValue);
-
-      if Assigned(Module) then
-        Module.Enumerations.Add(Result);
     end
     else
+    begin
       Result := nil;
+
+      Abort;
+    end;
   end;
 
   function CreateArray: TTypeAlias;
@@ -1139,7 +1165,7 @@ begin
   else if Supports(&Type, IXMLSimpleTypeDef, SimpleType) then
     case SimpleType.DerivationMethod of
       sdmNone: ;
-      sdmRestriction: Result := CreateEnumeration;
+      sdmRestriction: Result := CheckRestriction;
       sdmList: Result := CreateArray;
       sdmUnion: Abort;
     end;
