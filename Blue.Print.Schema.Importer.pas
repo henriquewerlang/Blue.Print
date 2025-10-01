@@ -1227,9 +1227,9 @@ function TXSDSchemaLoader.GenerateProperty(const ClassDefinition: TClassDefiniti
     begin
       ParentNode := ElementDefinition.ParentNode;
 
-      while Assigned(ParentNode) and not Supports(ParentNode, IXMLComplexTypeDef) and not Result do
+      while Assigned(ParentNode) and Supports(ParentNode, IXMLElementCompositor, Compositor) and not Result do
       begin
-        Result := Assigned(ParentNode) and Supports(ParentNode, IXMLElementCompositor, Compositor) and ((Compositor.CompositorType = ctChoice) or (Compositor.MinOccurs <= 0));
+        Result := Assigned(ParentNode) and ((Compositor.CompositorType = ctChoice) or (Compositor.MinOccurs <= 0));
 
         ParentNode := ParentNode.ParentNode;
       end;
@@ -3384,14 +3384,14 @@ begin
           ServiceMethod.Return := LoadReturnType(PortTypeOperation.Output);
           var SOAPAction := SOAPOperation.AttributeNodes.FindNode(SSoapAction);
           var SOAPStyle := SOAPOperation.AttributeNodes.FindNode(SStyle);
-          XMLNameSpaceAttribute := ServiceMethod.FormatNamespaceAttribute(WSDLDocument.Definition.TargetNameSpace);
+          XMLNameSpaceAttribute := WSDLDocument.Definition.TargetNameSpace;
 
           IsRPCCall := Assigned(SOAPStyle) and SameText(SOAPStyle.Text, 'rpc');
 
           if IsRPCCall then
           begin
             ServiceMethod.Attributes.Add('SOAP_RPC');
-            ServiceMethod.Attributes.Add(XMLNameSpaceAttribute);
+            ServiceMethod.AddNamespaceAttribute(XMLNameSpaceAttribute);
           end;
 
           if SOAPNamespace = Soapns then
