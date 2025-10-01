@@ -3254,21 +3254,32 @@ var
           AddParameter(Part.Name, CheckPartType(Part))
         else
         begin
-          var ComplexType := FindType(Part.Element) as IXMLComplexTypeDef;
+          var ElementType := FindType(Part.Element);
 
-          var ClassDefinition := FImporter.CreateClassDefinition(UnitDefinition, ComplexType.Name);
+          var ElementTypeDefinition := SchemaLoader.FindType(ElementType.Name, UnitDefinition);
 
-          if ComplexType.ElementDefs.Count = 0 then
-            AddParameter(ComplexType.Name, ClassDefinition)
+          if Assigned(ElementTypeDefinition) then
+            AddParameter(Part.Name, ElementTypeDefinition)
+          else if ElementType.IsComplex then
+          begin
+            var ComplexType := ElementType as IXMLComplexTypeDef;
+
+            var ClassDefinition := FImporter.CreateClassDefinition(UnitDefinition, ComplexType.Name);
+
+            if ComplexType.ElementDefs.Count = 0 then
+              AddParameter(ComplexType.Name, ClassDefinition)
+            else
+              for var B := 0 to Pred(ComplexType.ElementDefs.Count) do
+              begin
+                var Element := ComplexType.ElementDefs[0];
+
+                ElementTypeDefinition := SchemaLoader.CheckTypeDefinition(Element.DataType, ClassDefinition);
+
+                AddParameter(Element.Name, ElementTypeDefinition);
+              end;
+          end
           else
-            for var B := 0 to Pred(ComplexType.ElementDefs.Count) do
-            begin
-              var Element := ComplexType.ElementDefs[0];
-
-              var ElementTypeDefinition := SchemaLoader.CheckTypeDefinition(Element.DataType, ClassDefinition);
-
-              AddParameter(Element.Name, ElementTypeDefinition);
-            end;
+            AddParameter(Part.Name, SchemaLoader.FindType(ElementType.Name, UnitDefinition));
         end;
       end;
     end;
@@ -3320,10 +3331,10 @@ begin
 
   WSDLDocument.LoadFromXML(FImporter.LoadFileFromConfiguration(UnitFileConfiguration));
 
-  if Assigned(WSDLDocument.Definition.FindNamespaceDecl(Soapns)) then
-    SOAPNamespace := Soapns
+  if Assigned(WSDLDocument.Definition.FindNamespaceDecl(Soap12ns)) then
+    SOAPNamespace := Soap12ns
   else
-    SOAPNamespace := Soap12ns;
+    SOAPNamespace := Soapns;
 
   for var A := 0 to Pred(WSDLDocument.Definition.Types.SchemaDefs.Count) do
   begin
