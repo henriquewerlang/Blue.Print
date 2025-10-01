@@ -3115,12 +3115,14 @@ end;
 
 procedure TWSDLSchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
 var
+  IsRPCCall: Boolean;
   Operation: IBindingOperation;
   Port: IPort;
   ServiceInterface: TTypeInterfaceDefinition;
   ServiceMethod: TTypeMethodDefinition;
   SchemaLoader: TXSDSchemaLoader;
   SOAPNamespace: String;
+  XMLNameSpaceAttribute: String;
   WSDLDocument: IWSDLDocument;
 
   function CompareNames(const Name1, Name2: String): Boolean;
@@ -3239,6 +3241,9 @@ var
       Result.ParameterType := &Type;
 
       Result.AddAtribute('Body');
+
+      if not IsRPCCall then
+        Result.AddNamespaceAttribute(XMLNameSpaceAttribute);
     end;
 
   begin
@@ -3378,8 +3383,16 @@ begin
           ServiceMethod.Name := Operation.Name;
           ServiceMethod.Return := LoadReturnType(PortTypeOperation.Output);
           var SOAPAction := SOAPOperation.AttributeNodes.FindNode(SSoapAction);
+          var SOAPStyle := SOAPOperation.AttributeNodes.FindNode(SStyle);
+          XMLNameSpaceAttribute := ServiceMethod.FormatNamespaceAttribute(WSDLDocument.Definition.TargetNameSpace);
 
-          ServiceMethod.Attributes.Add(ServiceMethod.FormatNamespaceAttribute(WSDLDocument.Definition.TargetNameSpace));
+          IsRPCCall := Assigned(SOAPStyle) and SameText(SOAPStyle.Text, 'rpc');
+
+          if IsRPCCall then
+          begin
+            ServiceMethod.Attributes.Add('SOAP_RPC');
+            ServiceMethod.Attributes.Add(XMLNameSpaceAttribute);
+          end;
 
           if SOAPNamespace = Soapns then
             ServiceMethod.AddAtribute('Header(''SOAPAction'', ''%s'')', [SOAPAction.Text])
