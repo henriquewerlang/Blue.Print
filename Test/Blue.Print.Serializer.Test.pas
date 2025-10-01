@@ -269,6 +269,8 @@ type
     procedure WhenTheProcedureHasTheXMLNamespaceMustLoadAllNodesWithThisValue;
     [Test]
     procedure WhenSerializeAClassWithTheFlatAttributeMustLoadOnlyThePropertyFromThePropertiesFromTheFlatClass;
+    [Test]
+    procedure WhenTheMethodHasTheSOAP_RPC_AttributeMustLoadTheMethodNameInTheXMLAsExpected;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -785,9 +787,13 @@ type
     procedure MyMethod(const MyParam: Integer);
     procedure MyMethodWithParamAttribute([XMLAttribute('MyAttribute', 'MyValue')] const MyParam: Integer);
     procedure MyMethodWithNamespace([XMLNamespace('MySpace')] const MyParam: TMyBooleanClass);
+    [SOAP_RPC]
     procedure MoreThanOneParameter(const Param1: Integer; const Param2, Param3: String);
+    [SOAP_RPC]
     [XMLNamespace('MyNamespace')]
     procedure ProcedureWithNameSpace(const Param1: Integer);
+    [SOAP_RPC]
+    procedure RPCProcedure(const Param: String);
   end;
 
 implementation
@@ -1980,7 +1986,7 @@ begin
 
   SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], 'abc');
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV=""><SOAP-ENV:Body><MyMethod><MyParam>abc</MyParam></MyMethod></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV=""><SOAP-ENV:Body><MyParam>abc</MyParam></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPEnvelop)));
 
   RttiContext.Free;
@@ -2003,7 +2009,7 @@ begin
 
   SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], 'abc');
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV=""><SOAP-ENV:Body><MyMethod><MyParam>abc</MyParam></MyMethod></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV=""><SOAP-ENV:Body><MyParam>abc</MyParam></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPEnvelop)));
 
   RttiContext.Free;
@@ -2046,6 +2052,22 @@ begin
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyRecordWithXMLAttributeAndFieldName AnotherName="abc"/>'#13#10, FSerializer.Serialize(TValue.From(MyRecord)));
 end;
 
+procedure TBluePrintXMLSerializerTest.WhenTheMethodHasTheSOAP_RPC_AttributeMustLoadTheMethodNameInTheXMLAsExpected;
+begin
+  var RttiContext := TRttiContext.Create;
+  var RttiInterface := RttiContext.GetType(TypeInfo(ISOAPService));
+
+  var RttiMethod := RttiInterface.GetMethod('RPCProcedure');
+  var SOAPEnvelop: TSOAPEnvelop;
+
+  SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], 'abc');
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV="">'
+    + '<SOAP-ENV:Body><RPCProcedure><Param>abc</Param></RPCProcedure></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPEnvelop)));
+
+  RttiContext.Free;
+end;
+
 procedure TBluePrintXMLSerializerTest.WhenTheParameterHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;
 begin
   var RttiContext := TRttiContext.Create;
@@ -2056,7 +2078,7 @@ begin
 
   SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], 'abc');
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV=""><SOAP-ENV:Body><MyMethodWithParamAttribute><MyParam MyAttribute="MyValue">abc</MyParam></MyMethodWithParamAttribute></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV=""><SOAP-ENV:Body><MyParam MyAttribute="MyValue">abc</MyParam></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPEnvelop)));
 
   RttiContext.Free;
@@ -2156,7 +2178,7 @@ begin
   SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], nil);
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV="">'
-    + '<SOAP-ENV:Body><MyMethodWithNamespace><MyParam xmlns="MySpace"/></MyMethodWithNamespace></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPEnvelop)));
+    + '<SOAP-ENV:Body><MyParam xmlns="MySpace"/></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPEnvelop)));
 
   RttiContext.Free;
 end;

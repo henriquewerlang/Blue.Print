@@ -1369,7 +1369,14 @@ begin
           Parameter := Part.Key;
 
           if not Assigned(ParentNode) then
-            ParentNode := Node.AddChild(TRttiMethod(Parameter.Parent).Name, GetNamespaceValue(Parameter.Parent, Namespace));
+          begin
+            var Method := TRttiMethod(Parameter.Parent);
+
+            if Method.HasAttribute(SOAP_RPCAttribute) then
+              ParentNode := Node.AddChild(Method.Name, GetNamespaceValue(Parameter.Parent, Namespace))
+            else
+              ParentNode := Node;
+          end;
 
           SerializeType(FContext.GetType(Parameter.ParamType.Handle), Part.Value, LoadAttributes(Parameter, ParentNode.AddChild(Parameter.Name, GetNamespaceValue(Parameter, Namespace))), Namespace, ValueFormat);
         end;

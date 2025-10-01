@@ -269,6 +269,10 @@ type
     property ActionName: String read FActionName;
   end;
 
+  SOAP_RPCAttribute = class(TCustomAttribute)
+
+  end;
+
   TFormatAttribute = class(TCustomAttribute)
   private
     FFormat: String;
