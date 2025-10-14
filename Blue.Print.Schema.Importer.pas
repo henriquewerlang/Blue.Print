@@ -3271,17 +3271,14 @@ var
 
             var ClassDefinition := FImporter.CreateClassDefinition(UnitDefinition, ComplexType.Name);
 
-            if ComplexType.ElementDefs.Count = 0 then
-              AddParameter(ComplexType.Name, ClassDefinition)
-            else
-              for var B := 0 to Pred(ComplexType.ElementDefs.Count) do
-              begin
-                var Element := ComplexType.ElementDefs[0];
+            AddParameter(ComplexType.Name, ClassDefinition);
 
-                ElementTypeDefinition := SchemaLoader.CheckTypeDefinition(Element.DataType, ClassDefinition);
+            for var B := 0 to Pred(ComplexType.ElementDefs.Count) do
+            begin
+              var Element := ComplexType.ElementDefs[0];
 
-                AddParameter(Element.Name, ElementTypeDefinition);
-              end;
+              SchemaLoader.AddProperty(ClassDefinition, Element.Name, Element.DataType, False);
+            end;
           end
           else
             AddParameter(Part.Name, SchemaLoader.FindType(ElementType.Name, UnitDefinition));
