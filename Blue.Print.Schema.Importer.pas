@@ -1378,10 +1378,14 @@ begin
   AddBuildInType('long', FImporter.Int64Type);
   AddBuildInType('Name', FImporter.StringType);
   AddBuildInType('NCName', FImporter.StringType);
+  AddBuildInType('negativeInteger', FImporter.IntegerType);
   AddBuildInType('NMTOKEN', FImporter.StringType);
   AddBuildInType('NMTOKENS', FImporter.StringType);
+  AddBuildInType('nonNegativeInteger', FImporter.CardinalType);
+  AddBuildInType('nonPositiveInteger', FImporter.IntegerType);
   AddBuildInType('normalizedString', FImporter.StringType);
   AddBuildInType('NOTATION', FImporter.StringType);
+  AddBuildInType('positiveInteger', FImporter.CardinalType);
   AddBuildInType('QName', FImporter.StringType);
   AddBuildInType('short', FImporter.IntegerType);
   AddBuildInType('string', FImporter.StringType);
