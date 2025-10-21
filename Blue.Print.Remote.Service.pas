@@ -114,6 +114,7 @@ const
 {$IFDEF PAS2JS}
   CONTENTTYPE_APPLICATION_SOAP_XML = 'application/soap+xml';
   CONTENTTYPE_TEXT_PLAIN = 'text/plain';
+  CONTENTTYPE_TEXT_XML = 'text/xml';
 {$ENDIF}
 
 {$IFDEF DCC}

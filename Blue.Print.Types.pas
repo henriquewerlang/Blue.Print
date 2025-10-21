@@ -11,6 +11,13 @@ const
   SOAP_BODY_NODENAME = 'SOAP-ENV:Body';
   SOAP_ENVELOP_NODENAME = 'SOAP-ENV:Envelope';
 
+{$IFDEF PAS2JS}
+  SSoapNamespace = 'http://schemas.xmlsoap.org/soap/envelope/'; { do not localize }
+  SSoap12Namespace = 'http://www.w3.org/2003/05/soap-envelope'; { do not localize }
+  SXMLSchemaURI_2001 = 'http://www.w3.org/2001/XMLSchema';
+  SXMLSchemaInstURI = 'http://www.w3.org/2001/XMLSchema-instance';
+{$ENDIF}
+
 type
 {$IFDEF PAS2JS}
   PTypeInfo = TTypeInfo;
