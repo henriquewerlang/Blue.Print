@@ -179,7 +179,7 @@ function TOpenAPI20SchemaLoader.GenerateSimpleType(const Module: TTypeModuleDefi
     Result.Name := TypeName;
 
     for var EnumeratorValue in Enumeration do
-      Result.Values.Add(EnumeratorValue.AsString);
+      Result.Values.Add(EnumeratorValue.ToString);
 
     Module.Enumerations.Add(Result);
   end;
