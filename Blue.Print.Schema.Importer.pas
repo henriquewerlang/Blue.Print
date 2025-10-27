@@ -534,7 +534,7 @@ const
 
 function CheckReservedName(const Name: String): String;
 const
-  SPECIAL_NAMES: array[0..15] of String = ('type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'string', 'const', 'not', 'in', 'file', 'is');
+  SPECIAL_NAMES: array[0..16] of String = ('type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'string', 'const', 'not', 'in', 'file', 'is', 'end');
 
 begin
   Result := Name;
