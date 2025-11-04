@@ -12,8 +12,9 @@ type
     FOpenAPIDefinitions: TDictionary<String, TOpenAPIDefinition>;
     FUnitFileConfiguration: TUnitFileConfiguration;
 
+    function CheckClassDefinition(const Module: TTypeModuleDefinition; const ClassSchema: Schema; const ClassName: String): TTypeDefinition;
     function CreateArrayDefinition(const Module: TTypeModuleDefinition; const TypeName: String; const ArrayItemType: TTypeDefinition): TTypeDefinition;
-    function GenerateClassDefinition(const Module: TTypeModuleDefinition; const ClassSchema: Schema; const ClassName: String): TTypeDefinition;
+    function FindSchemaReference(const Reference: String): Schema;
     function GenerateSimpleType(const Module: TTypeModuleDefinition; const TypeName: String; const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems; const Enumeration: TArray<TValue>): TTypeDefinition;
     function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const TypeName: String): TTypeDefinition;
     function GetSchemaReferenceName(const OpenAPISchema: Schema): String;
@@ -22,6 +23,7 @@ type
     function LoadSchemaReference(const Reference: String; out ReferenceName: String): TOpenAPIDefinition;
 
     procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+    procedure LoadClassDefinition(const ClassDefinition: TClassDefinition; const ClassSchema: Schema);
   public
     constructor Create(const Importer: TSchemaImporter);
 
@@ -65,6 +67,18 @@ const
 
 { TOpenAPI20SchemaLoader }
 
+function TOpenAPI20SchemaLoader.CheckClassDefinition(const Module: TTypeModuleDefinition; const ClassSchema: Schema; const ClassName: String): TTypeDefinition;
+begin
+  Result := FImporter.FindType(ClassName, Module);
+
+  if not Assigned(Result) then
+  begin
+    Result := FImporter.CreateClassDefinition(Module, ClassName);
+
+    LoadClassDefinition(Result.AsClassDefinition, ClassSchema);
+  end;
+end;
+
 constructor TOpenAPI20SchemaLoader.Create(const Importer: TSchemaImporter);
 begin
   inherited Create;
@@ -92,83 +106,16 @@ begin
   inherited;
 end;
 
-function TOpenAPI20SchemaLoader.GenerateClassDefinition(const Module: TTypeModuleDefinition; const ClassSchema: Schema; const ClassName: String): TTypeDefinition;
-var
-  ClassDefinition: TClassDefinition;
-  AnnonymusIndex: Integer;
-
-  procedure DefinePropety(const PropertyName: String; const PropertyType: TTypeDefinition);
-  begin
-    var NewProperty := TPropertyDefinition.Create;
-    NewProperty.Name := PropertyName;
-    NewProperty.PropertyType := PropertyType;
-    var Required := False;
-
-    if not Assigned(NewProperty.PropertyType) then
-      raise Exception.Create('Property type not found!');
-
-    for var RequiredName in ClassSchema.required do
-      Required := Required or (RequiredName = PropertyName);
-
-    NewProperty.Optional := not Required;
-
-    ClassDefinition.Properties.Add(NewProperty);
-  end;
-
-  procedure DefineProperties(const Properties: Schema);
-  begin
-    for var Prop in Properties.properties.schema do
-    begin
-      var PropertyName := Prop.Key;
-
-      DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, Prop.Value, PropertyName));
-    end;
-  end;
-
-  function GetPropertyName(const PropertySchema: Schema): String;
-  begin
-    if PropertySchema.IsRefStored then
-      Result := GetSchemaReferenceName(PropertySchema)
-    else
-    begin
-      Inc(AnnonymusIndex);
-
-      Result := ClassName;
-
-      if AnnonymusIndex > 1 then
-        Result := Result + AnnonymusIndex.ToString;
-    end;
-  end;
-
+function TOpenAPI20SchemaLoader.FindSchemaReference(const Reference: String): Schema;
 begin
-  Result := FImporter.FindType(ClassName, Module);
+  Result := nil;
+  var SchemaName := EmptyStr;
 
-  if not Assigned(Result) then
-  begin
-    AnnonymusIndex := 0;
-    ClassDefinition := FImporter.CreateClassDefinition(Module, ClassName);
-    Result := ClassDefinition;
+  var Schema := LoadSchemaReference(Reference, SchemaName);
 
-    DefineProperties(ClassSchema);
-
-    if ClassSchema.IsAllOfStored then
-      ClassDefinition.AddFlatAttribute;
-
-    for var AllOfSchema in ClassSchema.allOf do
-    begin
-      var PropertyName := GetPropertyName(AllOfSchema);
-
-      DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, AllOfSchema, PropertyName));
-    end;
-
-    if ClassSchema.IsXmlStored then
-    begin
-      ClassDefinition.AddAtribute('XML');
-
-      if ClassSchema.xml.name <> ClassName then
-        ClassDefinition.AddAtribute('DocumentName(''%s'')', [ClassSchema.xml.name]);
-    end;
-  end;
+  for var Definition in Schema.definitions.schema do
+    if Definition.Key = SchemaName then
+      Exit(Definition.Value);
 end;
 
 function TOpenAPI20SchemaLoader.GenerateSimpleType(const Module: TTypeModuleDefinition; const TypeName: String; const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems; const Enumeration: TArray<TValue>): TTypeDefinition;
@@ -227,7 +174,7 @@ begin
         Result := Module.AddDelayedType(GetSchemaReferenceName(OpenAPISchema))
       else if OpenAPISchema.IsTypeStored then
         case OpenAPISchema.&type.simpleTypes of
-          simpleTypes.&object: Result := GenerateClassDefinition(Module, OpenAPISchema, TypeName);
+          simpleTypes.&object: Result := CheckClassDefinition(Module, OpenAPISchema, TypeName);
           else Result := GenerateSimpleType(Module, TypeName, OpenAPISchema.&type.simpleTypes, nil, OpenAPISchema.enum);
         end
       else
@@ -276,17 +223,53 @@ var
     end;
 
     function FindReturnType: TTypeDefinition;
+    var
+      Schemas: TList<Response.TSchema>;
+
+      procedure AddSchema(const Schema: Response.TSchema);
+      begin
+        if Schema.IsSchemaStored and Schema.schema.IsRefStored then
+          for var SchemaToFind in Schemas do
+            if SchemaToFind.IsSchemaStored and SchemaToFind.schema.IsRefStored and (SchemaToFind.schema.ref = Schema.schema.ref) then
+              Exit;
+
+        Schemas.Add(Schema);
+      end;
+
+      function GetSchema(const Schema: Response.TSchema): Schema;
+      begin
+        if Schema.schema.IsRefStored then
+          Result := FindSchemaReference(Schema.schema.ref)
+        else
+          Result := Schema.schema;
+      end;
+
     begin
       Result := nil;
+      Schemas := TList<Response.TSchema>.Create;
 
       for var Return in Operation.responses.responseValue do
-      begin
         if Return.Value.response.IsSchemaStored then
-          Result := GenerateTypeDefinition(UnitDefinition, Return.Value.response.schema.schema, Method.Name + 'Return');
+          AddSchema(Return.Value.response.schema);
 
-        if Return.Key = '200' then
-          Break;
+      if Schemas.IsEmpty then
+      else
+      begin
+        var ReturnClassName := Method.Name + 'Return';
+
+        if Schemas.Count = 1 then
+          Result := GenerateTypeDefinition(UnitDefinition, Schemas.First.schema, ReturnClassName)
+        else
+        begin
+          Result := FImporter.CreateClassDefinition(UnitDefinition, ReturnClassName);
+
+          for var Schema in Schemas do
+            if Schema.IsSchemaStored then
+              LoadClassDefinition(Result.AsClassDefinition, GetSchema(Schema));
+        end;
       end;
+
+      Schemas.Free;
     end;
 
   begin
@@ -391,6 +374,88 @@ end;
 function TOpenAPI20SchemaLoader.GetSchemaReferenceName(const OpenAPISchema: Schema): String;
 begin
   LoadSchemaReference(OpenAPISchema.ref, Result);
+end;
+
+procedure TOpenAPI20SchemaLoader.LoadClassDefinition(const ClassDefinition: TClassDefinition; const ClassSchema: Schema);
+var
+  AnnonymusIndex: Integer;
+
+  function FindProperty(const PropertyName: String): Boolean;
+  begin
+    Result := False;
+
+    for var &Property in ClassDefinition.Properties do
+      Result := Result or SameText(&Property.Name, PropertyName);
+  end;
+
+  procedure DefinePropety(const PropertyName: String; const PropertyType: TTypeDefinition);
+  begin
+    if not FindProperty(PropertyName) then
+    begin
+      var NewProperty := TPropertyDefinition.Create;
+      NewProperty.Name := PropertyName;
+      NewProperty.PropertyType := PropertyType;
+      var Required := False;
+
+      if not Assigned(NewProperty.PropertyType) then
+        raise Exception.Create('Property type not found!');
+
+      for var RequiredName in ClassSchema.required do
+        Required := Required or (RequiredName = PropertyName);
+
+      NewProperty.Optional := not Required;
+
+      ClassDefinition.Properties.Add(NewProperty);
+    end;
+  end;
+
+  procedure DefineProperties(const Properties: Schema);
+  begin
+    for var Prop in Properties.properties.schema do
+    begin
+      var PropertyName := Prop.Key;
+
+      DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, Prop.Value, PropertyName));
+    end;
+  end;
+
+  function GetPropertyName(const PropertySchema: Schema): String;
+  begin
+    if PropertySchema.IsRefStored then
+      Result := GetSchemaReferenceName(PropertySchema)
+    else
+    begin
+      Inc(AnnonymusIndex);
+
+      Result := ClassName;
+
+      if AnnonymusIndex > 1 then
+        Result := Result + AnnonymusIndex.ToString;
+    end;
+  end;
+
+begin
+  AnnonymusIndex := 0;
+
+  DefineProperties(ClassSchema);
+
+  if ClassSchema.IsAllOfStored then
+    ClassDefinition.AddFlatAttribute;
+
+  for var AllOfSchema in ClassSchema.allOf do
+  begin
+    var PropertyName := GetPropertyName(AllOfSchema);
+
+    DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, AllOfSchema, PropertyName));
+  end;
+
+  if ClassSchema.IsXmlStored then
+  begin
+    ClassDefinition.AddAtribute('XML');
+
+    if ClassSchema.xml.name <> ClassName then
+      ClassDefinition.AddAtribute('DocumentName(''%s'')', [ClassSchema.xml.name]);
+  end;
 end;
 
 function TOpenAPI20SchemaLoader.LoadOpenAPIDefinition(const Reference: String): TOpenAPIDefinition;
