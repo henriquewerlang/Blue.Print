@@ -273,6 +273,8 @@ type
     procedure WhenTheMethodHasTheSOAP_RPC_AttributeMustLoadTheMethodNameInTheXMLAsExpected;
     [Test]
     procedure OnlyPublicRecordFieldCanBeSerialized;
+    [Test]
+    procedure WhenARecordFieldHasTheStoredAttributeMustOnlyLoadTheFieldIfTheStoredReturnTrue;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -376,6 +378,16 @@ type
     [FieldName('AnotherName')]
     [XMLAttributeValue]
     MyField: String;
+  end;
+
+  TMyRecordWithStore = record
+  private
+    MyFieldStored: Boolean;
+  public
+    [Stored('GetMyFieldStored')]
+    MyField: String;
+
+    function GetMyFieldStored: Boolean;
   end;
 
   TMyTValueClass = class
@@ -1693,6 +1705,17 @@ begin
   MyObject.Free;
 end;
 
+procedure TBluePrintXMLSerializerTest.WhenARecordFieldHasTheStoredAttributeMustOnlyLoadTheFieldIfTheStoredReturnTrue;
+begin
+  var MyRecord: TMyRecordWithStore;
+  MyRecord.MyField := 'abc';
+  MyRecord.MyFieldStored := False;
+
+  var Value := FSerializer.Serialize(TValue.From(MyRecord));
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyRecordWithStore/>'#13#10, Value);
+end;
+
 procedure TBluePrintXMLSerializerTest.WhenDeserializeAClassWithAnArrayPropertyMustLoadTheClassAsExpected;
 begin
   var Value := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithArray><MyArray>1</MyArray><MyArray>2</MyArray><MyArray>3</MyArray></TMyClassWithArray>'#13#10, TypeInfo(TMyClassWithArray)).AsType<TMyClassWithArray>;
@@ -2269,6 +2292,13 @@ begin
   FDynamicProperty.Free;
 
   inherited;
+end;
+
+{ TMyRecordWithStore }
+
+function TMyRecordWithStore.GetMyFieldStored: Boolean;
+begin
+  Result := MyFieldStored;
 end;
 
 end.

@@ -1292,10 +1292,22 @@ begin
 end;
 
 procedure TBluePrintXMLSerializer.SerializeFields(const RttiType: TRttiType; const Instance: TValue; const Node: IXMLNode; const Namespace: String);
+{$IFDEF DCC}
+var
+  Field: TRttiField;
+
+  function FieldStored: Boolean;
+  begin
+    var Stored := Field.GetAttribute<StoredAttribute>;
+
+    Result := not Assigned(Stored) or RttiType.GetMethod(Stored.Name).Invoke(Instance, []).AsBoolean;
+  end;
+{$ENDIF}
+
 begin
 {$IFDEF DCC}
-  for var Field in RttiType.GetFields do
-    if not LoadAttributeValue(Field, Instance.GetReferenceToRawData, Node) and (Field.Visibility = mvPublic) then
+  for Field in RttiType.GetFields do
+    if not LoadAttributeValue(Field, Instance.GetReferenceToRawData, Node) and (Field.Visibility = mvPublic) and FieldStored then
       SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetFieldName(Field)), Namespace, EmptyStr);
 {$ENDIF}
 end;
