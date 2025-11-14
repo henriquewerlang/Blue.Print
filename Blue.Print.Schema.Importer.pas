@@ -3234,21 +3234,33 @@ var
       Result := SchemaLoader.FindType(TypeName, UnitDefinition);
   end;
 
+  function AddParameter(const Name: String; const &Type: TTypeDefinition): TTypeParameterDefinition;
+  begin
+    Result := ServiceMethod.AddParameter;
+    Result.Name := Name;
+    Result.ParameterType := &Type;
+
+    if not IsRPCCall then
+      Result.AddNamespaceAttribute(XMLNameSpaceAttribute);
+  end;
+
+  function AddBodyParameter(const Name: String; const &Type: TTypeDefinition): TTypeParameterDefinition;
+  begin
+    Result := AddParameter(Name, &Type);
+
+    Result.AddAtribute('Body');
+  end;
+
+  function AddHeaderParameter(const Name: String; const &Type: TTypeDefinition): TTypeParameterDefinition;
+  begin
+    Result := AddParameter(Name, &Type);
+
+    Result.AddAtribute('SOAPHeader');
+  end;
+
   procedure CreateParameters(const Parameter: IParam);
   var
     Message: IMessage;
-
-    function AddParameter(const Name: String; const &Type: TTypeDefinition): TTypeParameterDefinition;
-    begin
-      Result := ServiceMethod.AddParameter;
-      Result.Name := Name;
-      Result.ParameterType := &Type;
-
-      Result.AddAtribute('Body');
-
-      if not IsRPCCall then
-        Result.AddNamespaceAttribute(XMLNameSpaceAttribute);
-    end;
 
   begin
     if Assigned(Parameter) then
@@ -3260,7 +3272,7 @@ var
         var Part := Message.Parts[A];
 
         if Part.Element.IsEmpty then
-          AddParameter(Part.Name, CheckPartType(Part))
+          AddBodyParameter(Part.Name, CheckPartType(Part))
         else
         begin
           var ElementType := FindType(Part.Element);
@@ -3268,14 +3280,14 @@ var
           var ElementTypeDefinition := SchemaLoader.FindType(ElementType.Name, UnitDefinition);
 
           if Assigned(ElementTypeDefinition) then
-            AddParameter(Part.Name, ElementTypeDefinition)
+            AddBodyParameter(Part.Name, ElementTypeDefinition)
           else if ElementType.IsComplex then
           begin
             var ComplexType := ElementType as IXMLComplexTypeDef;
 
             var ClassDefinition := FImporter.CreateClassDefinition(UnitDefinition, ComplexType.Name);
 
-            AddParameter(ComplexType.Name, ClassDefinition);
+            AddBodyParameter(ComplexType.Name, ClassDefinition);
 
             for var B := 0 to Pred(ComplexType.ElementDefs.Count) do
             begin
@@ -3285,9 +3297,50 @@ var
             end;
           end
           else
-            AddParameter(Part.Name, SchemaLoader.FindType(ElementType.Name, UnitDefinition));
+            AddBodyParameter(Part.Name, SchemaLoader.FindType(ElementType.Name, UnitDefinition));
         end;
       end;
+    end;
+  end;
+
+  function CheckMessageType(const Message: IMessage): TTypeDefinition;
+  var
+    Part: IPart;
+
+  begin
+    Result := nil;
+
+    for var A := 0 to Pred(Message.Parts.Count) do
+    begin
+      Part := Message.Parts[A];
+
+      if Part.Element.IsEmpty then
+      begin
+        var ClassDefinition := FImporter.CreateClassDefinition(UnitDefinition, Message.Name);
+        var PartProperty := ClassDefinition.AddProperty(Part.Name);
+        PartProperty.PropertyType := CheckPartType(Part);
+        Result := ClassDefinition;
+      end
+      else
+        Exit(CheckPartType(Part));
+    end;
+  end;
+
+  procedure CheckHeaderParameter(const Operation: IBindingOperation);
+  begin
+    var Header := Operation.Input.ChildNodes.FindNode(SHeader, SOAPNamespace);
+
+    if Assigned(Header) then
+    begin
+      var MessageType := CheckMessageType(FindMessage(Header.Attributes['message']));
+      var ParameterName := EmptyStr;
+
+      if Header.HasAttribute('name') then
+        ParameterName := Header.Attributes['name']
+      else
+        ParameterName := MessageType.Name;
+
+      AddHeaderParameter(ParameterName, MessageType);
     end;
   end;
 
@@ -3401,6 +3454,8 @@ begin
             ServiceMethod.AddAtribute('SOAPAction(''%s'')', [SOAPAction.Text]);
 
           ServiceInterface.Methods.Add(ServiceMethod);
+
+          CheckHeaderParameter(Operation);
 
           CreateParameters(PortTypeOperation.Input);
         end;
