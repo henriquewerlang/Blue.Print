@@ -22,7 +22,7 @@ type
 
   TImplementationInformation = (NeedDestructor, NeedGetFunction, NeedSetProcedure, NeedAddFunction, NeedIsStoredFunction, NeedIsStoredField);
   TImplementationInformations = set of TImplementationInformation;
-  TSchemaType = (XSD, JSON, OpenAPI20, OpenAPI30, OpenAPI31, WSDL);
+  TSchemaType = (XSD, JSON, OpenAPI20, OpenAPI30, OpenAPI31, WSDL, SOAP10);
 
   TUnitFileConfiguration = class
   private
@@ -647,7 +647,7 @@ end;
 
 function TSchemaImporter.CreateSchemaLoader(const UnitFileConfiguration: TUnitFileConfiguration): ISchemaLoader;
 const
-  FILE_SCHEMA_EXTENSION: array[TSchemaType] of String = ('xsd', 'json', 'oas2', 'oas3', 'oas31', 'wsdl');
+  FILE_SCHEMA_EXTENSION: array[TSchemaType] of String = ('xsd', 'json', 'oas2', 'oas3', 'oas31', 'wsdl', 'wsdl');
 
   function GetFileType: TSchemaType;
   begin
@@ -672,7 +672,8 @@ begin
     TSchemaType.OpenAPI20: Result := TOpenAPI20SchemaLoader.Create(Self);
     TSchemaType.OpenAPI30: Result := TOpenAPI30SchemaLoader.Create(Self);
     TSchemaType.OpenAPI31: Result := TOpenAPI31SchemaLoader.Create(Self);
-    TSchemaType.WSDL: Result := TWSDLSchemaLoader.Create(Self);
+    TSchemaType.WSDL, TSchemaType.SOAP10: Result := TWSDLSchemaLoader.Create(Self);
+    else Abort;
   end;
 end;
 
@@ -3333,11 +3334,9 @@ var
     if Assigned(Header) then
     begin
       var MessageType := CheckMessageType(FindMessage(Header.Attributes['message']));
-      var ParameterName := EmptyStr;
+      var ParameterName := Operation.Input.Name;
 
-      if Header.HasAttribute('name') then
-        ParameterName := Header.Attributes['name']
-      else
+      if ParameterName.IsEmpty then
         ParameterName := MessageType.Name;
 
       AddHeaderParameter(ParameterName, MessageType);
@@ -3345,28 +3344,8 @@ var
   end;
 
   function LoadReturnType(const Return: IParam): TTypeDefinition;
-  var
-    Message: IMessage;
-    Part: IPart;
-
   begin
-    Message := FindMessage(Return.Message);
-    Result := nil;
-
-    for var A := 0 to Pred(Message.Parts.Count) do
-    begin
-      Part := Message.Parts[A];
-
-      if Part.Element.IsEmpty then
-      begin
-        var ClassDefinition := FImporter.CreateClassDefinition(UnitDefinition, Message.Name);
-        var PartProperty := ClassDefinition.AddProperty(Part.Name);
-        PartProperty.PropertyType := CheckPartType(Part);
-        Result := ClassDefinition;
-      end
-      else
-        Exit(CheckPartType(Part));
-    end;
+    Result := CheckMessageType(FindMessage(Return.Message));
   end;
 
   function FindSOAPNode(const ParentNode: IXMLNode; const Name: String): IXMLNode;
@@ -3390,10 +3369,10 @@ begin
 
   WSDLDocument.LoadFromXML(FImporter.LoadFileFromConfiguration(UnitFileConfiguration));
 
-  if Assigned(WSDLDocument.Definition.FindNamespaceDecl(Soap12ns)) then
-    SOAPNamespace := Soap12ns
+  if UnitFileConfiguration.FileType = TSchemaType.SOAP10 then
+    SOAPNamespace := Soapns
   else
-    SOAPNamespace := Soapns;
+    SOAPNamespace := Soap12ns;
 
   for var A := 0 to Pred(WSDLDocument.Definition.Types.SchemaDefs.Count) do
   begin
