@@ -271,6 +271,8 @@ type
     procedure WhenSerializeAClassWithTheFlatAttributeMustLoadOnlyThePropertyFromThePropertiesFromTheFlatClass;
     [Test]
     procedure WhenTheMethodHasTheSOAP_RPC_AttributeMustLoadTheMethodNameInTheXMLAsExpected;
+    [Test]
+    procedure OnlyPublicRecordFieldCanBeSerialized;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -1597,6 +1599,17 @@ begin
 end;
 
 { TBluePrintXMLSerializerTest }
+
+procedure TBluePrintXMLSerializerTest.OnlyPublicRecordFieldCanBeSerialized;
+begin
+  var MyRecord: TMyPrivateRecord;
+  MyRecord.MyPublicField := 'abc';
+  MyRecord.MyPrivateField := 'def';
+
+  var Value := FSerializer.Serialize(TValue.From(MyRecord));
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyPrivateRecord><MyPublicField>abc</MyPublicField></TMyPrivateRecord>'#13#10, Value);
+end;
 
 procedure TBluePrintXMLSerializerTest.OnlyPublishedPropertiesCantBeSerialized;
 begin

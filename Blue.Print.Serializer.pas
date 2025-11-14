@@ -390,7 +390,7 @@ var
 
 begin
   for Field in RttiType.GetFields do
-    if Field.Visibility in [mvPublic, mvPublished] then
+    if Field.Visibility = mvPublic then
       JSONObject.AddPair(Field.Name, SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData)));
 end;
 
@@ -1295,7 +1295,7 @@ procedure TBluePrintXMLSerializer.SerializeFields(const RttiType: TRttiType; con
 begin
 {$IFDEF DCC}
   for var Field in RttiType.GetFields do
-    if not LoadAttributeValue(Field, Instance.GetReferenceToRawData, Node) then
+    if not LoadAttributeValue(Field, Instance.GetReferenceToRawData, Node) and (Field.Visibility = mvPublic) then
       SerializeType(Field.FieldType, Field.GetValue(Instance.GetReferenceToRawData), Node.AddChild(GetFieldName(Field)), Namespace, EmptyStr);
 {$ENDIF}
 end;
