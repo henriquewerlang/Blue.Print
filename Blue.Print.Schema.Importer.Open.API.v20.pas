@@ -90,13 +90,6 @@ end;
 function TOpenAPI20SchemaLoader.CreateArrayDefinition(const Module: TTypeModuleDefinition; const TypeName: String; const ArrayItemType: TTypeDefinition): TTypeDefinition;
 begin
   Result := TTypeArrayDefinition.Create(Module, ArrayItemType);
-
-  if Module.IsUnitDefinition then
-  begin
-    Result := FImporter.CreateTypeAlias(Module, TypeName, Result);
-
-    Module.AsUnitDefinition.AddTypeAlias(Result.AsTypeAlias);
-  end;
 end;
 
 destructor TOpenAPI20SchemaLoader.Destroy;
