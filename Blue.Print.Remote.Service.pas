@@ -406,7 +406,7 @@ var
     LoadValuesFromParameters(Method,
       procedure(Parameter: TRttiParameter; ParameterAttribute: TParameterAttribute; Value: TValue)
       begin
-        SOAPEnvelop.AddPart(Parameter, Value);
+        SOAPEnvelop.AddBodyPart(Parameter, Value);
       end, TParameterType.Body, Args);
 
     LoadContentType(Method);

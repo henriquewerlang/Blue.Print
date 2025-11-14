@@ -10,6 +10,7 @@ uses System.Rtti, System.Classes, System.SysUtils, System.TypInfo, System.Generi
 const
   SOAP_BODY_NODENAME = 'SOAP-ENV:Body';
   SOAP_ENVELOP_NODENAME = 'SOAP-ENV:Envelope';
+  SOAP_HEADER_NODENAME = 'SOAP-ENV:Header';
 
 {$IFDEF PAS2JS}
   SSoapNamespace = 'http://schemas.xmlsoap.org/soap/envelope/'; { do not localize }
@@ -277,7 +278,9 @@ type
   end;
 
   SOAP_RPCAttribute = class(TCustomAttribute)
+  end;
 
+  SOAPHeader = class(TCustomAttribute)
   end;
 
   TFormatAttribute = class(TCustomAttribute)
@@ -337,7 +340,7 @@ type
 {$ENDIF}
   end;
 
-  TSOAPBody = record
+  TSOAPParts = record
   public
     Parts: TArray<TPair<TRttiParameter, TValue>>;
   end;
@@ -347,13 +350,19 @@ type
   [XMLAttribute('xmlns:xsi', SXMLSchemaInstURI)]
   TSOAPEnvelop = record
   public
+    [NodeName(SOAP_HEADER_NODENAME)]
+    [Stored('GetSOAPHeaderStored')]
+    SOAPHeader: TSOAPParts;
     [NodeName(SOAP_BODY_NODENAME)]
-    SOAPBody: TSOAPBody;
+    SOAPBody: TSOAPParts;
     [XMLAttributeValue]
     [FieldName('xmlns:SOAP-ENV')]
     SOAPNameSpace: String;
 
-    procedure AddPart(const Parameter: TRttiParameter; const Value: TValue);
+    function GetSOAPHeaderStored: Boolean;
+
+    procedure AddBodyPart(const Parameter: TRttiParameter; const Value: TValue);
+    procedure AddHeaderPart(const Parameter: TRttiParameter; const Value: TValue);
   end;
 
   TDynamicProperty<V> = class(TList<TPair<String, V>>)
@@ -838,9 +847,19 @@ end;
 
 { TSOAPEnvelop }
 
-procedure TSOAPEnvelop.AddPart(const Parameter: TRttiParameter; const Value: TValue);
+procedure TSOAPEnvelop.AddBodyPart(const Parameter: TRttiParameter; const Value: TValue);
 begin
   SOAPBody.Parts := SOAPBody.Parts + [TPair<TRttiParameter, TValue>.Create(Parameter, Value)];
+end;
+
+procedure TSOAPEnvelop.AddHeaderPart(const Parameter: TRttiParameter; const Value: TValue);
+begin
+  SOAPHeader.Parts := SOAPHeader.Parts + [TPair<TRttiParameter, TValue>.Create(Parameter, Value)];
+end;
+
+function TSOAPEnvelop.GetSOAPHeaderStored: Boolean;
+begin
+  Result := Assigned(SOAPHeader.Parts);
 end;
 
 end.

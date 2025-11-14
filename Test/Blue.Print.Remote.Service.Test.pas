@@ -163,6 +163,8 @@ type
     procedure WhenTheProcedureIsSOAPVersion12MustLoadTheNamespaceWithTheValueExpected;
     [Test]
     procedure WhenTheProcedureIsSOAPVersion11MustLoadTheNamespaceWithTheValueExpected;
+    [Test]
+    procedure TheSOAPRecordMustReturnTrueInTheHeaderStoredIfAnyPartyIsLoaded;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -474,6 +476,15 @@ begin
   Service.SoapNamedMethod(EmptyStr);
 
   Assert.AreEqual('application/soap+xml;action=MyService/MyAction;charset=utf-8', FCommunication.Header['Content-Type']);
+end;
+
+procedure TRemoteServiceTest.TheSOAPRecordMustReturnTrueInTheHeaderStoredIfAnyPartyIsLoaded;
+begin
+  var SOAP: TSOAPEnvelop;
+
+  SOAP.AddHeaderPart(nil, nil);
+
+  Assert.IsTrue(SOAP.GetSOAPHeaderStored);
 end;
 
 procedure TRemoteServiceTest.WhenAFunctionIsCalledMustDeserializeTheValueBeforeReturingTheValueForTheCaller;

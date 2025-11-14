@@ -275,6 +275,8 @@ type
     procedure OnlyPublicRecordFieldCanBeSerialized;
     [Test]
     procedure WhenARecordFieldHasTheStoredAttributeMustOnlyLoadTheFieldIfTheStoredReturnTrue;
+    [Test]
+    procedure WhenTheProcedureHasTheSOAPHeaderAttributeMustLoadTheSOAPHeaderHasExpected;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -808,6 +810,7 @@ type
     procedure ProcedureWithNameSpace(const Param1: Integer);
     [SOAP_RPC]
     procedure RPCProcedure(const Param: String);
+    procedure MyHeader([SOAPHeader] const Header: String);
   end;
 
 implementation
@@ -2020,7 +2023,7 @@ begin
   var RttiMethod := RttiInterface.GetMethod('MyMethod');
   var SOAPEnvelop: TSOAPEnvelop;
 
-  SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], 'abc');
+  SOAPEnvelop.AddBodyPart(RttiMethod.GetParameters[0], 'abc');
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV=""><SOAP-ENV:Body><MyParam>abc</MyParam></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPEnvelop)));
@@ -2043,7 +2046,7 @@ begin
   var RttiMethod := RttiInterface.GetMethod('MyMethod');
   var SOAPEnvelop: TSOAPEnvelop;
 
-  SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], 'abc');
+  SOAPEnvelop.AddBodyPart(RttiMethod.GetParameters[0], 'abc');
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV=""><SOAP-ENV:Body><MyParam>abc</MyParam></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPEnvelop)));
@@ -2096,7 +2099,7 @@ begin
   var RttiMethod := RttiInterface.GetMethod('RPCProcedure');
   var SOAPEnvelop: TSOAPEnvelop;
 
-  SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], 'abc');
+  SOAPEnvelop.AddBodyPart(RttiMethod.GetParameters[0], 'abc');
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV="">'
     + '<SOAP-ENV:Body><RPCProcedure><Param>abc</Param></RPCProcedure></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPEnvelop)));
@@ -2112,10 +2115,26 @@ begin
   var RttiMethod := RttiInterface.GetMethod('MyMethodWithParamAttribute');
   var SOAPEnvelop: TSOAPEnvelop;
 
-  SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], 'abc');
+  SOAPEnvelop.AddBodyPart(RttiMethod.GetParameters[0], 'abc');
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV=""><SOAP-ENV:Body><MyParam MyAttribute="MyValue">abc</MyParam></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPEnvelop)));
+
+  RttiContext.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenTheProcedureHasTheSOAPHeaderAttributeMustLoadTheSOAPHeaderHasExpected;
+begin
+  var RttiContext := TRttiContext.Create;
+  var RttiInterface := RttiContext.GetType(TypeInfo(ISOAPService));
+
+  var RttiMethod := RttiInterface.GetMethod('MyHeader');
+  var SOAPEnvelop: TSOAPEnvelop;
+
+  SOAPEnvelop.AddHeaderPart(RttiMethod.GetParameters[0], 'abc');
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV="">'
+    + '<SOAP-ENV:Header><Header>abc</Header></SOAP-ENV:Header><SOAP-ENV:Body/></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPEnvelop)));
 
   RttiContext.Free;
 end;
@@ -2128,7 +2147,7 @@ begin
   var RttiMethod := RttiInterface.GetMethod('ProcedureWithNameSpace');
   var SOAPEnvelop: TSOAPEnvelop;
 
-  SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], nil);
+  SOAPEnvelop.AddBodyPart(RttiMethod.GetParameters[0], nil);
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV="">'
     + '<SOAP-ENV:Body><ProcedureWithNameSpace xmlns="MyNamespace"><Param1/></ProcedureWithNameSpace></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPEnvelop)));
@@ -2211,7 +2230,7 @@ begin
   var RttiMethod := RttiInterface.GetMethod('MyMethodWithNamespace');
   var SOAPEnvelop: TSOAPEnvelop;
 
-  SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], nil);
+  SOAPEnvelop.AddBodyPart(RttiMethod.GetParameters[0], nil);
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV="">'
     + '<SOAP-ENV:Body><MyParam xmlns="MySpace"/></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPEnvelop)));
@@ -2227,9 +2246,9 @@ begin
   var RttiMethod := RttiInterface.GetMethod('MoreThanOneParameter');
   var SOAPEnvelop: TSOAPEnvelop;
 
-  SOAPEnvelop.AddPart(RttiMethod.GetParameters[0], 123);
-  SOAPEnvelop.AddPart(RttiMethod.GetParameters[1], 'abc');
-  SOAPEnvelop.AddPart(RttiMethod.GetParameters[2], 'def');
+  SOAPEnvelop.AddBodyPart(RttiMethod.GetParameters[0], 123);
+  SOAPEnvelop.AddBodyPart(RttiMethod.GetParameters[1], 'abc');
+  SOAPEnvelop.AddBodyPart(RttiMethod.GetParameters[2], 'def');
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV=""><SOAP-ENV:Body><MoreThanOneParameter><Param1>123</Param1><Param2>abc</Param2><Param3>def</Param3></MoreThanOneParameter></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10,
     FSerializer.Serialize(TValue.From(SOAPEnvelop)));

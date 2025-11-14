@@ -1370,9 +1370,9 @@ begin
     tkMRecord,
     tkRecord:
     begin
-      if Value.TypeInfo = TypeInfo(TSOAPBody) then
+      if Value.TypeInfo = TypeInfo(TSOAPParts) then
       begin
-        var SOAPBody := Value.AsType<TSOAPBody>;
+        var SOAPBody := Value.AsType<TSOAPParts>;
 
         ParentNode := nil;
 
