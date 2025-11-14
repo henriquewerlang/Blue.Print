@@ -280,7 +280,7 @@ type
   SOAP_RPCAttribute = class(TCustomAttribute)
   end;
 
-  SOAPHeader = class(TCustomAttribute)
+  SOAPHeader = class(BodyAttribute)
   end;
 
   TFormatAttribute = class(TCustomAttribute)

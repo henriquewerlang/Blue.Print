@@ -165,6 +165,10 @@ type
     procedure WhenTheProcedureIsSOAPVersion11MustLoadTheNamespaceWithTheValueExpected;
     [Test]
     procedure TheSOAPRecordMustReturnTrueInTheHeaderStoredIfAnyPartyIsLoaded;
+    [Test]
+    procedure WhenTheParameterHasTheSOAPHeaderAttributeMustLoadTheSOAPHeaderInformationInTheSOAPRecord;
+    [Test]
+    procedure WhenLoadTheSOAPHeaderCantLoadTheSOAPBodyInformation;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -342,6 +346,7 @@ type
     [SOAPAction('MyService/MyAction')]
     procedure SoapNamedMethod(const [Body] Body: String);
     procedure MoreThanOneParameter(const [Body] Value1, [Body] Value2, [Body] Value3: String);
+    procedure SOAPHeader([SOAPHeader] const MyHeader: String);
   end;
 
 implementation
@@ -667,6 +672,15 @@ begin
   Assert.AreEqual('/IInheritedServiceTest/TestProcedure', FCommunication.URL);
 end;
 
+procedure TRemoteServiceTest.WhenLoadTheSOAPHeaderCantLoadTheSOAPBodyInformation;
+begin
+  var Service := GetRemoteService<ISOAPService>('Host');
+
+  Service.SOAPHeader('Value');
+
+  Assert.AreEqual(0, Length(FSerializer.SerializeValue.AsType<TSOAPEnvelop>.SOAPBody.Parts));
+end;
+
 procedure TRemoteServiceTest.WhenSendASOAPRequestMustSerializeTheSOAPEnvelopInTheRequest;
 begin
   var Service := GetRemoteService<ISOAPService>('Host');
@@ -934,6 +948,15 @@ begin
   Service.GetHeaderValue(ValueHeader);
 
   Assert.AreEqual('Value', ValueHeader);
+end;
+
+procedure TRemoteServiceTest.WhenTheParameterHasTheSOAPHeaderAttributeMustLoadTheSOAPHeaderInformationInTheSOAPRecord;
+begin
+  var Service := GetRemoteService<ISOAPService>('Host');
+
+  Service.SOAPHeader('Value');
+
+  Assert.AreEqual(1, Length(FSerializer.SerializeValue.AsType<TSOAPEnvelop>.SOAPHeader.Parts));
 end;
 
 procedure TRemoteServiceTest.WhenTheParameterHasTheVarDirectiveMustLoadTheHeaderValueInTheParamterValue;

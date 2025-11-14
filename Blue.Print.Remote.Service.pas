@@ -406,7 +406,10 @@ var
     LoadValuesFromParameters(Method,
       procedure(Parameter: TRttiParameter; ParameterAttribute: TParameterAttribute; Value: TValue)
       begin
-        SOAPEnvelop.AddBodyPart(Parameter, Value);
+        if ParameterAttribute is SOAPHeader then
+          SOAPEnvelop.AddHeaderPart(Parameter, Value)
+        else
+          SOAPEnvelop.AddBodyPart(Parameter, Value);
       end, TParameterType.Body, Args);
 
     LoadContentType(Method);
