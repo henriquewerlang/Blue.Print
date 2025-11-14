@@ -522,6 +522,8 @@ type
     destructor Destroy; override;
   end;
 
+function OnlyValidChars(const Value: String): String;
+
 implementation
 
 uses System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, System.Generics.Defaults, Xml.XMLIntf, XML.XMLDom, Xml.XMLSchemaTags, Soap.WSDLBind, Soap.WSDLIntf, System.Hash, Blue.Print.Serializer,

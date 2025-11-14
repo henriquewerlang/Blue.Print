@@ -269,6 +269,9 @@ var
     Method := TTypeMethodDefinition.Create;
     Method.Name := Operation.operationId;
 
+    if Method.Name.IsEmpty then
+      Method.Name := OnlyValidChars(RemoteName);
+
     AddRemoteName(Method, RemoteName);
 
     Method.Return := FindReturnType;
