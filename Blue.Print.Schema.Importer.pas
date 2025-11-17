@@ -470,6 +470,8 @@ type
     function CheckClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef): TTypeDefinition;
     function CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
     function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
+    function GetAttributeDataType(const Attribute: IXMLAttributeDef): IXMLTypeDef;
+    function GetElementDataType(const Element: IXMLElementDef): IXMLTypeDef;
     function FindBaseType(const TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
     function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef): TTypeDefinition;
@@ -1191,7 +1193,7 @@ begin
   for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
   begin
     var Attribute := ComplexType.AttributeDefs[A];
-    var &Property := AddProperty(ClassDefinition, Attribute.Name, Attribute.DataType);
+    var &Property := AddProperty(ClassDefinition, Attribute.Name, GetAttributeDataType(Attribute));
 
     AddPropertyAttribute(&Property, Attribute);
   end;
@@ -1272,15 +1274,17 @@ function TXSDSchemaLoader.GenerateProperty(const ClassDefinition: TClassDefiniti
   end;
 
 begin
-  if ElementDefinition.DataType.IsComplex then
+  var ElementDataType := GetElementDataType(ElementDefinition);
+
+  if ElementDataType.IsComplex then
   begin
-    var ComplexType := ElementDefinition.DataType as IXMLComplexTypeDef;
+    var ComplexType := ElementDataType as IXMLComplexTypeDef;
 
     if (ComplexType.ElementDefs.Count = 0) and (ComplexType.AttributeDefs.Count = 1) and ComplexType.AttributeDefs[0].HasAttribute(SFixed) then
     begin
       var Attribute := ComplexType.AttributeDefs[0];
 
-      Result := CreateProperty(Attribute.DataType);
+      Result := CreateProperty(GetAttributeDataType(Attribute));
 
       AddPropertyAttribute(Result, Attribute);
     end
@@ -1293,7 +1297,7 @@ begin
   end
   else
   begin
-    Result := CreateProperty(ElementDefinition.DataType);
+    Result := CreateProperty(ElementDataType);
 
     var FixedValue := ElementDefinition.AttributeNodes.FindNode(SFixed);
 
@@ -1336,6 +1340,50 @@ begin
     CheckUnitTypeDefinition(Schema.SchemaDef.ComplexTypes[A], UnitDefinition);
 
   GenerateClassDefinitionFromSchema(UnitFileConfiguration, UnitDefinition, Schema.SchemaDef);
+end;
+
+function TXSDSchemaLoader.GetAttributeDataType(const Attribute: IXMLAttributeDef): IXMLTypeDef;
+begin
+  if Attribute.RefName.IsEmpty then
+    Result := Attribute.DataType
+  else if Assigned(Attribute.Ref) then
+    Result := Attribute.Ref.DataType
+  else
+  begin
+    var SchemaDefinition := Attribute.SchemaDef;
+
+    while Assigned(SchemaDefinition) do
+    begin
+      var SchemaAttribute := SchemaDefinition.AttributeDefs.Find(Attribute.RefName);
+
+      if Assigned(SchemaAttribute) then
+        Exit(SchemaAttribute.DataType);
+
+      SchemaDefinition := SchemaDefinition.NextSibling as IXMLSchemaDef;
+    end;
+  end;
+end;
+
+function TXSDSchemaLoader.GetElementDataType(const Element: IXMLElementDef): IXMLTypeDef;
+begin
+  if Element.RefName.IsEmpty then
+    Result := Element.DataType
+  else if Assigned(Element.Ref) then
+    Result := Element.Ref.DataType
+  else
+  begin
+    var SchemaDefinition := Element.SchemaDef;
+
+    while Assigned(SchemaDefinition) do
+    begin
+      var SchemaElement := SchemaDefinition.ElementDefs.Find(Element.RefName);
+
+      if Assigned(SchemaElement) then
+        Exit(SchemaElement.DataType);
+
+      SchemaDefinition := SchemaDefinition.NextSibling as IXMLSchemaDef;
+    end;
+  end;
 end;
 
 procedure TXSDSchemaLoader.LoadXSDTypes;
@@ -3204,7 +3252,7 @@ var
         var Element := Schema.ElementDefs[B];
 
         if CompareNames(Element.Name, Name) then
-          Exit(Element.DataType);
+          Exit(SchemaLoader.GetElementDataType(Element));
       end;
     end;
   end;
@@ -3285,7 +3333,7 @@ var
             begin
               var Element := ComplexType.ElementDefs[0];
 
-              SchemaLoader.AddProperty(ClassDefinition, Element.Name, Element.DataType);
+              SchemaLoader.AddProperty(ClassDefinition, Element.Name, SchemaLoader.GetElementDataType(Element));
             end;
           end
           else
@@ -3374,8 +3422,6 @@ begin
 
     for var B := 0 to Pred(Schema.SimpleTypes.Count) do
       SchemaLoader.CheckUnitTypeDefinition(Schema.SimpleTypes[B], UnitDefinition);
-
-    SchemaLoader.GenerateClassDefinitionFromSchema(UnitFileConfiguration, UnitDefinition, Schema);
   end;
 
   for var A := 0 to Pred(WSDLDocument.Definition.Services.Count) do
