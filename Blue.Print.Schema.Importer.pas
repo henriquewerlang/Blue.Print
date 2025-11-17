@@ -466,16 +466,15 @@ type
     FImporter: TSchemaImporter;
     FXMLBuildInType: TDictionary<String, TTypeDefinition>;
 
-    function AddProperty(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef; const IsReferenceType: Boolean): TPropertyDefinition;
-    function CanGenerateClass(const Element: IXMLElementDef): Boolean;
+    function AddProperty(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef): TPropertyDefinition;
     function CheckClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef): TTypeDefinition;
     function CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
     function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TUnitDefinition): TTypeDefinition;
     function FindBaseType(const TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
     function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef): TTypeDefinition;
+    function GenerateClassDefinitionFromSchema(const UnitFileConfiguration: TUnitFileConfiguration; const ParentModule: TTypeModuleDefinition; const SchemaDefinition: IXMLSchemaDef): TClassDefinition;
     function GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef): TPropertyDefinition;
-    function IsReferenceType(const Element: IXMLTypedSchemaItem): Boolean;
 
     procedure AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList);
@@ -533,6 +532,11 @@ const
   DEFAULT_SCHEMA_CLASS_NAME = 'Schema';
   REFERENCE_SEPARATOR = '#';
   WHITE_SPACE_IDENT = '  ';
+
+function CompareNames(const Name1, Name2: String): Boolean;
+begin
+  Result := SameText(ExtractLocalName(Name1), ExtractLocalName(Name2));
+end;
 
 function CheckReservedName(const Name: String): String;
 const
@@ -1014,22 +1018,17 @@ begin
   &Property.Optional := (Attribute.Use <> NULL) and (Attribute.Use = 'optional');
 end;
 
-function TXSDSchemaLoader.AddProperty(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef; const IsReferenceType: Boolean): TPropertyDefinition;
+function TXSDSchemaLoader.AddProperty(const ClassDefinition: TClassDefinition; const Name: String; const &Type: IXMLTypeDef): TPropertyDefinition;
 
   function CheckPropertyTypeDefinition: TTypeDefinition;
   begin
     Result := FindType(&Type.Name, ClassDefinition);
 
     if not Assigned(Result) then
-      if IsReferenceType then
-        Result := ClassDefinition.UnitDefinition.AddDelayedType(&Type.Name)
-      else
-      begin
-        Result := CheckTypeDefinition(&Type, ClassDefinition);
+      Result := CheckTypeDefinition(&Type, ClassDefinition);
 
-        if not Assigned(Result) then
-          Result := FindBaseType(&Type, ClassDefinition);
-      end;
+    if not Assigned(Result) then
+      Result := FindBaseType(&Type, ClassDefinition);
 
     if not Assigned(Result) then
       raise Exception.CreateFmt('Type %s not found for the property %s!', [&Type.Name, Name]);
@@ -1038,11 +1037,6 @@ function TXSDSchemaLoader.AddProperty(const ClassDefinition: TClassDefinition; c
 begin
   Result := ClassDefinition.AddProperty(Name);
   Result.PropertyType := CheckPropertyTypeDefinition;
-end;
-
-function TXSDSchemaLoader.CanGenerateClass(const Element: IXMLElementDef): Boolean;
-begin
-  Result := Element.DataType.IsComplex and not IsReferenceType(Element);
 end;
 
 constructor TXSDSchemaLoader.Create(const Importer: TSchemaImporter);
@@ -1197,16 +1191,45 @@ begin
   for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
   begin
     var Attribute := ComplexType.AttributeDefs[A];
-    var &Property := AddProperty(ClassDefinition, Attribute.Name, Attribute.DataType, IsReferenceType(Attribute));
+    var &Property := AddProperty(ClassDefinition, Attribute.Name, Attribute.DataType);
 
     AddPropertyAttribute(&Property, Attribute);
   end;
 
   if Assigned(ComplexType.BaseType) then
   begin
-    var &Property := AddProperty(ClassDefinition, 'Value', ComplexType.BaseType, False);
+    var &Property := AddProperty(ClassDefinition, 'Value', ComplexType.BaseType);
 
     &Property.AddXMLValueAttribute;
+  end;
+end;
+
+function TXSDSchemaLoader.GenerateClassDefinitionFromSchema(const UnitFileConfiguration: TUnitFileConfiguration; const ParentModule: TTypeModuleDefinition; const SchemaDefinition: IXMLSchemaDef): TClassDefinition;
+begin
+  Result := nil;
+
+  if SchemaDefinition.ElementDefs.Count > 0 then
+  begin
+    if not UnitFileConfiguration.UnitClassName.IsEmpty then
+      Result := FImporter.CreateClassDefinition(ParentModule, UnitFileConfiguration.UnitClassName)
+    else if not UnitFileConfiguration.AppendClassName.IsEmpty then
+    begin
+      var ClassType := FImporter.FindTypeInUnits(ParentModule, UnitFileConfiguration.AppendClassName);
+
+      if not Assigned(ClassType) then
+        ClassType := FImporter.CreateClassDefinition(ParentModule, UnitFileConfiguration.AppendClassName);
+
+      Result := ClassType.AsClassDefinition;
+    end;
+
+    for var A := 0 to Pred(SchemaDefinition.ElementDefs.Count) do
+    begin
+      if not Assigned(Result) then
+        raise Exception.CreateFmt('The file %s must have a "UnitClassName" in the configuration!', [UnitFileConfiguration.Reference]);
+
+      var &Property := GenerateProperty(Result, SchemaDefinition.ElementDefs[A]);
+      &Property.Optional := &Property.Optional or not UnitFileConfiguration.AppendClassName.IsEmpty;
+    end;
   end;
 end;
 
@@ -1241,7 +1264,7 @@ function TXSDSchemaLoader.GenerateProperty(const ClassDefinition: TClassDefiniti
 
   function CreateProperty(const TypeDefinition: IXMLTypeDef): TPropertyDefinition;
   begin
-    Result := AddProperty(ClassDefinition, ElementDefinition.Name, TypeDefinition, IsReferenceType(ElementDefinition));
+    Result := AddProperty(ClassDefinition, ElementDefinition.Name, TypeDefinition);
     Result.Optional := IsOptional(ElementDefinition);
 
     if ElementDefinition.IsRepeating then
@@ -1249,7 +1272,7 @@ function TXSDSchemaLoader.GenerateProperty(const ClassDefinition: TClassDefiniti
   end;
 
 begin
-  if CanGenerateClass(ElementDefinition) then
+  if ElementDefinition.DataType.IsComplex then
   begin
     var ComplexType := ElementDefinition.DataType as IXMLComplexTypeDef;
 
@@ -1312,36 +1335,7 @@ begin
   for var A := 0 to Pred(Schema.SchemaDef.ComplexTypes.Count) do
     CheckUnitTypeDefinition(Schema.SchemaDef.ComplexTypes[A], UnitDefinition);
 
-  if Schema.SchemaDef.ElementDefs.Count > 0 then
-  begin
-    var ClassDefinition: TClassDefinition := nil;
-
-    if not UnitFileConfiguration.UnitClassName.IsEmpty then
-      ClassDefinition := FImporter.CreateClassDefinition(UnitDefinition, UnitFileConfiguration.UnitClassName)
-    else if not UnitFileConfiguration.AppendClassName.IsEmpty then
-    begin
-      var ClassType := FImporter.FindTypeInUnits(UnitDefinition, UnitFileConfiguration.AppendClassName);
-
-      if not Assigned(ClassType) then
-        ClassType := FImporter.CreateClassDefinition(UnitDefinition, UnitFileConfiguration.AppendClassName);
-
-      ClassDefinition := ClassType.AsClassDefinition;
-    end;
-
-    for var A := 0 to Pred(Schema.SchemaDef.ElementDefs.Count) do
-    begin
-      if not Assigned(ClassDefinition) then
-        raise Exception.CreateFmt('The file %s must have a "UnitClassName" in the configuration!', [UnitFileConfiguration.Reference]);
-
-      var &Property := GenerateProperty(ClassDefinition, Schema.SchemaDef.ElementDefs[A]);
-      &Property.Optional := &Property.Optional or not UnitFileConfiguration.AppendClassName.IsEmpty;
-    end;
-  end;
-end;
-
-function TXSDSchemaLoader.IsReferenceType(const Element: IXMLTypedSchemaItem): Boolean;
-begin
-  Result := Supports(Element, IXMLElementDef) and Assigned((Element as IXMLElementDef).Ref) or Supports(Element, IXMLAttributeDef) and Assigned((Element as IXMLAttributeDef).Ref) or Assigned(Element.AttributeNodes.FindNode('type'));
+  GenerateClassDefinitionFromSchema(UnitFileConfiguration, UnitDefinition, Schema.SchemaDef);
 end;
 
 procedure TXSDSchemaLoader.LoadXSDTypes;
@@ -3132,11 +3126,6 @@ var
   XMLNameSpaceAttribute: String;
   WSDLDocument: IWSDLDocument;
 
-  function CompareNames(const Name1, Name2: String): Boolean;
-  begin
-    Result := SameText(ExtractLocalName(Name1), ExtractLocalName(Name2));
-  end;
-
   function FindBinding(const Name: String): IBinding;
   begin
     for var A := 0 to Pred(WSDLDocument.Definition.Bindings.Count) do
@@ -3296,7 +3285,7 @@ var
             begin
               var Element := ComplexType.ElementDefs[0];
 
-              SchemaLoader.AddProperty(ClassDefinition, Element.Name, Element.DataType, False);
+              SchemaLoader.AddProperty(ClassDefinition, Element.Name, Element.DataType);
             end;
           end
           else
@@ -3385,6 +3374,8 @@ begin
 
     for var B := 0 to Pred(Schema.SimpleTypes.Count) do
       SchemaLoader.CheckUnitTypeDefinition(Schema.SimpleTypes[B], UnitDefinition);
+
+    SchemaLoader.GenerateClassDefinitionFromSchema(UnitFileConfiguration, UnitDefinition, Schema);
   end;
 
   for var A := 0 to Pred(WSDLDocument.Definition.Services.Count) do
