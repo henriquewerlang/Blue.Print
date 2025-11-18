@@ -12,11 +12,7 @@ type
     FSerializer: IBluePrintSerializer;
   public
     [Test]
-    procedure WhenSerializeAStringMustReturnTheStringInTheReturnValue;
-    [Test]
     procedure WhenSerializeAnIntegerMustReturnTheValueConvertedInString;
-    [Test]
-    procedure WhenSerializeAnEnumeretorMustReturnTheNameOfEnumeration;
     [Test]
     procedure WhenDeserializeAStringMustReturnTheStringInTheReturnValue;
     [Test]
@@ -26,13 +22,7 @@ type
     [Test]
     procedure WhenSerializeAnFloatNumberMustReturnTheStringAsExpected;
     [Test]
-    procedure WhenSerializeABooleanValueMustReturnTheValueAsExpected;
-    [Test]
     procedure WhenDeserializeABooleanValueMustReturnTheValueAsExpected;
-    [Test]
-    procedure WhenSerializeASimpleTypeTheContentTypeMustBePlainText;
-    [Test]
-    procedure WhenSerializeAnEnumerationWithTheEnumValueAttributeMustSerializeTheValueFromAttribute;
     [Test]
     procedure WhenDeserializeAnEnumerationWithTheEnumValueAttributeMustUseTheAttributeNameToReturnTheEnumerationValue;
     [Test]
@@ -166,6 +156,14 @@ type
     procedure WhenLoadAFlatEnumeratorClassWithAnotherEnumeratorClassMustLoadTheObjectAsExpected;
     [Test]
     procedure WhenSerializeAClassWithTheFlatAttributeMustLoadOnlyThePropertyFromThePropertiesFromTheFlatClass;
+    [Test]
+    procedure WhenSerializeAStringMustReturnTheStringInTheReturnValue;
+    [Test]
+    procedure WhenSerializeAnEnumeretorMustReturnTheNameOfEnumeration;
+    [Test]
+    procedure WhenSerializeABooleanValueMustReturnTheValueAsExpected;
+    [Test]
+    procedure WhenSerializeAnEnumerationWithTheEnumValueAttributeMustSerializeTheValueFromAttribute;
   end;
 
   [TestFixture]
@@ -885,27 +883,6 @@ begin
   Assert.AreEqual('abc', Value.ToString);
 end;
 
-procedure TBluePrintSerializerTest.WhenSerializeABooleanValueMustReturnTheValueAsExpected;
-begin
-  var Value := FSerializer.Serialize(TValue.From(True));
-
-  Assert.AreEqual('True', Value);
-end;
-
-procedure TBluePrintSerializerTest.WhenSerializeAnEnumerationWithTheEnumValueAttributeMustSerializeTheValueFromAttribute;
-begin
-  var Value := FSerializer.Serialize(TValue.From(TMyEnumWithAttribute.MyValue3));
-
-  Assert.AreEqual('abc', Value);
-end;
-
-procedure TBluePrintSerializerTest.WhenSerializeAnEnumeretorMustReturnTheNameOfEnumeration;
-begin
-  var Value := FSerializer.Serialize(TValue.From(TMyEnum.MyValue));
-
-  Assert.AreEqual('MyValue', Value);
-end;
-
 procedure TBluePrintSerializerTest.WhenSerializeAnFloatNumberMustReturnTheStringAsExpected;
 begin
   var Value := FSerializer.Serialize(123.456);
@@ -918,20 +895,6 @@ begin
   var Value := FSerializer.Serialize(123);
 
   Assert.AreEqual('123', Value);
-end;
-
-procedure TBluePrintSerializerTest.WhenSerializeASimpleTypeTheContentTypeMustBePlainText;
-begin
-  FSerializer.Serialize('abc');
-
-  Assert.AreEqual(CONTENTTYPE_TEXT_PLAIN, FSerializer.ContentType);
-end;
-
-procedure TBluePrintSerializerTest.WhenSerializeAStringMustReturnTheStringInTheReturnValue;
-begin
-  var Value := FSerializer.Serialize('abc');
-
-  Assert.AreEqual('abc', Value);
 end;
 
 procedure TBluePrintSerializerTest.WhenTheClassHasMoreThanOneConstructorCantRaiseAnyError;
@@ -1459,6 +1422,13 @@ begin
   MyObject.Free;
 end;
 
+procedure TBluePrintJsonSerializerTest.WhenSerializeABooleanValueMustReturnTheValueAsExpected;
+begin
+  var Value := FSerializer.Serialize(TValue.From(True));
+
+  Assert.AreEqual('true', Value);
+end;
+
 procedure TBluePrintJsonSerializerTest.WhenSerializeAClassReferenceMustGenerateTheFullQualifiedNameOfTheClass;
 begin
   var ClassValue: TClass := TMyObject;
@@ -1524,6 +1494,20 @@ begin
   Assert.AreEqual('[123,456,789]', Value);
 end;
 
+procedure TBluePrintJsonSerializerTest.WhenSerializeAnEnumerationWithTheEnumValueAttributeMustSerializeTheValueFromAttribute;
+begin
+  var Value := FSerializer.Serialize(TValue.From(TMyEnumWithAttribute.MyValue3));
+
+  Assert.AreEqual('"abc"', Value);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenSerializeAnEnumeretorMustReturnTheNameOfEnumeration;
+begin
+  var Value := FSerializer.Serialize(TValue.From(TMyEnum.MyValue));
+
+  Assert.AreEqual('"MyValue"', Value);
+end;
+
 procedure TBluePrintJsonSerializerTest.WhenSerializeAnObjectMustGenerateTheJSONAsExpected;
 begin
   var MyObject := TMyObject.Create;
@@ -1577,6 +1561,13 @@ begin
   var Value := FSerializer.Serialize(TValue.From(MyRecord));
 
   Assert.AreEqual('{"MyField1":"abc","MyField2":123,"MyField3":123.456,"MyField4":"MyValue"}', Value);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenSerializeAStringMustReturnTheStringInTheReturnValue;
+begin
+  var Value := FSerializer.Serialize('abc');
+
+  Assert.AreEqual('"abc"', Value);
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenTheDynamicPropertyHasThePatternPropertyAttributeAndTheFieldPassInTheRegexValidationMustLoadTheValueInThisProperty;

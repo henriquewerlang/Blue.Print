@@ -345,27 +345,14 @@ var
   JSON: TJSONValue;
 
 begin
-  case Value.Kind of
-{$IFDEF DCC}
-    tkMRecord,
-{$ENDIF}
-    tkArray,
-    tkClass,
-    tkClassRef,
-    tkDynArray,
-    tkRecord:
-    begin
-      JSON := SerializeType(FContext.GetType(Value.TypeInfo), Value);
+  JSON := SerializeType(FContext.GetType(Value.TypeInfo), Value);
 
-      FContentType := CONTENTTYPE_APPLICATION_JSON;
-      Result := {$IFDEF DCC}JSON.ToJSON{$ELSE}TJSJSON.stringify(JSON){$ENDIF};
+  FContentType := CONTENTTYPE_APPLICATION_JSON;
+  Result := {$IFDEF DCC}JSON.ToJSON{$ELSE}TJSJSON.stringify(JSON){$ENDIF};
 
 {$IFDEF DCC}
-      JSON.Free;
+  JSON.Free;
 {$ENDIF}
-    end;
-    else Result := inherited;
-  end;
 end;
 
 function TBluePrintJSONSerializer.SerializeArray(const RttiType: TRttiType; const Value: TValue): TJSONArray;
