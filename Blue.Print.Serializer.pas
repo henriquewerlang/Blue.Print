@@ -675,30 +675,16 @@ var
   JSON: TJSONValue;
 
 begin
-  case TypeInfo.Kind of
-{$IFDEF DCC}
-    tkMRecord,
-{$ENDIF}
-    tkArray,
-    tkClass,
-    tkClassRef,
-    tkDynArray,
-    tkRecord:
-    begin
-      JSON := {$IFDEF PAS2JS}TJSJSON.Parse{$ELSE}TJSONValue.ParseJSONValue{$ENDIF}(Value);
+  JSON := {$IFDEF PAS2JS}TJSJSON.Parse{$ELSE}TJSONValue.ParseJSONValue{$ENDIF}(Value);
 
-      try
-        Result := DeserializeType(FContext.GetType(TypeInfo), JSON);
-      finally
+  try
+    Result := DeserializeType(FContext.GetType(TypeInfo), JSON);
+  finally
 {$IFDEF PAS2JS}
-        JSON := nil;
+    JSON := nil;
 {$ELSE}
-        JSON.Free;
+    JSON.Free;
 {$ENDIF}
-      end;
-    end;
-
-    else Result := inherited;
   end;
 end;
 
