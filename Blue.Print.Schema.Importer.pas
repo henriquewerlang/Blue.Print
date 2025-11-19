@@ -2225,7 +2225,7 @@ var
     end;
   end;
 
-  procedure DeclareMethod(const Method: TTypeMethodDefinition);
+  procedure DeclareMethod(const &Interface: TTypeInterfaceDefinition; const Method: TTypeMethodDefinition);
 
     function GetMethodType: String;
     begin
@@ -2276,15 +2276,24 @@ var
 
       if not Result.IsEmpty then
         Result := Format('(%s)', [Result]);
+    end;
 
-      if Assigned(Method.Return) then
-        Result := Result + Format(': %s', [GetTypeName(Method.Return)]);
+    function GetOverloadInformation: String;
+    begin
+      for var MethodOverload in &Interface.Methods do
+        if MethodOverload.Name = Method.Name then
+          if Result.IsEmpty then
+            Result := ' overload;'
+          else
+            Exit;
+
+      Result := EmptyStr;
     end;
 
   begin
     LoadAttributes('    ', Method);
 
-    AddLine('    %s %s%s;', [GetMethodType, Method.Name, GetParameters, GetMethodReturn]);
+    AddLine('    %s %s%s%s;%s', [GetMethodType, Method.Name, GetParameters, GetMethodReturn, GetOverloadInformation]);
   end;
 
   function GetInterfaceFunction(const &Interface: TTypeInterfaceDefinition; const LoadDefaultURL: Boolean): String;
@@ -2369,7 +2378,7 @@ begin
     AddLine('    [''{%s-%s-%s-%s-%s}'']', [GUIDValue.Substring(0, 8), GUIDValue.Substring(8, 4), GUIDValue.Substring(12, 4), GUIDValue.Substring(16, 4), GUIDValue.Substring(20, 12)]);
 
     for var Method in &Interface.Methods do
-      DeclareMethod(Method);
+      DeclareMethod(&Interface, Method);
 
     AddLine('  end;');
 
