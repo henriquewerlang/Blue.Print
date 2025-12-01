@@ -85,6 +85,10 @@ type
     procedure WhenTheReturnIsAnTStreamClassMustLoadTheContentStreamPropertyInTheWebResponse;
     [Test]
     procedure WhenTheReturningStreamIsTheBluePrintStreamMustLoadTheContentValueAsExpected;
+    [Test]
+    procedure WhenTheRequestHasAQueryFieldCantUseTheSerializerToLoadTheParams;
+    [Test]
+    procedure WhenTheRequestHasAPathValueCantUseTheSerializerToLoadTheParams;
   end;
 
   TMyService = class
@@ -192,16 +196,15 @@ end;
 
 procedure TBluePrintWebModuleTest.IfTheQueryFieldIsRepeatedMustReplaceTheValueAndDontRaiseAnyError;
 begin
-  FSerializer.DeserializeValues := ['Value1', 'Value2', 'Value3', 'Value4'];
   var Request := TWebRequestMock.Create('GET', '/MyService/MyProc2');
-  Request.QueryFields := 'Param1=V&Param2=V&Param2=V&Param2=V';
+  Request.QueryFields := 'Param1=V1&Param2=V2&Param2=V3&Param2=V4';
 
   InitContext(TWebResponseMock.Create(Request));
 
   FWebAppServices.HandleRequest;
 
   Assert.AreEqual('MyProc2', FMyService.ProcedureCalled);
-  Assert.AreEqual('Value1,Value4', FMyService.ParamsOfProcedureCalled);
+  Assert.AreEqual('V1,V4', FMyService.ParamsOfProcedureCalled);
 end;
 
 procedure TBluePrintWebModuleTest.InitContext(const Request: TWebResponse);
@@ -368,16 +371,15 @@ end;
 
 procedure TBluePrintWebModuleTest.WhenTheProcedureHasMoreTheOneVersionMustCheckTheParamCountToCallTheCorrectProcedure;
 begin
-  FSerializer.DeserializeValues := ['Value1', 'Value2'];
   var Request := TWebRequestMock.Create('GET', '/MyService/SameName');
-  Request.QueryFields := 'Param1=V&Param2=V';
+  Request.QueryFields := 'Param1=V1&Param2=V2';
 
   InitContext(TWebResponseMock.Create(Request));
 
   FWebAppServices.HandleRequest;
 
   Assert.AreEqual('SameName', FMyService.ProcedureCalled);
-  Assert.AreEqual('Value1,Value2', FMyService.ParamsOfProcedureCalled);
+  Assert.AreEqual('V1,V2', FMyService.ParamsOfProcedureCalled);
 end;
 
 procedure TBluePrintWebModuleTest.WhenTheRequestDontHaveEnoughParamsMustRaiseABadRequestError;
@@ -409,7 +411,7 @@ end;
 
 procedure TBluePrintWebModuleTest.WhenTheRequestHasABodyMustLoadTheBodyValueInTheLastParamFromTheMethod;
 begin
-  FSerializer.DeserializeValues := ['Value1', 'Value2'];
+  FSerializer.DeserializeValues := ['Value1'];
   var Request := TWebRequestMock.Create('GET', '/MyService/SameName/P1');
   Request.ContentLength := 25;
 
@@ -418,7 +420,36 @@ begin
   FWebAppServices.HandleRequest;
 
   Assert.AreEqual('SameName', FMyService.ProcedureCalled);
-  Assert.AreEqual('Value1,Value2', FMyService.ParamsOfProcedureCalled);
+  Assert.AreEqual('P1,Value1', FMyService.ParamsOfProcedureCalled);
+end;
+
+procedure TBluePrintWebModuleTest.WhenTheRequestHasAPathValueCantUseTheSerializerToLoadTheParams;
+begin
+  InitContext(TWebResponseMock.Create(TWebRequestMock.Create('GET', '/MyService/MyProc2/V1/V2')));
+
+  Assert.WillNotRaise(
+    procedure
+    begin
+      FWebAppServices.HandleRequest;
+    end);
+
+  Assert.AreEqual('V1,V2', FMyService.ParamsOfProcedureCalled);
+end;
+
+procedure TBluePrintWebModuleTest.WhenTheRequestHasAQueryFieldCantUseTheSerializerToLoadTheParams;
+begin
+  var Request := TWebRequestMock.Create('GET', '/MyService/MyProc2');
+  Request.QueryFields := 'Param1=V1&Param2=V2';
+
+  InitContext(TWebResponseMock.Create(Request));
+
+  Assert.WillNotRaise(
+    procedure
+    begin
+      FWebAppServices.HandleRequest;
+    end);
+
+  Assert.AreEqual('V1,V2', FMyService.ParamsOfProcedureCalled);
 end;
 
 procedure TBluePrintWebModuleTest.WhenTheRequestHasPathParamsMustLoadThisValuesInTheParamsOfTheProcedureCalled;
@@ -484,14 +515,14 @@ procedure TBluePrintWebModuleTest.WhenTheRequestSendQueryFieldsMustLoadTheParamV
 begin
   FSerializer.DeserializeValues := ['Value1', 'Value2'];
   var Request := TWebRequestMock.Create('GET', '/MyService/MyProc2');
-  Request.QueryFields := 'Param1=V&Param2=V';
+  Request.QueryFields := 'Param1=V1&Param2=V2';
 
   InitContext(TWebResponseMock.Create(Request));
 
   FWebAppServices.HandleRequest;
 
   Assert.AreEqual('MyProc2', FMyService.ProcedureCalled);
-  Assert.AreEqual('Value1,Value2', FMyService.ParamsOfProcedureCalled);
+  Assert.AreEqual('V1,V2', FMyService.ParamsOfProcedureCalled);
 end;
 
 procedure TBluePrintWebModuleTest.WhenTheReturningStreamIsTheBluePrintStreamMustLoadTheContentValueAsExpected;

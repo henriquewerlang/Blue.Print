@@ -73,7 +73,7 @@ type
 
 implementation
 
-uses System.Math, System.NetConsts, System.Generics.Collections, Blue.Print.Serializer;
+uses System.Math, System.NetConsts, System.Generics.Collections, System.NetEncoding, Blue.Print.Serializer;
 
 { TBluePrintWebModule }
 
@@ -166,11 +166,21 @@ var
   var
     Parameters: TList<TRttiParameter>;
 
-    procedure LoadParameterValue(const Parameter: TRttiParameter; const Value: String);
+    procedure LoadParameterValue(const Parameter: TRttiParameter; const Value: TValue);
     begin
       Parameters.Extract(Parameter);
 
-      Result[TArray.IndexOf<TRttiParameter>(Method.GetParameters, Parameter)] := Serializer.Deserialize(Value, Parameter.ParamType.Handle);
+      Result[TArray.IndexOf<TRttiParameter>(Method.GetParameters, Parameter)] := Value;
+    end;
+
+    procedure DecodeParameterValue(const Parameter: TRttiParameter; const Value: String);
+    begin
+      LoadParameterValue(Parameter, TNetEncoding.URL.Decode(Value));
+    end;
+
+    procedure DeserializeParameterValue(const Parameter: TRttiParameter; const Value: String);
+    begin
+      LoadParameterValue(Parameter, Serializer.Deserialize(Value, Parameter.ParamType.Handle));
     end;
 
     function FindParameterByName(const ParameterName: String): TRttiParameter;
@@ -197,13 +207,13 @@ var
 
     try
       for var A := PARAMS_INDEX to High(Params) do
-        LoadParameterValue(GetCurrentParameter, Params[A]);
+        DecodeParameterValue(GetCurrentParameter, Params[A]);
 
       for var A := 0 to Pred(Request.QueryFields.Count) do
-        LoadParameterValue(FindParameterByName(Request.QueryFields.Names[A]), Request.QueryFields.ValueFromIndex[A]);
+        DecodeParameterValue(FindParameterByName(Request.QueryFields.Names[A]), Request.QueryFields.ValueFromIndex[A]);
 
       if Request.ContentLength > 0 then
-        LoadParameterValue(Parameters.First, Request.Content);
+        DeserializeParameterValue(Parameters.First, Request.Content);
 
       if not Parameters.IsEmpty then
         raise EHTTPErrorBadRequest.Create('Parameter count mismatch!');
