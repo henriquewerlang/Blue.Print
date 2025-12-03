@@ -59,7 +59,7 @@ type
     function IsString(const JSONValue: TJSONValue): Boolean;
   protected
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
-    function DeserializeArray(const RttiType: TRttiType; const JSONArray: TJSONArray): TValue;
+    function DeserializeArray(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
     function DeserializeClassReference(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
     function DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue; virtual;
     function Serialize(const Value: TValue): String;
@@ -574,7 +574,7 @@ begin
           DeserializeProperties(RttiType, Result.AsObject, TJSONObject(JSONValue));
       end;
 
-    tkArray, tkDynArray: Result := DeserializeArray(RttiType, TJSONArray(JSONValue));
+    tkArray, tkDynArray: Result := DeserializeArray(RttiType, JSONValue);
 
 {$IFDEF DCC}
     tkMRecord,
@@ -691,27 +691,33 @@ begin
   end;
 end;
 
-function TBluePrintJSONSerializer.DeserializeArray(const RttiType: TRttiType; const JSONArray: TJSONArray): TValue;
+function TBluePrintJSONSerializer.DeserializeArray(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
 var
   ArrayElementType: TRttiType;
   ArrayItems: TArray<TValue>;
   Count: Integer;
   Index: Integer;
+  JSONArray: TJSONArray absolute JSONValue;
 
 begin
-  Count := JSONArray.{$IFDEF PAS2JS}Length{$ELSE}Count{$ENDIF};
+  if JSONValue.Null then
+    ArrayItems := nil
+  else
+  begin
+    Count := JSONArray.{$IFDEF PAS2JS}Length{$ELSE}Count{$ENDIF};
 
-  SetLength(ArrayItems, Count);
+    SetLength(ArrayItems, Count);
 
 {$IFDEF DCC}
-  if RttiType is TRttiArrayType then
-    ArrayElementType := TRttiArrayType(RttiType).ElementType
-  else
+    if RttiType is TRttiArrayType then
+      ArrayElementType := TRttiArrayType(RttiType).ElementType
+    else
 {$ENDIF}
-    ArrayElementType := TRttiDynamicArrayType(RttiType).ElementType;
+      ArrayElementType := TRttiDynamicArrayType(RttiType).ElementType;
 
-  for Index := 0 to Pred(Count) do
-    ArrayItems[Index] := DeserializeType(ArrayElementType, JSONArray[Index]);
+    for Index := 0 to Pred(Count) do
+      ArrayItems[Index] := DeserializeType(ArrayElementType, JSONArray[Index]);
+  end;
 
   Result := TValue.FromArray(RttiType.Handle, ArrayItems);
 end;

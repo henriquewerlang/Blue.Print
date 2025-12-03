@@ -164,6 +164,8 @@ type
     procedure WhenDeserializeABooleanValueMustReturnTheValueAsExpected;
     [Test]
     procedure WhenDeserializeAnEnumerationWithTheEnumValueAttributeMustUseTheAttributeNameToReturnTheEnumerationValue;
+    [Test]
+    procedure WhenDeserializeANullValueArrayCantRaiseAnyError;
   end;
 
   [TestFixture]
@@ -1301,6 +1303,15 @@ begin
   Assert.AreEqual(TMyEnum.MyValue, Value.MyProp4);
 
   Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeANullValueArrayCantRaiseAnyError;
+begin
+  Assert.WillNotRaise(
+    procedure
+    begin
+      FSerializer.Deserialize('null', TypeInfo(TArray<Integer>));
+    end);
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAPropertyTypeOfTDynamicPropertyMustLoadTheFieldNameFromJSONInTheKeyValueOfTheDynamicPropertyProperty;
