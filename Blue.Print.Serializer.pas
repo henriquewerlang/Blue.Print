@@ -612,7 +612,10 @@ begin
 {$IFDEF DCC}
   Result := TJSONString(JSONValue).Value;
 {$ELSE}
-  Result := String(JSONValue);
+  if IsString(JSONValue) then
+    Result := String(JSONValue)
+  else
+    Result := TJSJSON.Stringify(JSONValue);
 {$ENDIF}
 end;
 
