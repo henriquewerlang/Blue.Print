@@ -285,6 +285,13 @@ type
 
     function AddParameter: TTypeParameterDefinition;
 
+    procedure AddDeleteAttribute;
+    procedure AddGetAttribute;
+    procedure AddOptionsAttribute;
+    procedure AddPatchAttribute;
+    procedure AddPostAttribute;
+    procedure AddPutAttribute;
+
     property Name: String read FName write FName;
     property Parameters: TList<TTypeParameterDefinition> read FParameters;
     property Return: TTypeDefinition read FReturn write FReturn;
@@ -3141,11 +3148,41 @@ end;
 
 { TTypeMethodDefinition }
 
+procedure TTypeMethodDefinition.AddDeleteAttribute;
+begin
+  AddAtribute('Delete');
+end;
+
+procedure TTypeMethodDefinition.AddGetAttribute;
+begin
+  AddAtribute('Get');
+end;
+
+procedure TTypeMethodDefinition.AddOptionsAttribute;
+begin
+  AddAtribute('Options');
+end;
+
 function TTypeMethodDefinition.AddParameter: TTypeParameterDefinition;
 begin
   Result := TTypeParameterDefinition.Create;
 
   Parameters.Add(Result);
+end;
+
+procedure TTypeMethodDefinition.AddPatchAttribute;
+begin
+  AddAtribute('Patch');
+end;
+
+procedure TTypeMethodDefinition.AddPostAttribute;
+begin
+  AddAtribute('Post');
+end;
+
+procedure TTypeMethodDefinition.AddPutAttribute;
+begin
+  AddAtribute('Put');
 end;
 
 constructor TTypeMethodDefinition.Create;

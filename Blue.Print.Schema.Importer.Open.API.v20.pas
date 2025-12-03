@@ -187,9 +187,9 @@ var
     TypeDefinition.AddAtribute('RemoteName(''%s'')', [RemoteName]);
   end;
 
-  procedure AddMethod(const Operation: Operation; const RemoteName: String);
+  function AddMethod(const Operation: Operation; const RemoteName: String): TTypeMethodDefinition;
   var
-    Method: TTypeMethodDefinition;
+    Method: TTypeMethodDefinition absolute Result;
 
     function AddParameter(const Name: String; const ParameterType: TTypeDefinition): TTypeParameterDefinition; overload;
     begin
@@ -266,15 +266,15 @@ var
     end;
 
   begin
-    Method := TTypeMethodDefinition.Create;
-    Method.Name := Operation.operationId;
+    Result := TTypeMethodDefinition.Create;
+    Result.Name := Operation.operationId;
 
-    if Method.Name.IsEmpty then
-      Method.Name := OnlyValidChars(RemoteName);
+    if Result.Name.IsEmpty then
+      Result.Name := OnlyValidChars(RemoteName);
 
-    AddRemoteName(Method, RemoteName);
+    AddRemoteName(Result, RemoteName);
 
-    Method.Return := FindReturnType;
+    Result.Return := FindReturnType;
 
     for var ParameterDefinitionItem in Operation.parameters do
     begin
@@ -345,22 +345,22 @@ begin
   for var PathItem in FOpenAPIDefinition.paths.pathItem do
   begin
     if PathItem.Value.IsGetStored then
-      AddMethod(PathItem.Value.get, PathItem.Key);
+      AddMethod(PathItem.Value.get, PathItem.Key).AddGetAttribute;
 
     if PathItem.Value.IsPostStored then
-      AddMethod(PathItem.Value.post, PathItem.Key);
+      AddMethod(PathItem.Value.post, PathItem.Key).AddPostAttribute;
 
     if PathItem.Value.IsPutStored then
-      AddMethod(PathItem.Value.put, PathItem.Key);
+      AddMethod(PathItem.Value.put, PathItem.Key).AddPutAttribute;
 
     if PathItem.Value.IsDeleteStored then
-      AddMethod(PathItem.Value.delete, PathItem.Key);
+      AddMethod(PathItem.Value.delete, PathItem.Key).AddDeleteAttribute;
 
     if PathItem.Value.IsOptionsStored then
-      AddMethod(PathItem.Value.options, PathItem.Key);
+      AddMethod(PathItem.Value.options, PathItem.Key).AddOptionsAttribute;
 
     if PathItem.Value.IsPatchStored then
-      AddMethod(PathItem.Value.patch, PathItem.Key);
+      AddMethod(PathItem.Value.patch, PathItem.Key).AddPatchAttribute;
 
     if PathItem.Value.IsHeadStored then
       AddMethod(PathItem.Value.head, PathItem.Key);
