@@ -54,7 +54,8 @@ type
     function CreateNumber(const Value: Double): TJSONValue;
     function CreateString(const Value: String): TJSONValue;
     function GetNumber(const JSONValue: TJSONValue): Double;
-    function GetString(const JSONValue: TJSONValue): String; inline;
+    function GetString(const JSONValue: TJSONValue): String;
+    function IsNull(const JSONValue: TJSONValue): Boolean;
     function IsNumber(const JSONValue: TJSONValue): Boolean;
     function IsString(const JSONValue: TJSONValue): Boolean;
   protected
@@ -562,7 +563,7 @@ begin
     tkClassRef: Result := DeserializeClassReference(RttiType, JSONValue);
 
     tkClass:
-      if {$IFDEF PAS2JS}JSONValue = NULL{$ELSE}JSONValue.Null{$ENDIF} then
+      if IsNull(JSONValue) then
         TValue.Make(nil, RttiType.Handle, Result)
       else
       begin
@@ -617,6 +618,11 @@ begin
   else
     Result := TJSJSON.Stringify(JSONValue);
 {$ENDIF}
+end;
+
+function TBluePrintJSONSerializer.IsNull(const JSONValue: TJSONValue): Boolean;
+begin
+  Result := {$IFDEF PAS2JS}JSONValue = NULL{$ELSE}JSONValue.Null{$ENDIF};
 end;
 
 function TBluePrintJSONSerializer.IsNumber(const JSONValue: TJSONValue): Boolean;
@@ -700,7 +706,7 @@ var
   JSONArray: TJSONArray absolute JSONValue;
 
 begin
-  if JSONValue.Null then
+  if IsNull(JSONValue) then
     ArrayItems := nil
   else
   begin
