@@ -194,8 +194,11 @@ var
     function AddParameter(const Name: String; const ParameterType: TTypeDefinition): TTypeParameterDefinition; overload;
     begin
       Result := Method.AddParameter;
-      Result.Name := Name;
+      Result.Name := OnlyValidChars(Name);
       Result.ParameterType := ParameterType;
+
+      if Result.Name <> Name then
+        Result.AddAtribute('Query(''%s'')', [Name]);
     end;
 
     function AddParameter(const Name: String; const OpenAPISchema: Schema): TTypeParameterDefinition; overload;
