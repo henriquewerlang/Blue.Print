@@ -3216,7 +3216,6 @@ var
   ServiceInterface: TTypeInterfaceDefinition;
   ServiceMethod: TTypeMethodDefinition;
   SchemaLoader: TXSDSchemaLoader;
-  SOAPNamespace: String;
   XMLNameSpaceAttribute: String;
   WSDLDocument: IWSDLDocument;
 
@@ -3412,9 +3411,17 @@ var
     end;
   end;
 
+  function FindSOAPNode(const ParentNode: IXMLNode; const Name: String): IXMLNode;
+  begin
+    Result := ParentNode.ChildNodes.FindNode(Name, Soap12ns);
+
+    if not Assigned(Result) then
+      Result := ParentNode.ChildNodes.FindNode(Name, Soapns);
+  end;
+
   procedure CheckHeaderParameter(const Operation: IBindingOperation);
   begin
-    var Header := Operation.Input.ChildNodes.FindNode(SHeader, SOAPNamespace);
+    var Header := FindSOAPNode(Operation.Input, SHeader);
 
     if Assigned(Header) then
     begin
@@ -3433,11 +3440,6 @@ var
     Result := CheckMessageType(FindMessage(Return.Message));
   end;
 
-  function FindSOAPNode(const ParentNode: IXMLNode; const Name: String): IXMLNode;
-  begin
-    Result := ParentNode.ChildNodes.FindNode(Name, SOAPNamespace);
-  end;
-
   function FindSOAPOperation: IXMLNode;
   begin
     Result := FindSOAPNode(Operation, SOperation);
@@ -3453,11 +3455,6 @@ begin
   WSDLDocument := NewWSDLDoc;
 
   WSDLDocument.LoadFromXML(FImporter.LoadFileFromConfiguration(UnitFileConfiguration));
-
-  if UnitFileConfiguration.FileType = TSchemaType.SOAP10 then
-    SOAPNamespace := Soapns
-  else
-    SOAPNamespace := Soap12ns;
 
   for var A := 0 to Pred(WSDLDocument.Definition.Types.SchemaDefs.Count) do
   begin
@@ -3512,7 +3509,7 @@ begin
             ServiceMethod.AddNamespaceAttribute(XMLNameSpaceAttribute);
           end;
 
-          if SOAPNamespace = Soapns then
+          if SOAPOperation.NamespaceURI = Soapns then
             ServiceMethod.AddAtribute('Header(''SOAPAction'', ''%s'')', [SOAPAction.Text])
           else
             ServiceMethod.AddAtribute('SOAPAction(''%s'')', [SOAPAction.Text]);
