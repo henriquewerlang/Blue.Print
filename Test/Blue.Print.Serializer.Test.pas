@@ -277,6 +277,8 @@ type
     procedure WhenARecordFieldHasTheStoredAttributeMustOnlyLoadTheFieldIfTheStoredReturnTrue;
     [Test]
     procedure WhenTheProcedureHasTheSOAPHeaderAttributeMustLoadTheSOAPHeaderHasExpected;
+    [Test]
+    procedure WhenTheNodeNameHasANamespaceMustUseTheLocalNameToFindTheProperty;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -2107,6 +2109,15 @@ begin
     + '<SOAP-ENV:Body><RPCProcedure><Param>abc</Param></RPCProcedure></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPEnvelop)));
 
   RttiContext.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenTheNodeNameHasANamespaceMustUseTheLocalNameToFindTheProperty;
+begin
+  var Value := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<ns:TMyClassWithNode xmlns:ns="http://myshema.com"><ns:MyNode>abc</ns:MyNode></ns:TMyClassWithNode>'#13#10, TypeInfo(TMyClassWithNode)).AsType<TMyClassWithNode>;
+
+  Assert.AreEqual('abc', Value.MyProperty);
+
+  Value.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenTheParameterHasXMLAttributesThisValueMustBeLoadedInTheXMLAsExpected;

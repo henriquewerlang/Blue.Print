@@ -1050,7 +1050,7 @@ const
       FindPropertyValue.SetValue(Instance, TValue.FromVariant(Node.NodeValue))
     else
     begin
-      var Prop := FindPropertyByName(RttiType, Node.NodeName);
+      var Prop := FindPropertyByName(RttiType, Node.LocalName);
 
       if Assigned(Prop) then
       begin
