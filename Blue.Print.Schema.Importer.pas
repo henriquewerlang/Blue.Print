@@ -1193,8 +1193,6 @@ begin
   var ClassDefinition := FImporter.CreateClassDefinition(ParentModule, ComplexType.Name);
   Result := ClassDefinition;
 
-  ClassDefinition.AddNamespaceAttribute(VarToStr(ComplexType.SchemaDef.TargetNamespace));
-
   GenerateProperties(ClassDefinition, ComplexType.ElementDefList);
 
   for var A := 0 to Pred(ComplexType.AttributeDefs.Count) do
@@ -1238,6 +1236,9 @@ begin
 
       var &Property := GenerateProperty(Result, SchemaDefinition.ElementDefs[A]);
       &Property.Optional := &Property.Optional or not UnitFileConfiguration.AppendClassName.IsEmpty;
+
+      if not SchemaDefinition.ElementDefs[A].HasAttribute('type') then
+        &Property.PropertyType.AddNamespaceAttribute(VarToStr(SchemaDefinition.TargetNamespace));
     end;
   end;
 end;
@@ -1344,7 +1345,7 @@ begin
     CheckUnitTypeDefinition(Schema.SchemaDef.SimpleTypes[A], UnitDefinition);
 
   for var A := 0 to Pred(Schema.SchemaDef.ComplexTypes.Count) do
-    CheckUnitTypeDefinition(Schema.SchemaDef.ComplexTypes[A], UnitDefinition);
+    CheckUnitTypeDefinition(Schema.SchemaDef.ComplexTypes[A], UnitDefinition).AddNamespaceAttribute(VarToStr(Schema.SchemaDef.TargetNamespace));
 
   GenerateClassDefinitionFromSchema(UnitFileConfiguration, UnitDefinition, Schema.SchemaDef);
 end;
