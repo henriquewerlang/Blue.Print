@@ -285,6 +285,8 @@ type
     procedure WhenDontFindThePropertyWithXMLValueAttributeCantRaiseAnyError;
     [Test]
     procedure WhenThePropertyHasTheXMLValueAttributeAndTheTypeIsAnEnumeratorMustLoadTheEnumeratorValueAsExpected;
+    [Test]
+    procedure WhenTheSOAPParameterDontHaveTheXMLNamespaceTheParameterValueMustBeInTheSameNameSpace;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -2284,6 +2286,25 @@ begin
   MyRecord.MyField := 'abc';
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyRecordWithAttribute><AnotherName>abc</AnotherName></TMyRecordWithAttribute>'#13#10, FSerializer.Serialize(TValue.From(MyRecord)));
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenTheSOAPParameterDontHaveTheXMLNamespaceTheParameterValueMustBeInTheSameNameSpace;
+begin
+  var RttiContext := TRttiContext.Create;
+  var RttiInterface := RttiContext.GetType(TypeInfo(ISOAPService));
+  var Value := TMyBooleanClass.Create;
+
+  var RttiMethod := RttiInterface.GetMethod('MyMethodWithNamespace');
+  var SOAPEnvelop: TSOAPEnvelop;
+
+  SOAPEnvelop.AddBodyPart(RttiMethod.GetParameters[0], Value);
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV="">'
+    + '<SOAP-ENV:Body><MyParam xmlns="MySpace"><MyProp>False</MyProp></MyParam></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPEnvelop)));
+
+  RttiContext.Free;
+
+  Value.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenTheSOAPParamHasTheNamespaceAttributeMustLoadThisNamespaceInTheXML;

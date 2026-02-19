@@ -1385,7 +1385,9 @@ begin
               ParentNode := Node;
           end;
 
-          SerializeType(FContext.GetType(Parameter.ParamType.Handle), Part.Value, LoadAttributes(Parameter, ParentNode.AddChild(Parameter.Name, GetNamespaceValue(Parameter, Namespace))), Namespace, ValueFormat);
+          var ParameterNamespace := GetNamespaceValue(Parameter, Namespace);
+
+          SerializeType(FContext.GetType(Parameter.ParamType.Handle), Part.Value, LoadAttributes(Parameter, ParentNode.AddChild(Parameter.Name, ParameterNamespace)), ParameterNamespace, ValueFormat);
         end;
       end
       else if Value.TypeInfo = TypeInfo(TValue) then
