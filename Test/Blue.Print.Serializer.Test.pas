@@ -279,6 +279,12 @@ type
     procedure WhenTheProcedureHasTheSOAPHeaderAttributeMustLoadTheSOAPHeaderHasExpected;
     [Test]
     procedure WhenTheNodeNameHasANamespaceMustUseTheLocalNameToFindTheProperty;
+    [Test]
+    procedure WhenThePropertyHasTheXMLValueAttributeAndTheTypeIsAnEnumeratorCantRaiseAnyError;
+    [Test]
+    procedure WhenDontFindThePropertyWithXMLValueAttributeCantRaiseAnyError;
+    [Test]
+    procedure WhenThePropertyHasTheXMLValueAttributeAndTheTypeIsAnEnumeratorMustLoadTheEnumeratorValueAsExpected;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -524,11 +530,21 @@ type
     property Value: String read FValue write FValue;
   end;
 
+  TMyClassWithXMLValueAttributeEnumerator = class
+  private
+    FValue: TMyEnum;
+  published
+    [XMLValue]
+    property Value: TMyEnum read FValue write FValue;
+  end;
+
   TMyClassWithXMLValueAttributeParent = class
   private
     FMyValue: TMyClassWithXMLValueAttribute;
+    FMyEnumerator: TMyClassWithXMLValueAttributeEnumerator;
   published
     property MyValue: TMyClassWithXMLValueAttribute read FMyValue write FMyValue;
+    property MyEnumerator: TMyClassWithXMLValueAttributeEnumerator read FMyEnumerator write FMyEnumerator;
   end;
 
   TMyClassWithFormatAttribute = class
@@ -1841,6 +1857,17 @@ begin
   Value.Free;
 end;
 
+procedure TBluePrintXMLSerializerTest.WhenDontFindThePropertyWithXMLValueAttributeCantRaiseAnyError;
+begin
+  Assert.WillNotRaise(
+    procedure
+    begin
+      var Value := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyInvalid>MyValue2</MyInvalid></Document>'#13#10, TypeInfo(TMyClassWithXMLValueAttributeParent)).AsType<TMyClassWithXMLValueAttributeParent>;
+
+      Value.Free;
+    end);
+end;
+
 procedure TBluePrintXMLSerializerTest.WhenGetTheCurrentTimezoneMustReturnTheValueAsExpected;
 begin
   var CurrentTimezone := TTimeZone.Local.Abbreviation.Substring(3) + ':00';
@@ -2204,6 +2231,30 @@ begin
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithStoredProperty/>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.Free;
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheXMLValueAttributeAndTheTypeIsAnEnumeratorCantRaiseAnyError;
+begin
+  Assert.WillNotRaise(
+    procedure
+    begin
+      var Value := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyEnumerator>MyValue2</MyEnumerator></Document>'#13#10, TypeInfo(TMyClassWithXMLValueAttributeParent)).AsType<TMyClassWithXMLValueAttributeParent>;
+
+      Value.MyEnumerator.Free;
+
+      Value.Free;
+    end);
+end;
+
+procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheXMLValueAttributeAndTheTypeIsAnEnumeratorMustLoadTheEnumeratorValueAsExpected;
+begin
+  var Value := FSerializer.Deserialize('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<Document><MyEnumerator>MyValue2</MyEnumerator></Document>'#13#10, TypeInfo(TMyClassWithXMLValueAttributeParent)).AsType<TMyClassWithXMLValueAttributeParent>;
+
+  Assert.AreEqual(TMyEnum.MyValue2, Value.MyEnumerator.Value);
+
+  Value.MyEnumerator.Free;
+
+  Value.Free;
 end;
 
 procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheXMLValueAttributeMustLoadTheValueFromTheNodeInTheProperty;

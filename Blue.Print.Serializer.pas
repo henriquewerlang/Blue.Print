@@ -1045,12 +1045,19 @@ const
   end;
 
   procedure LoadPropertyValue(const Node: IXMLNode);
+  var
+    Prop: TRttiProperty;
+
   begin
     if Node.NodeName = TEXT_NODE_NAME then
-      FindPropertyValue.SetValue(Instance, TValue.FromVariant(Node.NodeValue))
+    begin
+      Prop := FindPropertyValue;
+
+      Prop.SetValue(Instance, DeserializeType(Prop.PropertyType, Node));
+    end
     else
     begin
-      var Prop := FindPropertyByName(RttiType, Node.LocalName);
+      Prop := FindPropertyByName(RttiType, Node.LocalName);
 
       if Assigned(Prop) then
       begin
