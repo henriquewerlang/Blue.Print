@@ -740,10 +740,8 @@ begin
   if BuildInType.TryGetValue(TypeName, Result) then
     Exit;
 
-  var ClassModule := Module;
-
-  while Assigned(ClassModule) and not FindTypeDefinitionInModule(ClassModule, TypeName, Result) do
-    ClassModule := ClassModule.ParentModule;
+  if FindTypeDefinitionInModule(Module, TypeName, Result) or Module.IsClassDefinition and FindTypeDefinitionInModule(Module.AsClassDefinition.UnitDefinition, TypeName, Result) then
+    Exit;
 
   if not Assigned(Result) then
     Result := FindTypeInUnits(nil, TypeName);
