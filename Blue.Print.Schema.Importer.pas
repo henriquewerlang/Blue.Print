@@ -1093,7 +1093,7 @@ function TXSDSchemaLoader.CheckClassDefinition(const ParentModule: TTypeModuleDe
 begin
   Result := FindType(ComplexType.Name, ParentModule);
 
-  if not Assigned(Result) then
+  if not Assigned(Result) or not Result.IsClassDefinition then
     Result := GenerateClassDefinition(ParentModule, ComplexType);
 end;
 
