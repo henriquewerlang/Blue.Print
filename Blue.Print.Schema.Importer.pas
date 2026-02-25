@@ -1125,14 +1125,6 @@ var
       Module.Enumerations.Add(Result);
   end;
 
-  function GetUnitDefinition: TTypeModuleDefinition;
-  begin
-    Result := Module;
-
-    while not Result.IsUnitDefinition do
-      Result := Result.ParentModule;
-  end;
-
   function CheckRestriction: TTypeDefinition;
   begin
     if &Type.Enumerations.Count > 0 then
@@ -1141,14 +1133,14 @@ var
     begin
       Result := FindBaseType(&Type, Module);
 
-      if Assigned(Result) then
+      if not Assigned(Result) then
+        Abort
+      else if Module.IsUnitDefinition then
       begin
-        Result := FImporter.CreateTypeAlias(GetUnitDefinition, &Type.Name, Result);
+        Result := FImporter.CreateTypeAlias(Module.AsUnitDefinition, &Type.Name, Result);
 
-        GetUnitDefinition.AsUnitDefinition.AddTypeAlias(Result.AsTypeAlias);
-      end
-      else
-        Abort;
+        Module.AsUnitDefinition.AddTypeAlias(Result.AsTypeAlias);
+      end;
     end;
   end;
 
@@ -1179,13 +1171,6 @@ begin
 
   if not Assigned(Result) then
     Result := CheckTypeDefinition(&Type, UnitDefinition);
-
-  if not Assigned(Result) then
-  begin
-    Result := FImporter.CreateTypeAlias(UnitDefinition, &Type.Name, FindBaseType(&Type, UnitDefinition));
-
-    UnitDefinition.AddTypeAlias(Result.AsTypeAlias);
-  end;
 end;
 
 function TXSDSchemaLoader.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef): TTypeDefinition;
