@@ -1274,8 +1274,14 @@ begin
     if (ComplexType.ElementDefs.Count = 0) and (ComplexType.AttributeDefs.Count = 1) and ComplexType.AttributeDefs[0].HasAttribute(SFixed) then
     begin
       var Attribute := ComplexType.AttributeDefs[0];
+      var PropertyType: IXMLTypeDef := nil;
 
-      Result := CreateProperty(GetAttributeDataType(Attribute));
+      if Assigned(ComplexType.BaseType) then
+        PropertyType := ComplexType.BaseType
+      else
+        PropertyType := GetAttributeDataType(Attribute);
+
+      Result := CreateProperty(PropertyType);
 
       AddPropertyAttribute(Result, Attribute);
     end
