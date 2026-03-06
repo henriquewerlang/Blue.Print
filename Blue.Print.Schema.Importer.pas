@@ -484,6 +484,7 @@ type
     function GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef): TTypeDefinition;
     function GenerateClassDefinitionFromSchema(const UnitFileConfiguration: TUnitFileConfiguration; const ParentModule: TTypeModuleDefinition; const SchemaDefinition: IXMLSchemaDef): TClassDefinition;
     function GenerateProperty(const ClassDefinition: TClassDefinition; const ElementDefinition: IXMLElementDef): TPropertyDefinition;
+    function IsElementOptional(const ElementDefinition: IXMLElementDef): Boolean;
 
     procedure AddPropertyAttribute(const &Property: TPropertyDefinition; const Attribute: IXMLAttributeDef);
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const ElementDefs: IXMLElementDefList);
@@ -1240,7 +1241,7 @@ function TXSDSchemaLoader.GenerateProperty(const ClassDefinition: TClassDefiniti
     ParentNode: IXMLNode;
 
   begin
-    Result := (ElementDefinition.MinOccurs <= 0);
+    Result := IsElementOptional(ElementDefinition);
 
     if not Result then
     begin
@@ -1284,6 +1285,7 @@ begin
       Result := CreateProperty(PropertyType);
 
       AddPropertyAttribute(Result, Attribute);
+      Result.Optional := Result.Optional or IsElementOptional(ElementDefinition);
     end
     else
     begin
@@ -1381,6 +1383,11 @@ begin
       SchemaDefinition := SchemaDefinition.NextSibling as IXMLSchemaDef;
     end;
   end;
+end;
+
+function TXSDSchemaLoader.IsElementOptional(const ElementDefinition: IXMLElementDef): Boolean;
+begin
+  Result := ElementDefinition.MinOccurs <= 0;
 end;
 
 procedure TXSDSchemaLoader.LoadXSDTypes;
