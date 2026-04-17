@@ -38,6 +38,9 @@ type
     FCertificateValue: TStream;
     FHeaders: TStringList;
     FResponseHeaders: TStringList;
+    {$IFDEF DCC}
+    FResponse: IHTTPResponse;
+    {$ENDIF}
 
     function GetResponseHeader(const HeaderName: String): String;
 
@@ -683,17 +686,17 @@ begin
     Request.SetClientCertificate(FCertificateFileName, FCertificatePassword);
 
   try
-    var Response := Connection.Execute(Request, nil);
+    FResponse := Connection.Execute(Request, nil);
 
     if ReturnStream then
-      ContentStream := Response.ContentStream
+      ContentStream := FResponse.ContentStream
     else
-      ContentString := Response.ContentAsString;
+      ContentString := FResponse.ContentAsString;
 
-    for var HeaderValue in Response.Headers do
+    for var HeaderValue in FResponse.Headers do
       FResponseHeaders.Values[HeaderValue.Name] := HeaderValue.Value;
 
-    CheckStatusCode(Response.StatusCode);
+    CheckStatusCode(FResponse.StatusCode);
   finally
     BodyStream.Free;
 
