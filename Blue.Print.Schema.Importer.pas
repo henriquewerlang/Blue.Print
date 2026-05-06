@@ -32,10 +32,12 @@ type
     FFileType: TSchemaType;
     FIsFileTypeStored: Boolean;
     FInterfaceName: String;
+    FBaseURL: String;
 
     procedure SetFileType(const Value: TSchemaType);
   public
     property AppendClassName: String read FAppendClassName write FAppendClassName;
+    property BaseURL: String read FBaseURL write FBaseURL;
     property FileType: TSchemaType read FFileType write SetFileType stored FIsFileTypeStored;
     property InterfaceName: String read FInterfaceName write FInterfaceName;
     property IsFileTypeStored: Boolean read FIsFileTypeStored write FIsFileTypeStored;
@@ -443,9 +445,10 @@ type
     function CreateInterfaceDefinition(const ParentUnit: TUnitDefinition; const InterfaceName: String): TTypeInterfaceDefinition;
     function CreateTypeAlias(const Module: TTypeModuleDefinition; const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
+    function FindUnitClassByReference(const Reference: String): TClassDefinition;
     function GetFileNameFromSchemaFolder(const FileName: String): String;
     function LoadFile(Reference: String): String;
-    function LoadFileFromConfiguration(const UnitFile: TUnitFileConfiguration): String;
+    function LoadFileFromConfiguration(const UnitConfiguration: TUnitFileConfiguration): String;
     function LoadRelativePath(const RelativeFolder, FileName: String): String;
 
     procedure Import;
@@ -507,7 +510,6 @@ type
 
   TJSONSchemaLoader = class(TInterfacedObject, ISchemaLoader)
   private
-    FFileClass: TDictionary<String, TTypeDelayedDefinition>;
     FImporter: TSchemaImporter;
     FSchemaClass: TTypeDelayedDefinition;
     FSchemas: TDictionary<String, TSchema>;
@@ -817,6 +819,15 @@ begin
   end;
 end;
 
+function TSchemaImporter.FindUnitClassByReference(const Reference: String): TClassDefinition;
+begin
+  Result := nil;
+
+  for var UnitConfiguration in FUnitFiles do
+    if UnitConfiguration.Key.Reference = Reference then
+      Exit(FindType(UnitConfiguration.Key.UnitClassName, UnitConfiguration.Value).AsClassDefinition);
+end;
+
 procedure TSchemaImporter.GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration);
 begin
   var UnitDefinition := LoadUnit(UnitConfiguration);
@@ -924,9 +935,14 @@ begin
   end;
 end;
 
-function TSchemaImporter.LoadFileFromConfiguration(const UnitFile: TUnitFileConfiguration): String;
+function TSchemaImporter.LoadFileFromConfiguration(const UnitConfiguration: TUnitFileConfiguration): String;
 begin
-  Result := LoadFile(UnitFile.Reference);
+  var ReferenceName := UnitConfiguration.Reference;
+
+  if not UnitConfiguration.BaseURL.IsEmpty then
+    ReferenceName := UnitConfiguration.BaseURL + '/' + ReferenceName;
+
+  Result := LoadFile(ReferenceName);
 end;
 
 procedure TSchemaImporter.LoadInternalTypes;
@@ -2716,7 +2732,6 @@ constructor TJSONSchemaLoader.Create(const Importer: TSchemaImporter);
 begin
   inherited Create;
 
-  FFileClass := TDictionary<String, TTypeDelayedDefinition>.Create;
   FImporter := Importer;
   FSchemas := TDictionary<String, TSchema>.Create(TIStringComparer.Ordinal);
 end;
@@ -2836,8 +2851,6 @@ end;
 destructor TJSONSchemaLoader.Destroy;
 begin
   FSchemas.Free;
-
-  FFileClass.Free;
 
   inherited;
 end;
@@ -2971,14 +2984,14 @@ begin
   begin
     var ParentModule := Module;
     var ReferenceName := GetReferenceName(Schema);
-    var ReferenceModule: TTypeDelayedDefinition;
+    var ReferenceModule: TTypeDefinition;
 
     References := Schema.&Object.ref.Split([REFERENCE_SEPARATOR]);
 
     if References[0].IsEmpty then
       ReferenceModule := FSchemaClass
     else
-      ReferenceModule := FFileClass[References[0] + REFERENCE_SEPARATOR];
+      ReferenceModule := FImporter.FindUnitClassByReference(References[0] + REFERENCE_SEPARATOR);
 
     ReferencePath := References[1].Split(['/']);
 
@@ -2987,8 +3000,10 @@ begin
     else if (ReferencePath[1] = 'definitions') or (ReferencePath[1] = 'def') then
       ParentModule := FSchemaClass.FParentModule;
 
-    if ReferenceModule.IsResolved then
-      Result := FindAllTypes(ReferenceName, ReferenceModule.TypeResolved.AsClassDefinition)
+    if ReferenceModule.IsClassDefinition then
+      Result := FindAllTypes(ReferenceName, ReferenceModule.AsClassDefinition)
+    else if ReferenceModule.IsDelayedType and ReferenceModule.AsDelayedType.IsResolved then
+      Result := FindAllTypes(ReferenceName, ReferenceModule.AsDelayedType.TypeResolved.AsClassDefinition)
     else
       Result := nil;
 
@@ -3007,8 +3022,6 @@ begin
     FImporter.LoadUnitFromReference(CurrenSchema.&Object.Schema);
 
   FSchemaClass := UnitDefinition.AddDelayedType(UnitFileConfiguration.UnitClassName);
-
-  FFileClass.Add(CurrenSchema.&Object.Id, FSchemaClass);
 
   for var Definition in CurrenSchema.&Object.definitions.Schema do
   begin
