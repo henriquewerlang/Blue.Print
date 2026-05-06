@@ -550,7 +550,7 @@ end;
 
 function CheckReservedName(const Name: String): String;
 const
-  SPECIAL_NAMES: array[0..16] of String = ('type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'string', 'const', 'not', 'in', 'file', 'is', 'end');
+  SPECIAL_NAMES: array[0..17] of String = ('type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'string', 'const', 'not', 'in', 'file', 'is', 'end', 'label');
 
 begin
   Result := Name;
@@ -2888,6 +2888,8 @@ begin
 end;
 
 procedure TJSONSchemaLoader.GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
+var
+  AnonymousIndex: Integer;
 
   function GetPropertyName(const Schema: TSchema; var PropertyName: String): Boolean;
   begin
@@ -2905,10 +2907,17 @@ procedure TJSONSchemaLoader.GenerateProperties(const ClassDefinition: TClassDefi
   begin
     var PropertyName := EmptyStr;
 
-    if GetPropertyName(AnonymousSchema, PropertyName) then
-      Result := DefineProperty(ClassDefinition, AnonymousSchema, PropertyName, GetPropertyType(AnonymousSchema, PropertyName))
-    else
-      Result := nil;
+    if not GetPropertyName(AnonymousSchema, PropertyName) then
+    begin
+      Inc(AnonymousIndex);
+
+      PropertyName := 'Anonymous';
+
+      if AnonymousIndex > 1 then
+        PropertyName := PropertyName + AnonymousIndex.ToString;
+    end;
+
+    Result := DefineProperty(ClassDefinition, AnonymousSchema, PropertyName, GetPropertyType(AnonymousSchema, PropertyName))
   end;
 
   procedure DefineProperties(const Schemas: TArray<TSchema>; const GetPropertyType: TFunc<TSchema, String, TTypeDefinition>);
@@ -2918,6 +2927,8 @@ procedure TJSONSchemaLoader.GenerateProperties(const ClassDefinition: TClassDefi
   end;
 
 begin
+  AnonymousIndex := 0;
+
   for var Pair in Schema.&Object.Properties.Schema do
     DefineProperty(ClassDefinition, Schema, Pair.Key, GenerateTypeDefinition(ClassDefinition, Pair.Value, Pair.Key));
 
