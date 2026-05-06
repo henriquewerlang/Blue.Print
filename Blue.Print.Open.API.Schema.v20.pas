@@ -5,7 +5,7 @@ interface
 {$M+}
 {$SCOPEDENUMS ON}
 
-// File generated from http://json-schema.org/draft-04/schema#, http://swagger.io/v2/schema.json#;
+// File generated from http://json-schema.org/draft-04/schema#, https://spec.openapis.org/oas/2.0/schema/2017-08-27;
 
 uses Blue.Print.Types, System.Rtti;
 
@@ -14,13 +14,10 @@ type
   [EnumValue('array, boolean, integer, null, number, object, string')]
   simpleTypes = (&array, boolean, integer, null, number, &object, &string);
 
-  [EnumValue('http, https, ws, wss')]
   schemesListArrayItem = (http, https, ws, wss);
 
-  [EnumValue('csv, ssv, tsv, pipes')]
   collectionFormat = (csv, ssv, tsv, pipes);
 
-  [EnumValue('csv, ssv, tsv, pipes, multi')]
   collectionFormatWithMulti = (csv, ssv, tsv, pipes, multi);
   // Forward class declaration
   PositiveIntegerDefault0 = class;
@@ -70,8 +67,8 @@ type
   // Forward type alias
   schemaArray = TArray<Blue.Print.Open.API.Schema.v20.TJSONSchema>;
   positiveInteger = System.Integer;
-  stringArray = TArray<System.String>;
   any = System.Rtti.TValue;
+  stringArray = TArray<System.String>;
   mimeType = System.String;
   security = TArray<Blue.Print.Open.API.Schema.v20.SecurityRequirement>;
   mediaTypeList = TArray<System.String>;
@@ -97,12 +94,17 @@ type
   PositiveIntegerDefault0 = class
   private
     FPositiveInteger: positiveInteger;
+    FAnonymous: any;
+    FAnonymousIsStored: Boolean;
 
     function GetPositiveIntegerStored: Boolean;
+    procedure SetAnonymous(const Value: any);
   public
     property IsPositiveIntegerStored: Boolean read GetPositiveIntegerStored;
+    property IsAnonymousStored: Boolean read FAnonymousIsStored;
   published
     property positiveInteger: positiveInteger read FPositiveInteger write FPositiveInteger stored GetPositiveIntegerStored;
+    property Anonymous: any read FAnonymous write SetAnonymous stored FAnonymousIsStored;
   end;
 
   TJSONSchema = class
@@ -111,10 +113,10 @@ type
     TAdditionalItems = class
     private
       FBoolean: System.Boolean;
-      FSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
+      FSchema: TJSONSchema;
       FBooleanIsStored: Boolean;
 
-      function GetSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
+      function GetSchema: TJSONSchema;
       function GetSchemaStored: Boolean;
       procedure SetBoolean(const Value: System.Boolean);
     public
@@ -124,27 +126,27 @@ type
       property IsSchemaStored: Boolean read GetSchemaStored;
     published
       property boolean: System.Boolean read FBoolean write SetBoolean stored FBooleanIsStored;
-      property Schema: Blue.Print.Open.API.Schema.v20.TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
+      property Schema: TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
     end;
 
     [Flat]
     TItems = class
     private
-      FSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
+      FSchema: TJSONSchema;
       FSchemaArray: schemaArray;
 
-      function GetSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
+      function GetSchema: TJSONSchema;
       function GetSchemaStored: Boolean;
       function GetSchemaArrayStored: Boolean;
     public
       destructor Destroy; override;
 
-      function AddSchemaArray: Blue.Print.Open.API.Schema.v20.TJSONSchema;
+      function AddSchemaArray: TJSONSchema;
 
       property IsSchemaStored: Boolean read GetSchemaStored;
       property IsSchemaArrayStored: Boolean read GetSchemaArrayStored;
     published
-      property Schema: Blue.Print.Open.API.Schema.v20.TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
+      property Schema: TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
       property schemaArray: schemaArray read FSchemaArray write FSchemaArray stored GetSchemaArrayStored;
     end;
 
@@ -152,10 +154,10 @@ type
     TAdditionalProperties = class
     private
       FBoolean: System.Boolean;
-      FSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
+      FSchema: TJSONSchema;
       FBooleanIsStored: Boolean;
 
-      function GetSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
+      function GetSchema: TJSONSchema;
       function GetSchemaStored: Boolean;
       procedure SetBoolean(const Value: System.Boolean);
     public
@@ -165,57 +167,57 @@ type
       property IsSchemaStored: Boolean read GetSchemaStored;
     published
       property boolean: System.Boolean read FBoolean write SetBoolean stored FBooleanIsStored;
-      property Schema: Blue.Print.Open.API.Schema.v20.TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
+      property Schema: TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
     end;
 
     TDefinitions = class
     private
-      FSchema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema>;
+      FSchema: TDynamicProperty<TJSONSchema>;
 
-      function GetSchema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema>;
+      function GetSchema: TDynamicProperty<TJSONSchema>;
       function GetSchemaStored: Boolean;
     public
       destructor Destroy; override;
 
       property IsSchemaStored: Boolean read GetSchemaStored;
     published
-      property Schema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema> read GetSchema write FSchema stored GetSchemaStored;
+      property Schema: TDynamicProperty<TJSONSchema> read GetSchema write FSchema stored GetSchemaStored;
     end;
 
     TProperties = class
     private
-      FSchema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema>;
+      FSchema: TDynamicProperty<TJSONSchema>;
 
-      function GetSchema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema>;
+      function GetSchema: TDynamicProperty<TJSONSchema>;
       function GetSchemaStored: Boolean;
     public
       destructor Destroy; override;
 
       property IsSchemaStored: Boolean read GetSchemaStored;
     published
-      property Schema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema> read GetSchema write FSchema stored GetSchemaStored;
+      property Schema: TDynamicProperty<TJSONSchema> read GetSchema write FSchema stored GetSchemaStored;
     end;
 
     TPatternProperties = class
     private
-      FSchema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema>;
+      FSchema: TDynamicProperty<TJSONSchema>;
 
-      function GetSchema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema>;
+      function GetSchema: TDynamicProperty<TJSONSchema>;
       function GetSchemaStored: Boolean;
     public
       destructor Destroy; override;
 
       property IsSchemaStored: Boolean read GetSchemaStored;
     published
-      property Schema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema> read GetSchema write FSchema stored GetSchemaStored;
+      property Schema: TDynamicProperty<TJSONSchema> read GetSchema write FSchema stored GetSchemaStored;
     end;
 
     TDependencies = class
     private
-      FSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
+      FSchema: TJSONSchema;
       FStringArray: stringArray;
 
-      function GetSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
+      function GetSchema: TJSONSchema;
       function GetSchemaStored: Boolean;
       function GetStringArrayStored: Boolean;
     public
@@ -224,7 +226,7 @@ type
       property IsSchemaStored: Boolean read GetSchemaStored;
       property IsStringArrayStored: Boolean read GetStringArrayStored;
     published
-      property Schema: Blue.Print.Open.API.Schema.v20.TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
+      property Schema: TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
       property stringArray: stringArray read FStringArray write FStringArray stored GetStringArrayStored;
     end;
 
@@ -257,45 +259,45 @@ type
     FMinimum: System.Double;
     FExclusiveMinimum: System.Boolean;
     FMaxLength: positiveInteger;
-    FMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+    FMinLength: PositiveIntegerDefault0;
     FPattern: System.String;
-    FAdditionalItems: Blue.Print.Open.API.Schema.v20.TJSONSchema.TAdditionalItems;
-    FItems: Blue.Print.Open.API.Schema.v20.TJSONSchema.TItems;
+    FAdditionalItems: TJSONSchema.TAdditionalItems;
+    FItems: TJSONSchema.TItems;
     FMaxItems: positiveInteger;
-    FMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+    FMinItems: PositiveIntegerDefault0;
     FUniqueItems: System.Boolean;
     FMaxProperties: positiveInteger;
-    FMinProperties: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+    FMinProperties: PositiveIntegerDefault0;
     FRequired: stringArray;
-    FAdditionalProperties: Blue.Print.Open.API.Schema.v20.TJSONSchema.TAdditionalProperties;
-    FDefinitions: Blue.Print.Open.API.Schema.v20.TJSONSchema.TDefinitions;
-    FProperties: Blue.Print.Open.API.Schema.v20.TJSONSchema.TProperties;
-    FPatternProperties: Blue.Print.Open.API.Schema.v20.TJSONSchema.TPatternProperties;
-    FDependencies: Blue.Print.Open.API.Schema.v20.TJSONSchema.TDependencies;
+    FAdditionalProperties: TJSONSchema.TAdditionalProperties;
+    FDefinitions: TJSONSchema.TDefinitions;
+    FProperties: TJSONSchema.TProperties;
+    FPatternProperties: TJSONSchema.TPatternProperties;
+    FDependencies: TJSONSchema.TDependencies;
     FEnum: TArray<any>;
-    FType: Blue.Print.Open.API.Schema.v20.TJSONSchema.TType;
+    FType: TJSONSchema.TType;
     FFormat: System.String;
     FAllOf: schemaArray;
     FAnyOf: schemaArray;
     FOneOf: schemaArray;
-    FNot: Blue.Print.Open.API.Schema.v20.TJSONSchema;
+    FNot: TJSONSchema;
     FDefaultIsStored: Boolean;
     FExclusiveMaximumIsStored: Boolean;
     FExclusiveMinimumIsStored: Boolean;
     FUniqueItemsIsStored: Boolean;
 
-    function GetMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
-    function GetAdditionalItems: Blue.Print.Open.API.Schema.v20.TJSONSchema.TAdditionalItems;
-    function GetItems: Blue.Print.Open.API.Schema.v20.TJSONSchema.TItems;
-    function GetMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
-    function GetMinProperties: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
-    function GetAdditionalProperties: Blue.Print.Open.API.Schema.v20.TJSONSchema.TAdditionalProperties;
-    function GetDefinitions: Blue.Print.Open.API.Schema.v20.TJSONSchema.TDefinitions;
-    function GetProperties: Blue.Print.Open.API.Schema.v20.TJSONSchema.TProperties;
-    function GetPatternProperties: Blue.Print.Open.API.Schema.v20.TJSONSchema.TPatternProperties;
-    function GetDependencies: Blue.Print.Open.API.Schema.v20.TJSONSchema.TDependencies;
-    function GetType: Blue.Print.Open.API.Schema.v20.TJSONSchema.TType;
-    function GetNot: Blue.Print.Open.API.Schema.v20.TJSONSchema;
+    function GetMinLength: PositiveIntegerDefault0;
+    function GetAdditionalItems: TJSONSchema.TAdditionalItems;
+    function GetItems: TJSONSchema.TItems;
+    function GetMinItems: PositiveIntegerDefault0;
+    function GetMinProperties: PositiveIntegerDefault0;
+    function GetAdditionalProperties: TJSONSchema.TAdditionalProperties;
+    function GetDefinitions: TJSONSchema.TDefinitions;
+    function GetProperties: TJSONSchema.TProperties;
+    function GetPatternProperties: TJSONSchema.TPatternProperties;
+    function GetDependencies: TJSONSchema.TDependencies;
+    function GetType: TJSONSchema.TType;
+    function GetNot: TJSONSchema;
     function GetIdStored: Boolean;
     function GetSchemaStored: Boolean;
     function GetTitleStored: Boolean;
@@ -332,9 +334,9 @@ type
   public
     destructor Destroy; override;
 
-    function AddAllOf: Blue.Print.Open.API.Schema.v20.TJSONSchema;
-    function AddAnyOf: Blue.Print.Open.API.Schema.v20.TJSONSchema;
-    function AddOneOf: Blue.Print.Open.API.Schema.v20.TJSONSchema;
+    function AddAllOf: TJSONSchema;
+    function AddAnyOf: TJSONSchema;
+    function AddOneOf: TJSONSchema;
 
     property IsIdStored: Boolean read GetIdStored;
     property IsSchemaStored: Boolean read GetSchemaStored;
@@ -382,30 +384,30 @@ type
     property minimum: System.Double read FMinimum write FMinimum stored GetMinimumStored;
     property exclusiveMinimum: System.Boolean read FExclusiveMinimum write SetExclusiveMinimum stored FExclusiveMinimumIsStored;
     property maxLength: positiveInteger read FMaxLength write FMaxLength stored GetMaxLengthStored;
-    property minLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
+    property minLength: PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
     property pattern: System.String read FPattern write FPattern stored GetPatternStored;
-    property additionalItems: Blue.Print.Open.API.Schema.v20.TJSONSchema.TAdditionalItems read GetAdditionalItems write FAdditionalItems stored GetAdditionalItemsStored;
-    property items: Blue.Print.Open.API.Schema.v20.TJSONSchema.TItems read GetItems write FItems stored GetItemsStored;
+    property additionalItems: TJSONSchema.TAdditionalItems read GetAdditionalItems write FAdditionalItems stored GetAdditionalItemsStored;
+    property items: TJSONSchema.TItems read GetItems write FItems stored GetItemsStored;
     property maxItems: positiveInteger read FMaxItems write FMaxItems stored GetMaxItemsStored;
-    property minItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
+    property minItems: PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
     property uniqueItems: System.Boolean read FUniqueItems write SetUniqueItems stored FUniqueItemsIsStored;
     property maxProperties: positiveInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
-    property minProperties: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
+    property minProperties: PositiveIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
     property required: stringArray read FRequired write FRequired stored GetRequiredStored;
-    property additionalProperties: Blue.Print.Open.API.Schema.v20.TJSONSchema.TAdditionalProperties read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
-    property definitions: Blue.Print.Open.API.Schema.v20.TJSONSchema.TDefinitions read GetDefinitions write FDefinitions stored GetDefinitionsStored;
-    property properties: Blue.Print.Open.API.Schema.v20.TJSONSchema.TProperties read GetProperties write FProperties stored GetPropertiesStored;
-    property patternProperties: Blue.Print.Open.API.Schema.v20.TJSONSchema.TPatternProperties read GetPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
-    property dependencies: Blue.Print.Open.API.Schema.v20.TJSONSchema.TDependencies read GetDependencies write FDependencies stored GetDependenciesStored;
+    property additionalProperties: TJSONSchema.TAdditionalProperties read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+    property definitions: TJSONSchema.TDefinitions read GetDefinitions write FDefinitions stored GetDefinitionsStored;
+    property properties: TJSONSchema.TProperties read GetProperties write FProperties stored GetPropertiesStored;
+    property patternProperties: TJSONSchema.TPatternProperties read GetPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
+    property dependencies: TJSONSchema.TDependencies read GetDependencies write FDependencies stored GetDependenciesStored;
     property enum: TArray<any> read FEnum write FEnum stored GetEnumStored;
     [FieldName('type')]
-    property &type: Blue.Print.Open.API.Schema.v20.TJSONSchema.TType read GetType write FType stored GetTypeStored;
+    property &type: TJSONSchema.TType read GetType write FType stored GetTypeStored;
     property format: System.String read FFormat write FFormat stored GetFormatStored;
     property allOf: schemaArray read FAllOf write FAllOf stored GetAllOfStored;
     property anyOf: schemaArray read FAnyOf write FAnyOf stored GetAnyOfStored;
     property oneOf: schemaArray read FOneOf write FOneOf stored GetOneOfStored;
     [FieldName('not')]
-    property &not: Blue.Print.Open.API.Schema.v20.TJSONSchema read GetNot write FNot stored GetNotStored;
+    property &not: TJSONSchema read GetNot write FNot stored GetNotStored;
   end;
 
   Info = class
@@ -414,13 +416,13 @@ type
     FVersion: System.String;
     FDescription: System.String;
     FTermsOfService: System.String;
-    FContact: Blue.Print.Open.API.Schema.v20.Contact;
-    FLicense: Blue.Print.Open.API.Schema.v20.License;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FContact: Contact;
+    FLicense: License;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
 
-    function GetContact: Blue.Print.Open.API.Schema.v20.Contact;
-    function GetLicense: Blue.Print.Open.API.Schema.v20.License;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetContact: Contact;
+    function GetLicense: License;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetDescriptionStored: Boolean;
     function GetTermsOfServiceStored: Boolean;
     function GetContactStored: Boolean;
@@ -439,10 +441,10 @@ type
     property version: System.String read FVersion write FVersion;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property termsOfService: System.String read FTermsOfService write FTermsOfService stored GetTermsOfServiceStored;
-    property contact: Blue.Print.Open.API.Schema.v20.Contact read GetContact write FContact stored GetContactStored;
-    property license: Blue.Print.Open.API.Schema.v20.License read GetLicense write FLicense stored GetLicenseStored;
+    property contact: Contact read GetContact write FContact stored GetContactStored;
+    property license: License read GetLicense write FLicense stored GetLicenseStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   Contact = class
@@ -450,9 +452,9 @@ type
     FName: System.String;
     FUrl: System.String;
     FEmail: System.String;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
 
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetNameStored: Boolean;
     function GetUrlStored: Boolean;
     function GetEmailStored: Boolean;
@@ -469,16 +471,16 @@ type
     property url: System.String read FUrl write FUrl stored GetUrlStored;
     property email: System.String read FEmail write FEmail stored GetEmailStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   License = class
   private
     FName: System.String;
     FUrl: System.String;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
 
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetUrlStored: Boolean;
     function GetVendorExtensionStored: Boolean;
   public
@@ -490,16 +492,16 @@ type
     property name: System.String read FName write FName;
     property url: System.String read FUrl write FUrl stored GetUrlStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   Paths = class
   private
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
-    FPathItem: TDynamicProperty<Blue.Print.Open.API.Schema.v20.PathItem>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
+    FPathItem: TDynamicProperty<PathItem>;
 
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
-    function GetPathItem: TDynamicProperty<Blue.Print.Open.API.Schema.v20.PathItem>;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
+    function GetPathItem: TDynamicProperty<PathItem>;
     function GetVendorExtensionStored: Boolean;
     function GetPathItemStored: Boolean;
   public
@@ -509,60 +511,60 @@ type
     property IsPathItemStored: Boolean read GetPathItemStored;
   published
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     [PatternProperty('^/')]
-    property pathItem: TDynamicProperty<Blue.Print.Open.API.Schema.v20.PathItem> read GetPathItem write FPathItem stored GetPathItemStored;
+    property pathItem: TDynamicProperty<PathItem> read GetPathItem write FPathItem stored GetPathItemStored;
   end;
 
   Definitions = class
   private
-    FSchema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Schema>;
+    FSchema: TDynamicProperty<Schema>;
 
-    function GetSchema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Schema>;
+    function GetSchema: TDynamicProperty<Schema>;
     function GetSchemaStored: Boolean;
   public
     destructor Destroy; override;
 
     property IsSchemaStored: Boolean read GetSchemaStored;
   published
-    property schema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Schema> read GetSchema write FSchema stored GetSchemaStored;
+    property schema: TDynamicProperty<Schema> read GetSchema write FSchema stored GetSchemaStored;
   end;
 
   ParameterDefinitions = class
   private
-    FParameter: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Parameter>;
+    FParameter: TDynamicProperty<Parameter>;
 
-    function GetParameter: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Parameter>;
+    function GetParameter: TDynamicProperty<Parameter>;
     function GetParameterStored: Boolean;
   public
     destructor Destroy; override;
 
     property IsParameterStored: Boolean read GetParameterStored;
   published
-    property parameter: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Parameter> read GetParameter write FParameter stored GetParameterStored;
+    property parameter: TDynamicProperty<Parameter> read GetParameter write FParameter stored GetParameterStored;
   end;
 
   ResponseDefinitions = class
   private
-    FResponse: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Response>;
+    FResponse: TDynamicProperty<Response>;
 
-    function GetResponse: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Response>;
+    function GetResponse: TDynamicProperty<Response>;
     function GetResponseStored: Boolean;
   public
     destructor Destroy; override;
 
     property IsResponseStored: Boolean read GetResponseStored;
   published
-    property response: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Response> read GetResponse write FResponse stored GetResponseStored;
+    property response: TDynamicProperty<Response> read GetResponse write FResponse stored GetResponseStored;
   end;
 
   ExternalDocs = class
   private
     FDescription: System.String;
     FUrl: System.String;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
 
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetDescriptionStored: Boolean;
     function GetVendorExtensionStored: Boolean;
   public
@@ -574,7 +576,7 @@ type
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property url: System.String read FUrl write FUrl;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   Examples = class
@@ -609,23 +611,23 @@ type
     FTags: TArray<System.String>;
     FSummary: System.String;
     FDescription: System.String;
-    FExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
+    FExternalDocs: ExternalDocs;
     FOperationId: System.String;
-    FProduces: Blue.Print.Open.API.Schema.v20.Operation.TProduces;
-    FConsumes: Blue.Print.Open.API.Schema.v20.Operation.TConsumes;
+    FProduces: Operation.TProduces;
+    FConsumes: Operation.TConsumes;
     FParameters: parametersList;
-    FResponses: Blue.Print.Open.API.Schema.v20.Responses;
+    FResponses: Responses;
     FSchemes: schemesList;
     FDeprecated: System.Boolean;
     FSecurity: security;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
     FDeprecatedIsStored: Boolean;
 
-    function GetExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
-    function GetProduces: Blue.Print.Open.API.Schema.v20.Operation.TProduces;
-    function GetConsumes: Blue.Print.Open.API.Schema.v20.Operation.TConsumes;
-    function GetResponses: Blue.Print.Open.API.Schema.v20.Responses;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetExternalDocs: ExternalDocs;
+    function GetProduces: Operation.TProduces;
+    function GetConsumes: Operation.TConsumes;
+    function GetResponses: Responses;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetTagsStored: Boolean;
     function GetSummaryStored: Boolean;
     function GetDescriptionStored: Boolean;
@@ -641,8 +643,8 @@ type
   public
     destructor Destroy; override;
 
-    function AddParameters: Blue.Print.Open.API.Schema.v20.ParametersListArrayItem;
-    function AddSecurity: Blue.Print.Open.API.Schema.v20.SecurityRequirement;
+    function AddParameters: ParametersListArrayItem;
+    function AddSecurity: SecurityRequirement;
 
     property IsTagsStored: Boolean read GetTagsStored;
     property IsSummaryStored: Boolean read GetSummaryStored;
@@ -660,40 +662,40 @@ type
     property tags: TArray<System.String> read FTags write FTags stored GetTagsStored;
     property summary: System.String read FSummary write FSummary stored GetSummaryStored;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-    property externalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
+    property externalDocs: ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
     property operationId: System.String read FOperationId write FOperationId stored GetOperationIdStored;
-    property produces: Blue.Print.Open.API.Schema.v20.Operation.TProduces read GetProduces write FProduces stored GetProducesStored;
-    property consumes: Blue.Print.Open.API.Schema.v20.Operation.TConsumes read GetConsumes write FConsumes stored GetConsumesStored;
+    property produces: Operation.TProduces read GetProduces write FProduces stored GetProducesStored;
+    property consumes: Operation.TConsumes read GetConsumes write FConsumes stored GetConsumesStored;
     property parameters: parametersList read FParameters write FParameters stored GetParametersStored;
-    property responses: Blue.Print.Open.API.Schema.v20.Responses read GetResponses write FResponses;
+    property responses: Responses read GetResponses write FResponses;
     property schemes: schemesList read FSchemes write FSchemes stored GetSchemesStored;
     property deprecated: System.Boolean read FDeprecated write SetDeprecated stored FDeprecatedIsStored;
     property security: security read FSecurity write FSecurity stored GetSecurityStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   PathItem = class
   private
     FRef: System.String;
-    FGet: Blue.Print.Open.API.Schema.v20.Operation;
-    FPut: Blue.Print.Open.API.Schema.v20.Operation;
-    FPost: Blue.Print.Open.API.Schema.v20.Operation;
-    FDelete: Blue.Print.Open.API.Schema.v20.Operation;
-    FOptions: Blue.Print.Open.API.Schema.v20.Operation;
-    FHead: Blue.Print.Open.API.Schema.v20.Operation;
-    FPatch: Blue.Print.Open.API.Schema.v20.Operation;
+    FGet: Operation;
+    FPut: Operation;
+    FPost: Operation;
+    FDelete: Operation;
+    FOptions: Operation;
+    FHead: Operation;
+    FPatch: Operation;
     FParameters: parametersList;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
 
-    function GetGet: Blue.Print.Open.API.Schema.v20.Operation;
-    function GetPut: Blue.Print.Open.API.Schema.v20.Operation;
-    function GetPost: Blue.Print.Open.API.Schema.v20.Operation;
-    function GetDelete: Blue.Print.Open.API.Schema.v20.Operation;
-    function GetOptions: Blue.Print.Open.API.Schema.v20.Operation;
-    function GetHead: Blue.Print.Open.API.Schema.v20.Operation;
-    function GetPatch: Blue.Print.Open.API.Schema.v20.Operation;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetGet: Operation;
+    function GetPut: Operation;
+    function GetPost: Operation;
+    function GetDelete: Operation;
+    function GetOptions: Operation;
+    function GetHead: Operation;
+    function GetPatch: Operation;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetRefStored: Boolean;
     function GetGetStored: Boolean;
     function GetPutStored: Boolean;
@@ -707,7 +709,7 @@ type
   public
     destructor Destroy; override;
 
-    function AddParameters: Blue.Print.Open.API.Schema.v20.ParametersListArrayItem;
+    function AddParameters: ParametersListArrayItem;
 
     property IsRefStored: Boolean read GetRefStored;
     property IsGetStored: Boolean read GetGetStored;
@@ -722,25 +724,25 @@ type
   published
     [FieldName('$ref')]
     property ref: System.String read FRef write FRef stored GetRefStored;
-    property get: Blue.Print.Open.API.Schema.v20.Operation read GetGet write FGet stored GetGetStored;
-    property put: Blue.Print.Open.API.Schema.v20.Operation read GetPut write FPut stored GetPutStored;
-    property post: Blue.Print.Open.API.Schema.v20.Operation read GetPost write FPost stored GetPostStored;
-    property delete: Blue.Print.Open.API.Schema.v20.Operation read GetDelete write FDelete stored GetDeleteStored;
-    property options: Blue.Print.Open.API.Schema.v20.Operation read GetOptions write FOptions stored GetOptionsStored;
-    property head: Blue.Print.Open.API.Schema.v20.Operation read GetHead write FHead stored GetHeadStored;
-    property patch: Blue.Print.Open.API.Schema.v20.Operation read GetPatch write FPatch stored GetPatchStored;
+    property get: Operation read GetGet write FGet stored GetGetStored;
+    property put: Operation read GetPut write FPut stored GetPutStored;
+    property post: Operation read GetPost write FPost stored GetPostStored;
+    property delete: Operation read GetDelete write FDelete stored GetDeleteStored;
+    property options: Operation read GetOptions write FOptions stored GetOptionsStored;
+    property head: Operation read GetHead write FHead stored GetHeadStored;
+    property patch: Operation read GetPatch write FPatch stored GetPatchStored;
     property parameters: parametersList read FParameters write FParameters stored GetParametersStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   Responses = class
   private
-    FResponseValue: TDynamicProperty<Blue.Print.Open.API.Schema.v20.ResponseValue>;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FResponseValue: TDynamicProperty<ResponseValue>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
 
-    function GetResponseValue: TDynamicProperty<Blue.Print.Open.API.Schema.v20.ResponseValue>;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetResponseValue: TDynamicProperty<ResponseValue>;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetResponseValueStored: Boolean;
     function GetVendorExtensionStored: Boolean;
   public
@@ -750,19 +752,19 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [PatternProperty('^([0-9]{3})$|^(default)$')]
-    property responseValue: TDynamicProperty<Blue.Print.Open.API.Schema.v20.ResponseValue> read GetResponseValue write FResponseValue stored GetResponseValueStored;
+    property responseValue: TDynamicProperty<ResponseValue> read GetResponseValue write FResponseValue stored GetResponseValueStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   [Flat]
   ResponseValue = class
   private
-    FResponse: Blue.Print.Open.API.Schema.v20.Response;
-    FJsonReference: Blue.Print.Open.API.Schema.v20.JsonReference;
+    FResponse: Response;
+    FJsonReference: JsonReference;
 
-    function GetResponse: Blue.Print.Open.API.Schema.v20.Response;
-    function GetJsonReference: Blue.Print.Open.API.Schema.v20.JsonReference;
+    function GetResponse: Response;
+    function GetJsonReference: JsonReference;
     function GetResponseStored: Boolean;
     function GetJsonReferenceStored: Boolean;
   public
@@ -771,8 +773,8 @@ type
     property IsResponseStored: Boolean read GetResponseStored;
     property IsJsonReferenceStored: Boolean read GetJsonReferenceStored;
   published
-    property response: Blue.Print.Open.API.Schema.v20.Response read GetResponse write FResponse stored GetResponseStored;
-    property jsonReference: Blue.Print.Open.API.Schema.v20.JsonReference read GetJsonReference write FJsonReference stored GetJsonReferenceStored;
+    property response: Response read GetResponse write FResponse stored GetResponseStored;
+    property jsonReference: JsonReference read GetJsonReference write FJsonReference stored GetJsonReferenceStored;
   end;
 
   Response = class
@@ -780,11 +782,11 @@ type
     [Flat('type')]
     TSchema = class
     private
-      FSchema: Blue.Print.Open.API.Schema.v20.Schema;
-      FFileSchema: Blue.Print.Open.API.Schema.v20.FileSchema;
+      FSchema: Schema;
+      FFileSchema: FileSchema;
 
-      function GetSchema: Blue.Print.Open.API.Schema.v20.Schema;
-      function GetFileSchema: Blue.Print.Open.API.Schema.v20.FileSchema;
+      function GetSchema: Schema;
+      function GetFileSchema: FileSchema;
       function GetSchemaStored: Boolean;
       function GetFileSchemaStored: Boolean;
     public
@@ -793,20 +795,20 @@ type
       property IsSchemaStored: Boolean read GetSchemaStored;
       property IsFileSchemaStored: Boolean read GetFileSchemaStored;
     published
-      property schema: Blue.Print.Open.API.Schema.v20.Schema read GetSchema write FSchema stored GetSchemaStored;
-      property fileSchema: Blue.Print.Open.API.Schema.v20.FileSchema read GetFileSchema write FFileSchema stored GetFileSchemaStored;
+      property schema: Schema read GetSchema write FSchema stored GetSchemaStored;
+      property fileSchema: FileSchema read GetFileSchema write FFileSchema stored GetFileSchemaStored;
     end;
   private
     FDescription: System.String;
-    FSchema: Blue.Print.Open.API.Schema.v20.Response.TSchema;
-    FHeaders: Blue.Print.Open.API.Schema.v20.Headers;
-    FExamples: Blue.Print.Open.API.Schema.v20.Examples;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FSchema: Response.TSchema;
+    FHeaders: Headers;
+    FExamples: Examples;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
 
-    function GetSchema: Blue.Print.Open.API.Schema.v20.Response.TSchema;
-    function GetHeaders: Blue.Print.Open.API.Schema.v20.Headers;
-    function GetExamples: Blue.Print.Open.API.Schema.v20.Examples;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetSchema: Response.TSchema;
+    function GetHeaders: Headers;
+    function GetExamples: Examples;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetSchemaStored: Boolean;
     function GetHeadersStored: Boolean;
     function GetExamplesStored: Boolean;
@@ -820,25 +822,25 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     property description: System.String read FDescription write FDescription;
-    property schema: Blue.Print.Open.API.Schema.v20.Response.TSchema read GetSchema write FSchema stored GetSchemaStored;
-    property headers: Blue.Print.Open.API.Schema.v20.Headers read GetHeaders write FHeaders stored GetHeadersStored;
-    property examples: Blue.Print.Open.API.Schema.v20.Examples read GetExamples write FExamples stored GetExamplesStored;
+    property schema: Response.TSchema read GetSchema write FSchema stored GetSchemaStored;
+    property headers: Headers read GetHeaders write FHeaders stored GetHeadersStored;
+    property examples: Examples read GetExamples write FExamples stored GetExamplesStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   Headers = class
   private
-    FHeader: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Header>;
+    FHeader: TDynamicProperty<Header>;
 
-    function GetHeader: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Header>;
+    function GetHeader: TDynamicProperty<Header>;
     function GetHeaderStored: Boolean;
   public
     destructor Destroy; override;
 
     property IsHeaderStored: Boolean read GetHeaderStored;
   published
-    property header: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Header> read GetHeader write FHeader stored GetHeaderStored;
+    property header: TDynamicProperty<Header> read GetHeader write FHeader stored GetHeaderStored;
   end;
 
   Header = class
@@ -846,9 +848,9 @@ type
     [EnumValue('string, number, integer, boolean, array')]
     TType = (&string, number, integer, boolean, &array);
   private
-    FType: TType;
+    FType: Header.TType;
     FFormat: System.String;
-    FItems: Blue.Print.Open.API.Schema.v20.PrimitivesItems;
+    FItems: PrimitivesItems;
     FCollectionFormat: collectionFormat;
     FDefault: default;
     FMaximum: maximum;
@@ -864,17 +866,17 @@ type
     FEnum: enum;
     FMultipleOf: multipleOf;
     FDescription: System.String;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
     FCollectionFormatIsStored: Boolean;
     FDefaultIsStored: Boolean;
     FExclusiveMaximumIsStored: Boolean;
     FExclusiveMinimumIsStored: Boolean;
     FUniqueItemsIsStored: Boolean;
 
-    function GetItems: Blue.Print.Open.API.Schema.v20.PrimitivesItems;
+    function GetItems: PrimitivesItems;
     function GetMinLength: minLength;
     function GetMinItems: minItems;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetFormatStored: Boolean;
     function GetItemsStored: Boolean;
     function GetMaximumStored: Boolean;
@@ -916,9 +918,9 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('type')]
-    property &type: TType read FType write FType;
+    property &type: Header.TType read FType write FType;
     property format: System.String read FFormat write FFormat stored GetFormatStored;
-    property items: Blue.Print.Open.API.Schema.v20.PrimitivesItems read GetItems write FItems stored GetItemsStored;
+    property items: PrimitivesItems read GetItems write FItems stored GetItemsStored;
     property collectionFormat: collectionFormat read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
     property default: default read FDefault write SetDefault stored FDefaultIsStored;
     property maximum: maximum read FMaximum write FMaximum stored GetMaximumStored;
@@ -935,7 +937,7 @@ type
     property multipleOf: multipleOf read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   VendorExtension = class
@@ -943,19 +945,18 @@ type
 
   BodyParameter = class
   public type
-    [EnumValue('body')]
     TIn = (body);
   private
     FDescription: System.String;
     FName: System.String;
-    FIn: TIn;
+    FIn: BodyParameter.TIn;
     FRequired: System.Boolean;
-    FSchema: Blue.Print.Open.API.Schema.v20.Schema;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FSchema: Schema;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
     FRequiredIsStored: Boolean;
 
-    function GetSchema: Blue.Print.Open.API.Schema.v20.Schema;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetSchema: Schema;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetDescriptionStored: Boolean;
     function GetVendorExtensionStored: Boolean;
     procedure SetRequired(const Value: System.Boolean);
@@ -969,28 +970,27 @@ type
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property name: System.String read FName write FName;
     [FieldName('in')]
-    property &in: TIn read FIn write FIn;
+    property &in: BodyParameter.TIn read FIn write FIn;
     property required: System.Boolean read FRequired write SetRequired stored FRequiredIsStored;
-    property schema: Blue.Print.Open.API.Schema.v20.Schema read GetSchema write FSchema;
+    property schema: Schema read GetSchema write FSchema;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   HeaderParameterSubSchema = class
   public type
-    [EnumValue('header')]
     TIn = (header);
 
     [EnumValue('string, number, boolean, integer, array')]
     TType = (&string, number, boolean, integer, &array);
   private
     FRequired: System.Boolean;
-    FIn: TIn;
+    FIn: HeaderParameterSubSchema.TIn;
     FDescription: System.String;
     FName: System.String;
-    FType: TType;
+    FType: HeaderParameterSubSchema.TType;
     FFormat: System.String;
-    FItems: Blue.Print.Open.API.Schema.v20.PrimitivesItems;
+    FItems: PrimitivesItems;
     FCollectionFormat: collectionFormat;
     FDefault: default;
     FMaximum: maximum;
@@ -1005,7 +1005,7 @@ type
     FUniqueItems: uniqueItems;
     FEnum: enum;
     FMultipleOf: multipleOf;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
     FRequiredIsStored: Boolean;
     FInIsStored: Boolean;
     FTypeIsStored: Boolean;
@@ -1015,10 +1015,10 @@ type
     FExclusiveMinimumIsStored: Boolean;
     FUniqueItemsIsStored: Boolean;
 
-    function GetItems: Blue.Print.Open.API.Schema.v20.PrimitivesItems;
+    function GetItems: PrimitivesItems;
     function GetMinLength: minLength;
     function GetMinItems: minItems;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetDescriptionStored: Boolean;
     function GetNameStored: Boolean;
     function GetFormatStored: Boolean;
@@ -1034,8 +1034,8 @@ type
     function GetMultipleOfStored: Boolean;
     function GetVendorExtensionStored: Boolean;
     procedure SetRequired(const Value: System.Boolean);
-    procedure SetIn(const Value: TIn);
-    procedure SetType(const Value: TType);
+    procedure SetIn(const Value: HeaderParameterSubSchema.TIn);
+    procedure SetType(const Value: HeaderParameterSubSchema.TType);
     procedure SetCollectionFormat(const Value: collectionFormat);
     procedure SetDefault(const Value: default);
     procedure SetExclusiveMaximum(const Value: exclusiveMaximum);
@@ -1069,13 +1069,13 @@ type
   published
     property required: System.Boolean read FRequired write SetRequired stored FRequiredIsStored;
     [FieldName('in')]
-    property &in: TIn read FIn write SetIn stored FInIsStored;
+    property &in: HeaderParameterSubSchema.TIn read FIn write SetIn stored FInIsStored;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property name: System.String read FName write FName stored GetNameStored;
     [FieldName('type')]
-    property &type: TType read FType write SetType stored FTypeIsStored;
+    property &type: HeaderParameterSubSchema.TType read FType write SetType stored FTypeIsStored;
     property format: System.String read FFormat write FFormat stored GetFormatStored;
-    property items: Blue.Print.Open.API.Schema.v20.PrimitivesItems read GetItems write FItems stored GetItemsStored;
+    property items: PrimitivesItems read GetItems write FItems stored GetItemsStored;
     property collectionFormat: collectionFormat read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
     property default: default read FDefault write SetDefault stored FDefaultIsStored;
     property maximum: maximum read FMaximum write FMaximum stored GetMaximumStored;
@@ -1091,25 +1091,24 @@ type
     property enum: enum read FEnum write FEnum stored GetEnumStored;
     property multipleOf: multipleOf read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   QueryParameterSubSchema = class
   public type
-    [EnumValue('query')]
     TIn = (query);
 
     [EnumValue('string, number, boolean, integer, array')]
     TType = (&string, number, boolean, integer, &array);
   private
     FRequired: System.Boolean;
-    FIn: TIn;
+    FIn: QueryParameterSubSchema.TIn;
     FDescription: System.String;
     FName: System.String;
     FAllowEmptyValue: System.Boolean;
-    FType: TType;
+    FType: QueryParameterSubSchema.TType;
     FFormat: System.String;
-    FItems: Blue.Print.Open.API.Schema.v20.PrimitivesItems;
+    FItems: PrimitivesItems;
     FCollectionFormat: collectionFormatWithMulti;
     FDefault: default;
     FMaximum: maximum;
@@ -1124,7 +1123,7 @@ type
     FUniqueItems: uniqueItems;
     FEnum: enum;
     FMultipleOf: multipleOf;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
     FRequiredIsStored: Boolean;
     FInIsStored: Boolean;
     FAllowEmptyValueIsStored: Boolean;
@@ -1135,10 +1134,10 @@ type
     FExclusiveMinimumIsStored: Boolean;
     FUniqueItemsIsStored: Boolean;
 
-    function GetItems: Blue.Print.Open.API.Schema.v20.PrimitivesItems;
+    function GetItems: PrimitivesItems;
     function GetMinLength: minLength;
     function GetMinItems: minItems;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetDescriptionStored: Boolean;
     function GetNameStored: Boolean;
     function GetFormatStored: Boolean;
@@ -1154,9 +1153,9 @@ type
     function GetMultipleOfStored: Boolean;
     function GetVendorExtensionStored: Boolean;
     procedure SetRequired(const Value: System.Boolean);
-    procedure SetIn(const Value: TIn);
+    procedure SetIn(const Value: QueryParameterSubSchema.TIn);
     procedure SetAllowEmptyValue(const Value: System.Boolean);
-    procedure SetType(const Value: TType);
+    procedure SetType(const Value: QueryParameterSubSchema.TType);
     procedure SetCollectionFormat(const Value: collectionFormatWithMulti);
     procedure SetDefault(const Value: default);
     procedure SetExclusiveMaximum(const Value: exclusiveMaximum);
@@ -1191,14 +1190,14 @@ type
   published
     property required: System.Boolean read FRequired write SetRequired stored FRequiredIsStored;
     [FieldName('in')]
-    property &in: TIn read FIn write SetIn stored FInIsStored;
+    property &in: QueryParameterSubSchema.TIn read FIn write SetIn stored FInIsStored;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property name: System.String read FName write FName stored GetNameStored;
     property allowEmptyValue: System.Boolean read FAllowEmptyValue write SetAllowEmptyValue stored FAllowEmptyValueIsStored;
     [FieldName('type')]
-    property &type: TType read FType write SetType stored FTypeIsStored;
+    property &type: QueryParameterSubSchema.TType read FType write SetType stored FTypeIsStored;
     property format: System.String read FFormat write FFormat stored GetFormatStored;
-    property items: Blue.Print.Open.API.Schema.v20.PrimitivesItems read GetItems write FItems stored GetItemsStored;
+    property items: PrimitivesItems read GetItems write FItems stored GetItemsStored;
     property collectionFormat: collectionFormatWithMulti read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
     property default: default read FDefault write SetDefault stored FDefaultIsStored;
     property maximum: maximum read FMaximum write FMaximum stored GetMaximumStored;
@@ -1214,25 +1213,24 @@ type
     property enum: enum read FEnum write FEnum stored GetEnumStored;
     property multipleOf: multipleOf read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   FormDataParameterSubSchema = class
   public type
-    [EnumValue('formData')]
     TIn = (formData);
 
     [EnumValue('string, number, boolean, integer, array, file')]
     TType = (&string, number, boolean, integer, &array, &file);
   private
     FRequired: System.Boolean;
-    FIn: TIn;
+    FIn: FormDataParameterSubSchema.TIn;
     FDescription: System.String;
     FName: System.String;
     FAllowEmptyValue: System.Boolean;
-    FType: TType;
+    FType: FormDataParameterSubSchema.TType;
     FFormat: System.String;
-    FItems: Blue.Print.Open.API.Schema.v20.PrimitivesItems;
+    FItems: PrimitivesItems;
     FCollectionFormat: collectionFormatWithMulti;
     FDefault: default;
     FMaximum: maximum;
@@ -1247,7 +1245,7 @@ type
     FUniqueItems: uniqueItems;
     FEnum: enum;
     FMultipleOf: multipleOf;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
     FRequiredIsStored: Boolean;
     FInIsStored: Boolean;
     FAllowEmptyValueIsStored: Boolean;
@@ -1258,10 +1256,10 @@ type
     FExclusiveMinimumIsStored: Boolean;
     FUniqueItemsIsStored: Boolean;
 
-    function GetItems: Blue.Print.Open.API.Schema.v20.PrimitivesItems;
+    function GetItems: PrimitivesItems;
     function GetMinLength: minLength;
     function GetMinItems: minItems;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetDescriptionStored: Boolean;
     function GetNameStored: Boolean;
     function GetFormatStored: Boolean;
@@ -1277,9 +1275,9 @@ type
     function GetMultipleOfStored: Boolean;
     function GetVendorExtensionStored: Boolean;
     procedure SetRequired(const Value: System.Boolean);
-    procedure SetIn(const Value: TIn);
+    procedure SetIn(const Value: FormDataParameterSubSchema.TIn);
     procedure SetAllowEmptyValue(const Value: System.Boolean);
-    procedure SetType(const Value: TType);
+    procedure SetType(const Value: FormDataParameterSubSchema.TType);
     procedure SetCollectionFormat(const Value: collectionFormatWithMulti);
     procedure SetDefault(const Value: default);
     procedure SetExclusiveMaximum(const Value: exclusiveMaximum);
@@ -1314,14 +1312,14 @@ type
   published
     property required: System.Boolean read FRequired write SetRequired stored FRequiredIsStored;
     [FieldName('in')]
-    property &in: TIn read FIn write SetIn stored FInIsStored;
+    property &in: FormDataParameterSubSchema.TIn read FIn write SetIn stored FInIsStored;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property name: System.String read FName write FName stored GetNameStored;
     property allowEmptyValue: System.Boolean read FAllowEmptyValue write SetAllowEmptyValue stored FAllowEmptyValueIsStored;
     [FieldName('type')]
-    property &type: TType read FType write SetType stored FTypeIsStored;
+    property &type: FormDataParameterSubSchema.TType read FType write SetType stored FTypeIsStored;
     property format: System.String read FFormat write FFormat stored GetFormatStored;
-    property items: Blue.Print.Open.API.Schema.v20.PrimitivesItems read GetItems write FItems stored GetItemsStored;
+    property items: PrimitivesItems read GetItems write FItems stored GetItemsStored;
     property collectionFormat: collectionFormatWithMulti read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
     property default: default read FDefault write SetDefault stored FDefaultIsStored;
     property maximum: maximum read FMaximum write FMaximum stored GetMaximumStored;
@@ -1337,27 +1335,25 @@ type
     property enum: enum read FEnum write FEnum stored GetEnumStored;
     property multipleOf: multipleOf read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   PathParameterSubSchema = class
   public type
-    [EnumValue('true')]
     TRequired = (true);
 
-    [EnumValue('path')]
     TIn = (path);
 
     [EnumValue('string, number, boolean, integer, array')]
     TType = (&string, number, boolean, integer, &array);
   private
-    FRequired: TRequired;
-    FIn: TIn;
+    FRequired: PathParameterSubSchema.TRequired;
+    FIn: PathParameterSubSchema.TIn;
     FDescription: System.String;
     FName: System.String;
-    FType: TType;
+    FType: PathParameterSubSchema.TType;
     FFormat: System.String;
-    FItems: Blue.Print.Open.API.Schema.v20.PrimitivesItems;
+    FItems: PrimitivesItems;
     FCollectionFormat: collectionFormat;
     FDefault: default;
     FMaximum: maximum;
@@ -1372,7 +1368,7 @@ type
     FUniqueItems: uniqueItems;
     FEnum: enum;
     FMultipleOf: multipleOf;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
     FInIsStored: Boolean;
     FTypeIsStored: Boolean;
     FCollectionFormatIsStored: Boolean;
@@ -1381,10 +1377,10 @@ type
     FExclusiveMinimumIsStored: Boolean;
     FUniqueItemsIsStored: Boolean;
 
-    function GetItems: Blue.Print.Open.API.Schema.v20.PrimitivesItems;
+    function GetItems: PrimitivesItems;
     function GetMinLength: minLength;
     function GetMinItems: minItems;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetDescriptionStored: Boolean;
     function GetNameStored: Boolean;
     function GetFormatStored: Boolean;
@@ -1399,8 +1395,8 @@ type
     function GetEnumStored: Boolean;
     function GetMultipleOfStored: Boolean;
     function GetVendorExtensionStored: Boolean;
-    procedure SetIn(const Value: TIn);
-    procedure SetType(const Value: TType);
+    procedure SetIn(const Value: PathParameterSubSchema.TIn);
+    procedure SetType(const Value: PathParameterSubSchema.TType);
     procedure SetCollectionFormat(const Value: collectionFormat);
     procedure SetDefault(const Value: default);
     procedure SetExclusiveMaximum(const Value: exclusiveMaximum);
@@ -1431,15 +1427,15 @@ type
     property IsMultipleOfStored: Boolean read GetMultipleOfStored;
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
-    property required: TRequired read FRequired write FRequired;
+    property required: PathParameterSubSchema.TRequired read FRequired write FRequired;
     [FieldName('in')]
-    property &in: TIn read FIn write SetIn stored FInIsStored;
+    property &in: PathParameterSubSchema.TIn read FIn write SetIn stored FInIsStored;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property name: System.String read FName write FName stored GetNameStored;
     [FieldName('type')]
-    property &type: TType read FType write SetType stored FTypeIsStored;
+    property &type: PathParameterSubSchema.TType read FType write SetType stored FTypeIsStored;
     property format: System.String read FFormat write FFormat stored GetFormatStored;
-    property items: Blue.Print.Open.API.Schema.v20.PrimitivesItems read GetItems write FItems stored GetItemsStored;
+    property items: PrimitivesItems read GetItems write FItems stored GetItemsStored;
     property collectionFormat: collectionFormat read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
     property default: default read FDefault write SetDefault stored FDefaultIsStored;
     property maximum: maximum read FMaximum write FMaximum stored GetMaximumStored;
@@ -1455,21 +1451,21 @@ type
     property enum: enum read FEnum write FEnum stored GetEnumStored;
     property multipleOf: multipleOf read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   [Flat('in')]
   NonBodyParameter = class
   private
-    FHeaderParameterSubSchema: Blue.Print.Open.API.Schema.v20.HeaderParameterSubSchema;
-    FFormDataParameterSubSchema: Blue.Print.Open.API.Schema.v20.FormDataParameterSubSchema;
-    FQueryParameterSubSchema: Blue.Print.Open.API.Schema.v20.QueryParameterSubSchema;
-    FPathParameterSubSchema: Blue.Print.Open.API.Schema.v20.PathParameterSubSchema;
+    FHeaderParameterSubSchema: HeaderParameterSubSchema;
+    FFormDataParameterSubSchema: FormDataParameterSubSchema;
+    FQueryParameterSubSchema: QueryParameterSubSchema;
+    FPathParameterSubSchema: PathParameterSubSchema;
 
-    function GetHeaderParameterSubSchema: Blue.Print.Open.API.Schema.v20.HeaderParameterSubSchema;
-    function GetFormDataParameterSubSchema: Blue.Print.Open.API.Schema.v20.FormDataParameterSubSchema;
-    function GetQueryParameterSubSchema: Blue.Print.Open.API.Schema.v20.QueryParameterSubSchema;
-    function GetPathParameterSubSchema: Blue.Print.Open.API.Schema.v20.PathParameterSubSchema;
+    function GetHeaderParameterSubSchema: HeaderParameterSubSchema;
+    function GetFormDataParameterSubSchema: FormDataParameterSubSchema;
+    function GetQueryParameterSubSchema: QueryParameterSubSchema;
+    function GetPathParameterSubSchema: PathParameterSubSchema;
     function GetHeaderParameterSubSchemaStored: Boolean;
     function GetFormDataParameterSubSchemaStored: Boolean;
     function GetQueryParameterSubSchemaStored: Boolean;
@@ -1482,20 +1478,20 @@ type
     property IsQueryParameterSubSchemaStored: Boolean read GetQueryParameterSubSchemaStored;
     property IsPathParameterSubSchemaStored: Boolean read GetPathParameterSubSchemaStored;
   published
-    property headerParameterSubSchema: Blue.Print.Open.API.Schema.v20.HeaderParameterSubSchema read GetHeaderParameterSubSchema write FHeaderParameterSubSchema stored GetHeaderParameterSubSchemaStored;
-    property formDataParameterSubSchema: Blue.Print.Open.API.Schema.v20.FormDataParameterSubSchema read GetFormDataParameterSubSchema write FFormDataParameterSubSchema stored GetFormDataParameterSubSchemaStored;
-    property queryParameterSubSchema: Blue.Print.Open.API.Schema.v20.QueryParameterSubSchema read GetQueryParameterSubSchema write FQueryParameterSubSchema stored GetQueryParameterSubSchemaStored;
-    property pathParameterSubSchema: Blue.Print.Open.API.Schema.v20.PathParameterSubSchema read GetPathParameterSubSchema write FPathParameterSubSchema stored GetPathParameterSubSchemaStored;
+    property headerParameterSubSchema: HeaderParameterSubSchema read GetHeaderParameterSubSchema write FHeaderParameterSubSchema stored GetHeaderParameterSubSchemaStored;
+    property formDataParameterSubSchema: FormDataParameterSubSchema read GetFormDataParameterSubSchema write FFormDataParameterSubSchema stored GetFormDataParameterSubSchemaStored;
+    property queryParameterSubSchema: QueryParameterSubSchema read GetQueryParameterSubSchema write FQueryParameterSubSchema stored GetQueryParameterSubSchemaStored;
+    property pathParameterSubSchema: PathParameterSubSchema read GetPathParameterSubSchema write FPathParameterSubSchema stored GetPathParameterSubSchemaStored;
   end;
 
   [Flat('in')]
   Parameter = class
   private
-    FBodyParameter: Blue.Print.Open.API.Schema.v20.BodyParameter;
-    FNonBodyParameter: Blue.Print.Open.API.Schema.v20.NonBodyParameter;
+    FBodyParameter: BodyParameter;
+    FNonBodyParameter: NonBodyParameter;
 
-    function GetBodyParameter: Blue.Print.Open.API.Schema.v20.BodyParameter;
-    function GetNonBodyParameter: Blue.Print.Open.API.Schema.v20.NonBodyParameter;
+    function GetBodyParameter: BodyParameter;
+    function GetNonBodyParameter: NonBodyParameter;
     function GetBodyParameterStored: Boolean;
     function GetNonBodyParameterStored: Boolean;
   public
@@ -1504,8 +1500,8 @@ type
     property IsBodyParameterStored: Boolean read GetBodyParameterStored;
     property IsNonBodyParameterStored: Boolean read GetNonBodyParameterStored;
   published
-    property bodyParameter: Blue.Print.Open.API.Schema.v20.BodyParameter read GetBodyParameter write FBodyParameter stored GetBodyParameterStored;
-    property nonBodyParameter: Blue.Print.Open.API.Schema.v20.NonBodyParameter read GetNonBodyParameter write FNonBodyParameter stored GetNonBodyParameterStored;
+    property bodyParameter: BodyParameter read GetBodyParameter write FBodyParameter stored GetBodyParameterStored;
+    property nonBodyParameter: NonBodyParameter read GetNonBodyParameter write FNonBodyParameter stored GetNonBodyParameterStored;
   end;
 
   Schema = class
@@ -1513,11 +1509,11 @@ type
     [Flat]
     TAdditionalProperties = class
     private
-      FSchema: Blue.Print.Open.API.Schema.v20.Schema;
+      FSchema: Schema;
       FBoolean: System.Boolean;
       FBooleanIsStored: Boolean;
 
-      function GetSchema: Blue.Print.Open.API.Schema.v20.Schema;
+      function GetSchema: Schema;
       function GetSchemaStored: Boolean;
       procedure SetBoolean(const Value: System.Boolean);
     public
@@ -1526,44 +1522,44 @@ type
       property IsSchemaStored: Boolean read GetSchemaStored;
       property IsBooleanStored: Boolean read FBooleanIsStored;
     published
-      property schema: Blue.Print.Open.API.Schema.v20.Schema read GetSchema write FSchema stored GetSchemaStored;
+      property schema: Schema read GetSchema write FSchema stored GetSchemaStored;
       property boolean: System.Boolean read FBoolean write SetBoolean stored FBooleanIsStored;
     end;
 
     [Flat]
     TItems = class
     private
-      FSchema: Blue.Print.Open.API.Schema.v20.Schema;
-      FArray: TArray<Blue.Print.Open.API.Schema.v20.Schema>;
+      FSchema: Schema;
+      FArray: TArray<Schema>;
 
-      function GetSchema: Blue.Print.Open.API.Schema.v20.Schema;
+      function GetSchema: Schema;
       function GetSchemaStored: Boolean;
       function GetArrayStored: Boolean;
     public
       destructor Destroy; override;
 
-      function AddArray: Blue.Print.Open.API.Schema.v20.Schema;
+      function AddArray: Schema;
 
       property IsSchemaStored: Boolean read GetSchemaStored;
       property IsArrayStored: Boolean read GetArrayStored;
     published
-      property schema: Blue.Print.Open.API.Schema.v20.Schema read GetSchema write FSchema stored GetSchemaStored;
+      property schema: Schema read GetSchema write FSchema stored GetSchemaStored;
       [FieldName('array')]
-      property &array: TArray<Blue.Print.Open.API.Schema.v20.Schema> read FArray write FArray stored GetArrayStored;
+      property &array: TArray<Schema> read FArray write FArray stored GetArrayStored;
     end;
 
     TProperties = class
     private
-      FSchema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Schema>;
+      FSchema: TDynamicProperty<Schema>;
 
-      function GetSchema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Schema>;
+      function GetSchema: TDynamicProperty<Schema>;
       function GetSchemaStored: Boolean;
     public
       destructor Destroy; override;
 
       property IsSchemaStored: Boolean read GetSchemaStored;
     published
-      property schema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Schema> read GetSchema write FSchema stored GetSchemaStored;
+      property schema: TDynamicProperty<Schema> read GetSchema write FSchema stored GetSchemaStored;
     end;
   private
     FRef: System.String;
@@ -1577,26 +1573,26 @@ type
     FMinimum: System.Double;
     FExclusiveMinimum: System.Boolean;
     FMaxLength: positiveInteger;
-    FMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+    FMinLength: PositiveIntegerDefault0;
     FPattern: System.String;
     FMaxItems: positiveInteger;
-    FMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+    FMinItems: PositiveIntegerDefault0;
     FUniqueItems: System.Boolean;
     FMaxProperties: positiveInteger;
-    FMinProperties: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+    FMinProperties: PositiveIntegerDefault0;
     FRequired: stringArray;
     FEnum: TArray<any>;
-    FAdditionalProperties: Blue.Print.Open.API.Schema.v20.Schema.TAdditionalProperties;
-    FType: Blue.Print.Open.API.Schema.v20.TJSONSchema.TType;
-    FItems: Blue.Print.Open.API.Schema.v20.Schema.TItems;
-    FAllOf: TArray<Blue.Print.Open.API.Schema.v20.Schema>;
-    FProperties: Blue.Print.Open.API.Schema.v20.Schema.TProperties;
+    FAdditionalProperties: Schema.TAdditionalProperties;
+    FType: TJSONSchema.TType;
+    FItems: Schema.TItems;
+    FAllOf: TArray<Schema>;
+    FProperties: Schema.TProperties;
     FDiscriminator: System.String;
     FReadOnly: System.Boolean;
-    FXml: Blue.Print.Open.API.Schema.v20.Xml;
-    FExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
+    FXml: Xml;
+    FExternalDocs: ExternalDocs;
     FExample: any;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
     FDefaultIsStored: Boolean;
     FExclusiveMaximumIsStored: Boolean;
     FExclusiveMinimumIsStored: Boolean;
@@ -1604,16 +1600,16 @@ type
     FReadOnlyIsStored: Boolean;
     FExampleIsStored: Boolean;
 
-    function GetMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
-    function GetMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
-    function GetMinProperties: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
-    function GetAdditionalProperties: Blue.Print.Open.API.Schema.v20.Schema.TAdditionalProperties;
-    function GetType: Blue.Print.Open.API.Schema.v20.TJSONSchema.TType;
-    function GetItems: Blue.Print.Open.API.Schema.v20.Schema.TItems;
-    function GetProperties: Blue.Print.Open.API.Schema.v20.Schema.TProperties;
-    function GetXml: Blue.Print.Open.API.Schema.v20.Xml;
-    function GetExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetMinLength: PositiveIntegerDefault0;
+    function GetMinItems: PositiveIntegerDefault0;
+    function GetMinProperties: PositiveIntegerDefault0;
+    function GetAdditionalProperties: Schema.TAdditionalProperties;
+    function GetType: TJSONSchema.TType;
+    function GetItems: Schema.TItems;
+    function GetProperties: Schema.TProperties;
+    function GetXml: Xml;
+    function GetExternalDocs: ExternalDocs;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetRefStored: Boolean;
     function GetFormatStored: Boolean;
     function GetTitleStored: Boolean;
@@ -1648,7 +1644,7 @@ type
   public
     destructor Destroy; override;
 
-    function AddAllOf: Blue.Print.Open.API.Schema.v20.Schema;
+    function AddAllOf: Schema;
 
     property IsRefStored: Boolean read GetRefStored;
     property IsFormatStored: Boolean read GetFormatStored;
@@ -1694,28 +1690,28 @@ type
     property minimum: System.Double read FMinimum write FMinimum stored GetMinimumStored;
     property exclusiveMinimum: System.Boolean read FExclusiveMinimum write SetExclusiveMinimum stored FExclusiveMinimumIsStored;
     property maxLength: positiveInteger read FMaxLength write FMaxLength stored GetMaxLengthStored;
-    property minLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
+    property minLength: PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
     property pattern: System.String read FPattern write FPattern stored GetPatternStored;
     property maxItems: positiveInteger read FMaxItems write FMaxItems stored GetMaxItemsStored;
-    property minItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
+    property minItems: PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
     property uniqueItems: System.Boolean read FUniqueItems write SetUniqueItems stored FUniqueItemsIsStored;
     property maxProperties: positiveInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
-    property minProperties: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
+    property minProperties: PositiveIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
     property required: stringArray read FRequired write FRequired stored GetRequiredStored;
     property enum: TArray<any> read FEnum write FEnum stored GetEnumStored;
-    property additionalProperties: Blue.Print.Open.API.Schema.v20.Schema.TAdditionalProperties read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+    property additionalProperties: Schema.TAdditionalProperties read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
     [FieldName('type')]
-    property &type: Blue.Print.Open.API.Schema.v20.TJSONSchema.TType read GetType write FType stored GetTypeStored;
-    property items: Blue.Print.Open.API.Schema.v20.Schema.TItems read GetItems write FItems stored GetItemsStored;
-    property allOf: TArray<Blue.Print.Open.API.Schema.v20.Schema> read FAllOf write FAllOf stored GetAllOfStored;
-    property properties: Blue.Print.Open.API.Schema.v20.Schema.TProperties read GetProperties write FProperties stored GetPropertiesStored;
+    property &type: TJSONSchema.TType read GetType write FType stored GetTypeStored;
+    property items: Schema.TItems read GetItems write FItems stored GetItemsStored;
+    property allOf: TArray<Schema> read FAllOf write FAllOf stored GetAllOfStored;
+    property properties: Schema.TProperties read GetProperties write FProperties stored GetPropertiesStored;
     property discriminator: System.String read FDiscriminator write FDiscriminator stored GetDiscriminatorStored;
     property readOnly: System.Boolean read FReadOnly write SetReadOnly stored FReadOnlyIsStored;
-    property xml: Blue.Print.Open.API.Schema.v20.Xml read GetXml write FXml stored GetXmlStored;
-    property externalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
+    property xml: Xml read GetXml write FXml stored GetXmlStored;
+    property externalDocs: ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
     property example: any read FExample write SetExample stored FExampleIsStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   FileSchema = class
@@ -1728,17 +1724,17 @@ type
     FDescription: System.String;
     FDefault: any;
     FRequired: stringArray;
-    FType: TType;
+    FType: FileSchema.TType;
     FReadOnly: System.Boolean;
-    FExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
+    FExternalDocs: ExternalDocs;
     FExample: any;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
     FDefaultIsStored: Boolean;
     FReadOnlyIsStored: Boolean;
     FExampleIsStored: Boolean;
 
-    function GetExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetExternalDocs: ExternalDocs;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetFormatStored: Boolean;
     function GetTitleStored: Boolean;
     function GetDescriptionStored: Boolean;
@@ -1767,12 +1763,12 @@ type
     property default: any read FDefault write SetDefault stored FDefaultIsStored;
     property required: stringArray read FRequired write FRequired stored GetRequiredStored;
     [FieldName('type')]
-    property &type: TType read FType write FType;
+    property &type: FileSchema.TType read FType write FType;
     property readOnly: System.Boolean read FReadOnly write SetReadOnly stored FReadOnlyIsStored;
-    property externalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
+    property externalDocs: ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
     property example: any read FExample write SetExample stored FExampleIsStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   PrimitivesItems = class
@@ -1780,9 +1776,9 @@ type
     [EnumValue('string, number, integer, boolean, array')]
     TType = (&string, number, integer, boolean, &array);
   private
-    FType: TType;
+    FType: PrimitivesItems.TType;
     FFormat: System.String;
-    FItems: Blue.Print.Open.API.Schema.v20.PrimitivesItems;
+    FItems: PrimitivesItems;
     FCollectionFormat: collectionFormat;
     FDefault: default;
     FMaximum: maximum;
@@ -1797,7 +1793,7 @@ type
     FUniqueItems: uniqueItems;
     FEnum: enum;
     FMultipleOf: multipleOf;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
     FTypeIsStored: Boolean;
     FCollectionFormatIsStored: Boolean;
     FDefaultIsStored: Boolean;
@@ -1805,10 +1801,10 @@ type
     FExclusiveMinimumIsStored: Boolean;
     FUniqueItemsIsStored: Boolean;
 
-    function GetItems: Blue.Print.Open.API.Schema.v20.PrimitivesItems;
+    function GetItems: PrimitivesItems;
     function GetMinLength: minLength;
     function GetMinItems: minItems;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetFormatStored: Boolean;
     function GetItemsStored: Boolean;
     function GetMaximumStored: Boolean;
@@ -1821,7 +1817,7 @@ type
     function GetEnumStored: Boolean;
     function GetMultipleOfStored: Boolean;
     function GetVendorExtensionStored: Boolean;
-    procedure SetType(const Value: TType);
+    procedure SetType(const Value: PrimitivesItems.TType);
     procedure SetCollectionFormat(const Value: collectionFormat);
     procedure SetDefault(const Value: default);
     procedure SetExclusiveMaximum(const Value: exclusiveMaximum);
@@ -1850,9 +1846,9 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('type')]
-    property &type: TType read FType write SetType stored FTypeIsStored;
+    property &type: PrimitivesItems.TType read FType write SetType stored FTypeIsStored;
     property format: System.String read FFormat write FFormat stored GetFormatStored;
-    property items: Blue.Print.Open.API.Schema.v20.PrimitivesItems read GetItems write FItems stored GetItemsStored;
+    property items: PrimitivesItems read GetItems write FItems stored GetItemsStored;
     property collectionFormat: collectionFormat read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
     property default: default read FDefault write SetDefault stored FDefaultIsStored;
     property maximum: maximum read FMaximum write FMaximum stored GetMaximumStored;
@@ -1868,7 +1864,7 @@ type
     property enum: enum read FEnum write FEnum stored GetEnumStored;
     property multipleOf: multipleOf read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   SecurityRequirement = class
@@ -1893,11 +1889,11 @@ type
     FPrefix: System.String;
     FAttribute: System.Boolean;
     FWrapped: System.Boolean;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
     FAttributeIsStored: Boolean;
     FWrappedIsStored: Boolean;
 
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetNameStored: Boolean;
     function GetNamespaceStored: Boolean;
     function GetPrefixStored: Boolean;
@@ -1920,18 +1916,18 @@ type
     property attribute: System.Boolean read FAttribute write SetAttribute stored FAttributeIsStored;
     property wrapped: System.Boolean read FWrapped write SetWrapped stored FWrappedIsStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   Tag = class
   private
     FName: System.String;
     FDescription: System.String;
-    FExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FExternalDocs: ExternalDocs;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
 
-    function GetExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetExternalDocs: ExternalDocs;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetDescriptionStored: Boolean;
     function GetExternalDocsStored: Boolean;
     function GetVendorExtensionStored: Boolean;
@@ -1944,26 +1940,26 @@ type
   published
     property name: System.String read FName write FName;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-    property externalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
+    property externalDocs: ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   SecurityDefinitions = class
   private
-    FBasicAuthenticationSecurity: Blue.Print.Open.API.Schema.v20.BasicAuthenticationSecurity;
-    FApiKeySecurity: Blue.Print.Open.API.Schema.v20.ApiKeySecurity;
-    FOauth2ImplicitSecurity: Blue.Print.Open.API.Schema.v20.Oauth2ImplicitSecurity;
-    FOauth2PasswordSecurity: Blue.Print.Open.API.Schema.v20.Oauth2PasswordSecurity;
-    FOauth2ApplicationSecurity: Blue.Print.Open.API.Schema.v20.Oauth2ApplicationSecurity;
-    FOauth2AccessCodeSecurity: Blue.Print.Open.API.Schema.v20.Oauth2AccessCodeSecurity;
+    FBasicAuthenticationSecurity: BasicAuthenticationSecurity;
+    FApiKeySecurity: ApiKeySecurity;
+    FOauth2ImplicitSecurity: Oauth2ImplicitSecurity;
+    FOauth2PasswordSecurity: Oauth2PasswordSecurity;
+    FOauth2ApplicationSecurity: Oauth2ApplicationSecurity;
+    FOauth2AccessCodeSecurity: Oauth2AccessCodeSecurity;
 
-    function GetBasicAuthenticationSecurity: Blue.Print.Open.API.Schema.v20.BasicAuthenticationSecurity;
-    function GetApiKeySecurity: Blue.Print.Open.API.Schema.v20.ApiKeySecurity;
-    function GetOauth2ImplicitSecurity: Blue.Print.Open.API.Schema.v20.Oauth2ImplicitSecurity;
-    function GetOauth2PasswordSecurity: Blue.Print.Open.API.Schema.v20.Oauth2PasswordSecurity;
-    function GetOauth2ApplicationSecurity: Blue.Print.Open.API.Schema.v20.Oauth2ApplicationSecurity;
-    function GetOauth2AccessCodeSecurity: Blue.Print.Open.API.Schema.v20.Oauth2AccessCodeSecurity;
+    function GetBasicAuthenticationSecurity: BasicAuthenticationSecurity;
+    function GetApiKeySecurity: ApiKeySecurity;
+    function GetOauth2ImplicitSecurity: Oauth2ImplicitSecurity;
+    function GetOauth2PasswordSecurity: Oauth2PasswordSecurity;
+    function GetOauth2ApplicationSecurity: Oauth2ApplicationSecurity;
+    function GetOauth2AccessCodeSecurity: Oauth2AccessCodeSecurity;
     function GetBasicAuthenticationSecurityStored: Boolean;
     function GetApiKeySecurityStored: Boolean;
     function GetOauth2ImplicitSecurityStored: Boolean;
@@ -1980,24 +1976,23 @@ type
     property IsOauth2ApplicationSecurityStored: Boolean read GetOauth2ApplicationSecurityStored;
     property IsOauth2AccessCodeSecurityStored: Boolean read GetOauth2AccessCodeSecurityStored;
   published
-    property basicAuthenticationSecurity: Blue.Print.Open.API.Schema.v20.BasicAuthenticationSecurity read GetBasicAuthenticationSecurity write FBasicAuthenticationSecurity stored GetBasicAuthenticationSecurityStored;
-    property apiKeySecurity: Blue.Print.Open.API.Schema.v20.ApiKeySecurity read GetApiKeySecurity write FApiKeySecurity stored GetApiKeySecurityStored;
-    property oauth2ImplicitSecurity: Blue.Print.Open.API.Schema.v20.Oauth2ImplicitSecurity read GetOauth2ImplicitSecurity write FOauth2ImplicitSecurity stored GetOauth2ImplicitSecurityStored;
-    property oauth2PasswordSecurity: Blue.Print.Open.API.Schema.v20.Oauth2PasswordSecurity read GetOauth2PasswordSecurity write FOauth2PasswordSecurity stored GetOauth2PasswordSecurityStored;
-    property oauth2ApplicationSecurity: Blue.Print.Open.API.Schema.v20.Oauth2ApplicationSecurity read GetOauth2ApplicationSecurity write FOauth2ApplicationSecurity stored GetOauth2ApplicationSecurityStored;
-    property oauth2AccessCodeSecurity: Blue.Print.Open.API.Schema.v20.Oauth2AccessCodeSecurity read GetOauth2AccessCodeSecurity write FOauth2AccessCodeSecurity stored GetOauth2AccessCodeSecurityStored;
+    property basicAuthenticationSecurity: BasicAuthenticationSecurity read GetBasicAuthenticationSecurity write FBasicAuthenticationSecurity stored GetBasicAuthenticationSecurityStored;
+    property apiKeySecurity: ApiKeySecurity read GetApiKeySecurity write FApiKeySecurity stored GetApiKeySecurityStored;
+    property oauth2ImplicitSecurity: Oauth2ImplicitSecurity read GetOauth2ImplicitSecurity write FOauth2ImplicitSecurity stored GetOauth2ImplicitSecurityStored;
+    property oauth2PasswordSecurity: Oauth2PasswordSecurity read GetOauth2PasswordSecurity write FOauth2PasswordSecurity stored GetOauth2PasswordSecurityStored;
+    property oauth2ApplicationSecurity: Oauth2ApplicationSecurity read GetOauth2ApplicationSecurity write FOauth2ApplicationSecurity stored GetOauth2ApplicationSecurityStored;
+    property oauth2AccessCodeSecurity: Oauth2AccessCodeSecurity read GetOauth2AccessCodeSecurity write FOauth2AccessCodeSecurity stored GetOauth2AccessCodeSecurityStored;
   end;
 
   BasicAuthenticationSecurity = class
   public type
-    [EnumValue('basic')]
     TType = (basic);
   private
-    FType: TType;
+    FType: BasicAuthenticationSecurity.TType;
     FDescription: System.String;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
 
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetDescriptionStored: Boolean;
     function GetVendorExtensionStored: Boolean;
   public
@@ -2007,27 +2002,25 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('type')]
-    property &type: TType read FType write FType;
+    property &type: BasicAuthenticationSecurity.TType read FType write FType;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   ApiKeySecurity = class
   public type
-    [EnumValue('apiKey')]
     TType = (apiKey);
 
-    [EnumValue('header, query')]
     TIn = (header, query);
   private
-    FType: TType;
+    FType: ApiKeySecurity.TType;
     FName: System.String;
-    FIn: TIn;
+    FIn: ApiKeySecurity.TIn;
     FDescription: System.String;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
 
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetDescriptionStored: Boolean;
     function GetVendorExtensionStored: Boolean;
   public
@@ -2037,32 +2030,30 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('type')]
-    property &type: TType read FType write FType;
+    property &type: ApiKeySecurity.TType read FType write FType;
     property name: System.String read FName write FName;
     [FieldName('in')]
-    property &in: TIn read FIn write FIn;
+    property &in: ApiKeySecurity.TIn read FIn write FIn;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   Oauth2ImplicitSecurity = class
   public type
-    [EnumValue('oauth2')]
     TType = (oauth2);
 
-    [EnumValue('implicit')]
     TFlow = (implicit);
   private
-    FType: TType;
-    FFlow: TFlow;
-    FScopes: Blue.Print.Open.API.Schema.v20.Oauth2Scopes;
+    FType: Oauth2ImplicitSecurity.TType;
+    FFlow: Oauth2ImplicitSecurity.TFlow;
+    FScopes: Oauth2Scopes;
     FAuthorizationUrl: System.String;
     FDescription: System.String;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
 
-    function GetScopes: Blue.Print.Open.API.Schema.v20.Oauth2Scopes;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetScopes: Oauth2Scopes;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetScopesStored: Boolean;
     function GetDescriptionStored: Boolean;
     function GetVendorExtensionStored: Boolean;
@@ -2074,32 +2065,30 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('type')]
-    property &type: TType read FType write FType;
-    property flow: TFlow read FFlow write FFlow;
-    property scopes: Blue.Print.Open.API.Schema.v20.Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
+    property &type: Oauth2ImplicitSecurity.TType read FType write FType;
+    property flow: Oauth2ImplicitSecurity.TFlow read FFlow write FFlow;
+    property scopes: Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
     property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   Oauth2PasswordSecurity = class
   public type
-    [EnumValue('oauth2')]
     TType = (oauth2);
 
-    [EnumValue('password')]
     TFlow = (password);
   private
-    FType: TType;
-    FFlow: TFlow;
-    FScopes: Blue.Print.Open.API.Schema.v20.Oauth2Scopes;
+    FType: Oauth2PasswordSecurity.TType;
+    FFlow: Oauth2PasswordSecurity.TFlow;
+    FScopes: Oauth2Scopes;
     FTokenUrl: System.String;
     FDescription: System.String;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
 
-    function GetScopes: Blue.Print.Open.API.Schema.v20.Oauth2Scopes;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetScopes: Oauth2Scopes;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetScopesStored: Boolean;
     function GetDescriptionStored: Boolean;
     function GetVendorExtensionStored: Boolean;
@@ -2111,32 +2100,30 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('type')]
-    property &type: TType read FType write FType;
-    property flow: TFlow read FFlow write FFlow;
-    property scopes: Blue.Print.Open.API.Schema.v20.Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
+    property &type: Oauth2PasswordSecurity.TType read FType write FType;
+    property flow: Oauth2PasswordSecurity.TFlow read FFlow write FFlow;
+    property scopes: Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
     property tokenUrl: System.String read FTokenUrl write FTokenUrl;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   Oauth2ApplicationSecurity = class
   public type
-    [EnumValue('oauth2')]
     TType = (oauth2);
 
-    [EnumValue('application')]
     TFlow = (application);
   private
-    FType: TType;
-    FFlow: TFlow;
-    FScopes: Blue.Print.Open.API.Schema.v20.Oauth2Scopes;
+    FType: Oauth2ApplicationSecurity.TType;
+    FFlow: Oauth2ApplicationSecurity.TFlow;
+    FScopes: Oauth2Scopes;
     FTokenUrl: System.String;
     FDescription: System.String;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
 
-    function GetScopes: Blue.Print.Open.API.Schema.v20.Oauth2Scopes;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetScopes: Oauth2Scopes;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetScopesStored: Boolean;
     function GetDescriptionStored: Boolean;
     function GetVendorExtensionStored: Boolean;
@@ -2148,33 +2135,31 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('type')]
-    property &type: TType read FType write FType;
-    property flow: TFlow read FFlow write FFlow;
-    property scopes: Blue.Print.Open.API.Schema.v20.Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
+    property &type: Oauth2ApplicationSecurity.TType read FType write FType;
+    property flow: Oauth2ApplicationSecurity.TFlow read FFlow write FFlow;
+    property scopes: Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
     property tokenUrl: System.String read FTokenUrl write FTokenUrl;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   Oauth2AccessCodeSecurity = class
   public type
-    [EnumValue('oauth2')]
     TType = (oauth2);
 
-    [EnumValue('accessCode')]
     TFlow = (accessCode);
   private
-    FType: TType;
-    FFlow: TFlow;
-    FScopes: Blue.Print.Open.API.Schema.v20.Oauth2Scopes;
+    FType: Oauth2AccessCodeSecurity.TType;
+    FFlow: Oauth2AccessCodeSecurity.TFlow;
+    FScopes: Oauth2Scopes;
     FAuthorizationUrl: System.String;
     FTokenUrl: System.String;
     FDescription: System.String;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
 
-    function GetScopes: Blue.Print.Open.API.Schema.v20.Oauth2Scopes;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetScopes: Oauth2Scopes;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetScopesStored: Boolean;
     function GetDescriptionStored: Boolean;
     function GetVendorExtensionStored: Boolean;
@@ -2186,14 +2171,14 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('type')]
-    property &type: TType read FType write FType;
-    property flow: TFlow read FFlow write FFlow;
-    property scopes: Blue.Print.Open.API.Schema.v20.Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
+    property &type: Oauth2AccessCodeSecurity.TType read FType write FType;
+    property flow: Oauth2AccessCodeSecurity.TFlow read FFlow write FFlow;
+    property scopes: Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
     property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
     property tokenUrl: System.String read FTokenUrl write FTokenUrl;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
   Oauth2Scopes = class
@@ -2214,11 +2199,11 @@ type
   [Flat]
   ParametersListArrayItem = class
   private
-    FParameter: Blue.Print.Open.API.Schema.v20.Parameter;
-    FJsonReference: Blue.Print.Open.API.Schema.v20.JsonReference;
+    FParameter: Parameter;
+    FJsonReference: JsonReference;
 
-    function GetParameter: Blue.Print.Open.API.Schema.v20.Parameter;
-    function GetJsonReference: Blue.Print.Open.API.Schema.v20.JsonReference;
+    function GetParameter: Parameter;
+    function GetJsonReference: JsonReference;
     function GetParameterStored: Boolean;
     function GetJsonReferenceStored: Boolean;
   public
@@ -2227,8 +2212,8 @@ type
     property IsParameterStored: Boolean read GetParameterStored;
     property IsJsonReferenceStored: Boolean read GetJsonReferenceStored;
   published
-    property parameter: Blue.Print.Open.API.Schema.v20.Parameter read GetParameter write FParameter stored GetParameterStored;
-    property jsonReference: Blue.Print.Open.API.Schema.v20.JsonReference read GetJsonReference write FJsonReference stored GetJsonReferenceStored;
+    property parameter: Parameter read GetParameter write FParameter stored GetParameterStored;
+    property jsonReference: JsonReference read GetJsonReference write FJsonReference stored GetJsonReferenceStored;
   end;
 
   JsonReference = class
@@ -2267,33 +2252,33 @@ type
       property mediaTypeList: mediaTypeList read FMediaTypeList write FMediaTypeList stored GetMediaTypeListStored;
     end;
   private
-    FSwagger: TSwagger;
-    FInfo: Blue.Print.Open.API.Schema.v20.Info;
+    FSwagger: TOpenAPIDefinition.TSwagger;
+    FInfo: Info;
     FHost: System.String;
     FBasePath: System.String;
     FSchemes: schemesList;
-    FConsumes: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.TConsumes;
-    FProduces: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.TProduces;
-    FPaths: Blue.Print.Open.API.Schema.v20.Paths;
-    FDefinitions: Blue.Print.Open.API.Schema.v20.Definitions;
-    FParameters: Blue.Print.Open.API.Schema.v20.ParameterDefinitions;
-    FResponses: Blue.Print.Open.API.Schema.v20.ResponseDefinitions;
+    FConsumes: TOpenAPIDefinition.TConsumes;
+    FProduces: TOpenAPIDefinition.TProduces;
+    FPaths: Paths;
+    FDefinitions: Definitions;
+    FParameters: ParameterDefinitions;
+    FResponses: ResponseDefinitions;
     FSecurity: security;
-    FSecurityDefinitions: Blue.Print.Open.API.Schema.v20.SecurityDefinitions;
-    FTags: TArray<Blue.Print.Open.API.Schema.v20.Tag>;
-    FExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
-    FVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    FSecurityDefinitions: SecurityDefinitions;
+    FTags: TArray<Tag>;
+    FExternalDocs: ExternalDocs;
+    FVendorExtension: TDynamicProperty<VendorExtension>;
 
-    function GetInfo: Blue.Print.Open.API.Schema.v20.Info;
-    function GetConsumes: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.TConsumes;
-    function GetProduces: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.TProduces;
-    function GetPaths: Blue.Print.Open.API.Schema.v20.Paths;
-    function GetDefinitions: Blue.Print.Open.API.Schema.v20.Definitions;
-    function GetParameters: Blue.Print.Open.API.Schema.v20.ParameterDefinitions;
-    function GetResponses: Blue.Print.Open.API.Schema.v20.ResponseDefinitions;
-    function GetSecurityDefinitions: Blue.Print.Open.API.Schema.v20.SecurityDefinitions;
-    function GetExternalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs;
-    function GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+    function GetInfo: Info;
+    function GetConsumes: TOpenAPIDefinition.TConsumes;
+    function GetProduces: TOpenAPIDefinition.TProduces;
+    function GetPaths: Paths;
+    function GetDefinitions: Definitions;
+    function GetParameters: ParameterDefinitions;
+    function GetResponses: ResponseDefinitions;
+    function GetSecurityDefinitions: SecurityDefinitions;
+    function GetExternalDocs: ExternalDocs;
+    function GetVendorExtension: TDynamicProperty<VendorExtension>;
     function GetHostStored: Boolean;
     function GetBasePathStored: Boolean;
     function GetSchemesStored: Boolean;
@@ -2310,8 +2295,8 @@ type
   public
     destructor Destroy; override;
 
-    function AddSecurity: Blue.Print.Open.API.Schema.v20.SecurityRequirement;
-    function AddTags: Blue.Print.Open.API.Schema.v20.Tag;
+    function AddSecurity: SecurityRequirement;
+    function AddTags: Tag;
 
     property IsHostStored: Boolean read GetHostStored;
     property IsBasePathStored: Boolean read GetBasePathStored;
@@ -2327,23 +2312,23 @@ type
     property IsExternalDocsStored: Boolean read GetExternalDocsStored;
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
-    property swagger: TSwagger read FSwagger write FSwagger;
-    property info: Blue.Print.Open.API.Schema.v20.Info read GetInfo write FInfo;
+    property swagger: TOpenAPIDefinition.TSwagger read FSwagger write FSwagger;
+    property info: Info read GetInfo write FInfo;
     property host: System.String read FHost write FHost stored GetHostStored;
     property basePath: System.String read FBasePath write FBasePath stored GetBasePathStored;
     property schemes: schemesList read FSchemes write FSchemes stored GetSchemesStored;
-    property consumes: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.TConsumes read GetConsumes write FConsumes stored GetConsumesStored;
-    property produces: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.TProduces read GetProduces write FProduces stored GetProducesStored;
-    property paths: Blue.Print.Open.API.Schema.v20.Paths read GetPaths write FPaths;
-    property definitions: Blue.Print.Open.API.Schema.v20.Definitions read GetDefinitions write FDefinitions stored GetDefinitionsStored;
-    property parameters: Blue.Print.Open.API.Schema.v20.ParameterDefinitions read GetParameters write FParameters stored GetParametersStored;
-    property responses: Blue.Print.Open.API.Schema.v20.ResponseDefinitions read GetResponses write FResponses stored GetResponsesStored;
+    property consumes: TOpenAPIDefinition.TConsumes read GetConsumes write FConsumes stored GetConsumesStored;
+    property produces: TOpenAPIDefinition.TProduces read GetProduces write FProduces stored GetProducesStored;
+    property paths: Paths read GetPaths write FPaths;
+    property definitions: Definitions read GetDefinitions write FDefinitions stored GetDefinitionsStored;
+    property parameters: ParameterDefinitions read GetParameters write FParameters stored GetParametersStored;
+    property responses: ResponseDefinitions read GetResponses write FResponses stored GetResponsesStored;
     property security: security read FSecurity write FSecurity stored GetSecurityStored;
-    property securityDefinitions: Blue.Print.Open.API.Schema.v20.SecurityDefinitions read GetSecurityDefinitions write FSecurityDefinitions stored GetSecurityDefinitionsStored;
-    property tags: TArray<Blue.Print.Open.API.Schema.v20.Tag> read FTags write FTags stored GetTagsStored;
-    property externalDocs: Blue.Print.Open.API.Schema.v20.ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
+    property securityDefinitions: SecurityDefinitions read GetSecurityDefinitions write FSecurityDefinitions stored GetSecurityDefinitionsStored;
+    property tags: TArray<Tag> read FTags write FTags stored GetTagsStored;
+    property externalDocs: ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
     [PatternProperty('^x-')]
-    property vendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+    property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
   end;
 
 implementation
@@ -2355,6 +2340,12 @@ uses System.SysUtils;
 function PositiveIntegerDefault0.GetPositiveIntegerStored: Boolean;
 begin
   Result := FPositiveInteger <> 0;
+end;
+
+procedure PositiveIntegerDefault0.SetAnonymous(const Value: any);
+begin
+  FAnonymous := Value;
+  FAnonymousIsStored := True;
 end;
 
 { TJSONSchema }
@@ -2785,7 +2776,7 @@ begin
   inherited;
 end;
 
-function TJSONSchema.TDefinitions.GetSchema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema>;
+function TJSONSchema.TDefinitions.GetSchema: TDynamicProperty<TJSONSchema>;
 begin
   if not Assigned(FSchema) then
     FSchema := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema>.Create;
@@ -2807,7 +2798,7 @@ begin
   inherited;
 end;
 
-function TJSONSchema.TProperties.GetSchema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema>;
+function TJSONSchema.TProperties.GetSchema: TDynamicProperty<TJSONSchema>;
 begin
   if not Assigned(FSchema) then
     FSchema := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema>.Create;
@@ -2829,7 +2820,7 @@ begin
   inherited;
 end;
 
-function TJSONSchema.TPatternProperties.GetSchema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema>;
+function TJSONSchema.TPatternProperties.GetSchema: TDynamicProperty<TJSONSchema>;
 begin
   if not Assigned(FSchema) then
     FSchema := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema>.Create;
@@ -2931,7 +2922,7 @@ begin
   Result := Assigned(FLicense);
 end;
 
-function Info.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function Info.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -2968,7 +2959,7 @@ begin
   Result := not FEmail.IsEmpty;
 end;
 
-function Contact.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function Contact.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -2995,7 +2986,7 @@ begin
   Result := not FUrl.IsEmpty;
 end;
 
-function License.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function License.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -3019,7 +3010,7 @@ begin
   inherited;
 end;
 
-function Paths.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function Paths.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -3032,7 +3023,7 @@ begin
   Result := Assigned(FVendorExtension);
 end;
 
-function Paths.GetPathItem: TDynamicProperty<Blue.Print.Open.API.Schema.v20.PathItem>;
+function Paths.GetPathItem: TDynamicProperty<PathItem>;
 begin
   if not Assigned(FPathItem) then
     FPathItem := TDynamicProperty<Blue.Print.Open.API.Schema.v20.PathItem>.Create;
@@ -3054,7 +3045,7 @@ begin
   inherited;
 end;
 
-function Definitions.GetSchema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Schema>;
+function Definitions.GetSchema: TDynamicProperty<Schema>;
 begin
   if not Assigned(FSchema) then
     FSchema := TDynamicProperty<Blue.Print.Open.API.Schema.v20.Schema>.Create;
@@ -3076,7 +3067,7 @@ begin
   inherited;
 end;
 
-function ParameterDefinitions.GetParameter: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Parameter>;
+function ParameterDefinitions.GetParameter: TDynamicProperty<Parameter>;
 begin
   if not Assigned(FParameter) then
     FParameter := TDynamicProperty<Blue.Print.Open.API.Schema.v20.Parameter>.Create;
@@ -3098,7 +3089,7 @@ begin
   inherited;
 end;
 
-function ResponseDefinitions.GetResponse: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Response>;
+function ResponseDefinitions.GetResponse: TDynamicProperty<Response>;
 begin
   if not Assigned(FResponse) then
     FResponse := TDynamicProperty<Blue.Print.Open.API.Schema.v20.Response>.Create;
@@ -3125,7 +3116,7 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function ExternalDocs.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function ExternalDocs.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -3263,7 +3254,7 @@ begin
   Result := Assigned(FSecurity);
 end;
 
-function Operation.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function Operation.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -3424,7 +3415,7 @@ begin
   Result := Assigned(FParameters);
 end;
 
-function PathItem.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function PathItem.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -3448,7 +3439,7 @@ begin
   inherited;
 end;
 
-function Responses.GetResponseValue: TDynamicProperty<Blue.Print.Open.API.Schema.v20.ResponseValue>;
+function Responses.GetResponseValue: TDynamicProperty<ResponseValue>;
 begin
   if not Assigned(FResponseValue) then
     FResponseValue := TDynamicProperty<Blue.Print.Open.API.Schema.v20.ResponseValue>.Create;
@@ -3461,7 +3452,7 @@ begin
   Result := Assigned(FResponseValue);
 end;
 
-function Responses.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function Responses.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -3565,7 +3556,7 @@ begin
   Result := Assigned(FExamples);
 end;
 
-function Response.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function Response.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -3624,7 +3615,7 @@ begin
   inherited;
 end;
 
-function Headers.GetHeader: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Header>;
+function Headers.GetHeader: TDynamicProperty<Header>;
 begin
   if not Assigned(FHeader) then
     FHeader := TDynamicProperty<Blue.Print.Open.API.Schema.v20.Header>.Create;
@@ -3766,7 +3757,7 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function Header.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function Header.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -3809,7 +3800,7 @@ begin
   Result := FSchema;
 end;
 
-function BodyParameter.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function BodyParameter.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -3843,7 +3834,7 @@ begin
   FRequiredIsStored := True;
 end;
 
-procedure HeaderParameterSubSchema.SetIn(const Value: TIn);
+procedure HeaderParameterSubSchema.SetIn(const Value: HeaderParameterSubSchema.TIn);
 begin
   FIn := Value;
   FInIsStored := True;
@@ -3859,7 +3850,7 @@ begin
   Result := not FName.IsEmpty;
 end;
 
-procedure HeaderParameterSubSchema.SetType(const Value: TType);
+procedure HeaderParameterSubSchema.SetType(const Value: HeaderParameterSubSchema.TType);
 begin
   FType := Value;
   FTypeIsStored := True;
@@ -3974,7 +3965,7 @@ begin
   Result := FMultipleOf <> 0;
 end;
 
-function HeaderParameterSubSchema.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function HeaderParameterSubSchema.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -4008,7 +3999,7 @@ begin
   FRequiredIsStored := True;
 end;
 
-procedure QueryParameterSubSchema.SetIn(const Value: TIn);
+procedure QueryParameterSubSchema.SetIn(const Value: QueryParameterSubSchema.TIn);
 begin
   FIn := Value;
   FInIsStored := True;
@@ -4030,7 +4021,7 @@ begin
   FAllowEmptyValueIsStored := True;
 end;
 
-procedure QueryParameterSubSchema.SetType(const Value: TType);
+procedure QueryParameterSubSchema.SetType(const Value: QueryParameterSubSchema.TType);
 begin
   FType := Value;
   FTypeIsStored := True;
@@ -4145,7 +4136,7 @@ begin
   Result := FMultipleOf <> 0;
 end;
 
-function QueryParameterSubSchema.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function QueryParameterSubSchema.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -4179,7 +4170,7 @@ begin
   FRequiredIsStored := True;
 end;
 
-procedure FormDataParameterSubSchema.SetIn(const Value: TIn);
+procedure FormDataParameterSubSchema.SetIn(const Value: FormDataParameterSubSchema.TIn);
 begin
   FIn := Value;
   FInIsStored := True;
@@ -4201,7 +4192,7 @@ begin
   FAllowEmptyValueIsStored := True;
 end;
 
-procedure FormDataParameterSubSchema.SetType(const Value: TType);
+procedure FormDataParameterSubSchema.SetType(const Value: FormDataParameterSubSchema.TType);
 begin
   FType := Value;
   FTypeIsStored := True;
@@ -4316,7 +4307,7 @@ begin
   Result := FMultipleOf <> 0;
 end;
 
-function FormDataParameterSubSchema.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function FormDataParameterSubSchema.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -4344,7 +4335,7 @@ begin
   inherited;
 end;
 
-procedure PathParameterSubSchema.SetIn(const Value: TIn);
+procedure PathParameterSubSchema.SetIn(const Value: PathParameterSubSchema.TIn);
 begin
   FIn := Value;
   FInIsStored := True;
@@ -4360,7 +4351,7 @@ begin
   Result := not FName.IsEmpty;
 end;
 
-procedure PathParameterSubSchema.SetType(const Value: TType);
+procedure PathParameterSubSchema.SetType(const Value: PathParameterSubSchema.TType);
 begin
   FType := Value;
   FTypeIsStored := True;
@@ -4475,7 +4466,7 @@ begin
   Result := FMultipleOf <> 0;
 end;
 
-function PathParameterSubSchema.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function PathParameterSubSchema.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -4857,7 +4848,7 @@ begin
   FExampleIsStored := True;
 end;
 
-function Schema.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function Schema.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -4944,7 +4935,7 @@ begin
   inherited;
 end;
 
-function Schema.TProperties.GetSchema: TDynamicProperty<Blue.Print.Open.API.Schema.v20.Schema>;
+function Schema.TProperties.GetSchema: TDynamicProperty<Schema>;
 begin
   if not Assigned(FSchema) then
     FSchema := TDynamicProperty<Blue.Print.Open.API.Schema.v20.Schema>.Create;
@@ -5019,7 +5010,7 @@ begin
   FExampleIsStored := True;
 end;
 
-function FileSchema.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function FileSchema.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -5047,7 +5038,7 @@ begin
   inherited;
 end;
 
-procedure PrimitivesItems.SetType(const Value: TType);
+procedure PrimitivesItems.SetType(const Value: PrimitivesItems.TType);
 begin
   FType := Value;
   FTypeIsStored := True;
@@ -5162,7 +5153,7 @@ begin
   Result := FMultipleOf <> 0;
 end;
 
-function PrimitivesItems.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function PrimitivesItems.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -5233,7 +5224,7 @@ begin
   FWrappedIsStored := True;
 end;
 
-function Xml.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function Xml.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -5275,7 +5266,7 @@ begin
   Result := Assigned(FExternalDocs);
 end;
 
-function Tag.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function Tag.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -5399,7 +5390,7 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function BasicAuthenticationSecurity.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function BasicAuthenticationSecurity.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -5426,7 +5417,7 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function ApiKeySecurity.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function ApiKeySecurity.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -5468,7 +5459,7 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function Oauth2ImplicitSecurity.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function Oauth2ImplicitSecurity.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -5510,7 +5501,7 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function Oauth2PasswordSecurity.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function Oauth2PasswordSecurity.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -5552,7 +5543,7 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function Oauth2ApplicationSecurity.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function Oauth2ApplicationSecurity.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -5594,7 +5585,7 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function Oauth2AccessCodeSecurity.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function Oauth2AccessCodeSecurity.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
@@ -5845,7 +5836,7 @@ begin
   Result := Assigned(FExternalDocs);
 end;
 
-function TOpenAPIDefinition.GetVendorExtension: TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>;
+function TOpenAPIDefinition.GetVendorExtension: TDynamicProperty<VendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
     FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.VendorExtension>.Create;
