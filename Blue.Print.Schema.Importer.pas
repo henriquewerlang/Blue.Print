@@ -97,11 +97,13 @@ type
     FUnitConfiguration: TArray<TUnitDefinitionConfiguration>;
     FTypeDefinition: TArray<TTypeDefinitionConfiguration>;
     FMaxColumnSize: Integer;
+    FImports: TArray<String>;
   public
     constructor Create;
 
     destructor Destroy; override;
 
+    property Imports: TArray<String> read FImports write FImports;
     property MaxColumnSize: Integer read FMaxColumnSize write FMaxColumnSize;
     property OutputFolder: String read FOutputFolder write FOutputFolder;
     property SchemaFolder: String read FSchemaFolder write FSchemaFolder;
@@ -431,11 +433,11 @@ type
     function FindTypeDefinitionInModule(const Module: TTypeModuleDefinition; const TypeName: String; var TypeDefinition: TTypeDefinition): Boolean;
     function FindTypeInUnits(const Module: TTypeModuleDefinition; const TypeName: String): TTypeDefinition;
     function LoadUnit(const UnitConfiguration: TUnitDefinitionConfiguration): TUnitDefinition;
+    function LoadUnitFromReference(const Reference: String): TUnitDefinition;
 
     procedure GenerateUnitDefinition(const UnitConfiguration: TUnitDefinitionConfiguration);
     procedure LoadInternalTypes;
     procedure LoadUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
-    procedure LoadUnitFromReference(const Reference: String);
   public
     constructor Create;
 
@@ -511,7 +513,7 @@ type
   TJSONSchemaLoader = class(TInterfacedObject, ISchemaLoader)
   private
     FImporter: TSchemaImporter;
-    FSchemaClass: TTypeDelayedDefinition;
+    FSchemaClass: TClassDefinition;
     FSchemas: TDictionary<String, TSchema>;
 
     function CanGenerateClass(const Schema: TSchema): Boolean;
@@ -824,7 +826,7 @@ begin
   Result := nil;
 
   for var UnitConfiguration in FUnitFiles do
-    if UnitConfiguration.Key.Reference = Reference then
+    if UnitConfiguration.Key.Reference + REFERENCE_SEPARATOR = Reference then
       Exit(FindType(UnitConfiguration.Key.UnitClassName, UnitConfiguration.Value).AsClassDefinition);
 end;
 
@@ -893,18 +895,38 @@ begin
 end;
 
 procedure TSchemaImporter.LoadConfig(const FileName: String);
-begin
-  if TFile.Exists(FileName) then
+
+  function LoadConfiguration(const FileName: String): TConfiguration;
   begin
     var Serializer: IBluePrintSerializer := TBluePrintJsonSerializer.Create;
 
-    Configuration := Serializer.Deserialize(TFile.ReadAllText(FileName), TypeInfo(TConfiguration)).AsType<TConfiguration>;
+    Result := Serializer.Deserialize(TFile.ReadAllText(FileName), TypeInfo(TConfiguration)).AsType<TConfiguration>;
+  end;
+
+  procedure LoadImports(const Imports: TConfiguration);
+  begin
+    for var Import in Imports.Imports do
+    begin
+      var ImportedConfiguration := LoadConfiguration(Configuration.OutputFolder + Import);
+
+      LoadImports(ImportedConfiguration);
+
+      Configuration.UnitConfiguration := ImportedConfiguration.UnitConfiguration + Configuration.UnitConfiguration;
+    end;
+  end;
+
+begin
+  if TFile.Exists(FileName) then
+  begin
+    Configuration := LoadConfiguration(FileName);
     Configuration.OutputFolder := LoadRelativePath(Configuration.OutputFolder, FileName);
     Configuration.SchemaFolder := LoadRelativePath(Configuration.SchemaFolder, FileName);
 
     for var TypeExternal in Configuration.TypeDefinition do
       if not TypeExternal.ModuleName.IsEmpty then
         AddTypeExternal(TypeExternal.ModuleName, TypeExternal.Name);
+
+    LoadImports(Configuration);
   end;
 end;
 
@@ -1016,13 +1038,15 @@ begin
   end;
 end;
 
-procedure TSchemaImporter.LoadUnitFromReference(const Reference: String);
+function TSchemaImporter.LoadUnitFromReference(const Reference: String): TUnitDefinition;
 begin
   for var UnitConfiguration in Configuration.UnitConfiguration do
     for var UnitFileConfiguration in UnitConfiguration.Files do
       if TPath.GetFileName(UnitFileConfiguration.Reference) = TPath.GetFileName(Reference) then
       begin
-        LoadUnitFileDefinition(LoadUnit(UnitConfiguration), UnitFileConfiguration);
+        Result := LoadUnit(UnitConfiguration);
+
+        LoadUnitFileDefinition(Result, UnitFileConfiguration);
 
         Exit;
       end;
@@ -2906,7 +2930,7 @@ var
 
   function GetPropertyName(const Schema: TSchema; var PropertyName: String): Boolean;
   begin
-    if not Schema.&Object.ref.IsEmpty then
+    if Schema.&Object.IsRefStored then
       PropertyName := GetReferenceName(Schema)
     else if Schema.&Object.IsTypeStored then
       PropertyName := TRttiEnumerationType.GetName(Schema.&Object.&type.simpleTypes)
@@ -2980,7 +3004,7 @@ var
   References: TArray<String>;
 
 begin
-  if not Schema.&Object.ref.IsEmpty then
+  if Schema.&Object.IsRefStored then
   begin
     var ParentModule := Module;
     var ReferenceName := GetReferenceName(Schema);
@@ -2988,16 +3012,22 @@ begin
 
     References := Schema.&Object.ref.Split([REFERENCE_SEPARATOR]);
 
-    if References[0].IsEmpty then
+    if Length(References) = 1 then
+      Exit(FImporter.LoadUnitFromReference(References[0]))
+    else if References[0].IsEmpty then
       ReferenceModule := FSchemaClass
     else
+    begin
+      FImporter.LoadUnitFromReference(References[0]);
+
       ReferenceModule := FImporter.FindUnitClassByReference(References[0] + REFERENCE_SEPARATOR);
+    end;
 
     ReferencePath := References[1].Split(['/']);
 
     if not Assigned(ReferencePath) then
       Exit(FSchemaClass)
-    else if (ReferencePath[1] = 'definitions') or (ReferencePath[1] = 'def') then
+    else if (ReferencePath[1] = 'definitions') or (ReferencePath[1] = 'def') or (ReferencePath[1] = '$defs') then
       ParentModule := FSchemaClass.FParentModule;
 
     if ReferenceModule.IsClassDefinition then
@@ -3017,11 +3047,17 @@ end;
 procedure TJSONSchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
 begin
   var CurrenSchema := LoadSchema(UnitFileConfiguration);
+  var UnitClassName := UnitFileConfiguration.UnitClassName;
 
-  if not CurrenSchema.&Object.Schema.IsEmpty then
-    FImporter.LoadUnitFromReference(CurrenSchema.&Object.Schema);
+  if not UnitFileConfiguration.AppendClassName.IsEmpty then
+  begin
+    UnitClassName := UnitFileConfiguration.AppendClassName;
 
-  FSchemaClass := UnitDefinition.AddDelayedType(UnitFileConfiguration.UnitClassName);
+    FSchemaClass := FImporter.FindTypeInUnits(UnitDefinition, UnitClassName).AsClassDefinition;
+  end;
+
+  if not Assigned(FSchemaClass) then
+    FSchemaClass := FImporter.CreateClassDefinition(UnitDefinition, UnitClassName);
 
   for var Definition in CurrenSchema.&Object.definitions.Schema do
   begin
@@ -3031,7 +3067,7 @@ begin
       UnitDefinition.AddTypeAlias(FImporter.CreateTypeAlias(UnitDefinition, Definition.Key, TypeDefinition));
   end;
 
-  FSchemaClass.TypeResolved := CreateTypeDefinition(UnitDefinition, CurrenSchema, UnitFileConfiguration.UnitClassName);
+  GenerateProperties(FSchemaClass, CurrenSchema);
 end;
 
 function TJSONSchemaLoader.GetReferenceName(const Schema: TSchema): String;

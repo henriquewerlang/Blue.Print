@@ -1,0 +1,58 @@
+{
+   "OutputFolder": ".\\",
+   "SchemaFolder": ".\\Schemas",
+   "UnitConfiguration": [
+      {
+         "Name": "Blue.Print.JSON.Draft2022.Schema",
+         "Files": [
+            {
+               "BaseURL": "https://json-schema.org/draft/2020-12",
+               "FileType": "JSON",
+               "Reference": "meta/core",
+               "UnitClassName": "TCore"
+            },
+            {
+               "BaseURL": "https://json-schema.org/draft/2020-12",
+               "FileType": "JSON",
+               "Reference": "meta/applicator",
+               "UnitClassName": "TApplicator"
+            },
+            {
+               "BaseURL": "https://json-schema.org/draft/2020-12",
+               "FileType": "JSON",
+               "Reference": "meta/unevaluated",
+               "UnitClassName": "TUnevaluated"
+            },
+            {
+               "BaseURL": "https://json-schema.org/draft/2020-12",
+               "FileType": "JSON",
+               "Reference": "meta/validation",
+               "UnitClassName": "TValidation"
+            },
+            {
+               "BaseURL": "https://json-schema.org/draft/2020-12",
+               "FileType": "JSON",
+               "Reference": "meta/meta-data",
+               "UnitClassName": "TMetadata"
+            },
+            {
+               "BaseURL": "https://json-schema.org/draft/2020-12",
+               "FileType": "JSON",
+               "Reference": "meta/format-annotation",
+               "UnitClassName": "TFormatAnnotation"
+            },
+            {
+               "BaseURL": "https://json-schema.org/draft/2020-12",
+               "FileType": "JSON",
+               "Reference": "meta/content",
+               "UnitClassName": "TContent"
+            },
+            {
+               "FileType": "JSON",
+               "Reference": "https://json-schema.org/draft/2020-12/schema",
+               "UnitClassName": "TSchema"
+            }
+         ]
+      }
+   ]
+}
