@@ -53,8 +53,10 @@ type
     function CreateInt64(const Value: Int64): TJSONValue;
     function CreateNumber(const Value: Double): TJSONValue;
     function CreateString(const Value: String): TJSONValue;
+    function GetBoolean(const JSONValue: TJSONValue): Boolean;
     function GetNumber(const JSONValue: TJSONValue): Double;
     function GetString(const JSONValue: TJSONValue): String;
+    function IsBoolean(const JSONValue: TJSONValue): Boolean;
     function IsNull(const JSONValue: TJSONValue): Boolean;
     function IsNumber(const JSONValue: TJSONValue): Boolean;
     function IsString(const JSONValue: TJSONValue): Boolean;
@@ -581,10 +583,13 @@ begin
     tkMRecord,
 {$ENDIF}
     tkRecord:
+
     begin
       if RttiType.Handle = TypeInfo(TValue) then
         if IsNumber(JSONValue) then
           Result := TValue.From(GetNumber(JSONValue))
+        else if IsBoolean(JSONValue) then
+          Result := TValue.From(GetBoolean(JSONValue))
         else
           Result := TValue.From(GetString(JSONValue))
       else
@@ -597,6 +602,15 @@ begin
 
     else Result := TValue.Empty;
   end;
+end;
+
+function TBluePrintJSONSerializer.GetBoolean(const JSONValue: TJSONValue): Boolean;
+begin
+{$IFDEF DCC}
+  Result := TJSONBool(JSONValue).AsBoolean;
+{$ELSE}
+  Result := ToBoolean(JSONValue);
+{$ENDIF}
 end;
 
 function TBluePrintJSONSerializer.GetNumber(const JSONValue: TJSONValue): Double;
@@ -617,6 +631,15 @@ begin
     Result := String(JSONValue)
   else
     Result := TJSJSON.Stringify(JSONValue);
+{$ENDIF}
+end;
+
+function TBluePrintJSONSerializer.IsBoolean(const JSONValue: TJSONValue): Boolean;
+begin
+{$IFDEF DCC}
+  Result := JSONValue is TJSONBool;
+{$ELSE}
+  Result := JSApi.JS.IsBoolean(JSONValue);
 {$ENDIF}
 end;
 

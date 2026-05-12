@@ -95,6 +95,8 @@ type
     [Test]
     procedure WhenDeserializeATValueAndTheJSONValueIsANumberMustLoadThisValueInTheProperty;
     [Test]
+    procedure WhenDeserializeATValueAndTheJSONValueIsABooleanMustLoadThisValueInTheProperty;
+    [Test]
     procedure WhenDeserializeAClassWithFlatAttributeAndTheJSONIsAnArrayMustLoadTheArrayProperty;
     [Test]
     procedure WhenDeserializeAClassWithFlatAttributeAndTheJSONIsAnStringMustLoadTheStringProperty;
@@ -1373,6 +1375,15 @@ begin
   var Value := FSerializer.Deserialize('"abc"', TypeInfo(String));
 
   Assert.AreEqual('abc', Value.ToString);
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenDeserializeATValueAndTheJSONValueIsABooleanMustLoadThisValueInTheProperty;
+begin
+  var Value := FSerializer.Deserialize('{"Value":true}', TypeInfo(TMyTValueClass)).AsType<TMyTValueClass>;
+
+  Assert.IsTrue(Value.Value.AsBoolean);
+
+  Value.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeATValueAndTheJSONValueIsANumberMustLoadThisValueInTheProperty;
