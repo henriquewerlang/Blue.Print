@@ -5,23 +5,18 @@ interface
 {$M+}
 {$SCOPEDENUMS ON}
 
-// File generated from http://json-schema.org/draft-04/schema#, https://spec.openapis.org/oas/2.0/schema/2017-08-27;
+// File generated from https://spec.openapis.org/oas/2.0/schema/2017-08-27;
 
-uses Blue.Print.Types, System.Rtti;
+uses Blue.Print.Types, Blue.Print.JSON.Draft4.Schema, System.Rtti;
 
 type
   // Enumerations declaration
-  [EnumValue('array, boolean, integer, null, number, object, string')]
-  simpleTypes = (&array, boolean, integer, null, number, &object, &string);
-
   schemesListArrayItem = (http, https, ws, wss);
 
   collectionFormat = (csv, ssv, tsv, pipes);
 
   collectionFormatWithMulti = (csv, ssv, tsv, pipes, multi);
   // Forward class declaration
-  PositiveIntegerDefault0 = class;
-  TJSONSchema = class;
   Info = class;
   Contact = class;
   License = class;
@@ -65,10 +60,6 @@ type
   TOpenAPIDefinition = class;
 
   // Forward type alias
-  schemaArray = TArray<Blue.Print.Open.API.Schema.v20.TJSONSchema>;
-  positiveInteger = System.Integer;
-  any = System.Rtti.TValue;
-  stringArray = TArray<System.String>;
   mimeType = System.String;
   security = TArray<Blue.Print.Open.API.Schema.v20.SecurityRequirement>;
   mediaTypeList = TArray<System.String>;
@@ -83,332 +74,12 @@ type
   minimum = System.Double;
   exclusiveMinimum = System.Boolean;
   maxLength = System.Integer;
-  minLength = Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+  minLength = Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
   pattern = System.String;
   maxItems = System.Integer;
-  minItems = Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+  minItems = Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
   uniqueItems = System.Boolean;
   enum = TArray<System.Rtti.TValue>;
-
-  [Flat]
-  PositiveIntegerDefault0 = class
-  private
-    FPositiveInteger: positiveInteger;
-    FAnonymous: any;
-    FAnonymousIsStored: Boolean;
-
-    function GetPositiveIntegerStored: Boolean;
-    procedure SetAnonymous(const Value: any);
-  public
-    property IsPositiveIntegerStored: Boolean read GetPositiveIntegerStored;
-    property IsAnonymousStored: Boolean read FAnonymousIsStored;
-  published
-    property positiveInteger: positiveInteger read FPositiveInteger write FPositiveInteger stored GetPositiveIntegerStored;
-    property Anonymous: any read FAnonymous write SetAnonymous stored FAnonymousIsStored;
-  end;
-
-  TJSONSchema = class
-  public type
-    [Flat]
-    TAdditionalItems = class
-    private
-      FBoolean: System.Boolean;
-      FSchema: TJSONSchema;
-      FBooleanIsStored: Boolean;
-
-      function GetSchema: TJSONSchema;
-      function GetSchemaStored: Boolean;
-      procedure SetBoolean(const Value: System.Boolean);
-    public
-      destructor Destroy; override;
-
-      property IsBooleanStored: Boolean read FBooleanIsStored;
-      property IsSchemaStored: Boolean read GetSchemaStored;
-    published
-      property boolean: System.Boolean read FBoolean write SetBoolean stored FBooleanIsStored;
-      property Schema: TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
-    end;
-
-    [Flat]
-    TItems = class
-    private
-      FSchema: TJSONSchema;
-      FSchemaArray: schemaArray;
-
-      function GetSchema: TJSONSchema;
-      function GetSchemaStored: Boolean;
-      function GetSchemaArrayStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      function AddSchemaArray: TJSONSchema;
-
-      property IsSchemaStored: Boolean read GetSchemaStored;
-      property IsSchemaArrayStored: Boolean read GetSchemaArrayStored;
-    published
-      property Schema: TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
-      property schemaArray: schemaArray read FSchemaArray write FSchemaArray stored GetSchemaArrayStored;
-    end;
-
-    [Flat]
-    TAdditionalProperties = class
-    private
-      FBoolean: System.Boolean;
-      FSchema: TJSONSchema;
-      FBooleanIsStored: Boolean;
-
-      function GetSchema: TJSONSchema;
-      function GetSchemaStored: Boolean;
-      procedure SetBoolean(const Value: System.Boolean);
-    public
-      destructor Destroy; override;
-
-      property IsBooleanStored: Boolean read FBooleanIsStored;
-      property IsSchemaStored: Boolean read GetSchemaStored;
-    published
-      property boolean: System.Boolean read FBoolean write SetBoolean stored FBooleanIsStored;
-      property Schema: TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
-    end;
-
-    TDefinitions = class
-    private
-      FSchema: TDynamicProperty<TJSONSchema>;
-
-      function GetSchema: TDynamicProperty<TJSONSchema>;
-      function GetSchemaStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsSchemaStored: Boolean read GetSchemaStored;
-    published
-      property Schema: TDynamicProperty<TJSONSchema> read GetSchema write FSchema stored GetSchemaStored;
-    end;
-
-    TProperties = class
-    private
-      FSchema: TDynamicProperty<TJSONSchema>;
-
-      function GetSchema: TDynamicProperty<TJSONSchema>;
-      function GetSchemaStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsSchemaStored: Boolean read GetSchemaStored;
-    published
-      property Schema: TDynamicProperty<TJSONSchema> read GetSchema write FSchema stored GetSchemaStored;
-    end;
-
-    TPatternProperties = class
-    private
-      FSchema: TDynamicProperty<TJSONSchema>;
-
-      function GetSchema: TDynamicProperty<TJSONSchema>;
-      function GetSchemaStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsSchemaStored: Boolean read GetSchemaStored;
-    published
-      property Schema: TDynamicProperty<TJSONSchema> read GetSchema write FSchema stored GetSchemaStored;
-    end;
-
-    TDependencies = class
-    private
-      FSchema: TJSONSchema;
-      FStringArray: stringArray;
-
-      function GetSchema: TJSONSchema;
-      function GetSchemaStored: Boolean;
-      function GetStringArrayStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsSchemaStored: Boolean read GetSchemaStored;
-      property IsStringArrayStored: Boolean read GetStringArrayStored;
-    published
-      property Schema: TJSONSchema read GetSchema write FSchema stored GetSchemaStored;
-      property stringArray: stringArray read FStringArray write FStringArray stored GetStringArrayStored;
-    end;
-
-    [Flat]
-    TType = class
-    private
-      FSimpleTypes: simpleTypes;
-      FArray: TArray<simpleTypes>;
-      FSimpleTypesIsStored: Boolean;
-
-      function GetArrayStored: Boolean;
-      procedure SetSimpleTypes(const Value: simpleTypes);
-    public
-      property IsSimpleTypesStored: Boolean read FSimpleTypesIsStored;
-      property IsArrayStored: Boolean read GetArrayStored;
-    published
-      property simpleTypes: simpleTypes read FSimpleTypes write SetSimpleTypes stored FSimpleTypesIsStored;
-      [FieldName('array')]
-      property &array: TArray<simpleTypes> read FArray write FArray stored GetArrayStored;
-    end;
-  private
-    FId: System.String;
-    FSchema: System.String;
-    FTitle: System.String;
-    FDescription: System.String;
-    FDefault: any;
-    FMultipleOf: System.Double;
-    FMaximum: System.Double;
-    FExclusiveMaximum: System.Boolean;
-    FMinimum: System.Double;
-    FExclusiveMinimum: System.Boolean;
-    FMaxLength: positiveInteger;
-    FMinLength: PositiveIntegerDefault0;
-    FPattern: System.String;
-    FAdditionalItems: TJSONSchema.TAdditionalItems;
-    FItems: TJSONSchema.TItems;
-    FMaxItems: positiveInteger;
-    FMinItems: PositiveIntegerDefault0;
-    FUniqueItems: System.Boolean;
-    FMaxProperties: positiveInteger;
-    FMinProperties: PositiveIntegerDefault0;
-    FRequired: stringArray;
-    FAdditionalProperties: TJSONSchema.TAdditionalProperties;
-    FDefinitions: TJSONSchema.TDefinitions;
-    FProperties: TJSONSchema.TProperties;
-    FPatternProperties: TJSONSchema.TPatternProperties;
-    FDependencies: TJSONSchema.TDependencies;
-    FEnum: TArray<any>;
-    FType: TJSONSchema.TType;
-    FFormat: System.String;
-    FAllOf: schemaArray;
-    FAnyOf: schemaArray;
-    FOneOf: schemaArray;
-    FNot: TJSONSchema;
-    FDefaultIsStored: Boolean;
-    FExclusiveMaximumIsStored: Boolean;
-    FExclusiveMinimumIsStored: Boolean;
-    FUniqueItemsIsStored: Boolean;
-
-    function GetMinLength: PositiveIntegerDefault0;
-    function GetAdditionalItems: TJSONSchema.TAdditionalItems;
-    function GetItems: TJSONSchema.TItems;
-    function GetMinItems: PositiveIntegerDefault0;
-    function GetMinProperties: PositiveIntegerDefault0;
-    function GetAdditionalProperties: TJSONSchema.TAdditionalProperties;
-    function GetDefinitions: TJSONSchema.TDefinitions;
-    function GetProperties: TJSONSchema.TProperties;
-    function GetPatternProperties: TJSONSchema.TPatternProperties;
-    function GetDependencies: TJSONSchema.TDependencies;
-    function GetType: TJSONSchema.TType;
-    function GetNot: TJSONSchema;
-    function GetIdStored: Boolean;
-    function GetSchemaStored: Boolean;
-    function GetTitleStored: Boolean;
-    function GetDescriptionStored: Boolean;
-    function GetMultipleOfStored: Boolean;
-    function GetMaximumStored: Boolean;
-    function GetMinimumStored: Boolean;
-    function GetMaxLengthStored: Boolean;
-    function GetMinLengthStored: Boolean;
-    function GetPatternStored: Boolean;
-    function GetAdditionalItemsStored: Boolean;
-    function GetItemsStored: Boolean;
-    function GetMaxItemsStored: Boolean;
-    function GetMinItemsStored: Boolean;
-    function GetMaxPropertiesStored: Boolean;
-    function GetMinPropertiesStored: Boolean;
-    function GetRequiredStored: Boolean;
-    function GetAdditionalPropertiesStored: Boolean;
-    function GetDefinitionsStored: Boolean;
-    function GetPropertiesStored: Boolean;
-    function GetPatternPropertiesStored: Boolean;
-    function GetDependenciesStored: Boolean;
-    function GetEnumStored: Boolean;
-    function GetTypeStored: Boolean;
-    function GetFormatStored: Boolean;
-    function GetAllOfStored: Boolean;
-    function GetAnyOfStored: Boolean;
-    function GetOneOfStored: Boolean;
-    function GetNotStored: Boolean;
-    procedure SetDefault(const Value: any);
-    procedure SetExclusiveMaximum(const Value: System.Boolean);
-    procedure SetExclusiveMinimum(const Value: System.Boolean);
-    procedure SetUniqueItems(const Value: System.Boolean);
-  public
-    destructor Destroy; override;
-
-    function AddAllOf: TJSONSchema;
-    function AddAnyOf: TJSONSchema;
-    function AddOneOf: TJSONSchema;
-
-    property IsIdStored: Boolean read GetIdStored;
-    property IsSchemaStored: Boolean read GetSchemaStored;
-    property IsTitleStored: Boolean read GetTitleStored;
-    property IsDescriptionStored: Boolean read GetDescriptionStored;
-    property IsDefaultStored: Boolean read FDefaultIsStored;
-    property IsMultipleOfStored: Boolean read GetMultipleOfStored;
-    property IsMaximumStored: Boolean read GetMaximumStored;
-    property IsExclusiveMaximumStored: Boolean read FExclusiveMaximumIsStored;
-    property IsMinimumStored: Boolean read GetMinimumStored;
-    property IsExclusiveMinimumStored: Boolean read FExclusiveMinimumIsStored;
-    property IsMaxLengthStored: Boolean read GetMaxLengthStored;
-    property IsMinLengthStored: Boolean read GetMinLengthStored;
-    property IsPatternStored: Boolean read GetPatternStored;
-    property IsAdditionalItemsStored: Boolean read GetAdditionalItemsStored;
-    property IsItemsStored: Boolean read GetItemsStored;
-    property IsMaxItemsStored: Boolean read GetMaxItemsStored;
-    property IsMinItemsStored: Boolean read GetMinItemsStored;
-    property IsUniqueItemsStored: Boolean read FUniqueItemsIsStored;
-    property IsMaxPropertiesStored: Boolean read GetMaxPropertiesStored;
-    property IsMinPropertiesStored: Boolean read GetMinPropertiesStored;
-    property IsRequiredStored: Boolean read GetRequiredStored;
-    property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
-    property IsDefinitionsStored: Boolean read GetDefinitionsStored;
-    property IsPropertiesStored: Boolean read GetPropertiesStored;
-    property IsPatternPropertiesStored: Boolean read GetPatternPropertiesStored;
-    property IsDependenciesStored: Boolean read GetDependenciesStored;
-    property IsEnumStored: Boolean read GetEnumStored;
-    property IsTypeStored: Boolean read GetTypeStored;
-    property IsFormatStored: Boolean read GetFormatStored;
-    property IsAllOfStored: Boolean read GetAllOfStored;
-    property IsAnyOfStored: Boolean read GetAnyOfStored;
-    property IsOneOfStored: Boolean read GetOneOfStored;
-    property IsNotStored: Boolean read GetNotStored;
-  published
-    property id: System.String read FId write FId stored GetIdStored;
-    [FieldName('$schema')]
-    property schema: System.String read FSchema write FSchema stored GetSchemaStored;
-    property title: System.String read FTitle write FTitle stored GetTitleStored;
-    property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-    property default: any read FDefault write SetDefault stored FDefaultIsStored;
-    property multipleOf: System.Double read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
-    property maximum: System.Double read FMaximum write FMaximum stored GetMaximumStored;
-    property exclusiveMaximum: System.Boolean read FExclusiveMaximum write SetExclusiveMaximum stored FExclusiveMaximumIsStored;
-    property minimum: System.Double read FMinimum write FMinimum stored GetMinimumStored;
-    property exclusiveMinimum: System.Boolean read FExclusiveMinimum write SetExclusiveMinimum stored FExclusiveMinimumIsStored;
-    property maxLength: positiveInteger read FMaxLength write FMaxLength stored GetMaxLengthStored;
-    property minLength: PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
-    property pattern: System.String read FPattern write FPattern stored GetPatternStored;
-    property additionalItems: TJSONSchema.TAdditionalItems read GetAdditionalItems write FAdditionalItems stored GetAdditionalItemsStored;
-    property items: TJSONSchema.TItems read GetItems write FItems stored GetItemsStored;
-    property maxItems: positiveInteger read FMaxItems write FMaxItems stored GetMaxItemsStored;
-    property minItems: PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
-    property uniqueItems: System.Boolean read FUniqueItems write SetUniqueItems stored FUniqueItemsIsStored;
-    property maxProperties: positiveInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
-    property minProperties: PositiveIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
-    property required: stringArray read FRequired write FRequired stored GetRequiredStored;
-    property additionalProperties: TJSONSchema.TAdditionalProperties read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
-    property definitions: TJSONSchema.TDefinitions read GetDefinitions write FDefinitions stored GetDefinitionsStored;
-    property properties: TJSONSchema.TProperties read GetProperties write FProperties stored GetPropertiesStored;
-    property patternProperties: TJSONSchema.TPatternProperties read GetPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
-    property dependencies: TJSONSchema.TDependencies read GetDependencies write FDependencies stored GetDependenciesStored;
-    property enum: TArray<any> read FEnum write FEnum stored GetEnumStored;
-    [FieldName('type')]
-    property &type: TJSONSchema.TType read GetType write FType stored GetTypeStored;
-    property format: System.String read FFormat write FFormat stored GetFormatStored;
-    property allOf: schemaArray read FAllOf write FAllOf stored GetAllOfStored;
-    property anyOf: schemaArray read FAnyOf write FAnyOf stored GetAnyOfStored;
-    property oneOf: schemaArray read FOneOf write FOneOf stored GetOneOfStored;
-    [FieldName('not')]
-    property &not: TJSONSchema read GetNot write FNot stored GetNotStored;
-  end;
 
   Info = class
   private
@@ -723,7 +394,7 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('$ref')]
-    property ref: System.String read FRef write FRef stored GetRefStored;
+    property Ref: System.String read FRef write FRef stored GetRefStored;
     property get: Operation read GetGet write FGet stored GetGetStored;
     property put: Operation read GetPut write FPut stored GetPutStored;
     property post: Operation read GetPost write FPost stored GetPostStored;
@@ -918,7 +589,7 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('type')]
-    property &type: Header.TType read FType write FType;
+    property &Type: Header.TType read FType write FType;
     property format: System.String read FFormat write FFormat stored GetFormatStored;
     property items: PrimitivesItems read GetItems write FItems stored GetItemsStored;
     property collectionFormat: collectionFormat read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
@@ -970,7 +641,7 @@ type
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property name: System.String read FName write FName;
     [FieldName('in')]
-    property &in: BodyParameter.TIn read FIn write FIn;
+    property &In: BodyParameter.TIn read FIn write FIn;
     property required: System.Boolean read FRequired write SetRequired stored FRequiredIsStored;
     property schema: Schema read GetSchema write FSchema;
     [PatternProperty('^x-')]
@@ -1069,11 +740,11 @@ type
   published
     property required: System.Boolean read FRequired write SetRequired stored FRequiredIsStored;
     [FieldName('in')]
-    property &in: HeaderParameterSubSchema.TIn read FIn write SetIn stored FInIsStored;
+    property &In: HeaderParameterSubSchema.TIn read FIn write SetIn stored FInIsStored;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property name: System.String read FName write FName stored GetNameStored;
     [FieldName('type')]
-    property &type: HeaderParameterSubSchema.TType read FType write SetType stored FTypeIsStored;
+    property &Type: HeaderParameterSubSchema.TType read FType write SetType stored FTypeIsStored;
     property format: System.String read FFormat write FFormat stored GetFormatStored;
     property items: PrimitivesItems read GetItems write FItems stored GetItemsStored;
     property collectionFormat: collectionFormat read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
@@ -1190,12 +861,12 @@ type
   published
     property required: System.Boolean read FRequired write SetRequired stored FRequiredIsStored;
     [FieldName('in')]
-    property &in: QueryParameterSubSchema.TIn read FIn write SetIn stored FInIsStored;
+    property &In: QueryParameterSubSchema.TIn read FIn write SetIn stored FInIsStored;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property name: System.String read FName write FName stored GetNameStored;
     property allowEmptyValue: System.Boolean read FAllowEmptyValue write SetAllowEmptyValue stored FAllowEmptyValueIsStored;
     [FieldName('type')]
-    property &type: QueryParameterSubSchema.TType read FType write SetType stored FTypeIsStored;
+    property &Type: QueryParameterSubSchema.TType read FType write SetType stored FTypeIsStored;
     property format: System.String read FFormat write FFormat stored GetFormatStored;
     property items: PrimitivesItems read GetItems write FItems stored GetItemsStored;
     property collectionFormat: collectionFormatWithMulti read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
@@ -1312,12 +983,12 @@ type
   published
     property required: System.Boolean read FRequired write SetRequired stored FRequiredIsStored;
     [FieldName('in')]
-    property &in: FormDataParameterSubSchema.TIn read FIn write SetIn stored FInIsStored;
+    property &In: FormDataParameterSubSchema.TIn read FIn write SetIn stored FInIsStored;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property name: System.String read FName write FName stored GetNameStored;
     property allowEmptyValue: System.Boolean read FAllowEmptyValue write SetAllowEmptyValue stored FAllowEmptyValueIsStored;
     [FieldName('type')]
-    property &type: FormDataParameterSubSchema.TType read FType write SetType stored FTypeIsStored;
+    property &Type: FormDataParameterSubSchema.TType read FType write SetType stored FTypeIsStored;
     property format: System.String read FFormat write FFormat stored GetFormatStored;
     property items: PrimitivesItems read GetItems write FItems stored GetItemsStored;
     property collectionFormat: collectionFormatWithMulti read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
@@ -1429,11 +1100,11 @@ type
   published
     property required: PathParameterSubSchema.TRequired read FRequired write FRequired;
     [FieldName('in')]
-    property &in: PathParameterSubSchema.TIn read FIn write SetIn stored FInIsStored;
+    property &In: PathParameterSubSchema.TIn read FIn write SetIn stored FInIsStored;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property name: System.String read FName write FName stored GetNameStored;
     [FieldName('type')]
-    property &type: PathParameterSubSchema.TType read FType write SetType stored FTypeIsStored;
+    property &Type: PathParameterSubSchema.TType read FType write SetType stored FTypeIsStored;
     property format: System.String read FFormat write FFormat stored GetFormatStored;
     property items: PrimitivesItems read GetItems write FItems stored GetItemsStored;
     property collectionFormat: collectionFormat read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
@@ -1545,7 +1216,7 @@ type
     published
       property schema: Schema read GetSchema write FSchema stored GetSchemaStored;
       [FieldName('array')]
-      property &array: TArray<Schema> read FArray write FArray stored GetArrayStored;
+      property &Array: TArray<Schema> read FArray write FArray stored GetArrayStored;
     end;
 
     TProperties = class
@@ -1583,7 +1254,7 @@ type
     FRequired: stringArray;
     FEnum: TArray<any>;
     FAdditionalProperties: Schema.TAdditionalProperties;
-    FType: TJSONSchema.TType;
+    FType: TSchema.TType;
     FItems: Schema.TItems;
     FAllOf: TArray<Schema>;
     FProperties: Schema.TProperties;
@@ -1604,7 +1275,7 @@ type
     function GetMinItems: PositiveIntegerDefault0;
     function GetMinProperties: PositiveIntegerDefault0;
     function GetAdditionalProperties: Schema.TAdditionalProperties;
-    function GetType: TJSONSchema.TType;
+    function GetType: TSchema.TType;
     function GetItems: Schema.TItems;
     function GetProperties: Schema.TProperties;
     function GetXml: Xml;
@@ -1679,7 +1350,7 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('$ref')]
-    property ref: System.String read FRef write FRef stored GetRefStored;
+    property Ref: System.String read FRef write FRef stored GetRefStored;
     property format: System.String read FFormat write FFormat stored GetFormatStored;
     property title: System.String read FTitle write FTitle stored GetTitleStored;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
@@ -1701,7 +1372,7 @@ type
     property enum: TArray<any> read FEnum write FEnum stored GetEnumStored;
     property additionalProperties: Schema.TAdditionalProperties read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
     [FieldName('type')]
-    property &type: TJSONSchema.TType read GetType write FType stored GetTypeStored;
+    property &Type: TSchema.TType read GetType write FType stored GetTypeStored;
     property items: Schema.TItems read GetItems write FItems stored GetItemsStored;
     property allOf: TArray<Schema> read FAllOf write FAllOf stored GetAllOfStored;
     property properties: Schema.TProperties read GetProperties write FProperties stored GetPropertiesStored;
@@ -1763,7 +1434,7 @@ type
     property default: any read FDefault write SetDefault stored FDefaultIsStored;
     property required: stringArray read FRequired write FRequired stored GetRequiredStored;
     [FieldName('type')]
-    property &type: FileSchema.TType read FType write FType;
+    property &Type: FileSchema.TType read FType write FType;
     property readOnly: System.Boolean read FReadOnly write SetReadOnly stored FReadOnlyIsStored;
     property externalDocs: ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
     property example: any read FExample write SetExample stored FExampleIsStored;
@@ -1846,7 +1517,7 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('type')]
-    property &type: PrimitivesItems.TType read FType write SetType stored FTypeIsStored;
+    property &Type: PrimitivesItems.TType read FType write SetType stored FTypeIsStored;
     property format: System.String read FFormat write FFormat stored GetFormatStored;
     property items: PrimitivesItems read GetItems write FItems stored GetItemsStored;
     property collectionFormat: collectionFormat read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
@@ -1879,7 +1550,7 @@ type
     property IsArrayStored: Boolean read GetArrayStored;
   published
     [FieldName('array')]
-    property &array: TDynamicProperty<TArray<System.String>> read GetArray write FArray stored GetArrayStored;
+    property &Array: TDynamicProperty<TArray<System.String>> read GetArray write FArray stored GetArrayStored;
   end;
 
   Xml = class
@@ -2002,7 +1673,7 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('type')]
-    property &type: BasicAuthenticationSecurity.TType read FType write FType;
+    property &Type: BasicAuthenticationSecurity.TType read FType write FType;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     [PatternProperty('^x-')]
     property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
@@ -2030,10 +1701,10 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('type')]
-    property &type: ApiKeySecurity.TType read FType write FType;
+    property &Type: ApiKeySecurity.TType read FType write FType;
     property name: System.String read FName write FName;
     [FieldName('in')]
-    property &in: ApiKeySecurity.TIn read FIn write FIn;
+    property &In: ApiKeySecurity.TIn read FIn write FIn;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     [PatternProperty('^x-')]
     property vendorExtension: TDynamicProperty<VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
@@ -2065,7 +1736,7 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('type')]
-    property &type: Oauth2ImplicitSecurity.TType read FType write FType;
+    property &Type: Oauth2ImplicitSecurity.TType read FType write FType;
     property flow: Oauth2ImplicitSecurity.TFlow read FFlow write FFlow;
     property scopes: Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
     property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
@@ -2100,7 +1771,7 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('type')]
-    property &type: Oauth2PasswordSecurity.TType read FType write FType;
+    property &Type: Oauth2PasswordSecurity.TType read FType write FType;
     property flow: Oauth2PasswordSecurity.TFlow read FFlow write FFlow;
     property scopes: Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
     property tokenUrl: System.String read FTokenUrl write FTokenUrl;
@@ -2135,7 +1806,7 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('type')]
-    property &type: Oauth2ApplicationSecurity.TType read FType write FType;
+    property &Type: Oauth2ApplicationSecurity.TType read FType write FType;
     property flow: Oauth2ApplicationSecurity.TFlow read FFlow write FFlow;
     property scopes: Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
     property tokenUrl: System.String read FTokenUrl write FTokenUrl;
@@ -2171,7 +1842,7 @@ type
     property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
   published
     [FieldName('type')]
-    property &type: Oauth2AccessCodeSecurity.TType read FType write FType;
+    property &Type: Oauth2AccessCodeSecurity.TType read FType write FType;
     property flow: Oauth2AccessCodeSecurity.TFlow read FFlow write FFlow;
     property scopes: Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
     property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
@@ -2193,7 +1864,7 @@ type
     property IsStringStored: Boolean read GetStringStored;
   published
     [FieldName('string')]
-    property &string: TDynamicProperty<System.String> read GetString write FString stored GetStringStored;
+    property &String: TDynamicProperty<System.String> read GetString write FString stored GetStringStored;
   end;
 
   [Flat]
@@ -2221,7 +1892,7 @@ type
     FRef: System.String;
   published
     [FieldName('$ref')]
-    property ref: System.String read FRef write FRef;
+    property Ref: System.String read FRef write FRef;
   end;
 
   TOpenAPIDefinition = class
@@ -2334,544 +2005,6 @@ type
 implementation
 
 uses System.SysUtils;
-
-{ PositiveIntegerDefault0 }
-
-function PositiveIntegerDefault0.GetPositiveIntegerStored: Boolean;
-begin
-  Result := FPositiveInteger <> 0;
-end;
-
-procedure PositiveIntegerDefault0.SetAnonymous(const Value: any);
-begin
-  FAnonymous := Value;
-  FAnonymousIsStored := True;
-end;
-
-{ TJSONSchema }
-
-destructor TJSONSchema.Destroy;
-begin
-  FMinLength.Free;
-
-  FAdditionalItems.Free;
-
-  FItems.Free;
-
-  FMinItems.Free;
-
-  FMinProperties.Free;
-
-  FAdditionalProperties.Free;
-
-  FDefinitions.Free;
-
-  FProperties.Free;
-
-  FPatternProperties.Free;
-
-  FDependencies.Free;
-
-  FType.Free;
-
-  for var AObject in FAllOf do
-    AObject.Free;
-
-  for var AObject in FAnyOf do
-    AObject.Free;
-
-  for var AObject in FOneOf do
-    AObject.Free;
-
-  FNot.Free;
-
-  inherited;
-end;
-
-function TJSONSchema.GetIdStored: Boolean;
-begin
-  Result := not FId.IsEmpty;
-end;
-
-function TJSONSchema.GetSchemaStored: Boolean;
-begin
-  Result := not FSchema.IsEmpty;
-end;
-
-function TJSONSchema.GetTitleStored: Boolean;
-begin
-  Result := not FTitle.IsEmpty;
-end;
-
-function TJSONSchema.GetDescriptionStored: Boolean;
-begin
-  Result := not FDescription.IsEmpty;
-end;
-
-procedure TJSONSchema.SetDefault(const Value: any);
-begin
-  FDefault := Value;
-  FDefaultIsStored := True;
-end;
-
-function TJSONSchema.GetMultipleOfStored: Boolean;
-begin
-  Result := FMultipleOf <> 0;
-end;
-
-function TJSONSchema.GetMaximumStored: Boolean;
-begin
-  Result := FMaximum <> 0;
-end;
-
-procedure TJSONSchema.SetExclusiveMaximum(const Value: System.Boolean);
-begin
-  FExclusiveMaximum := Value;
-  FExclusiveMaximumIsStored := True;
-end;
-
-function TJSONSchema.GetMinimumStored: Boolean;
-begin
-  Result := FMinimum <> 0;
-end;
-
-procedure TJSONSchema.SetExclusiveMinimum(const Value: System.Boolean);
-begin
-  FExclusiveMinimum := Value;
-  FExclusiveMinimumIsStored := True;
-end;
-
-function TJSONSchema.GetMaxLengthStored: Boolean;
-begin
-  Result := FMaxLength <> 0;
-end;
-
-function TJSONSchema.GetMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
-begin
-  if not Assigned(FMinLength) then
-    FMinLength := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
-
-  Result := FMinLength;
-end;
-
-function TJSONSchema.GetMinLengthStored: Boolean;
-begin
-  Result := Assigned(FMinLength);
-end;
-
-function TJSONSchema.GetPatternStored: Boolean;
-begin
-  Result := not FPattern.IsEmpty;
-end;
-
-function TJSONSchema.GetAdditionalItems: Blue.Print.Open.API.Schema.v20.TJSONSchema.TAdditionalItems;
-begin
-  if not Assigned(FAdditionalItems) then
-    FAdditionalItems := Blue.Print.Open.API.Schema.v20.TJSONSchema.TAdditionalItems.Create;
-
-  Result := FAdditionalItems;
-end;
-
-function TJSONSchema.GetAdditionalItemsStored: Boolean;
-begin
-  Result := Assigned(FAdditionalItems);
-end;
-
-function TJSONSchema.GetItems: Blue.Print.Open.API.Schema.v20.TJSONSchema.TItems;
-begin
-  if not Assigned(FItems) then
-    FItems := Blue.Print.Open.API.Schema.v20.TJSONSchema.TItems.Create;
-
-  Result := FItems;
-end;
-
-function TJSONSchema.GetItemsStored: Boolean;
-begin
-  Result := Assigned(FItems);
-end;
-
-function TJSONSchema.GetMaxItemsStored: Boolean;
-begin
-  Result := FMaxItems <> 0;
-end;
-
-function TJSONSchema.GetMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
-begin
-  if not Assigned(FMinItems) then
-    FMinItems := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
-
-  Result := FMinItems;
-end;
-
-function TJSONSchema.GetMinItemsStored: Boolean;
-begin
-  Result := Assigned(FMinItems);
-end;
-
-procedure TJSONSchema.SetUniqueItems(const Value: System.Boolean);
-begin
-  FUniqueItems := Value;
-  FUniqueItemsIsStored := True;
-end;
-
-function TJSONSchema.GetMaxPropertiesStored: Boolean;
-begin
-  Result := FMaxProperties <> 0;
-end;
-
-function TJSONSchema.GetMinProperties: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
-begin
-  if not Assigned(FMinProperties) then
-    FMinProperties := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
-
-  Result := FMinProperties;
-end;
-
-function TJSONSchema.GetMinPropertiesStored: Boolean;
-begin
-  Result := Assigned(FMinProperties);
-end;
-
-function TJSONSchema.GetRequiredStored: Boolean;
-begin
-  Result := Assigned(FRequired);
-end;
-
-function TJSONSchema.GetAdditionalProperties: Blue.Print.Open.API.Schema.v20.TJSONSchema.TAdditionalProperties;
-begin
-  if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := Blue.Print.Open.API.Schema.v20.TJSONSchema.TAdditionalProperties.Create;
-
-  Result := FAdditionalProperties;
-end;
-
-function TJSONSchema.GetAdditionalPropertiesStored: Boolean;
-begin
-  Result := Assigned(FAdditionalProperties);
-end;
-
-function TJSONSchema.GetDefinitions: Blue.Print.Open.API.Schema.v20.TJSONSchema.TDefinitions;
-begin
-  if not Assigned(FDefinitions) then
-    FDefinitions := Blue.Print.Open.API.Schema.v20.TJSONSchema.TDefinitions.Create;
-
-  Result := FDefinitions;
-end;
-
-function TJSONSchema.GetDefinitionsStored: Boolean;
-begin
-  Result := Assigned(FDefinitions);
-end;
-
-function TJSONSchema.GetProperties: Blue.Print.Open.API.Schema.v20.TJSONSchema.TProperties;
-begin
-  if not Assigned(FProperties) then
-    FProperties := Blue.Print.Open.API.Schema.v20.TJSONSchema.TProperties.Create;
-
-  Result := FProperties;
-end;
-
-function TJSONSchema.GetPropertiesStored: Boolean;
-begin
-  Result := Assigned(FProperties);
-end;
-
-function TJSONSchema.GetPatternProperties: Blue.Print.Open.API.Schema.v20.TJSONSchema.TPatternProperties;
-begin
-  if not Assigned(FPatternProperties) then
-    FPatternProperties := Blue.Print.Open.API.Schema.v20.TJSONSchema.TPatternProperties.Create;
-
-  Result := FPatternProperties;
-end;
-
-function TJSONSchema.GetPatternPropertiesStored: Boolean;
-begin
-  Result := Assigned(FPatternProperties);
-end;
-
-function TJSONSchema.GetDependencies: Blue.Print.Open.API.Schema.v20.TJSONSchema.TDependencies;
-begin
-  if not Assigned(FDependencies) then
-    FDependencies := Blue.Print.Open.API.Schema.v20.TJSONSchema.TDependencies.Create;
-
-  Result := FDependencies;
-end;
-
-function TJSONSchema.GetDependenciesStored: Boolean;
-begin
-  Result := Assigned(FDependencies);
-end;
-
-function TJSONSchema.GetEnumStored: Boolean;
-begin
-  Result := Assigned(FEnum);
-end;
-
-function TJSONSchema.GetType: Blue.Print.Open.API.Schema.v20.TJSONSchema.TType;
-begin
-  if not Assigned(FType) then
-    FType := Blue.Print.Open.API.Schema.v20.TJSONSchema.TType.Create;
-
-  Result := FType;
-end;
-
-function TJSONSchema.GetTypeStored: Boolean;
-begin
-  Result := Assigned(FType);
-end;
-
-function TJSONSchema.GetFormatStored: Boolean;
-begin
-  Result := not FFormat.IsEmpty;
-end;
-
-function TJSONSchema.AddAllOf: Blue.Print.Open.API.Schema.v20.TJSONSchema;
-begin
-  Result := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
-
-  FAllOf := FAllOf + [Result];
-end;
-
-function TJSONSchema.GetAllOfStored: Boolean;
-begin
-  Result := Assigned(FAllOf);
-end;
-
-function TJSONSchema.AddAnyOf: Blue.Print.Open.API.Schema.v20.TJSONSchema;
-begin
-  Result := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
-
-  FAnyOf := FAnyOf + [Result];
-end;
-
-function TJSONSchema.GetAnyOfStored: Boolean;
-begin
-  Result := Assigned(FAnyOf);
-end;
-
-function TJSONSchema.AddOneOf: Blue.Print.Open.API.Schema.v20.TJSONSchema;
-begin
-  Result := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
-
-  FOneOf := FOneOf + [Result];
-end;
-
-function TJSONSchema.GetOneOfStored: Boolean;
-begin
-  Result := Assigned(FOneOf);
-end;
-
-function TJSONSchema.GetNot: Blue.Print.Open.API.Schema.v20.TJSONSchema;
-begin
-  if not Assigned(FNot) then
-    FNot := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
-
-  Result := FNot;
-end;
-
-function TJSONSchema.GetNotStored: Boolean;
-begin
-  Result := Assigned(FNot);
-end;
-
-{ TJSONSchema.TAdditionalItems }
-
-destructor TJSONSchema.TAdditionalItems.Destroy;
-begin
-  FSchema.Free;
-
-  inherited;
-end;
-
-procedure TJSONSchema.TAdditionalItems.SetBoolean(const Value: System.Boolean);
-begin
-  FBoolean := Value;
-  FBooleanIsStored := True;
-end;
-
-function TJSONSchema.TAdditionalItems.GetSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
-begin
-  if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
-
-  Result := FSchema;
-end;
-
-function TJSONSchema.TAdditionalItems.GetSchemaStored: Boolean;
-begin
-  Result := Assigned(FSchema);
-end;
-
-{ TJSONSchema.TItems }
-
-destructor TJSONSchema.TItems.Destroy;
-begin
-  FSchema.Free;
-
-  for var AObject in FSchemaArray do
-    AObject.Free;
-
-  inherited;
-end;
-
-function TJSONSchema.TItems.GetSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
-begin
-  if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
-
-  Result := FSchema;
-end;
-
-function TJSONSchema.TItems.GetSchemaStored: Boolean;
-begin
-  Result := Assigned(FSchema);
-end;
-
-function TJSONSchema.TItems.AddSchemaArray: Blue.Print.Open.API.Schema.v20.TJSONSchema;
-begin
-  Result := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
-
-  FSchemaArray := FSchemaArray + [Result];
-end;
-
-function TJSONSchema.TItems.GetSchemaArrayStored: Boolean;
-begin
-  Result := Assigned(FSchemaArray);
-end;
-
-{ TJSONSchema.TAdditionalProperties }
-
-destructor TJSONSchema.TAdditionalProperties.Destroy;
-begin
-  FSchema.Free;
-
-  inherited;
-end;
-
-procedure TJSONSchema.TAdditionalProperties.SetBoolean(const Value: System.Boolean);
-begin
-  FBoolean := Value;
-  FBooleanIsStored := True;
-end;
-
-function TJSONSchema.TAdditionalProperties.GetSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
-begin
-  if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
-
-  Result := FSchema;
-end;
-
-function TJSONSchema.TAdditionalProperties.GetSchemaStored: Boolean;
-begin
-  Result := Assigned(FSchema);
-end;
-
-{ TJSONSchema.TDefinitions }
-
-destructor TJSONSchema.TDefinitions.Destroy;
-begin
-  FSchema.Free;
-
-  inherited;
-end;
-
-function TJSONSchema.TDefinitions.GetSchema: TDynamicProperty<TJSONSchema>;
-begin
-  if not Assigned(FSchema) then
-    FSchema := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema>.Create;
-
-  Result := FSchema;
-end;
-
-function TJSONSchema.TDefinitions.GetSchemaStored: Boolean;
-begin
-  Result := Assigned(FSchema);
-end;
-
-{ TJSONSchema.TProperties }
-
-destructor TJSONSchema.TProperties.Destroy;
-begin
-  FSchema.Free;
-
-  inherited;
-end;
-
-function TJSONSchema.TProperties.GetSchema: TDynamicProperty<TJSONSchema>;
-begin
-  if not Assigned(FSchema) then
-    FSchema := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema>.Create;
-
-  Result := FSchema;
-end;
-
-function TJSONSchema.TProperties.GetSchemaStored: Boolean;
-begin
-  Result := Assigned(FSchema);
-end;
-
-{ TJSONSchema.TPatternProperties }
-
-destructor TJSONSchema.TPatternProperties.Destroy;
-begin
-  FSchema.Free;
-
-  inherited;
-end;
-
-function TJSONSchema.TPatternProperties.GetSchema: TDynamicProperty<TJSONSchema>;
-begin
-  if not Assigned(FSchema) then
-    FSchema := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TJSONSchema>.Create;
-
-  Result := FSchema;
-end;
-
-function TJSONSchema.TPatternProperties.GetSchemaStored: Boolean;
-begin
-  Result := Assigned(FSchema);
-end;
-
-{ TJSONSchema.TDependencies }
-
-destructor TJSONSchema.TDependencies.Destroy;
-begin
-  FSchema.Free;
-
-  inherited;
-end;
-
-function TJSONSchema.TDependencies.GetSchema: Blue.Print.Open.API.Schema.v20.TJSONSchema;
-begin
-  if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v20.TJSONSchema.Create;
-
-  Result := FSchema;
-end;
-
-function TJSONSchema.TDependencies.GetSchemaStored: Boolean;
-begin
-  Result := Assigned(FSchema);
-end;
-
-function TJSONSchema.TDependencies.GetStringArrayStored: Boolean;
-begin
-  Result := Assigned(FStringArray);
-end;
-
-{ TJSONSchema.TType }
-
-procedure TJSONSchema.TType.SetSimpleTypes(const Value: simpleTypes);
-begin
-  FSimpleTypes := Value;
-  FSimpleTypesIsStored := True;
-end;
-
-function TJSONSchema.TType.GetArrayStored: Boolean;
-begin
-  Result := Assigned(FArray);
-end;
 
 { Info }
 
@@ -3700,10 +2833,10 @@ begin
   Result := FMaxLength <> 0;
 end;
 
-function Header.GetMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function Header.GetMinLength: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinLength) then
-    FMinLength := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+    FMinLength := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinLength;
 end;
@@ -3723,10 +2856,10 @@ begin
   Result := FMaxItems <> 0;
 end;
 
-function Header.GetMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function Header.GetMinItems: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinItems) then
-    FMinItems := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+    FMinItems := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinItems;
 end;
@@ -3913,10 +3046,10 @@ begin
   Result := FMaxLength <> 0;
 end;
 
-function HeaderParameterSubSchema.GetMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function HeaderParameterSubSchema.GetMinLength: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinLength) then
-    FMinLength := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+    FMinLength := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinLength;
 end;
@@ -3936,10 +3069,10 @@ begin
   Result := FMaxItems <> 0;
 end;
 
-function HeaderParameterSubSchema.GetMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function HeaderParameterSubSchema.GetMinItems: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinItems) then
-    FMinItems := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+    FMinItems := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinItems;
 end;
@@ -4084,10 +3217,10 @@ begin
   Result := FMaxLength <> 0;
 end;
 
-function QueryParameterSubSchema.GetMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function QueryParameterSubSchema.GetMinLength: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinLength) then
-    FMinLength := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+    FMinLength := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinLength;
 end;
@@ -4107,10 +3240,10 @@ begin
   Result := FMaxItems <> 0;
 end;
 
-function QueryParameterSubSchema.GetMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function QueryParameterSubSchema.GetMinItems: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinItems) then
-    FMinItems := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+    FMinItems := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinItems;
 end;
@@ -4255,10 +3388,10 @@ begin
   Result := FMaxLength <> 0;
 end;
 
-function FormDataParameterSubSchema.GetMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function FormDataParameterSubSchema.GetMinLength: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinLength) then
-    FMinLength := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+    FMinLength := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinLength;
 end;
@@ -4278,10 +3411,10 @@ begin
   Result := FMaxItems <> 0;
 end;
 
-function FormDataParameterSubSchema.GetMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function FormDataParameterSubSchema.GetMinItems: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinItems) then
-    FMinItems := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+    FMinItems := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinItems;
 end;
@@ -4414,10 +3547,10 @@ begin
   Result := FMaxLength <> 0;
 end;
 
-function PathParameterSubSchema.GetMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function PathParameterSubSchema.GetMinLength: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinLength) then
-    FMinLength := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+    FMinLength := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinLength;
 end;
@@ -4437,10 +3570,10 @@ begin
   Result := FMaxItems <> 0;
 end;
 
-function PathParameterSubSchema.GetMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function PathParameterSubSchema.GetMinItems: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinItems) then
-    FMinItems := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+    FMinItems := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinItems;
 end;
@@ -4671,10 +3804,10 @@ begin
   Result := FMaxLength <> 0;
 end;
 
-function Schema.GetMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function Schema.GetMinLength: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinLength) then
-    FMinLength := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+    FMinLength := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinLength;
 end;
@@ -4694,10 +3827,10 @@ begin
   Result := FMaxItems <> 0;
 end;
 
-function Schema.GetMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function Schema.GetMinItems: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinItems) then
-    FMinItems := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+    FMinItems := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinItems;
 end;
@@ -4718,10 +3851,10 @@ begin
   Result := FMaxProperties <> 0;
 end;
 
-function Schema.GetMinProperties: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function Schema.GetMinProperties: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinProperties) then
-    FMinProperties := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+    FMinProperties := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinProperties;
 end;
@@ -4754,10 +3887,10 @@ begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-function Schema.GetType: Blue.Print.Open.API.Schema.v20.TJSONSchema.TType;
+function Schema.GetType: Blue.Print.JSON.Draft4.Schema.TSchema.TType;
 begin
   if not Assigned(FType) then
-    FType := Blue.Print.Open.API.Schema.v20.TJSONSchema.TType.Create;
+    FType := Blue.Print.JSON.Draft4.Schema.TSchema.TType.Create;
 
   Result := FType;
 end;
@@ -5101,10 +4234,10 @@ begin
   Result := FMaxLength <> 0;
 end;
 
-function PrimitivesItems.GetMinLength: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function PrimitivesItems.GetMinLength: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinLength) then
-    FMinLength := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+    FMinLength := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinLength;
 end;
@@ -5124,10 +4257,10 @@ begin
   Result := FMaxItems <> 0;
 end;
 
-function PrimitivesItems.GetMinItems: Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0;
+function PrimitivesItems.GetMinItems: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinItems) then
-    FMinItems := Blue.Print.Open.API.Schema.v20.PositiveIntegerDefault0.Create;
+    FMinItems := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinItems;
 end;

@@ -10,7 +10,7 @@
          "Name": "Blue.Print.Open.API.Schema.v32",
          "Files": [
             {
-               "FileType": "JSON2022",
+               "FileType": "JSON",
                "Reference": "https://spec.openapis.org/oas/3.2/schema/2025-11-23",
                "UnitClassName": "TOpenAPIDefinition"
             }

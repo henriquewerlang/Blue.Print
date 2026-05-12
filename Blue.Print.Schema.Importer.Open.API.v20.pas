@@ -2,7 +2,7 @@
 
 interface
 
-uses System.Rtti, System.Generics.Collections, Blue.Print.Schema.Importer, Blue.Print.Open.API.Schema.v20;
+uses System.Rtti, System.Generics.Collections, Blue.Print.Schema.Importer, Blue.Print.Open.API.Schema.v20, Blue.Print.JSON.Draft4.Schema;
 
 type
   TOpenAPI20SchemaLoader = class(TInterfacedObject, ISchemaLoader)

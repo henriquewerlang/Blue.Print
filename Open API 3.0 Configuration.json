@@ -3,7 +3,7 @@
    "OutputFolder": ".\\",
    "SchemaFolder": ".\\Schemas",
    "Imports": [
-      "JSON Draft 7 Schema Configuration.json"
+      "JSON Draft 4 Schema Configuration.json"
    ],
    "UnitConfiguration": [
       {

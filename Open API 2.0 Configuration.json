@@ -1,7 +1,7 @@
 {
    "OutputFolder": ".\\",
    "Imports": [
-      "JSON Draft 7 Schema Configuration.json"
+      "JSON Draft 4 Schema Configuration.json"
    ],
    "TypeDefinition": [
       {

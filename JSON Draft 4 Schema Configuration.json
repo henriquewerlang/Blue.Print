@@ -3,11 +3,11 @@
    "SchemaFolder": ".\\Schemas",
    "UnitConfiguration": [
       {
-         "Name": "Blue.Print.JSON.Draft7.Schema",
+         "Name": "Blue.Print.JSON.Draft4.Schema",
          "Files": [
             {
                "FileType": "JSON",
-               "Reference": "http://json-schema.org/draft-07/schema",
+               "Reference": "http://json-schema.org/draft-04/schema",
                "UnitClassName": "TSchema"
             }
          ]

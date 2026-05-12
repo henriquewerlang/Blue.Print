@@ -9,43 +9,43 @@
                "BaseURL": "https://json-schema.org/draft/2020-12",
                "FileType": "JSON",
                "Reference": "meta/core",
-               "UnitClassName": "TCore"
+               "AppendClassName": "TSchema"
             },
             {
                "BaseURL": "https://json-schema.org/draft/2020-12",
                "FileType": "JSON",
                "Reference": "meta/applicator",
-               "UnitClassName": "TApplicator"
+               "AppendClassName": "TSchema"
             },
             {
                "BaseURL": "https://json-schema.org/draft/2020-12",
                "FileType": "JSON",
                "Reference": "meta/unevaluated",
-               "UnitClassName": "TUnevaluated"
+               "AppendClassName": "TSchema"
             },
             {
                "BaseURL": "https://json-schema.org/draft/2020-12",
                "FileType": "JSON",
                "Reference": "meta/validation",
-               "UnitClassName": "TValidation"
+               "AppendClassName": "TSchema"
             },
             {
                "BaseURL": "https://json-schema.org/draft/2020-12",
                "FileType": "JSON",
                "Reference": "meta/meta-data",
-               "UnitClassName": "TMetadata"
+               "AppendClassName": "TSchema"
             },
             {
                "BaseURL": "https://json-schema.org/draft/2020-12",
                "FileType": "JSON",
                "Reference": "meta/format-annotation",
-               "UnitClassName": "TFormatAnnotation"
+               "AppendClassName": "TSchema"
             },
             {
                "BaseURL": "https://json-schema.org/draft/2020-12",
                "FileType": "JSON",
                "Reference": "meta/content",
-               "UnitClassName": "TContent"
+               "AppendClassName": "TSchema"
             },
             {
                "FileType": "JSON",

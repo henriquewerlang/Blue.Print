@@ -1,4 +1,4 @@
-﻿unit Blue.Print.JSON.Schema;
+﻿unit Blue.Print.JSON.Draft2022.Schema;
 
 interface
 
@@ -20,7 +20,7 @@ type
   anchorString = System.String;
   uriString = System.String;
   uriReferenceString = System.String;
-  schemaArray = TArray<Blue.Print.JSON.Schema.TSchema>;
+  schemaArray = TArray<Blue.Print.JSON.Draft2022.Schema.TSchema>;
   nonNegativeInteger = System.Integer;
   nonNegativeIntegerDefault0 = System.Integer;
   stringArray = TArray<System.String>;
@@ -544,10 +544,10 @@ begin
   inherited;
 end;
 
-function TSchema.GetObject: Blue.Print.JSON.Schema.TSchema.TObject;
+function TSchema.GetObject: Blue.Print.JSON.Draft2022.Schema.TSchema.TObject;
 begin
   if not Assigned(FObject) then
-    FObject := Blue.Print.JSON.Schema.TSchema.TObject.Create;
+    FObject := Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.Create;
 
   Result := FObject;
 end;
@@ -666,10 +666,10 @@ begin
   Result := not FDynamicAnchor.IsEmpty;
 end;
 
-function TSchema.TObject.GetVocabulary: Blue.Print.JSON.Schema.TSchema.TObject.TVocabulary;
+function TSchema.TObject.GetVocabulary: Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TVocabulary;
 begin
   if not Assigned(FVocabulary) then
-    FVocabulary := Blue.Print.JSON.Schema.TSchema.TObject.TVocabulary.Create;
+    FVocabulary := Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TVocabulary.Create;
 
   Result := FVocabulary;
 end;
@@ -684,10 +684,10 @@ begin
   Result := not FComment.IsEmpty;
 end;
 
-function TSchema.TObject.GetDefs: Blue.Print.JSON.Schema.TSchema.TObject.TDefs;
+function TSchema.TObject.GetDefs: Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TDefs;
 begin
   if not Assigned(FDefs) then
-    FDefs := Blue.Print.JSON.Schema.TSchema.TObject.TDefs.Create;
+    FDefs := Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TDefs.Create;
 
   Result := FDefs;
 end;
@@ -697,9 +697,9 @@ begin
   Result := Assigned(FDefs);
 end;
 
-function TSchema.TObject.AddPrefixItems: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.AddPrefixItems: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
-  Result := Blue.Print.JSON.Schema.TSchema.Create;
+  Result := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   FPrefixItems := FPrefixItems + [Result];
 end;
@@ -709,10 +709,10 @@ begin
   Result := Assigned(FPrefixItems);
 end;
 
-function TSchema.TObject.GetItems: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetItems: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FItems) then
-    FItems := Blue.Print.JSON.Schema.TSchema.Create;
+    FItems := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FItems;
 end;
@@ -722,10 +722,10 @@ begin
   Result := Assigned(FItems);
 end;
 
-function TSchema.TObject.GetContains: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetContains: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FContains) then
-    FContains := Blue.Print.JSON.Schema.TSchema.Create;
+    FContains := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FContains;
 end;
@@ -735,10 +735,10 @@ begin
   Result := Assigned(FContains);
 end;
 
-function TSchema.TObject.GetAdditionalProperties: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetAdditionalProperties: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := Blue.Print.JSON.Schema.TSchema.Create;
+    FAdditionalProperties := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FAdditionalProperties;
 end;
@@ -748,10 +748,10 @@ begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-function TSchema.TObject.GetProperties: Blue.Print.JSON.Schema.TSchema.TObject.TProperties;
+function TSchema.TObject.GetProperties: Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TProperties;
 begin
   if not Assigned(FProperties) then
-    FProperties := Blue.Print.JSON.Schema.TSchema.TObject.TProperties.Create;
+    FProperties := Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TProperties.Create;
 
   Result := FProperties;
 end;
@@ -761,10 +761,10 @@ begin
   Result := Assigned(FProperties);
 end;
 
-function TSchema.TObject.GetPatternProperties: Blue.Print.JSON.Schema.TSchema.TObject.TPatternProperties;
+function TSchema.TObject.GetPatternProperties: Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TPatternProperties;
 begin
   if not Assigned(FPatternProperties) then
-    FPatternProperties := Blue.Print.JSON.Schema.TSchema.TObject.TPatternProperties.Create;
+    FPatternProperties := Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TPatternProperties.Create;
 
   Result := FPatternProperties;
 end;
@@ -774,10 +774,10 @@ begin
   Result := Assigned(FPatternProperties);
 end;
 
-function TSchema.TObject.GetDependentSchemas: Blue.Print.JSON.Schema.TSchema.TObject.TDependentSchemas;
+function TSchema.TObject.GetDependentSchemas: Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TDependentSchemas;
 begin
   if not Assigned(FDependentSchemas) then
-    FDependentSchemas := Blue.Print.JSON.Schema.TSchema.TObject.TDependentSchemas.Create;
+    FDependentSchemas := Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TDependentSchemas.Create;
 
   Result := FDependentSchemas;
 end;
@@ -787,10 +787,10 @@ begin
   Result := Assigned(FDependentSchemas);
 end;
 
-function TSchema.TObject.GetPropertyNames: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetPropertyNames: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FPropertyNames) then
-    FPropertyNames := Blue.Print.JSON.Schema.TSchema.Create;
+    FPropertyNames := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FPropertyNames;
 end;
@@ -800,10 +800,10 @@ begin
   Result := Assigned(FPropertyNames);
 end;
 
-function TSchema.TObject.GetIf: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetIf: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FIf) then
-    FIf := Blue.Print.JSON.Schema.TSchema.Create;
+    FIf := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FIf;
 end;
@@ -813,10 +813,10 @@ begin
   Result := Assigned(FIf);
 end;
 
-function TSchema.TObject.GetThen: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetThen: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FThen) then
-    FThen := Blue.Print.JSON.Schema.TSchema.Create;
+    FThen := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FThen;
 end;
@@ -826,10 +826,10 @@ begin
   Result := Assigned(FThen);
 end;
 
-function TSchema.TObject.GetElse: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetElse: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FElse) then
-    FElse := Blue.Print.JSON.Schema.TSchema.Create;
+    FElse := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FElse;
 end;
@@ -839,9 +839,9 @@ begin
   Result := Assigned(FElse);
 end;
 
-function TSchema.TObject.AddAllOf: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.AddAllOf: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
-  Result := Blue.Print.JSON.Schema.TSchema.Create;
+  Result := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   FAllOf := FAllOf + [Result];
 end;
@@ -851,9 +851,9 @@ begin
   Result := Assigned(FAllOf);
 end;
 
-function TSchema.TObject.AddAnyOf: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.AddAnyOf: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
-  Result := Blue.Print.JSON.Schema.TSchema.Create;
+  Result := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   FAnyOf := FAnyOf + [Result];
 end;
@@ -863,9 +863,9 @@ begin
   Result := Assigned(FAnyOf);
 end;
 
-function TSchema.TObject.AddOneOf: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.AddOneOf: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
-  Result := Blue.Print.JSON.Schema.TSchema.Create;
+  Result := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   FOneOf := FOneOf + [Result];
 end;
@@ -875,10 +875,10 @@ begin
   Result := Assigned(FOneOf);
 end;
 
-function TSchema.TObject.GetNot: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetNot: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FNot) then
-    FNot := Blue.Print.JSON.Schema.TSchema.Create;
+    FNot := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FNot;
 end;
@@ -888,10 +888,10 @@ begin
   Result := Assigned(FNot);
 end;
 
-function TSchema.TObject.GetUnevaluatedItems: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetUnevaluatedItems: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FUnevaluatedItems) then
-    FUnevaluatedItems := Blue.Print.JSON.Schema.TSchema.Create;
+    FUnevaluatedItems := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FUnevaluatedItems;
 end;
@@ -901,10 +901,10 @@ begin
   Result := Assigned(FUnevaluatedItems);
 end;
 
-function TSchema.TObject.GetUnevaluatedProperties: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetUnevaluatedProperties: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FUnevaluatedProperties) then
-    FUnevaluatedProperties := Blue.Print.JSON.Schema.TSchema.Create;
+    FUnevaluatedProperties := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FUnevaluatedProperties;
 end;
@@ -914,10 +914,10 @@ begin
   Result := Assigned(FUnevaluatedProperties);
 end;
 
-function TSchema.TObject.GetType: Blue.Print.JSON.Schema.TSchema.TObject.TType;
+function TSchema.TObject.GetType: Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TType;
 begin
   if not Assigned(FType) then
-    FType := Blue.Print.JSON.Schema.TSchema.TObject.TType.Create;
+    FType := Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TType.Create;
 
   Result := FType;
 end;
@@ -1019,10 +1019,10 @@ begin
   Result := Assigned(FRequired);
 end;
 
-function TSchema.TObject.GetDependentRequired: Blue.Print.JSON.Schema.TSchema.TObject.TDependentRequired;
+function TSchema.TObject.GetDependentRequired: Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TDependentRequired;
 begin
   if not Assigned(FDependentRequired) then
-    FDependentRequired := Blue.Print.JSON.Schema.TSchema.TObject.TDependentRequired.Create;
+    FDependentRequired := Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TDependentRequired.Create;
 
   Result := FDependentRequired;
 end;
@@ -1086,10 +1086,10 @@ begin
   Result := not FContentMediaType.IsEmpty;
 end;
 
-function TSchema.TObject.GetContentSchema: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetContentSchema: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FContentSchema) then
-    FContentSchema := Blue.Print.JSON.Schema.TSchema.Create;
+    FContentSchema := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FContentSchema;
 end;
@@ -1099,10 +1099,10 @@ begin
   Result := Assigned(FContentSchema);
 end;
 
-function TSchema.TObject.GetDefinitions: Blue.Print.JSON.Schema.TSchema.TObject.TDefinitions;
+function TSchema.TObject.GetDefinitions: Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TDefinitions;
 begin
   if not Assigned(FDefinitions) then
-    FDefinitions := Blue.Print.JSON.Schema.TSchema.TObject.TDefinitions.Create;
+    FDefinitions := Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TDefinitions.Create;
 
   Result := FDefinitions;
 end;
@@ -1112,10 +1112,10 @@ begin
   Result := Assigned(FDefinitions);
 end;
 
-function TSchema.TObject.GetDependencies: Blue.Print.JSON.Schema.TSchema.TObject.TDependencies;
+function TSchema.TObject.GetDependencies: Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TDependencies;
 begin
   if not Assigned(FDependencies) then
-    FDependencies := Blue.Print.JSON.Schema.TSchema.TObject.TDependencies.Create;
+    FDependencies := Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TDependencies.Create;
 
   Result := FDependencies;
 end;
@@ -1135,10 +1135,10 @@ begin
   Result := not FRecursiveRef.IsEmpty;
 end;
 
-function TSchema.TObject.GetCore: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetCore: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FCore) then
-    FCore := Blue.Print.JSON.Schema.TSchema.Create;
+    FCore := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FCore;
 end;
@@ -1148,10 +1148,10 @@ begin
   Result := Assigned(FCore);
 end;
 
-function TSchema.TObject.GetApplicator: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetApplicator: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FApplicator) then
-    FApplicator := Blue.Print.JSON.Schema.TSchema.Create;
+    FApplicator := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FApplicator;
 end;
@@ -1161,10 +1161,10 @@ begin
   Result := Assigned(FApplicator);
 end;
 
-function TSchema.TObject.GetUnevaluated: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetUnevaluated: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FUnevaluated) then
-    FUnevaluated := Blue.Print.JSON.Schema.TSchema.Create;
+    FUnevaluated := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FUnevaluated;
 end;
@@ -1174,10 +1174,10 @@ begin
   Result := Assigned(FUnevaluated);
 end;
 
-function TSchema.TObject.GetValidation: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetValidation: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FValidation) then
-    FValidation := Blue.Print.JSON.Schema.TSchema.Create;
+    FValidation := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FValidation;
 end;
@@ -1187,10 +1187,10 @@ begin
   Result := Assigned(FValidation);
 end;
 
-function TSchema.TObject.GetMetaData: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetMetaData: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FMetaData) then
-    FMetaData := Blue.Print.JSON.Schema.TSchema.Create;
+    FMetaData := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FMetaData;
 end;
@@ -1200,10 +1200,10 @@ begin
   Result := Assigned(FMetaData);
 end;
 
-function TSchema.TObject.GetFormatAnnotation: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetFormatAnnotation: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FFormatAnnotation) then
-    FFormatAnnotation := Blue.Print.JSON.Schema.TSchema.Create;
+    FFormatAnnotation := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FFormatAnnotation;
 end;
@@ -1213,10 +1213,10 @@ begin
   Result := Assigned(FFormatAnnotation);
 end;
 
-function TSchema.TObject.GetContent: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.GetContent: Blue.Print.JSON.Draft2022.Schema.TSchema;
 begin
   if not Assigned(FContent) then
-    FContent := Blue.Print.JSON.Schema.TSchema.Create;
+    FContent := Blue.Print.JSON.Draft2022.Schema.TSchema.Create;
 
   Result := FContent;
 end;
@@ -1260,7 +1260,7 @@ end;
 function TSchema.TObject.TDefs.GetDefs: TDynamicProperty<TSchema>;
 begin
   if not Assigned(FDefs) then
-    FDefs := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
+    FDefs := TDynamicProperty<Blue.Print.JSON.Draft2022.Schema.TSchema>.Create;
 
   Result := FDefs;
 end;
@@ -1282,7 +1282,7 @@ end;
 function TSchema.TObject.TProperties.GetProperties: TDynamicProperty<TSchema>;
 begin
   if not Assigned(FProperties) then
-    FProperties := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
+    FProperties := TDynamicProperty<Blue.Print.JSON.Draft2022.Schema.TSchema>.Create;
 
   Result := FProperties;
 end;
@@ -1304,7 +1304,7 @@ end;
 function TSchema.TObject.TPatternProperties.GetPatternProperties: TDynamicProperty<TSchema>;
 begin
   if not Assigned(FPatternProperties) then
-    FPatternProperties := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
+    FPatternProperties := TDynamicProperty<Blue.Print.JSON.Draft2022.Schema.TSchema>.Create;
 
   Result := FPatternProperties;
 end;
@@ -1326,7 +1326,7 @@ end;
 function TSchema.TObject.TDependentSchemas.GetDependentSchemas: TDynamicProperty<TSchema>;
 begin
   if not Assigned(FDependentSchemas) then
-    FDependentSchemas := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
+    FDependentSchemas := TDynamicProperty<Blue.Print.JSON.Draft2022.Schema.TSchema>.Create;
 
   Result := FDependentSchemas;
 end;
@@ -1383,7 +1383,7 @@ end;
 function TSchema.TObject.TDefinitions.GetDefinitions: TDynamicProperty<TSchema>;
 begin
   if not Assigned(FDefinitions) then
-    FDefinitions := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
+    FDefinitions := TDynamicProperty<Blue.Print.JSON.Draft2022.Schema.TSchema>.Create;
 
   Result := FDefinitions;
 end;
@@ -1410,7 +1410,7 @@ end;
 function TSchema.TObject.TDependencies.GetAnonymous: TDynamicProperty<TSchema.TObject.TDependencies.TAnonymous>;
 begin
   if not Assigned(FAnonymous) then
-    FAnonymous := TDynamicProperty<Blue.Print.JSON.Schema.TSchema.TObject.TDependencies.TAnonymous>.Create;
+    FAnonymous := TDynamicProperty<Blue.Print.JSON.Draft2022.Schema.TSchema.TObject.TDependencies.TAnonymous>.Create;
 
   Result := FAnonymous;
 end;
