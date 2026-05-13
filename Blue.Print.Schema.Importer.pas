@@ -518,9 +518,10 @@ type
     function CreateDynamicPropertyType(const ParentModule: TTypeModuleDefinition; const ValueType: TTypeDefinition): TTypeDynamicPropertyDefinition;
     function CreateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
     function DefineProperty(const ClassDefinition: TClassDefinition; const Schema: TSchema; const PropertyName: String; const PropertyType: TTypeDefinition): TPropertyDefinition;
+    function FindAllTypes(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
     function FindTypeReference(const Module: TTypeModuleDefinition; const Schema: TSchema): TTypeDefinition;
     function GetReferenceName(const Schema: TSchema): String;
-    function FindAllTypes(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
+    function IsConditionalSchema(const Schema: TSchema): Boolean;
     function IsReference(const Schema: TSchema): Boolean;
     function LoadSchema(const UnitFileConfiguration: TUnitFileConfiguration): TSchema;
 
@@ -2827,7 +2828,7 @@ function TJSONSchemaLoader.CreateTypeDefinition(const Module: TTypeModuleDefinit
 
   function IsFlatSchema(const Schema: TSchema): Boolean;
   begin
-    Result := Schema.&Object.IsAllOfStored or Schema.&Object.IsOneOfStored or Schema.&Object.IsAnyOfStored or Schema.&Object.IsTypeStored and Schema.&Object.&Type.IsArrayStored;
+    Result := Schema.&Object.IsAllOfStored or Schema.&Object.IsOneOfStored or Schema.&Object.IsAnyOfStored or Schema.&Object.IsTypeStored and Schema.&Object.&Type.IsArrayStored or IsConditionalSchema(Schema);
   end;
 
   procedure CheckFlatAttribute(const ClassDefinition: TClassDefinition);
@@ -2882,9 +2883,14 @@ function TJSONSchemaLoader.CreateTypeDefinition(const Module: TTypeModuleDefinit
     end;
   end;
 
+  function NeedClassDeclaration(const Schema: TSchema): Boolean;
+  begin
+    Result := IsFlatSchema(Schema) or Schema.&Object.IsAdditionalPropertiesStored or Schema.&Object.IsPatternPropertiesStored or Schema.&Object.IsPropertiesStored;
+  end;
+
   function MustDeclareClass: Boolean;
   begin
-    Result := IsFlatSchema(Schema) or Schema.&Object.IsAdditionalPropertiesStored or Schema.&Object.IsPatternPropertiesStored;
+    Result := NeedClassDeclaration(Schema);
   end;
 
 begin
@@ -2927,6 +2933,15 @@ begin
     Result := CreateClassDefinition(Module, TypeName)
   else if IsReference(Schema) then
     Result := FindTypeReference(Module, Schema)
+  else if Schema.&Object.IsDefaultStored then
+    if Schema.&Object.Default.TypeInfo = TypeInfo(Boolean) then
+      Result := FImporter.BooleanType
+    else if Schema.&Object.Default.TypeInfo = TypeInfo(Double) then
+      Result := FImporter.IntegerType
+    else if Schema.&Object.Default.TypeInfo = TypeInfo(String) then
+      Result := FImporter.StringType
+    else
+      Result := GetAnyTypeDefinition
   else
     Result := GetAnyTypeDefinition;
 end;
@@ -3037,21 +3052,20 @@ procedure TJSONSchemaLoader.GenerateProperties(const ClassDefinition: TClassDefi
 const
   PATTERN_PROPERTY_NAME = 'PatternProperty';
 
+  function CheckUniqueName(const PropertyName: String): String;
+  begin
+    var PropertyCount := 1;
+    Result := PropertyName;
+
+    for var ClassProperty in ClassDefinition.Properties do
+      if SameText(ClassProperty.Name, PropertyName) then
+        Inc(PropertyCount);
+
+    if PropertyCount > 1 then
+      Result := Result + PropertyCount.ToString;
+  end;
+
   function GetPropertyName(const Schema: TSchema): String;
-
-    function CheckUniqueName(const PropertyName: String): String;
-    begin
-      var PropertyCount := 0;
-      Result := PropertyName;
-
-      for var ClassProperty in ClassDefinition.Properties do
-        if SameText(ClassProperty.Name, PropertyName) then
-          Inc(PropertyCount);
-
-      if PropertyCount > 1 then
-        Result := Result + PropertyCount.ToString;
-    end;
-
   const
     ANONYMOUS_PROPERTY_NAME = 'Anonymous';
 
@@ -3063,9 +3077,30 @@ const
     else if Schema.&Object.IsDynamicRefStored then
       Result := FormatName(ClassDefinition.Name)
     else if Schema.&Object.IsPatternPropertiesStored then
-      Result := CheckUniqueName(PATTERN_PROPERTY_NAME)
+      Result := PATTERN_PROPERTY_NAME
     else
-      Result := CheckUniqueName(ANONYMOUS_PROPERTY_NAME);
+      Result := ANONYMOUS_PROPERTY_NAME;
+
+    Result := CheckUniqueName(Result);
+  end;
+
+  procedure DefinePropertyCheckingType(const PropertyName: String; const PropertySchema: TSchema);
+  begin
+    DefineProperty(ClassDefinition, Schema, PropertyName, CheckTypeDefinition(ClassDefinition, PropertySchema, PropertyName));
+  end;
+
+  function ConditionalSchemas: TArray<TSchema>;
+  begin
+    Result := nil;
+
+    if IsConditionalSchema(Schema) then
+    begin
+      if Schema.&Object.IsThenStored then
+        Result := Result + [Schema.&Object.&Then];
+
+      if Schema.&Object.IsElseStored then
+        Result := Result + [Schema.&Object.&Else];
+    end;
   end;
 
 var
@@ -3073,17 +3108,11 @@ var
 
 begin
   for var Pair in Schema.&Object.Properties.Properties do
-    DefineProperty(ClassDefinition, Schema, Pair.Key, CheckTypeDefinition(ClassDefinition, Pair.Value, Pair.Key));
+    DefinePropertyCheckingType(Pair.Key, Pair.Value);
 
-  for var AnonymousSchema in Schema.&Object.allOf + Schema.&Object.oneOf + Schema.&Object.anyOf do
-    if AnonymousSchema.&Object.IsRefStored then
-      DefineProperty(ClassDefinition, Schema, GetPropertyName(AnonymousSchema), FindTypeReference(ClassDefinition, AnonymousSchema))
-    else if AnonymousSchema.&Object.IsTypeStored then
-    begin
-      PropertyName := GetPropertyName(AnonymousSchema);
-
-      DefineProperty(ClassDefinition, Schema, PropertyName, CheckTypeDefinition(ClassDefinition, AnonymousSchema, PropertyName));
-    end
+  for var AnonymousSchema in Schema.&Object.allOf + Schema.&Object.oneOf + Schema.&Object.anyOf + ConditionalSchemas do
+    if AnonymousSchema.&Object.IsRefStored or AnonymousSchema.&Object.IsTypeStored then
+      DefinePropertyCheckingType(GetPropertyName(AnonymousSchema), AnonymousSchema)
     else
       GenerateProperties(ClassDefinition, AnonymousSchema);
 
@@ -3138,6 +3167,11 @@ begin
 
   if Result = REFERENCE_SEPARATOR then
     Result := DEFAULT_SCHEMA_CLASS_NAME;
+end;
+
+function TJSONSchemaLoader.IsConditionalSchema(const Schema: TSchema): Boolean;
+begin
+  Result := Schema.&Object.IsIfStored or Schema.&Object.IsThenStored or Schema.&Object.IsElseStored;
 end;
 
 function TJSONSchemaLoader.IsReference(const Schema: TSchema): Boolean;

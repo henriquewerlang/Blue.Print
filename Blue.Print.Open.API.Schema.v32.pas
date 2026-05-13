@@ -1,11 +1,11 @@
-﻿unit Blue.Print.Open.API.Schema.v31;
+﻿unit Blue.Print.Open.API.Schema.v32;
 
 interface
 
 {$M+}
 {$SCOPEDENUMS ON}
 
-// File generated from https://spec.openapis.org/oas/3.1/schema/2025-11-23;
+// File generated from https://spec.openapis.org/oas/3.2/schema/2025-11-23;
 
 uses Blue.Print.Types, Blue.Print.JSON.Draft2022.Schema;
 
@@ -27,6 +27,7 @@ type
   RequestBodyOrReference = class;
   Content = class;
   MediaType = class;
+  MediaTypeOrReference = class;
   Encoding = class;
   Responses = class;
   Response = class;
@@ -50,6 +51,9 @@ type
   Examples = class;
   MapOfStrings = class;
   ExplodeForForm = class;
+
+  // Forward type alias
+  parameters = TArray<Blue.Print.Open.API.Schema.v32.ParameterOrReference>;
 
   Info = class
   private
@@ -141,19 +145,23 @@ type
   private
     FUrl: System.String;
     FDescription: System.String;
+    FName: System.String;
     FVariables: Server.TVariables;
 
     function GetVariables: Server.TVariables;
     function GetDescriptionStored: Boolean;
+    function GetNameStored: Boolean;
     function GetVariablesStored: Boolean;
   public
     destructor Destroy; override;
 
     property IsDescriptionStored: Boolean read GetDescriptionStored;
+    property IsNameStored: Boolean read GetNameStored;
     property IsVariablesStored: Boolean read GetVariablesStored;
   published
     property url: System.String read FUrl write FUrl;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+    property name: System.String read FName write FName stored GetNameStored;
     property variables: Server.TVariables read GetVariables write FVariables stored GetVariablesStored;
   end;
 
@@ -324,6 +332,21 @@ type
       [FieldName('path-item')]
       property PathItem: TDynamicProperty<PathItem> read GetPathItem write FPathItem stored GetPathItemStored;
     end;
+
+    TMediaTypes = class
+    private
+      FMediaTypeOrReference: TDynamicProperty<MediaTypeOrReference>;
+
+      function GetMediaTypeOrReference: TDynamicProperty<MediaTypeOrReference>;
+      function GetMediaTypeOrReferenceStored: Boolean;
+    public
+      destructor Destroy; override;
+
+      property IsMediaTypeOrReferenceStored: Boolean read GetMediaTypeOrReferenceStored;
+    published
+      [FieldName('media-type-or-reference')]
+      property MediaTypeOrReference: TDynamicProperty<MediaTypeOrReference> read GetMediaTypeOrReference write FMediaTypeOrReference stored GetMediaTypeOrReferenceStored;
+    end;
   private
     FSchemas: Components.TSchemas;
     FResponses: Components.TResponses;
@@ -335,6 +358,7 @@ type
     FLinks: Components.TLinks;
     FCallbacks: Components.TCallbacks;
     FPathItems: Components.TPathItems;
+    FMediaTypes: Components.TMediaTypes;
     FSpecificationExtensions: TDynamicProperty<any>;
 
     function GetSchemas: Components.TSchemas;
@@ -347,6 +371,7 @@ type
     function GetLinks: Components.TLinks;
     function GetCallbacks: Components.TCallbacks;
     function GetPathItems: Components.TPathItems;
+    function GetMediaTypes: Components.TMediaTypes;
     function GetSpecificationExtensions: TDynamicProperty<any>;
     function GetSchemasStored: Boolean;
     function GetResponsesStored: Boolean;
@@ -358,6 +383,7 @@ type
     function GetLinksStored: Boolean;
     function GetCallbacksStored: Boolean;
     function GetPathItemsStored: Boolean;
+    function GetMediaTypesStored: Boolean;
     function GetSpecificationExtensionsStored: Boolean;
   public
     destructor Destroy; override;
@@ -372,6 +398,7 @@ type
     property IsLinksStored: Boolean read GetLinksStored;
     property IsCallbacksStored: Boolean read GetCallbacksStored;
     property IsPathItemsStored: Boolean read GetPathItemsStored;
+    property IsMediaTypesStored: Boolean read GetMediaTypesStored;
     property IsSpecificationExtensionsStored: Boolean read GetSpecificationExtensionsStored;
   published
     property schemas: Components.TSchemas read GetSchemas write FSchemas stored GetSchemasStored;
@@ -384,7 +411,8 @@ type
     property links: Components.TLinks read GetLinks write FLinks stored GetLinksStored;
     property callbacks: Components.TCallbacks read GetCallbacks write FCallbacks stored GetCallbacksStored;
     property pathItems: Components.TPathItems read GetPathItems write FPathItems stored GetPathItemsStored;
-    [PatternProperty('^(?:schemas|responses|parameters|examples|requestBodies|headers|securitySchemes|links|callbacks|pathItems)$')]
+    property mediaTypes: Components.TMediaTypes read GetMediaTypes write FMediaTypes stored GetMediaTypesStored;
+    [PatternProperty('^(?:schemas|responses|parameters|examples|requestBodies|headers|securitySchemes|links|callbacks|pathItems|mediaTypes)$')]
     [FieldName('specification-extensions')]
     property SpecificationExtensions: TDynamicProperty<any> read GetSpecificationExtensions write FSpecificationExtensions stored GetSpecificationExtensionsStored;
   end;
@@ -406,12 +434,27 @@ type
   end;
 
   PathItem = class
+  public type
+    TAdditionalOperations = class
+    private
+      FOperation: TDynamicProperty<Operation>;
+
+      function GetOperation: TDynamicProperty<Operation>;
+      function GetOperationStored: Boolean;
+    public
+      destructor Destroy; override;
+
+      property IsOperationStored: Boolean read GetOperationStored;
+    published
+      property operation: TDynamicProperty<Operation> read GetOperation write FOperation stored GetOperationStored;
+    end;
   private
     FRef: System.String;
     FSummary: System.String;
     FDescription: System.String;
     FServers: TArray<Server>;
-    FParameters: TArray<ParameterOrReference>;
+    FParameters: parameters;
+    FAdditionalOperations: PathItem.TAdditionalOperations;
     FGet: Operation;
     FPut: Operation;
     FPost: Operation;
@@ -420,7 +463,9 @@ type
     FHead: Operation;
     FPatch: Operation;
     FTrace: Operation;
+    FQuery: Operation;
 
+    function GetAdditionalOperations: PathItem.TAdditionalOperations;
     function GetGet: Operation;
     function GetPut: Operation;
     function GetPost: Operation;
@@ -429,11 +474,13 @@ type
     function GetHead: Operation;
     function GetPatch: Operation;
     function GetTrace: Operation;
+    function GetQuery: Operation;
     function GetRefStored: Boolean;
     function GetSummaryStored: Boolean;
     function GetDescriptionStored: Boolean;
     function GetServersStored: Boolean;
     function GetParametersStored: Boolean;
+    function GetAdditionalOperationsStored: Boolean;
     function GetGetStored: Boolean;
     function GetPutStored: Boolean;
     function GetPostStored: Boolean;
@@ -442,6 +489,7 @@ type
     function GetHeadStored: Boolean;
     function GetPatchStored: Boolean;
     function GetTraceStored: Boolean;
+    function GetQueryStored: Boolean;
   public
     destructor Destroy; override;
 
@@ -453,6 +501,7 @@ type
     property IsDescriptionStored: Boolean read GetDescriptionStored;
     property IsServersStored: Boolean read GetServersStored;
     property IsParametersStored: Boolean read GetParametersStored;
+    property IsAdditionalOperationsStored: Boolean read GetAdditionalOperationsStored;
     property IsGetStored: Boolean read GetGetStored;
     property IsPutStored: Boolean read GetPutStored;
     property IsPostStored: Boolean read GetPostStored;
@@ -461,13 +510,15 @@ type
     property IsHeadStored: Boolean read GetHeadStored;
     property IsPatchStored: Boolean read GetPatchStored;
     property IsTraceStored: Boolean read GetTraceStored;
+    property IsQueryStored: Boolean read GetQueryStored;
   published
     [FieldName('$ref')]
     property Ref: System.String read FRef write FRef stored GetRefStored;
     property summary: System.String read FSummary write FSummary stored GetSummaryStored;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property servers: TArray<Server> read FServers write FServers stored GetServersStored;
-    property parameters: TArray<ParameterOrReference> read FParameters write FParameters stored GetParametersStored;
+    property parameters: parameters read FParameters write FParameters stored GetParametersStored;
+    property additionalOperations: PathItem.TAdditionalOperations read GetAdditionalOperations write FAdditionalOperations stored GetAdditionalOperationsStored;
     property get: Operation read GetGet write FGet stored GetGetStored;
     property put: Operation read GetPut write FPut stored GetPutStored;
     property post: Operation read GetPost write FPost stored GetPostStored;
@@ -476,6 +527,7 @@ type
     property head: Operation read GetHead write FHead stored GetHeadStored;
     property patch: Operation read GetPatch write FPatch stored GetPatchStored;
     property trace: Operation read GetTrace write FTrace stored GetTraceStored;
+    property query: Operation read GetQuery write FQuery stored GetQueryStored;
   end;
 
   Operation = class
@@ -500,7 +552,7 @@ type
     FDescription: System.String;
     FExternalDocs: ExternalDocumentation;
     FOperationId: System.String;
-    FParameters: TArray<ParameterOrReference>;
+    FParameters: parameters;
     FRequestBody: RequestBodyOrReference;
     FResponses: Responses;
     FCallbacks: Operation.TCallbacks;
@@ -550,7 +602,7 @@ type
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property externalDocs: ExternalDocumentation read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
     property operationId: System.String read FOperationId write FOperationId stored GetOperationIdStored;
-    property parameters: TArray<ParameterOrReference> read FParameters write FParameters stored GetParametersStored;
+    property parameters: parameters read FParameters write FParameters stored GetParametersStored;
     property requestBody: RequestBodyOrReference read GetRequestBody write FRequestBody stored GetRequestBodyStored;
     property responses: Responses read GetResponses write FResponses stored GetResponsesStored;
     property callbacks: Operation.TCallbacks read GetCallbacks write FCallbacks stored GetCallbacksStored;
@@ -575,7 +627,7 @@ type
   [Flat]
   Parameter = class
   public type
-    TIn = (query, header, path, cookie);
+    TIn = (query, querystring, header, path, cookie);
   private
     FName: System.String;
     FIn: Parameter.TIn;
@@ -584,6 +636,8 @@ type
     FDeprecated: System.Boolean;
     FSchema: SpecificationExtensions;
     FContent: Content;
+    FExamples: Examples;
+    FSpecificationExtensions: SpecificationExtensions;
     FAllowEmptyValue: System.Boolean;
     FRequiredIsStored: Boolean;
     FDeprecatedIsStored: Boolean;
@@ -591,9 +645,13 @@ type
 
     function GetSchema: SpecificationExtensions;
     function GetContent: Content;
+    function GetExamples: Examples;
+    function GetSpecificationExtensions: SpecificationExtensions;
     function GetDescriptionStored: Boolean;
     function GetSchemaStored: Boolean;
     function GetContentStored: Boolean;
+    function GetExamplesStored: Boolean;
+    function GetSpecificationExtensionsStored: Boolean;
     procedure SetRequired(const Value: System.Boolean);
     procedure SetDeprecated(const Value: System.Boolean);
     procedure SetAllowEmptyValue(const Value: System.Boolean);
@@ -605,6 +663,8 @@ type
     property IsDeprecatedStored: Boolean read FDeprecatedIsStored;
     property IsSchemaStored: Boolean read GetSchemaStored;
     property IsContentStored: Boolean read GetContentStored;
+    property IsExamplesStored: Boolean read GetExamplesStored;
+    property IsSpecificationExtensionsStored: Boolean read GetSpecificationExtensionsStored;
     property IsAllowEmptyValueStored: Boolean read FAllowEmptyValueIsStored;
   published
     property name: System.String read FName write FName;
@@ -615,6 +675,9 @@ type
     property deprecated: System.Boolean read FDeprecated write SetDeprecated stored FDeprecatedIsStored;
     property schema: SpecificationExtensions read GetSchema write FSchema stored GetSchemaStored;
     property content: Content read GetContent write FContent stored GetContentStored;
+    property examples: Examples read GetExamples write FExamples stored GetExamplesStored;
+    [FieldName('specification-extensions')]
+    property SpecificationExtensions: SpecificationExtensions read GetSpecificationExtensions write FSpecificationExtensions stored GetSpecificationExtensionsStored;
     property allowEmptyValue: System.Boolean read FAllowEmptyValue write SetAllowEmptyValue stored FAllowEmptyValueIsStored;
   end;
 
@@ -682,17 +745,17 @@ type
 
   Content = class
   private
-    FMediaType: TDynamicProperty<MediaType>;
+    FMediaTypeOrReference: TDynamicProperty<MediaTypeOrReference>;
 
-    function GetMediaType: TDynamicProperty<MediaType>;
-    function GetMediaTypeStored: Boolean;
+    function GetMediaTypeOrReference: TDynamicProperty<MediaTypeOrReference>;
+    function GetMediaTypeOrReferenceStored: Boolean;
   public
     destructor Destroy; override;
 
-    property IsMediaTypeStored: Boolean read GetMediaTypeStored;
+    property IsMediaTypeOrReferenceStored: Boolean read GetMediaTypeOrReferenceStored;
   published
-    [FieldName('media-type')]
-    property MediaType: TDynamicProperty<MediaType> read GetMediaType write FMediaType stored GetMediaTypeStored;
+    [FieldName('media-type-or-reference')]
+    property MediaTypeOrReference: TDynamicProperty<MediaTypeOrReference> read GetMediaTypeOrReference write FMediaTypeOrReference stored GetMediaTypeOrReferenceStored;
   end;
 
   [Flat]
@@ -712,32 +775,73 @@ type
       property encoding: TDynamicProperty<Encoding> read GetEncoding write FEncoding stored GetEncodingStored;
     end;
   private
+    FDescription: System.String;
     FSchema: SpecificationExtensions;
+    FItemSchema: SpecificationExtensions;
     FEncoding: MediaType.TEncoding;
-    FSpecificationExtensions: SpecificationExtensions;
+    FPrefixEncoding: TArray<Encoding>;
+    FItemEncoding: Encoding;
     FExamples: Examples;
+    FSpecificationExtensions: SpecificationExtensions;
 
     function GetSchema: SpecificationExtensions;
+    function GetItemSchema: SpecificationExtensions;
     function GetEncoding: MediaType.TEncoding;
-    function GetSpecificationExtensions: SpecificationExtensions;
+    function GetItemEncoding: Encoding;
     function GetExamples: Examples;
+    function GetSpecificationExtensions: SpecificationExtensions;
+    function GetDescriptionStored: Boolean;
     function GetSchemaStored: Boolean;
+    function GetItemSchemaStored: Boolean;
     function GetEncodingStored: Boolean;
-    function GetSpecificationExtensionsStored: Boolean;
+    function GetPrefixEncodingStored: Boolean;
+    function GetItemEncodingStored: Boolean;
     function GetExamplesStored: Boolean;
+    function GetSpecificationExtensionsStored: Boolean;
   public
     destructor Destroy; override;
 
+    function AddPrefixEncoding: Encoding;
+
+    property IsDescriptionStored: Boolean read GetDescriptionStored;
     property IsSchemaStored: Boolean read GetSchemaStored;
+    property IsItemSchemaStored: Boolean read GetItemSchemaStored;
     property IsEncodingStored: Boolean read GetEncodingStored;
-    property IsSpecificationExtensionsStored: Boolean read GetSpecificationExtensionsStored;
+    property IsPrefixEncodingStored: Boolean read GetPrefixEncodingStored;
+    property IsItemEncodingStored: Boolean read GetItemEncodingStored;
     property IsExamplesStored: Boolean read GetExamplesStored;
+    property IsSpecificationExtensionsStored: Boolean read GetSpecificationExtensionsStored;
   published
+    property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property schema: SpecificationExtensions read GetSchema write FSchema stored GetSchemaStored;
+    property itemSchema: SpecificationExtensions read GetItemSchema write FItemSchema stored GetItemSchemaStored;
     property encoding: MediaType.TEncoding read GetEncoding write FEncoding stored GetEncodingStored;
+    property prefixEncoding: TArray<Encoding> read FPrefixEncoding write FPrefixEncoding stored GetPrefixEncodingStored;
+    property itemEncoding: Encoding read GetItemEncoding write FItemEncoding stored GetItemEncodingStored;
+    property examples: Examples read GetExamples write FExamples stored GetExamplesStored;
     [FieldName('specification-extensions')]
     property SpecificationExtensions: SpecificationExtensions read GetSpecificationExtensions write FSpecificationExtensions stored GetSpecificationExtensionsStored;
-    property examples: Examples read GetExamples write FExamples stored GetExamplesStored;
+  end;
+
+  [Flat]
+  MediaTypeOrReference = class
+  private
+    FReference: Reference;
+    FMediaType: MediaType;
+
+    function GetReference: Reference;
+    function GetMediaType: MediaType;
+    function GetReferenceStored: Boolean;
+    function GetMediaTypeStored: Boolean;
+  public
+    destructor Destroy; override;
+
+    property IsReferenceStored: Boolean read GetReferenceStored;
+    property IsMediaTypeStored: Boolean read GetMediaTypeStored;
+  published
+    property reference: Reference read GetReference write FReference stored GetReferenceStored;
+    [FieldName('media-type')]
+    property MediaType: MediaType read GetMediaType write FMediaType stored GetMediaTypeStored;
   end;
 
   Encoding = class
@@ -763,30 +867,46 @@ type
     FStyle: Encoding.TStyle;
     FExplode: System.Boolean;
     FAllowReserved: System.Boolean;
+    FEncoding: TDynamicProperty<Encoding>;
+    FPrefixEncoding: TArray<Encoding>;
+    FItemEncoding: Encoding;
     FStyleIsStored: Boolean;
     FExplodeIsStored: Boolean;
     FAllowReservedIsStored: Boolean;
 
     function GetHeaders: Encoding.THeaders;
+    function GetEncoding: TDynamicProperty<Encoding>;
+    function GetItemEncoding: Encoding;
     function GetContentTypeStored: Boolean;
     function GetHeadersStored: Boolean;
+    function GetEncodingStored: Boolean;
+    function GetPrefixEncodingStored: Boolean;
+    function GetItemEncodingStored: Boolean;
     procedure SetStyle(const Value: Encoding.TStyle);
     procedure SetExplode(const Value: System.Boolean);
     procedure SetAllowReserved(const Value: System.Boolean);
   public
     destructor Destroy; override;
 
+    function AddPrefixEncoding: Encoding;
+
     property IsContentTypeStored: Boolean read GetContentTypeStored;
     property IsHeadersStored: Boolean read GetHeadersStored;
     property IsStyleStored: Boolean read FStyleIsStored;
     property IsExplodeStored: Boolean read FExplodeIsStored;
     property IsAllowReservedStored: Boolean read FAllowReservedIsStored;
+    property IsEncodingStored: Boolean read GetEncodingStored;
+    property IsPrefixEncodingStored: Boolean read GetPrefixEncodingStored;
+    property IsItemEncodingStored: Boolean read GetItemEncodingStored;
   published
     property contentType: System.String read FContentType write FContentType stored GetContentTypeStored;
     property headers: Encoding.THeaders read GetHeaders write FHeaders stored GetHeadersStored;
     property style: Encoding.TStyle read FStyle write SetStyle stored FStyleIsStored;
     property explode: System.Boolean read FExplode write SetExplode stored FExplodeIsStored;
     property allowReserved: System.Boolean read FAllowReserved write SetAllowReserved stored FAllowReservedIsStored;
+    property encoding: TDynamicProperty<Encoding> read GetEncoding write FEncoding stored GetEncodingStored;
+    property prefixEncoding: TArray<Encoding> read FPrefixEncoding write FPrefixEncoding stored GetPrefixEncodingStored;
+    property itemEncoding: Encoding read GetItemEncoding write FItemEncoding stored GetItemEncodingStored;
   end;
 
   [Flat]
@@ -843,6 +963,7 @@ type
       property LinkOrReference: TDynamicProperty<LinkOrReference> read GetLinkOrReference write FLinkOrReference stored GetLinkOrReferenceStored;
     end;
   private
+    FSummary: System.String;
     FDescription: System.String;
     FHeaders: Response.THeaders;
     FContent: Content;
@@ -851,17 +972,22 @@ type
     function GetHeaders: Response.THeaders;
     function GetContent: Content;
     function GetLinks: Response.TLinks;
+    function GetSummaryStored: Boolean;
+    function GetDescriptionStored: Boolean;
     function GetHeadersStored: Boolean;
     function GetContentStored: Boolean;
     function GetLinksStored: Boolean;
   public
     destructor Destroy; override;
 
+    property IsSummaryStored: Boolean read GetSummaryStored;
+    property IsDescriptionStored: Boolean read GetDescriptionStored;
     property IsHeadersStored: Boolean read GetHeadersStored;
     property IsContentStored: Boolean read GetContentStored;
     property IsLinksStored: Boolean read GetLinksStored;
   published
-    property description: System.String read FDescription write FDescription;
+    property summary: System.String read FSummary write FSummary stored GetSummaryStored;
+    property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property headers: Response.THeaders read GetHeaders write FHeaders stored GetHeadersStored;
     property content: Content read GetContent write FContent stored GetContentStored;
     property links: Response.TLinks read GetLinks write FLinks stored GetLinksStored;
@@ -922,26 +1048,36 @@ type
     property callbacks: Callbacks read GetCallbacks write FCallbacks stored GetCallbacksStored;
   end;
 
+  [Flat]
   Example = class
   private
     FSummary: System.String;
     FDescription: System.String;
+    FDataValue: any;
+    FSerializedValue: System.String;
     FValue: any;
     FExternalValue: System.String;
+    FDataValueIsStored: Boolean;
     FValueIsStored: Boolean;
 
     function GetSummaryStored: Boolean;
     function GetDescriptionStored: Boolean;
+    function GetSerializedValueStored: Boolean;
     function GetExternalValueStored: Boolean;
+    procedure SetDataValue(const Value: any);
     procedure SetValue(const Value: any);
   public
     property IsSummaryStored: Boolean read GetSummaryStored;
     property IsDescriptionStored: Boolean read GetDescriptionStored;
+    property IsDataValueStored: Boolean read FDataValueIsStored;
+    property IsSerializedValueStored: Boolean read GetSerializedValueStored;
     property IsValueStored: Boolean read FValueIsStored;
     property IsExternalValueStored: Boolean read GetExternalValueStored;
   published
     property summary: System.String read FSummary write FSummary stored GetSummaryStored;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+    property dataValue: any read FDataValue write SetDataValue stored FDataValueIsStored;
+    property serializedValue: System.String read FSerializedValue write FSerializedValue stored GetSerializedValueStored;
     property value: any read FValue write SetValue stored FValueIsStored;
     property externalValue: System.String read FExternalValue write FExternalValue stored GetExternalValueStored;
   end;
@@ -1031,14 +1167,20 @@ type
     FDeprecated: System.Boolean;
     FSchema: SpecificationExtensions;
     FContent: Content;
+    FExamples: Examples;
+    FSpecificationExtensions: SpecificationExtensions;
     FRequiredIsStored: Boolean;
     FDeprecatedIsStored: Boolean;
 
     function GetSchema: SpecificationExtensions;
     function GetContent: Content;
+    function GetExamples: Examples;
+    function GetSpecificationExtensions: SpecificationExtensions;
     function GetDescriptionStored: Boolean;
     function GetSchemaStored: Boolean;
     function GetContentStored: Boolean;
+    function GetExamplesStored: Boolean;
+    function GetSpecificationExtensionsStored: Boolean;
     procedure SetRequired(const Value: System.Boolean);
     procedure SetDeprecated(const Value: System.Boolean);
   public
@@ -1049,12 +1191,17 @@ type
     property IsDeprecatedStored: Boolean read FDeprecatedIsStored;
     property IsSchemaStored: Boolean read GetSchemaStored;
     property IsContentStored: Boolean read GetContentStored;
+    property IsExamplesStored: Boolean read GetExamplesStored;
+    property IsSpecificationExtensionsStored: Boolean read GetSpecificationExtensionsStored;
   published
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property required: System.Boolean read FRequired write SetRequired stored FRequiredIsStored;
     property deprecated: System.Boolean read FDeprecated write SetDeprecated stored FDeprecatedIsStored;
     property schema: SpecificationExtensions read GetSchema write FSchema stored GetSchemaStored;
     property content: Content read GetContent write FContent stored GetContentStored;
+    property examples: Examples read GetExamples write FExamples stored GetExamplesStored;
+    [FieldName('specification-extensions')]
+    property SpecificationExtensions: SpecificationExtensions read GetSpecificationExtensions write FSpecificationExtensions stored GetSpecificationExtensionsStored;
   end;
 
   [Flat]
@@ -1080,21 +1227,33 @@ type
   Tag = class
   private
     FName: System.String;
+    FSummary: System.String;
     FDescription: System.String;
     FExternalDocs: ExternalDocumentation;
+    FParent: System.String;
+    FKind: System.String;
 
     function GetExternalDocs: ExternalDocumentation;
+    function GetSummaryStored: Boolean;
     function GetDescriptionStored: Boolean;
     function GetExternalDocsStored: Boolean;
+    function GetParentStored: Boolean;
+    function GetKindStored: Boolean;
   public
     destructor Destroy; override;
 
+    property IsSummaryStored: Boolean read GetSummaryStored;
     property IsDescriptionStored: Boolean read GetDescriptionStored;
     property IsExternalDocsStored: Boolean read GetExternalDocsStored;
+    property IsParentStored: Boolean read GetParentStored;
+    property IsKindStored: Boolean read GetKindStored;
   published
     property name: System.String read FName write FName;
+    property summary: System.String read FSummary write FSummary stored GetSummaryStored;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
     property externalDocs: ExternalDocumentation read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
+    property parent: System.String read FParent write FParent stored GetParentStored;
+    property kind: System.String read FKind write FKind stored GetKindStored;
   end;
 
   Reference = class
@@ -1148,12 +1307,14 @@ type
   private
     FType: SecurityScheme.TType;
     FDescription: System.String;
+    FDeprecated: System.Boolean;
     FSpecificationExtensions: SpecificationExtensions;
     FTypeApikey: Undefined { type-apikey };
     FTypeHttp: Undefined { type-http };
     FTypeHttpBearer: Undefined { type-http-bearer };
     FTypeOauth2: Undefined { type-oauth2 };
     FTypeOidc: Undefined { type-oidc };
+    FDeprecatedIsStored: Boolean;
 
     function GetSpecificationExtensions: SpecificationExtensions;
     function GetDescriptionStored: Boolean;
@@ -1163,10 +1324,12 @@ type
     function GetTypeHttpBearerStored: Boolean;
     function GetTypeOauth2Stored: Boolean;
     function GetTypeOidcStored: Boolean;
+    procedure SetDeprecated(const Value: System.Boolean);
   public
     destructor Destroy; override;
 
     property IsDescriptionStored: Boolean read GetDescriptionStored;
+    property IsDeprecatedStored: Boolean read FDeprecatedIsStored;
     property IsSpecificationExtensionsStored: Boolean read GetSpecificationExtensionsStored;
     property IsTypeApikeyStored: Boolean read GetTypeApikeyStored;
     property IsTypeHttpStored: Boolean read GetTypeHttpStored;
@@ -1177,6 +1340,7 @@ type
     [FieldName('type')]
     property &Type: SecurityScheme.TType read FType write FType;
     property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+    property deprecated: System.Boolean read FDeprecated write SetDeprecated stored FDeprecatedIsStored;
     [FieldName('specification-extensions')]
     property SpecificationExtensions: SpecificationExtensions read GetSpecificationExtensions write FSpecificationExtensions stored GetSpecificationExtensionsStored;
     [FieldName('type-apikey')]
@@ -1218,21 +1382,25 @@ type
     FPassword: Undefined { password };
     FClientCredentials: Undefined { client-credentials };
     FAuthorizationCode: Undefined { authorization-code };
+    FDeviceAuthorization: Undefined { device-authorization };
 
     function GetImplicitStored: Boolean;
     function GetPasswordStored: Boolean;
     function GetClientCredentialsStored: Boolean;
     function GetAuthorizationCodeStored: Boolean;
+    function GetDeviceAuthorizationStored: Boolean;
   public
     property IsImplicitStored: Boolean read GetImplicitStored;
     property IsPasswordStored: Boolean read GetPasswordStored;
     property IsClientCredentialsStored: Boolean read GetClientCredentialsStored;
     property IsAuthorizationCodeStored: Boolean read GetAuthorizationCodeStored;
+    property IsDeviceAuthorizationStored: Boolean read GetDeviceAuthorizationStored;
   published
     property implicit: Undefined { implicit } read FImplicit write FImplicit stored GetImplicitStored;
     property password: Undefined { password } read FPassword write FPassword stored GetPasswordStored;
     property clientCredentials: Undefined { client-credentials } read FClientCredentials write FClientCredentials stored GetClientCredentialsStored;
     property authorizationCode: Undefined { authorization-code } read FAuthorizationCode write FAuthorizationCode stored GetAuthorizationCodeStored;
+    property deviceAuthorization: Undefined { device-authorization } read FDeviceAuthorization write FDeviceAuthorization stored GetDeviceAuthorizationStored;
   end;
 
   SecurityRequirement = class
@@ -1348,10 +1516,10 @@ begin
   Result := not FTermsOfService.IsEmpty;
 end;
 
-function Info.GetContact: Blue.Print.Open.API.Schema.v31.Contact;
+function Info.GetContact: Blue.Print.Open.API.Schema.v32.Contact;
 begin
   if not Assigned(FContact) then
-    FContact := Blue.Print.Open.API.Schema.v31.Contact.Create;
+    FContact := Blue.Print.Open.API.Schema.v32.Contact.Create;
 
   Result := FContact;
 end;
@@ -1361,10 +1529,10 @@ begin
   Result := Assigned(FContact);
 end;
 
-function Info.GetLicense: Blue.Print.Open.API.Schema.v31.License;
+function Info.GetLicense: Blue.Print.Open.API.Schema.v32.License;
 begin
   if not Assigned(FLicense) then
-    FLicense := Blue.Print.Open.API.Schema.v31.License.Create;
+    FLicense := Blue.Print.Open.API.Schema.v32.License.Create;
 
   Result := FLicense;
 end;
@@ -1417,10 +1585,15 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function Server.GetVariables: Blue.Print.Open.API.Schema.v31.Server.TVariables;
+function Server.GetNameStored: Boolean;
+begin
+  Result := not FName.IsEmpty;
+end;
+
+function Server.GetVariables: Blue.Print.Open.API.Schema.v32.Server.TVariables;
 begin
   if not Assigned(FVariables) then
-    FVariables := Blue.Print.Open.API.Schema.v31.Server.TVariables.Create;
+    FVariables := Blue.Print.Open.API.Schema.v32.Server.TVariables.Create;
 
   Result := FVariables;
 end;
@@ -1442,7 +1615,7 @@ end;
 function Server.TVariables.GetServerVariable: TDynamicProperty<ServerVariable>;
 begin
   if not Assigned(FServerVariable) then
-    FServerVariable := TDynamicProperty<Blue.Print.Open.API.Schema.v31.ServerVariable>.Create;
+    FServerVariable := TDynamicProperty<Blue.Print.Open.API.Schema.v32.ServerVariable>.Create;
 
   Result := FServerVariable;
 end;
@@ -1488,15 +1661,17 @@ begin
 
   FPathItems.Free;
 
+  FMediaTypes.Free;
+
   FSpecificationExtensions.Free;
 
   inherited;
 end;
 
-function Components.GetSchemas: Blue.Print.Open.API.Schema.v31.Components.TSchemas;
+function Components.GetSchemas: Blue.Print.Open.API.Schema.v32.Components.TSchemas;
 begin
   if not Assigned(FSchemas) then
-    FSchemas := Blue.Print.Open.API.Schema.v31.Components.TSchemas.Create;
+    FSchemas := Blue.Print.Open.API.Schema.v32.Components.TSchemas.Create;
 
   Result := FSchemas;
 end;
@@ -1506,10 +1681,10 @@ begin
   Result := Assigned(FSchemas);
 end;
 
-function Components.GetResponses: Blue.Print.Open.API.Schema.v31.Components.TResponses;
+function Components.GetResponses: Blue.Print.Open.API.Schema.v32.Components.TResponses;
 begin
   if not Assigned(FResponses) then
-    FResponses := Blue.Print.Open.API.Schema.v31.Components.TResponses.Create;
+    FResponses := Blue.Print.Open.API.Schema.v32.Components.TResponses.Create;
 
   Result := FResponses;
 end;
@@ -1519,10 +1694,10 @@ begin
   Result := Assigned(FResponses);
 end;
 
-function Components.GetParameters: Blue.Print.Open.API.Schema.v31.Components.TParameters;
+function Components.GetParameters: Blue.Print.Open.API.Schema.v32.Components.TParameters;
 begin
   if not Assigned(FParameters) then
-    FParameters := Blue.Print.Open.API.Schema.v31.Components.TParameters.Create;
+    FParameters := Blue.Print.Open.API.Schema.v32.Components.TParameters.Create;
 
   Result := FParameters;
 end;
@@ -1532,10 +1707,10 @@ begin
   Result := Assigned(FParameters);
 end;
 
-function Components.GetExamples: Blue.Print.Open.API.Schema.v31.Components.TExamples;
+function Components.GetExamples: Blue.Print.Open.API.Schema.v32.Components.TExamples;
 begin
   if not Assigned(FExamples) then
-    FExamples := Blue.Print.Open.API.Schema.v31.Components.TExamples.Create;
+    FExamples := Blue.Print.Open.API.Schema.v32.Components.TExamples.Create;
 
   Result := FExamples;
 end;
@@ -1545,10 +1720,10 @@ begin
   Result := Assigned(FExamples);
 end;
 
-function Components.GetRequestBodies: Blue.Print.Open.API.Schema.v31.Components.TRequestBodies;
+function Components.GetRequestBodies: Blue.Print.Open.API.Schema.v32.Components.TRequestBodies;
 begin
   if not Assigned(FRequestBodies) then
-    FRequestBodies := Blue.Print.Open.API.Schema.v31.Components.TRequestBodies.Create;
+    FRequestBodies := Blue.Print.Open.API.Schema.v32.Components.TRequestBodies.Create;
 
   Result := FRequestBodies;
 end;
@@ -1558,10 +1733,10 @@ begin
   Result := Assigned(FRequestBodies);
 end;
 
-function Components.GetHeaders: Blue.Print.Open.API.Schema.v31.Components.THeaders;
+function Components.GetHeaders: Blue.Print.Open.API.Schema.v32.Components.THeaders;
 begin
   if not Assigned(FHeaders) then
-    FHeaders := Blue.Print.Open.API.Schema.v31.Components.THeaders.Create;
+    FHeaders := Blue.Print.Open.API.Schema.v32.Components.THeaders.Create;
 
   Result := FHeaders;
 end;
@@ -1571,10 +1746,10 @@ begin
   Result := Assigned(FHeaders);
 end;
 
-function Components.GetSecuritySchemes: Blue.Print.Open.API.Schema.v31.Components.TSecuritySchemes;
+function Components.GetSecuritySchemes: Blue.Print.Open.API.Schema.v32.Components.TSecuritySchemes;
 begin
   if not Assigned(FSecuritySchemes) then
-    FSecuritySchemes := Blue.Print.Open.API.Schema.v31.Components.TSecuritySchemes.Create;
+    FSecuritySchemes := Blue.Print.Open.API.Schema.v32.Components.TSecuritySchemes.Create;
 
   Result := FSecuritySchemes;
 end;
@@ -1584,10 +1759,10 @@ begin
   Result := Assigned(FSecuritySchemes);
 end;
 
-function Components.GetLinks: Blue.Print.Open.API.Schema.v31.Components.TLinks;
+function Components.GetLinks: Blue.Print.Open.API.Schema.v32.Components.TLinks;
 begin
   if not Assigned(FLinks) then
-    FLinks := Blue.Print.Open.API.Schema.v31.Components.TLinks.Create;
+    FLinks := Blue.Print.Open.API.Schema.v32.Components.TLinks.Create;
 
   Result := FLinks;
 end;
@@ -1597,10 +1772,10 @@ begin
   Result := Assigned(FLinks);
 end;
 
-function Components.GetCallbacks: Blue.Print.Open.API.Schema.v31.Components.TCallbacks;
+function Components.GetCallbacks: Blue.Print.Open.API.Schema.v32.Components.TCallbacks;
 begin
   if not Assigned(FCallbacks) then
-    FCallbacks := Blue.Print.Open.API.Schema.v31.Components.TCallbacks.Create;
+    FCallbacks := Blue.Print.Open.API.Schema.v32.Components.TCallbacks.Create;
 
   Result := FCallbacks;
 end;
@@ -1610,10 +1785,10 @@ begin
   Result := Assigned(FCallbacks);
 end;
 
-function Components.GetPathItems: Blue.Print.Open.API.Schema.v31.Components.TPathItems;
+function Components.GetPathItems: Blue.Print.Open.API.Schema.v32.Components.TPathItems;
 begin
   if not Assigned(FPathItems) then
-    FPathItems := Blue.Print.Open.API.Schema.v31.Components.TPathItems.Create;
+    FPathItems := Blue.Print.Open.API.Schema.v32.Components.TPathItems.Create;
 
   Result := FPathItems;
 end;
@@ -1621,6 +1796,19 @@ end;
 function Components.GetPathItemsStored: Boolean;
 begin
   Result := Assigned(FPathItems);
+end;
+
+function Components.GetMediaTypes: Blue.Print.Open.API.Schema.v32.Components.TMediaTypes;
+begin
+  if not Assigned(FMediaTypes) then
+    FMediaTypes := Blue.Print.Open.API.Schema.v32.Components.TMediaTypes.Create;
+
+  Result := FMediaTypes;
+end;
+
+function Components.GetMediaTypesStored: Boolean;
+begin
+  Result := Assigned(FMediaTypes);
 end;
 
 function Components.GetSpecificationExtensions: TDynamicProperty<any>;
@@ -1648,7 +1836,7 @@ end;
 function Components.TSchemas.GetSchemas: TDynamicProperty<SpecificationExtensions>;
 begin
   if not Assigned(FSchemas) then
-    FSchemas := TDynamicProperty<Blue.Print.Open.API.Schema.v31.SpecificationExtensions>.Create;
+    FSchemas := TDynamicProperty<Blue.Print.Open.API.Schema.v32.SpecificationExtensions>.Create;
 
   Result := FSchemas;
 end;
@@ -1670,7 +1858,7 @@ end;
 function Components.TResponses.GetResponseOrReference: TDynamicProperty<ResponseOrReference>;
 begin
   if not Assigned(FResponseOrReference) then
-    FResponseOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.ResponseOrReference>.Create;
+    FResponseOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v32.ResponseOrReference>.Create;
 
   Result := FResponseOrReference;
 end;
@@ -1692,7 +1880,7 @@ end;
 function Components.TParameters.GetParameterOrReference: TDynamicProperty<ParameterOrReference>;
 begin
   if not Assigned(FParameterOrReference) then
-    FParameterOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.ParameterOrReference>.Create;
+    FParameterOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v32.ParameterOrReference>.Create;
 
   Result := FParameterOrReference;
 end;
@@ -1714,7 +1902,7 @@ end;
 function Components.TExamples.GetExampleOrReference: TDynamicProperty<ExampleOrReference>;
 begin
   if not Assigned(FExampleOrReference) then
-    FExampleOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.ExampleOrReference>.Create;
+    FExampleOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v32.ExampleOrReference>.Create;
 
   Result := FExampleOrReference;
 end;
@@ -1736,7 +1924,7 @@ end;
 function Components.TRequestBodies.GetRequestBodyOrReference: TDynamicProperty<RequestBodyOrReference>;
 begin
   if not Assigned(FRequestBodyOrReference) then
-    FRequestBodyOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.RequestBodyOrReference>.Create;
+    FRequestBodyOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v32.RequestBodyOrReference>.Create;
 
   Result := FRequestBodyOrReference;
 end;
@@ -1758,7 +1946,7 @@ end;
 function Components.THeaders.GetHeaderOrReference: TDynamicProperty<HeaderOrReference>;
 begin
   if not Assigned(FHeaderOrReference) then
-    FHeaderOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.HeaderOrReference>.Create;
+    FHeaderOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v32.HeaderOrReference>.Create;
 
   Result := FHeaderOrReference;
 end;
@@ -1780,7 +1968,7 @@ end;
 function Components.TSecuritySchemes.GetSecuritySchemeOrReference: TDynamicProperty<SecuritySchemeOrReference>;
 begin
   if not Assigned(FSecuritySchemeOrReference) then
-    FSecuritySchemeOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.SecuritySchemeOrReference>.Create;
+    FSecuritySchemeOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v32.SecuritySchemeOrReference>.Create;
 
   Result := FSecuritySchemeOrReference;
 end;
@@ -1802,7 +1990,7 @@ end;
 function Components.TLinks.GetLinkOrReference: TDynamicProperty<LinkOrReference>;
 begin
   if not Assigned(FLinkOrReference) then
-    FLinkOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.LinkOrReference>.Create;
+    FLinkOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v32.LinkOrReference>.Create;
 
   Result := FLinkOrReference;
 end;
@@ -1824,7 +2012,7 @@ end;
 function Components.TCallbacks.GetCallbacksOrReference: TDynamicProperty<CallbacksOrReference>;
 begin
   if not Assigned(FCallbacksOrReference) then
-    FCallbacksOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.CallbacksOrReference>.Create;
+    FCallbacksOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v32.CallbacksOrReference>.Create;
 
   Result := FCallbacksOrReference;
 end;
@@ -1846,7 +2034,7 @@ end;
 function Components.TPathItems.GetPathItem: TDynamicProperty<PathItem>;
 begin
   if not Assigned(FPathItem) then
-    FPathItem := TDynamicProperty<Blue.Print.Open.API.Schema.v31.PathItem>.Create;
+    FPathItem := TDynamicProperty<Blue.Print.Open.API.Schema.v32.PathItem>.Create;
 
   Result := FPathItem;
 end;
@@ -1854,6 +2042,28 @@ end;
 function Components.TPathItems.GetPathItemStored: Boolean;
 begin
   Result := Assigned(FPathItem);
+end;
+
+{ Components.TMediaTypes }
+
+destructor Components.TMediaTypes.Destroy;
+begin
+  FMediaTypeOrReference.Free;
+
+  inherited;
+end;
+
+function Components.TMediaTypes.GetMediaTypeOrReference: TDynamicProperty<MediaTypeOrReference>;
+begin
+  if not Assigned(FMediaTypeOrReference) then
+    FMediaTypeOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v32.MediaTypeOrReference>.Create;
+
+  Result := FMediaTypeOrReference;
+end;
+
+function Components.TMediaTypes.GetMediaTypeOrReferenceStored: Boolean;
+begin
+  Result := Assigned(FMediaTypeOrReference);
 end;
 
 { Paths }
@@ -1868,7 +2078,7 @@ end;
 function Paths.GetSpecificationExtensions: TDynamicProperty<PathItem>;
 begin
   if not Assigned(FSpecificationExtensions) then
-    FSpecificationExtensions := TDynamicProperty<Blue.Print.Open.API.Schema.v31.PathItem>.Create;
+    FSpecificationExtensions := TDynamicProperty<Blue.Print.Open.API.Schema.v32.PathItem>.Create;
 
   Result := FSpecificationExtensions;
 end;
@@ -1888,6 +2098,8 @@ begin
   for var AObject in FParameters do
     AObject.Free;
 
+  FAdditionalOperations.Free;
+
   FGet.Free;
 
   FPut.Free;
@@ -1903,6 +2115,8 @@ begin
   FPatch.Free;
 
   FTrace.Free;
+
+  FQuery.Free;
 
   inherited;
 end;
@@ -1922,9 +2136,9 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function PathItem.AddServers: Blue.Print.Open.API.Schema.v31.Server;
+function PathItem.AddServers: Blue.Print.Open.API.Schema.v32.Server;
 begin
-  Result := Blue.Print.Open.API.Schema.v31.Server.Create;
+  Result := Blue.Print.Open.API.Schema.v32.Server.Create;
 
   FServers := FServers + [Result];
 end;
@@ -1934,9 +2148,9 @@ begin
   Result := Assigned(FServers);
 end;
 
-function PathItem.AddParameters: Blue.Print.Open.API.Schema.v31.ParameterOrReference;
+function PathItem.AddParameters: Blue.Print.Open.API.Schema.v32.ParameterOrReference;
 begin
-  Result := Blue.Print.Open.API.Schema.v31.ParameterOrReference.Create;
+  Result := Blue.Print.Open.API.Schema.v32.ParameterOrReference.Create;
 
   FParameters := FParameters + [Result];
 end;
@@ -1946,10 +2160,23 @@ begin
   Result := Assigned(FParameters);
 end;
 
-function PathItem.GetGet: Blue.Print.Open.API.Schema.v31.Operation;
+function PathItem.GetAdditionalOperations: Blue.Print.Open.API.Schema.v32.PathItem.TAdditionalOperations;
+begin
+  if not Assigned(FAdditionalOperations) then
+    FAdditionalOperations := Blue.Print.Open.API.Schema.v32.PathItem.TAdditionalOperations.Create;
+
+  Result := FAdditionalOperations;
+end;
+
+function PathItem.GetAdditionalOperationsStored: Boolean;
+begin
+  Result := Assigned(FAdditionalOperations);
+end;
+
+function PathItem.GetGet: Blue.Print.Open.API.Schema.v32.Operation;
 begin
   if not Assigned(FGet) then
-    FGet := Blue.Print.Open.API.Schema.v31.Operation.Create;
+    FGet := Blue.Print.Open.API.Schema.v32.Operation.Create;
 
   Result := FGet;
 end;
@@ -1959,10 +2186,10 @@ begin
   Result := Assigned(FGet);
 end;
 
-function PathItem.GetPut: Blue.Print.Open.API.Schema.v31.Operation;
+function PathItem.GetPut: Blue.Print.Open.API.Schema.v32.Operation;
 begin
   if not Assigned(FPut) then
-    FPut := Blue.Print.Open.API.Schema.v31.Operation.Create;
+    FPut := Blue.Print.Open.API.Schema.v32.Operation.Create;
 
   Result := FPut;
 end;
@@ -1972,10 +2199,10 @@ begin
   Result := Assigned(FPut);
 end;
 
-function PathItem.GetPost: Blue.Print.Open.API.Schema.v31.Operation;
+function PathItem.GetPost: Blue.Print.Open.API.Schema.v32.Operation;
 begin
   if not Assigned(FPost) then
-    FPost := Blue.Print.Open.API.Schema.v31.Operation.Create;
+    FPost := Blue.Print.Open.API.Schema.v32.Operation.Create;
 
   Result := FPost;
 end;
@@ -1985,10 +2212,10 @@ begin
   Result := Assigned(FPost);
 end;
 
-function PathItem.GetDelete: Blue.Print.Open.API.Schema.v31.Operation;
+function PathItem.GetDelete: Blue.Print.Open.API.Schema.v32.Operation;
 begin
   if not Assigned(FDelete) then
-    FDelete := Blue.Print.Open.API.Schema.v31.Operation.Create;
+    FDelete := Blue.Print.Open.API.Schema.v32.Operation.Create;
 
   Result := FDelete;
 end;
@@ -1998,10 +2225,10 @@ begin
   Result := Assigned(FDelete);
 end;
 
-function PathItem.GetOptions: Blue.Print.Open.API.Schema.v31.Operation;
+function PathItem.GetOptions: Blue.Print.Open.API.Schema.v32.Operation;
 begin
   if not Assigned(FOptions) then
-    FOptions := Blue.Print.Open.API.Schema.v31.Operation.Create;
+    FOptions := Blue.Print.Open.API.Schema.v32.Operation.Create;
 
   Result := FOptions;
 end;
@@ -2011,10 +2238,10 @@ begin
   Result := Assigned(FOptions);
 end;
 
-function PathItem.GetHead: Blue.Print.Open.API.Schema.v31.Operation;
+function PathItem.GetHead: Blue.Print.Open.API.Schema.v32.Operation;
 begin
   if not Assigned(FHead) then
-    FHead := Blue.Print.Open.API.Schema.v31.Operation.Create;
+    FHead := Blue.Print.Open.API.Schema.v32.Operation.Create;
 
   Result := FHead;
 end;
@@ -2024,10 +2251,10 @@ begin
   Result := Assigned(FHead);
 end;
 
-function PathItem.GetPatch: Blue.Print.Open.API.Schema.v31.Operation;
+function PathItem.GetPatch: Blue.Print.Open.API.Schema.v32.Operation;
 begin
   if not Assigned(FPatch) then
-    FPatch := Blue.Print.Open.API.Schema.v31.Operation.Create;
+    FPatch := Blue.Print.Open.API.Schema.v32.Operation.Create;
 
   Result := FPatch;
 end;
@@ -2037,10 +2264,10 @@ begin
   Result := Assigned(FPatch);
 end;
 
-function PathItem.GetTrace: Blue.Print.Open.API.Schema.v31.Operation;
+function PathItem.GetTrace: Blue.Print.Open.API.Schema.v32.Operation;
 begin
   if not Assigned(FTrace) then
-    FTrace := Blue.Print.Open.API.Schema.v31.Operation.Create;
+    FTrace := Blue.Print.Open.API.Schema.v32.Operation.Create;
 
   Result := FTrace;
 end;
@@ -2048,6 +2275,41 @@ end;
 function PathItem.GetTraceStored: Boolean;
 begin
   Result := Assigned(FTrace);
+end;
+
+function PathItem.GetQuery: Blue.Print.Open.API.Schema.v32.Operation;
+begin
+  if not Assigned(FQuery) then
+    FQuery := Blue.Print.Open.API.Schema.v32.Operation.Create;
+
+  Result := FQuery;
+end;
+
+function PathItem.GetQueryStored: Boolean;
+begin
+  Result := Assigned(FQuery);
+end;
+
+{ PathItem.TAdditionalOperations }
+
+destructor PathItem.TAdditionalOperations.Destroy;
+begin
+  FOperation.Free;
+
+  inherited;
+end;
+
+function PathItem.TAdditionalOperations.GetOperation: TDynamicProperty<Operation>;
+begin
+  if not Assigned(FOperation) then
+    FOperation := TDynamicProperty<Blue.Print.Open.API.Schema.v32.Operation>.Create;
+
+  Result := FOperation;
+end;
+
+function PathItem.TAdditionalOperations.GetOperationStored: Boolean;
+begin
+  Result := Assigned(FOperation);
 end;
 
 { Operation }
@@ -2089,10 +2351,10 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function Operation.GetExternalDocs: Blue.Print.Open.API.Schema.v31.ExternalDocumentation;
+function Operation.GetExternalDocs: Blue.Print.Open.API.Schema.v32.ExternalDocumentation;
 begin
   if not Assigned(FExternalDocs) then
-    FExternalDocs := Blue.Print.Open.API.Schema.v31.ExternalDocumentation.Create;
+    FExternalDocs := Blue.Print.Open.API.Schema.v32.ExternalDocumentation.Create;
 
   Result := FExternalDocs;
 end;
@@ -2107,9 +2369,9 @@ begin
   Result := not FOperationId.IsEmpty;
 end;
 
-function Operation.AddParameters: Blue.Print.Open.API.Schema.v31.ParameterOrReference;
+function Operation.AddParameters: Blue.Print.Open.API.Schema.v32.ParameterOrReference;
 begin
-  Result := Blue.Print.Open.API.Schema.v31.ParameterOrReference.Create;
+  Result := Blue.Print.Open.API.Schema.v32.ParameterOrReference.Create;
 
   FParameters := FParameters + [Result];
 end;
@@ -2119,10 +2381,10 @@ begin
   Result := Assigned(FParameters);
 end;
 
-function Operation.GetRequestBody: Blue.Print.Open.API.Schema.v31.RequestBodyOrReference;
+function Operation.GetRequestBody: Blue.Print.Open.API.Schema.v32.RequestBodyOrReference;
 begin
   if not Assigned(FRequestBody) then
-    FRequestBody := Blue.Print.Open.API.Schema.v31.RequestBodyOrReference.Create;
+    FRequestBody := Blue.Print.Open.API.Schema.v32.RequestBodyOrReference.Create;
 
   Result := FRequestBody;
 end;
@@ -2132,10 +2394,10 @@ begin
   Result := Assigned(FRequestBody);
 end;
 
-function Operation.GetResponses: Blue.Print.Open.API.Schema.v31.Responses;
+function Operation.GetResponses: Blue.Print.Open.API.Schema.v32.Responses;
 begin
   if not Assigned(FResponses) then
-    FResponses := Blue.Print.Open.API.Schema.v31.Responses.Create;
+    FResponses := Blue.Print.Open.API.Schema.v32.Responses.Create;
 
   Result := FResponses;
 end;
@@ -2145,10 +2407,10 @@ begin
   Result := Assigned(FResponses);
 end;
 
-function Operation.GetCallbacks: Blue.Print.Open.API.Schema.v31.Operation.TCallbacks;
+function Operation.GetCallbacks: Blue.Print.Open.API.Schema.v32.Operation.TCallbacks;
 begin
   if not Assigned(FCallbacks) then
-    FCallbacks := Blue.Print.Open.API.Schema.v31.Operation.TCallbacks.Create;
+    FCallbacks := Blue.Print.Open.API.Schema.v32.Operation.TCallbacks.Create;
 
   Result := FCallbacks;
 end;
@@ -2164,9 +2426,9 @@ begin
   FDeprecatedIsStored := True;
 end;
 
-function Operation.AddSecurity: Blue.Print.Open.API.Schema.v31.SecurityRequirement;
+function Operation.AddSecurity: Blue.Print.Open.API.Schema.v32.SecurityRequirement;
 begin
-  Result := Blue.Print.Open.API.Schema.v31.SecurityRequirement.Create;
+  Result := Blue.Print.Open.API.Schema.v32.SecurityRequirement.Create;
 
   FSecurity := FSecurity + [Result];
 end;
@@ -2176,9 +2438,9 @@ begin
   Result := Assigned(FSecurity);
 end;
 
-function Operation.AddServers: Blue.Print.Open.API.Schema.v31.Server;
+function Operation.AddServers: Blue.Print.Open.API.Schema.v32.Server;
 begin
-  Result := Blue.Print.Open.API.Schema.v31.Server.Create;
+  Result := Blue.Print.Open.API.Schema.v32.Server.Create;
 
   FServers := FServers + [Result];
 end;
@@ -2200,7 +2462,7 @@ end;
 function Operation.TCallbacks.GetCallbacksOrReference: TDynamicProperty<CallbacksOrReference>;
 begin
   if not Assigned(FCallbacksOrReference) then
-    FCallbacksOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.CallbacksOrReference>.Create;
+    FCallbacksOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v32.CallbacksOrReference>.Create;
 
   Result := FCallbacksOrReference;
 end;
@@ -2225,6 +2487,10 @@ begin
 
   FContent.Free;
 
+  FExamples.Free;
+
+  FSpecificationExtensions.Free;
+
   inherited;
 end;
 
@@ -2245,10 +2511,10 @@ begin
   FDeprecatedIsStored := True;
 end;
 
-function Parameter.GetSchema: Blue.Print.Open.API.Schema.v31.SpecificationExtensions;
+function Parameter.GetSchema: Blue.Print.Open.API.Schema.v32.SpecificationExtensions;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v31.SpecificationExtensions.Create;
+    FSchema := Blue.Print.Open.API.Schema.v32.SpecificationExtensions.Create;
 
   Result := FSchema;
 end;
@@ -2258,10 +2524,10 @@ begin
   Result := Assigned(FSchema);
 end;
 
-function Parameter.GetContent: Blue.Print.Open.API.Schema.v31.Content;
+function Parameter.GetContent: Blue.Print.Open.API.Schema.v32.Content;
 begin
   if not Assigned(FContent) then
-    FContent := Blue.Print.Open.API.Schema.v31.Content.Create;
+    FContent := Blue.Print.Open.API.Schema.v32.Content.Create;
 
   Result := FContent;
 end;
@@ -2269,6 +2535,32 @@ end;
 function Parameter.GetContentStored: Boolean;
 begin
   Result := Assigned(FContent);
+end;
+
+function Parameter.GetExamples: Blue.Print.Open.API.Schema.v32.Examples;
+begin
+  if not Assigned(FExamples) then
+    FExamples := Blue.Print.Open.API.Schema.v32.Examples.Create;
+
+  Result := FExamples;
+end;
+
+function Parameter.GetExamplesStored: Boolean;
+begin
+  Result := Assigned(FExamples);
+end;
+
+function Parameter.GetSpecificationExtensions: Blue.Print.Open.API.Schema.v32.SpecificationExtensions;
+begin
+  if not Assigned(FSpecificationExtensions) then
+    FSpecificationExtensions := Blue.Print.Open.API.Schema.v32.SpecificationExtensions.Create;
+
+  Result := FSpecificationExtensions;
+end;
+
+function Parameter.GetSpecificationExtensionsStored: Boolean;
+begin
+  Result := Assigned(FSpecificationExtensions);
 end;
 
 procedure Parameter.SetAllowEmptyValue(const Value: System.Boolean);
@@ -2288,10 +2580,10 @@ begin
   inherited;
 end;
 
-function ParameterOrReference.GetReference: Blue.Print.Open.API.Schema.v31.Reference;
+function ParameterOrReference.GetReference: Blue.Print.Open.API.Schema.v32.Reference;
 begin
   if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v31.Reference.Create;
+    FReference := Blue.Print.Open.API.Schema.v32.Reference.Create;
 
   Result := FReference;
 end;
@@ -2301,10 +2593,10 @@ begin
   Result := Assigned(FReference);
 end;
 
-function ParameterOrReference.GetParameter: Blue.Print.Open.API.Schema.v31.Parameter;
+function ParameterOrReference.GetParameter: Blue.Print.Open.API.Schema.v32.Parameter;
 begin
   if not Assigned(FParameter) then
-    FParameter := Blue.Print.Open.API.Schema.v31.Parameter.Create;
+    FParameter := Blue.Print.Open.API.Schema.v32.Parameter.Create;
 
   Result := FParameter;
 end;
@@ -2328,10 +2620,10 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function RequestBody.GetContent: Blue.Print.Open.API.Schema.v31.Content;
+function RequestBody.GetContent: Blue.Print.Open.API.Schema.v32.Content;
 begin
   if not Assigned(FContent) then
-    FContent := Blue.Print.Open.API.Schema.v31.Content.Create;
+    FContent := Blue.Print.Open.API.Schema.v32.Content.Create;
 
   Result := FContent;
 end;
@@ -2353,10 +2645,10 @@ begin
   inherited;
 end;
 
-function RequestBodyOrReference.GetReference: Blue.Print.Open.API.Schema.v31.Reference;
+function RequestBodyOrReference.GetReference: Blue.Print.Open.API.Schema.v32.Reference;
 begin
   if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v31.Reference.Create;
+    FReference := Blue.Print.Open.API.Schema.v32.Reference.Create;
 
   Result := FReference;
 end;
@@ -2366,10 +2658,10 @@ begin
   Result := Assigned(FReference);
 end;
 
-function RequestBodyOrReference.GetRequestBody: Blue.Print.Open.API.Schema.v31.RequestBody;
+function RequestBodyOrReference.GetRequestBody: Blue.Print.Open.API.Schema.v32.RequestBody;
 begin
   if not Assigned(FRequestBody) then
-    FRequestBody := Blue.Print.Open.API.Schema.v31.RequestBody.Create;
+    FRequestBody := Blue.Print.Open.API.Schema.v32.RequestBody.Create;
 
   Result := FRequestBody;
 end;
@@ -2383,22 +2675,22 @@ end;
 
 destructor Content.Destroy;
 begin
-  FMediaType.Free;
+  FMediaTypeOrReference.Free;
 
   inherited;
 end;
 
-function Content.GetMediaType: TDynamicProperty<MediaType>;
+function Content.GetMediaTypeOrReference: TDynamicProperty<MediaTypeOrReference>;
 begin
-  if not Assigned(FMediaType) then
-    FMediaType := TDynamicProperty<Blue.Print.Open.API.Schema.v31.MediaType>.Create;
+  if not Assigned(FMediaTypeOrReference) then
+    FMediaTypeOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v32.MediaTypeOrReference>.Create;
 
-  Result := FMediaType;
+  Result := FMediaTypeOrReference;
 end;
 
-function Content.GetMediaTypeStored: Boolean;
+function Content.GetMediaTypeOrReferenceStored: Boolean;
 begin
-  Result := Assigned(FMediaType);
+  Result := Assigned(FMediaTypeOrReference);
 end;
 
 { MediaType }
@@ -2407,19 +2699,31 @@ destructor MediaType.Destroy;
 begin
   FSchema.Free;
 
+  FItemSchema.Free;
+
   FEncoding.Free;
 
-  FSpecificationExtensions.Free;
+  for var AObject in FPrefixEncoding do
+    AObject.Free;
+
+  FItemEncoding.Free;
 
   FExamples.Free;
+
+  FSpecificationExtensions.Free;
 
   inherited;
 end;
 
-function MediaType.GetSchema: Blue.Print.Open.API.Schema.v31.SpecificationExtensions;
+function MediaType.GetDescriptionStored: Boolean;
+begin
+  Result := not FDescription.IsEmpty;
+end;
+
+function MediaType.GetSchema: Blue.Print.Open.API.Schema.v32.SpecificationExtensions;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v31.SpecificationExtensions.Create;
+    FSchema := Blue.Print.Open.API.Schema.v32.SpecificationExtensions.Create;
 
   Result := FSchema;
 end;
@@ -2429,10 +2733,23 @@ begin
   Result := Assigned(FSchema);
 end;
 
-function MediaType.GetEncoding: Blue.Print.Open.API.Schema.v31.MediaType.TEncoding;
+function MediaType.GetItemSchema: Blue.Print.Open.API.Schema.v32.SpecificationExtensions;
+begin
+  if not Assigned(FItemSchema) then
+    FItemSchema := Blue.Print.Open.API.Schema.v32.SpecificationExtensions.Create;
+
+  Result := FItemSchema;
+end;
+
+function MediaType.GetItemSchemaStored: Boolean;
+begin
+  Result := Assigned(FItemSchema);
+end;
+
+function MediaType.GetEncoding: Blue.Print.Open.API.Schema.v32.MediaType.TEncoding;
 begin
   if not Assigned(FEncoding) then
-    FEncoding := Blue.Print.Open.API.Schema.v31.MediaType.TEncoding.Create;
+    FEncoding := Blue.Print.Open.API.Schema.v32.MediaType.TEncoding.Create;
 
   Result := FEncoding;
 end;
@@ -2442,23 +2759,35 @@ begin
   Result := Assigned(FEncoding);
 end;
 
-function MediaType.GetSpecificationExtensions: Blue.Print.Open.API.Schema.v31.SpecificationExtensions;
+function MediaType.AddPrefixEncoding: Blue.Print.Open.API.Schema.v32.Encoding;
 begin
-  if not Assigned(FSpecificationExtensions) then
-    FSpecificationExtensions := Blue.Print.Open.API.Schema.v31.SpecificationExtensions.Create;
+  Result := Blue.Print.Open.API.Schema.v32.Encoding.Create;
 
-  Result := FSpecificationExtensions;
+  FPrefixEncoding := FPrefixEncoding + [Result];
 end;
 
-function MediaType.GetSpecificationExtensionsStored: Boolean;
+function MediaType.GetPrefixEncodingStored: Boolean;
 begin
-  Result := Assigned(FSpecificationExtensions);
+  Result := Assigned(FPrefixEncoding);
 end;
 
-function MediaType.GetExamples: Blue.Print.Open.API.Schema.v31.Examples;
+function MediaType.GetItemEncoding: Blue.Print.Open.API.Schema.v32.Encoding;
+begin
+  if not Assigned(FItemEncoding) then
+    FItemEncoding := Blue.Print.Open.API.Schema.v32.Encoding.Create;
+
+  Result := FItemEncoding;
+end;
+
+function MediaType.GetItemEncodingStored: Boolean;
+begin
+  Result := Assigned(FItemEncoding);
+end;
+
+function MediaType.GetExamples: Blue.Print.Open.API.Schema.v32.Examples;
 begin
   if not Assigned(FExamples) then
-    FExamples := Blue.Print.Open.API.Schema.v31.Examples.Create;
+    FExamples := Blue.Print.Open.API.Schema.v32.Examples.Create;
 
   Result := FExamples;
 end;
@@ -2466,6 +2795,19 @@ end;
 function MediaType.GetExamplesStored: Boolean;
 begin
   Result := Assigned(FExamples);
+end;
+
+function MediaType.GetSpecificationExtensions: Blue.Print.Open.API.Schema.v32.SpecificationExtensions;
+begin
+  if not Assigned(FSpecificationExtensions) then
+    FSpecificationExtensions := Blue.Print.Open.API.Schema.v32.SpecificationExtensions.Create;
+
+  Result := FSpecificationExtensions;
+end;
+
+function MediaType.GetSpecificationExtensionsStored: Boolean;
+begin
+  Result := Assigned(FSpecificationExtensions);
 end;
 
 { MediaType.TEncoding }
@@ -2480,7 +2822,7 @@ end;
 function MediaType.TEncoding.GetEncoding: TDynamicProperty<Encoding>;
 begin
   if not Assigned(FEncoding) then
-    FEncoding := TDynamicProperty<Blue.Print.Open.API.Schema.v31.Encoding>.Create;
+    FEncoding := TDynamicProperty<Blue.Print.Open.API.Schema.v32.Encoding>.Create;
 
   Result := FEncoding;
 end;
@@ -2490,11 +2832,55 @@ begin
   Result := Assigned(FEncoding);
 end;
 
+{ MediaTypeOrReference }
+
+destructor MediaTypeOrReference.Destroy;
+begin
+  FReference.Free;
+
+  FMediaType.Free;
+
+  inherited;
+end;
+
+function MediaTypeOrReference.GetReference: Blue.Print.Open.API.Schema.v32.Reference;
+begin
+  if not Assigned(FReference) then
+    FReference := Blue.Print.Open.API.Schema.v32.Reference.Create;
+
+  Result := FReference;
+end;
+
+function MediaTypeOrReference.GetReferenceStored: Boolean;
+begin
+  Result := Assigned(FReference);
+end;
+
+function MediaTypeOrReference.GetMediaType: Blue.Print.Open.API.Schema.v32.MediaType;
+begin
+  if not Assigned(FMediaType) then
+    FMediaType := Blue.Print.Open.API.Schema.v32.MediaType.Create;
+
+  Result := FMediaType;
+end;
+
+function MediaTypeOrReference.GetMediaTypeStored: Boolean;
+begin
+  Result := Assigned(FMediaType);
+end;
+
 { Encoding }
 
 destructor Encoding.Destroy;
 begin
   FHeaders.Free;
+
+  FEncoding.Free;
+
+  for var AObject in FPrefixEncoding do
+    AObject.Free;
+
+  FItemEncoding.Free;
 
   inherited;
 end;
@@ -2504,10 +2890,10 @@ begin
   Result := not FContentType.IsEmpty;
 end;
 
-function Encoding.GetHeaders: Blue.Print.Open.API.Schema.v31.Encoding.THeaders;
+function Encoding.GetHeaders: Blue.Print.Open.API.Schema.v32.Encoding.THeaders;
 begin
   if not Assigned(FHeaders) then
-    FHeaders := Blue.Print.Open.API.Schema.v31.Encoding.THeaders.Create;
+    FHeaders := Blue.Print.Open.API.Schema.v32.Encoding.THeaders.Create;
 
   Result := FHeaders;
 end;
@@ -2535,6 +2921,44 @@ begin
   FAllowReservedIsStored := True;
 end;
 
+function Encoding.GetEncoding: TDynamicProperty<Encoding>;
+begin
+  if not Assigned(FEncoding) then
+    FEncoding := TDynamicProperty<Blue.Print.Open.API.Schema.v32.Encoding>.Create;
+
+  Result := FEncoding;
+end;
+
+function Encoding.GetEncodingStored: Boolean;
+begin
+  Result := Assigned(FEncoding);
+end;
+
+function Encoding.AddPrefixEncoding: Blue.Print.Open.API.Schema.v32.Encoding;
+begin
+  Result := Blue.Print.Open.API.Schema.v32.Encoding.Create;
+
+  FPrefixEncoding := FPrefixEncoding + [Result];
+end;
+
+function Encoding.GetPrefixEncodingStored: Boolean;
+begin
+  Result := Assigned(FPrefixEncoding);
+end;
+
+function Encoding.GetItemEncoding: Blue.Print.Open.API.Schema.v32.Encoding;
+begin
+  if not Assigned(FItemEncoding) then
+    FItemEncoding := Blue.Print.Open.API.Schema.v32.Encoding.Create;
+
+  Result := FItemEncoding;
+end;
+
+function Encoding.GetItemEncodingStored: Boolean;
+begin
+  Result := Assigned(FItemEncoding);
+end;
+
 { Encoding.THeaders }
 
 destructor Encoding.THeaders.Destroy;
@@ -2547,7 +2971,7 @@ end;
 function Encoding.THeaders.GetHeaderOrReference: TDynamicProperty<HeaderOrReference>;
 begin
   if not Assigned(FHeaderOrReference) then
-    FHeaderOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.HeaderOrReference>.Create;
+    FHeaderOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v32.HeaderOrReference>.Create;
 
   Result := FHeaderOrReference;
 end;
@@ -2568,10 +2992,10 @@ begin
   inherited;
 end;
 
-function Responses.GetDefault: Blue.Print.Open.API.Schema.v31.ResponseOrReference;
+function Responses.GetDefault: Blue.Print.Open.API.Schema.v32.ResponseOrReference;
 begin
   if not Assigned(FDefault) then
-    FDefault := Blue.Print.Open.API.Schema.v31.ResponseOrReference.Create;
+    FDefault := Blue.Print.Open.API.Schema.v32.ResponseOrReference.Create;
 
   Result := FDefault;
 end;
@@ -2584,7 +3008,7 @@ end;
 function Responses.GetSpecificationExtensions: TDynamicProperty<ResponseOrReference>;
 begin
   if not Assigned(FSpecificationExtensions) then
-    FSpecificationExtensions := TDynamicProperty<Blue.Print.Open.API.Schema.v31.ResponseOrReference>.Create;
+    FSpecificationExtensions := TDynamicProperty<Blue.Print.Open.API.Schema.v32.ResponseOrReference>.Create;
 
   Result := FSpecificationExtensions;
 end;
@@ -2607,10 +3031,20 @@ begin
   inherited;
 end;
 
-function Response.GetHeaders: Blue.Print.Open.API.Schema.v31.Response.THeaders;
+function Response.GetSummaryStored: Boolean;
+begin
+  Result := not FSummary.IsEmpty;
+end;
+
+function Response.GetDescriptionStored: Boolean;
+begin
+  Result := not FDescription.IsEmpty;
+end;
+
+function Response.GetHeaders: Blue.Print.Open.API.Schema.v32.Response.THeaders;
 begin
   if not Assigned(FHeaders) then
-    FHeaders := Blue.Print.Open.API.Schema.v31.Response.THeaders.Create;
+    FHeaders := Blue.Print.Open.API.Schema.v32.Response.THeaders.Create;
 
   Result := FHeaders;
 end;
@@ -2620,10 +3054,10 @@ begin
   Result := Assigned(FHeaders);
 end;
 
-function Response.GetContent: Blue.Print.Open.API.Schema.v31.Content;
+function Response.GetContent: Blue.Print.Open.API.Schema.v32.Content;
 begin
   if not Assigned(FContent) then
-    FContent := Blue.Print.Open.API.Schema.v31.Content.Create;
+    FContent := Blue.Print.Open.API.Schema.v32.Content.Create;
 
   Result := FContent;
 end;
@@ -2633,10 +3067,10 @@ begin
   Result := Assigned(FContent);
 end;
 
-function Response.GetLinks: Blue.Print.Open.API.Schema.v31.Response.TLinks;
+function Response.GetLinks: Blue.Print.Open.API.Schema.v32.Response.TLinks;
 begin
   if not Assigned(FLinks) then
-    FLinks := Blue.Print.Open.API.Schema.v31.Response.TLinks.Create;
+    FLinks := Blue.Print.Open.API.Schema.v32.Response.TLinks.Create;
 
   Result := FLinks;
 end;
@@ -2658,7 +3092,7 @@ end;
 function Response.THeaders.GetHeaderOrReference: TDynamicProperty<HeaderOrReference>;
 begin
   if not Assigned(FHeaderOrReference) then
-    FHeaderOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.HeaderOrReference>.Create;
+    FHeaderOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v32.HeaderOrReference>.Create;
 
   Result := FHeaderOrReference;
 end;
@@ -2680,7 +3114,7 @@ end;
 function Response.TLinks.GetLinkOrReference: TDynamicProperty<LinkOrReference>;
 begin
   if not Assigned(FLinkOrReference) then
-    FLinkOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.LinkOrReference>.Create;
+    FLinkOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v32.LinkOrReference>.Create;
 
   Result := FLinkOrReference;
 end;
@@ -2701,10 +3135,10 @@ begin
   inherited;
 end;
 
-function ResponseOrReference.GetReference: Blue.Print.Open.API.Schema.v31.Reference;
+function ResponseOrReference.GetReference: Blue.Print.Open.API.Schema.v32.Reference;
 begin
   if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v31.Reference.Create;
+    FReference := Blue.Print.Open.API.Schema.v32.Reference.Create;
 
   Result := FReference;
 end;
@@ -2714,10 +3148,10 @@ begin
   Result := Assigned(FReference);
 end;
 
-function ResponseOrReference.GetResponse: Blue.Print.Open.API.Schema.v31.Response;
+function ResponseOrReference.GetResponse: Blue.Print.Open.API.Schema.v32.Response;
 begin
   if not Assigned(FResponse) then
-    FResponse := Blue.Print.Open.API.Schema.v31.Response.Create;
+    FResponse := Blue.Print.Open.API.Schema.v32.Response.Create;
 
   Result := FResponse;
 end;
@@ -2739,7 +3173,7 @@ end;
 function Callbacks.GetPathItem: TDynamicProperty<PathItem>;
 begin
   if not Assigned(FPathItem) then
-    FPathItem := TDynamicProperty<Blue.Print.Open.API.Schema.v31.PathItem>.Create;
+    FPathItem := TDynamicProperty<Blue.Print.Open.API.Schema.v32.PathItem>.Create;
 
   Result := FPathItem;
 end;
@@ -2760,10 +3194,10 @@ begin
   inherited;
 end;
 
-function CallbacksOrReference.GetReference: Blue.Print.Open.API.Schema.v31.Reference;
+function CallbacksOrReference.GetReference: Blue.Print.Open.API.Schema.v32.Reference;
 begin
   if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v31.Reference.Create;
+    FReference := Blue.Print.Open.API.Schema.v32.Reference.Create;
 
   Result := FReference;
 end;
@@ -2773,10 +3207,10 @@ begin
   Result := Assigned(FReference);
 end;
 
-function CallbacksOrReference.GetCallbacks: Blue.Print.Open.API.Schema.v31.Callbacks;
+function CallbacksOrReference.GetCallbacks: Blue.Print.Open.API.Schema.v32.Callbacks;
 begin
   if not Assigned(FCallbacks) then
-    FCallbacks := Blue.Print.Open.API.Schema.v31.Callbacks.Create;
+    FCallbacks := Blue.Print.Open.API.Schema.v32.Callbacks.Create;
 
   Result := FCallbacks;
 end;
@@ -2796,6 +3230,17 @@ end;
 function Example.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
+end;
+
+procedure Example.SetDataValue(const Value: any);
+begin
+  FDataValue := Value;
+  FDataValueIsStored := True;
+end;
+
+function Example.GetSerializedValueStored: Boolean;
+begin
+  Result := not FSerializedValue.IsEmpty;
 end;
 
 procedure Example.SetValue(const Value: any);
@@ -2820,10 +3265,10 @@ begin
   inherited;
 end;
 
-function ExampleOrReference.GetReference: Blue.Print.Open.API.Schema.v31.Reference;
+function ExampleOrReference.GetReference: Blue.Print.Open.API.Schema.v32.Reference;
 begin
   if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v31.Reference.Create;
+    FReference := Blue.Print.Open.API.Schema.v32.Reference.Create;
 
   Result := FReference;
 end;
@@ -2833,10 +3278,10 @@ begin
   Result := Assigned(FReference);
 end;
 
-function ExampleOrReference.GetExample: Blue.Print.Open.API.Schema.v31.Example;
+function ExampleOrReference.GetExample: Blue.Print.Open.API.Schema.v32.Example;
 begin
   if not Assigned(FExample) then
-    FExample := Blue.Print.Open.API.Schema.v31.Example.Create;
+    FExample := Blue.Print.Open.API.Schema.v32.Example.Create;
 
   Result := FExample;
 end;
@@ -2867,10 +3312,10 @@ begin
   Result := not FOperationId.IsEmpty;
 end;
 
-function Link.GetParameters: Blue.Print.Open.API.Schema.v31.MapOfStrings;
+function Link.GetParameters: Blue.Print.Open.API.Schema.v32.MapOfStrings;
 begin
   if not Assigned(FParameters) then
-    FParameters := Blue.Print.Open.API.Schema.v31.MapOfStrings.Create;
+    FParameters := Blue.Print.Open.API.Schema.v32.MapOfStrings.Create;
 
   Result := FParameters;
 end;
@@ -2891,10 +3336,10 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function Link.GetServer: Blue.Print.Open.API.Schema.v31.Server;
+function Link.GetServer: Blue.Print.Open.API.Schema.v32.Server;
 begin
   if not Assigned(FServer) then
-    FServer := Blue.Print.Open.API.Schema.v31.Server.Create;
+    FServer := Blue.Print.Open.API.Schema.v32.Server.Create;
 
   Result := FServer;
 end;
@@ -2915,10 +3360,10 @@ begin
   inherited;
 end;
 
-function LinkOrReference.GetReference: Blue.Print.Open.API.Schema.v31.Reference;
+function LinkOrReference.GetReference: Blue.Print.Open.API.Schema.v32.Reference;
 begin
   if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v31.Reference.Create;
+    FReference := Blue.Print.Open.API.Schema.v32.Reference.Create;
 
   Result := FReference;
 end;
@@ -2928,10 +3373,10 @@ begin
   Result := Assigned(FReference);
 end;
 
-function LinkOrReference.GetLink: Blue.Print.Open.API.Schema.v31.Link;
+function LinkOrReference.GetLink: Blue.Print.Open.API.Schema.v32.Link;
 begin
   if not Assigned(FLink) then
-    FLink := Blue.Print.Open.API.Schema.v31.Link.Create;
+    FLink := Blue.Print.Open.API.Schema.v32.Link.Create;
 
   Result := FLink;
 end;
@@ -2948,6 +3393,10 @@ begin
   FSchema.Free;
 
   FContent.Free;
+
+  FExamples.Free;
+
+  FSpecificationExtensions.Free;
 
   inherited;
 end;
@@ -2969,10 +3418,10 @@ begin
   FDeprecatedIsStored := True;
 end;
 
-function Header.GetSchema: Blue.Print.Open.API.Schema.v31.SpecificationExtensions;
+function Header.GetSchema: Blue.Print.Open.API.Schema.v32.SpecificationExtensions;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v31.SpecificationExtensions.Create;
+    FSchema := Blue.Print.Open.API.Schema.v32.SpecificationExtensions.Create;
 
   Result := FSchema;
 end;
@@ -2982,10 +3431,10 @@ begin
   Result := Assigned(FSchema);
 end;
 
-function Header.GetContent: Blue.Print.Open.API.Schema.v31.Content;
+function Header.GetContent: Blue.Print.Open.API.Schema.v32.Content;
 begin
   if not Assigned(FContent) then
-    FContent := Blue.Print.Open.API.Schema.v31.Content.Create;
+    FContent := Blue.Print.Open.API.Schema.v32.Content.Create;
 
   Result := FContent;
 end;
@@ -2993,6 +3442,32 @@ end;
 function Header.GetContentStored: Boolean;
 begin
   Result := Assigned(FContent);
+end;
+
+function Header.GetExamples: Blue.Print.Open.API.Schema.v32.Examples;
+begin
+  if not Assigned(FExamples) then
+    FExamples := Blue.Print.Open.API.Schema.v32.Examples.Create;
+
+  Result := FExamples;
+end;
+
+function Header.GetExamplesStored: Boolean;
+begin
+  Result := Assigned(FExamples);
+end;
+
+function Header.GetSpecificationExtensions: Blue.Print.Open.API.Schema.v32.SpecificationExtensions;
+begin
+  if not Assigned(FSpecificationExtensions) then
+    FSpecificationExtensions := Blue.Print.Open.API.Schema.v32.SpecificationExtensions.Create;
+
+  Result := FSpecificationExtensions;
+end;
+
+function Header.GetSpecificationExtensionsStored: Boolean;
+begin
+  Result := Assigned(FSpecificationExtensions);
 end;
 
 { HeaderOrReference }
@@ -3006,10 +3481,10 @@ begin
   inherited;
 end;
 
-function HeaderOrReference.GetReference: Blue.Print.Open.API.Schema.v31.Reference;
+function HeaderOrReference.GetReference: Blue.Print.Open.API.Schema.v32.Reference;
 begin
   if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v31.Reference.Create;
+    FReference := Blue.Print.Open.API.Schema.v32.Reference.Create;
 
   Result := FReference;
 end;
@@ -3019,10 +3494,10 @@ begin
   Result := Assigned(FReference);
 end;
 
-function HeaderOrReference.GetHeader: Blue.Print.Open.API.Schema.v31.Header;
+function HeaderOrReference.GetHeader: Blue.Print.Open.API.Schema.v32.Header;
 begin
   if not Assigned(FHeader) then
-    FHeader := Blue.Print.Open.API.Schema.v31.Header.Create;
+    FHeader := Blue.Print.Open.API.Schema.v32.Header.Create;
 
   Result := FHeader;
 end;
@@ -3041,15 +3516,20 @@ begin
   inherited;
 end;
 
+function Tag.GetSummaryStored: Boolean;
+begin
+  Result := not FSummary.IsEmpty;
+end;
+
 function Tag.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function Tag.GetExternalDocs: Blue.Print.Open.API.Schema.v31.ExternalDocumentation;
+function Tag.GetExternalDocs: Blue.Print.Open.API.Schema.v32.ExternalDocumentation;
 begin
   if not Assigned(FExternalDocs) then
-    FExternalDocs := Blue.Print.Open.API.Schema.v31.ExternalDocumentation.Create;
+    FExternalDocs := Blue.Print.Open.API.Schema.v32.ExternalDocumentation.Create;
 
   Result := FExternalDocs;
 end;
@@ -3057,6 +3537,16 @@ end;
 function Tag.GetExternalDocsStored: Boolean;
 begin
   Result := Assigned(FExternalDocs);
+end;
+
+function Tag.GetParentStored: Boolean;
+begin
+  Result := not FParent.IsEmpty;
+end;
+
+function Tag.GetKindStored: Boolean;
+begin
+  Result := not FKind.IsEmpty;
 end;
 
 { Reference }
@@ -3085,10 +3575,10 @@ begin
   inherited;
 end;
 
-function Schema.GetObject: Blue.Print.Open.API.Schema.v31.Schema.TObject;
+function Schema.GetObject: Blue.Print.Open.API.Schema.v32.Schema.TObject;
 begin
   if not Assigned(FObject) then
-    FObject := Blue.Print.Open.API.Schema.v31.Schema.TObject.Create;
+    FObject := Blue.Print.Open.API.Schema.v32.Schema.TObject.Create;
 
   Result := FObject;
 end;
@@ -3118,10 +3608,16 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function SecurityScheme.GetSpecificationExtensions: Blue.Print.Open.API.Schema.v31.SpecificationExtensions;
+procedure SecurityScheme.SetDeprecated(const Value: System.Boolean);
+begin
+  FDeprecated := Value;
+  FDeprecatedIsStored := True;
+end;
+
+function SecurityScheme.GetSpecificationExtensions: Blue.Print.Open.API.Schema.v32.SpecificationExtensions;
 begin
   if not Assigned(FSpecificationExtensions) then
-    FSpecificationExtensions := Blue.Print.Open.API.Schema.v31.SpecificationExtensions.Create;
+    FSpecificationExtensions := Blue.Print.Open.API.Schema.v32.SpecificationExtensions.Create;
 
   Result := FSpecificationExtensions;
 end;
@@ -3167,10 +3663,10 @@ begin
   inherited;
 end;
 
-function SecuritySchemeOrReference.GetReference: Blue.Print.Open.API.Schema.v31.Reference;
+function SecuritySchemeOrReference.GetReference: Blue.Print.Open.API.Schema.v32.Reference;
 begin
   if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v31.Reference.Create;
+    FReference := Blue.Print.Open.API.Schema.v32.Reference.Create;
 
   Result := FReference;
 end;
@@ -3180,10 +3676,10 @@ begin
   Result := Assigned(FReference);
 end;
 
-function SecuritySchemeOrReference.GetSecurityScheme: Blue.Print.Open.API.Schema.v31.SecurityScheme;
+function SecuritySchemeOrReference.GetSecurityScheme: Blue.Print.Open.API.Schema.v32.SecurityScheme;
 begin
   if not Assigned(FSecurityScheme) then
-    FSecurityScheme := Blue.Print.Open.API.Schema.v31.SecurityScheme.Create;
+    FSecurityScheme := Blue.Print.Open.API.Schema.v32.SecurityScheme.Create;
 
   Result := FSecurityScheme;
 end;
@@ -3211,6 +3707,11 @@ begin
 end;
 
 function OauthFlows.GetAuthorizationCodeStored: Boolean;
+begin
+  Result := False;
+end;
+
+function OauthFlows.GetDeviceAuthorizationStored: Boolean;
 begin
   Result := False;
 end;
@@ -3279,7 +3780,7 @@ end;
 function Examples.GetExampleOrReference: TDynamicProperty<ExampleOrReference>;
 begin
   if not Assigned(FExampleOrReference) then
-    FExampleOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.ExampleOrReference>.Create;
+    FExampleOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v32.ExampleOrReference>.Create;
 
   Result := FExampleOrReference;
 end;
@@ -3289,10 +3790,10 @@ begin
   Result := Assigned(FExampleOrReference);
 end;
 
-function Examples.GetExamples: Blue.Print.Open.API.Schema.v31.Examples;
+function Examples.GetExamples: Blue.Print.Open.API.Schema.v32.Examples;
 begin
   if not Assigned(FExamples) then
-    FExamples := Blue.Print.Open.API.Schema.v31.Examples.Create;
+    FExamples := Blue.Print.Open.API.Schema.v32.Examples.Create;
 
   Result := FExamples;
 end;
