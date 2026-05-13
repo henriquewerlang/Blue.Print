@@ -525,6 +525,7 @@ type
     function IsReference(const Schema: TSchema): Boolean;
     function LoadSchema(const UnitFileConfiguration: TUnitFileConfiguration): TSchema;
 
+    procedure GenerateDefinitions(const Module: TTypeModuleDefinition; const Schema: TSchema);
     procedure GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
     procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
   public
@@ -2859,7 +2860,11 @@ function TJSONSchemaLoader.CreateTypeDefinition(const Module: TTypeModuleDefinit
     if Assigned(ClassDefinition) and not ClassDefinition.IsDelayedType then
       Result := ClassDefinition.AsClassDefinition
     else
+    begin
       Result := FImporter.CreateClassDefinition(ParentModule, TypeName);
+
+      GenerateDefinitions(Result, Schema);
+    end;
   end;
 
   function CreateClassDefinition(const ParentModule: TTypeModuleDefinition; const TypeName: String): TClassDefinition;
@@ -3048,6 +3053,20 @@ begin
     Result := nil;
 end;
 
+procedure TJSONSchemaLoader.GenerateDefinitions(const Module: TTypeModuleDefinition; const Schema: TSchema);
+begin
+  for var Definition in Schema.&Object.Defs.defs do
+  begin
+    var TypeDefinition := CheckTypeDefinition(Module, Definition.Value, Definition.Key);
+
+    if TypeDefinition.IsDelayedType then
+      TypeDefinition := CreateTypeDefinition(Module, Definition.Value, Definition.Key);
+
+    if (TypeDefinition.Name <> Definition.Key) and Module.IsUnitDefinition then
+      Module.AsUnitDefinition.AddTypeAlias(FImporter.CreateTypeAlias(Module, Definition.Key, TypeDefinition));
+  end;
+end;
+
 procedure TJSONSchemaLoader.GenerateProperties(const ClassDefinition: TClassDefinition; const Schema: TSchema);
 const
   PATTERN_PROPERTY_NAME = 'PatternProperty';
@@ -3145,13 +3164,7 @@ begin
   if LoadMainClass then
     UnitDefinition.MainType := UnitDefinition.AddDelayedType(UnitClassName + 'Delayed');
 
-  for var Definition in CurrentSchema.&Object.Defs.defs do
-  begin
-    var TypeDefinition := CreateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
-
-    if TypeDefinition.Name <> Definition.Key then
-      UnitDefinition.AddTypeAlias(FImporter.CreateTypeAlias(UnitDefinition, Definition.Key, TypeDefinition));
-  end;
+  GenerateDefinitions(UnitDefinition, CurrentSchema);
 
   var ClassDefinition := CheckTypeDefinition(UnitDefinition, CurrentSchema, UnitClassName);
 

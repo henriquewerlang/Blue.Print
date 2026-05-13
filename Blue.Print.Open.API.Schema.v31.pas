@@ -1145,6 +1145,58 @@ type
   SecurityScheme = class
   public type
     TType = (apiKey, http, mutualTLS, oauth2, openIdConnect);
+    [Flat]
+    TTypeApikey = class
+    public type
+      TIn = (query, header, cookie);
+    private
+      FName: System.String;
+      FIn: SecurityScheme.TTypeApikey.TIn;
+    published
+      property name: System.String read FName write FName;
+      [FieldName('in')]
+      property &In: SecurityScheme.TTypeApikey.TIn read FIn write FIn;
+    end;
+
+    [Flat]
+    TTypeHttp = class
+    private
+      FScheme: System.String;
+    published
+      property scheme: System.String read FScheme write FScheme;
+    end;
+
+    [Flat]
+    TTypeHttpBearer = class
+    private
+      FBearerFormat: System.String;
+
+      function GetBearerFormatStored: Boolean;
+    public
+      property IsBearerFormatStored: Boolean read GetBearerFormatStored;
+    published
+      property bearerFormat: System.String read FBearerFormat write FBearerFormat stored GetBearerFormatStored;
+    end;
+
+    [Flat]
+    TTypeOauth2 = class
+    private
+      FFlows: OauthFlows;
+
+      function GetFlows: OauthFlows;
+    public
+      destructor Destroy; override;
+    published
+      property flows: OauthFlows read GetFlows write FFlows;
+    end;
+
+    [Flat]
+    TTypeOidc = class
+    private
+      FOpenIdConnectUrl: System.String;
+    published
+      property openIdConnectUrl: System.String read FOpenIdConnectUrl write FOpenIdConnectUrl;
+    end;
   private
     FType: SecurityScheme.TType;
     FDescription: System.String;
@@ -1213,6 +1265,80 @@ type
   end;
 
   OauthFlows = class
+  public type
+    TImplicit = class
+    private
+      FAuthorizationUrl: System.String;
+      FRefreshUrl: System.String;
+      FScopes: MapOfStrings;
+
+      function GetScopes: MapOfStrings;
+      function GetRefreshUrlStored: Boolean;
+    public
+      destructor Destroy; override;
+
+      property IsRefreshUrlStored: Boolean read GetRefreshUrlStored;
+    published
+      property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
+      property refreshUrl: System.String read FRefreshUrl write FRefreshUrl stored GetRefreshUrlStored;
+      property scopes: MapOfStrings read GetScopes write FScopes;
+    end;
+
+    TPassword = class
+    private
+      FTokenUrl: System.String;
+      FRefreshUrl: System.String;
+      FScopes: MapOfStrings;
+
+      function GetScopes: MapOfStrings;
+      function GetRefreshUrlStored: Boolean;
+    public
+      destructor Destroy; override;
+
+      property IsRefreshUrlStored: Boolean read GetRefreshUrlStored;
+    published
+      property tokenUrl: System.String read FTokenUrl write FTokenUrl;
+      property refreshUrl: System.String read FRefreshUrl write FRefreshUrl stored GetRefreshUrlStored;
+      property scopes: MapOfStrings read GetScopes write FScopes;
+    end;
+
+    TClientCredentials = class
+    private
+      FTokenUrl: System.String;
+      FRefreshUrl: System.String;
+      FScopes: MapOfStrings;
+
+      function GetScopes: MapOfStrings;
+      function GetRefreshUrlStored: Boolean;
+    public
+      destructor Destroy; override;
+
+      property IsRefreshUrlStored: Boolean read GetRefreshUrlStored;
+    published
+      property tokenUrl: System.String read FTokenUrl write FTokenUrl;
+      property refreshUrl: System.String read FRefreshUrl write FRefreshUrl stored GetRefreshUrlStored;
+      property scopes: MapOfStrings read GetScopes write FScopes;
+    end;
+
+    TAuthorizationCode = class
+    private
+      FAuthorizationUrl: System.String;
+      FTokenUrl: System.String;
+      FRefreshUrl: System.String;
+      FScopes: MapOfStrings;
+
+      function GetScopes: MapOfStrings;
+      function GetRefreshUrlStored: Boolean;
+    public
+      destructor Destroy; override;
+
+      property IsRefreshUrlStored: Boolean read GetRefreshUrlStored;
+    published
+      property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
+      property tokenUrl: System.String read FTokenUrl write FTokenUrl;
+      property refreshUrl: System.String read FRefreshUrl write FRefreshUrl stored GetRefreshUrlStored;
+      property scopes: MapOfStrings read GetScopes write FScopes;
+    end;
   private
     FImplicit: Undefined { implicit };
     FPassword: Undefined { password };
@@ -3156,6 +3282,30 @@ begin
   Result := False;
 end;
 
+{ SecurityScheme.TTypeHttpBearer }
+
+function SecurityScheme.TTypeHttpBearer.GetBearerFormatStored: Boolean;
+begin
+  Result := not FBearerFormat.IsEmpty;
+end;
+
+{ SecurityScheme.TTypeOauth2 }
+
+destructor SecurityScheme.TTypeOauth2.Destroy;
+begin
+  FFlows.Free;
+
+  inherited;
+end;
+
+function SecurityScheme.TTypeOauth2.GetFlows: Blue.Print.Open.API.Schema.v31.OauthFlows;
+begin
+  if not Assigned(FFlows) then
+    FFlows := Blue.Print.Open.API.Schema.v31.OauthFlows.Create;
+
+  Result := FFlows;
+end;
+
 { SecuritySchemeOrReference }
 
 destructor SecuritySchemeOrReference.Destroy;
@@ -3213,6 +3363,94 @@ end;
 function OauthFlows.GetAuthorizationCodeStored: Boolean;
 begin
   Result := False;
+end;
+
+{ OauthFlows.TImplicit }
+
+destructor OauthFlows.TImplicit.Destroy;
+begin
+  FScopes.Free;
+
+  inherited;
+end;
+
+function OauthFlows.TImplicit.GetRefreshUrlStored: Boolean;
+begin
+  Result := not FRefreshUrl.IsEmpty;
+end;
+
+function OauthFlows.TImplicit.GetScopes: Blue.Print.Open.API.Schema.v31.MapOfStrings;
+begin
+  if not Assigned(FScopes) then
+    FScopes := Blue.Print.Open.API.Schema.v31.MapOfStrings.Create;
+
+  Result := FScopes;
+end;
+
+{ OauthFlows.TPassword }
+
+destructor OauthFlows.TPassword.Destroy;
+begin
+  FScopes.Free;
+
+  inherited;
+end;
+
+function OauthFlows.TPassword.GetRefreshUrlStored: Boolean;
+begin
+  Result := not FRefreshUrl.IsEmpty;
+end;
+
+function OauthFlows.TPassword.GetScopes: Blue.Print.Open.API.Schema.v31.MapOfStrings;
+begin
+  if not Assigned(FScopes) then
+    FScopes := Blue.Print.Open.API.Schema.v31.MapOfStrings.Create;
+
+  Result := FScopes;
+end;
+
+{ OauthFlows.TClientCredentials }
+
+destructor OauthFlows.TClientCredentials.Destroy;
+begin
+  FScopes.Free;
+
+  inherited;
+end;
+
+function OauthFlows.TClientCredentials.GetRefreshUrlStored: Boolean;
+begin
+  Result := not FRefreshUrl.IsEmpty;
+end;
+
+function OauthFlows.TClientCredentials.GetScopes: Blue.Print.Open.API.Schema.v31.MapOfStrings;
+begin
+  if not Assigned(FScopes) then
+    FScopes := Blue.Print.Open.API.Schema.v31.MapOfStrings.Create;
+
+  Result := FScopes;
+end;
+
+{ OauthFlows.TAuthorizationCode }
+
+destructor OauthFlows.TAuthorizationCode.Destroy;
+begin
+  FScopes.Free;
+
+  inherited;
+end;
+
+function OauthFlows.TAuthorizationCode.GetRefreshUrlStored: Boolean;
+begin
+  Result := not FRefreshUrl.IsEmpty;
+end;
+
+function OauthFlows.TAuthorizationCode.GetScopes: Blue.Print.Open.API.Schema.v31.MapOfStrings;
+begin
+  if not Assigned(FScopes) then
+    FScopes := Blue.Print.Open.API.Schema.v31.MapOfStrings.Create;
+
+  Result := FScopes;
 end;
 
 { SecurityRequirement }
