@@ -3138,14 +3138,14 @@ end;
 
 procedure TJSONSchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
 begin
-  var CurrenSchema := LoadSchema(UnitFileConfiguration);
+  var CurrentSchema := LoadSchema(UnitFileConfiguration);
   var LoadMainClass := not Assigned(UnitDefinition.MainType);
   var UnitClassName := UnitFileConfiguration.UnitClassName + UnitFileConfiguration.AppendClassName;
 
   if LoadMainClass then
     UnitDefinition.MainType := UnitDefinition.AddDelayedType(UnitClassName + 'Delayed');
 
-  for var Definition in CurrenSchema.&Object.Defs.defs do
+  for var Definition in CurrentSchema.&Object.Defs.defs do
   begin
     var TypeDefinition := CreateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
 
@@ -3153,7 +3153,7 @@ begin
       UnitDefinition.AddTypeAlias(FImporter.CreateTypeAlias(UnitDefinition, Definition.Key, TypeDefinition));
   end;
 
-  var ClassDefinition := CheckTypeDefinition(UnitDefinition, CurrenSchema, UnitClassName);
+  var ClassDefinition := CheckTypeDefinition(UnitDefinition, CurrentSchema, UnitClassName);
 
   if LoadMainClass then
     UnitDefinition.MainType.AsDelayedType.TypeResolved := ClassDefinition;
