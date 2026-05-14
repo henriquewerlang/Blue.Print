@@ -2859,14 +2859,14 @@ function TJSONSchemaLoader.CheckTypeDefinition(const Module: TTypeModuleDefiniti
     GenerateDefinitions(Result, Schema);
   end;
 
-  function GetSimpleType(const SimpleType: simpleTypes): TTypeDefinition;
+  function GetSimpleType(const SimpleType: TSchema.simpleTypes): TTypeDefinition;
   begin
     case SimpleType of
-      simpleTypes.boolean: Result := FImporter.BooleanType;
-      simpleTypes.null: Result := nil;
-      simpleTypes.integer: Result := FImporter.IntegerType;
-      simpleTypes.number: Result := FImporter.DoubleType;
-      simpleTypes.&string: Result := FImporter.StringType;
+      TSchema.simpleTypes.boolean: Result := FImporter.BooleanType;
+      TSchema.simpleTypes.null: Result := nil;
+      TSchema.simpleTypes.integer: Result := FImporter.IntegerType;
+      TSchema.simpleTypes.number: Result := FImporter.DoubleType;
+      TSchema.simpleTypes.&string: Result := FImporter.StringType;
       else Result := nil;
     end;
   end;
@@ -2883,8 +2883,8 @@ begin
     if Schema.&Object.&type.IsSimpleTypesStored then
     begin
       case Schema.&Object.&type.SimpleTypes of
-        simpleTypes.&array: Result := TTypeArrayDefinition.Create(Module, CheckTypeDefinition(Module, Schema.&Object.items, TypeName + 'ArrayItem'));
-        simpleTypes.&object: Result := CreateClassDefinition(Module, TypeName);
+        TSchema.simpleTypes.&array: Result := TTypeArrayDefinition.Create(Module, CheckTypeDefinition(Module, Schema.&Object.items, TypeName + 'ArrayItem'));
+        TSchema.simpleTypes.&object: Result := CreateClassDefinition(Module, TypeName);
         else Result := GetSimpleType(Schema.&Object.&type.SimpleTypes);
       end;
     end
@@ -2902,7 +2902,7 @@ begin
         var PropertyName := FormatName(TRttiEnumerationType.GetName(SimpleType));
         var PropertyType: TTypeDefinition;
 
-        if SimpleType = simpleTypes.&object then
+        if SimpleType = TSchema.simpleTypes.&object then
         begin
           PropertyType := CreateClassTypeDefinition(ClassDefinition, PropertyName);
 
