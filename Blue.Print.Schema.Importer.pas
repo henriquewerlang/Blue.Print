@@ -3375,6 +3375,7 @@ var
   ServiceInterface: TTypeInterfaceDefinition;
   ServiceMethod: TTypeMethodDefinition;
   SchemaLoader: TXSDSchemaLoader;
+  SOAPNamespace: String;
   XMLNameSpaceAttribute: String;
   WSDLDocument: IWSDLDocument;
 
@@ -3572,10 +3573,7 @@ var
 
   function FindSOAPNode(const ParentNode: IXMLNode; const Name: String): IXMLNode;
   begin
-    Result := ParentNode.ChildNodes.FindNode(Name, Soap12ns);
-
-    if not Assigned(Result) then
-      Result := ParentNode.ChildNodes.FindNode(Name, Soapns);
+    Result := ParentNode.ChildNodes.FindNode(Name, SOAPNamespace);
   end;
 
   procedure CheckHeaderParameter(const Operation: IBindingOperation);
@@ -3625,6 +3623,11 @@ begin
     for var B := 0 to Pred(Schema.SimpleTypes.Count) do
       SchemaLoader.CheckUnitTypeDefinition(Schema.SimpleTypes[B], UnitDefinition);
   end;
+
+  if WSDLDocument.DocumentElement.HasAttribute(SXMLNS + NSDelim + 'soap12') then
+    SOAPNamespace := Soap12ns
+  else
+    SOAPNamespace := Soapns;
 
   for var A := 0 to Pred(WSDLDocument.Definition.Services.Count) do
   begin
