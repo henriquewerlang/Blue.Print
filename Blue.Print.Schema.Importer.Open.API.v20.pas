@@ -22,8 +22,8 @@ type
     function LoadOpenAPIDefinitionFromConfiguration(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;
     function LoadSchemaReference(const Reference: String; out ReferenceName: String): TOpenAPIDefinition;
 
-    procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
-    procedure LoadClassDefinition(const ClassDefinition: TClassDefinition; const ClassSchema: Schema);
+    procedure GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+    procedure LoadClassDefinition(const ClassDefinition: TTypeClassDefinition; const ClassSchema: Schema);
   public
     constructor Create(const Importer: TSchemaImporter);
 
@@ -175,7 +175,7 @@ begin
   end;
 end;
 
-procedure TOpenAPI20SchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+procedure TOpenAPI20SchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
 var
   Service: TTypeInterfaceDefinition;
 
@@ -375,7 +375,7 @@ begin
   LoadSchemaReference(OpenAPISchema.ref, Result);
 end;
 
-procedure TOpenAPI20SchemaLoader.LoadClassDefinition(const ClassDefinition: TClassDefinition; const ClassSchema: Schema);
+procedure TOpenAPI20SchemaLoader.LoadClassDefinition(const ClassDefinition: TTypeClassDefinition; const ClassSchema: Schema);
 var
   AnnonymusIndex: Integer;
 

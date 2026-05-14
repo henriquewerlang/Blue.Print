@@ -7,7 +7,7 @@ uses Blue.Print.Schema.Importer;
 type
   TOpenAPI31SchemaLoader = class(TInterfacedObject, ISchemaLoader)
   private
-    procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+    procedure GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
   public
     constructor Create(const Importer: TSchemaImporter);
   end;
@@ -21,7 +21,7 @@ begin
   inherited Create;
 end;
 
-procedure TOpenAPI31SchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+procedure TOpenAPI31SchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
 begin
   inherited;
 

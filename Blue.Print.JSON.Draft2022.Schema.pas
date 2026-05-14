@@ -10,25 +10,28 @@ interface
 uses Blue.Print.Types, System.Rtti;
 
 type
-  // Enumerations declaration
-  [EnumValue('array, boolean, integer, null, number, object, string')]
-  simpleTypes = (&array, boolean, integer, null, number, &object, &string);
   // Forward class declaration
   TSchema = class;
 
-  // Forward type alias
-  anchorString = System.String;
-  uriString = System.String;
-  uriReferenceString = System.String;
-  schemaArray = TArray<Blue.Print.JSON.Draft2022.Schema.TSchema>;
-  nonNegativeInteger = System.Integer;
-  nonNegativeIntegerDefault0 = System.Integer;
-  stringArray = TArray<System.String>;
+  // Types alias
   any = System.Rtti.TValue;
 
   [Flat]
   TSchema = class
   public type
+    [EnumValue('array, boolean, integer, null, number, object, string')]
+    TSimpleTypes = (&array, boolean, integer, null, number, &object, &string);
+
+    // Types alias
+    anchorString = System.String;
+    uriString = System.String;
+    uriReferenceString = System.String;
+    schemaArray = TArray<Blue.Print.JSON.Draft2022.Schema.TSchema>;
+    nonNegativeInteger = System.Integer;
+    nonNegativeIntegerDefault0 = System.Integer;
+    simpleTypes = TSchema.TSimpleTypes;
+    stringArray = TArray<System.String>;
+
     TObject = class
     public type
       TVocabulary = class
@@ -104,19 +107,19 @@ type
       [Flat]
       TType = class
       private
-        FSimpleTypes: simpleTypes;
-        FArray: TArray<simpleTypes>;
+        FSimpleTypes: TSchema.TSimpleTypes;
+        FArray: TArray<TSchema.TSimpleTypes>;
         FSimpleTypesIsStored: Boolean;
 
         function GetArrayStored: Boolean;
-        procedure SetSimpleTypes(const Value: simpleTypes);
+        procedure SetSimpleTypes(const Value: TSchema.TSimpleTypes);
       public
         property IsSimpleTypesStored: Boolean read FSimpleTypesIsStored;
         property IsArrayStored: Boolean read GetArrayStored;
       published
-        property simpleTypes: simpleTypes read FSimpleTypes write SetSimpleTypes stored FSimpleTypesIsStored;
+        property simpleTypes: TSchema.TSimpleTypes read FSimpleTypes write SetSimpleTypes stored FSimpleTypesIsStored;
         [FieldName('array')]
-        property &Array: TArray<simpleTypes> read FArray write FArray stored GetArrayStored;
+        property &Array: TArray<TSchema.TSimpleTypes> read FArray write FArray stored GetArrayStored;
       end;
 
       TDependentRequired = class
@@ -1338,7 +1341,7 @@ end;
 
 { TSchema.TObject.TType }
 
-procedure TSchema.TObject.TType.SetSimpleTypes(const Value: simpleTypes);
+procedure TSchema.TObject.TType.SetSimpleTypes(const Value: TSchema.TSimpleTypes);
 begin
   FSimpleTypes := Value;
   FSimpleTypesIsStored := True;

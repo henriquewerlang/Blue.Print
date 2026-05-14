@@ -10,7 +10,7 @@ type
     FImporter: TSchemaImporter;
     FOpenAPIDefinition: TOpenAPIDefinition;
 
-    procedure GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+    procedure GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
   public
     constructor Create(const Importer: TSchemaImporter);
   end;
@@ -28,7 +28,7 @@ begin
   FImporter := Importer;
 end;
 
-procedure TOpenAPI30SchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+procedure TOpenAPI30SchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
 
   procedure LoadDefinition;
   begin
