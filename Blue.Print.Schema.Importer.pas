@@ -2215,7 +2215,8 @@ var
 
       procedure AddUnitDefinition(const UnitDefinition: TTypeUnitDefinition);
       begin
-        AddUses(UnitDefinition.Name);
+        if Assigned(UnitDefinition) then
+          AddUses(UnitDefinition.Name);
       end;
 
       procedure CheckUses(const TypeDefinition: TTypeDefinition);
@@ -2712,7 +2713,7 @@ function TTypeDefinition.GetParentUnit: TTypeUnitDefinition;
 begin
   var Parent := Self;
 
-  while not Parent.IsUnitDefinition do
+  while Assigned(Parent) and not Parent.IsUnitDefinition do
     Parent := Parent.ParentModule;
 
   Result := Parent as TTypeUnitDefinition;
