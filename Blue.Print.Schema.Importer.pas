@@ -517,7 +517,6 @@ type
 
     function CheckTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
     function CreateDynamicPropertyType(const ParentModule: TTypeModuleDefinition; const ValueType: TTypeDefinition): TTypeDynamicPropertyDefinition;
-    function CreateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
     function DefineProperty(const ClassDefinition: TTypeClassDefinition; const Schema: TSchema; const PropertyName: String; const PropertyType: TTypeDefinition): TPropertyDefinition;
     function FindAllTypes(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
     function FindTypeReference(const Module: TTypeModuleDefinition; const Schema: TSchema): TTypeDefinition;
@@ -2776,27 +2775,6 @@ end;
 { TJSONSchemaLoader }
 
 function TJSONSchemaLoader.CheckTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
-begin
-  if IsReference(Schema) then
-    Result := FindTypeReference(Module, Schema)
-  else
-    Result := CreateTypeDefinition(Module, Schema, TypeName);
-end;
-
-constructor TJSONSchemaLoader.Create(const Importer: TSchemaImporter);
-begin
-  inherited Create;
-
-  FImporter := Importer;
-  FSchemas := TDictionary<String, TSchema>.Create(TIStringComparer.Ordinal);
-end;
-
-function TJSONSchemaLoader.CreateDynamicPropertyType(const ParentModule: TTypeModuleDefinition; const ValueType: TTypeDefinition): TTypeDynamicPropertyDefinition;
-begin
-  Result := TTypeDynamicPropertyDefinition.Create(ParentModule, ValueType);
-end;
-
-function TJSONSchemaLoader.CreateTypeDefinition(const Module: TTypeModuleDefinition; const Schema: TSchema; const TypeName: String): TTypeDefinition;
 
   function CreateEnumerator: TTypeEnumeration;
   begin
@@ -2892,14 +2870,9 @@ function TJSONSchemaLoader.CreateTypeDefinition(const Module: TTypeModuleDefinit
     end;
   end;
 
-  function NeedClassDeclaration(const Schema: TSchema): Boolean;
-  begin
-    Result := IsFlatSchema(Schema) or Schema.&Object.IsAdditionalPropertiesStored or Schema.&Object.IsPatternPropertiesStored or Schema.&Object.IsPropertiesStored;
-  end;
-
   function MustDeclareClass: Boolean;
   begin
-    Result := NeedClassDeclaration(Schema);
+    Result := IsFlatSchema(Schema) or Schema.&Object.IsAdditionalPropertiesStored or Schema.&Object.IsPatternPropertiesStored or Schema.&Object.IsPropertiesStored;
   end;
 
 begin
@@ -2955,6 +2928,19 @@ begin
       Result := GetAnyTypeDefinition
   else
     Result := GetAnyTypeDefinition;
+end;
+
+constructor TJSONSchemaLoader.Create(const Importer: TSchemaImporter);
+begin
+  inherited Create;
+
+  FImporter := Importer;
+  FSchemas := TDictionary<String, TSchema>.Create(TIStringComparer.Ordinal);
+end;
+
+function TJSONSchemaLoader.CreateDynamicPropertyType(const ParentModule: TTypeModuleDefinition; const ValueType: TTypeDefinition): TTypeDynamicPropertyDefinition;
+begin
+  Result := TTypeDynamicPropertyDefinition.Create(ParentModule, ValueType);
 end;
 
 function TJSONSchemaLoader.DefineProperty(const ClassDefinition: TTypeClassDefinition; const Schema: TSchema; const PropertyName: String; const PropertyType: TTypeDefinition): TPropertyDefinition;
@@ -3069,9 +3055,6 @@ begin
   begin
     var TypeDefinition := CheckTypeDefinition(Module, Definition.Value, Definition.Key);
 
-    if TypeDefinition.IsDelayedType then
-      TypeDefinition := CreateTypeDefinition(Module, Definition.Value, Definition.Key);
-
     if TypeDefinition.Name <> Definition.Key then
       Module.AddTypeAlias(FImporter.CreateTypeAlias(Module, Definition.Key, TypeDefinition));
   end;
@@ -3136,8 +3119,9 @@ var
   PropertyName: String;
 
 begin
-  for var Pair in Schema.&Object.Properties.Properties do
-    DefinePropertyCheckingType(Pair.Key, Pair.Value);
+  if Schema.&Object.IsPropertiesStored then
+    for var Pair in Schema.&Object.Properties.Properties do
+      DefinePropertyCheckingType(Pair.Key, Pair.Value);
 
   for var AnonymousSchema in Schema.&Object.allOf + Schema.&Object.oneOf + Schema.&Object.anyOf + ConditionalSchemas do
     if AnonymousSchema.&Object.IsRefStored or AnonymousSchema.&Object.IsTypeStored then
@@ -3169,8 +3153,6 @@ procedure TJSONSchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TTy
 begin
   var CurrentSchema := LoadSchema(UnitFileConfiguration);
   var UnitClassName := UnitFileConfiguration.UnitClassName + UnitFileConfiguration.AppendClassName;
-
-  CurrentSchema.&Object.Ref := EmptyStr;
 
   CheckTypeDefinition(UnitDefinition, CurrentSchema, UnitClassName);
 end;
