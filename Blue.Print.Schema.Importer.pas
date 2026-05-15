@@ -26,7 +26,6 @@ type
 
   TUnitFileConfiguration = class
   private
-    FAppendClassName: String;
     FReference: String;
     FUnitClassName: String;
     FFileType: TSchemaType;
@@ -36,7 +35,6 @@ type
 
     procedure SetFileType(const Value: TSchemaType);
   public
-    property AppendClassName: String read FAppendClassName write FAppendClassName;
     property BaseURL: String read FBaseURL write FBaseURL;
     property FileType: TSchemaType read FFileType write SetFileType stored FIsFileTypeStored;
     property InterfaceName: String read FInterfaceName write FInterfaceName;
@@ -1249,13 +1247,11 @@ begin
   if SchemaDefinition.ElementDefs.Count > 0 then
   begin
     if not UnitFileConfiguration.UnitClassName.IsEmpty then
-      Result := FImporter.CreateClassDefinition(ParentModule, UnitFileConfiguration.UnitClassName)
-    else if not UnitFileConfiguration.AppendClassName.IsEmpty then
     begin
-      var ClassType := FImporter.FindTypeInUnits(ParentModule, UnitFileConfiguration.AppendClassName);
+      var ClassType := FImporter.FindTypeInUnits(ParentModule, UnitFileConfiguration.UnitClassName);
 
       if not Assigned(ClassType) then
-        ClassType := FImporter.CreateClassDefinition(ParentModule, UnitFileConfiguration.AppendClassName);
+        ClassType := FImporter.CreateClassDefinition(ParentModule, UnitFileConfiguration.UnitClassName);
 
       Result := ClassType.AsClassDefinition;
     end;
@@ -1266,7 +1262,7 @@ begin
         raise Exception.CreateFmt('The file %s must have a "UnitClassName" in the configuration!', [UnitFileConfiguration.Reference]);
 
       var &Property := GenerateProperty(Result, SchemaDefinition.ElementDefs[A]);
-      &Property.Optional := &Property.Optional or not UnitFileConfiguration.AppendClassName.IsEmpty;
+      &Property.Optional := &Property.Optional;
 
       if not SchemaDefinition.ElementDefs[A].HasAttribute('type') then
         &Property.PropertyType.AddNamespaceAttribute(VarToStr(SchemaDefinition.TargetNamespace));
@@ -3153,7 +3149,7 @@ end;
 procedure TJSONSchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
 begin
   var CurrentSchema := LoadSchema(UnitFileConfiguration);
-  var UnitClassName := UnitFileConfiguration.UnitClassName + UnitFileConfiguration.AppendClassName;
+  var UnitClassName := UnitFileConfiguration.UnitClassName;
 
   CheckTypeDefinition(UnitDefinition, CurrentSchema, UnitClassName);
 end;
