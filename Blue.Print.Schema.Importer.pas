@@ -481,7 +481,7 @@ type
     function AddProperty(const ClassDefinition: TTypeClassDefinition; const Name: String; const &Type: IXMLTypeDef): TPropertyDefinition;
     function CheckClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef): TTypeDefinition;
     function CheckTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
-    function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TTypeUnitDefinition): TTypeDefinition;
+    function CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
     function GetAttributeDataType(const Attribute: IXMLAttributeDef): IXMLTypeDef;
     function GetElementDataType(const Element: IXMLElementDef): IXMLTypeDef;
     function FindBaseType(const TypeDefinition: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
@@ -1211,12 +1211,12 @@ begin
     end;
 end;
 
-function TXSDSchemaLoader.CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const UnitDefinition: TTypeUnitDefinition): TTypeDefinition;
+function TXSDSchemaLoader.CheckUnitTypeDefinition(const &Type: IXMLTypeDef; const Module: TTypeModuleDefinition): TTypeDefinition;
 begin
-  Result := FindType(&Type.Name, UnitDefinition);
+  Result := FindType(&Type.Name, Module);
 
   if not Assigned(Result) then
-    Result := CheckTypeDefinition(&Type, UnitDefinition);
+    Result := CheckTypeDefinition(&Type, Module);
 end;
 
 function TXSDSchemaLoader.GenerateClassDefinition(const ParentModule: TTypeModuleDefinition; const ComplexType: IXMLComplexTypeDef): TTypeDefinition;
@@ -1272,6 +1272,12 @@ begin
         &Property.PropertyType.AddNamespaceAttribute(VarToStr(SchemaDefinition.TargetNamespace));
     end;
   end;
+
+  for var A := 0 to Pred(SchemaDefinition.SimpleTypes.Count) do
+    CheckUnitTypeDefinition(SchemaDefinition.SimpleTypes[A], Result);
+
+  for var A := 0 to Pred(SchemaDefinition.ComplexTypes.Count) do
+    CheckUnitTypeDefinition(SchemaDefinition.ComplexTypes[A], Result).AddNamespaceAttribute(VarToStr(SchemaDefinition.TargetNamespace));
 end;
 
 procedure TXSDSchemaLoader.GenerateProperties(const ClassDefinition: TTypeClassDefinition; const ElementDefs: IXMLElementDefList);
@@ -1378,12 +1384,6 @@ begin
   ProcessReferences(UnitDefinition, Schema.SchemaDef.SchemaIncludes);
 
   ProcessReferences(UnitDefinition, Schema.SchemaDef.SchemaImports);
-
-  for var A := 0 to Pred(Schema.SchemaDef.SimpleTypes.Count) do
-    CheckUnitTypeDefinition(Schema.SchemaDef.SimpleTypes[A], UnitDefinition);
-
-  for var A := 0 to Pred(Schema.SchemaDef.ComplexTypes.Count) do
-    CheckUnitTypeDefinition(Schema.SchemaDef.ComplexTypes[A], UnitDefinition).AddNamespaceAttribute(VarToStr(Schema.SchemaDef.TargetNamespace));
 
   GenerateClassDefinitionFromSchema(UnitFileConfiguration, UnitDefinition, Schema.SchemaDef);
 end;
@@ -3468,9 +3468,9 @@ var
     var ParameterType := FindType(TypeName);
 
     if Assigned(ParameterType) then
-      Result := SchemaLoader.CheckUnitTypeDefinition(ParameterType, UnitDefinition)
+      Result := SchemaLoader.CheckUnitTypeDefinition(ParameterType, UnitDefinition.MainClassType)
     else
-      Result := SchemaLoader.FindType(TypeName, UnitDefinition);
+      Result := SchemaLoader.FindType(TypeName, UnitDefinition.MainClassType);
   end;
 
   function AddParameter(const Name: String; const &Type: TTypeDefinition): TTypeParameterDefinition;
@@ -3516,7 +3516,7 @@ var
         begin
           var ElementType := FindType(Part.Element);
 
-          var ElementTypeDefinition := SchemaLoader.FindType(ElementType.Name, UnitDefinition);
+          var ElementTypeDefinition := SchemaLoader.FindType(ElementType.Name, UnitDefinition.MainClassType);
 
           if Assigned(ElementTypeDefinition) then
             AddBodyParameter(Part.Name, ElementTypeDefinition)
@@ -3524,7 +3524,7 @@ var
           begin
             var ComplexType := ElementType as IXMLComplexTypeDef;
 
-            var ClassDefinition := FImporter.CreateClassDefinition(UnitDefinition, ComplexType.Name);
+            var ClassDefinition := FImporter.CreateClassDefinition(UnitDefinition.MainClassType, ComplexType.Name);
 
             AddBodyParameter(ComplexType.Name, ClassDefinition);
 
@@ -3536,7 +3536,7 @@ var
             end;
           end
           else
-            AddBodyParameter(Part.Name, SchemaLoader.FindType(ElementType.Name, UnitDefinition));
+            AddBodyParameter(Part.Name, SchemaLoader.FindType(ElementType.Name, UnitDefinition.MainClassType));
         end;
       end;
     end;
@@ -3555,7 +3555,7 @@ var
 
       if Part.Element.IsEmpty then
       begin
-        var ClassDefinition := FImporter.CreateClassDefinition(UnitDefinition, Message.Name);
+        var ClassDefinition := FImporter.CreateClassDefinition(UnitDefinition.MainClassType, Message.Name);
         var PartProperty := ClassDefinition.AddProperty(Part.Name);
         PartProperty.PropertyType := CheckPartType(Part);
         Result := ClassDefinition;
@@ -3602,7 +3602,9 @@ var
   end;
 
 begin
+  var MainClass := FImporter.CreateClassDefinition(UnitDefinition, UnitFileConfiguration.UnitClassName);
   SchemaLoader := TXSDSchemaLoader.Create(FImporter);
+  UnitDefinition.MainClassType := MainClass;
   WSDLDocument := NewWSDLDoc;
 
   WSDLDocument.LoadFromXML(FImporter.LoadFileFromConfiguration(UnitFileConfiguration));
@@ -3612,10 +3614,10 @@ begin
     var Schema := WSDLDocument.Definition.Types.SchemaDefs[A];
 
     for var B := 0 to Pred(Schema.ComplexTypes.Count) do
-      SchemaLoader.CheckUnitTypeDefinition(Schema.ComplexTypes[B], UnitDefinition);
+      SchemaLoader.CheckUnitTypeDefinition(Schema.ComplexTypes[B], MainClass);
 
     for var B := 0 to Pred(Schema.SimpleTypes.Count) do
-      SchemaLoader.CheckUnitTypeDefinition(Schema.SimpleTypes[B], UnitDefinition);
+      SchemaLoader.CheckUnitTypeDefinition(Schema.SimpleTypes[B], MainClass);
   end;
 
   if WSDLDocument.DocumentElement.HasAttribute(SXMLNS + NSDelim + 'soap12') then
