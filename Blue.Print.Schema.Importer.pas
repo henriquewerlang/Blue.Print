@@ -518,7 +518,6 @@ type
     function DefineProperty(const ClassDefinition: TTypeClassDefinition; const Schema: TSchema; const PropertyName: String; const PropertyType: TTypeDefinition): TPropertyDefinition;
     function FindAllTypes(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
     function FindTypeReference(const Module: TTypeModuleDefinition; const Schema: TSchema): TTypeDefinition;
-    function GetReferenceName(const Schema: TSchema): String;
     function IsConditionalSchema(const Schema: TSchema): Boolean;
     function IsReference(const Schema: TSchema): Boolean;
     function LoadSchema(const UnitFileConfiguration: TUnitFileConfiguration): TSchema;
@@ -540,7 +539,6 @@ uses System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, Sys
   Blue.Print.Schema.Importer.Open.API.v20, Blue.Print.Schema.Importer.Open.API.v30, Blue.Print.Schema.Importer.Open.API.v31;
 
 const
-  DEFAULT_SCHEMA_CLASS_NAME = 'Schema';
   REFERENCE_SEPARATOR = '#';
   WHITE_SPACE_IDENT = '  ';
 
@@ -2876,12 +2874,12 @@ begin
   if Schema.&Object.IsEnumStored then
     Result := CreateEnumerator
   else if Schema.&Object.IsTypeStored then
-    if Schema.&Object.&type.IsSimpleTypesStored then
+    if Schema.&Object.&type.IsTypeStored then
     begin
-      case Schema.&Object.&type.SimpleTypes of
+      case Schema.&Object.&type.&Type of
         TSchema.simpleTypes.&array: Result := TTypeArrayDefinition.Create(Module, CheckTypeDefinition(Module, Schema.&Object.items, TypeName + 'ArrayItem'));
         TSchema.simpleTypes.&object: Result := CreateClassDefinition(Module, TypeName);
-        else Result := GetSimpleType(Schema.&Object.&type.SimpleTypes);
+        else Result := GetSimpleType(Schema.&Object.&type.&Type);
       end;
     end
     else
@@ -2943,7 +2941,7 @@ end;
 function TJSONSchemaLoader.DefineProperty(const ClassDefinition: TTypeClassDefinition; const Schema: TSchema; const PropertyName: String; const PropertyType: TTypeDefinition): TPropertyDefinition;
 begin
   for var ClassProperty in ClassDefinition.Properties do
-    if ClassProperty.Name = PropertyName then
+    if SameText(ClassProperty.Name, PropertyName) then
       Exit(ClassProperty);
 
   Result := TPropertyDefinition.Create;
@@ -3000,12 +2998,12 @@ end;
 
 function TJSONSchemaLoader.FindTypeReference(const Module: TTypeModuleDefinition; const Schema: TSchema): TTypeDefinition;
 
-  function FindModuleReference(const Reference: String): TTypeModuleDefinition;
+  function FindModuleReference(const Reference: String): TTypeUnitDefinition;
   begin
     if Reference.IsEmpty then
-      Result := Module.ParentUnit.MainClassType
+      Result := Module.ParentUnit
     else
-      Result := FImporter.LoadUnitFromReference(Reference).MainClassType;
+      Result := FImporter.LoadUnitFromReference(Reference);
   end;
 
 begin
@@ -3015,12 +3013,13 @@ begin
     var References := Schema.&Object.ref.Split(['#']);
     Result := nil;
 
-    var CurrentModule := FindModuleReference(References[0]);
+    var CurrentModule := FindModuleReference(References[0]) as TTypeModuleDefinition;
 
     if Length(References) = 1 then
       Result := CurrentModule
     else
     begin
+      CurrentModule := CurrentModule.AsUnitDefinition.MainClassType;
       var ReferenceType := References[1].Split(['/']);
 
       for var A := Succ(Low(ReferenceType)) to High(ReferenceType) do
@@ -3036,7 +3035,9 @@ begin
             Exit;
       end;
 
-      if not Assigned(Result) then
+      if ReferenceName.IsEmpty then
+        Result := CurrentModule
+      else if not Assigned(Result) then
         Result := CurrentModule.AddDelayedType(ReferenceName);
     end;
   end
@@ -3048,7 +3049,7 @@ end;
 
 procedure TJSONSchemaLoader.GenerateDefinitions(const Module: TTypeModuleDefinition; const Schema: TSchema);
 begin
-  for var Definition in Schema.&Object.Defs.defs do
+  for var Definition in Schema.&Object.Defs.Defs do
   begin
     var TypeDefinition := CheckTypeDefinition(Module, Definition.Value, Definition.Key);
 
@@ -3079,23 +3080,22 @@ const
     ANONYMOUS_PROPERTY_NAME = 'Anonymous';
 
   begin
-    if Schema.&Object.IsRefStored then
-      Result := GetReferenceName(Schema)
-    else if Schema.&Object.IsTypeStored and Schema.&Object.&Type.IsSimpleTypesStored then
-      Result := TRttiEnumerationType.GetName(Schema.&Object.&type.simpleTypes)
-    else if Schema.&Object.IsDynamicRefStored then
+    if IsReference(Schema) then
       Result := FormatName(ClassDefinition.Name)
+    else if Schema.&Object.IsTypeStored and Schema.&Object.&Type.IsTypeStored then
+      Result := TRttiEnumerationType.GetName(Schema.&Object.&type.&Type)
     else if Schema.&Object.IsPatternPropertiesStored then
       Result := PATTERN_PROPERTY_NAME
     else
-      Result := ANONYMOUS_PROPERTY_NAME;
-
-    Result := CheckUniqueName(Result);
+      Result := CheckUniqueName(ANONYMOUS_PROPERTY_NAME);
   end;
 
   procedure DefinePropertyCheckingType(const PropertyName: String; const PropertySchema: TSchema);
   begin
-    DefineProperty(ClassDefinition, Schema, PropertyName, CheckTypeDefinition(ClassDefinition, PropertySchema, PropertyName));
+    var PropertyType := CheckTypeDefinition(ClassDefinition, PropertySchema, PropertyName);
+
+    if not PropertyType.IsUnitDefinition then
+      DefineProperty(ClassDefinition, Schema, PropertyName, PropertyType);
   end;
 
   function ConditionalSchemas: TArray<TSchema>;
@@ -3152,16 +3152,6 @@ begin
   var UnitClassName := UnitFileConfiguration.UnitClassName;
 
   CheckTypeDefinition(UnitDefinition, CurrentSchema, UnitClassName);
-end;
-
-function TJSONSchemaLoader.GetReferenceName(const Schema: TSchema): String;
-begin
-  var Values := Schema.&Object.ref.Split(['/']);
-
-  Result := Values[High(Values)];
-
-  if Result = REFERENCE_SEPARATOR then
-    Result := DEFAULT_SCHEMA_CLASS_NAME;
 end;
 
 function TJSONSchemaLoader.IsConditionalSchema(const Schema: TSchema): Boolean;
