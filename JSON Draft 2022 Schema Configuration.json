@@ -1,6 +1,12 @@
 {
    "OutputFolder": ".\\",
    "SchemaFolder": ".\\Schemas",
+   "TypeDefinition": [
+      {
+         "Name": "JSONSchema",
+         "ChangeName": "TSchema"
+      }
+   ],
    "UnitConfiguration": [
       {
          "Name": "Blue.Print.JSON.Draft2022.Schema",
@@ -9,48 +15,48 @@
                "BaseURL": "https://json-schema.org/draft/2020-12",
                "FileType": "JSON",
                "Reference": "meta/core",
-               "AppendClassName": "TSchema"
+               "UnitClassName": "JSONSchema"
             },
             {
                "BaseURL": "https://json-schema.org/draft/2020-12",
                "FileType": "JSON",
                "Reference": "meta/applicator",
-               "AppendClassName": "TSchema"
+               "UnitClassName": "JSONSchema"
             },
             {
                "BaseURL": "https://json-schema.org/draft/2020-12",
                "FileType": "JSON",
                "Reference": "meta/unevaluated",
-               "AppendClassName": "TSchema"
+               "UnitClassName": "JSONSchema"
             },
             {
                "BaseURL": "https://json-schema.org/draft/2020-12",
                "FileType": "JSON",
                "Reference": "meta/validation",
-               "AppendClassName": "TSchema"
+               "UnitClassName": "JSONSchema"
             },
             {
                "BaseURL": "https://json-schema.org/draft/2020-12",
                "FileType": "JSON",
                "Reference": "meta/meta-data",
-               "AppendClassName": "TSchema"
+               "UnitClassName": "JSONSchema"
             },
             {
                "BaseURL": "https://json-schema.org/draft/2020-12",
                "FileType": "JSON",
                "Reference": "meta/format-annotation",
-               "AppendClassName": "TSchema"
+               "UnitClassName": "JSONSchema"
             },
             {
                "BaseURL": "https://json-schema.org/draft/2020-12",
                "FileType": "JSON",
                "Reference": "meta/content",
-               "AppendClassName": "TSchema"
+               "UnitClassName": "JSONSchema"
             },
             {
                "FileType": "JSON",
                "Reference": "https://json-schema.org/draft/2020-12/schema",
-               "UnitClassName": "TSchema"
+               "UnitClassName": "JSONSchema"
             }
          ]
       }

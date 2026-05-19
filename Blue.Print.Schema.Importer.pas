@@ -2874,12 +2874,12 @@ begin
   if Schema.&Object.IsEnumStored then
     Result := CreateEnumerator
   else if Schema.&Object.IsTypeStored then
-    if Schema.&Object.&type.IsTypeStored then
+    if Schema.&Object.&type.IsSimpleTypesStored then
     begin
-      case Schema.&Object.&type.&Type of
+      case Schema.&Object.&type.SimpleTypes of
         TSchema.simpleTypes.&array: Result := TTypeArrayDefinition.Create(Module, CheckTypeDefinition(Module, Schema.&Object.items, TypeName + 'ArrayItem'));
         TSchema.simpleTypes.&object: Result := CreateClassDefinition(Module, TypeName);
-        else Result := GetSimpleType(Schema.&Object.&type.&Type);
+        else Result := GetSimpleType(Schema.&Object.&type.SimpleTypes);
       end;
     end
     else
@@ -3049,7 +3049,7 @@ end;
 
 procedure TJSONSchemaLoader.GenerateDefinitions(const Module: TTypeModuleDefinition; const Schema: TSchema);
 begin
-  for var Definition in Schema.&Object.Defs.Defs do
+  for var Definition in Schema.&Object.Defs.JSONSchema do
   begin
     var TypeDefinition := CheckTypeDefinition(Module, Definition.Value, Definition.Key);
 
@@ -3081,9 +3081,16 @@ const
 
   begin
     if IsReference(Schema) then
-      Result := FormatName(ClassDefinition.Name)
-    else if Schema.&Object.IsTypeStored and Schema.&Object.&Type.IsTypeStored then
-      Result := TRttiEnumerationType.GetName(Schema.&Object.&type.&Type)
+    begin
+      var PropertyTypeReference := FindTypeReference(ClassDefinition, Schema);
+
+      if PropertyTypeReference.IsDelayedType then
+        Result := PropertyTypeReference.AsDelayedType.UnresolvedType
+      else
+        Result := PropertyTypeReference.Name;
+    end
+    else if Schema.&Object.IsTypeStored and Schema.&Object.&Type.IsSimpleTypesStored then
+      Result := TRttiEnumerationType.GetName(Schema.&Object.&type.SimpleTypes)
     else if Schema.&Object.IsPatternPropertiesStored then
       Result := PATTERN_PROPERTY_NAME
     else
@@ -3117,7 +3124,7 @@ var
 
 begin
   if Schema.&Object.IsPropertiesStored then
-    for var Pair in Schema.&Object.Properties.Properties do
+    for var Pair in Schema.&Object.Properties.JSONSchema do
       DefinePropertyCheckingType(Pair.Key, Pair.Value);
 
   for var AnonymousSchema in Schema.&Object.allOf + Schema.&Object.oneOf + Schema.&Object.anyOf + ConditionalSchemas do
@@ -3136,7 +3143,7 @@ begin
   end;
 
   if Schema.&Object.IsPatternPropertiesStored then
-    for var PatternPropertySchema in Schema.&Object.patternProperties.PatternProperties do
+    for var PatternPropertySchema in Schema.&Object.patternProperties.JSONSchema do
     begin
       PropertyName := GetPropertyName(Schema);
 

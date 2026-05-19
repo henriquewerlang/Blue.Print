@@ -5,7 +5,7 @@ interface
 {$M+}
 {$SCOPEDENUMS ON}
 
-// File generated from http://json-schema.org/draft-04/schema, meta/core, meta/applicator, meta/unevaluated, meta/validation, meta/meta-data, meta/format-annotation, meta/content, https://json-schema.org/draft/2020-12/schema, http://json-schema.org/draft-07/schema;
+// File generated from meta/core, meta/applicator, meta/unevaluated, meta/validation, meta/meta-data, meta/format-annotation, meta/content, https://json-schema.org/draft/2020-12/schema, http://json-schema.org/draft-07/schema, http://json-schema.org/draft-04/schema;
 
 uses Blue.Print.Types, System.Rtti;
 
@@ -50,105 +50,104 @@ type
 
       TDefs = class
       private
-        FDefs: TDynamicProperty<TSchema>;
+        FJSONSchema: TDynamicProperty<TSchema>;
 
-        function GetDefs: TDynamicProperty<TSchema>;
-        function GetDefsStored: Boolean;
+        function GetJSONSchema: TDynamicProperty<TSchema>;
+        function GetJSONSchemaStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsDefsStored: Boolean read GetDefsStored;
+        property IsJSONSchemaStored: Boolean read GetJSONSchemaStored;
       published
-        property Defs: TDynamicProperty<TSchema> read GetDefs write FDefs stored GetDefsStored;
+        property JSONSchema: TDynamicProperty<TSchema> read GetJSONSchema write FJSONSchema stored GetJSONSchemaStored;
       end;
 
       TProperties = class
       private
-        FProperties: TDynamicProperty<TSchema>;
+        FJSONSchema: TDynamicProperty<TSchema>;
 
-        function GetProperties: TDynamicProperty<TSchema>;
-        function GetPropertiesStored: Boolean;
+        function GetJSONSchema: TDynamicProperty<TSchema>;
+        function GetJSONSchemaStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsPropertiesStored: Boolean read GetPropertiesStored;
+        property IsJSONSchemaStored: Boolean read GetJSONSchemaStored;
       published
-        property Properties: TDynamicProperty<TSchema> read GetProperties write FProperties stored GetPropertiesStored;
+        property JSONSchema: TDynamicProperty<TSchema> read GetJSONSchema write FJSONSchema stored GetJSONSchemaStored;
       end;
 
       TPatternProperties = class
       private
-        FPatternProperties: TDynamicProperty<TSchema>;
+        FJSONSchema: TDynamicProperty<TSchema>;
 
-        function GetPatternProperties: TDynamicProperty<TSchema>;
-        function GetPatternPropertiesStored: Boolean;
+        function GetJSONSchema: TDynamicProperty<TSchema>;
+        function GetJSONSchemaStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsPatternPropertiesStored: Boolean read GetPatternPropertiesStored;
+        property IsJSONSchemaStored: Boolean read GetJSONSchemaStored;
       published
-        property PatternProperties: TDynamicProperty<TSchema> read GetPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
+        property JSONSchema: TDynamicProperty<TSchema> read GetJSONSchema write FJSONSchema stored GetJSONSchemaStored;
       end;
 
       TDependentSchemas = class
       private
-        FDependentSchemas: TDynamicProperty<TSchema>;
+        FJSONSchema: TDynamicProperty<TSchema>;
 
-        function GetDependentSchemas: TDynamicProperty<TSchema>;
-        function GetDependentSchemasStored: Boolean;
+        function GetJSONSchema: TDynamicProperty<TSchema>;
+        function GetJSONSchemaStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsDependentSchemasStored: Boolean read GetDependentSchemasStored;
+        property IsJSONSchemaStored: Boolean read GetJSONSchemaStored;
       published
-        property DependentSchemas: TDynamicProperty<TSchema> read GetDependentSchemas write FDependentSchemas stored GetDependentSchemasStored;
+        property JSONSchema: TDynamicProperty<TSchema> read GetJSONSchema write FJSONSchema stored GetJSONSchemaStored;
       end;
 
       [Flat]
       TType = class
       private
-        FType: TSchema.TSimpleTypes;
+        FSimpleTypes: TSchema.TSimpleTypes;
         FArray: TArray<TSchema.TSimpleTypes>;
-        FTypeIsStored: Boolean;
+        FSimpleTypesIsStored: Boolean;
 
         function GetArrayStored: Boolean;
-        procedure SetType(const Value: TSchema.TSimpleTypes);
+        procedure SetSimpleTypes(const Value: TSchema.TSimpleTypes);
       public
-        property IsTypeStored: Boolean read FTypeIsStored;
+        property IsSimpleTypesStored: Boolean read FSimpleTypesIsStored;
         property IsArrayStored: Boolean read GetArrayStored;
       published
-        [FieldName('Type')]
-        property &Type: TSchema.TSimpleTypes read FType write SetType stored FTypeIsStored;
+        property SimpleTypes: TSchema.TSimpleTypes read FSimpleTypes write SetSimpleTypes stored FSimpleTypesIsStored;
         [FieldName('array')]
         property &Array: TArray<TSchema.TSimpleTypes> read FArray write FArray stored GetArrayStored;
       end;
 
       TDependentRequired = class
       private
-        FDependentRequired: TDynamicProperty<stringArray>;
+        FStringArray: TDynamicProperty<stringArray>;
 
-        function GetDependentRequired: TDynamicProperty<stringArray>;
-        function GetDependentRequiredStored: Boolean;
+        function GetStringArray: TDynamicProperty<stringArray>;
+        function GetStringArrayStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsDependentRequiredStored: Boolean read GetDependentRequiredStored;
+        property IsStringArrayStored: Boolean read GetStringArrayStored;
       published
-        property DependentRequired: TDynamicProperty<stringArray> read GetDependentRequired write FDependentRequired stored GetDependentRequiredStored;
+        property stringArray: TDynamicProperty<stringArray> read GetStringArray write FStringArray stored GetStringArrayStored;
       end;
 
       TDefinitions = class
       private
-        FDefinitions: TDynamicProperty<TSchema>;
+        FJSONSchema: TDynamicProperty<TSchema>;
 
-        function GetDefinitions: TDynamicProperty<TSchema>;
-        function GetDefinitionsStored: Boolean;
+        function GetJSONSchema: TDynamicProperty<TSchema>;
+        function GetJSONSchemaStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsDefinitionsStored: Boolean read GetDefinitionsStored;
+        property IsJSONSchemaStored: Boolean read GetJSONSchemaStored;
       published
-        property Definitions: TDynamicProperty<TSchema> read GetDefinitions write FDefinitions stored GetDefinitionsStored;
+        property JSONSchema: TDynamicProperty<TSchema> read GetJSONSchema write FJSONSchema stored GetJSONSchemaStored;
       end;
 
       TDependencies = class
@@ -156,64 +155,79 @@ type
         [Flat]
         TAnonymous = class
         private
-          FAnonymous: stringArray;
+          FStringArray: stringArray;
 
-          function GetAnonymousStored: Boolean;
+          function GetStringArrayStored: Boolean;
         public
-          property IsAnonymousStored: Boolean read GetAnonymousStored;
+          property IsStringArrayStored: Boolean read GetStringArrayStored;
         published
-          property Anonymous: stringArray read FAnonymous write FAnonymous stored GetAnonymousStored;
+          property stringArray: stringArray read FStringArray write FStringArray stored GetStringArrayStored;
         end;
 
         [Flat]
         TAnonymous2 = class
         private
-          FAnonymous2: TSchema;
+          FJSONSchema: TSchema;
+          FStringArray: stringArray;
 
-          function GetAnonymous2: TSchema;
-          function GetAnonymous2Stored: Boolean;
+          function GetJSONSchema: TSchema;
+          function GetJSONSchemaStored: Boolean;
+          function GetStringArrayStored: Boolean;
         public
           destructor Destroy; override;
 
-          property IsAnonymous2Stored: Boolean read GetAnonymous2Stored;
+          property IsJSONSchemaStored: Boolean read GetJSONSchemaStored;
+          property IsStringArrayStored: Boolean read GetStringArrayStored;
         published
-          property Anonymous2: TSchema read GetAnonymous2 write FAnonymous2 stored GetAnonymous2Stored;
+          property JSONSchema: TSchema read GetJSONSchema write FJSONSchema stored GetJSONSchemaStored;
+          property stringArray: stringArray read FStringArray write FStringArray stored GetStringArrayStored;
         end;
       private
-        FDependencies: stringArray;
+        FStringArray: stringArray;
         FAnonymous: TDynamicProperty<TSchema.TObject.TDependencies.TAnonymous>;
+        FJSONSchema: TSchema;
         FAnonymous2: TDynamicProperty<TSchema.TObject.TDependencies.TAnonymous2>;
 
         function GetAnonymous: TDynamicProperty<TSchema.TObject.TDependencies.TAnonymous>;
+        function GetJSONSchema: TSchema;
         function GetAnonymous2: TDynamicProperty<TSchema.TObject.TDependencies.TAnonymous2>;
-        function GetDependenciesStored: Boolean;
+        function GetStringArrayStored: Boolean;
         function GetAnonymousStored: Boolean;
+        function GetJSONSchemaStored: Boolean;
         function GetAnonymous2Stored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsDependenciesStored: Boolean read GetDependenciesStored;
+        property IsStringArrayStored: Boolean read GetStringArrayStored;
         property IsAnonymousStored: Boolean read GetAnonymousStored;
+        property IsJSONSchemaStored: Boolean read GetJSONSchemaStored;
         property IsAnonymous2Stored: Boolean read GetAnonymous2Stored;
       published
-        property Dependencies: stringArray read FDependencies write FDependencies stored GetDependenciesStored;
+        property stringArray: stringArray read FStringArray write FStringArray stored GetStringArrayStored;
         property Anonymous: TDynamicProperty<TSchema.TObject.TDependencies.TAnonymous> read GetAnonymous write FAnonymous stored GetAnonymousStored;
+        property JSONSchema: TSchema read GetJSONSchema write FJSONSchema stored GetJSONSchemaStored;
         property Anonymous2: TDynamicProperty<TSchema.TObject.TDependencies.TAnonymous2> read GetAnonymous2 write FAnonymous2 stored GetAnonymous2Stored;
       end;
 
       [Flat]
       TItems = class
       private
-        FItems: TSchema;
+        FJSONSchema: TSchema;
+        FSchemaArray: schemaArray;
 
-        function GetItems: TSchema;
-        function GetItemsStored: Boolean;
+        function GetJSONSchema: TSchema;
+        function GetJSONSchemaStored: Boolean;
+        function GetSchemaArrayStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsItemsStored: Boolean read GetItemsStored;
+        function AddSchemaArray: TSchema;
+
+        property IsJSONSchemaStored: Boolean read GetJSONSchemaStored;
+        property IsSchemaArrayStored: Boolean read GetSchemaArrayStored;
       published
-        property Items: TSchema read GetItems write FItems stored GetItemsStored;
+        property JSONSchema: TSchema read GetJSONSchema write FJSONSchema stored GetJSONSchemaStored;
+        property schemaArray: schemaArray read FSchemaArray write FSchemaArray stored GetSchemaArrayStored;
       end;
     private
       FId: uriReferenceString;
@@ -1169,96 +1183,96 @@ end;
 
 destructor TSchema.TObject.TDefs.Destroy;
 begin
-  FDefs.Free;
+  FJSONSchema.Free;
 
   inherited;
 end;
 
-function TSchema.TObject.TDefs.GetDefs: TDynamicProperty<TSchema>;
+function TSchema.TObject.TDefs.GetJSONSchema: TDynamicProperty<TSchema>;
 begin
-  if not Assigned(FDefs) then
-    FDefs := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
+  if not Assigned(FJSONSchema) then
+    FJSONSchema := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
 
-  Result := FDefs;
+  Result := FJSONSchema;
 end;
 
-function TSchema.TObject.TDefs.GetDefsStored: Boolean;
+function TSchema.TObject.TDefs.GetJSONSchemaStored: Boolean;
 begin
-  Result := Assigned(FDefs);
+  Result := Assigned(FJSONSchema);
 end;
 
 { TSchema.TObject.TProperties }
 
 destructor TSchema.TObject.TProperties.Destroy;
 begin
-  FProperties.Free;
+  FJSONSchema.Free;
 
   inherited;
 end;
 
-function TSchema.TObject.TProperties.GetProperties: TDynamicProperty<TSchema>;
+function TSchema.TObject.TProperties.GetJSONSchema: TDynamicProperty<TSchema>;
 begin
-  if not Assigned(FProperties) then
-    FProperties := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
+  if not Assigned(FJSONSchema) then
+    FJSONSchema := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
 
-  Result := FProperties;
+  Result := FJSONSchema;
 end;
 
-function TSchema.TObject.TProperties.GetPropertiesStored: Boolean;
+function TSchema.TObject.TProperties.GetJSONSchemaStored: Boolean;
 begin
-  Result := Assigned(FProperties);
+  Result := Assigned(FJSONSchema);
 end;
 
 { TSchema.TObject.TPatternProperties }
 
 destructor TSchema.TObject.TPatternProperties.Destroy;
 begin
-  FPatternProperties.Free;
+  FJSONSchema.Free;
 
   inherited;
 end;
 
-function TSchema.TObject.TPatternProperties.GetPatternProperties: TDynamicProperty<TSchema>;
+function TSchema.TObject.TPatternProperties.GetJSONSchema: TDynamicProperty<TSchema>;
 begin
-  if not Assigned(FPatternProperties) then
-    FPatternProperties := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
+  if not Assigned(FJSONSchema) then
+    FJSONSchema := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
 
-  Result := FPatternProperties;
+  Result := FJSONSchema;
 end;
 
-function TSchema.TObject.TPatternProperties.GetPatternPropertiesStored: Boolean;
+function TSchema.TObject.TPatternProperties.GetJSONSchemaStored: Boolean;
 begin
-  Result := Assigned(FPatternProperties);
+  Result := Assigned(FJSONSchema);
 end;
 
 { TSchema.TObject.TDependentSchemas }
 
 destructor TSchema.TObject.TDependentSchemas.Destroy;
 begin
-  FDependentSchemas.Free;
+  FJSONSchema.Free;
 
   inherited;
 end;
 
-function TSchema.TObject.TDependentSchemas.GetDependentSchemas: TDynamicProperty<TSchema>;
+function TSchema.TObject.TDependentSchemas.GetJSONSchema: TDynamicProperty<TSchema>;
 begin
-  if not Assigned(FDependentSchemas) then
-    FDependentSchemas := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
+  if not Assigned(FJSONSchema) then
+    FJSONSchema := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
 
-  Result := FDependentSchemas;
+  Result := FJSONSchema;
 end;
 
-function TSchema.TObject.TDependentSchemas.GetDependentSchemasStored: Boolean;
+function TSchema.TObject.TDependentSchemas.GetJSONSchemaStored: Boolean;
 begin
-  Result := Assigned(FDependentSchemas);
+  Result := Assigned(FJSONSchema);
 end;
 
 { TSchema.TObject.TType }
 
-procedure TSchema.TObject.TType.SetType(const Value: TSchema.TSimpleTypes);
+procedure TSchema.TObject.TType.SetSimpleTypes(const Value: TSchema.TSimpleTypes);
 begin
-  FType := Value;
-  FTypeIsStored := True;
+  FSimpleTypes := Value;
+  FSimpleTypesIsStored := True;
 end;
 
 function TSchema.TObject.TType.GetArrayStored: Boolean;
@@ -1270,44 +1284,44 @@ end;
 
 destructor TSchema.TObject.TDependentRequired.Destroy;
 begin
-  FDependentRequired.Free;
+  FStringArray.Free;
 
   inherited;
 end;
 
-function TSchema.TObject.TDependentRequired.GetDependentRequired: TDynamicProperty<stringArray>;
+function TSchema.TObject.TDependentRequired.GetStringArray: TDynamicProperty<stringArray>;
 begin
-  if not Assigned(FDependentRequired) then
-    FDependentRequired := TDynamicProperty<TArray<System.String>>.Create;
+  if not Assigned(FStringArray) then
+    FStringArray := TDynamicProperty<TArray<System.String>>.Create;
 
-  Result := FDependentRequired;
+  Result := FStringArray;
 end;
 
-function TSchema.TObject.TDependentRequired.GetDependentRequiredStored: Boolean;
+function TSchema.TObject.TDependentRequired.GetStringArrayStored: Boolean;
 begin
-  Result := Assigned(FDependentRequired);
+  Result := Assigned(FStringArray);
 end;
 
 { TSchema.TObject.TDefinitions }
 
 destructor TSchema.TObject.TDefinitions.Destroy;
 begin
-  FDefinitions.Free;
+  FJSONSchema.Free;
 
   inherited;
 end;
 
-function TSchema.TObject.TDefinitions.GetDefinitions: TDynamicProperty<TSchema>;
+function TSchema.TObject.TDefinitions.GetJSONSchema: TDynamicProperty<TSchema>;
 begin
-  if not Assigned(FDefinitions) then
-    FDefinitions := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
+  if not Assigned(FJSONSchema) then
+    FJSONSchema := TDynamicProperty<Blue.Print.JSON.Schema.TSchema>.Create;
 
-  Result := FDefinitions;
+  Result := FJSONSchema;
 end;
 
-function TSchema.TObject.TDefinitions.GetDefinitionsStored: Boolean;
+function TSchema.TObject.TDefinitions.GetJSONSchemaStored: Boolean;
 begin
-  Result := Assigned(FDefinitions);
+  Result := Assigned(FJSONSchema);
 end;
 
 { TSchema.TObject.TDependencies }
@@ -1316,14 +1330,16 @@ destructor TSchema.TObject.TDependencies.Destroy;
 begin
   FAnonymous.Free;
 
+  FJSONSchema.Free;
+
   FAnonymous2.Free;
 
   inherited;
 end;
 
-function TSchema.TObject.TDependencies.GetDependenciesStored: Boolean;
+function TSchema.TObject.TDependencies.GetStringArrayStored: Boolean;
 begin
-  Result := Assigned(FDependencies);
+  Result := Assigned(FStringArray);
 end;
 
 function TSchema.TObject.TDependencies.GetAnonymous: TDynamicProperty<TSchema.TObject.TDependencies.TAnonymous>;
@@ -1337,6 +1353,19 @@ end;
 function TSchema.TObject.TDependencies.GetAnonymousStored: Boolean;
 begin
   Result := Assigned(FAnonymous);
+end;
+
+function TSchema.TObject.TDependencies.GetJSONSchema: Blue.Print.JSON.Schema.TSchema;
+begin
+  if not Assigned(FJSONSchema) then
+    FJSONSchema := Blue.Print.JSON.Schema.TSchema.Create;
+
+  Result := FJSONSchema;
+end;
+
+function TSchema.TObject.TDependencies.GetJSONSchemaStored: Boolean;
+begin
+  Result := Assigned(FJSONSchema);
 end;
 
 function TSchema.TObject.TDependencies.GetAnonymous2: TDynamicProperty<TSchema.TObject.TDependencies.TAnonymous2>;
@@ -1354,53 +1383,73 @@ end;
 
 { TSchema.TObject.TDependencies.TAnonymous }
 
-function TSchema.TObject.TDependencies.TAnonymous.GetAnonymousStored: Boolean;
+function TSchema.TObject.TDependencies.TAnonymous.GetStringArrayStored: Boolean;
 begin
-  Result := Assigned(FAnonymous);
+  Result := Assigned(FStringArray);
 end;
 
 { TSchema.TObject.TDependencies.TAnonymous2 }
 
 destructor TSchema.TObject.TDependencies.TAnonymous2.Destroy;
 begin
-  FAnonymous2.Free;
+  FJSONSchema.Free;
 
   inherited;
 end;
 
-function TSchema.TObject.TDependencies.TAnonymous2.GetAnonymous2: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.TDependencies.TAnonymous2.GetJSONSchema: Blue.Print.JSON.Schema.TSchema;
 begin
-  if not Assigned(FAnonymous2) then
-    FAnonymous2 := Blue.Print.JSON.Schema.TSchema.Create;
+  if not Assigned(FJSONSchema) then
+    FJSONSchema := Blue.Print.JSON.Schema.TSchema.Create;
 
-  Result := FAnonymous2;
+  Result := FJSONSchema;
 end;
 
-function TSchema.TObject.TDependencies.TAnonymous2.GetAnonymous2Stored: Boolean;
+function TSchema.TObject.TDependencies.TAnonymous2.GetJSONSchemaStored: Boolean;
 begin
-  Result := Assigned(FAnonymous2);
+  Result := Assigned(FJSONSchema);
+end;
+
+function TSchema.TObject.TDependencies.TAnonymous2.GetStringArrayStored: Boolean;
+begin
+  Result := Assigned(FStringArray);
 end;
 
 { TSchema.TObject.TItems }
 
 destructor TSchema.TObject.TItems.Destroy;
 begin
-  FItems.Free;
+  FJSONSchema.Free;
+
+  for var AObject in FSchemaArray do
+    AObject.Free;
 
   inherited;
 end;
 
-function TSchema.TObject.TItems.GetItems: Blue.Print.JSON.Schema.TSchema;
+function TSchema.TObject.TItems.GetJSONSchema: Blue.Print.JSON.Schema.TSchema;
 begin
-  if not Assigned(FItems) then
-    FItems := Blue.Print.JSON.Schema.TSchema.Create;
+  if not Assigned(FJSONSchema) then
+    FJSONSchema := Blue.Print.JSON.Schema.TSchema.Create;
 
-  Result := FItems;
+  Result := FJSONSchema;
 end;
 
-function TSchema.TObject.TItems.GetItemsStored: Boolean;
+function TSchema.TObject.TItems.GetJSONSchemaStored: Boolean;
 begin
-  Result := Assigned(FItems);
+  Result := Assigned(FJSONSchema);
+end;
+
+function TSchema.TObject.TItems.AddSchemaArray: Blue.Print.JSON.Schema.TSchema;
+begin
+  Result := Blue.Print.JSON.Schema.TSchema.Create;
+
+  FSchemaArray := FSchemaArray + [Result];
+end;
+
+function TSchema.TObject.TItems.GetSchemaArrayStored: Boolean;
+begin
+  Result := Assigned(FSchemaArray);
 end;
 
 end.
