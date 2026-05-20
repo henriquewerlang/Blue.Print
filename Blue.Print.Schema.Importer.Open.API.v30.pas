@@ -5,14 +5,14 @@ interface
 uses Blue.Print.Schema.Importer, Blue.Print.Open.API.Schema.v30;
 
 type
-  TOpenAPI30SchemaLoader = class(TInterfacedObject, ISchemaLoader)
+  TOpenAPI30SchemaLoader = class(TSchemaLoader, ISchemaLoader)
   private
     FImporter: TSchemaImporter;
     FOpenAPIDefinition: TOpenAPIDefinition;
 
     procedure GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
   public
-    constructor Create(const Importer: TSchemaImporter);
+    constructor Create(const Importer: TSchemaImporter); override;
   end;
 
 implementation
@@ -23,7 +23,7 @@ uses Blue.Print.Serializer, Blue.Print.Types;
 
 constructor TOpenAPI30SchemaLoader.Create(const Importer: TSchemaImporter);
 begin
-  inherited Create;
+  inherited;
 
   FImporter := Importer;
 end;

@@ -22,7 +22,7 @@ type
 
   TImplementationInformation = (NeedDestructor, NeedGetFunction, NeedSetProcedure, NeedAddFunction, NeedIsStoredFunction, NeedIsStoredField);
   TImplementationInformations = set of TImplementationInformation;
-  TSchemaType = (XSD, JSON, OpenAPI20, OpenAPI30, OpenAPI31, WSDL, SOAP10);
+  TSchemaType = (XML, XSD, JSON, OpenAPI20, OpenAPI30, OpenAPI31, WSDL, SOAP10);
 
   TUnitFileConfiguration = class
   private
@@ -400,6 +400,7 @@ type
   end;
 
   ISchemaLoader = interface
+    ['{CBCF837D-0032-46F0-865B-D18C93A6DA79}']
     procedure GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
   end;
 
@@ -471,7 +472,19 @@ type
     property WordType: TTypeDefinition read FWordType;
   end;
 
-  TXSDSchemaLoader = class(TInterfacedObject, ISchemaLoader)
+  TSchemaLoader = class(TInterfacedObject)
+  public
+    constructor Create(const Importer: TSchemaImporter); virtual; abstract;
+  end;
+
+  TSchemaLoaderClass = class of TSchemaLoader;
+
+  TXMLSchemaLoader = class(TSchemaLoader, ISchemaLoader)
+  private
+    procedure GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+  end;
+
+  TXSDSchemaLoader = class(TSchemaLoader, ISchemaLoader)
   private
     FImporter: TSchemaImporter;
     FXMLBuildInType: TDictionary<String, TTypeDefinition>;
@@ -494,21 +507,21 @@ type
     procedure GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
     procedure LoadXSDTypes;
   public
-    constructor Create(const Importer: TSchemaImporter);
+    constructor Create(const Importer: TSchemaImporter); override;
 
     destructor Destroy; override;
   end;
 
-  TWSDLSchemaLoader = class(TInterfacedObject, ISchemaLoader)
+  TWSDLSchemaLoader = class(TSchemaLoader, ISchemaLoader)
   private
     FImporter: TSchemaImporter;
 
     procedure GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
   public
-    constructor Create(const Importer: TSchemaImporter);
+    constructor Create(const Importer: TSchemaImporter); override;
   end;
 
-  TJSONSchemaLoader = class(TInterfacedObject, ISchemaLoader)
+  TJSONSchemaLoader = class(TSchemaLoader, ISchemaLoader)
   private
     FImporter: TSchemaImporter;
     FSchemas: TDictionary<String, TSchema>;
@@ -526,7 +539,7 @@ type
     procedure GenerateProperties(const ClassDefinition: TTypeClassDefinition; const Schema: TSchema);
     procedure GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
   public
-    constructor Create(const Importer: TSchemaImporter);
+    constructor Create(const Importer: TSchemaImporter); override;
 
     destructor Destroy; override;
   end;
@@ -671,7 +684,8 @@ end;
 
 function TSchemaImporter.CreateSchemaLoader(const UnitFileConfiguration: TUnitFileConfiguration): ISchemaLoader;
 const
-  FILE_SCHEMA_EXTENSION: array[TSchemaType] of String = ('xsd', 'json', 'oas2', 'oas3', 'oas31', 'wsdl', 'wsdl');
+  FILE_SCHEMA_CLASS: array[TSchemaType] of TSchemaLoaderClass = (TXMLSchemaLoader, TXSDSchemaLoader, TJSONSchemaLoader, TOpenAPI20SchemaLoader, TOpenAPI30SchemaLoader, TOpenAPI31SchemaLoader, TWSDLSchemaLoader, TWSDLSchemaLoader);
+  FILE_SCHEMA_EXTENSION: array[TSchemaType] of String = ('xml', 'xsd', 'json', 'oas2', 'oas3', 'oas31', 'wsdl', 'wsdl');
 
   function GetFileType: TSchemaType;
   begin
@@ -690,15 +704,7 @@ begin
   if not UnitFileConfiguration.IsFileTypeStored then
     FileType := GetFileType;
 
-  case FileType of
-    TSchemaType.XSD: Result := TXSDSchemaLoader.Create(Self);
-    TSchemaType.JSON: Result := TJSONSchemaLoader.Create(Self);
-    TSchemaType.OpenAPI20: Result := TOpenAPI20SchemaLoader.Create(Self);
-    TSchemaType.OpenAPI30: Result := TOpenAPI30SchemaLoader.Create(Self);
-    TSchemaType.OpenAPI31: Result := TOpenAPI31SchemaLoader.Create(Self);
-    TSchemaType.WSDL, TSchemaType.SOAP10: Result := TWSDLSchemaLoader.Create(Self);
-    else Abort;
-  end;
+  FILE_SCHEMA_CLASS[FileType].Create(Self).QueryInterface(ISchemaLoader, Result);
 end;
 
 function TSchemaImporter.CreateTypeAlias(const Module: TTypeModuleDefinition; const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
@@ -1092,7 +1098,7 @@ end;
 
 constructor TXSDSchemaLoader.Create(const Importer: TSchemaImporter);
 begin
-  inherited Create;
+  inherited;
 
   FImporter := Importer;
   FXMLBuildInType := TDictionary<String, TTypeDefinition>.Create(TIStringComparer.Ordinal);
@@ -2927,7 +2933,7 @@ end;
 
 constructor TJSONSchemaLoader.Create(const Importer: TSchemaImporter);
 begin
-  inherited Create;
+  inherited;
 
   FImporter := Importer;
   FSchemas := TDictionary<String, TSchema>.Create(TIStringComparer.Ordinal);
@@ -3349,7 +3355,7 @@ end;
 
 constructor TWSDLSchemaLoader.Create(const Importer: TSchemaImporter);
 begin
-  inherited Create;
+  inherited;
 
   FImporter := Importer;
 end;
@@ -3727,6 +3733,13 @@ end;
 function TTypeCommonDefinition.GetIsClassDefinition: Boolean;
 begin
   Result := Self is TTypeClassDefinition;
+end;
+
+{ TXMLSchemaLoader }
+
+procedure TXMLSchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+begin
+
 end;
 
 end.

@@ -5,7 +5,7 @@ interface
 uses System.Rtti, System.Generics.Collections, Blue.Print.Schema.Importer, Blue.Print.Open.API.Schema.v20, Blue.Print.JSON.Draft4.Schema;
 
 type
-  TOpenAPI20SchemaLoader = class(TInterfacedObject, ISchemaLoader)
+  TOpenAPI20SchemaLoader = class(TSchemaLoader, ISchemaLoader)
   private
     FImporter: TSchemaImporter;
     FOpenAPIDefinition: TOpenAPIDefinition;
@@ -25,7 +25,7 @@ type
     procedure GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
     procedure LoadClassDefinition(const ClassDefinition: TTypeClassDefinition; const ClassSchema: Schema);
   public
-    constructor Create(const Importer: TSchemaImporter);
+    constructor Create(const Importer: TSchemaImporter); override;
 
     destructor Destroy; override;
   end;
@@ -81,7 +81,7 @@ end;
 
 constructor TOpenAPI20SchemaLoader.Create(const Importer: TSchemaImporter);
 begin
-  inherited Create;
+  inherited;
 
   FImporter := Importer;
   FOpenAPIDefinitions := TDictionary<String, TOpenAPIDefinition>.Create(TIStringComparer.Ordinal);
