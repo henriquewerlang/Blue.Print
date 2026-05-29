@@ -305,7 +305,7 @@ var
 begin
   Result := nil;
 
-  for &Property in RttiType.GetProperties do
+  for &Property in RttiType.GetPropertiesInDeclOrder do
     if &Property.Visibility = mvPublished then
       Result := Result + [&Property];
 end;

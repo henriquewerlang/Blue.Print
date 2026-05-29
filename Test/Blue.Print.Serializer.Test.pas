@@ -289,6 +289,8 @@ type
     procedure WhenThePropertyHasTheXMLValueAttributeAndTheTypeIsAnEnumeratorMustLoadTheEnumeratorValueAsExpected;
     [Test]
     procedure WhenTheSOAPParameterDontHaveTheXMLNamespaceTheParameterValueMustBeInTheSameNameSpace;
+    [Test]
+    procedure WhenSerializarAnInheritedObjectMustLoadTheBasePropertiesFirst;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -357,6 +359,13 @@ type
     FAnother: Integer;
   published
     property Another: Integer read FAnother write FAnother;
+  end;
+
+  TMyObjectInherited2 = class(TMyObjectInherited)
+  private
+    FMoreOne: Integer;
+  published
+    property MoreOne: Integer read FMoreOne write FMoreOne;
   end;
 
   TMyRecord = record
@@ -1570,7 +1579,7 @@ begin
 
   var Value := FSerializer.Serialize(MyClass);
 
-  Assert.AreEqual('{"Error":"","MyObject":{"Another":0,"MyProp1":"","MyProp2":0,"MyProp3":0.0,"MyProp4":"MyValue"}}', FSerializer.Serialize(MyClass));
+  Assert.AreEqual('{"Error":"","MyObject":{"MyProp1":"","MyProp2":0,"MyProp3":0.0,"MyProp4":"MyValue","Another":0}}', FSerializer.Serialize(MyClass));
 
   MyClass.MyObject.Free;
 
@@ -1888,6 +1897,17 @@ begin
   Assert.AreEqual(CurrentTimezone, TBluePrintXMLSerializer.GetCurrentTimeZone);
 end;
 
+procedure TBluePrintXMLSerializerTest.WhenSerializarAnInheritedObjectMustLoadTheBasePropertiesFirst;
+begin
+  var MyClass := TMyObjectInherited2.Create;
+
+  var Value := FSerializer.Serialize(MyClass);
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyObjectInherited2><MyProp1/><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4><Another>0</Another><MoreOne>0</MoreOne></TMyObjectInherited2>'#13#10, FSerializer.Serialize(MyClass));
+
+  MyClass.Free;
+end;
+
 procedure TBluePrintXMLSerializerTest.WhenSerializarAnObjectMustGenerateTheXMLAsExpected;
 begin
   var MyObject := TMyObject.Create;
@@ -2030,7 +2050,7 @@ begin
 
   var Value := FSerializer.Serialize(MyClass);
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyObjectParent><Error/><MyObject><Another>0</Another><MyProp1/><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4></MyObject></TMyObjectParent>'#13#10, FSerializer.Serialize(MyClass));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyObjectParent><Error/><MyObject><MyProp1/><MyProp2>0</MyProp2><MyProp3>0</MyProp3><MyProp4>MyValue</MyProp4><Another>0</Another></MyObject></TMyObjectParent>'#13#10, FSerializer.Serialize(MyClass));
 
   MyClass.MyObject.Free;
 
