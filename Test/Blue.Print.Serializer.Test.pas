@@ -25,6 +25,8 @@ type
     procedure WhenTheClassHasMoreThanOneConstructorMustCallTheConstructorWithoutParameters;
     [Test]
     procedure WhenDeserializeAnObjectThePropertyNameMustBeCaseInsensitive;
+    [Test]
+    procedure WhenSerializeABooleanTypeMustReturnTheValueInLowerCase;
   end;
 
   [TestFixture]
@@ -291,6 +293,10 @@ type
     procedure WhenTheSOAPParameterDontHaveTheXMLNamespaceTheParameterValueMustBeInTheSameNameSpace;
     [Test]
     procedure WhenSerializarAnInheritedObjectMustLoadTheBasePropertiesFirst;
+    [Test]
+    procedure WhenThePropertyTypeIsntAndStructuredTypeMustLoadTheNamespaceValueFromTheParentProperty;
+    [Test]
+    procedure WhenThePropertyHasTheNamespaceAttributeMustLoadThisNamespaceInXML;
   end;
 
   TMyEnum = (MyValue, MyValue2);
@@ -366,6 +372,39 @@ type
     FMoreOne: Integer;
   published
     property MoreOne: Integer read FMoreOne write FMoreOne;
+  end;
+
+  [XMLNamespace('Base')]
+  TMyClassBaseNamespace = class
+  private
+    FBase: Integer;
+  published
+    property Base: Integer read FBase write FBase;
+  end;
+
+  [XMLNamespace('Inherited')]
+  TMyClassInheritedNamespace = class(TMyClassBaseNamespace)
+  private
+    FBase2: Integer;
+  published
+    property Base2: Integer read FBase2 write FBase2;
+  end;
+
+  [XMLNamespace('Namespace')]
+  TMyClassLinkNamespace = class
+  private
+    FNamespace: TMyClassInheritedNamespace;
+  published
+    property Namespace: TMyClassInheritedNamespace read FNamespace write FNamespace;
+  end;
+
+  [XMLNamespace('Class')]
+  TMyClassWithPropertyNamespace = class
+  private
+    FValue: Integer;
+  published
+    [XMLNamespace('Property')]
+    property Value: Integer read FValue write FValue;
   end;
 
   TMyRecord = record
@@ -886,6 +925,17 @@ begin
   Source.Free;
 
   Value.Free;
+end;
+
+procedure TBluePrintSerializerTest.WhenSerializeABooleanTypeMustReturnTheValueInLowerCase;
+begin
+  var Value := FSerializer.Serialize(True);
+
+  Assert.AreEqual('true', Value);
+
+  Value := FSerializer.Serialize(False);
+
+  Assert.AreEqual('false', Value);
 end;
 
 procedure TBluePrintSerializerTest.WhenSerializeAnFloatNumberMustReturnTheStringAsExpected;
@@ -2237,6 +2287,15 @@ begin
   MyClass.Free;
 end;
 
+procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheNamespaceAttributeMustLoadThisNamespaceInXML;
+begin
+  var MyObject := TMyClassWithPropertyNamespace.Create;
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithPropertyNamespace xmlns="Class"><Value xmlns="Property">0</Value></TMyClassWithPropertyNamespace>'#13#10, FSerializer.Serialize(MyObject));
+
+  MyObject.Free;
+end;
+
 procedure TBluePrintXMLSerializerTest.WhenThePropertyHasTheNodeNameAttributeMustGenerateTheXMLWithTheNameInTheAttribute;
 begin
   var MyObject := TMyClassWithNode.Create;
@@ -2301,6 +2360,18 @@ begin
   Value.Free;
 end;
 
+procedure TBluePrintXMLSerializerTest.WhenThePropertyTypeIsntAndStructuredTypeMustLoadTheNamespaceValueFromTheParentProperty;
+begin
+  var MyObject := TMyClassLinkNamespace.Create;
+  MyObject.Namespace := TMyClassInheritedNamespace.Create;
+
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassLinkNamespace xmlns="Namespace"><Namespace xmlns="Inherited"><Base xmlns="Base">0</Base><Base2>0</Base2></Namespace></TMyClassLinkNamespace>'#13#10, FSerializer.Serialize(MyObject));
+
+  MyObject.Namespace.Free;
+
+  MyObject.Free;
+end;
+
 procedure TBluePrintXMLSerializerTest.WhenThePropetyValueIsEmptyMustLoadTheXMLWithTheNodeEmptyAsExpected;
 begin
   var MyClass := TMyClassWithNodeNameAttribute.Create;
@@ -2331,7 +2402,7 @@ begin
   SOAPEnvelop.AddBodyPart(RttiMethod.GetParameters[0], Value);
 
   Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<SOAP-ENV:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENV="">'
-    + '<SOAP-ENV:Body><MyParam xmlns="MySpace"><MyProp>False</MyProp></MyParam></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPEnvelop)));
+    + '<SOAP-ENV:Body><MyParam xmlns="MySpace"><MyProp>false</MyProp></MyParam></SOAP-ENV:Body></SOAP-ENV:Envelope>'#13#10, FSerializer.Serialize(TValue.From(SOAPEnvelop)));
 
   RttiContext.Free;
 

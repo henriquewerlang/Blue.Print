@@ -330,7 +330,13 @@ begin
 {$IFDEF PAS2JS}
     tkBool,
 {$ENDIF}
-    tkEnumeration: Result := GetEnumerationNames(Value.TypeInfo)[Value.AsOrdinal()];
+    tkEnumeration:
+      begin
+        Result := GetEnumerationNames(Value.TypeInfo)[Value.AsOrdinal()];
+
+        if Value.TypeInfo = TypeInfo(Boolean) then
+          Result := Result.ToLower;
+      end;
 
     else Result := EmptyStr;
   end;
@@ -1350,7 +1356,12 @@ begin
 
       if not PropertyValue.IsEmpty then
       begin
-        var CurrentNamespace := GetNamespaceValue(&Property.PropertyType, Namespace);
+        var ParentObject: TRttiObject := &Property.PropertyType;
+
+        if not (ParentObject is TRttiStructuredType) then
+          ParentObject := &Property;
+
+        var CurrentNamespace := GetNamespaceValue(ParentObject, Namespace);
         var NodeValue := Node;
 
         if not &Property.HasAttribute<XMLValueAttribute> then
