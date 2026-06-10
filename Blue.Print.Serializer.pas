@@ -1207,14 +1207,14 @@ end;
 function TBluePrintXMLSerializer.GetNamespaceValue(const RttiObject: TRttiObject; const Namespace: String): String;
 begin
 {$IFDEF DCC}
-  Result := Namespace;
-
   for var Attribute in RttiObject.GetAttributes do
     if Attribute is XMLNamespaceAttribute then
       Exit((Attribute as XMLNamespaceAttribute).Namespace);
 
   if Assigned(RttiObject.Parent) then
-    Result := GetNamespaceValue(RttiObject.Parent, Namespace);
+    Result := GetNamespaceValue(RttiObject.Parent, Namespace)
+  else
+    Result := Namespace;
 {$ENDIF}
 end;
 
@@ -1356,12 +1356,7 @@ begin
 
       if not PropertyValue.IsEmpty then
       begin
-        var ParentObject: TRttiObject := &Property.PropertyType;
-
-        if not (ParentObject is TRttiStructuredType) then
-          ParentObject := &Property;
-
-        var CurrentNamespace := GetNamespaceValue(ParentObject, Namespace);
+        var CurrentNamespace := GetNamespaceValue(&Property, Namespace);
         var NodeValue := Node;
 
         if not &Property.HasAttribute<XMLValueAttribute> then

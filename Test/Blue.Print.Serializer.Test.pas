@@ -1741,8 +1741,11 @@ procedure TBluePrintXMLSerializerTest.WhenAChildClassHasXMLNamespaceAttributeMus
 begin
   var MyClass := TMyClassWithNamespaceParent.Create;
   MyClass.MyProp := TMyClassWithNamespace.Create;
+  MyClass.MyProp.MyProp := TMyClassWithChildWithXMLAttribute.Create;
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithNamespaceParent xmlns="Another"><MyProp xmlns="MyNamespace"/></TMyClassWithNamespaceParent>'#13#10, FSerializer.Serialize(MyClass));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassWithNamespaceParent xmlns="Another"><MyProp><MyProp xmlns="MyNamespace"/></MyProp></TMyClassWithNamespaceParent>'#13#10, FSerializer.Serialize(MyClass));
+
+  MyClass.MyProp.MyProp.Free;
 
   MyClass.MyProp.Free;
 
@@ -2365,7 +2368,7 @@ begin
   var MyObject := TMyClassLinkNamespace.Create;
   MyObject.Namespace := TMyClassInheritedNamespace.Create;
 
-  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassLinkNamespace xmlns="Namespace"><Namespace xmlns="Inherited"><Base xmlns="Base">0</Base><Base2>0</Base2></Namespace></TMyClassLinkNamespace>'#13#10, FSerializer.Serialize(MyObject));
+  Assert.AreEqual('<?xml version="1.0" encoding="UTF-8"?>'#13#10'<TMyClassLinkNamespace xmlns="Namespace"><Namespace><Base xmlns="Base">0</Base><Base2 xmlns="Inherited">0</Base2></Namespace></TMyClassLinkNamespace>'#13#10, FSerializer.Serialize(MyObject));
 
   MyObject.Namespace.Free;
 
