@@ -27,6 +27,10 @@ type
     procedure WhenDeserializeAnObjectThePropertyNameMustBeCaseInsensitive;
     [Test]
     procedure WhenSerializeABooleanTypeMustReturnTheValueInLowerCase;
+    [Test]
+    procedure WhenDeserializeAnInvalidEnumeratorNameMustRaiseAnError;
+    [Test]
+    procedure WhenTryToDeserializeAnEnumeratorMustIgnoreTheCaseOfTheName;
   end;
 
   [TestFixture]
@@ -908,6 +912,15 @@ begin
   Assert.AreEqual(123, Value.AsInteger);
 end;
 
+procedure TBluePrintSerializerTest.WhenDeserializeAnInvalidEnumeratorNameMustRaiseAnError;
+begin
+  Assert.WillRaise(
+    procedure
+    begin
+      FSerializer.Deserialize('"Error"', TypeInfo(Boolean));
+    end, EInvalidEnumeratorName);
+end;
+
 procedure TBluePrintSerializerTest.WhenDeserializeAnObjectThePropertyNameMustBeCaseInsensitive;
 begin
   var Source := TMyObjectLowercase.Create;
@@ -976,6 +989,15 @@ begin
   Source.Free;
 
   Value.Free;
+end;
+
+procedure TBluePrintSerializerTest.WhenTryToDeserializeAnEnumeratorMustIgnoreTheCaseOfTheName;
+begin
+  Assert.WillNotRaise(
+    procedure
+    begin
+      FSerializer.Deserialize('"TRUE"', TypeInfo(Boolean));
+    end);
 end;
 
 { TBluePrintJsonSerializerTest }

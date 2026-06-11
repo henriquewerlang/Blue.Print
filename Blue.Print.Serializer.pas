@@ -22,6 +22,9 @@ type
     constructor Create;
   end;
 
+  EInvalidEnumeratorName = class(Exception)
+  end;
+
   TBluePrintSerializer = class(TInterfacedObject)
   protected
     FContext: TRttiContext;
@@ -267,22 +270,27 @@ begin
 end;
 
 function TBluePrintSerializer.GetEnumerationValue(const TypeInfo: PTypeInfo; const Value: String): TValue;
-var
-  CurrentValue: Int64;
-  EnumName: String;
 
-begin
-  CurrentValue := -1;
+  function EnumeratoValue: Integer;
+  var
+    EnumName: String;
 
-  for EnumName in GetEnumerationNames(TypeInfo) do
   begin
-    Inc(CurrentValue);
+    Result := -1;
 
-    if EnumName = Value then
-      Break;
+    for EnumName in GetEnumerationNames(TypeInfo) do
+    begin
+      Inc(Result);
+
+      if SameText(EnumName, Value) then
+        Exit;
+    end;
+
+    raise EInvalidEnumeratorName.CreateFmt('Invalid enumerator value name %s!', [Value]);
   end;
 
-  Result := TValue.FromOrdinal(TypeInfo, CurrentValue);
+begin
+  Result := TValue.FromOrdinal(TypeInfo, EnumeratoValue);
 end;
 
 function TBluePrintSerializer.GetFieldName(const RttiObject: TRttiNamedObject): String;
