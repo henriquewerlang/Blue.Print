@@ -453,8 +453,9 @@ type
       property IsRecursiveRefStored: Boolean read GetRecursiveRefStored;
       property IsAdditionalItemsStored: Boolean read GetAdditionalItemsStored;
     published
-      [FieldName('$id')]
       property Id: uriReferenceString read FId write FId stored GetIdStored;
+      [FieldName('$id')]
+      property Id_: uriReferenceString read FId write FId stored GetIdStored;
       [FieldName('$schema')]
       property Schema: uriString read FSchema write FSchema stored GetSchemaStored;
       [FieldName('$ref')]

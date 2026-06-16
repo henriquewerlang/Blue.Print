@@ -8,7 +8,7 @@
             {
                "FileType": "JSON",
                "Reference": "http://json-schema.org/draft-04/schema",
-               "UnitClassName": "TSchema"
+               "UnitClassName": "Schema"
             }
          ]
       }

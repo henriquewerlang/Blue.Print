@@ -5,7 +5,7 @@
         <FrameworkType>VCL</FrameworkType>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
-        <Platform Condition="'$(Platform)'==''">Win64</Platform>
+        <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <ProjectName Condition="'$(ProjectName)'==''">Blue.Print.Schema.Importer.Application</ProjectName>
         <TargetedPlatforms>3</TargetedPlatforms>
         <AppType>Application</AppType>
@@ -135,10 +135,11 @@
         <DCCReference Include="Blue.Print.Serializer.pas"/>
         <DCCReference Include="Blue.Print.Types.pas"/>
         <DCCReference Include="Blue.Print.JSON.Schema.pas"/>
+        <DCCReference Include="Blue.Print.JSON.Draft4.Schema.pas"/>
         <DCCReference Include="Blue.Print.Open.API.Schema.v20.pas"/>
         <DCCReference Include="Blue.Print.Schema.Importer.Open.API.v20.pas"/>
+        <DCCReference Include="Blue.Print.Open.API.Schema.v30.pas"/>
         <DCCReference Include="Blue.Print.Schema.Importer.Open.API.v30.pas"/>
-        <DCCReference Include="Blue.Print.Schema.Importer.Open.API.v31.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
@@ -175,12 +176,6 @@
                 <DeployFile LocalName="Win64\Debug\Blue.Print.Schema.Importer.Application.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win64">
                         <RemoteName>Blue.Print.Schema.Importer.Application.exe</RemoteName>
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
-                <DeployFile LocalName="Win64\Debug\Blue.Print.Schema.Importer.Application.rsm" Configuration="Debug" Class="DebugSymbols">
-                    <Platform Name="Win64">
-                        <RemoteName>Blue.Print.Schema.Importer.Application.rsm</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>

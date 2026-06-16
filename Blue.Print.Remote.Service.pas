@@ -677,6 +677,8 @@ begin
 
   LoadHeaders;
 
+  BodyStream.SaveToFile('Requisição.xml');
+
   var Request := Connection.GetRequest(REQUEST_METHOD_NAME[RequestMethod], URLString);
   Request.SourceStream := BodyStream;
 

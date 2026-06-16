@@ -5,15 +5,19 @@
    ],
    "TypeDefinition": [
       {
-         "Name": "nonBodyParameter",
+         "Name": "TOpenAPIDefinition.nonBodyParameter",
          "FlatEnumerator": "in"
       },
       {
-         "Name": "parameter",
+         "Name": "TOpenAPIDefinition.BodyParameter",
          "FlatEnumerator": "in"
       },
       {
-         "Name": "response.schema",
+         "Name": "TOpenAPIDefinition.parameter",
+         "FlatEnumerator": "in"
+      },
+      {
+         "Name": "TOpenAPIDefinition.response.schema",
          "FlatEnumerator": "type"
       }
    ],

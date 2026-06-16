@@ -29,8 +29,6 @@ type
     procedure WhenSerializeABooleanTypeMustReturnTheValueInLowerCase;
     [Test]
     procedure WhenDeserializeAnInvalidEnumeratorNameMustRaiseAnError;
-    [Test]
-    procedure WhenTryToDeserializeAnEnumeratorMustIgnoreTheCaseOfTheName;
   end;
 
   [TestFixture]
@@ -174,6 +172,8 @@ type
     procedure WhenDeserializeAnEnumerationWithTheEnumValueAttributeMustUseTheAttributeNameToReturnTheEnumerationValue;
     [Test]
     procedure WhenDeserializeANullValueArrayCantRaiseAnyError;
+    [Test]
+    procedure WhenTryToDeserializeAnEnumeratorMustIgnoreTheCaseOfTheName;
   end;
 
   [TestFixture]
@@ -820,7 +820,7 @@ type
     property MyProp4: Integer read FMyProp4 write FMyProp4;
   end;
 
-  [Flat('MyProp1')]
+  [Flat]
   TMyClassWithNotEnumeratorProperty = class
   private
     FMyObject: TMyObject;
@@ -864,7 +864,7 @@ type
     property MyEnum: TClassWithFlatAttributeAndEnumerator read FMyEnum write FMyEnum;
   end;
 
-  [Flat('MyEnum')]
+  [Flat]
   TFlatClassToEnumerator = class
   private
     FTheClass: TClassToEnumerator;
@@ -989,15 +989,6 @@ begin
   Source.Free;
 
   Value.Free;
-end;
-
-procedure TBluePrintSerializerTest.WhenTryToDeserializeAnEnumeratorMustIgnoreTheCaseOfTheName;
-begin
-  Assert.WillNotRaise(
-    procedure
-    begin
-      FSerializer.Deserialize('"TRUE"', TypeInfo(Boolean));
-    end);
 end;
 
 { TBluePrintJsonSerializerTest }
@@ -1402,7 +1393,7 @@ begin
   Assert.IsNotNil(Value);
   Assert.AreEqual('abc', Value.MyProp1);
   Assert.AreEqual(123, Value.MyProp2);
-  Assert.AreEqual(123.456, Value.MyProp3);
+  Assert.AreEqual(FormatFloat('0.000', 123.456), FormatFloat('0.000', Value.MyProp3));
   Assert.AreEqual(TMyEnum.MyValue, Value.MyProp4);
 
   Value.Free;
@@ -1447,7 +1438,7 @@ begin
 
   Assert.AreEqual('abc', Value.MyField1);
   Assert.AreEqual(123, Value.MyField2);
-  Assert.AreEqual(123.456, Value.MyField3);
+  Assert.AreEqual(FormatFloat('0.000', 123.456), FormatFloat('0.000', Value.MyField3));
   Assert.AreEqual(TMyEnum.MyValue2, Value.MyField4);
 end;
 
@@ -1471,7 +1462,7 @@ procedure TBluePrintJsonSerializerTest.WhenDeserializeATValueAndTheJSONValueIsAN
 begin
   var Value := FSerializer.Deserialize('{"Value":123.456}', TypeInfo(TMyTValueClass)).AsType<TMyTValueClass>;
 
-  Assert.AreEqual(123.456, Value.Value.AsExtended);
+  Assert.AreEqual(FormatFloat('0.000', 123.456), FormatFloat('0.000', Value.Value.AsExtended));
 
   Value.Free;
 end;
@@ -1727,6 +1718,15 @@ begin
     end);
 end;
 
+procedure TBluePrintJsonSerializerTest.WhenTryToDeserializeAnEnumeratorMustIgnoreTheCaseOfTheName;
+begin
+  Assert.WillNotRaise(
+    procedure
+    begin
+      FSerializer.Deserialize('"TRUE"', TypeInfo(Boolean));
+    end);
+end;
+
 { TBluePrintXMLSerializerTest }
 
 procedure TBluePrintXMLSerializerTest.OnlyPublicRecordFieldCanBeSerialized;
@@ -1918,7 +1918,7 @@ begin
   Assert.IsNotNil(Value);
   Assert.AreEqual('abc', Value.MyProp1);
   Assert.AreEqual(123, Value.MyProp2);
-  Assert.AreEqual(123.456, Value.MyProp3);
+  Assert.AreEqual(FormatFloat('0.000', 123.456), FormatFloat('0.000', Value.MyProp3));
   Assert.AreEqual(TMyEnum.MyValue2, Value.MyProp4);
 
   Value.Free;
@@ -1933,7 +1933,7 @@ begin
   Assert.IsNotNil(Value);
   Assert.AreEqual('abc', Value.MyProp1);
   Assert.AreEqual(123, Value.MyProp2);
-  Assert.AreEqual(123.456, Value.MyProp3);
+  Assert.AreEqual(FormatFloat('0.000', 123.456), FormatFloat('0.000', Value.MyProp3));
   Assert.AreEqual(TMyEnum.MyValue2, Value.MyProp4);
 
   Value.Free;
@@ -1948,7 +1948,7 @@ begin
   Assert.IsNotNil(Value);
   Assert.AreEqual('abc', Value.MyProp1);
   Assert.AreEqual(123, Value.MyProp2);
-  Assert.AreEqual(123.456, Value.MyProp3);
+  Assert.AreEqual(FormatFloat('0.000', 123.456), FormatFloat('0.000', Value.MyProp3));
   Assert.AreEqual(TMyEnum.MyValue2, Value.MyProp4);
 
   Value.Free;

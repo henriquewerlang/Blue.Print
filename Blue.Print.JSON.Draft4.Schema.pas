@@ -10,359 +10,387 @@ interface
 uses Blue.Print.Types, System.Rtti;
 
 type
-  // Enumerations declaration
-  [EnumValue('array, boolean, integer, null, number, object, string')]
-  simpleTypes = (&array, boolean, integer, null, number, &object, &string);
   // Forward class declaration
-  PositiveIntegerDefault0 = class;
-  TSchema = class;
+  Schema = class;
 
-  // Forward type alias
-  schemaArray = TArray<Blue.Print.JSON.Draft4.Schema.TSchema>;
-  positiveInteger = System.Integer;
+  // Types alias
   any = System.Rtti.TValue;
-  stringArray = TArray<System.String>;
 
-  [Flat]
-  PositiveIntegerDefault0 = class
-  private
-    FPositiveInteger: positiveInteger;
-    FAnonymous: any;
-    FAnonymousIsStored: Boolean;
-
-    function GetPositiveIntegerStored: Boolean;
-    procedure SetAnonymous(const Value: any);
-  public
-    property IsPositiveIntegerStored: Boolean read GetPositiveIntegerStored;
-    property IsAnonymousStored: Boolean read FAnonymousIsStored;
-  published
-    property positiveInteger: positiveInteger read FPositiveInteger write FPositiveInteger stored GetPositiveIntegerStored;
-    property Anonymous: any read FAnonymous write SetAnonymous stored FAnonymousIsStored;
-  end;
-
-  TSchema = class
+  Schema = class
   public type
-    [Flat]
-    TAdditionalItems = class
-    private
-      FBoolean: System.Boolean;
-      FSchema: TSchema;
-      FBooleanIsStored: Boolean;
+    [EnumValue('array, boolean, integer, null, number, object, string')]
+    SimpleTypes = (&array, boolean, integer, null, number, &object, &string);
 
-      function GetSchema: TSchema;
-      function GetSchemaStored: Boolean;
-      procedure SetBoolean(const Value: System.Boolean);
-    public
-      destructor Destroy; override;
+    // Forward class declaration
+    PositiveIntegerDefault0 = class;
+    Schema = class;
 
-      property IsBooleanStored: Boolean read FBooleanIsStored;
-      property IsSchemaStored: Boolean read GetSchemaStored;
-    published
-      property boolean: System.Boolean read FBoolean write SetBoolean stored FBooleanIsStored;
-      property Schema: TSchema read GetSchema write FSchema stored GetSchemaStored;
-    end;
+    // Types alias
+    schemaArray = TArray<Blue.Print.JSON.Draft4.Schema.Schema>;
+    positiveInteger = System.Integer;
+    stringArray = TArray<System.String>;
 
     [Flat]
-    TItems = class
+    PositiveIntegerDefault0 = class
     private
-      FSchema: TSchema;
-      FSchemaArray: schemaArray;
+      FPositiveInteger: Schema.positiveInteger;
 
-      function GetSchema: TSchema;
+      function GetPositiveIntegerStored: Boolean;
+    public
+      property IsPositiveIntegerStored: Boolean read GetPositiveIntegerStored;
+    published
+      property positiveInteger: Schema.positiveInteger read FPositiveInteger write FPositiveInteger stored GetPositiveIntegerStored;
+    end;
+
+    Schema = class
+    public type
+      // Forward class declaration
+      TAdditionalItems = class;
+      TItems = class;
+      TAdditionalProperties = class;
+      TDefinitions = class;
+      TProperties = class;
+      TPatternProperties = class;
+      TDependencies = class;
+      TType = class;
+
+      [Flat]
+      TAdditionalItems = class
+      private
+        FBoolean: System.Boolean;
+        FSchema: Schema;
+
+        function GetSchema: Schema;
+        function GetBooleanStored: Boolean;
+        function GetSchemaStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsBooleanStored: Boolean read GetBooleanStored;
+        property IsSchemaStored: Boolean read GetSchemaStored;
+      published
+        property boolean: System.Boolean read FBoolean write FBoolean stored GetBooleanStored;
+        property Schema: Schema read GetSchema write FSchema stored GetSchemaStored;
+      end;
+
+      [Flat]
+      TItems = class
+      private
+        FSchema: Schema;
+        FSchemaArray: Schema.schemaArray;
+
+        function GetSchema: Schema;
+        function GetSchemaStored: Boolean;
+        function GetSchemaArrayStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        function AddSchemaArray: Blue.Print.JSON.Draft4.Schema.Schema;
+
+        property IsSchemaStored: Boolean read GetSchemaStored;
+        property IsSchemaArrayStored: Boolean read GetSchemaArrayStored;
+      published
+        property Schema: Schema read GetSchema write FSchema stored GetSchemaStored;
+        property schemaArray: Schema.schemaArray read FSchemaArray write FSchemaArray stored GetSchemaArrayStored;
+      end;
+
+      [Flat]
+      TAdditionalProperties = class
+      private
+        FBoolean: System.Boolean;
+        FSchema: Schema;
+
+        function GetSchema: Schema;
+        function GetBooleanStored: Boolean;
+        function GetSchemaStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsBooleanStored: Boolean read GetBooleanStored;
+        property IsSchemaStored: Boolean read GetSchemaStored;
+      published
+        property boolean: System.Boolean read FBoolean write FBoolean stored GetBooleanStored;
+        property Schema: Schema read GetSchema write FSchema stored GetSchemaStored;
+      end;
+
+      TDefinitions = class
+      private
+        FAdditionalProperties: TDynamicProperty<Schema>;
+
+        function GetAdditionalProperties: TDynamicProperty<Schema>;
+        function GetAdditionalPropertiesStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+      published
+        property additionalProperties: TDynamicProperty<Schema> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+      end;
+
+      TProperties = class
+      private
+        FAdditionalProperties: TDynamicProperty<Schema>;
+
+        function GetAdditionalProperties: TDynamicProperty<Schema>;
+        function GetAdditionalPropertiesStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+      published
+        property additionalProperties: TDynamicProperty<Schema> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+      end;
+
+      TPatternProperties = class
+      private
+        FAdditionalProperties: TDynamicProperty<Schema>;
+
+        function GetAdditionalProperties: TDynamicProperty<Schema>;
+        function GetAdditionalPropertiesStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+      published
+        property additionalProperties: TDynamicProperty<Schema> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+      end;
+
+      TDependencies = class
+      public type
+        // Forward class declaration
+        TadditionalProperties = class;
+
+        [Flat]
+        TadditionalProperties = class
+        private
+          FSchema: Schema;
+          FStringArray: Schema.stringArray;
+
+          function GetSchema: Schema;
+          function GetSchemaStored: Boolean;
+          function GetStringArrayStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsSchemaStored: Boolean read GetSchemaStored;
+          property IsStringArrayStored: Boolean read GetStringArrayStored;
+        published
+          property Schema: Schema read GetSchema write FSchema stored GetSchemaStored;
+          property stringArray: Schema.stringArray read FStringArray write FStringArray stored GetStringArrayStored;
+        end;
+      private
+        FSchema: Schema;
+        FStringArray: Schema.stringArray;
+        FAdditionalProperties: TDynamicProperty<Schema.Schema.TDependencies.TadditionalProperties>;
+
+        function GetSchema: Schema;
+        function GetAdditionalProperties: TDynamicProperty<Schema.Schema.TDependencies.TadditionalProperties>;
+        function GetSchemaStored: Boolean;
+        function GetStringArrayStored: Boolean;
+        function GetAdditionalPropertiesStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsSchemaStored: Boolean read GetSchemaStored;
+        property IsStringArrayStored: Boolean read GetStringArrayStored;
+        property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+      published
+        property Schema: Schema read GetSchema write FSchema stored GetSchemaStored;
+        property stringArray: Schema.stringArray read FStringArray write FStringArray stored GetStringArrayStored;
+        property additionalProperties: TDynamicProperty<Schema.Schema.TDependencies.TadditionalProperties> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+      end;
+
+      [Flat]
+      TType = class
+      private
+        FSimpleTypes: Schema.SimpleTypes;
+        FArray: TArray<Schema.SimpleTypes>;
+        FSimpleTypesIsStored: Boolean;
+
+        function GetArrayStored: Boolean;
+        procedure SetSimpleTypes(const Value: Schema.SimpleTypes);
+      public
+        property IsSimpleTypesStored: Boolean read FSimpleTypesIsStored;
+        property IsArrayStored: Boolean read GetArrayStored;
+      published
+        property SimpleTypes: Schema.SimpleTypes read FSimpleTypes write SetSimpleTypes stored FSimpleTypesIsStored;
+        [FieldName('array')]
+        property &array: TArray<Schema.SimpleTypes> read FArray write FArray stored GetArrayStored;
+      end;
+    private
+      FId: System.String;
+      FSchema: System.String;
+      FTitle: System.String;
+      FDescription: System.String;
+      FDefault: any;
+      FMultipleOf: System.Double;
+      FMaximum: System.Double;
+      FExclusiveMaximum: System.Boolean;
+      FMinimum: System.Double;
+      FExclusiveMinimum: System.Boolean;
+      FMaxLength: Schema.positiveInteger;
+      FMinLength: Schema.PositiveIntegerDefault0;
+      FPattern: System.String;
+      FAdditionalItems: Schema.Schema.TAdditionalItems;
+      FItems: Schema.Schema.TItems;
+      FMaxItems: Schema.positiveInteger;
+      FMinItems: Schema.PositiveIntegerDefault0;
+      FUniqueItems: System.Boolean;
+      FMaxProperties: Schema.positiveInteger;
+      FMinProperties: Schema.PositiveIntegerDefault0;
+      FRequired: Schema.stringArray;
+      FAdditionalProperties: Schema.Schema.TAdditionalProperties;
+      FDefinitions: Schema.Schema.TDefinitions;
+      FProperties: Schema.Schema.TProperties;
+      FPatternProperties: Schema.Schema.TPatternProperties;
+      FDependencies: Schema.Schema.TDependencies;
+      FEnum: TArray<any>;
+      FType: Schema.Schema.TType;
+      FFormat: System.String;
+      FAllOf: Schema.schemaArray;
+      FAnyOf: Schema.schemaArray;
+      FOneOf: Schema.schemaArray;
+      FNot: Schema;
+
+      function GetMinLength: Schema.PositiveIntegerDefault0;
+      function GetAdditionalItems: Schema.Schema.TAdditionalItems;
+      function GetItems: Schema.Schema.TItems;
+      function GetMinItems: Schema.PositiveIntegerDefault0;
+      function GetMinProperties: Schema.PositiveIntegerDefault0;
+      function GetAdditionalProperties: Schema.Schema.TAdditionalProperties;
+      function GetDefinitions: Schema.Schema.TDefinitions;
+      function GetProperties: Schema.Schema.TProperties;
+      function GetPatternProperties: Schema.Schema.TPatternProperties;
+      function GetDependencies: Schema.Schema.TDependencies;
+      function GetType: Schema.Schema.TType;
+      function GetNot: Schema;
+      function GetIdStored: Boolean;
       function GetSchemaStored: Boolean;
-      function GetSchemaArrayStored: Boolean;
+      function GetTitleStored: Boolean;
+      function GetDescriptionStored: Boolean;
+      function GetDefaultStored: Boolean;
+      function GetMultipleOfStored: Boolean;
+      function GetMaximumStored: Boolean;
+      function GetExclusiveMaximumStored: Boolean;
+      function GetMinimumStored: Boolean;
+      function GetExclusiveMinimumStored: Boolean;
+      function GetMaxLengthStored: Boolean;
+      function GetMinLengthStored: Boolean;
+      function GetPatternStored: Boolean;
+      function GetAdditionalItemsStored: Boolean;
+      function GetItemsStored: Boolean;
+      function GetMaxItemsStored: Boolean;
+      function GetMinItemsStored: Boolean;
+      function GetUniqueItemsStored: Boolean;
+      function GetMaxPropertiesStored: Boolean;
+      function GetMinPropertiesStored: Boolean;
+      function GetRequiredStored: Boolean;
+      function GetAdditionalPropertiesStored: Boolean;
+      function GetDefinitionsStored: Boolean;
+      function GetPropertiesStored: Boolean;
+      function GetPatternPropertiesStored: Boolean;
+      function GetDependenciesStored: Boolean;
+      function GetEnumStored: Boolean;
+      function GetTypeStored: Boolean;
+      function GetFormatStored: Boolean;
+      function GetAllOfStored: Boolean;
+      function GetAnyOfStored: Boolean;
+      function GetOneOfStored: Boolean;
+      function GetNotStored: Boolean;
     public
       destructor Destroy; override;
 
-      function AddSchemaArray: TSchema;
+      function AddAllOf: Blue.Print.JSON.Draft4.Schema.Schema;
+      function AddAnyOf: Blue.Print.JSON.Draft4.Schema.Schema;
+      function AddOneOf: Blue.Print.JSON.Draft4.Schema.Schema;
 
+      property IsIdStored: Boolean read GetIdStored;
       property IsSchemaStored: Boolean read GetSchemaStored;
-      property IsSchemaArrayStored: Boolean read GetSchemaArrayStored;
+      property IsTitleStored: Boolean read GetTitleStored;
+      property IsDescriptionStored: Boolean read GetDescriptionStored;
+      property IsDefaultStored: Boolean read GetDefaultStored;
+      property IsMultipleOfStored: Boolean read GetMultipleOfStored;
+      property IsMaximumStored: Boolean read GetMaximumStored;
+      property IsExclusiveMaximumStored: Boolean read GetExclusiveMaximumStored;
+      property IsMinimumStored: Boolean read GetMinimumStored;
+      property IsExclusiveMinimumStored: Boolean read GetExclusiveMinimumStored;
+      property IsMaxLengthStored: Boolean read GetMaxLengthStored;
+      property IsMinLengthStored: Boolean read GetMinLengthStored;
+      property IsPatternStored: Boolean read GetPatternStored;
+      property IsAdditionalItemsStored: Boolean read GetAdditionalItemsStored;
+      property IsItemsStored: Boolean read GetItemsStored;
+      property IsMaxItemsStored: Boolean read GetMaxItemsStored;
+      property IsMinItemsStored: Boolean read GetMinItemsStored;
+      property IsUniqueItemsStored: Boolean read GetUniqueItemsStored;
+      property IsMaxPropertiesStored: Boolean read GetMaxPropertiesStored;
+      property IsMinPropertiesStored: Boolean read GetMinPropertiesStored;
+      property IsRequiredStored: Boolean read GetRequiredStored;
+      property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+      property IsDefinitionsStored: Boolean read GetDefinitionsStored;
+      property IsPropertiesStored: Boolean read GetPropertiesStored;
+      property IsPatternPropertiesStored: Boolean read GetPatternPropertiesStored;
+      property IsDependenciesStored: Boolean read GetDependenciesStored;
+      property IsEnumStored: Boolean read GetEnumStored;
+      property IsTypeStored: Boolean read GetTypeStored;
+      property IsFormatStored: Boolean read GetFormatStored;
+      property IsAllOfStored: Boolean read GetAllOfStored;
+      property IsAnyOfStored: Boolean read GetAnyOfStored;
+      property IsOneOfStored: Boolean read GetOneOfStored;
+      property IsNotStored: Boolean read GetNotStored;
     published
-      property Schema: TSchema read GetSchema write FSchema stored GetSchemaStored;
-      property schemaArray: schemaArray read FSchemaArray write FSchemaArray stored GetSchemaArrayStored;
+      property id: System.String read FId write FId stored GetIdStored;
+      [FieldName('$schema')]
+      property Schema: System.String read FSchema write FSchema stored GetSchemaStored;
+      property title: System.String read FTitle write FTitle stored GetTitleStored;
+      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+      property default: any read FDefault write FDefault stored GetDefaultStored;
+      property multipleOf: System.Double read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
+      property maximum: System.Double read FMaximum write FMaximum stored GetMaximumStored;
+      property exclusiveMaximum: System.Boolean read FExclusiveMaximum write FExclusiveMaximum stored GetExclusiveMaximumStored;
+      property minimum: System.Double read FMinimum write FMinimum stored GetMinimumStored;
+      property exclusiveMinimum: System.Boolean read FExclusiveMinimum write FExclusiveMinimum stored GetExclusiveMinimumStored;
+      property maxLength: Schema.positiveInteger read FMaxLength write FMaxLength stored GetMaxLengthStored;
+      property minLength: Schema.PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
+      property pattern: System.String read FPattern write FPattern stored GetPatternStored;
+      property additionalItems: Schema.Schema.TAdditionalItems read GetAdditionalItems write FAdditionalItems stored GetAdditionalItemsStored;
+      property items: Schema.Schema.TItems read GetItems write FItems stored GetItemsStored;
+      property maxItems: Schema.positiveInteger read FMaxItems write FMaxItems stored GetMaxItemsStored;
+      property minItems: Schema.PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
+      property uniqueItems: System.Boolean read FUniqueItems write FUniqueItems stored GetUniqueItemsStored;
+      property maxProperties: Schema.positiveInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
+      property minProperties: Schema.PositiveIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
+      property required: Schema.stringArray read FRequired write FRequired stored GetRequiredStored;
+      property additionalProperties: Schema.Schema.TAdditionalProperties read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+      property definitions: Schema.Schema.TDefinitions read GetDefinitions write FDefinitions stored GetDefinitionsStored;
+      property properties: Schema.Schema.TProperties read GetProperties write FProperties stored GetPropertiesStored;
+      property patternProperties: Schema.Schema.TPatternProperties read GetPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
+      property dependencies: Schema.Schema.TDependencies read GetDependencies write FDependencies stored GetDependenciesStored;
+      property enum: TArray<any> read FEnum write FEnum stored GetEnumStored;
+      [FieldName('type')]
+      property &type: Schema.Schema.TType read GetType write FType stored GetTypeStored;
+      property format: System.String read FFormat write FFormat stored GetFormatStored;
+      property allOf: Schema.schemaArray read FAllOf write FAllOf stored GetAllOfStored;
+      property anyOf: Schema.schemaArray read FAnyOf write FAnyOf stored GetAnyOfStored;
+      property oneOf: Schema.schemaArray read FOneOf write FOneOf stored GetOneOfStored;
+      [FieldName('not')]
+      property &not: Schema read GetNot write FNot stored GetNotStored;
     end;
-
-    [Flat]
-    TAdditionalProperties = class
-    private
-      FBoolean: System.Boolean;
-      FSchema: TSchema;
-      FBooleanIsStored: Boolean;
-
-      function GetSchema: TSchema;
-      function GetSchemaStored: Boolean;
-      procedure SetBoolean(const Value: System.Boolean);
-    public
-      destructor Destroy; override;
-
-      property IsBooleanStored: Boolean read FBooleanIsStored;
-      property IsSchemaStored: Boolean read GetSchemaStored;
-    published
-      property boolean: System.Boolean read FBoolean write SetBoolean stored FBooleanIsStored;
-      property Schema: TSchema read GetSchema write FSchema stored GetSchemaStored;
-    end;
-
-    TDefinitions = class
-    private
-      FSchema: TDynamicProperty<TSchema>;
-
-      function GetSchema: TDynamicProperty<TSchema>;
-      function GetSchemaStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsSchemaStored: Boolean read GetSchemaStored;
-    published
-      property Schema: TDynamicProperty<TSchema> read GetSchema write FSchema stored GetSchemaStored;
-    end;
-
-    TProperties = class
-    private
-      FSchema: TDynamicProperty<TSchema>;
-
-      function GetSchema: TDynamicProperty<TSchema>;
-      function GetSchemaStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsSchemaStored: Boolean read GetSchemaStored;
-    published
-      property Schema: TDynamicProperty<TSchema> read GetSchema write FSchema stored GetSchemaStored;
-    end;
-
-    TPatternProperties = class
-    private
-      FSchema: TDynamicProperty<TSchema>;
-
-      function GetSchema: TDynamicProperty<TSchema>;
-      function GetSchemaStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsSchemaStored: Boolean read GetSchemaStored;
-    published
-      property Schema: TDynamicProperty<TSchema> read GetSchema write FSchema stored GetSchemaStored;
-    end;
-
-    TDependencies = class
-    private
-      FSchema: TSchema;
-      FStringArray: stringArray;
-
-      function GetSchema: TSchema;
-      function GetSchemaStored: Boolean;
-      function GetStringArrayStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsSchemaStored: Boolean read GetSchemaStored;
-      property IsStringArrayStored: Boolean read GetStringArrayStored;
-    published
-      property Schema: TSchema read GetSchema write FSchema stored GetSchemaStored;
-      property stringArray: stringArray read FStringArray write FStringArray stored GetStringArrayStored;
-    end;
-
-    [Flat]
-    TType = class
-    private
-      FSimpleTypes: simpleTypes;
-      FArray: TArray<simpleTypes>;
-      FSimpleTypesIsStored: Boolean;
-
-      function GetArrayStored: Boolean;
-      procedure SetSimpleTypes(const Value: simpleTypes);
-    public
-      property IsSimpleTypesStored: Boolean read FSimpleTypesIsStored;
-      property IsArrayStored: Boolean read GetArrayStored;
-    published
-      property simpleTypes: simpleTypes read FSimpleTypes write SetSimpleTypes stored FSimpleTypesIsStored;
-      [FieldName('array')]
-      property &Array: TArray<simpleTypes> read FArray write FArray stored GetArrayStored;
-    end;
-  private
-    FId: System.String;
-    FSchema: System.String;
-    FTitle: System.String;
-    FDescription: System.String;
-    FDefault: any;
-    FMultipleOf: System.Double;
-    FMaximum: System.Double;
-    FExclusiveMaximum: System.Boolean;
-    FMinimum: System.Double;
-    FExclusiveMinimum: System.Boolean;
-    FMaxLength: positiveInteger;
-    FMinLength: PositiveIntegerDefault0;
-    FPattern: System.String;
-    FAdditionalItems: TSchema.TAdditionalItems;
-    FItems: TSchema.TItems;
-    FMaxItems: positiveInteger;
-    FMinItems: PositiveIntegerDefault0;
-    FUniqueItems: System.Boolean;
-    FMaxProperties: positiveInteger;
-    FMinProperties: PositiveIntegerDefault0;
-    FRequired: stringArray;
-    FAdditionalProperties: TSchema.TAdditionalProperties;
-    FDefinitions: TSchema.TDefinitions;
-    FProperties: TSchema.TProperties;
-    FPatternProperties: TSchema.TPatternProperties;
-    FDependencies: TSchema.TDependencies;
-    FEnum: TArray<any>;
-    FType: TSchema.TType;
-    FFormat: System.String;
-    FAllOf: schemaArray;
-    FAnyOf: schemaArray;
-    FOneOf: schemaArray;
-    FNot: TSchema;
-    FDefaultIsStored: Boolean;
-    FExclusiveMaximumIsStored: Boolean;
-    FExclusiveMinimumIsStored: Boolean;
-    FUniqueItemsIsStored: Boolean;
-
-    function GetMinLength: PositiveIntegerDefault0;
-    function GetAdditionalItems: TSchema.TAdditionalItems;
-    function GetItems: TSchema.TItems;
-    function GetMinItems: PositiveIntegerDefault0;
-    function GetMinProperties: PositiveIntegerDefault0;
-    function GetAdditionalProperties: TSchema.TAdditionalProperties;
-    function GetDefinitions: TSchema.TDefinitions;
-    function GetProperties: TSchema.TProperties;
-    function GetPatternProperties: TSchema.TPatternProperties;
-    function GetDependencies: TSchema.TDependencies;
-    function GetType: TSchema.TType;
-    function GetNot: TSchema;
-    function GetIdStored: Boolean;
-    function GetSchemaStored: Boolean;
-    function GetTitleStored: Boolean;
-    function GetDescriptionStored: Boolean;
-    function GetMultipleOfStored: Boolean;
-    function GetMaximumStored: Boolean;
-    function GetMinimumStored: Boolean;
-    function GetMaxLengthStored: Boolean;
-    function GetMinLengthStored: Boolean;
-    function GetPatternStored: Boolean;
-    function GetAdditionalItemsStored: Boolean;
-    function GetItemsStored: Boolean;
-    function GetMaxItemsStored: Boolean;
-    function GetMinItemsStored: Boolean;
-    function GetMaxPropertiesStored: Boolean;
-    function GetMinPropertiesStored: Boolean;
-    function GetRequiredStored: Boolean;
-    function GetAdditionalPropertiesStored: Boolean;
-    function GetDefinitionsStored: Boolean;
-    function GetPropertiesStored: Boolean;
-    function GetPatternPropertiesStored: Boolean;
-    function GetDependenciesStored: Boolean;
-    function GetEnumStored: Boolean;
-    function GetTypeStored: Boolean;
-    function GetFormatStored: Boolean;
-    function GetAllOfStored: Boolean;
-    function GetAnyOfStored: Boolean;
-    function GetOneOfStored: Boolean;
-    function GetNotStored: Boolean;
-    procedure SetDefault(const Value: any);
-    procedure SetExclusiveMaximum(const Value: System.Boolean);
-    procedure SetExclusiveMinimum(const Value: System.Boolean);
-    procedure SetUniqueItems(const Value: System.Boolean);
-  public
-    destructor Destroy; override;
-
-    function AddAllOf: TSchema;
-    function AddAnyOf: TSchema;
-    function AddOneOf: TSchema;
-
-    property IsIdStored: Boolean read GetIdStored;
-    property IsSchemaStored: Boolean read GetSchemaStored;
-    property IsTitleStored: Boolean read GetTitleStored;
-    property IsDescriptionStored: Boolean read GetDescriptionStored;
-    property IsDefaultStored: Boolean read FDefaultIsStored;
-    property IsMultipleOfStored: Boolean read GetMultipleOfStored;
-    property IsMaximumStored: Boolean read GetMaximumStored;
-    property IsExclusiveMaximumStored: Boolean read FExclusiveMaximumIsStored;
-    property IsMinimumStored: Boolean read GetMinimumStored;
-    property IsExclusiveMinimumStored: Boolean read FExclusiveMinimumIsStored;
-    property IsMaxLengthStored: Boolean read GetMaxLengthStored;
-    property IsMinLengthStored: Boolean read GetMinLengthStored;
-    property IsPatternStored: Boolean read GetPatternStored;
-    property IsAdditionalItemsStored: Boolean read GetAdditionalItemsStored;
-    property IsItemsStored: Boolean read GetItemsStored;
-    property IsMaxItemsStored: Boolean read GetMaxItemsStored;
-    property IsMinItemsStored: Boolean read GetMinItemsStored;
-    property IsUniqueItemsStored: Boolean read FUniqueItemsIsStored;
-    property IsMaxPropertiesStored: Boolean read GetMaxPropertiesStored;
-    property IsMinPropertiesStored: Boolean read GetMinPropertiesStored;
-    property IsRequiredStored: Boolean read GetRequiredStored;
-    property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
-    property IsDefinitionsStored: Boolean read GetDefinitionsStored;
-    property IsPropertiesStored: Boolean read GetPropertiesStored;
-    property IsPatternPropertiesStored: Boolean read GetPatternPropertiesStored;
-    property IsDependenciesStored: Boolean read GetDependenciesStored;
-    property IsEnumStored: Boolean read GetEnumStored;
-    property IsTypeStored: Boolean read GetTypeStored;
-    property IsFormatStored: Boolean read GetFormatStored;
-    property IsAllOfStored: Boolean read GetAllOfStored;
-    property IsAnyOfStored: Boolean read GetAnyOfStored;
-    property IsOneOfStored: Boolean read GetOneOfStored;
-    property IsNotStored: Boolean read GetNotStored;
-  published
-    property id: System.String read FId write FId stored GetIdStored;
-    [FieldName('$schema')]
-    property Schema: System.String read FSchema write FSchema stored GetSchemaStored;
-    property title: System.String read FTitle write FTitle stored GetTitleStored;
-    property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-    property default: any read FDefault write SetDefault stored FDefaultIsStored;
-    property multipleOf: System.Double read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
-    property maximum: System.Double read FMaximum write FMaximum stored GetMaximumStored;
-    property exclusiveMaximum: System.Boolean read FExclusiveMaximum write SetExclusiveMaximum stored FExclusiveMaximumIsStored;
-    property minimum: System.Double read FMinimum write FMinimum stored GetMinimumStored;
-    property exclusiveMinimum: System.Boolean read FExclusiveMinimum write SetExclusiveMinimum stored FExclusiveMinimumIsStored;
-    property maxLength: positiveInteger read FMaxLength write FMaxLength stored GetMaxLengthStored;
-    property minLength: PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
-    property pattern: System.String read FPattern write FPattern stored GetPatternStored;
-    property additionalItems: TSchema.TAdditionalItems read GetAdditionalItems write FAdditionalItems stored GetAdditionalItemsStored;
-    property items: TSchema.TItems read GetItems write FItems stored GetItemsStored;
-    property maxItems: positiveInteger read FMaxItems write FMaxItems stored GetMaxItemsStored;
-    property minItems: PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
-    property uniqueItems: System.Boolean read FUniqueItems write SetUniqueItems stored FUniqueItemsIsStored;
-    property maxProperties: positiveInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
-    property minProperties: PositiveIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
-    property required: stringArray read FRequired write FRequired stored GetRequiredStored;
-    property additionalProperties: TSchema.TAdditionalProperties read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
-    property definitions: TSchema.TDefinitions read GetDefinitions write FDefinitions stored GetDefinitionsStored;
-    property properties: TSchema.TProperties read GetProperties write FProperties stored GetPropertiesStored;
-    property patternProperties: TSchema.TPatternProperties read GetPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
-    property dependencies: TSchema.TDependencies read GetDependencies write FDependencies stored GetDependenciesStored;
-    property enum: TArray<any> read FEnum write FEnum stored GetEnumStored;
-    [FieldName('type')]
-    property &Type: TSchema.TType read GetType write FType stored GetTypeStored;
-    property format: System.String read FFormat write FFormat stored GetFormatStored;
-    property allOf: schemaArray read FAllOf write FAllOf stored GetAllOfStored;
-    property anyOf: schemaArray read FAnyOf write FAnyOf stored GetAnyOfStored;
-    property oneOf: schemaArray read FOneOf write FOneOf stored GetOneOfStored;
-    [FieldName('not')]
-    property &Not: TSchema read GetNot write FNot stored GetNotStored;
   end;
 
 implementation
 
 uses System.SysUtils;
 
-{ PositiveIntegerDefault0 }
+{ Schema.PositiveIntegerDefault0 }
 
-function PositiveIntegerDefault0.GetPositiveIntegerStored: Boolean;
+function Schema.PositiveIntegerDefault0.GetPositiveIntegerStored: Boolean;
 begin
   Result := FPositiveInteger <> 0;
 end;
 
-procedure PositiveIntegerDefault0.SetAnonymous(const Value: any);
-begin
-  FAnonymous := Value;
-  FAnonymousIsStored := True;
-end;
+{ Schema.Schema }
 
-{ TSchema }
-
-destructor TSchema.Destroy;
+destructor Schema.Schema.Destroy;
 begin
   FMinLength.Free;
 
@@ -400,323 +428,318 @@ begin
   inherited;
 end;
 
-function TSchema.GetIdStored: Boolean;
+function Schema.Schema.GetIdStored: Boolean;
 begin
   Result := not FId.IsEmpty;
 end;
 
-function TSchema.GetSchemaStored: Boolean;
+function Schema.Schema.GetSchemaStored: Boolean;
 begin
   Result := not FSchema.IsEmpty;
 end;
 
-function TSchema.GetTitleStored: Boolean;
+function Schema.Schema.GetTitleStored: Boolean;
 begin
   Result := not FTitle.IsEmpty;
 end;
 
-function TSchema.GetDescriptionStored: Boolean;
+function Schema.Schema.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-procedure TSchema.SetDefault(const Value: any);
+function Schema.Schema.GetDefaultStored: Boolean;
 begin
-  FDefault := Value;
-  FDefaultIsStored := True;
+  Result := False;
 end;
 
-function TSchema.GetMultipleOfStored: Boolean;
+function Schema.Schema.GetMultipleOfStored: Boolean;
 begin
   Result := FMultipleOf <> 0;
 end;
 
-function TSchema.GetMaximumStored: Boolean;
+function Schema.Schema.GetMaximumStored: Boolean;
 begin
   Result := FMaximum <> 0;
 end;
 
-procedure TSchema.SetExclusiveMaximum(const Value: System.Boolean);
+function Schema.Schema.GetExclusiveMaximumStored: Boolean;
 begin
-  FExclusiveMaximum := Value;
-  FExclusiveMaximumIsStored := True;
+  Result := False;
 end;
 
-function TSchema.GetMinimumStored: Boolean;
+function Schema.Schema.GetMinimumStored: Boolean;
 begin
   Result := FMinimum <> 0;
 end;
 
-procedure TSchema.SetExclusiveMinimum(const Value: System.Boolean);
+function Schema.Schema.GetExclusiveMinimumStored: Boolean;
 begin
-  FExclusiveMinimum := Value;
-  FExclusiveMinimumIsStored := True;
+  Result := False;
 end;
 
-function TSchema.GetMaxLengthStored: Boolean;
+function Schema.Schema.GetMaxLengthStored: Boolean;
 begin
   Result := FMaxLength <> 0;
 end;
 
-function TSchema.GetMinLength: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
+function Schema.Schema.GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinLength) then
-    FMinLength := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
+    FMinLength := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinLength;
 end;
 
-function TSchema.GetMinLengthStored: Boolean;
+function Schema.Schema.GetMinLengthStored: Boolean;
 begin
   Result := Assigned(FMinLength);
 end;
 
-function TSchema.GetPatternStored: Boolean;
+function Schema.Schema.GetPatternStored: Boolean;
 begin
   Result := not FPattern.IsEmpty;
 end;
 
-function TSchema.GetAdditionalItems: Blue.Print.JSON.Draft4.Schema.TSchema.TAdditionalItems;
+function Schema.Schema.GetAdditionalItems: Blue.Print.JSON.Draft4.Schema.Schema.Schema.TAdditionalItems;
 begin
   if not Assigned(FAdditionalItems) then
-    FAdditionalItems := Blue.Print.JSON.Draft4.Schema.TSchema.TAdditionalItems.Create;
+    FAdditionalItems := Blue.Print.JSON.Draft4.Schema.Schema.Schema.TAdditionalItems.Create;
 
   Result := FAdditionalItems;
 end;
 
-function TSchema.GetAdditionalItemsStored: Boolean;
+function Schema.Schema.GetAdditionalItemsStored: Boolean;
 begin
   Result := Assigned(FAdditionalItems);
 end;
 
-function TSchema.GetItems: Blue.Print.JSON.Draft4.Schema.TSchema.TItems;
+function Schema.Schema.GetItems: Blue.Print.JSON.Draft4.Schema.Schema.Schema.TItems;
 begin
   if not Assigned(FItems) then
-    FItems := Blue.Print.JSON.Draft4.Schema.TSchema.TItems.Create;
+    FItems := Blue.Print.JSON.Draft4.Schema.Schema.Schema.TItems.Create;
 
   Result := FItems;
 end;
 
-function TSchema.GetItemsStored: Boolean;
+function Schema.Schema.GetItemsStored: Boolean;
 begin
   Result := Assigned(FItems);
 end;
 
-function TSchema.GetMaxItemsStored: Boolean;
+function Schema.Schema.GetMaxItemsStored: Boolean;
 begin
   Result := FMaxItems <> 0;
 end;
 
-function TSchema.GetMinItems: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
+function Schema.Schema.GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinItems) then
-    FMinItems := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
+    FMinItems := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinItems;
 end;
 
-function TSchema.GetMinItemsStored: Boolean;
+function Schema.Schema.GetMinItemsStored: Boolean;
 begin
   Result := Assigned(FMinItems);
 end;
 
-procedure TSchema.SetUniqueItems(const Value: System.Boolean);
+function Schema.Schema.GetUniqueItemsStored: Boolean;
 begin
-  FUniqueItems := Value;
-  FUniqueItemsIsStored := True;
+  Result := False;
 end;
 
-function TSchema.GetMaxPropertiesStored: Boolean;
+function Schema.Schema.GetMaxPropertiesStored: Boolean;
 begin
   Result := FMaxProperties <> 0;
 end;
 
-function TSchema.GetMinProperties: Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0;
+function Schema.Schema.GetMinProperties: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
 begin
   if not Assigned(FMinProperties) then
-    FMinProperties := Blue.Print.JSON.Draft4.Schema.PositiveIntegerDefault0.Create;
+    FMinProperties := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
 
   Result := FMinProperties;
 end;
 
-function TSchema.GetMinPropertiesStored: Boolean;
+function Schema.Schema.GetMinPropertiesStored: Boolean;
 begin
   Result := Assigned(FMinProperties);
 end;
 
-function TSchema.GetRequiredStored: Boolean;
+function Schema.Schema.GetRequiredStored: Boolean;
 begin
   Result := Assigned(FRequired);
 end;
 
-function TSchema.GetAdditionalProperties: Blue.Print.JSON.Draft4.Schema.TSchema.TAdditionalProperties;
+function Schema.Schema.GetAdditionalProperties: Blue.Print.JSON.Draft4.Schema.Schema.Schema.TAdditionalProperties;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := Blue.Print.JSON.Draft4.Schema.TSchema.TAdditionalProperties.Create;
+    FAdditionalProperties := Blue.Print.JSON.Draft4.Schema.Schema.Schema.TAdditionalProperties.Create;
 
   Result := FAdditionalProperties;
 end;
 
-function TSchema.GetAdditionalPropertiesStored: Boolean;
+function Schema.Schema.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-function TSchema.GetDefinitions: Blue.Print.JSON.Draft4.Schema.TSchema.TDefinitions;
+function Schema.Schema.GetDefinitions: Blue.Print.JSON.Draft4.Schema.Schema.Schema.TDefinitions;
 begin
   if not Assigned(FDefinitions) then
-    FDefinitions := Blue.Print.JSON.Draft4.Schema.TSchema.TDefinitions.Create;
+    FDefinitions := Blue.Print.JSON.Draft4.Schema.Schema.Schema.TDefinitions.Create;
 
   Result := FDefinitions;
 end;
 
-function TSchema.GetDefinitionsStored: Boolean;
+function Schema.Schema.GetDefinitionsStored: Boolean;
 begin
   Result := Assigned(FDefinitions);
 end;
 
-function TSchema.GetProperties: Blue.Print.JSON.Draft4.Schema.TSchema.TProperties;
+function Schema.Schema.GetProperties: Blue.Print.JSON.Draft4.Schema.Schema.Schema.TProperties;
 begin
   if not Assigned(FProperties) then
-    FProperties := Blue.Print.JSON.Draft4.Schema.TSchema.TProperties.Create;
+    FProperties := Blue.Print.JSON.Draft4.Schema.Schema.Schema.TProperties.Create;
 
   Result := FProperties;
 end;
 
-function TSchema.GetPropertiesStored: Boolean;
+function Schema.Schema.GetPropertiesStored: Boolean;
 begin
   Result := Assigned(FProperties);
 end;
 
-function TSchema.GetPatternProperties: Blue.Print.JSON.Draft4.Schema.TSchema.TPatternProperties;
+function Schema.Schema.GetPatternProperties: Blue.Print.JSON.Draft4.Schema.Schema.Schema.TPatternProperties;
 begin
   if not Assigned(FPatternProperties) then
-    FPatternProperties := Blue.Print.JSON.Draft4.Schema.TSchema.TPatternProperties.Create;
+    FPatternProperties := Blue.Print.JSON.Draft4.Schema.Schema.Schema.TPatternProperties.Create;
 
   Result := FPatternProperties;
 end;
 
-function TSchema.GetPatternPropertiesStored: Boolean;
+function Schema.Schema.GetPatternPropertiesStored: Boolean;
 begin
   Result := Assigned(FPatternProperties);
 end;
 
-function TSchema.GetDependencies: Blue.Print.JSON.Draft4.Schema.TSchema.TDependencies;
+function Schema.Schema.GetDependencies: Blue.Print.JSON.Draft4.Schema.Schema.Schema.TDependencies;
 begin
   if not Assigned(FDependencies) then
-    FDependencies := Blue.Print.JSON.Draft4.Schema.TSchema.TDependencies.Create;
+    FDependencies := Blue.Print.JSON.Draft4.Schema.Schema.Schema.TDependencies.Create;
 
   Result := FDependencies;
 end;
 
-function TSchema.GetDependenciesStored: Boolean;
+function Schema.Schema.GetDependenciesStored: Boolean;
 begin
   Result := Assigned(FDependencies);
 end;
 
-function TSchema.GetEnumStored: Boolean;
+function Schema.Schema.GetEnumStored: Boolean;
 begin
   Result := Assigned(FEnum);
 end;
 
-function TSchema.GetType: Blue.Print.JSON.Draft4.Schema.TSchema.TType;
+function Schema.Schema.GetType: Blue.Print.JSON.Draft4.Schema.Schema.Schema.TType;
 begin
   if not Assigned(FType) then
-    FType := Blue.Print.JSON.Draft4.Schema.TSchema.TType.Create;
+    FType := Blue.Print.JSON.Draft4.Schema.Schema.Schema.TType.Create;
 
   Result := FType;
 end;
 
-function TSchema.GetTypeStored: Boolean;
+function Schema.Schema.GetTypeStored: Boolean;
 begin
   Result := Assigned(FType);
 end;
 
-function TSchema.GetFormatStored: Boolean;
+function Schema.Schema.GetFormatStored: Boolean;
 begin
   Result := not FFormat.IsEmpty;
 end;
 
-function TSchema.AddAllOf: Blue.Print.JSON.Draft4.Schema.TSchema;
+function Schema.Schema.AddAllOf: Blue.Print.JSON.Draft4.Schema.Schema;
 begin
-  Result := Blue.Print.JSON.Draft4.Schema.TSchema.Create;
+  Result := Blue.Print.JSON.Draft4.Schema.Schema.Create;
 
   FAllOf := FAllOf + [Result];
 end;
 
-function TSchema.GetAllOfStored: Boolean;
+function Schema.Schema.GetAllOfStored: Boolean;
 begin
   Result := Assigned(FAllOf);
 end;
 
-function TSchema.AddAnyOf: Blue.Print.JSON.Draft4.Schema.TSchema;
+function Schema.Schema.AddAnyOf: Blue.Print.JSON.Draft4.Schema.Schema;
 begin
-  Result := Blue.Print.JSON.Draft4.Schema.TSchema.Create;
+  Result := Blue.Print.JSON.Draft4.Schema.Schema.Create;
 
   FAnyOf := FAnyOf + [Result];
 end;
 
-function TSchema.GetAnyOfStored: Boolean;
+function Schema.Schema.GetAnyOfStored: Boolean;
 begin
   Result := Assigned(FAnyOf);
 end;
 
-function TSchema.AddOneOf: Blue.Print.JSON.Draft4.Schema.TSchema;
+function Schema.Schema.AddOneOf: Blue.Print.JSON.Draft4.Schema.Schema;
 begin
-  Result := Blue.Print.JSON.Draft4.Schema.TSchema.Create;
+  Result := Blue.Print.JSON.Draft4.Schema.Schema.Create;
 
   FOneOf := FOneOf + [Result];
 end;
 
-function TSchema.GetOneOfStored: Boolean;
+function Schema.Schema.GetOneOfStored: Boolean;
 begin
   Result := Assigned(FOneOf);
 end;
 
-function TSchema.GetNot: Blue.Print.JSON.Draft4.Schema.TSchema;
+function Schema.Schema.GetNot: Blue.Print.JSON.Draft4.Schema.Schema;
 begin
   if not Assigned(FNot) then
-    FNot := Blue.Print.JSON.Draft4.Schema.TSchema.Create;
+    FNot := Blue.Print.JSON.Draft4.Schema.Schema.Create;
 
   Result := FNot;
 end;
 
-function TSchema.GetNotStored: Boolean;
+function Schema.Schema.GetNotStored: Boolean;
 begin
   Result := Assigned(FNot);
 end;
 
-{ TSchema.TAdditionalItems }
+{ Schema.Schema.TAdditionalItems }
 
-destructor TSchema.TAdditionalItems.Destroy;
+destructor Schema.Schema.TAdditionalItems.Destroy;
 begin
   FSchema.Free;
 
   inherited;
 end;
 
-procedure TSchema.TAdditionalItems.SetBoolean(const Value: System.Boolean);
+function Schema.Schema.TAdditionalItems.GetBooleanStored: Boolean;
 begin
-  FBoolean := Value;
-  FBooleanIsStored := True;
+  Result := False;
 end;
 
-function TSchema.TAdditionalItems.GetSchema: Blue.Print.JSON.Draft4.Schema.TSchema;
+function Schema.Schema.TAdditionalItems.GetSchema: Blue.Print.JSON.Draft4.Schema.Schema;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.JSON.Draft4.Schema.TSchema.Create;
+    FSchema := Blue.Print.JSON.Draft4.Schema.Schema.Create;
 
   Result := FSchema;
 end;
 
-function TSchema.TAdditionalItems.GetSchemaStored: Boolean;
+function Schema.Schema.TAdditionalItems.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-{ TSchema.TItems }
+{ Schema.Schema.TItems }
 
-destructor TSchema.TItems.Destroy;
+destructor Schema.Schema.TItems.Destroy;
 begin
   FSchema.Free;
 
@@ -726,161 +749,202 @@ begin
   inherited;
 end;
 
-function TSchema.TItems.GetSchema: Blue.Print.JSON.Draft4.Schema.TSchema;
+function Schema.Schema.TItems.GetSchema: Blue.Print.JSON.Draft4.Schema.Schema;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.JSON.Draft4.Schema.TSchema.Create;
+    FSchema := Blue.Print.JSON.Draft4.Schema.Schema.Create;
 
   Result := FSchema;
 end;
 
-function TSchema.TItems.GetSchemaStored: Boolean;
+function Schema.Schema.TItems.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TSchema.TItems.AddSchemaArray: Blue.Print.JSON.Draft4.Schema.TSchema;
+function Schema.Schema.TItems.AddSchemaArray: Blue.Print.JSON.Draft4.Schema.Schema;
 begin
-  Result := Blue.Print.JSON.Draft4.Schema.TSchema.Create;
+  Result := Blue.Print.JSON.Draft4.Schema.Schema.Create;
 
   FSchemaArray := FSchemaArray + [Result];
 end;
 
-function TSchema.TItems.GetSchemaArrayStored: Boolean;
+function Schema.Schema.TItems.GetSchemaArrayStored: Boolean;
 begin
   Result := Assigned(FSchemaArray);
 end;
 
-{ TSchema.TAdditionalProperties }
+{ Schema.Schema.TAdditionalProperties }
 
-destructor TSchema.TAdditionalProperties.Destroy;
+destructor Schema.Schema.TAdditionalProperties.Destroy;
 begin
   FSchema.Free;
 
   inherited;
 end;
 
-procedure TSchema.TAdditionalProperties.SetBoolean(const Value: System.Boolean);
+function Schema.Schema.TAdditionalProperties.GetBooleanStored: Boolean;
 begin
-  FBoolean := Value;
-  FBooleanIsStored := True;
+  Result := False;
 end;
 
-function TSchema.TAdditionalProperties.GetSchema: Blue.Print.JSON.Draft4.Schema.TSchema;
+function Schema.Schema.TAdditionalProperties.GetSchema: Blue.Print.JSON.Draft4.Schema.Schema;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.JSON.Draft4.Schema.TSchema.Create;
+    FSchema := Blue.Print.JSON.Draft4.Schema.Schema.Create;
 
   Result := FSchema;
 end;
 
-function TSchema.TAdditionalProperties.GetSchemaStored: Boolean;
+function Schema.Schema.TAdditionalProperties.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-{ TSchema.TDefinitions }
+{ Schema.Schema.TDefinitions }
 
-destructor TSchema.TDefinitions.Destroy;
+destructor Schema.Schema.TDefinitions.Destroy;
 begin
-  FSchema.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TSchema.TDefinitions.GetSchema: TDynamicProperty<TSchema>;
+function Schema.Schema.TDefinitions.GetAdditionalProperties: TDynamicProperty<Schema>;
 begin
-  if not Assigned(FSchema) then
-    FSchema := TDynamicProperty<Blue.Print.JSON.Draft4.Schema.TSchema>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.JSON.Draft4.Schema.Schema>.Create;
 
-  Result := FSchema;
+  Result := FAdditionalProperties;
 end;
 
-function TSchema.TDefinitions.GetSchemaStored: Boolean;
+function Schema.Schema.TDefinitions.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FSchema);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TSchema.TProperties }
+{ Schema.Schema.TProperties }
 
-destructor TSchema.TProperties.Destroy;
+destructor Schema.Schema.TProperties.Destroy;
 begin
-  FSchema.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TSchema.TProperties.GetSchema: TDynamicProperty<TSchema>;
+function Schema.Schema.TProperties.GetAdditionalProperties: TDynamicProperty<Schema>;
 begin
-  if not Assigned(FSchema) then
-    FSchema := TDynamicProperty<Blue.Print.JSON.Draft4.Schema.TSchema>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.JSON.Draft4.Schema.Schema>.Create;
 
-  Result := FSchema;
+  Result := FAdditionalProperties;
 end;
 
-function TSchema.TProperties.GetSchemaStored: Boolean;
+function Schema.Schema.TProperties.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FSchema);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TSchema.TPatternProperties }
+{ Schema.Schema.TPatternProperties }
 
-destructor TSchema.TPatternProperties.Destroy;
+destructor Schema.Schema.TPatternProperties.Destroy;
 begin
-  FSchema.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TSchema.TPatternProperties.GetSchema: TDynamicProperty<TSchema>;
+function Schema.Schema.TPatternProperties.GetAdditionalProperties: TDynamicProperty<Schema>;
 begin
-  if not Assigned(FSchema) then
-    FSchema := TDynamicProperty<Blue.Print.JSON.Draft4.Schema.TSchema>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.JSON.Draft4.Schema.Schema>.Create;
 
-  Result := FSchema;
+  Result := FAdditionalProperties;
 end;
 
-function TSchema.TPatternProperties.GetSchemaStored: Boolean;
+function Schema.Schema.TPatternProperties.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FSchema);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TSchema.TDependencies }
+{ Schema.Schema.TDependencies }
 
-destructor TSchema.TDependencies.Destroy;
+destructor Schema.Schema.TDependencies.Destroy;
 begin
   FSchema.Free;
+
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TSchema.TDependencies.GetSchema: Blue.Print.JSON.Draft4.Schema.TSchema;
+function Schema.Schema.TDependencies.GetSchema: Blue.Print.JSON.Draft4.Schema.Schema;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.JSON.Draft4.Schema.TSchema.Create;
+    FSchema := Blue.Print.JSON.Draft4.Schema.Schema.Create;
 
   Result := FSchema;
 end;
 
-function TSchema.TDependencies.GetSchemaStored: Boolean;
+function Schema.Schema.TDependencies.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TSchema.TDependencies.GetStringArrayStored: Boolean;
+function Schema.Schema.TDependencies.GetStringArrayStored: Boolean;
 begin
   Result := Assigned(FStringArray);
 end;
 
-{ TSchema.TType }
+function Schema.Schema.TDependencies.GetAdditionalProperties: TDynamicProperty<Schema.Schema.TDependencies.TadditionalProperties>;
+begin
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.JSON.Draft4.Schema.Schema.Schema.TDependencies.TadditionalProperties>.Create;
 
-procedure TSchema.TType.SetSimpleTypes(const Value: simpleTypes);
+  Result := FAdditionalProperties;
+end;
+
+function Schema.Schema.TDependencies.GetAdditionalPropertiesStored: Boolean;
+begin
+  Result := Assigned(FAdditionalProperties);
+end;
+
+{ Schema.Schema.TDependencies.TadditionalProperties }
+
+destructor Schema.Schema.TDependencies.TadditionalProperties.Destroy;
+begin
+  FSchema.Free;
+
+  inherited;
+end;
+
+function Schema.Schema.TDependencies.TadditionalProperties.GetSchema: Blue.Print.JSON.Draft4.Schema.Schema;
+begin
+  if not Assigned(FSchema) then
+    FSchema := Blue.Print.JSON.Draft4.Schema.Schema.Create;
+
+  Result := FSchema;
+end;
+
+function Schema.Schema.TDependencies.TadditionalProperties.GetSchemaStored: Boolean;
+begin
+  Result := Assigned(FSchema);
+end;
+
+function Schema.Schema.TDependencies.TadditionalProperties.GetStringArrayStored: Boolean;
+begin
+  Result := Assigned(FStringArray);
+end;
+
+{ Schema.Schema.TType }
+
+procedure Schema.Schema.TType.SetSimpleTypes(const Value: Schema.SimpleTypes);
 begin
   FSimpleTypes := Value;
   FSimpleTypesIsStored := True;
 end;
 
-function TSchema.TType.GetArrayStored: Boolean;
+function Schema.Schema.TType.GetArrayStored: Boolean;
 begin
   Result := Assigned(FArray);
 end;

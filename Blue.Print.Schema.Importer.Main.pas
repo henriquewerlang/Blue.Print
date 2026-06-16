@@ -24,7 +24,7 @@ implementation
 
 {$R *.dfm}
 
-uses System.SysUtils, System.Types, Blue.Print.Schema.Importer.Open.API.v20, Blue.Print.Schema.Importer.Open.API.v30, Blue.Print.Schema.Importer.Open.API.v31;
+uses System.SysUtils, System.Types;
 
 { TMain }
 

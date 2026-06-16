@@ -7,1504 +7,1566 @@ interface
 
 // File generated from https://spec.openapis.org/oas/3.1/schema/2025-11-23;
 
-uses Blue.Print.Types, Blue.Print.JSON.Draft2022.Schema;
+uses Blue.Print.Types, Blue.Print.JSON.Draft2022.Schema, System.Rtti;
 
 type
   // Forward class declaration
   TOpenAPIDefinition = class;
 
-  [Flat]
+  // Types alias
+  any = System.Rtti.TValue;
+
   TOpenAPIDefinition = class
   public type
-    TWebhooks = class
-    private
-      FPathItem: TDynamicProperty<TOpenAPIDefinition.TPathItem>;
+    // Forward class declaration
+    TOpenAPIDefinition = class;
 
-      function GetPathItem: TDynamicProperty<TOpenAPIDefinition.TPathItem>;
-      function GetPathItemStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsPathItemStored: Boolean read GetPathItemStored;
-    published
-      [FieldName('path-item')]
-      property PathItem: TDynamicProperty<TOpenAPIDefinition.TPathItem> read GetPathItem write FPathItem stored GetPathItemStored;
-    end;
-
-    TInfo = class
-    private
-      FTitle: System.String;
-      FSummary: System.String;
-      FDescription: System.String;
-      FTermsOfService: System.String;
-      FContact: TOpenAPIDefinition.TContact;
-      FLicense: TOpenAPIDefinition.TLicense;
-      FVersion: System.String;
-
-      function GetContact: TOpenAPIDefinition.TContact;
-      function GetLicense: TOpenAPIDefinition.TLicense;
-      function GetSummaryStored: Boolean;
-      function GetDescriptionStored: Boolean;
-      function GetTermsOfServiceStored: Boolean;
-      function GetContactStored: Boolean;
-      function GetLicenseStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsSummaryStored: Boolean read GetSummaryStored;
-      property IsDescriptionStored: Boolean read GetDescriptionStored;
-      property IsTermsOfServiceStored: Boolean read GetTermsOfServiceStored;
-      property IsContactStored: Boolean read GetContactStored;
-      property IsLicenseStored: Boolean read GetLicenseStored;
-    published
-      property title: System.String read FTitle write FTitle;
-      property summary: System.String read FSummary write FSummary stored GetSummaryStored;
-      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property termsOfService: System.String read FTermsOfService write FTermsOfService stored GetTermsOfServiceStored;
-      property contact: TOpenAPIDefinition.TContact read GetContact write FContact stored GetContactStored;
-      property license: TOpenAPIDefinition.TLicense read GetLicense write FLicense stored GetLicenseStored;
-      property version: System.String read FVersion write FVersion;
-    end;
-
-    TContact = class
-    private
-      FName: System.String;
-      FUrl: System.String;
-      FEmail: System.String;
-
-      function GetNameStored: Boolean;
-      function GetUrlStored: Boolean;
-      function GetEmailStored: Boolean;
-    public
-      property IsNameStored: Boolean read GetNameStored;
-      property IsUrlStored: Boolean read GetUrlStored;
-      property IsEmailStored: Boolean read GetEmailStored;
-    published
-      property name: System.String read FName write FName stored GetNameStored;
-      property url: System.String read FUrl write FUrl stored GetUrlStored;
-      property email: System.String read FEmail write FEmail stored GetEmailStored;
-    end;
-
-    TLicense = class
-    private
-      FName: System.String;
-      FIdentifier: System.String;
-      FUrl: System.String;
-
-      function GetIdentifierStored: Boolean;
-      function GetUrlStored: Boolean;
-    public
-      property IsIdentifierStored: Boolean read GetIdentifierStored;
-      property IsUrlStored: Boolean read GetUrlStored;
-    published
-      property name: System.String read FName write FName;
-      property identifier: System.String read FIdentifier write FIdentifier stored GetIdentifierStored;
-      property url: System.String read FUrl write FUrl stored GetUrlStored;
-    end;
-
-    TServer = class
+    [Flat]
+    TOpenAPIDefinition = class
     public type
-      TVariables = class
-      private
-        FServerVariable: TDynamicProperty<TOpenAPIDefinition.TServerVariable>;
+      // Forward class declaration
+      TWebhooks = class;
+      Info = class;
+      Contact = class;
+      License = class;
+      Server = class;
+      ServerVariable = class;
+      Components = class;
+      Paths = class;
+      PathItem = class;
+      Operation = class;
+      ExternalDocumentation = class;
+      Parameter = class;
+      ParameterOrReference = class;
+      RequestBody = class;
+      RequestBodyOrReference = class;
+      Content = class;
+      MediaType = class;
+      Encoding = class;
+      Responses = class;
+      Response = class;
+      ResponseOrReference = class;
+      Callbacks = class;
+      CallbacksOrReference = class;
+      Example = class;
+      ExampleOrReference = class;
+      Link = class;
+      LinkOrReference = class;
+      Header = class;
+      HeaderOrReference = class;
+      Tag = class;
+      Reference = class;
+      Schema = class;
+      SecurityScheme = class;
+      SecuritySchemeOrReference = class;
+      OauthFlows = class;
+      SecurityRequirement = class;
+      SpecificationExtensions = class;
+      Examples = class;
+      MapOfStrings = class;
+      ExplodeForForm = class;
 
-        function GetServerVariable: TDynamicProperty<TOpenAPIDefinition.TServerVariable>;
-        function GetServerVariableStored: Boolean;
+      TWebhooks = class
+      private
+        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.PathItem>;
+
+        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.PathItem>;
+        function GetAdditionalPropertiesStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsServerVariableStored: Boolean read GetServerVariableStored;
+        property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
       published
-        [FieldName('server-variable')]
-        property ServerVariable: TDynamicProperty<TOpenAPIDefinition.TServerVariable> read GetServerVariable write FServerVariable stored GetServerVariableStored;
+        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.PathItem> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       end;
-    private
-      FUrl: System.String;
-      FDescription: System.String;
-      FVariables: TOpenAPIDefinition.TServer.TVariables;
 
-      function GetVariables: TOpenAPIDefinition.TServer.TVariables;
-      function GetDescriptionStored: Boolean;
-      function GetVariablesStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsDescriptionStored: Boolean read GetDescriptionStored;
-      property IsVariablesStored: Boolean read GetVariablesStored;
-    published
-      property url: System.String read FUrl write FUrl;
-      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property variables: TOpenAPIDefinition.TServer.TVariables read GetVariables write FVariables stored GetVariablesStored;
-    end;
-
-    TServerVariable = class
-    private
-      FEnum: TArray<System.String>;
-      FDefault: System.String;
-      FDescription: System.String;
-
-      function GetEnumStored: Boolean;
-      function GetDescriptionStored: Boolean;
-    public
-      property IsEnumStored: Boolean read GetEnumStored;
-      property IsDescriptionStored: Boolean read GetDescriptionStored;
-    published
-      property enum: TArray<System.String> read FEnum write FEnum stored GetEnumStored;
-      property default: System.String read FDefault write FDefault;
-      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-    end;
-
-    TComponents = class
-    public type
-      TSchemas = class
+      Info = class
       private
-        FSchemas: TDynamicProperty<TOpenAPIDefinition>;
+        FTitle: System.String;
+        FSummary: System.String;
+        FDescription: System.String;
+        FTermsOfService: System.String;
+        FContact: TOpenAPIDefinition.TOpenAPIDefinition.Contact;
+        FLicense: TOpenAPIDefinition.TOpenAPIDefinition.License;
+        FVersion: System.String;
 
-        function GetSchemas: TDynamicProperty<TOpenAPIDefinition>;
+        function GetContact: TOpenAPIDefinition.TOpenAPIDefinition.Contact;
+        function GetLicense: TOpenAPIDefinition.TOpenAPIDefinition.License;
+        function GetSummaryStored: Boolean;
+        function GetDescriptionStored: Boolean;
+        function GetTermsOfServiceStored: Boolean;
+        function GetContactStored: Boolean;
+        function GetLicenseStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsSummaryStored: Boolean read GetSummaryStored;
+        property IsDescriptionStored: Boolean read GetDescriptionStored;
+        property IsTermsOfServiceStored: Boolean read GetTermsOfServiceStored;
+        property IsContactStored: Boolean read GetContactStored;
+        property IsLicenseStored: Boolean read GetLicenseStored;
+      published
+        property title: System.String read FTitle write FTitle;
+        property summary: System.String read FSummary write FSummary stored GetSummaryStored;
+        property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+        property termsOfService: System.String read FTermsOfService write FTermsOfService stored GetTermsOfServiceStored;
+        property contact: TOpenAPIDefinition.TOpenAPIDefinition.Contact read GetContact write FContact stored GetContactStored;
+        property license: TOpenAPIDefinition.TOpenAPIDefinition.License read GetLicense write FLicense stored GetLicenseStored;
+        property version: System.String read FVersion write FVersion;
+      end;
+
+      Contact = class
+      private
+        FName: System.String;
+        FUrl: System.String;
+        FEmail: System.String;
+
+        function GetNameStored: Boolean;
+        function GetUrlStored: Boolean;
+        function GetEmailStored: Boolean;
+      public
+        property IsNameStored: Boolean read GetNameStored;
+        property IsUrlStored: Boolean read GetUrlStored;
+        property IsEmailStored: Boolean read GetEmailStored;
+      published
+        property name: System.String read FName write FName stored GetNameStored;
+        property url: System.String read FUrl write FUrl stored GetUrlStored;
+        property email: System.String read FEmail write FEmail stored GetEmailStored;
+      end;
+
+      License = class
+      private
+        FName: System.String;
+        FIdentifier: System.String;
+        FUrl: System.String;
+
+        function GetIdentifierStored: Boolean;
+        function GetUrlStored: Boolean;
+      public
+        property IsIdentifierStored: Boolean read GetIdentifierStored;
+        property IsUrlStored: Boolean read GetUrlStored;
+      published
+        property name: System.String read FName write FName;
+        property identifier: System.String read FIdentifier write FIdentifier stored GetIdentifierStored;
+        property url: System.String read FUrl write FUrl stored GetUrlStored;
+      end;
+
+      Server = class
+      public type
+        // Forward class declaration
+        TVariables = class;
+
+        TVariables = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ServerVariable>;
+
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ServerVariable>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ServerVariable> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
+      private
+        FUrl: System.String;
+        FDescription: System.String;
+        FVariables: TOpenAPIDefinition.TOpenAPIDefinition.Server.TVariables;
+
+        function GetVariables: TOpenAPIDefinition.TOpenAPIDefinition.Server.TVariables;
+        function GetDescriptionStored: Boolean;
+        function GetVariablesStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsDescriptionStored: Boolean read GetDescriptionStored;
+        property IsVariablesStored: Boolean read GetVariablesStored;
+      published
+        property url: System.String read FUrl write FUrl;
+        property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+        property variables: TOpenAPIDefinition.TOpenAPIDefinition.Server.TVariables read GetVariables write FVariables stored GetVariablesStored;
+      end;
+
+      ServerVariable = class
+      private
+        FEnum: TArray<System.String>;
+        FDefault: System.String;
+        FDescription: System.String;
+
+        function GetEnumStored: Boolean;
+        function GetDescriptionStored: Boolean;
+      public
+        property IsEnumStored: Boolean read GetEnumStored;
+        property IsDescriptionStored: Boolean read GetDescriptionStored;
+      published
+        property enum: TArray<System.String> read FEnum write FEnum stored GetEnumStored;
+        property default: System.String read FDefault write FDefault;
+        property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+      end;
+
+      Components = class
+      public type
+        // Forward class declaration
+        TSchemas = class;
+        TResponses = class;
+        TParameters = class;
+        TExamples = class;
+        TRequestBodies = class;
+        THeaders = class;
+        TSecuritySchemes = class;
+        TLinks = class;
+        TCallbacks = class;
+        TPathItems = class;
+
+        TSchemas = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition>;
+
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
+
+        TResponses = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference>;
+
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
+
+        TParameters = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference>;
+
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
+
+        TExamples = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ExampleOrReference>;
+
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ExampleOrReference>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ExampleOrReference> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
+
+        TRequestBodies = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.RequestBodyOrReference>;
+
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.RequestBodyOrReference>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.RequestBodyOrReference> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
+
+        THeaders = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference>;
+
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
+
+        TSecuritySchemes = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.SecuritySchemeOrReference>;
+
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.SecuritySchemeOrReference>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.SecuritySchemeOrReference> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
+
+        TLinks = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.LinkOrReference>;
+
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.LinkOrReference>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.LinkOrReference> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
+
+        TCallbacks = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.CallbacksOrReference>;
+
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.CallbacksOrReference>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.CallbacksOrReference> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
+
+        TPathItems = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.PathItem>;
+
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.PathItem>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.PathItem> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
+      private
+        FSchemas: TOpenAPIDefinition.TOpenAPIDefinition.Components.TSchemas;
+        FResponses: TOpenAPIDefinition.TOpenAPIDefinition.Components.TResponses;
+        FParameters: TOpenAPIDefinition.TOpenAPIDefinition.Components.TParameters;
+        FExamples: TOpenAPIDefinition.TOpenAPIDefinition.Components.TExamples;
+        FRequestBodies: TOpenAPIDefinition.TOpenAPIDefinition.Components.TRequestBodies;
+        FHeaders: TOpenAPIDefinition.TOpenAPIDefinition.Components.THeaders;
+        FSecuritySchemes: TOpenAPIDefinition.TOpenAPIDefinition.Components.TSecuritySchemes;
+        FLinks: TOpenAPIDefinition.TOpenAPIDefinition.Components.TLinks;
+        FCallbacks: TOpenAPIDefinition.TOpenAPIDefinition.Components.TCallbacks;
+        FPathItems: TOpenAPIDefinition.TOpenAPIDefinition.Components.TPathItems;
+        FPatternProperty: TDynamicProperty<any>;
+
+        function GetSchemas: TOpenAPIDefinition.TOpenAPIDefinition.Components.TSchemas;
+        function GetResponses: TOpenAPIDefinition.TOpenAPIDefinition.Components.TResponses;
+        function GetParameters: TOpenAPIDefinition.TOpenAPIDefinition.Components.TParameters;
+        function GetExamples: TOpenAPIDefinition.TOpenAPIDefinition.Components.TExamples;
+        function GetRequestBodies: TOpenAPIDefinition.TOpenAPIDefinition.Components.TRequestBodies;
+        function GetHeaders: TOpenAPIDefinition.TOpenAPIDefinition.Components.THeaders;
+        function GetSecuritySchemes: TOpenAPIDefinition.TOpenAPIDefinition.Components.TSecuritySchemes;
+        function GetLinks: TOpenAPIDefinition.TOpenAPIDefinition.Components.TLinks;
+        function GetCallbacks: TOpenAPIDefinition.TOpenAPIDefinition.Components.TCallbacks;
+        function GetPathItems: TOpenAPIDefinition.TOpenAPIDefinition.Components.TPathItems;
+        function GetPatternProperty: TDynamicProperty<any>;
         function GetSchemasStored: Boolean;
+        function GetResponsesStored: Boolean;
+        function GetParametersStored: Boolean;
+        function GetExamplesStored: Boolean;
+        function GetRequestBodiesStored: Boolean;
+        function GetHeadersStored: Boolean;
+        function GetSecuritySchemesStored: Boolean;
+        function GetLinksStored: Boolean;
+        function GetCallbacksStored: Boolean;
+        function GetPathItemsStored: Boolean;
+        function GetPatternPropertyStored: Boolean;
       public
         destructor Destroy; override;
 
         property IsSchemasStored: Boolean read GetSchemasStored;
+        property IsResponsesStored: Boolean read GetResponsesStored;
+        property IsParametersStored: Boolean read GetParametersStored;
+        property IsExamplesStored: Boolean read GetExamplesStored;
+        property IsRequestBodiesStored: Boolean read GetRequestBodiesStored;
+        property IsHeadersStored: Boolean read GetHeadersStored;
+        property IsSecuritySchemesStored: Boolean read GetSecuritySchemesStored;
+        property IsLinksStored: Boolean read GetLinksStored;
+        property IsCallbacksStored: Boolean read GetCallbacksStored;
+        property IsPathItemsStored: Boolean read GetPathItemsStored;
+        property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
       published
-        property Schemas: TDynamicProperty<TOpenAPIDefinition> read GetSchemas write FSchemas stored GetSchemasStored;
+        property schemas: TOpenAPIDefinition.TOpenAPIDefinition.Components.TSchemas read GetSchemas write FSchemas stored GetSchemasStored;
+        property responses: TOpenAPIDefinition.TOpenAPIDefinition.Components.TResponses read GetResponses write FResponses stored GetResponsesStored;
+        property parameters: TOpenAPIDefinition.TOpenAPIDefinition.Components.TParameters read GetParameters write FParameters stored GetParametersStored;
+        property examples: TOpenAPIDefinition.TOpenAPIDefinition.Components.TExamples read GetExamples write FExamples stored GetExamplesStored;
+        property requestBodies: TOpenAPIDefinition.TOpenAPIDefinition.Components.TRequestBodies read GetRequestBodies write FRequestBodies stored GetRequestBodiesStored;
+        property headers: TOpenAPIDefinition.TOpenAPIDefinition.Components.THeaders read GetHeaders write FHeaders stored GetHeadersStored;
+        property securitySchemes: TOpenAPIDefinition.TOpenAPIDefinition.Components.TSecuritySchemes read GetSecuritySchemes write FSecuritySchemes stored GetSecuritySchemesStored;
+        property links: TOpenAPIDefinition.TOpenAPIDefinition.Components.TLinks read GetLinks write FLinks stored GetLinksStored;
+        property callbacks: TOpenAPIDefinition.TOpenAPIDefinition.Components.TCallbacks read GetCallbacks write FCallbacks stored GetCallbacksStored;
+        property pathItems: TOpenAPIDefinition.TOpenAPIDefinition.Components.TPathItems read GetPathItems write FPathItems stored GetPathItemsStored;
+        [PatternProperty('^(?:schemas|responses|parameters|examples|requestBodies|headers|securitySchemes|links|callbacks|pathItems)$')]
+        property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
       end;
 
-      TResponses = class
+      Paths = class
       private
-        FResponseOrReference: TDynamicProperty<TOpenAPIDefinition.TResponseOrReference>;
+        FPathItem: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.PathItem>;
 
-        function GetResponseOrReference: TDynamicProperty<TOpenAPIDefinition.TResponseOrReference>;
-        function GetResponseOrReferenceStored: Boolean;
-      public
-        destructor Destroy; override;
-
-        property IsResponseOrReferenceStored: Boolean read GetResponseOrReferenceStored;
-      published
-        [FieldName('response-or-reference')]
-        property ResponseOrReference: TDynamicProperty<TOpenAPIDefinition.TResponseOrReference> read GetResponseOrReference write FResponseOrReference stored GetResponseOrReferenceStored;
-      end;
-
-      TParameters = class
-      private
-        FParameterOrReference: TDynamicProperty<TOpenAPIDefinition.TParameterOrReference>;
-
-        function GetParameterOrReference: TDynamicProperty<TOpenAPIDefinition.TParameterOrReference>;
-        function GetParameterOrReferenceStored: Boolean;
-      public
-        destructor Destroy; override;
-
-        property IsParameterOrReferenceStored: Boolean read GetParameterOrReferenceStored;
-      published
-        [FieldName('parameter-or-reference')]
-        property ParameterOrReference: TDynamicProperty<TOpenAPIDefinition.TParameterOrReference> read GetParameterOrReference write FParameterOrReference stored GetParameterOrReferenceStored;
-      end;
-
-      TExamples = class
-      private
-        FExampleOrReference: TDynamicProperty<TOpenAPIDefinition.TExampleOrReference>;
-
-        function GetExampleOrReference: TDynamicProperty<TOpenAPIDefinition.TExampleOrReference>;
-        function GetExampleOrReferenceStored: Boolean;
-      public
-        destructor Destroy; override;
-
-        property IsExampleOrReferenceStored: Boolean read GetExampleOrReferenceStored;
-      published
-        [FieldName('example-or-reference')]
-        property ExampleOrReference: TDynamicProperty<TOpenAPIDefinition.TExampleOrReference> read GetExampleOrReference write FExampleOrReference stored GetExampleOrReferenceStored;
-      end;
-
-      TRequestBodies = class
-      private
-        FRequestBodyOrReference: TDynamicProperty<TOpenAPIDefinition.TRequestBodyOrReference>;
-
-        function GetRequestBodyOrReference: TDynamicProperty<TOpenAPIDefinition.TRequestBodyOrReference>;
-        function GetRequestBodyOrReferenceStored: Boolean;
-      public
-        destructor Destroy; override;
-
-        property IsRequestBodyOrReferenceStored: Boolean read GetRequestBodyOrReferenceStored;
-      published
-        [FieldName('request-body-or-reference')]
-        property RequestBodyOrReference: TDynamicProperty<TOpenAPIDefinition.TRequestBodyOrReference> read GetRequestBodyOrReference write FRequestBodyOrReference stored GetRequestBodyOrReferenceStored;
-      end;
-
-      THeaders = class
-      private
-        FHeaderOrReference: TDynamicProperty<TOpenAPIDefinition.THeaderOrReference>;
-
-        function GetHeaderOrReference: TDynamicProperty<TOpenAPIDefinition.THeaderOrReference>;
-        function GetHeaderOrReferenceStored: Boolean;
-      public
-        destructor Destroy; override;
-
-        property IsHeaderOrReferenceStored: Boolean read GetHeaderOrReferenceStored;
-      published
-        [FieldName('header-or-reference')]
-        property HeaderOrReference: TDynamicProperty<TOpenAPIDefinition.THeaderOrReference> read GetHeaderOrReference write FHeaderOrReference stored GetHeaderOrReferenceStored;
-      end;
-
-      TSecuritySchemes = class
-      private
-        FSecuritySchemeOrReference: TDynamicProperty<TOpenAPIDefinition.TSecuritySchemeOrReference>;
-
-        function GetSecuritySchemeOrReference: TDynamicProperty<TOpenAPIDefinition.TSecuritySchemeOrReference>;
-        function GetSecuritySchemeOrReferenceStored: Boolean;
-      public
-        destructor Destroy; override;
-
-        property IsSecuritySchemeOrReferenceStored: Boolean read GetSecuritySchemeOrReferenceStored;
-      published
-        [FieldName('security-scheme-or-reference')]
-        property SecuritySchemeOrReference: TDynamicProperty<TOpenAPIDefinition.TSecuritySchemeOrReference> read GetSecuritySchemeOrReference write FSecuritySchemeOrReference stored GetSecuritySchemeOrReferenceStored;
-      end;
-
-      TLinks = class
-      private
-        FLinkOrReference: TDynamicProperty<TOpenAPIDefinition.TLinkOrReference>;
-
-        function GetLinkOrReference: TDynamicProperty<TOpenAPIDefinition.TLinkOrReference>;
-        function GetLinkOrReferenceStored: Boolean;
-      public
-        destructor Destroy; override;
-
-        property IsLinkOrReferenceStored: Boolean read GetLinkOrReferenceStored;
-      published
-        [FieldName('link-or-reference')]
-        property LinkOrReference: TDynamicProperty<TOpenAPIDefinition.TLinkOrReference> read GetLinkOrReference write FLinkOrReference stored GetLinkOrReferenceStored;
-      end;
-
-      TCallbacks = class
-      private
-        FCallbacksOrReference: TDynamicProperty<TOpenAPIDefinition.TCallbacksOrReference>;
-
-        function GetCallbacksOrReference: TDynamicProperty<TOpenAPIDefinition.TCallbacksOrReference>;
-        function GetCallbacksOrReferenceStored: Boolean;
-      public
-        destructor Destroy; override;
-
-        property IsCallbacksOrReferenceStored: Boolean read GetCallbacksOrReferenceStored;
-      published
-        [FieldName('callbacks-or-reference')]
-        property CallbacksOrReference: TDynamicProperty<TOpenAPIDefinition.TCallbacksOrReference> read GetCallbacksOrReference write FCallbacksOrReference stored GetCallbacksOrReferenceStored;
-      end;
-
-      TPathItems = class
-      private
-        FPathItem: TDynamicProperty<TOpenAPIDefinition.TPathItem>;
-
-        function GetPathItem: TDynamicProperty<TOpenAPIDefinition.TPathItem>;
+        function GetPathItem: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.PathItem>;
         function GetPathItemStored: Boolean;
       public
         destructor Destroy; override;
 
         property IsPathItemStored: Boolean read GetPathItemStored;
       published
+        [PatternProperty('^/')]
         [FieldName('path-item')]
-        property PathItem: TDynamicProperty<TOpenAPIDefinition.TPathItem> read GetPathItem write FPathItem stored GetPathItemStored;
+        property pathItem: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.PathItem> read GetPathItem write FPathItem stored GetPathItemStored;
       end;
-    private
-      FSchemas: TOpenAPIDefinition.TComponents.TSchemas;
-      FResponses: TOpenAPIDefinition.TComponents.TResponses;
-      FParameters: TOpenAPIDefinition.TComponents.TParameters;
-      FExamples: TOpenAPIDefinition.TComponents.TExamples;
-      FRequestBodies: TOpenAPIDefinition.TComponents.TRequestBodies;
-      FHeaders: TOpenAPIDefinition.TComponents.THeaders;
-      FSecuritySchemes: TOpenAPIDefinition.TComponents.TSecuritySchemes;
-      FLinks: TOpenAPIDefinition.TComponents.TLinks;
-      FCallbacks: TOpenAPIDefinition.TComponents.TCallbacks;
-      FPathItems: TOpenAPIDefinition.TComponents.TPathItems;
-      FSpecificationExtensions: TDynamicProperty<any>;
 
-      function GetSchemas: TOpenAPIDefinition.TComponents.TSchemas;
-      function GetResponses: TOpenAPIDefinition.TComponents.TResponses;
-      function GetParameters: TOpenAPIDefinition.TComponents.TParameters;
-      function GetExamples: TOpenAPIDefinition.TComponents.TExamples;
-      function GetRequestBodies: TOpenAPIDefinition.TComponents.TRequestBodies;
-      function GetHeaders: TOpenAPIDefinition.TComponents.THeaders;
-      function GetSecuritySchemes: TOpenAPIDefinition.TComponents.TSecuritySchemes;
-      function GetLinks: TOpenAPIDefinition.TComponents.TLinks;
-      function GetCallbacks: TOpenAPIDefinition.TComponents.TCallbacks;
-      function GetPathItems: TOpenAPIDefinition.TComponents.TPathItems;
-      function GetSpecificationExtensions: TDynamicProperty<any>;
-      function GetSchemasStored: Boolean;
-      function GetResponsesStored: Boolean;
-      function GetParametersStored: Boolean;
-      function GetExamplesStored: Boolean;
-      function GetRequestBodiesStored: Boolean;
-      function GetHeadersStored: Boolean;
-      function GetSecuritySchemesStored: Boolean;
-      function GetLinksStored: Boolean;
-      function GetCallbacksStored: Boolean;
-      function GetPathItemsStored: Boolean;
-      function GetSpecificationExtensionsStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsSchemasStored: Boolean read GetSchemasStored;
-      property IsResponsesStored: Boolean read GetResponsesStored;
-      property IsParametersStored: Boolean read GetParametersStored;
-      property IsExamplesStored: Boolean read GetExamplesStored;
-      property IsRequestBodiesStored: Boolean read GetRequestBodiesStored;
-      property IsHeadersStored: Boolean read GetHeadersStored;
-      property IsSecuritySchemesStored: Boolean read GetSecuritySchemesStored;
-      property IsLinksStored: Boolean read GetLinksStored;
-      property IsCallbacksStored: Boolean read GetCallbacksStored;
-      property IsPathItemsStored: Boolean read GetPathItemsStored;
-      property IsSpecificationExtensionsStored: Boolean read GetSpecificationExtensionsStored;
-    published
-      property schemas: TOpenAPIDefinition.TComponents.TSchemas read GetSchemas write FSchemas stored GetSchemasStored;
-      property responses: TOpenAPIDefinition.TComponents.TResponses read GetResponses write FResponses stored GetResponsesStored;
-      property parameters: TOpenAPIDefinition.TComponents.TParameters read GetParameters write FParameters stored GetParametersStored;
-      property examples: TOpenAPIDefinition.TComponents.TExamples read GetExamples write FExamples stored GetExamplesStored;
-      property requestBodies: TOpenAPIDefinition.TComponents.TRequestBodies read GetRequestBodies write FRequestBodies stored GetRequestBodiesStored;
-      property headers: TOpenAPIDefinition.TComponents.THeaders read GetHeaders write FHeaders stored GetHeadersStored;
-      property securitySchemes: TOpenAPIDefinition.TComponents.TSecuritySchemes read GetSecuritySchemes write FSecuritySchemes stored GetSecuritySchemesStored;
-      property links: TOpenAPIDefinition.TComponents.TLinks read GetLinks write FLinks stored GetLinksStored;
-      property callbacks: TOpenAPIDefinition.TComponents.TCallbacks read GetCallbacks write FCallbacks stored GetCallbacksStored;
-      property pathItems: TOpenAPIDefinition.TComponents.TPathItems read GetPathItems write FPathItems stored GetPathItemsStored;
-      [PatternProperty('^(?:schemas|responses|parameters|examples|requestBodies|headers|securitySchemes|links|callbacks|pathItems)$')]
-      [FieldName('specification-extensions')]
-      property SpecificationExtensions: TDynamicProperty<any> read GetSpecificationExtensions write FSpecificationExtensions stored GetSpecificationExtensionsStored;
-    end;
-
-    TPaths = class
-    private
-      FSpecificationExtensions: TDynamicProperty<TOpenAPIDefinition.TPathItem>;
-
-      function GetSpecificationExtensions: TDynamicProperty<TOpenAPIDefinition.TPathItem>;
-      function GetSpecificationExtensionsStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsSpecificationExtensionsStored: Boolean read GetSpecificationExtensionsStored;
-    published
-      [PatternProperty('^/')]
-      [FieldName('specification-extensions')]
-      property SpecificationExtensions: TDynamicProperty<TOpenAPIDefinition.TPathItem> read GetSpecificationExtensions write FSpecificationExtensions stored GetSpecificationExtensionsStored;
-    end;
-
-    TPathItem = class
-    private
-      FRef: System.String;
-      FSummary: System.String;
-      FDescription: System.String;
-      FServers: TArray<TOpenAPIDefinition.TServer>;
-      FParameters: TArray<TOpenAPIDefinition.TParameterOrReference>;
-      FGet: TOpenAPIDefinition.TOperation;
-      FPut: TOpenAPIDefinition.TOperation;
-      FPost: TOpenAPIDefinition.TOperation;
-      FDelete: TOpenAPIDefinition.TOperation;
-      FOptions: TOpenAPIDefinition.TOperation;
-      FHead: TOpenAPIDefinition.TOperation;
-      FPatch: TOpenAPIDefinition.TOperation;
-      FTrace: TOpenAPIDefinition.TOperation;
-
-      function GetGet: TOpenAPIDefinition.TOperation;
-      function GetPut: TOpenAPIDefinition.TOperation;
-      function GetPost: TOpenAPIDefinition.TOperation;
-      function GetDelete: TOpenAPIDefinition.TOperation;
-      function GetOptions: TOpenAPIDefinition.TOperation;
-      function GetHead: TOpenAPIDefinition.TOperation;
-      function GetPatch: TOpenAPIDefinition.TOperation;
-      function GetTrace: TOpenAPIDefinition.TOperation;
-      function GetRefStored: Boolean;
-      function GetSummaryStored: Boolean;
-      function GetDescriptionStored: Boolean;
-      function GetServersStored: Boolean;
-      function GetParametersStored: Boolean;
-      function GetGetStored: Boolean;
-      function GetPutStored: Boolean;
-      function GetPostStored: Boolean;
-      function GetDeleteStored: Boolean;
-      function GetOptionsStored: Boolean;
-      function GetHeadStored: Boolean;
-      function GetPatchStored: Boolean;
-      function GetTraceStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      function AddServers: TOpenAPIDefinition.TServer;
-      function AddParameters: TOpenAPIDefinition.TParameterOrReference;
-
-      property IsRefStored: Boolean read GetRefStored;
-      property IsSummaryStored: Boolean read GetSummaryStored;
-      property IsDescriptionStored: Boolean read GetDescriptionStored;
-      property IsServersStored: Boolean read GetServersStored;
-      property IsParametersStored: Boolean read GetParametersStored;
-      property IsGetStored: Boolean read GetGetStored;
-      property IsPutStored: Boolean read GetPutStored;
-      property IsPostStored: Boolean read GetPostStored;
-      property IsDeleteStored: Boolean read GetDeleteStored;
-      property IsOptionsStored: Boolean read GetOptionsStored;
-      property IsHeadStored: Boolean read GetHeadStored;
-      property IsPatchStored: Boolean read GetPatchStored;
-      property IsTraceStored: Boolean read GetTraceStored;
-    published
-      [FieldName('$ref')]
-      property Ref: System.String read FRef write FRef stored GetRefStored;
-      property summary: System.String read FSummary write FSummary stored GetSummaryStored;
-      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property servers: TArray<TOpenAPIDefinition.TServer> read FServers write FServers stored GetServersStored;
-      property parameters: TArray<TOpenAPIDefinition.TParameterOrReference> read FParameters write FParameters stored GetParametersStored;
-      property get: TOpenAPIDefinition.TOperation read GetGet write FGet stored GetGetStored;
-      property put: TOpenAPIDefinition.TOperation read GetPut write FPut stored GetPutStored;
-      property post: TOpenAPIDefinition.TOperation read GetPost write FPost stored GetPostStored;
-      property delete: TOpenAPIDefinition.TOperation read GetDelete write FDelete stored GetDeleteStored;
-      property options: TOpenAPIDefinition.TOperation read GetOptions write FOptions stored GetOptionsStored;
-      property head: TOpenAPIDefinition.TOperation read GetHead write FHead stored GetHeadStored;
-      property patch: TOpenAPIDefinition.TOperation read GetPatch write FPatch stored GetPatchStored;
-      property trace: TOpenAPIDefinition.TOperation read GetTrace write FTrace stored GetTraceStored;
-    end;
-
-    TOperation = class
-    public type
-      TCallbacks = class
+      PathItem = class
       private
-        FCallbacksOrReference: TDynamicProperty<TOpenAPIDefinition.TCallbacksOrReference>;
+        FRef: System.String;
+        FSummary: System.String;
+        FDescription: System.String;
+        FServers: TArray<TOpenAPIDefinition.TOpenAPIDefinition.Server>;
+        FParameters: TArray<TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference>;
+        FGet: TOpenAPIDefinition.TOpenAPIDefinition.Operation;
+        FPut: TOpenAPIDefinition.TOpenAPIDefinition.Operation;
+        FPost: TOpenAPIDefinition.TOpenAPIDefinition.Operation;
+        FDelete: TOpenAPIDefinition.TOpenAPIDefinition.Operation;
+        FOptions: TOpenAPIDefinition.TOpenAPIDefinition.Operation;
+        FHead: TOpenAPIDefinition.TOpenAPIDefinition.Operation;
+        FPatch: TOpenAPIDefinition.TOpenAPIDefinition.Operation;
+        FTrace: TOpenAPIDefinition.TOpenAPIDefinition.Operation;
 
-        function GetCallbacksOrReference: TDynamicProperty<TOpenAPIDefinition.TCallbacksOrReference>;
-        function GetCallbacksOrReferenceStored: Boolean;
+        function GetGet: TOpenAPIDefinition.TOpenAPIDefinition.Operation;
+        function GetPut: TOpenAPIDefinition.TOpenAPIDefinition.Operation;
+        function GetPost: TOpenAPIDefinition.TOpenAPIDefinition.Operation;
+        function GetDelete: TOpenAPIDefinition.TOpenAPIDefinition.Operation;
+        function GetOptions: TOpenAPIDefinition.TOpenAPIDefinition.Operation;
+        function GetHead: TOpenAPIDefinition.TOpenAPIDefinition.Operation;
+        function GetPatch: TOpenAPIDefinition.TOpenAPIDefinition.Operation;
+        function GetTrace: TOpenAPIDefinition.TOpenAPIDefinition.Operation;
+        function GetRefStored: Boolean;
+        function GetSummaryStored: Boolean;
+        function GetDescriptionStored: Boolean;
+        function GetServersStored: Boolean;
+        function GetParametersStored: Boolean;
+        function GetGetStored: Boolean;
+        function GetPutStored: Boolean;
+        function GetPostStored: Boolean;
+        function GetDeleteStored: Boolean;
+        function GetOptionsStored: Boolean;
+        function GetHeadStored: Boolean;
+        function GetPatchStored: Boolean;
+        function GetTraceStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsCallbacksOrReferenceStored: Boolean read GetCallbacksOrReferenceStored;
+        function AddServers: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Server;
+        function AddParameters: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference;
+
+        property IsRefStored: Boolean read GetRefStored;
+        property IsSummaryStored: Boolean read GetSummaryStored;
+        property IsDescriptionStored: Boolean read GetDescriptionStored;
+        property IsServersStored: Boolean read GetServersStored;
+        property IsParametersStored: Boolean read GetParametersStored;
+        property IsGetStored: Boolean read GetGetStored;
+        property IsPutStored: Boolean read GetPutStored;
+        property IsPostStored: Boolean read GetPostStored;
+        property IsDeleteStored: Boolean read GetDeleteStored;
+        property IsOptionsStored: Boolean read GetOptionsStored;
+        property IsHeadStored: Boolean read GetHeadStored;
+        property IsPatchStored: Boolean read GetPatchStored;
+        property IsTraceStored: Boolean read GetTraceStored;
       published
-        [FieldName('callbacks-or-reference')]
-        property CallbacksOrReference: TDynamicProperty<TOpenAPIDefinition.TCallbacksOrReference> read GetCallbacksOrReference write FCallbacksOrReference stored GetCallbacksOrReferenceStored;
+        [FieldName('$ref')]
+        property Ref: System.String read FRef write FRef stored GetRefStored;
+        property summary: System.String read FSummary write FSummary stored GetSummaryStored;
+        property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+        property servers: TArray<TOpenAPIDefinition.TOpenAPIDefinition.Server> read FServers write FServers stored GetServersStored;
+        property parameters: TArray<TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference> read FParameters write FParameters stored GetParametersStored;
+        property get: TOpenAPIDefinition.TOpenAPIDefinition.Operation read GetGet write FGet stored GetGetStored;
+        property put: TOpenAPIDefinition.TOpenAPIDefinition.Operation read GetPut write FPut stored GetPutStored;
+        property post: TOpenAPIDefinition.TOpenAPIDefinition.Operation read GetPost write FPost stored GetPostStored;
+        property delete: TOpenAPIDefinition.TOpenAPIDefinition.Operation read GetDelete write FDelete stored GetDeleteStored;
+        property options: TOpenAPIDefinition.TOpenAPIDefinition.Operation read GetOptions write FOptions stored GetOptionsStored;
+        property head: TOpenAPIDefinition.TOpenAPIDefinition.Operation read GetHead write FHead stored GetHeadStored;
+        property patch: TOpenAPIDefinition.TOpenAPIDefinition.Operation read GetPatch write FPatch stored GetPatchStored;
+        property trace: TOpenAPIDefinition.TOpenAPIDefinition.Operation read GetTrace write FTrace stored GetTraceStored;
       end;
-    private
-      FTags: TArray<System.String>;
-      FSummary: System.String;
-      FDescription: System.String;
-      FExternalDocs: TOpenAPIDefinition.TExternalDocumentation;
-      FOperationId: System.String;
-      FParameters: TArray<TOpenAPIDefinition.TParameterOrReference>;
-      FRequestBody: TOpenAPIDefinition.TRequestBodyOrReference;
-      FResponses: TOpenAPIDefinition.TResponses;
-      FCallbacks: TOpenAPIDefinition.TOperation.TCallbacks;
-      FDeprecated: System.Boolean;
-      FSecurity: TArray<TOpenAPIDefinition.TSecurityRequirement>;
-      FServers: TArray<TOpenAPIDefinition.TServer>;
-      FDeprecatedIsStored: Boolean;
 
-      function GetExternalDocs: TOpenAPIDefinition.TExternalDocumentation;
-      function GetRequestBody: TOpenAPIDefinition.TRequestBodyOrReference;
-      function GetResponses: TOpenAPIDefinition.TResponses;
-      function GetCallbacks: TOpenAPIDefinition.TOperation.TCallbacks;
-      function GetTagsStored: Boolean;
-      function GetSummaryStored: Boolean;
-      function GetDescriptionStored: Boolean;
-      function GetExternalDocsStored: Boolean;
-      function GetOperationIdStored: Boolean;
-      function GetParametersStored: Boolean;
-      function GetRequestBodyStored: Boolean;
-      function GetResponsesStored: Boolean;
-      function GetCallbacksStored: Boolean;
-      function GetSecurityStored: Boolean;
-      function GetServersStored: Boolean;
-      procedure SetDeprecated(const Value: System.Boolean);
-    public
-      destructor Destroy; override;
+      Operation = class
+      public type
+        // Forward class declaration
+        TCallbacks = class;
 
-      function AddParameters: TOpenAPIDefinition.TParameterOrReference;
-      function AddSecurity: TOpenAPIDefinition.TSecurityRequirement;
-      function AddServers: TOpenAPIDefinition.TServer;
+        TCallbacks = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.CallbacksOrReference>;
 
-      property IsTagsStored: Boolean read GetTagsStored;
-      property IsSummaryStored: Boolean read GetSummaryStored;
-      property IsDescriptionStored: Boolean read GetDescriptionStored;
-      property IsExternalDocsStored: Boolean read GetExternalDocsStored;
-      property IsOperationIdStored: Boolean read GetOperationIdStored;
-      property IsParametersStored: Boolean read GetParametersStored;
-      property IsRequestBodyStored: Boolean read GetRequestBodyStored;
-      property IsResponsesStored: Boolean read GetResponsesStored;
-      property IsCallbacksStored: Boolean read GetCallbacksStored;
-      property IsDeprecatedStored: Boolean read FDeprecatedIsStored;
-      property IsSecurityStored: Boolean read GetSecurityStored;
-      property IsServersStored: Boolean read GetServersStored;
-    published
-      property tags: TArray<System.String> read FTags write FTags stored GetTagsStored;
-      property summary: System.String read FSummary write FSummary stored GetSummaryStored;
-      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property externalDocs: TOpenAPIDefinition.TExternalDocumentation read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
-      property operationId: System.String read FOperationId write FOperationId stored GetOperationIdStored;
-      property parameters: TArray<TOpenAPIDefinition.TParameterOrReference> read FParameters write FParameters stored GetParametersStored;
-      property requestBody: TOpenAPIDefinition.TRequestBodyOrReference read GetRequestBody write FRequestBody stored GetRequestBodyStored;
-      property responses: TOpenAPIDefinition.TResponses read GetResponses write FResponses stored GetResponsesStored;
-      property callbacks: TOpenAPIDefinition.TOperation.TCallbacks read GetCallbacks write FCallbacks stored GetCallbacksStored;
-      property deprecated: System.Boolean read FDeprecated write SetDeprecated stored FDeprecatedIsStored;
-      property security: TArray<TOpenAPIDefinition.TSecurityRequirement> read FSecurity write FSecurity stored GetSecurityStored;
-      property servers: TArray<TOpenAPIDefinition.TServer> read FServers write FServers stored GetServersStored;
-    end;
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.CallbacksOrReference>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
 
-    TExternalDocumentation = class
-    private
-      FDescription: System.String;
-      FUrl: System.String;
-
-      function GetDescriptionStored: Boolean;
-    public
-      property IsDescriptionStored: Boolean read GetDescriptionStored;
-    published
-      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property url: System.String read FUrl write FUrl;
-    end;
-
-    [Flat]
-    TParameter = class
-    public type
-      TIn = (query, header, path, cookie);
-    private
-      FName: System.String;
-      FIn: TOpenAPIDefinition.TParameter.TIn;
-      FDescription: System.String;
-      FRequired: System.Boolean;
-      FDeprecated: System.Boolean;
-      FSchema: TOpenAPIDefinition;
-      FContent: TOpenAPIDefinition.TContent;
-      FAllowEmptyValue: System.Boolean;
-      FRequiredIsStored: Boolean;
-      FDeprecatedIsStored: Boolean;
-      FAllowEmptyValueIsStored: Boolean;
-
-      function GetSchema: TOpenAPIDefinition;
-      function GetContent: TOpenAPIDefinition.TContent;
-      function GetDescriptionStored: Boolean;
-      function GetSchemaStored: Boolean;
-      function GetContentStored: Boolean;
-      procedure SetRequired(const Value: System.Boolean);
-      procedure SetDeprecated(const Value: System.Boolean);
-      procedure SetAllowEmptyValue(const Value: System.Boolean);
-    public
-      destructor Destroy; override;
-
-      property IsDescriptionStored: Boolean read GetDescriptionStored;
-      property IsRequiredStored: Boolean read FRequiredIsStored;
-      property IsDeprecatedStored: Boolean read FDeprecatedIsStored;
-      property IsSchemaStored: Boolean read GetSchemaStored;
-      property IsContentStored: Boolean read GetContentStored;
-      property IsAllowEmptyValueStored: Boolean read FAllowEmptyValueIsStored;
-    published
-      property name: System.String read FName write FName;
-      [FieldName('in')]
-      property &In: TOpenAPIDefinition.TParameter.TIn read FIn write FIn;
-      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property required: System.Boolean read FRequired write SetRequired stored FRequiredIsStored;
-      property deprecated: System.Boolean read FDeprecated write SetDeprecated stored FDeprecatedIsStored;
-      property schema: TOpenAPIDefinition read GetSchema write FSchema stored GetSchemaStored;
-      property content: TOpenAPIDefinition.TContent read GetContent write FContent stored GetContentStored;
-      property allowEmptyValue: System.Boolean read FAllowEmptyValue write SetAllowEmptyValue stored FAllowEmptyValueIsStored;
-    end;
-
-    [Flat]
-    TParameterOrReference = class
-    private
-      FReference: TOpenAPIDefinition.TReference;
-      FParameter: TOpenAPIDefinition.TParameter;
-
-      function GetReference: TOpenAPIDefinition.TReference;
-      function GetParameter: TOpenAPIDefinition.TParameter;
-      function GetReferenceStored: Boolean;
-      function GetParameterStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsReferenceStored: Boolean read GetReferenceStored;
-      property IsParameterStored: Boolean read GetParameterStored;
-    published
-      property reference: TOpenAPIDefinition.TReference read GetReference write FReference stored GetReferenceStored;
-      property parameter: TOpenAPIDefinition.TParameter read GetParameter write FParameter stored GetParameterStored;
-    end;
-
-    TRequestBody = class
-    private
-      FDescription: System.String;
-      FContent: TOpenAPIDefinition.TContent;
-      FRequired: System.Boolean;
-      FRequiredIsStored: Boolean;
-
-      function GetContent: TOpenAPIDefinition.TContent;
-      function GetDescriptionStored: Boolean;
-      procedure SetRequired(const Value: System.Boolean);
-    public
-      destructor Destroy; override;
-
-      property IsDescriptionStored: Boolean read GetDescriptionStored;
-      property IsRequiredStored: Boolean read FRequiredIsStored;
-    published
-      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property content: TOpenAPIDefinition.TContent read GetContent write FContent;
-      property required: System.Boolean read FRequired write SetRequired stored FRequiredIsStored;
-    end;
-
-    [Flat]
-    TRequestBodyOrReference = class
-    private
-      FReference: TOpenAPIDefinition.TReference;
-      FRequestBody: TOpenAPIDefinition.TRequestBody;
-
-      function GetReference: TOpenAPIDefinition.TReference;
-      function GetRequestBody: TOpenAPIDefinition.TRequestBody;
-      function GetReferenceStored: Boolean;
-      function GetRequestBodyStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsReferenceStored: Boolean read GetReferenceStored;
-      property IsRequestBodyStored: Boolean read GetRequestBodyStored;
-    published
-      property reference: TOpenAPIDefinition.TReference read GetReference write FReference stored GetReferenceStored;
-      [FieldName('request-body')]
-      property RequestBody: TOpenAPIDefinition.TRequestBody read GetRequestBody write FRequestBody stored GetRequestBodyStored;
-    end;
-
-    TContent = class
-    private
-      FMediaType: TDynamicProperty<TOpenAPIDefinition.TMediaType>;
-
-      function GetMediaType: TDynamicProperty<TOpenAPIDefinition.TMediaType>;
-      function GetMediaTypeStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsMediaTypeStored: Boolean read GetMediaTypeStored;
-    published
-      [FieldName('media-type')]
-      property MediaType: TDynamicProperty<TOpenAPIDefinition.TMediaType> read GetMediaType write FMediaType stored GetMediaTypeStored;
-    end;
-
-    [Flat]
-    TMediaType = class
-    public type
-      TEncoding = class
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.CallbacksOrReference> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
       private
-        FEncoding: TDynamicProperty<TOpenAPIDefinition.TEncoding>;
+        FTags: TArray<System.String>;
+        FSummary: System.String;
+        FDescription: System.String;
+        FExternalDocs: TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation;
+        FOperationId: System.String;
+        FParameters: TArray<TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference>;
+        FRequestBody: TOpenAPIDefinition.TOpenAPIDefinition.RequestBodyOrReference;
+        FResponses: TOpenAPIDefinition.TOpenAPIDefinition.Responses;
+        FCallbacks: TOpenAPIDefinition.TOpenAPIDefinition.Operation.TCallbacks;
+        FDeprecated: System.Boolean;
+        FSecurity: TArray<TOpenAPIDefinition.TOpenAPIDefinition.SecurityRequirement>;
+        FServers: TArray<TOpenAPIDefinition.TOpenAPIDefinition.Server>;
 
-        function GetEncoding: TDynamicProperty<TOpenAPIDefinition.TEncoding>;
-        function GetEncodingStored: Boolean;
+        function GetExternalDocs: TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation;
+        function GetRequestBody: TOpenAPIDefinition.TOpenAPIDefinition.RequestBodyOrReference;
+        function GetResponses: TOpenAPIDefinition.TOpenAPIDefinition.Responses;
+        function GetCallbacks: TOpenAPIDefinition.TOpenAPIDefinition.Operation.TCallbacks;
+        function GetTagsStored: Boolean;
+        function GetSummaryStored: Boolean;
+        function GetDescriptionStored: Boolean;
+        function GetExternalDocsStored: Boolean;
+        function GetOperationIdStored: Boolean;
+        function GetParametersStored: Boolean;
+        function GetRequestBodyStored: Boolean;
+        function GetResponsesStored: Boolean;
+        function GetCallbacksStored: Boolean;
+        function GetDeprecatedStored: Boolean;
+        function GetSecurityStored: Boolean;
+        function GetServersStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsEncodingStored: Boolean read GetEncodingStored;
+        function AddParameters: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference;
+        function AddSecurity: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityRequirement;
+        function AddServers: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Server;
+
+        property IsTagsStored: Boolean read GetTagsStored;
+        property IsSummaryStored: Boolean read GetSummaryStored;
+        property IsDescriptionStored: Boolean read GetDescriptionStored;
+        property IsExternalDocsStored: Boolean read GetExternalDocsStored;
+        property IsOperationIdStored: Boolean read GetOperationIdStored;
+        property IsParametersStored: Boolean read GetParametersStored;
+        property IsRequestBodyStored: Boolean read GetRequestBodyStored;
+        property IsResponsesStored: Boolean read GetResponsesStored;
+        property IsCallbacksStored: Boolean read GetCallbacksStored;
+        property IsDeprecatedStored: Boolean read GetDeprecatedStored;
+        property IsSecurityStored: Boolean read GetSecurityStored;
+        property IsServersStored: Boolean read GetServersStored;
       published
-        property encoding: TDynamicProperty<TOpenAPIDefinition.TEncoding> read GetEncoding write FEncoding stored GetEncodingStored;
+        property tags: TArray<System.String> read FTags write FTags stored GetTagsStored;
+        property summary: System.String read FSummary write FSummary stored GetSummaryStored;
+        property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+        property externalDocs: TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
+        property operationId: System.String read FOperationId write FOperationId stored GetOperationIdStored;
+        property parameters: TArray<TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference> read FParameters write FParameters stored GetParametersStored;
+        property requestBody: TOpenAPIDefinition.TOpenAPIDefinition.RequestBodyOrReference read GetRequestBody write FRequestBody stored GetRequestBodyStored;
+        property responses: TOpenAPIDefinition.TOpenAPIDefinition.Responses read GetResponses write FResponses stored GetResponsesStored;
+        property callbacks: TOpenAPIDefinition.TOpenAPIDefinition.Operation.TCallbacks read GetCallbacks write FCallbacks stored GetCallbacksStored;
+        property deprecated: System.Boolean read FDeprecated write FDeprecated stored GetDeprecatedStored;
+        property security: TArray<TOpenAPIDefinition.TOpenAPIDefinition.SecurityRequirement> read FSecurity write FSecurity stored GetSecurityStored;
+        property servers: TArray<TOpenAPIDefinition.TOpenAPIDefinition.Server> read FServers write FServers stored GetServersStored;
       end;
-    private
-      FSchema: TOpenAPIDefinition;
-      FEncoding: TOpenAPIDefinition.TMediaType.TEncoding;
-      FSpecificationExtensions: TOpenAPIDefinition.TSpecificationExtensions;
-      FExamples: TOpenAPIDefinition.TExamples;
 
-      function GetSchema: TOpenAPIDefinition;
-      function GetEncoding: TOpenAPIDefinition.TMediaType.TEncoding;
-      function GetSpecificationExtensions: TOpenAPIDefinition.TSpecificationExtensions;
-      function GetExamples: TOpenAPIDefinition.TExamples;
-      function GetSchemaStored: Boolean;
-      function GetEncodingStored: Boolean;
-      function GetSpecificationExtensionsStored: Boolean;
-      function GetExamplesStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsSchemaStored: Boolean read GetSchemaStored;
-      property IsEncodingStored: Boolean read GetEncodingStored;
-      property IsSpecificationExtensionsStored: Boolean read GetSpecificationExtensionsStored;
-      property IsExamplesStored: Boolean read GetExamplesStored;
-    published
-      property schema: TOpenAPIDefinition read GetSchema write FSchema stored GetSchemaStored;
-      property encoding: TOpenAPIDefinition.TMediaType.TEncoding read GetEncoding write FEncoding stored GetEncodingStored;
-      [FieldName('specification-extensions')]
-      property SpecificationExtensions: TOpenAPIDefinition.TSpecificationExtensions read GetSpecificationExtensions write FSpecificationExtensions stored GetSpecificationExtensionsStored;
-      property examples: TOpenAPIDefinition.TExamples read GetExamples write FExamples stored GetExamplesStored;
-    end;
-
-    TEncoding = class
-    public type
-      TStyle = (form, spaceDelimited, pipeDelimited, deepObject);
-
-      THeaders = class
+      ExternalDocumentation = class
       private
-        FHeaderOrReference: TDynamicProperty<TOpenAPIDefinition.THeaderOrReference>;
+        FDescription: System.String;
+        FUrl: System.String;
 
-        function GetHeaderOrReference: TDynamicProperty<TOpenAPIDefinition.THeaderOrReference>;
-        function GetHeaderOrReferenceStored: Boolean;
+        function GetDescriptionStored: Boolean;
       public
-        destructor Destroy; override;
-
-        property IsHeaderOrReferenceStored: Boolean read GetHeaderOrReferenceStored;
+        property IsDescriptionStored: Boolean read GetDescriptionStored;
       published
-        [FieldName('header-or-reference')]
-        property HeaderOrReference: TDynamicProperty<TOpenAPIDefinition.THeaderOrReference> read GetHeaderOrReference write FHeaderOrReference stored GetHeaderOrReferenceStored;
+        property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+        property url: System.String read FUrl write FUrl;
       end;
-    private
-      FContentType: System.String;
-      FHeaders: TOpenAPIDefinition.TEncoding.THeaders;
-      FStyle: TOpenAPIDefinition.TEncoding.TStyle;
-      FExplode: System.Boolean;
-      FAllowReserved: System.Boolean;
-      FStyleIsStored: Boolean;
-      FExplodeIsStored: Boolean;
-      FAllowReservedIsStored: Boolean;
-
-      function GetHeaders: TOpenAPIDefinition.TEncoding.THeaders;
-      function GetContentTypeStored: Boolean;
-      function GetHeadersStored: Boolean;
-      procedure SetStyle(const Value: TOpenAPIDefinition.TEncoding.TStyle);
-      procedure SetExplode(const Value: System.Boolean);
-      procedure SetAllowReserved(const Value: System.Boolean);
-    public
-      destructor Destroy; override;
-
-      property IsContentTypeStored: Boolean read GetContentTypeStored;
-      property IsHeadersStored: Boolean read GetHeadersStored;
-      property IsStyleStored: Boolean read FStyleIsStored;
-      property IsExplodeStored: Boolean read FExplodeIsStored;
-      property IsAllowReservedStored: Boolean read FAllowReservedIsStored;
-    published
-      property contentType: System.String read FContentType write FContentType stored GetContentTypeStored;
-      property headers: TOpenAPIDefinition.TEncoding.THeaders read GetHeaders write FHeaders stored GetHeadersStored;
-      property style: TOpenAPIDefinition.TEncoding.TStyle read FStyle write SetStyle stored FStyleIsStored;
-      property explode: System.Boolean read FExplode write SetExplode stored FExplodeIsStored;
-      property allowReserved: System.Boolean read FAllowReserved write SetAllowReserved stored FAllowReservedIsStored;
-    end;
-
-    [Flat]
-    TResponses = class
-    private
-      FDefault: TOpenAPIDefinition.TResponseOrReference;
-      FSpecificationExtensions: TDynamicProperty<TOpenAPIDefinition.TResponseOrReference>;
-
-      function GetDefault: TOpenAPIDefinition.TResponseOrReference;
-      function GetSpecificationExtensions: TDynamicProperty<TOpenAPIDefinition.TResponseOrReference>;
-      function GetDefaultStored: Boolean;
-      function GetSpecificationExtensionsStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsDefaultStored: Boolean read GetDefaultStored;
-      property IsSpecificationExtensionsStored: Boolean read GetSpecificationExtensionsStored;
-    published
-      property default: TOpenAPIDefinition.TResponseOrReference read GetDefault write FDefault stored GetDefaultStored;
-      [PatternProperty('^[1-5](?:[0-9]{2}|XX)$')]
-      [FieldName('specification-extensions')]
-      property SpecificationExtensions: TDynamicProperty<TOpenAPIDefinition.TResponseOrReference> read GetSpecificationExtensions write FSpecificationExtensions stored GetSpecificationExtensionsStored;
-    end;
-
-    TResponse = class
-    public type
-      THeaders = class
-      private
-        FHeaderOrReference: TDynamicProperty<TOpenAPIDefinition.THeaderOrReference>;
-
-        function GetHeaderOrReference: TDynamicProperty<TOpenAPIDefinition.THeaderOrReference>;
-        function GetHeaderOrReferenceStored: Boolean;
-      public
-        destructor Destroy; override;
-
-        property IsHeaderOrReferenceStored: Boolean read GetHeaderOrReferenceStored;
-      published
-        [FieldName('header-or-reference')]
-        property HeaderOrReference: TDynamicProperty<TOpenAPIDefinition.THeaderOrReference> read GetHeaderOrReference write FHeaderOrReference stored GetHeaderOrReferenceStored;
-      end;
-
-      TLinks = class
-      private
-        FLinkOrReference: TDynamicProperty<TOpenAPIDefinition.TLinkOrReference>;
-
-        function GetLinkOrReference: TDynamicProperty<TOpenAPIDefinition.TLinkOrReference>;
-        function GetLinkOrReferenceStored: Boolean;
-      public
-        destructor Destroy; override;
-
-        property IsLinkOrReferenceStored: Boolean read GetLinkOrReferenceStored;
-      published
-        [FieldName('link-or-reference')]
-        property LinkOrReference: TDynamicProperty<TOpenAPIDefinition.TLinkOrReference> read GetLinkOrReference write FLinkOrReference stored GetLinkOrReferenceStored;
-      end;
-    private
-      FDescription: System.String;
-      FHeaders: TOpenAPIDefinition.TResponse.THeaders;
-      FContent: TOpenAPIDefinition.TContent;
-      FLinks: TOpenAPIDefinition.TResponse.TLinks;
-
-      function GetHeaders: TOpenAPIDefinition.TResponse.THeaders;
-      function GetContent: TOpenAPIDefinition.TContent;
-      function GetLinks: TOpenAPIDefinition.TResponse.TLinks;
-      function GetHeadersStored: Boolean;
-      function GetContentStored: Boolean;
-      function GetLinksStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsHeadersStored: Boolean read GetHeadersStored;
-      property IsContentStored: Boolean read GetContentStored;
-      property IsLinksStored: Boolean read GetLinksStored;
-    published
-      property description: System.String read FDescription write FDescription;
-      property headers: TOpenAPIDefinition.TResponse.THeaders read GetHeaders write FHeaders stored GetHeadersStored;
-      property content: TOpenAPIDefinition.TContent read GetContent write FContent stored GetContentStored;
-      property links: TOpenAPIDefinition.TResponse.TLinks read GetLinks write FLinks stored GetLinksStored;
-    end;
-
-    [Flat]
-    TResponseOrReference = class
-    private
-      FReference: TOpenAPIDefinition.TReference;
-      FResponse: TOpenAPIDefinition.TResponse;
-
-      function GetReference: TOpenAPIDefinition.TReference;
-      function GetResponse: TOpenAPIDefinition.TResponse;
-      function GetReferenceStored: Boolean;
-      function GetResponseStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsReferenceStored: Boolean read GetReferenceStored;
-      property IsResponseStored: Boolean read GetResponseStored;
-    published
-      property reference: TOpenAPIDefinition.TReference read GetReference write FReference stored GetReferenceStored;
-      property response: TOpenAPIDefinition.TResponse read GetResponse write FResponse stored GetResponseStored;
-    end;
-
-    TCallbacks = class
-    private
-      FPathItem: TDynamicProperty<TOpenAPIDefinition.TPathItem>;
-
-      function GetPathItem: TDynamicProperty<TOpenAPIDefinition.TPathItem>;
-      function GetPathItemStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsPathItemStored: Boolean read GetPathItemStored;
-    published
-      [FieldName('path-item')]
-      property PathItem: TDynamicProperty<TOpenAPIDefinition.TPathItem> read GetPathItem write FPathItem stored GetPathItemStored;
-    end;
-
-    [Flat]
-    TCallbacksOrReference = class
-    private
-      FReference: TOpenAPIDefinition.TReference;
-      FCallbacks: TOpenAPIDefinition.TCallbacks;
-
-      function GetReference: TOpenAPIDefinition.TReference;
-      function GetCallbacks: TOpenAPIDefinition.TCallbacks;
-      function GetReferenceStored: Boolean;
-      function GetCallbacksStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsReferenceStored: Boolean read GetReferenceStored;
-      property IsCallbacksStored: Boolean read GetCallbacksStored;
-    published
-      property reference: TOpenAPIDefinition.TReference read GetReference write FReference stored GetReferenceStored;
-      property callbacks: TOpenAPIDefinition.TCallbacks read GetCallbacks write FCallbacks stored GetCallbacksStored;
-    end;
-
-    TExample = class
-    private
-      FSummary: System.String;
-      FDescription: System.String;
-      FValue: any;
-      FExternalValue: System.String;
-      FValueIsStored: Boolean;
-
-      function GetSummaryStored: Boolean;
-      function GetDescriptionStored: Boolean;
-      function GetExternalValueStored: Boolean;
-      procedure SetValue(const Value: any);
-    public
-      property IsSummaryStored: Boolean read GetSummaryStored;
-      property IsDescriptionStored: Boolean read GetDescriptionStored;
-      property IsValueStored: Boolean read FValueIsStored;
-      property IsExternalValueStored: Boolean read GetExternalValueStored;
-    published
-      property summary: System.String read FSummary write FSummary stored GetSummaryStored;
-      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property value: any read FValue write SetValue stored FValueIsStored;
-      property externalValue: System.String read FExternalValue write FExternalValue stored GetExternalValueStored;
-    end;
-
-    [Flat]
-    TExampleOrReference = class
-    private
-      FReference: TOpenAPIDefinition.TReference;
-      FExample: TOpenAPIDefinition.TExample;
-
-      function GetReference: TOpenAPIDefinition.TReference;
-      function GetExample: TOpenAPIDefinition.TExample;
-      function GetReferenceStored: Boolean;
-      function GetExampleStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsReferenceStored: Boolean read GetReferenceStored;
-      property IsExampleStored: Boolean read GetExampleStored;
-    published
-      property reference: TOpenAPIDefinition.TReference read GetReference write FReference stored GetReferenceStored;
-      property example: TOpenAPIDefinition.TExample read GetExample write FExample stored GetExampleStored;
-    end;
-
-    [Flat]
-    TLink = class
-    private
-      FOperationRef: System.String;
-      FOperationId: System.String;
-      FParameters: TOpenAPIDefinition.TMapOfStrings;
-      FRequestBody: any;
-      FDescription: System.String;
-      FServer: TOpenAPIDefinition.TServer;
-      FRequestBodyIsStored: Boolean;
-
-      function GetParameters: TOpenAPIDefinition.TMapOfStrings;
-      function GetServer: TOpenAPIDefinition.TServer;
-      function GetOperationRefStored: Boolean;
-      function GetOperationIdStored: Boolean;
-      function GetParametersStored: Boolean;
-      function GetDescriptionStored: Boolean;
-      function GetServerStored: Boolean;
-      procedure SetRequestBody(const Value: any);
-    public
-      destructor Destroy; override;
-
-      property IsOperationRefStored: Boolean read GetOperationRefStored;
-      property IsOperationIdStored: Boolean read GetOperationIdStored;
-      property IsParametersStored: Boolean read GetParametersStored;
-      property IsRequestBodyStored: Boolean read FRequestBodyIsStored;
-      property IsDescriptionStored: Boolean read GetDescriptionStored;
-      property IsServerStored: Boolean read GetServerStored;
-    published
-      property operationRef: System.String read FOperationRef write FOperationRef stored GetOperationRefStored;
-      property operationId: System.String read FOperationId write FOperationId stored GetOperationIdStored;
-      property parameters: TOpenAPIDefinition.TMapOfStrings read GetParameters write FParameters stored GetParametersStored;
-      property requestBody: any read FRequestBody write SetRequestBody stored FRequestBodyIsStored;
-      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property server: TOpenAPIDefinition.TServer read GetServer write FServer stored GetServerStored;
-    end;
-
-    [Flat]
-    TLinkOrReference = class
-    private
-      FReference: TOpenAPIDefinition.TReference;
-      FLink: TOpenAPIDefinition.TLink;
-
-      function GetReference: TOpenAPIDefinition.TReference;
-      function GetLink: TOpenAPIDefinition.TLink;
-      function GetReferenceStored: Boolean;
-      function GetLinkStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsReferenceStored: Boolean read GetReferenceStored;
-      property IsLinkStored: Boolean read GetLinkStored;
-    published
-      property reference: TOpenAPIDefinition.TReference read GetReference write FReference stored GetReferenceStored;
-      property link: TOpenAPIDefinition.TLink read GetLink write FLink stored GetLinkStored;
-    end;
-
-    [Flat]
-    THeader = class
-    private
-      FDescription: System.String;
-      FRequired: System.Boolean;
-      FDeprecated: System.Boolean;
-      FSchema: TOpenAPIDefinition;
-      FContent: TOpenAPIDefinition.TContent;
-      FRequiredIsStored: Boolean;
-      FDeprecatedIsStored: Boolean;
-
-      function GetSchema: TOpenAPIDefinition;
-      function GetContent: TOpenAPIDefinition.TContent;
-      function GetDescriptionStored: Boolean;
-      function GetSchemaStored: Boolean;
-      function GetContentStored: Boolean;
-      procedure SetRequired(const Value: System.Boolean);
-      procedure SetDeprecated(const Value: System.Boolean);
-    public
-      destructor Destroy; override;
-
-      property IsDescriptionStored: Boolean read GetDescriptionStored;
-      property IsRequiredStored: Boolean read FRequiredIsStored;
-      property IsDeprecatedStored: Boolean read FDeprecatedIsStored;
-      property IsSchemaStored: Boolean read GetSchemaStored;
-      property IsContentStored: Boolean read GetContentStored;
-    published
-      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property required: System.Boolean read FRequired write SetRequired stored FRequiredIsStored;
-      property deprecated: System.Boolean read FDeprecated write SetDeprecated stored FDeprecatedIsStored;
-      property schema: TOpenAPIDefinition read GetSchema write FSchema stored GetSchemaStored;
-      property content: TOpenAPIDefinition.TContent read GetContent write FContent stored GetContentStored;
-    end;
-
-    [Flat]
-    THeaderOrReference = class
-    private
-      FReference: TOpenAPIDefinition.TReference;
-      FHeader: TOpenAPIDefinition.THeader;
-
-      function GetReference: TOpenAPIDefinition.TReference;
-      function GetHeader: TOpenAPIDefinition.THeader;
-      function GetReferenceStored: Boolean;
-      function GetHeaderStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsReferenceStored: Boolean read GetReferenceStored;
-      property IsHeaderStored: Boolean read GetHeaderStored;
-    published
-      property reference: TOpenAPIDefinition.TReference read GetReference write FReference stored GetReferenceStored;
-      property header: TOpenAPIDefinition.THeader read GetHeader write FHeader stored GetHeaderStored;
-    end;
-
-    TTag = class
-    private
-      FName: System.String;
-      FDescription: System.String;
-      FExternalDocs: TOpenAPIDefinition.TExternalDocumentation;
-
-      function GetExternalDocs: TOpenAPIDefinition.TExternalDocumentation;
-      function GetDescriptionStored: Boolean;
-      function GetExternalDocsStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsDescriptionStored: Boolean read GetDescriptionStored;
-      property IsExternalDocsStored: Boolean read GetExternalDocsStored;
-    published
-      property name: System.String read FName write FName;
-      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property externalDocs: TOpenAPIDefinition.TExternalDocumentation read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
-    end;
-
-    TReference = class
-    private
-      FRef: System.String;
-      FSummary: System.String;
-      FDescription: System.String;
-
-      function GetRefStored: Boolean;
-      function GetSummaryStored: Boolean;
-      function GetDescriptionStored: Boolean;
-    public
-      property IsRefStored: Boolean read GetRefStored;
-      property IsSummaryStored: Boolean read GetSummaryStored;
-      property IsDescriptionStored: Boolean read GetDescriptionStored;
-    published
-      [FieldName('$ref')]
-      property Ref: System.String read FRef write FRef stored GetRefStored;
-      property summary: System.String read FSummary write FSummary stored GetSummaryStored;
-      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-    end;
-
-    [Flat]
-    TSchema = class
-    public type
-      TObject = class
-      end;
-    private
-      FObject: TOpenAPIDefinition.TSchema.TObject;
-      FBoolean: System.Boolean;
-      FBooleanIsStored: Boolean;
-
-      function GetObject: TOpenAPIDefinition.TSchema.TObject;
-      function GetObjectStored: Boolean;
-      procedure SetBoolean(const Value: System.Boolean);
-    public
-      destructor Destroy; override;
-
-      property IsObjectStored: Boolean read GetObjectStored;
-      property IsBooleanStored: Boolean read FBooleanIsStored;
-    published
-      [FieldName('Object')]
-      property &Object: TOpenAPIDefinition.TSchema.TObject read GetObject write FObject stored GetObjectStored;
-      property Boolean: System.Boolean read FBoolean write SetBoolean stored FBooleanIsStored;
-    end;
-
-    [Flat]
-    TSecurityScheme = class
-    public type
-      TType = (apiKey, http, mutualTLS, oauth2, openIdConnect);
 
       [Flat]
-      TTypeApikey = class
+      Parameter = class
       public type
-        TIn = (query, header, cookie);
+        TIn = (query, header, path, cookie);
       private
         FName: System.String;
-        FIn: TOpenAPIDefinition.TSecurityScheme.TTypeApikey.TIn;
+        FIn: TOpenAPIDefinition.TOpenAPIDefinition.Parameter.TIn;
+        FDescription: System.String;
+        FRequired: System.Boolean;
+        FDeprecated: System.Boolean;
+        FSchema: TOpenAPIDefinition;
+        FContent: TOpenAPIDefinition.TOpenAPIDefinition.Content;
+        FAllowEmptyValue: System.Boolean;
+
+        function GetSchema: TOpenAPIDefinition;
+        function GetContent: TOpenAPIDefinition.TOpenAPIDefinition.Content;
+        function GetDescriptionStored: Boolean;
+        function GetRequiredStored: Boolean;
+        function GetDeprecatedStored: Boolean;
+        function GetSchemaStored: Boolean;
+        function GetContentStored: Boolean;
+        function GetAllowEmptyValueStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsDescriptionStored: Boolean read GetDescriptionStored;
+        property IsRequiredStored: Boolean read GetRequiredStored;
+        property IsDeprecatedStored: Boolean read GetDeprecatedStored;
+        property IsSchemaStored: Boolean read GetSchemaStored;
+        property IsContentStored: Boolean read GetContentStored;
+        property IsAllowEmptyValueStored: Boolean read GetAllowEmptyValueStored;
       published
         property name: System.String read FName write FName;
         [FieldName('in')]
-        property &In: TOpenAPIDefinition.TSecurityScheme.TTypeApikey.TIn read FIn write FIn;
+        property &in: TOpenAPIDefinition.TOpenAPIDefinition.Parameter.TIn read FIn write FIn;
+        property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+        property required: System.Boolean read FRequired write FRequired stored GetRequiredStored;
+        property deprecated: System.Boolean read FDeprecated write FDeprecated stored GetDeprecatedStored;
+        property schema: TOpenAPIDefinition read GetSchema write FSchema stored GetSchemaStored;
+        property content: TOpenAPIDefinition.TOpenAPIDefinition.Content read GetContent write FContent stored GetContentStored;
+        property allowEmptyValue: System.Boolean read FAllowEmptyValue write FAllowEmptyValue stored GetAllowEmptyValueStored;
       end;
 
       [Flat]
-      TTypeHttp = class
+      ParameterOrReference = class
       private
-        FScheme: System.String;
+        FReference: TOpenAPIDefinition.TOpenAPIDefinition.Reference;
+        FParameter: TOpenAPIDefinition.TOpenAPIDefinition.Parameter;
+
+        function GetReference: TOpenAPIDefinition.TOpenAPIDefinition.Reference;
+        function GetParameter: TOpenAPIDefinition.TOpenAPIDefinition.Parameter;
+        function GetReferenceStored: Boolean;
+        function GetParameterStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsReferenceStored: Boolean read GetReferenceStored;
+        property IsParameterStored: Boolean read GetParameterStored;
       published
-        property scheme: System.String read FScheme write FScheme;
+        property reference: TOpenAPIDefinition.TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
+        property parameter: TOpenAPIDefinition.TOpenAPIDefinition.Parameter read GetParameter write FParameter stored GetParameterStored;
+      end;
+
+      RequestBody = class
+      private
+        FDescription: System.String;
+        FContent: TOpenAPIDefinition.TOpenAPIDefinition.Content;
+        FRequired: System.Boolean;
+
+        function GetContent: TOpenAPIDefinition.TOpenAPIDefinition.Content;
+        function GetDescriptionStored: Boolean;
+        function GetRequiredStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsDescriptionStored: Boolean read GetDescriptionStored;
+        property IsRequiredStored: Boolean read GetRequiredStored;
+      published
+        property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+        property content: TOpenAPIDefinition.TOpenAPIDefinition.Content read GetContent write FContent;
+        property required: System.Boolean read FRequired write FRequired stored GetRequiredStored;
       end;
 
       [Flat]
-      TTypeHttpBearer = class
+      RequestBodyOrReference = class
       private
-        FBearerFormat: System.String;
+        FReference: TOpenAPIDefinition.TOpenAPIDefinition.Reference;
+        FRequestBody: TOpenAPIDefinition.TOpenAPIDefinition.RequestBody;
 
-        function GetBearerFormatStored: Boolean;
+        function GetReference: TOpenAPIDefinition.TOpenAPIDefinition.Reference;
+        function GetRequestBody: TOpenAPIDefinition.TOpenAPIDefinition.RequestBody;
+        function GetReferenceStored: Boolean;
+        function GetRequestBodyStored: Boolean;
       public
-        property IsBearerFormatStored: Boolean read GetBearerFormatStored;
+        destructor Destroy; override;
+
+        property IsReferenceStored: Boolean read GetReferenceStored;
+        property IsRequestBodyStored: Boolean read GetRequestBodyStored;
       published
-        property bearerFormat: System.String read FBearerFormat write FBearerFormat stored GetBearerFormatStored;
+        property reference: TOpenAPIDefinition.TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
+        [FieldName('request-body')]
+        property requestBody: TOpenAPIDefinition.TOpenAPIDefinition.RequestBody read GetRequestBody write FRequestBody stored GetRequestBodyStored;
+      end;
+
+      Content = class
+      private
+        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.MediaType>;
+
+        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.MediaType>;
+        function GetAdditionalPropertiesStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+      published
+        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.MediaType> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       end;
 
       [Flat]
-      TTypeOauth2 = class
-      private
-        FFlows: TOpenAPIDefinition.TOauthFlows;
+      MediaType = class
+      public type
+        // Forward class declaration
+        TEncoding = class;
 
-        function GetFlows: TOpenAPIDefinition.TOauthFlows;
+        TEncoding = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.Encoding>;
+
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.Encoding>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.Encoding> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
+      private
+        FSchema: TOpenAPIDefinition;
+        FEncoding: TOpenAPIDefinition.TOpenAPIDefinition.MediaType.TEncoding;
+        FSpecificationExtensions: TOpenAPIDefinition.TOpenAPIDefinition.SpecificationExtensions;
+        FExamples: TArray<Blue.Print.JSON.Draft2022.Schema.any>;
+
+        function GetSchema: TOpenAPIDefinition;
+        function GetEncoding: TOpenAPIDefinition.TOpenAPIDefinition.MediaType.TEncoding;
+        function GetSpecificationExtensions: TOpenAPIDefinition.TOpenAPIDefinition.SpecificationExtensions;
+        function GetSchemaStored: Boolean;
+        function GetEncodingStored: Boolean;
+        function GetSpecificationExtensionsStored: Boolean;
+        function GetExamplesStored: Boolean;
       public
         destructor Destroy; override;
+
+        property IsSchemaStored: Boolean read GetSchemaStored;
+        property IsEncodingStored: Boolean read GetEncodingStored;
+        property IsSpecificationExtensionsStored: Boolean read GetSpecificationExtensionsStored;
+        property IsExamplesStored: Boolean read GetExamplesStored;
       published
-        property flows: TOpenAPIDefinition.TOauthFlows read GetFlows write FFlows;
+        property schema: TOpenAPIDefinition read GetSchema write FSchema stored GetSchemaStored;
+        property encoding: TOpenAPIDefinition.TOpenAPIDefinition.MediaType.TEncoding read GetEncoding write FEncoding stored GetEncodingStored;
+        [FieldName('specification-extensions')]
+        property specificationExtensions: TOpenAPIDefinition.TOpenAPIDefinition.SpecificationExtensions read GetSpecificationExtensions write FSpecificationExtensions stored GetSpecificationExtensionsStored;
+        property examples: TArray<Blue.Print.JSON.Draft2022.Schema.any> read FExamples write FExamples stored GetExamplesStored;
+      end;
+
+      Encoding = class
+      public type
+        TStyle = (form, spaceDelimited, pipeDelimited, deepObject);
+
+        // Forward class declaration
+        THeaders = class;
+
+        THeaders = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference>;
+
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
+      private
+        FContentType: System.String;
+        FHeaders: TOpenAPIDefinition.TOpenAPIDefinition.Encoding.THeaders;
+        FStyle: TOpenAPIDefinition.TOpenAPIDefinition.Encoding.TStyle;
+        FExplode: System.Boolean;
+        FAllowReserved: System.Boolean;
+        FStyleIsStored: Boolean;
+
+        function GetHeaders: TOpenAPIDefinition.TOpenAPIDefinition.Encoding.THeaders;
+        function GetContentTypeStored: Boolean;
+        function GetHeadersStored: Boolean;
+        function GetExplodeStored: Boolean;
+        function GetAllowReservedStored: Boolean;
+        procedure SetStyle(const Value: TOpenAPIDefinition.TOpenAPIDefinition.Encoding.TStyle);
+      public
+        destructor Destroy; override;
+
+        property IsContentTypeStored: Boolean read GetContentTypeStored;
+        property IsHeadersStored: Boolean read GetHeadersStored;
+        property IsStyleStored: Boolean read FStyleIsStored;
+        property IsExplodeStored: Boolean read GetExplodeStored;
+        property IsAllowReservedStored: Boolean read GetAllowReservedStored;
+      published
+        property contentType: System.String read FContentType write FContentType stored GetContentTypeStored;
+        property headers: TOpenAPIDefinition.TOpenAPIDefinition.Encoding.THeaders read GetHeaders write FHeaders stored GetHeadersStored;
+        property style: TOpenAPIDefinition.TOpenAPIDefinition.Encoding.TStyle read FStyle write SetStyle stored FStyleIsStored;
+        property explode: System.Boolean read FExplode write FExplode stored GetExplodeStored;
+        property allowReserved: System.Boolean read FAllowReserved write FAllowReserved stored GetAllowReservedStored;
       end;
 
       [Flat]
-      TTypeOidc = class
+      Responses = class
       private
-        FOpenIdConnectUrl: System.String;
-      published
-        property openIdConnectUrl: System.String read FOpenIdConnectUrl write FOpenIdConnectUrl;
-      end;
-    private
-      FType: TOpenAPIDefinition.TSecurityScheme.TType;
-      FDescription: System.String;
-      FSpecificationExtensions: TOpenAPIDefinition.TSpecificationExtensions;
-      FTypeApikey: TOpenAPIDefinition.TSecurityScheme.TTypeApikey;
-      FTypeHttp: TOpenAPIDefinition.TSecurityScheme.TTypeHttp;
-      FTypeHttpBearer: TOpenAPIDefinition.TSecurityScheme.TTypeHttpBearer;
-      FTypeOauth2: TOpenAPIDefinition.TSecurityScheme.TTypeOauth2;
-      FTypeOidc: TOpenAPIDefinition.TSecurityScheme.TTypeOidc;
+        FDefault: TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference;
+        FResponseOrReference: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference>;
 
-      function GetSpecificationExtensions: TOpenAPIDefinition.TSpecificationExtensions;
-      function GetTypeApikey: TOpenAPIDefinition.TSecurityScheme.TTypeApikey;
-      function GetTypeHttp: TOpenAPIDefinition.TSecurityScheme.TTypeHttp;
-      function GetTypeHttpBearer: TOpenAPIDefinition.TSecurityScheme.TTypeHttpBearer;
-      function GetTypeOauth2: TOpenAPIDefinition.TSecurityScheme.TTypeOauth2;
-      function GetTypeOidc: TOpenAPIDefinition.TSecurityScheme.TTypeOidc;
-      function GetDescriptionStored: Boolean;
-      function GetSpecificationExtensionsStored: Boolean;
-      function GetTypeApikeyStored: Boolean;
-      function GetTypeHttpStored: Boolean;
-      function GetTypeHttpBearerStored: Boolean;
-      function GetTypeOauth2Stored: Boolean;
-      function GetTypeOidcStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsDescriptionStored: Boolean read GetDescriptionStored;
-      property IsSpecificationExtensionsStored: Boolean read GetSpecificationExtensionsStored;
-      property IsTypeApikeyStored: Boolean read GetTypeApikeyStored;
-      property IsTypeHttpStored: Boolean read GetTypeHttpStored;
-      property IsTypeHttpBearerStored: Boolean read GetTypeHttpBearerStored;
-      property IsTypeOauth2Stored: Boolean read GetTypeOauth2Stored;
-      property IsTypeOidcStored: Boolean read GetTypeOidcStored;
-    published
-      [FieldName('type')]
-      property &Type: TOpenAPIDefinition.TSecurityScheme.TType read FType write FType;
-      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      [FieldName('specification-extensions')]
-      property SpecificationExtensions: TOpenAPIDefinition.TSpecificationExtensions read GetSpecificationExtensions write FSpecificationExtensions stored GetSpecificationExtensionsStored;
-      [FieldName('type-apikey')]
-      property TypeApikey: TOpenAPIDefinition.TSecurityScheme.TTypeApikey read GetTypeApikey write FTypeApikey stored GetTypeApikeyStored;
-      [FieldName('type-http')]
-      property TypeHttp: TOpenAPIDefinition.TSecurityScheme.TTypeHttp read GetTypeHttp write FTypeHttp stored GetTypeHttpStored;
-      [FieldName('type-http-bearer')]
-      property TypeHttpBearer: TOpenAPIDefinition.TSecurityScheme.TTypeHttpBearer read GetTypeHttpBearer write FTypeHttpBearer stored GetTypeHttpBearerStored;
-      [FieldName('type-oauth2')]
-      property TypeOauth2: TOpenAPIDefinition.TSecurityScheme.TTypeOauth2 read GetTypeOauth2 write FTypeOauth2 stored GetTypeOauth2Stored;
-      [FieldName('type-oidc')]
-      property TypeOidc: TOpenAPIDefinition.TSecurityScheme.TTypeOidc read GetTypeOidc write FTypeOidc stored GetTypeOidcStored;
-    end;
-
-    [Flat]
-    TSecuritySchemeOrReference = class
-    private
-      FReference: TOpenAPIDefinition.TReference;
-      FSecurityScheme: TOpenAPIDefinition.TSecurityScheme;
-
-      function GetReference: TOpenAPIDefinition.TReference;
-      function GetSecurityScheme: TOpenAPIDefinition.TSecurityScheme;
-      function GetReferenceStored: Boolean;
-      function GetSecuritySchemeStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsReferenceStored: Boolean read GetReferenceStored;
-      property IsSecuritySchemeStored: Boolean read GetSecuritySchemeStored;
-    published
-      property reference: TOpenAPIDefinition.TReference read GetReference write FReference stored GetReferenceStored;
-      [FieldName('security-scheme')]
-      property SecurityScheme: TOpenAPIDefinition.TSecurityScheme read GetSecurityScheme write FSecurityScheme stored GetSecuritySchemeStored;
-    end;
-
-    TOauthFlows = class
-    public type
-      TImplicit = class
-      private
-        FAuthorizationUrl: System.String;
-        FRefreshUrl: System.String;
-        FScopes: TOpenAPIDefinition.TMapOfStrings;
-
-        function GetScopes: TOpenAPIDefinition.TMapOfStrings;
-        function GetRefreshUrlStored: Boolean;
+        function GetDefault: TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference;
+        function GetResponseOrReference: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference>;
+        function GetDefaultStored: Boolean;
+        function GetResponseOrReferenceStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsRefreshUrlStored: Boolean read GetRefreshUrlStored;
+        property IsDefaultStored: Boolean read GetDefaultStored;
+        property IsResponseOrReferenceStored: Boolean read GetResponseOrReferenceStored;
       published
-        property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
-        property refreshUrl: System.String read FRefreshUrl write FRefreshUrl stored GetRefreshUrlStored;
-        property scopes: TOpenAPIDefinition.TMapOfStrings read GetScopes write FScopes;
+        property default: TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference read GetDefault write FDefault stored GetDefaultStored;
+        [PatternProperty('^[1-5](?:[0-9]{2}|XX)$')]
+        [FieldName('response-or-reference')]
+        property responseOrReference: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference> read GetResponseOrReference write FResponseOrReference stored GetResponseOrReferenceStored;
       end;
 
-      TPassword = class
-      private
-        FTokenUrl: System.String;
-        FRefreshUrl: System.String;
-        FScopes: TOpenAPIDefinition.TMapOfStrings;
+      Response = class
+      public type
+        // Forward class declaration
+        THeaders = class;
+        TLinks = class;
 
-        function GetScopes: TOpenAPIDefinition.TMapOfStrings;
-        function GetRefreshUrlStored: Boolean;
+        THeaders = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference>;
+
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
+
+        TLinks = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.LinkOrReference>;
+
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.LinkOrReference>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.LinkOrReference> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
+      private
+        FDescription: System.String;
+        FHeaders: TOpenAPIDefinition.TOpenAPIDefinition.Response.THeaders;
+        FContent: TOpenAPIDefinition.TOpenAPIDefinition.Content;
+        FLinks: TOpenAPIDefinition.TOpenAPIDefinition.Response.TLinks;
+
+        function GetHeaders: TOpenAPIDefinition.TOpenAPIDefinition.Response.THeaders;
+        function GetContent: TOpenAPIDefinition.TOpenAPIDefinition.Content;
+        function GetLinks: TOpenAPIDefinition.TOpenAPIDefinition.Response.TLinks;
+        function GetHeadersStored: Boolean;
+        function GetContentStored: Boolean;
+        function GetLinksStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsRefreshUrlStored: Boolean read GetRefreshUrlStored;
+        property IsHeadersStored: Boolean read GetHeadersStored;
+        property IsContentStored: Boolean read GetContentStored;
+        property IsLinksStored: Boolean read GetLinksStored;
       published
-        property tokenUrl: System.String read FTokenUrl write FTokenUrl;
-        property refreshUrl: System.String read FRefreshUrl write FRefreshUrl stored GetRefreshUrlStored;
-        property scopes: TOpenAPIDefinition.TMapOfStrings read GetScopes write FScopes;
+        property description: System.String read FDescription write FDescription;
+        property headers: TOpenAPIDefinition.TOpenAPIDefinition.Response.THeaders read GetHeaders write FHeaders stored GetHeadersStored;
+        property content: TOpenAPIDefinition.TOpenAPIDefinition.Content read GetContent write FContent stored GetContentStored;
+        property links: TOpenAPIDefinition.TOpenAPIDefinition.Response.TLinks read GetLinks write FLinks stored GetLinksStored;
       end;
 
-      TClientCredentials = class
+      [Flat]
+      ResponseOrReference = class
       private
-        FTokenUrl: System.String;
-        FRefreshUrl: System.String;
-        FScopes: TOpenAPIDefinition.TMapOfStrings;
+        FReference: TOpenAPIDefinition.TOpenAPIDefinition.Reference;
+        FResponse: TOpenAPIDefinition.TOpenAPIDefinition.Response;
 
-        function GetScopes: TOpenAPIDefinition.TMapOfStrings;
-        function GetRefreshUrlStored: Boolean;
+        function GetReference: TOpenAPIDefinition.TOpenAPIDefinition.Reference;
+        function GetResponse: TOpenAPIDefinition.TOpenAPIDefinition.Response;
+        function GetReferenceStored: Boolean;
+        function GetResponseStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsRefreshUrlStored: Boolean read GetRefreshUrlStored;
+        property IsReferenceStored: Boolean read GetReferenceStored;
+        property IsResponseStored: Boolean read GetResponseStored;
       published
-        property tokenUrl: System.String read FTokenUrl write FTokenUrl;
-        property refreshUrl: System.String read FRefreshUrl write FRefreshUrl stored GetRefreshUrlStored;
-        property scopes: TOpenAPIDefinition.TMapOfStrings read GetScopes write FScopes;
+        property reference: TOpenAPIDefinition.TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
+        property response: TOpenAPIDefinition.TOpenAPIDefinition.Response read GetResponse write FResponse stored GetResponseStored;
       end;
 
-      TAuthorizationCode = class
+      Callbacks = class
       private
-        FAuthorizationUrl: System.String;
-        FTokenUrl: System.String;
-        FRefreshUrl: System.String;
-        FScopes: TOpenAPIDefinition.TMapOfStrings;
+        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.PathItem>;
 
-        function GetScopes: TOpenAPIDefinition.TMapOfStrings;
-        function GetRefreshUrlStored: Boolean;
+        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.PathItem>;
+        function GetAdditionalPropertiesStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsRefreshUrlStored: Boolean read GetRefreshUrlStored;
+        property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
       published
-        property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
-        property tokenUrl: System.String read FTokenUrl write FTokenUrl;
-        property refreshUrl: System.String read FRefreshUrl write FRefreshUrl stored GetRefreshUrlStored;
-        property scopes: TOpenAPIDefinition.TMapOfStrings read GetScopes write FScopes;
+        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.PathItem> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       end;
-    private
-      FImplicit: TOpenAPIDefinition.TOauthFlows.TImplicit;
-      FPassword: TOpenAPIDefinition.TOauthFlows.TPassword;
-      FClientCredentials: TOpenAPIDefinition.TOauthFlows.TClientCredentials;
-      FAuthorizationCode: TOpenAPIDefinition.TOauthFlows.TAuthorizationCode;
 
-      function GetImplicit: TOpenAPIDefinition.TOauthFlows.TImplicit;
-      function GetPassword: TOpenAPIDefinition.TOauthFlows.TPassword;
-      function GetClientCredentials: TOpenAPIDefinition.TOauthFlows.TClientCredentials;
-      function GetAuthorizationCode: TOpenAPIDefinition.TOauthFlows.TAuthorizationCode;
-      function GetImplicitStored: Boolean;
-      function GetPasswordStored: Boolean;
-      function GetClientCredentialsStored: Boolean;
-      function GetAuthorizationCodeStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsImplicitStored: Boolean read GetImplicitStored;
-      property IsPasswordStored: Boolean read GetPasswordStored;
-      property IsClientCredentialsStored: Boolean read GetClientCredentialsStored;
-      property IsAuthorizationCodeStored: Boolean read GetAuthorizationCodeStored;
-    published
-      property implicit: TOpenAPIDefinition.TOauthFlows.TImplicit read GetImplicit write FImplicit stored GetImplicitStored;
-      property password: TOpenAPIDefinition.TOauthFlows.TPassword read GetPassword write FPassword stored GetPasswordStored;
-      property clientCredentials: TOpenAPIDefinition.TOauthFlows.TClientCredentials read GetClientCredentials write FClientCredentials stored GetClientCredentialsStored;
-      property authorizationCode: TOpenAPIDefinition.TOauthFlows.TAuthorizationCode read GetAuthorizationCode write FAuthorizationCode stored GetAuthorizationCodeStored;
-    end;
-
-    TSecurityRequirement = class
-    private
-      FArray: TDynamicProperty<TArray<System.String>>;
-
-      function GetArray: TDynamicProperty<TArray<System.String>>;
-      function GetArrayStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsArrayStored: Boolean read GetArrayStored;
-    published
-      [FieldName('array')]
-      property &Array: TDynamicProperty<TArray<System.String>> read GetArray write FArray stored GetArrayStored;
-    end;
-
-    TSpecificationExtensions = class
-    private
-      FPatternProperty: TDynamicProperty<any>;
-
-      function GetPatternProperty: TDynamicProperty<any>;
-      function GetPatternPropertyStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
-    published
-      [PatternProperty('^x-')]
-      property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
-    end;
-
-    TExamples = class
-    public type
-      TExamples = class
+      [Flat]
+      CallbacksOrReference = class
       private
-        FExampleOrReference: TDynamicProperty<TOpenAPIDefinition.TExampleOrReference>;
+        FReference: TOpenAPIDefinition.TOpenAPIDefinition.Reference;
+        FCallbacks: TOpenAPIDefinition.TOpenAPIDefinition.Callbacks;
 
-        function GetExampleOrReference: TDynamicProperty<TOpenAPIDefinition.TExampleOrReference>;
-        function GetExampleOrReferenceStored: Boolean;
+        function GetReference: TOpenAPIDefinition.TOpenAPIDefinition.Reference;
+        function GetCallbacks: TOpenAPIDefinition.TOpenAPIDefinition.Callbacks;
+        function GetReferenceStored: Boolean;
+        function GetCallbacksStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsExampleOrReferenceStored: Boolean read GetExampleOrReferenceStored;
+        property IsReferenceStored: Boolean read GetReferenceStored;
+        property IsCallbacksStored: Boolean read GetCallbacksStored;
       published
-        [FieldName('example-or-reference')]
-        property ExampleOrReference: TDynamicProperty<TOpenAPIDefinition.TExampleOrReference> read GetExampleOrReference write FExampleOrReference stored GetExampleOrReferenceStored;
+        property reference: TOpenAPIDefinition.TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
+        property callbacks: TOpenAPIDefinition.TOpenAPIDefinition.Callbacks read GetCallbacks write FCallbacks stored GetCallbacksStored;
+      end;
+
+      Example = class
+      private
+        FSummary: System.String;
+        FDescription: System.String;
+        FValue: any;
+        FExternalValue: System.String;
+
+        function GetSummaryStored: Boolean;
+        function GetDescriptionStored: Boolean;
+        function GetValueStored: Boolean;
+        function GetExternalValueStored: Boolean;
+      public
+        property IsSummaryStored: Boolean read GetSummaryStored;
+        property IsDescriptionStored: Boolean read GetDescriptionStored;
+        property IsValueStored: Boolean read GetValueStored;
+        property IsExternalValueStored: Boolean read GetExternalValueStored;
+      published
+        property summary: System.String read FSummary write FSummary stored GetSummaryStored;
+        property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+        property value: any read FValue write FValue stored GetValueStored;
+        property externalValue: System.String read FExternalValue write FExternalValue stored GetExternalValueStored;
+      end;
+
+      [Flat]
+      ExampleOrReference = class
+      private
+        FReference: TOpenAPIDefinition.TOpenAPIDefinition.Reference;
+        FExample: TOpenAPIDefinition.TOpenAPIDefinition.Example;
+
+        function GetReference: TOpenAPIDefinition.TOpenAPIDefinition.Reference;
+        function GetExample: TOpenAPIDefinition.TOpenAPIDefinition.Example;
+        function GetReferenceStored: Boolean;
+        function GetExampleStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsReferenceStored: Boolean read GetReferenceStored;
+        property IsExampleStored: Boolean read GetExampleStored;
+      published
+        property reference: TOpenAPIDefinition.TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
+        property example: TOpenAPIDefinition.TOpenAPIDefinition.Example read GetExample write FExample stored GetExampleStored;
+      end;
+
+      [Flat]
+      Link = class
+      private
+        FOperationRef: System.String;
+        FOperationId: System.String;
+        FParameters: TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings;
+        FRequestBody: any;
+        FDescription: System.String;
+        FServer: TOpenAPIDefinition.TOpenAPIDefinition.Server;
+
+        function GetParameters: TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings;
+        function GetServer: TOpenAPIDefinition.TOpenAPIDefinition.Server;
+        function GetOperationRefStored: Boolean;
+        function GetOperationIdStored: Boolean;
+        function GetParametersStored: Boolean;
+        function GetRequestBodyStored: Boolean;
+        function GetDescriptionStored: Boolean;
+        function GetServerStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsOperationRefStored: Boolean read GetOperationRefStored;
+        property IsOperationIdStored: Boolean read GetOperationIdStored;
+        property IsParametersStored: Boolean read GetParametersStored;
+        property IsRequestBodyStored: Boolean read GetRequestBodyStored;
+        property IsDescriptionStored: Boolean read GetDescriptionStored;
+        property IsServerStored: Boolean read GetServerStored;
+      published
+        property operationRef: System.String read FOperationRef write FOperationRef stored GetOperationRefStored;
+        property operationId: System.String read FOperationId write FOperationId stored GetOperationIdStored;
+        property parameters: TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings read GetParameters write FParameters stored GetParametersStored;
+        property requestBody: any read FRequestBody write FRequestBody stored GetRequestBodyStored;
+        property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+        property server: TOpenAPIDefinition.TOpenAPIDefinition.Server read GetServer write FServer stored GetServerStored;
+      end;
+
+      [Flat]
+      LinkOrReference = class
+      private
+        FReference: TOpenAPIDefinition.TOpenAPIDefinition.Reference;
+        FLink: TOpenAPIDefinition.TOpenAPIDefinition.Link;
+
+        function GetReference: TOpenAPIDefinition.TOpenAPIDefinition.Reference;
+        function GetLink: TOpenAPIDefinition.TOpenAPIDefinition.Link;
+        function GetReferenceStored: Boolean;
+        function GetLinkStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsReferenceStored: Boolean read GetReferenceStored;
+        property IsLinkStored: Boolean read GetLinkStored;
+      published
+        property reference: TOpenAPIDefinition.TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
+        property link: TOpenAPIDefinition.TOpenAPIDefinition.Link read GetLink write FLink stored GetLinkStored;
+      end;
+
+      [Flat]
+      Header = class
+      private
+        FDescription: System.String;
+        FRequired: System.Boolean;
+        FDeprecated: System.Boolean;
+        FSchema: TOpenAPIDefinition;
+        FContent: TOpenAPIDefinition.TOpenAPIDefinition.Content;
+
+        function GetSchema: TOpenAPIDefinition;
+        function GetContent: TOpenAPIDefinition.TOpenAPIDefinition.Content;
+        function GetDescriptionStored: Boolean;
+        function GetRequiredStored: Boolean;
+        function GetDeprecatedStored: Boolean;
+        function GetSchemaStored: Boolean;
+        function GetContentStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsDescriptionStored: Boolean read GetDescriptionStored;
+        property IsRequiredStored: Boolean read GetRequiredStored;
+        property IsDeprecatedStored: Boolean read GetDeprecatedStored;
+        property IsSchemaStored: Boolean read GetSchemaStored;
+        property IsContentStored: Boolean read GetContentStored;
+      published
+        property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+        property required: System.Boolean read FRequired write FRequired stored GetRequiredStored;
+        property deprecated: System.Boolean read FDeprecated write FDeprecated stored GetDeprecatedStored;
+        property schema: TOpenAPIDefinition read GetSchema write FSchema stored GetSchemaStored;
+        property content: TOpenAPIDefinition.TOpenAPIDefinition.Content read GetContent write FContent stored GetContentStored;
+      end;
+
+      [Flat]
+      HeaderOrReference = class
+      private
+        FReference: TOpenAPIDefinition.TOpenAPIDefinition.Reference;
+        FHeader: TOpenAPIDefinition.TOpenAPIDefinition.Header;
+
+        function GetReference: TOpenAPIDefinition.TOpenAPIDefinition.Reference;
+        function GetHeader: TOpenAPIDefinition.TOpenAPIDefinition.Header;
+        function GetReferenceStored: Boolean;
+        function GetHeaderStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsReferenceStored: Boolean read GetReferenceStored;
+        property IsHeaderStored: Boolean read GetHeaderStored;
+      published
+        property reference: TOpenAPIDefinition.TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
+        property header: TOpenAPIDefinition.TOpenAPIDefinition.Header read GetHeader write FHeader stored GetHeaderStored;
+      end;
+
+      Tag = class
+      private
+        FName: System.String;
+        FDescription: System.String;
+        FExternalDocs: TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation;
+
+        function GetExternalDocs: TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation;
+        function GetDescriptionStored: Boolean;
+        function GetExternalDocsStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsDescriptionStored: Boolean read GetDescriptionStored;
+        property IsExternalDocsStored: Boolean read GetExternalDocsStored;
+      published
+        property name: System.String read FName write FName;
+        property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+        property externalDocs: TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
+      end;
+
+      Reference = class
+      private
+        FRef: System.String;
+        FSummary: System.String;
+        FDescription: System.String;
+
+        function GetRefStored: Boolean;
+        function GetSummaryStored: Boolean;
+        function GetDescriptionStored: Boolean;
+      public
+        property IsRefStored: Boolean read GetRefStored;
+        property IsSummaryStored: Boolean read GetSummaryStored;
+        property IsDescriptionStored: Boolean read GetDescriptionStored;
+      published
+        [FieldName('$ref')]
+        property Ref: System.String read FRef write FRef stored GetRefStored;
+        property summary: System.String read FSummary write FSummary stored GetSummaryStored;
+        property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+      end;
+
+      [Flat]
+      Schema = class
+      public type
+        // Forward class declaration
+        &Object = class;
+
+        &Object = class
+        end;
+      private
+        FObject: TOpenAPIDefinition.TOpenAPIDefinition.Schema.&Object;
+        FBoolean: System.Boolean;
+
+        function GetObject: TOpenAPIDefinition.TOpenAPIDefinition.Schema.&Object;
+        function GetObjectStored: Boolean;
+        function GetBooleanStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsObjectStored: Boolean read GetObjectStored;
+        property IsBooleanStored: Boolean read GetBooleanStored;
+      published
+        [FieldName('Object')]
+        property &Object: TOpenAPIDefinition.TOpenAPIDefinition.Schema.&Object read GetObject write FObject stored GetObjectStored;
+        property Boolean: System.Boolean read FBoolean write FBoolean stored GetBooleanStored;
+      end;
+
+      [Flat]
+      SecurityScheme = class
+      public type
+        TType = (apiKey, http, mutualTLS, oauth2, openIdConnect);
+
+        // Forward class declaration
+        TypeApikey = class;
+        TypeHttp = class;
+        TypeHttpBearer = class;
+        TypeOauth2 = class;
+        TypeOidc = class;
+
+        [Flat]
+        TypeApikey = class
+        public type
+          TIn = (query, header, cookie);
+        private
+          FName: System.String;
+          FIn: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeApikey.TIn;
+        published
+          property name: System.String read FName write FName;
+          [FieldName('in')]
+          property &in: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeApikey.TIn read FIn write FIn;
+        end;
+
+        [Flat]
+        TypeHttp = class
+        private
+          FScheme: System.String;
+        published
+          property scheme: System.String read FScheme write FScheme;
+        end;
+
+        [Flat]
+        TypeHttpBearer = class
+        private
+          FBearerFormat: System.String;
+
+          function GetBearerFormatStored: Boolean;
+        public
+          property IsBearerFormatStored: Boolean read GetBearerFormatStored;
+        published
+          property bearerFormat: System.String read FBearerFormat write FBearerFormat stored GetBearerFormatStored;
+        end;
+
+        [Flat]
+        TypeOauth2 = class
+        private
+          FFlows: TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows;
+
+          function GetFlows: TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows;
+        public
+          destructor Destroy; override;
+        published
+          property flows: TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows read GetFlows write FFlows;
+        end;
+
+        [Flat]
+        TypeOidc = class
+        private
+          FOpenIdConnectUrl: System.String;
+        published
+          property openIdConnectUrl: System.String read FOpenIdConnectUrl write FOpenIdConnectUrl;
+        end;
+      private
+        FType: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TType;
+        FDescription: System.String;
+        FSpecificationExtensions: TOpenAPIDefinition.TOpenAPIDefinition.SpecificationExtensions;
+        FTypeApikey: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeApikey;
+        FTypeHttp: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeHttp;
+        FTypeHttpBearer: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeHttpBearer;
+        FTypeOauth2: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeOauth2;
+        FTypeOidc: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeOidc;
+
+        function GetSpecificationExtensions: TOpenAPIDefinition.TOpenAPIDefinition.SpecificationExtensions;
+        function GetTypeApikey: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeApikey;
+        function GetTypeHttp: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeHttp;
+        function GetTypeHttpBearer: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeHttpBearer;
+        function GetTypeOauth2: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeOauth2;
+        function GetTypeOidc: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeOidc;
+        function GetDescriptionStored: Boolean;
+        function GetSpecificationExtensionsStored: Boolean;
+        function GetTypeApikeyStored: Boolean;
+        function GetTypeHttpStored: Boolean;
+        function GetTypeHttpBearerStored: Boolean;
+        function GetTypeOauth2Stored: Boolean;
+        function GetTypeOidcStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsDescriptionStored: Boolean read GetDescriptionStored;
+        property IsSpecificationExtensionsStored: Boolean read GetSpecificationExtensionsStored;
+        property IsTypeApikeyStored: Boolean read GetTypeApikeyStored;
+        property IsTypeHttpStored: Boolean read GetTypeHttpStored;
+        property IsTypeHttpBearerStored: Boolean read GetTypeHttpBearerStored;
+        property IsTypeOauth2Stored: Boolean read GetTypeOauth2Stored;
+        property IsTypeOidcStored: Boolean read GetTypeOidcStored;
+      published
+        [FieldName('type')]
+        property &type: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TType read FType write FType;
+        property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+        [FieldName('specification-extensions')]
+        property specificationExtensions: TOpenAPIDefinition.TOpenAPIDefinition.SpecificationExtensions read GetSpecificationExtensions write FSpecificationExtensions stored GetSpecificationExtensionsStored;
+        [FieldName('type-apikey')]
+        property typeApikey: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeApikey read GetTypeApikey write FTypeApikey stored GetTypeApikeyStored;
+        [FieldName('type-http')]
+        property typeHttp: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeHttp read GetTypeHttp write FTypeHttp stored GetTypeHttpStored;
+        [FieldName('type-http-bearer')]
+        property typeHttpBearer: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeHttpBearer read GetTypeHttpBearer write FTypeHttpBearer stored GetTypeHttpBearerStored;
+        [FieldName('type-oauth2')]
+        property typeOauth2: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeOauth2 read GetTypeOauth2 write FTypeOauth2 stored GetTypeOauth2Stored;
+        [FieldName('type-oidc')]
+        property typeOidc: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeOidc read GetTypeOidc write FTypeOidc stored GetTypeOidcStored;
+      end;
+
+      [Flat]
+      SecuritySchemeOrReference = class
+      private
+        FReference: TOpenAPIDefinition.TOpenAPIDefinition.Reference;
+        FSecurityScheme: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme;
+
+        function GetReference: TOpenAPIDefinition.TOpenAPIDefinition.Reference;
+        function GetSecurityScheme: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme;
+        function GetReferenceStored: Boolean;
+        function GetSecuritySchemeStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsReferenceStored: Boolean read GetReferenceStored;
+        property IsSecuritySchemeStored: Boolean read GetSecuritySchemeStored;
+      published
+        property reference: TOpenAPIDefinition.TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
+        [FieldName('security-scheme')]
+        property securityScheme: TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme read GetSecurityScheme write FSecurityScheme stored GetSecuritySchemeStored;
+      end;
+
+      OauthFlows = class
+      public type
+        // Forward class declaration
+        Implicit = class;
+        Password = class;
+        ClientCredentials = class;
+        AuthorizationCode = class;
+
+        Implicit = class
+        private
+          FAuthorizationUrl: System.String;
+          FRefreshUrl: System.String;
+          FScopes: TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings;
+
+          function GetScopes: TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings;
+          function GetRefreshUrlStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsRefreshUrlStored: Boolean read GetRefreshUrlStored;
+        published
+          property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
+          property refreshUrl: System.String read FRefreshUrl write FRefreshUrl stored GetRefreshUrlStored;
+          property scopes: TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings read GetScopes write FScopes;
+        end;
+
+        Password = class
+        private
+          FTokenUrl: System.String;
+          FRefreshUrl: System.String;
+          FScopes: TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings;
+
+          function GetScopes: TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings;
+          function GetRefreshUrlStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsRefreshUrlStored: Boolean read GetRefreshUrlStored;
+        published
+          property tokenUrl: System.String read FTokenUrl write FTokenUrl;
+          property refreshUrl: System.String read FRefreshUrl write FRefreshUrl stored GetRefreshUrlStored;
+          property scopes: TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings read GetScopes write FScopes;
+        end;
+
+        ClientCredentials = class
+        private
+          FTokenUrl: System.String;
+          FRefreshUrl: System.String;
+          FScopes: TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings;
+
+          function GetScopes: TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings;
+          function GetRefreshUrlStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsRefreshUrlStored: Boolean read GetRefreshUrlStored;
+        published
+          property tokenUrl: System.String read FTokenUrl write FTokenUrl;
+          property refreshUrl: System.String read FRefreshUrl write FRefreshUrl stored GetRefreshUrlStored;
+          property scopes: TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings read GetScopes write FScopes;
+        end;
+
+        AuthorizationCode = class
+        private
+          FAuthorizationUrl: System.String;
+          FTokenUrl: System.String;
+          FRefreshUrl: System.String;
+          FScopes: TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings;
+
+          function GetScopes: TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings;
+          function GetRefreshUrlStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsRefreshUrlStored: Boolean read GetRefreshUrlStored;
+        published
+          property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
+          property tokenUrl: System.String read FTokenUrl write FTokenUrl;
+          property refreshUrl: System.String read FRefreshUrl write FRefreshUrl stored GetRefreshUrlStored;
+          property scopes: TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings read GetScopes write FScopes;
+        end;
+      private
+        FImplicit: TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Implicit;
+        FPassword: TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Password;
+        FClientCredentials: TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.ClientCredentials;
+        FAuthorizationCode: TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.AuthorizationCode;
+
+        function GetImplicit: TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Implicit;
+        function GetPassword: TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Password;
+        function GetClientCredentials: TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.ClientCredentials;
+        function GetAuthorizationCode: TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.AuthorizationCode;
+        function GetImplicitStored: Boolean;
+        function GetPasswordStored: Boolean;
+        function GetClientCredentialsStored: Boolean;
+        function GetAuthorizationCodeStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsImplicitStored: Boolean read GetImplicitStored;
+        property IsPasswordStored: Boolean read GetPasswordStored;
+        property IsClientCredentialsStored: Boolean read GetClientCredentialsStored;
+        property IsAuthorizationCodeStored: Boolean read GetAuthorizationCodeStored;
+      published
+        property implicit: TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Implicit read GetImplicit write FImplicit stored GetImplicitStored;
+        property password: TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Password read GetPassword write FPassword stored GetPasswordStored;
+        property clientCredentials: TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.ClientCredentials read GetClientCredentials write FClientCredentials stored GetClientCredentialsStored;
+        property authorizationCode: TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.AuthorizationCode read GetAuthorizationCode write FAuthorizationCode stored GetAuthorizationCodeStored;
+      end;
+
+      SecurityRequirement = class
+      private
+        FAdditionalProperties: TDynamicProperty<TArray<System.String>>;
+
+        function GetAdditionalProperties: TDynamicProperty<TArray<System.String>>;
+        function GetAdditionalPropertiesStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+      published
+        property additionalProperties: TDynamicProperty<TArray<System.String>> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+      end;
+
+      SpecificationExtensions = class
+      private
+        FPatternProperty: TDynamicProperty<any>;
+
+        function GetPatternProperty: TDynamicProperty<any>;
+        function GetPatternPropertyStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
+      published
+        [PatternProperty('^x-')]
+        property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
+      end;
+
+      Examples = class
+      public type
+        // Forward class declaration
+        TExamples = class;
+
+        TExamples = class
+        private
+          FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ExampleOrReference>;
+
+          function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ExampleOrReference>;
+          function GetAdditionalPropertiesStored: Boolean;
+        public
+          destructor Destroy; override;
+
+          property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+        published
+          property additionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ExampleOrReference> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        end;
+      private
+        FExample: any;
+        FExamples: TOpenAPIDefinition.TOpenAPIDefinition.Examples.TExamples;
+
+        function GetExamples: TOpenAPIDefinition.TOpenAPIDefinition.Examples.TExamples;
+        function GetExampleStored: Boolean;
+        function GetExamplesStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsExampleStored: Boolean read GetExampleStored;
+        property IsExamplesStored: Boolean read GetExamplesStored;
+      published
+        property example: any read FExample write FExample stored GetExampleStored;
+        property examples: TOpenAPIDefinition.TOpenAPIDefinition.Examples.TExamples read GetExamples write FExamples stored GetExamplesStored;
+      end;
+
+      MapOfStrings = class
+      private
+        FAdditionalProperties: TDynamicProperty<System.String>;
+
+        function GetAdditionalProperties: TDynamicProperty<System.String>;
+        function GetAdditionalPropertiesStored: Boolean;
+      public
+        destructor Destroy; override;
+
+        property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
+      published
+        property additionalProperties: TDynamicProperty<System.String> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+      end;
+
+      [Flat]
+      ExplodeForForm = class
+      private
+        FExplode: System.Boolean;
+
+        function GetExplodeStored: Boolean;
+      public
+        property IsExplodeStored: Boolean read GetExplodeStored;
+      published
+        property explode: System.Boolean read FExplode write FExplode stored GetExplodeStored;
       end;
     private
-      FExample: any;
-      FExamples: TOpenAPIDefinition.TExamples.TExamples;
-      FExampleIsStored: Boolean;
+      FOpenapi: System.String;
+      FInfo: TOpenAPIDefinition.TOpenAPIDefinition.Info;
+      FJsonSchemaDialect: System.String;
+      FServers: TArray<TOpenAPIDefinition.TOpenAPIDefinition.Server>;
+      FPaths: TOpenAPIDefinition.TOpenAPIDefinition.Paths;
+      FWebhooks: TOpenAPIDefinition.TOpenAPIDefinition.TWebhooks;
+      FComponents: TOpenAPIDefinition.TOpenAPIDefinition.Components;
+      FSecurity: TArray<TOpenAPIDefinition.TOpenAPIDefinition.SecurityRequirement>;
+      FTags: TArray<TOpenAPIDefinition.TOpenAPIDefinition.Tag>;
+      FExternalDocs: TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation;
 
-      function GetExamples: TOpenAPIDefinition.TExamples.TExamples;
-      function GetExamplesStored: Boolean;
-      procedure SetExample(const Value: any);
+      function GetInfo: TOpenAPIDefinition.TOpenAPIDefinition.Info;
+      function GetPaths: TOpenAPIDefinition.TOpenAPIDefinition.Paths;
+      function GetWebhooks: TOpenAPIDefinition.TOpenAPIDefinition.TWebhooks;
+      function GetComponents: TOpenAPIDefinition.TOpenAPIDefinition.Components;
+      function GetExternalDocs: TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation;
+      function GetJsonSchemaDialectStored: Boolean;
+      function GetServersStored: Boolean;
+      function GetPathsStored: Boolean;
+      function GetWebhooksStored: Boolean;
+      function GetComponentsStored: Boolean;
+      function GetSecurityStored: Boolean;
+      function GetTagsStored: Boolean;
+      function GetExternalDocsStored: Boolean;
     public
       destructor Destroy; override;
 
-      property IsExampleStored: Boolean read FExampleIsStored;
-      property IsExamplesStored: Boolean read GetExamplesStored;
+      function AddServers: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Server;
+      function AddSecurity: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityRequirement;
+      function AddTags: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Tag;
+
+      property IsJsonSchemaDialectStored: Boolean read GetJsonSchemaDialectStored;
+      property IsServersStored: Boolean read GetServersStored;
+      property IsPathsStored: Boolean read GetPathsStored;
+      property IsWebhooksStored: Boolean read GetWebhooksStored;
+      property IsComponentsStored: Boolean read GetComponentsStored;
+      property IsSecurityStored: Boolean read GetSecurityStored;
+      property IsTagsStored: Boolean read GetTagsStored;
+      property IsExternalDocsStored: Boolean read GetExternalDocsStored;
     published
-      property example: any read FExample write SetExample stored FExampleIsStored;
-      property examples: TOpenAPIDefinition.TExamples.TExamples read GetExamples write FExamples stored GetExamplesStored;
+      property openapi: System.String read FOpenapi write FOpenapi;
+      property info: TOpenAPIDefinition.TOpenAPIDefinition.Info read GetInfo write FInfo;
+      property jsonSchemaDialect: System.String read FJsonSchemaDialect write FJsonSchemaDialect stored GetJsonSchemaDialectStored;
+      property servers: TArray<TOpenAPIDefinition.TOpenAPIDefinition.Server> read FServers write FServers stored GetServersStored;
+      property paths: TOpenAPIDefinition.TOpenAPIDefinition.Paths read GetPaths write FPaths stored GetPathsStored;
+      property webhooks: TOpenAPIDefinition.TOpenAPIDefinition.TWebhooks read GetWebhooks write FWebhooks stored GetWebhooksStored;
+      property components: TOpenAPIDefinition.TOpenAPIDefinition.Components read GetComponents write FComponents stored GetComponentsStored;
+      property security: TArray<TOpenAPIDefinition.TOpenAPIDefinition.SecurityRequirement> read FSecurity write FSecurity stored GetSecurityStored;
+      property tags: TArray<TOpenAPIDefinition.TOpenAPIDefinition.Tag> read FTags write FTags stored GetTagsStored;
+      property externalDocs: TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
     end;
-
-    TMapOfStrings = class
-    private
-      FString: TDynamicProperty<System.String>;
-
-      function GetString: TDynamicProperty<System.String>;
-      function GetStringStored: Boolean;
-    public
-      destructor Destroy; override;
-
-      property IsStringStored: Boolean read GetStringStored;
-    published
-      [FieldName('string')]
-      property &String: TDynamicProperty<System.String> read GetString write FString stored GetStringStored;
-    end;
-
-    [Flat]
-    TExplodeForForm = class
-    private
-      FExplode: System.Boolean;
-      FExplodeIsStored: Boolean;
-
-      procedure SetExplode(const Value: System.Boolean);
-    public
-      property IsExplodeStored: Boolean read FExplodeIsStored;
-    published
-      property explode: System.Boolean read FExplode write SetExplode stored FExplodeIsStored;
-    end;
-  private
-    FOpenapi: System.String;
-    FInfo: TOpenAPIDefinition.TInfo;
-    FJsonSchemaDialect: System.String;
-    FServers: TArray<TOpenAPIDefinition.TServer>;
-    FPaths: TOpenAPIDefinition.TPaths;
-    FWebhooks: TOpenAPIDefinition.TWebhooks;
-    FComponents: TOpenAPIDefinition.TComponents;
-    FSecurity: TArray<TOpenAPIDefinition.TSecurityRequirement>;
-    FTags: TArray<TOpenAPIDefinition.TTag>;
-    FExternalDocs: TOpenAPIDefinition.TExternalDocumentation;
-
-    function GetInfo: TOpenAPIDefinition.TInfo;
-    function GetPaths: TOpenAPIDefinition.TPaths;
-    function GetWebhooks: TOpenAPIDefinition.TWebhooks;
-    function GetComponents: TOpenAPIDefinition.TComponents;
-    function GetExternalDocs: TOpenAPIDefinition.TExternalDocumentation;
-    function GetJsonSchemaDialectStored: Boolean;
-    function GetServersStored: Boolean;
-    function GetPathsStored: Boolean;
-    function GetWebhooksStored: Boolean;
-    function GetComponentsStored: Boolean;
-    function GetSecurityStored: Boolean;
-    function GetTagsStored: Boolean;
-    function GetExternalDocsStored: Boolean;
-  public
-    destructor Destroy; override;
-
-    function AddServers: TOpenAPIDefinition.TServer;
-    function AddSecurity: TOpenAPIDefinition.TSecurityRequirement;
-    function AddTags: TOpenAPIDefinition.TTag;
-
-    property IsJsonSchemaDialectStored: Boolean read GetJsonSchemaDialectStored;
-    property IsServersStored: Boolean read GetServersStored;
-    property IsPathsStored: Boolean read GetPathsStored;
-    property IsWebhooksStored: Boolean read GetWebhooksStored;
-    property IsComponentsStored: Boolean read GetComponentsStored;
-    property IsSecurityStored: Boolean read GetSecurityStored;
-    property IsTagsStored: Boolean read GetTagsStored;
-    property IsExternalDocsStored: Boolean read GetExternalDocsStored;
-  published
-    property openapi: System.String read FOpenapi write FOpenapi;
-    property info: TOpenAPIDefinition.TInfo read GetInfo write FInfo;
-    property jsonSchemaDialect: System.String read FJsonSchemaDialect write FJsonSchemaDialect stored GetJsonSchemaDialectStored;
-    property servers: TArray<TOpenAPIDefinition.TServer> read FServers write FServers stored GetServersStored;
-    property paths: TOpenAPIDefinition.TPaths read GetPaths write FPaths stored GetPathsStored;
-    property webhooks: TOpenAPIDefinition.TWebhooks read GetWebhooks write FWebhooks stored GetWebhooksStored;
-    property components: TOpenAPIDefinition.TComponents read GetComponents write FComponents stored GetComponentsStored;
-    property security: TArray<TOpenAPIDefinition.TSecurityRequirement> read FSecurity write FSecurity stored GetSecurityStored;
-    property tags: TArray<TOpenAPIDefinition.TTag> read FTags write FTags stored GetTagsStored;
-    property externalDocs: TOpenAPIDefinition.TExternalDocumentation read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
   end;
 
 implementation
 
 uses System.SysUtils;
 
-{ TOpenAPIDefinition }
+{ TOpenAPIDefinition.TOpenAPIDefinition }
 
-destructor TOpenAPIDefinition.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Destroy;
 begin
   FInfo.Free;
 
@@ -1528,132 +1590,132 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.GetInfo: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TInfo;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetInfo: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Info;
 begin
   if not Assigned(FInfo) then
-    FInfo := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TInfo.Create;
+    FInfo := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Info.Create;
 
   Result := FInfo;
 end;
 
-function TOpenAPIDefinition.GetJsonSchemaDialectStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetJsonSchemaDialectStored: Boolean;
 begin
   Result := not FJsonSchemaDialect.IsEmpty;
 end;
 
-function TOpenAPIDefinition.AddServers: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TServer;
+function TOpenAPIDefinition.TOpenAPIDefinition.AddServers: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Server;
 begin
-  Result := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TServer.Create;
+  Result := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Server.Create;
 
   FServers := FServers + [Result];
 end;
 
-function TOpenAPIDefinition.GetServersStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetServersStored: Boolean;
 begin
   Result := Assigned(FServers);
 end;
 
-function TOpenAPIDefinition.GetPaths: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TPaths;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetPaths: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Paths;
 begin
   if not Assigned(FPaths) then
-    FPaths := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TPaths.Create;
+    FPaths := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Paths.Create;
 
   Result := FPaths;
 end;
 
-function TOpenAPIDefinition.GetPathsStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetPathsStored: Boolean;
 begin
   Result := Assigned(FPaths);
 end;
 
-function TOpenAPIDefinition.GetWebhooks: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TWebhooks;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetWebhooks: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.TWebhooks;
 begin
   if not Assigned(FWebhooks) then
-    FWebhooks := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TWebhooks.Create;
+    FWebhooks := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.TWebhooks.Create;
 
   Result := FWebhooks;
 end;
 
-function TOpenAPIDefinition.GetWebhooksStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetWebhooksStored: Boolean;
 begin
   Result := Assigned(FWebhooks);
 end;
 
-function TOpenAPIDefinition.GetComponents: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetComponents: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components;
 begin
   if not Assigned(FComponents) then
-    FComponents := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.Create;
+    FComponents := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.Create;
 
   Result := FComponents;
 end;
 
-function TOpenAPIDefinition.GetComponentsStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetComponentsStored: Boolean;
 begin
   Result := Assigned(FComponents);
 end;
 
-function TOpenAPIDefinition.AddSecurity: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecurityRequirement;
+function TOpenAPIDefinition.TOpenAPIDefinition.AddSecurity: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityRequirement;
 begin
-  Result := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecurityRequirement.Create;
+  Result := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityRequirement.Create;
 
   FSecurity := FSecurity + [Result];
 end;
 
-function TOpenAPIDefinition.GetSecurityStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetSecurityStored: Boolean;
 begin
   Result := Assigned(FSecurity);
 end;
 
-function TOpenAPIDefinition.AddTags: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TTag;
+function TOpenAPIDefinition.TOpenAPIDefinition.AddTags: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Tag;
 begin
-  Result := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TTag.Create;
+  Result := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Tag.Create;
 
   FTags := FTags + [Result];
 end;
 
-function TOpenAPIDefinition.GetTagsStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetTagsStored: Boolean;
 begin
   Result := Assigned(FTags);
 end;
 
-function TOpenAPIDefinition.GetExternalDocs: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TExternalDocumentation;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetExternalDocs: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation;
 begin
   if not Assigned(FExternalDocs) then
-    FExternalDocs := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TExternalDocumentation.Create;
+    FExternalDocs := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation.Create;
 
   Result := FExternalDocs;
 end;
 
-function TOpenAPIDefinition.GetExternalDocsStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetExternalDocsStored: Boolean;
 begin
   Result := Assigned(FExternalDocs);
 end;
 
-{ TOpenAPIDefinition.TWebhooks }
+{ TOpenAPIDefinition.TOpenAPIDefinition.TWebhooks }
 
-destructor TOpenAPIDefinition.TWebhooks.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.TWebhooks.Destroy;
 begin
-  FPathItem.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TWebhooks.GetPathItem: TDynamicProperty<TOpenAPIDefinition.TPathItem>;
+function TOpenAPIDefinition.TOpenAPIDefinition.TWebhooks.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.PathItem>;
 begin
-  if not Assigned(FPathItem) then
-    FPathItem := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TPathItem>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.PathItem>.Create;
 
-  Result := FPathItem;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TWebhooks.GetPathItemStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.TWebhooks.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FPathItem);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TInfo }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Info }
 
-destructor TOpenAPIDefinition.TInfo.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Info.Destroy;
 begin
   FContact.Free;
 
@@ -1662,140 +1724,140 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.TInfo.GetSummaryStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Info.GetSummaryStored: Boolean;
 begin
   Result := not FSummary.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TInfo.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Info.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TInfo.GetTermsOfServiceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Info.GetTermsOfServiceStored: Boolean;
 begin
   Result := not FTermsOfService.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TInfo.GetContact: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TContact;
+function TOpenAPIDefinition.TOpenAPIDefinition.Info.GetContact: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Contact;
 begin
   if not Assigned(FContact) then
-    FContact := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TContact.Create;
+    FContact := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Contact.Create;
 
   Result := FContact;
 end;
 
-function TOpenAPIDefinition.TInfo.GetContactStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Info.GetContactStored: Boolean;
 begin
   Result := Assigned(FContact);
 end;
 
-function TOpenAPIDefinition.TInfo.GetLicense: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TLicense;
+function TOpenAPIDefinition.TOpenAPIDefinition.Info.GetLicense: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.License;
 begin
   if not Assigned(FLicense) then
-    FLicense := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TLicense.Create;
+    FLicense := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.License.Create;
 
   Result := FLicense;
 end;
 
-function TOpenAPIDefinition.TInfo.GetLicenseStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Info.GetLicenseStored: Boolean;
 begin
   Result := Assigned(FLicense);
 end;
 
-{ TOpenAPIDefinition.TContact }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Contact }
 
-function TOpenAPIDefinition.TContact.GetNameStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Contact.GetNameStored: Boolean;
 begin
   Result := not FName.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TContact.GetUrlStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Contact.GetUrlStored: Boolean;
 begin
   Result := not FUrl.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TContact.GetEmailStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Contact.GetEmailStored: Boolean;
 begin
   Result := not FEmail.IsEmpty;
 end;
 
-{ TOpenAPIDefinition.TLicense }
+{ TOpenAPIDefinition.TOpenAPIDefinition.License }
 
-function TOpenAPIDefinition.TLicense.GetIdentifierStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.License.GetIdentifierStored: Boolean;
 begin
   Result := not FIdentifier.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TLicense.GetUrlStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.License.GetUrlStored: Boolean;
 begin
   Result := not FUrl.IsEmpty;
 end;
 
-{ TOpenAPIDefinition.TServer }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Server }
 
-destructor TOpenAPIDefinition.TServer.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Server.Destroy;
 begin
   FVariables.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TServer.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Server.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TServer.GetVariables: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TServer.TVariables;
+function TOpenAPIDefinition.TOpenAPIDefinition.Server.GetVariables: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Server.TVariables;
 begin
   if not Assigned(FVariables) then
-    FVariables := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TServer.TVariables.Create;
+    FVariables := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Server.TVariables.Create;
 
   Result := FVariables;
 end;
 
-function TOpenAPIDefinition.TServer.GetVariablesStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Server.GetVariablesStored: Boolean;
 begin
   Result := Assigned(FVariables);
 end;
 
-{ TOpenAPIDefinition.TServer.TVariables }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Server.TVariables }
 
-destructor TOpenAPIDefinition.TServer.TVariables.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Server.TVariables.Destroy;
 begin
-  FServerVariable.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TServer.TVariables.GetServerVariable: TDynamicProperty<TOpenAPIDefinition.TServerVariable>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Server.TVariables.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ServerVariable>;
 begin
-  if not Assigned(FServerVariable) then
-    FServerVariable := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TServerVariable>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ServerVariable>.Create;
 
-  Result := FServerVariable;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TServer.TVariables.GetServerVariableStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Server.TVariables.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FServerVariable);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TServerVariable }
+{ TOpenAPIDefinition.TOpenAPIDefinition.ServerVariable }
 
-function TOpenAPIDefinition.TServerVariable.GetEnumStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.ServerVariable.GetEnumStored: Boolean;
 begin
   Result := Assigned(FEnum);
 end;
 
-function TOpenAPIDefinition.TServerVariable.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.ServerVariable.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-{ TOpenAPIDefinition.TComponents }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Components }
 
-destructor TOpenAPIDefinition.TComponents.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Components.Destroy;
 begin
   FSchemas.Free;
 
@@ -1817,399 +1879,399 @@ begin
 
   FPathItems.Free;
 
-  FSpecificationExtensions.Free;
+  FPatternProperty.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TComponents.GetSchemas: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TSchemas;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetSchemas: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TSchemas;
 begin
   if not Assigned(FSchemas) then
-    FSchemas := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TSchemas.Create;
+    FSchemas := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TSchemas.Create;
 
   Result := FSchemas;
 end;
 
-function TOpenAPIDefinition.TComponents.GetSchemasStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetSchemasStored: Boolean;
 begin
   Result := Assigned(FSchemas);
 end;
 
-function TOpenAPIDefinition.TComponents.GetResponses: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TResponses;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetResponses: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TResponses;
 begin
   if not Assigned(FResponses) then
-    FResponses := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TResponses.Create;
+    FResponses := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TResponses.Create;
 
   Result := FResponses;
 end;
 
-function TOpenAPIDefinition.TComponents.GetResponsesStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetResponsesStored: Boolean;
 begin
   Result := Assigned(FResponses);
 end;
 
-function TOpenAPIDefinition.TComponents.GetParameters: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TParameters;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetParameters: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TParameters;
 begin
   if not Assigned(FParameters) then
-    FParameters := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TParameters.Create;
+    FParameters := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TParameters.Create;
 
   Result := FParameters;
 end;
 
-function TOpenAPIDefinition.TComponents.GetParametersStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetParametersStored: Boolean;
 begin
   Result := Assigned(FParameters);
 end;
 
-function TOpenAPIDefinition.TComponents.GetExamples: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TExamples;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetExamples: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TExamples;
 begin
   if not Assigned(FExamples) then
-    FExamples := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TExamples.Create;
+    FExamples := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TExamples.Create;
 
   Result := FExamples;
 end;
 
-function TOpenAPIDefinition.TComponents.GetExamplesStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetExamplesStored: Boolean;
 begin
   Result := Assigned(FExamples);
 end;
 
-function TOpenAPIDefinition.TComponents.GetRequestBodies: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TRequestBodies;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetRequestBodies: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TRequestBodies;
 begin
   if not Assigned(FRequestBodies) then
-    FRequestBodies := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TRequestBodies.Create;
+    FRequestBodies := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TRequestBodies.Create;
 
   Result := FRequestBodies;
 end;
 
-function TOpenAPIDefinition.TComponents.GetRequestBodiesStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetRequestBodiesStored: Boolean;
 begin
   Result := Assigned(FRequestBodies);
 end;
 
-function TOpenAPIDefinition.TComponents.GetHeaders: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.THeaders;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetHeaders: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.THeaders;
 begin
   if not Assigned(FHeaders) then
-    FHeaders := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.THeaders.Create;
+    FHeaders := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.THeaders.Create;
 
   Result := FHeaders;
 end;
 
-function TOpenAPIDefinition.TComponents.GetHeadersStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetHeadersStored: Boolean;
 begin
   Result := Assigned(FHeaders);
 end;
 
-function TOpenAPIDefinition.TComponents.GetSecuritySchemes: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TSecuritySchemes;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetSecuritySchemes: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TSecuritySchemes;
 begin
   if not Assigned(FSecuritySchemes) then
-    FSecuritySchemes := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TSecuritySchemes.Create;
+    FSecuritySchemes := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TSecuritySchemes.Create;
 
   Result := FSecuritySchemes;
 end;
 
-function TOpenAPIDefinition.TComponents.GetSecuritySchemesStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetSecuritySchemesStored: Boolean;
 begin
   Result := Assigned(FSecuritySchemes);
 end;
 
-function TOpenAPIDefinition.TComponents.GetLinks: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TLinks;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetLinks: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TLinks;
 begin
   if not Assigned(FLinks) then
-    FLinks := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TLinks.Create;
+    FLinks := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TLinks.Create;
 
   Result := FLinks;
 end;
 
-function TOpenAPIDefinition.TComponents.GetLinksStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetLinksStored: Boolean;
 begin
   Result := Assigned(FLinks);
 end;
 
-function TOpenAPIDefinition.TComponents.GetCallbacks: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TCallbacks;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetCallbacks: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TCallbacks;
 begin
   if not Assigned(FCallbacks) then
-    FCallbacks := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TCallbacks.Create;
+    FCallbacks := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TCallbacks.Create;
 
   Result := FCallbacks;
 end;
 
-function TOpenAPIDefinition.TComponents.GetCallbacksStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetCallbacksStored: Boolean;
 begin
   Result := Assigned(FCallbacks);
 end;
 
-function TOpenAPIDefinition.TComponents.GetPathItems: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TPathItems;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetPathItems: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TPathItems;
 begin
   if not Assigned(FPathItems) then
-    FPathItems := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TComponents.TPathItems.Create;
+    FPathItems := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Components.TPathItems.Create;
 
   Result := FPathItems;
 end;
 
-function TOpenAPIDefinition.TComponents.GetPathItemsStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetPathItemsStored: Boolean;
 begin
   Result := Assigned(FPathItems);
 end;
 
-function TOpenAPIDefinition.TComponents.GetSpecificationExtensions: TDynamicProperty<any>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetPatternProperty: TDynamicProperty<any>;
 begin
-  if not Assigned(FSpecificationExtensions) then
-    FSpecificationExtensions := TDynamicProperty<System.Rtti.TValue>.Create;
+  if not Assigned(FPatternProperty) then
+    FPatternProperty := TDynamicProperty<System.Rtti.TValue>.Create;
 
-  Result := FSpecificationExtensions;
+  Result := FPatternProperty;
 end;
 
-function TOpenAPIDefinition.TComponents.GetSpecificationExtensionsStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.GetPatternPropertyStored: Boolean;
 begin
-  Result := Assigned(FSpecificationExtensions);
+  Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.TComponents.TSchemas }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Components.TSchemas }
 
-destructor TOpenAPIDefinition.TComponents.TSchemas.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Components.TSchemas.Destroy;
 begin
-  FSchemas.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TComponents.TSchemas.GetSchemas: TDynamicProperty<TOpenAPIDefinition>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TSchemas.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition>;
 begin
-  if not Assigned(FSchemas) then
-    FSchemas := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition>.Create;
 
-  Result := FSchemas;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TComponents.TSchemas.GetSchemasStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TSchemas.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FSchemas);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TComponents.TResponses }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Components.TResponses }
 
-destructor TOpenAPIDefinition.TComponents.TResponses.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Components.TResponses.Destroy;
 begin
-  FResponseOrReference.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TComponents.TResponses.GetResponseOrReference: TDynamicProperty<TOpenAPIDefinition.TResponseOrReference>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TResponses.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference>;
 begin
-  if not Assigned(FResponseOrReference) then
-    FResponseOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TResponseOrReference>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference>.Create;
 
-  Result := FResponseOrReference;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TComponents.TResponses.GetResponseOrReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TResponses.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FResponseOrReference);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TComponents.TParameters }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Components.TParameters }
 
-destructor TOpenAPIDefinition.TComponents.TParameters.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Components.TParameters.Destroy;
 begin
-  FParameterOrReference.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TComponents.TParameters.GetParameterOrReference: TDynamicProperty<TOpenAPIDefinition.TParameterOrReference>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TParameters.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference>;
 begin
-  if not Assigned(FParameterOrReference) then
-    FParameterOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TParameterOrReference>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference>.Create;
 
-  Result := FParameterOrReference;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TComponents.TParameters.GetParameterOrReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TParameters.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FParameterOrReference);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TComponents.TExamples }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Components.TExamples }
 
-destructor TOpenAPIDefinition.TComponents.TExamples.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Components.TExamples.Destroy;
 begin
-  FExampleOrReference.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TComponents.TExamples.GetExampleOrReference: TDynamicProperty<TOpenAPIDefinition.TExampleOrReference>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TExamples.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ExampleOrReference>;
 begin
-  if not Assigned(FExampleOrReference) then
-    FExampleOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TExampleOrReference>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ExampleOrReference>.Create;
 
-  Result := FExampleOrReference;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TComponents.TExamples.GetExampleOrReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TExamples.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FExampleOrReference);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TComponents.TRequestBodies }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Components.TRequestBodies }
 
-destructor TOpenAPIDefinition.TComponents.TRequestBodies.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Components.TRequestBodies.Destroy;
 begin
-  FRequestBodyOrReference.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TComponents.TRequestBodies.GetRequestBodyOrReference: TDynamicProperty<TOpenAPIDefinition.TRequestBodyOrReference>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TRequestBodies.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.RequestBodyOrReference>;
 begin
-  if not Assigned(FRequestBodyOrReference) then
-    FRequestBodyOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TRequestBodyOrReference>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.RequestBodyOrReference>.Create;
 
-  Result := FRequestBodyOrReference;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TComponents.TRequestBodies.GetRequestBodyOrReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TRequestBodies.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FRequestBodyOrReference);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TComponents.THeaders }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Components.THeaders }
 
-destructor TOpenAPIDefinition.TComponents.THeaders.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Components.THeaders.Destroy;
 begin
-  FHeaderOrReference.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TComponents.THeaders.GetHeaderOrReference: TDynamicProperty<TOpenAPIDefinition.THeaderOrReference>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.THeaders.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference>;
 begin
-  if not Assigned(FHeaderOrReference) then
-    FHeaderOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.THeaderOrReference>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference>.Create;
 
-  Result := FHeaderOrReference;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TComponents.THeaders.GetHeaderOrReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.THeaders.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FHeaderOrReference);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TComponents.TSecuritySchemes }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Components.TSecuritySchemes }
 
-destructor TOpenAPIDefinition.TComponents.TSecuritySchemes.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Components.TSecuritySchemes.Destroy;
 begin
-  FSecuritySchemeOrReference.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TComponents.TSecuritySchemes.GetSecuritySchemeOrReference: TDynamicProperty<TOpenAPIDefinition.TSecuritySchemeOrReference>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TSecuritySchemes.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.SecuritySchemeOrReference>;
 begin
-  if not Assigned(FSecuritySchemeOrReference) then
-    FSecuritySchemeOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecuritySchemeOrReference>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecuritySchemeOrReference>.Create;
 
-  Result := FSecuritySchemeOrReference;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TComponents.TSecuritySchemes.GetSecuritySchemeOrReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TSecuritySchemes.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FSecuritySchemeOrReference);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TComponents.TLinks }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Components.TLinks }
 
-destructor TOpenAPIDefinition.TComponents.TLinks.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Components.TLinks.Destroy;
 begin
-  FLinkOrReference.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TComponents.TLinks.GetLinkOrReference: TDynamicProperty<TOpenAPIDefinition.TLinkOrReference>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TLinks.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.LinkOrReference>;
 begin
-  if not Assigned(FLinkOrReference) then
-    FLinkOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TLinkOrReference>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.LinkOrReference>.Create;
 
-  Result := FLinkOrReference;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TComponents.TLinks.GetLinkOrReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TLinks.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FLinkOrReference);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TComponents.TCallbacks }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Components.TCallbacks }
 
-destructor TOpenAPIDefinition.TComponents.TCallbacks.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Components.TCallbacks.Destroy;
 begin
-  FCallbacksOrReference.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TComponents.TCallbacks.GetCallbacksOrReference: TDynamicProperty<TOpenAPIDefinition.TCallbacksOrReference>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TCallbacks.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.CallbacksOrReference>;
 begin
-  if not Assigned(FCallbacksOrReference) then
-    FCallbacksOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TCallbacksOrReference>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.CallbacksOrReference>.Create;
 
-  Result := FCallbacksOrReference;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TComponents.TCallbacks.GetCallbacksOrReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TCallbacks.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FCallbacksOrReference);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TComponents.TPathItems }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Components.TPathItems }
 
-destructor TOpenAPIDefinition.TComponents.TPathItems.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Components.TPathItems.Destroy;
+begin
+  FAdditionalProperties.Free;
+
+  inherited;
+end;
+
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TPathItems.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.PathItem>;
+begin
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.PathItem>.Create;
+
+  Result := FAdditionalProperties;
+end;
+
+function TOpenAPIDefinition.TOpenAPIDefinition.Components.TPathItems.GetAdditionalPropertiesStored: Boolean;
+begin
+  Result := Assigned(FAdditionalProperties);
+end;
+
+{ TOpenAPIDefinition.TOpenAPIDefinition.Paths }
+
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Paths.Destroy;
 begin
   FPathItem.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TComponents.TPathItems.GetPathItem: TDynamicProperty<TOpenAPIDefinition.TPathItem>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Paths.GetPathItem: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.PathItem>;
 begin
   if not Assigned(FPathItem) then
-    FPathItem := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TPathItem>.Create;
+    FPathItem := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.PathItem>.Create;
 
   Result := FPathItem;
 end;
 
-function TOpenAPIDefinition.TComponents.TPathItems.GetPathItemStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Paths.GetPathItemStored: Boolean;
 begin
   Result := Assigned(FPathItem);
 end;
 
-{ TOpenAPIDefinition.TPaths }
+{ TOpenAPIDefinition.TOpenAPIDefinition.PathItem }
 
-destructor TOpenAPIDefinition.TPaths.Destroy;
-begin
-  FSpecificationExtensions.Free;
-
-  inherited;
-end;
-
-function TOpenAPIDefinition.TPaths.GetSpecificationExtensions: TDynamicProperty<TOpenAPIDefinition.TPathItem>;
-begin
-  if not Assigned(FSpecificationExtensions) then
-    FSpecificationExtensions := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TPathItem>.Create;
-
-  Result := FSpecificationExtensions;
-end;
-
-function TOpenAPIDefinition.TPaths.GetSpecificationExtensionsStored: Boolean;
-begin
-  Result := Assigned(FSpecificationExtensions);
-end;
-
-{ TOpenAPIDefinition.TPathItem }
-
-destructor TOpenAPIDefinition.TPathItem.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.PathItem.Destroy;
 begin
   for var AObject in FServers do
     AObject.Free;
@@ -2236,152 +2298,152 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.TPathItem.GetRefStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetRefStored: Boolean;
 begin
   Result := not FRef.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TPathItem.GetSummaryStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetSummaryStored: Boolean;
 begin
   Result := not FSummary.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TPathItem.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TPathItem.AddServers: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TServer;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.AddServers: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Server;
 begin
-  Result := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TServer.Create;
+  Result := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Server.Create;
 
   FServers := FServers + [Result];
 end;
 
-function TOpenAPIDefinition.TPathItem.GetServersStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetServersStored: Boolean;
 begin
   Result := Assigned(FServers);
 end;
 
-function TOpenAPIDefinition.TPathItem.AddParameters: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TParameterOrReference;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.AddParameters: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference;
 begin
-  Result := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TParameterOrReference.Create;
+  Result := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference.Create;
 
   FParameters := FParameters + [Result];
 end;
 
-function TOpenAPIDefinition.TPathItem.GetParametersStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetParametersStored: Boolean;
 begin
   Result := Assigned(FParameters);
 end;
 
-function TOpenAPIDefinition.TPathItem.GetGet: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetGet: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation;
 begin
   if not Assigned(FGet) then
-    FGet := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation.Create;
+    FGet := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation.Create;
 
   Result := FGet;
 end;
 
-function TOpenAPIDefinition.TPathItem.GetGetStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetGetStored: Boolean;
 begin
   Result := Assigned(FGet);
 end;
 
-function TOpenAPIDefinition.TPathItem.GetPut: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetPut: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation;
 begin
   if not Assigned(FPut) then
-    FPut := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation.Create;
+    FPut := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation.Create;
 
   Result := FPut;
 end;
 
-function TOpenAPIDefinition.TPathItem.GetPutStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetPutStored: Boolean;
 begin
   Result := Assigned(FPut);
 end;
 
-function TOpenAPIDefinition.TPathItem.GetPost: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetPost: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation;
 begin
   if not Assigned(FPost) then
-    FPost := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation.Create;
+    FPost := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation.Create;
 
   Result := FPost;
 end;
 
-function TOpenAPIDefinition.TPathItem.GetPostStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetPostStored: Boolean;
 begin
   Result := Assigned(FPost);
 end;
 
-function TOpenAPIDefinition.TPathItem.GetDelete: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetDelete: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation;
 begin
   if not Assigned(FDelete) then
-    FDelete := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation.Create;
+    FDelete := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation.Create;
 
   Result := FDelete;
 end;
 
-function TOpenAPIDefinition.TPathItem.GetDeleteStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetDeleteStored: Boolean;
 begin
   Result := Assigned(FDelete);
 end;
 
-function TOpenAPIDefinition.TPathItem.GetOptions: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetOptions: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation;
 begin
   if not Assigned(FOptions) then
-    FOptions := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation.Create;
+    FOptions := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation.Create;
 
   Result := FOptions;
 end;
 
-function TOpenAPIDefinition.TPathItem.GetOptionsStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetOptionsStored: Boolean;
 begin
   Result := Assigned(FOptions);
 end;
 
-function TOpenAPIDefinition.TPathItem.GetHead: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetHead: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation;
 begin
   if not Assigned(FHead) then
-    FHead := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation.Create;
+    FHead := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation.Create;
 
   Result := FHead;
 end;
 
-function TOpenAPIDefinition.TPathItem.GetHeadStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetHeadStored: Boolean;
 begin
   Result := Assigned(FHead);
 end;
 
-function TOpenAPIDefinition.TPathItem.GetPatch: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetPatch: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation;
 begin
   if not Assigned(FPatch) then
-    FPatch := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation.Create;
+    FPatch := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation.Create;
 
   Result := FPatch;
 end;
 
-function TOpenAPIDefinition.TPathItem.GetPatchStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetPatchStored: Boolean;
 begin
   Result := Assigned(FPatch);
 end;
 
-function TOpenAPIDefinition.TPathItem.GetTrace: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetTrace: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation;
 begin
   if not Assigned(FTrace) then
-    FTrace := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation.Create;
+    FTrace := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation.Create;
 
   Result := FTrace;
 end;
 
-function TOpenAPIDefinition.TPathItem.GetTraceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.PathItem.GetTraceStored: Boolean;
 begin
   Result := Assigned(FTrace);
 end;
 
-{ TOpenAPIDefinition.TOperation }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Operation }
 
-destructor TOpenAPIDefinition.TOperation.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Operation.Destroy;
 begin
   FExternalDocs.Free;
 
@@ -2403,152 +2465,151 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.TOperation.GetTagsStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.GetTagsStored: Boolean;
 begin
   Result := Assigned(FTags);
 end;
 
-function TOpenAPIDefinition.TOperation.GetSummaryStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.GetSummaryStored: Boolean;
 begin
   Result := not FSummary.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TOperation.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TOperation.GetExternalDocs: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TExternalDocumentation;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.GetExternalDocs: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation;
 begin
   if not Assigned(FExternalDocs) then
-    FExternalDocs := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TExternalDocumentation.Create;
+    FExternalDocs := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation.Create;
 
   Result := FExternalDocs;
 end;
 
-function TOpenAPIDefinition.TOperation.GetExternalDocsStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.GetExternalDocsStored: Boolean;
 begin
   Result := Assigned(FExternalDocs);
 end;
 
-function TOpenAPIDefinition.TOperation.GetOperationIdStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.GetOperationIdStored: Boolean;
 begin
   Result := not FOperationId.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TOperation.AddParameters: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TParameterOrReference;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.AddParameters: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference;
 begin
-  Result := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TParameterOrReference.Create;
+  Result := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference.Create;
 
   FParameters := FParameters + [Result];
 end;
 
-function TOpenAPIDefinition.TOperation.GetParametersStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.GetParametersStored: Boolean;
 begin
   Result := Assigned(FParameters);
 end;
 
-function TOpenAPIDefinition.TOperation.GetRequestBody: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TRequestBodyOrReference;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.GetRequestBody: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.RequestBodyOrReference;
 begin
   if not Assigned(FRequestBody) then
-    FRequestBody := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TRequestBodyOrReference.Create;
+    FRequestBody := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.RequestBodyOrReference.Create;
 
   Result := FRequestBody;
 end;
 
-function TOpenAPIDefinition.TOperation.GetRequestBodyStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.GetRequestBodyStored: Boolean;
 begin
   Result := Assigned(FRequestBody);
 end;
 
-function TOpenAPIDefinition.TOperation.GetResponses: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TResponses;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.GetResponses: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Responses;
 begin
   if not Assigned(FResponses) then
-    FResponses := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TResponses.Create;
+    FResponses := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Responses.Create;
 
   Result := FResponses;
 end;
 
-function TOpenAPIDefinition.TOperation.GetResponsesStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.GetResponsesStored: Boolean;
 begin
   Result := Assigned(FResponses);
 end;
 
-function TOpenAPIDefinition.TOperation.GetCallbacks: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation.TCallbacks;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.GetCallbacks: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation.TCallbacks;
 begin
   if not Assigned(FCallbacks) then
-    FCallbacks := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOperation.TCallbacks.Create;
+    FCallbacks := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Operation.TCallbacks.Create;
 
   Result := FCallbacks;
 end;
 
-function TOpenAPIDefinition.TOperation.GetCallbacksStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.GetCallbacksStored: Boolean;
 begin
   Result := Assigned(FCallbacks);
 end;
 
-procedure TOpenAPIDefinition.TOperation.SetDeprecated(const Value: System.Boolean);
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.GetDeprecatedStored: Boolean;
 begin
-  FDeprecated := Value;
-  FDeprecatedIsStored := True;
+  Result := False;
 end;
 
-function TOpenAPIDefinition.TOperation.AddSecurity: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecurityRequirement;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.AddSecurity: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityRequirement;
 begin
-  Result := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecurityRequirement.Create;
+  Result := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityRequirement.Create;
 
   FSecurity := FSecurity + [Result];
 end;
 
-function TOpenAPIDefinition.TOperation.GetSecurityStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.GetSecurityStored: Boolean;
 begin
   Result := Assigned(FSecurity);
 end;
 
-function TOpenAPIDefinition.TOperation.AddServers: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TServer;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.AddServers: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Server;
 begin
-  Result := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TServer.Create;
+  Result := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Server.Create;
 
   FServers := FServers + [Result];
 end;
 
-function TOpenAPIDefinition.TOperation.GetServersStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.GetServersStored: Boolean;
 begin
   Result := Assigned(FServers);
 end;
 
-{ TOpenAPIDefinition.TOperation.TCallbacks }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Operation.TCallbacks }
 
-destructor TOpenAPIDefinition.TOperation.TCallbacks.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Operation.TCallbacks.Destroy;
 begin
-  FCallbacksOrReference.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TOperation.TCallbacks.GetCallbacksOrReference: TDynamicProperty<TOpenAPIDefinition.TCallbacksOrReference>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.TCallbacks.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.CallbacksOrReference>;
 begin
-  if not Assigned(FCallbacksOrReference) then
-    FCallbacksOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TCallbacksOrReference>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.CallbacksOrReference>.Create;
 
-  Result := FCallbacksOrReference;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TOperation.TCallbacks.GetCallbacksOrReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Operation.TCallbacks.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FCallbacksOrReference);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TExternalDocumentation }
+{ TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation }
 
-function TOpenAPIDefinition.TExternalDocumentation.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-{ TOpenAPIDefinition.TParameter }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Parameter }
 
-destructor TOpenAPIDefinition.TParameter.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Parameter.Destroy;
 begin
   FSchema.Free;
 
@@ -2557,24 +2618,22 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.TParameter.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Parameter.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-procedure TOpenAPIDefinition.TParameter.SetRequired(const Value: System.Boolean);
+function TOpenAPIDefinition.TOpenAPIDefinition.Parameter.GetRequiredStored: Boolean;
 begin
-  FRequired := Value;
-  FRequiredIsStored := True;
+  Result := False;
 end;
 
-procedure TOpenAPIDefinition.TParameter.SetDeprecated(const Value: System.Boolean);
+function TOpenAPIDefinition.TOpenAPIDefinition.Parameter.GetDeprecatedStored: Boolean;
 begin
-  FDeprecated := Value;
-  FDeprecatedIsStored := True;
+  Result := False;
 end;
 
-function TOpenAPIDefinition.TParameter.GetSchema: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition;
+function TOpenAPIDefinition.TOpenAPIDefinition.Parameter.GetSchema: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.Create;
@@ -2582,33 +2641,32 @@ begin
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.TParameter.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Parameter.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.TParameter.GetContent: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TContent;
+function TOpenAPIDefinition.TOpenAPIDefinition.Parameter.GetContent: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Content;
 begin
   if not Assigned(FContent) then
-    FContent := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TContent.Create;
+    FContent := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Content.Create;
 
   Result := FContent;
 end;
 
-function TOpenAPIDefinition.TParameter.GetContentStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Parameter.GetContentStored: Boolean;
 begin
   Result := Assigned(FContent);
 end;
 
-procedure TOpenAPIDefinition.TParameter.SetAllowEmptyValue(const Value: System.Boolean);
+function TOpenAPIDefinition.TOpenAPIDefinition.Parameter.GetAllowEmptyValueStored: Boolean;
 begin
-  FAllowEmptyValue := Value;
-  FAllowEmptyValueIsStored := True;
+  Result := False;
 end;
 
-{ TOpenAPIDefinition.TParameterOrReference }
+{ TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference }
 
-destructor TOpenAPIDefinition.TParameterOrReference.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference.Destroy;
 begin
   FReference.Free;
 
@@ -2617,63 +2675,62 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.TParameterOrReference.GetReference: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TReference;
+function TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference.GetReference: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TReference.Create;
+    FReference := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Reference.Create;
 
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.TParameterOrReference.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.TParameterOrReference.GetParameter: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TParameter;
+function TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference.GetParameter: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Parameter;
 begin
   if not Assigned(FParameter) then
-    FParameter := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TParameter.Create;
+    FParameter := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Parameter.Create;
 
   Result := FParameter;
 end;
 
-function TOpenAPIDefinition.TParameterOrReference.GetParameterStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.ParameterOrReference.GetParameterStored: Boolean;
 begin
   Result := Assigned(FParameter);
 end;
 
-{ TOpenAPIDefinition.TRequestBody }
+{ TOpenAPIDefinition.TOpenAPIDefinition.RequestBody }
 
-destructor TOpenAPIDefinition.TRequestBody.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.RequestBody.Destroy;
 begin
   FContent.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TRequestBody.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.RequestBody.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TRequestBody.GetContent: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TContent;
+function TOpenAPIDefinition.TOpenAPIDefinition.RequestBody.GetContent: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Content;
 begin
   if not Assigned(FContent) then
-    FContent := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TContent.Create;
+    FContent := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Content.Create;
 
   Result := FContent;
 end;
 
-procedure TOpenAPIDefinition.TRequestBody.SetRequired(const Value: System.Boolean);
+function TOpenAPIDefinition.TOpenAPIDefinition.RequestBody.GetRequiredStored: Boolean;
 begin
-  FRequired := Value;
-  FRequiredIsStored := True;
+  Result := False;
 end;
 
-{ TOpenAPIDefinition.TRequestBodyOrReference }
+{ TOpenAPIDefinition.TOpenAPIDefinition.RequestBodyOrReference }
 
-destructor TOpenAPIDefinition.TRequestBodyOrReference.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.RequestBodyOrReference.Destroy;
 begin
   FReference.Free;
 
@@ -2682,57 +2739,57 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.TRequestBodyOrReference.GetReference: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TReference;
+function TOpenAPIDefinition.TOpenAPIDefinition.RequestBodyOrReference.GetReference: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TReference.Create;
+    FReference := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Reference.Create;
 
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.TRequestBodyOrReference.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.RequestBodyOrReference.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.TRequestBodyOrReference.GetRequestBody: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TRequestBody;
+function TOpenAPIDefinition.TOpenAPIDefinition.RequestBodyOrReference.GetRequestBody: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.RequestBody;
 begin
   if not Assigned(FRequestBody) then
-    FRequestBody := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TRequestBody.Create;
+    FRequestBody := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.RequestBody.Create;
 
   Result := FRequestBody;
 end;
 
-function TOpenAPIDefinition.TRequestBodyOrReference.GetRequestBodyStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.RequestBodyOrReference.GetRequestBodyStored: Boolean;
 begin
   Result := Assigned(FRequestBody);
 end;
 
-{ TOpenAPIDefinition.TContent }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Content }
 
-destructor TOpenAPIDefinition.TContent.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Content.Destroy;
 begin
-  FMediaType.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TContent.GetMediaType: TDynamicProperty<TOpenAPIDefinition.TMediaType>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Content.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.MediaType>;
 begin
-  if not Assigned(FMediaType) then
-    FMediaType := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TMediaType>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.MediaType>.Create;
 
-  Result := FMediaType;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TContent.GetMediaTypeStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Content.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FMediaType);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TMediaType }
+{ TOpenAPIDefinition.TOpenAPIDefinition.MediaType }
 
-destructor TOpenAPIDefinition.TMediaType.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.MediaType.Destroy;
 begin
   FSchema.Free;
 
@@ -2740,12 +2797,10 @@ begin
 
   FSpecificationExtensions.Free;
 
-  FExamples.Free;
-
   inherited;
 end;
 
-function TOpenAPIDefinition.TMediaType.GetSchema: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition;
+function TOpenAPIDefinition.TOpenAPIDefinition.MediaType.GetSchema: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.Create;
@@ -2753,179 +2808,169 @@ begin
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.TMediaType.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.MediaType.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.TMediaType.GetEncoding: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TMediaType.TEncoding;
+function TOpenAPIDefinition.TOpenAPIDefinition.MediaType.GetEncoding: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.MediaType.TEncoding;
 begin
   if not Assigned(FEncoding) then
-    FEncoding := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TMediaType.TEncoding.Create;
+    FEncoding := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.MediaType.TEncoding.Create;
 
   Result := FEncoding;
 end;
 
-function TOpenAPIDefinition.TMediaType.GetEncodingStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.MediaType.GetEncodingStored: Boolean;
 begin
   Result := Assigned(FEncoding);
 end;
 
-function TOpenAPIDefinition.TMediaType.GetSpecificationExtensions: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSpecificationExtensions;
+function TOpenAPIDefinition.TOpenAPIDefinition.MediaType.GetSpecificationExtensions: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SpecificationExtensions;
 begin
   if not Assigned(FSpecificationExtensions) then
-    FSpecificationExtensions := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSpecificationExtensions.Create;
+    FSpecificationExtensions := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SpecificationExtensions.Create;
 
   Result := FSpecificationExtensions;
 end;
 
-function TOpenAPIDefinition.TMediaType.GetSpecificationExtensionsStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.MediaType.GetSpecificationExtensionsStored: Boolean;
 begin
   Result := Assigned(FSpecificationExtensions);
 end;
 
-function TOpenAPIDefinition.TMediaType.GetExamples: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TExamples;
-begin
-  if not Assigned(FExamples) then
-    FExamples := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TExamples.Create;
-
-  Result := FExamples;
-end;
-
-function TOpenAPIDefinition.TMediaType.GetExamplesStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.MediaType.GetExamplesStored: Boolean;
 begin
   Result := Assigned(FExamples);
 end;
 
-{ TOpenAPIDefinition.TMediaType.TEncoding }
+{ TOpenAPIDefinition.TOpenAPIDefinition.MediaType.TEncoding }
 
-destructor TOpenAPIDefinition.TMediaType.TEncoding.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.MediaType.TEncoding.Destroy;
 begin
-  FEncoding.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TMediaType.TEncoding.GetEncoding: TDynamicProperty<TOpenAPIDefinition.TEncoding>;
+function TOpenAPIDefinition.TOpenAPIDefinition.MediaType.TEncoding.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.Encoding>;
 begin
-  if not Assigned(FEncoding) then
-    FEncoding := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TEncoding>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Encoding>.Create;
 
-  Result := FEncoding;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TMediaType.TEncoding.GetEncodingStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.MediaType.TEncoding.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FEncoding);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TEncoding }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Encoding }
 
-destructor TOpenAPIDefinition.TEncoding.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Encoding.Destroy;
 begin
   FHeaders.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TEncoding.GetContentTypeStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Encoding.GetContentTypeStored: Boolean;
 begin
   Result := not FContentType.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TEncoding.GetHeaders: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TEncoding.THeaders;
+function TOpenAPIDefinition.TOpenAPIDefinition.Encoding.GetHeaders: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Encoding.THeaders;
 begin
   if not Assigned(FHeaders) then
-    FHeaders := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TEncoding.THeaders.Create;
+    FHeaders := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Encoding.THeaders.Create;
 
   Result := FHeaders;
 end;
 
-function TOpenAPIDefinition.TEncoding.GetHeadersStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Encoding.GetHeadersStored: Boolean;
 begin
   Result := Assigned(FHeaders);
 end;
 
-procedure TOpenAPIDefinition.TEncoding.SetStyle(const Value: TOpenAPIDefinition.TEncoding.TStyle);
+procedure TOpenAPIDefinition.TOpenAPIDefinition.Encoding.SetStyle(const Value: TOpenAPIDefinition.TOpenAPIDefinition.Encoding.TStyle);
 begin
   FStyle := Value;
   FStyleIsStored := True;
 end;
 
-procedure TOpenAPIDefinition.TEncoding.SetExplode(const Value: System.Boolean);
+function TOpenAPIDefinition.TOpenAPIDefinition.Encoding.GetExplodeStored: Boolean;
 begin
-  FExplode := Value;
-  FExplodeIsStored := True;
+  Result := False;
 end;
 
-procedure TOpenAPIDefinition.TEncoding.SetAllowReserved(const Value: System.Boolean);
+function TOpenAPIDefinition.TOpenAPIDefinition.Encoding.GetAllowReservedStored: Boolean;
 begin
-  FAllowReserved := Value;
-  FAllowReservedIsStored := True;
+  Result := False;
 end;
 
-{ TOpenAPIDefinition.TEncoding.THeaders }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Encoding.THeaders }
 
-destructor TOpenAPIDefinition.TEncoding.THeaders.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Encoding.THeaders.Destroy;
 begin
-  FHeaderOrReference.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TEncoding.THeaders.GetHeaderOrReference: TDynamicProperty<TOpenAPIDefinition.THeaderOrReference>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Encoding.THeaders.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference>;
 begin
-  if not Assigned(FHeaderOrReference) then
-    FHeaderOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.THeaderOrReference>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference>.Create;
 
-  Result := FHeaderOrReference;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TEncoding.THeaders.GetHeaderOrReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Encoding.THeaders.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FHeaderOrReference);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TResponses }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Responses }
 
-destructor TOpenAPIDefinition.TResponses.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Responses.Destroy;
 begin
   FDefault.Free;
 
-  FSpecificationExtensions.Free;
+  FResponseOrReference.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TResponses.GetDefault: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TResponseOrReference;
+function TOpenAPIDefinition.TOpenAPIDefinition.Responses.GetDefault: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference;
 begin
   if not Assigned(FDefault) then
-    FDefault := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TResponseOrReference.Create;
+    FDefault := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference.Create;
 
   Result := FDefault;
 end;
 
-function TOpenAPIDefinition.TResponses.GetDefaultStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Responses.GetDefaultStored: Boolean;
 begin
   Result := Assigned(FDefault);
 end;
 
-function TOpenAPIDefinition.TResponses.GetSpecificationExtensions: TDynamicProperty<TOpenAPIDefinition.TResponseOrReference>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Responses.GetResponseOrReference: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference>;
 begin
-  if not Assigned(FSpecificationExtensions) then
-    FSpecificationExtensions := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TResponseOrReference>.Create;
+  if not Assigned(FResponseOrReference) then
+    FResponseOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference>.Create;
 
-  Result := FSpecificationExtensions;
+  Result := FResponseOrReference;
 end;
 
-function TOpenAPIDefinition.TResponses.GetSpecificationExtensionsStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Responses.GetResponseOrReferenceStored: Boolean;
 begin
-  Result := Assigned(FSpecificationExtensions);
+  Result := Assigned(FResponseOrReference);
 end;
 
-{ TOpenAPIDefinition.TResponse }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Response }
 
-destructor TOpenAPIDefinition.TResponse.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Response.Destroy;
 begin
   FHeaders.Free;
 
@@ -2936,92 +2981,92 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.TResponse.GetHeaders: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TResponse.THeaders;
+function TOpenAPIDefinition.TOpenAPIDefinition.Response.GetHeaders: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Response.THeaders;
 begin
   if not Assigned(FHeaders) then
-    FHeaders := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TResponse.THeaders.Create;
+    FHeaders := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Response.THeaders.Create;
 
   Result := FHeaders;
 end;
 
-function TOpenAPIDefinition.TResponse.GetHeadersStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Response.GetHeadersStored: Boolean;
 begin
   Result := Assigned(FHeaders);
 end;
 
-function TOpenAPIDefinition.TResponse.GetContent: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TContent;
+function TOpenAPIDefinition.TOpenAPIDefinition.Response.GetContent: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Content;
 begin
   if not Assigned(FContent) then
-    FContent := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TContent.Create;
+    FContent := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Content.Create;
 
   Result := FContent;
 end;
 
-function TOpenAPIDefinition.TResponse.GetContentStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Response.GetContentStored: Boolean;
 begin
   Result := Assigned(FContent);
 end;
 
-function TOpenAPIDefinition.TResponse.GetLinks: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TResponse.TLinks;
+function TOpenAPIDefinition.TOpenAPIDefinition.Response.GetLinks: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Response.TLinks;
 begin
   if not Assigned(FLinks) then
-    FLinks := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TResponse.TLinks.Create;
+    FLinks := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Response.TLinks.Create;
 
   Result := FLinks;
 end;
 
-function TOpenAPIDefinition.TResponse.GetLinksStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Response.GetLinksStored: Boolean;
 begin
   Result := Assigned(FLinks);
 end;
 
-{ TOpenAPIDefinition.TResponse.THeaders }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Response.THeaders }
 
-destructor TOpenAPIDefinition.TResponse.THeaders.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Response.THeaders.Destroy;
 begin
-  FHeaderOrReference.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TResponse.THeaders.GetHeaderOrReference: TDynamicProperty<TOpenAPIDefinition.THeaderOrReference>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Response.THeaders.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference>;
 begin
-  if not Assigned(FHeaderOrReference) then
-    FHeaderOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.THeaderOrReference>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference>.Create;
 
-  Result := FHeaderOrReference;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TResponse.THeaders.GetHeaderOrReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Response.THeaders.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FHeaderOrReference);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TResponse.TLinks }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Response.TLinks }
 
-destructor TOpenAPIDefinition.TResponse.TLinks.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Response.TLinks.Destroy;
 begin
-  FLinkOrReference.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TResponse.TLinks.GetLinkOrReference: TDynamicProperty<TOpenAPIDefinition.TLinkOrReference>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Response.TLinks.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.LinkOrReference>;
 begin
-  if not Assigned(FLinkOrReference) then
-    FLinkOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TLinkOrReference>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.LinkOrReference>.Create;
 
-  Result := FLinkOrReference;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TResponse.TLinks.GetLinkOrReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Response.TLinks.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FLinkOrReference);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TResponseOrReference }
+{ TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference }
 
-destructor TOpenAPIDefinition.TResponseOrReference.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference.Destroy;
 begin
   FReference.Free;
 
@@ -3030,57 +3075,57 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.TResponseOrReference.GetReference: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TReference;
+function TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference.GetReference: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TReference.Create;
+    FReference := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Reference.Create;
 
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.TResponseOrReference.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.TResponseOrReference.GetResponse: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TResponse;
+function TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference.GetResponse: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Response;
 begin
   if not Assigned(FResponse) then
-    FResponse := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TResponse.Create;
+    FResponse := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Response.Create;
 
   Result := FResponse;
 end;
 
-function TOpenAPIDefinition.TResponseOrReference.GetResponseStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.ResponseOrReference.GetResponseStored: Boolean;
 begin
   Result := Assigned(FResponse);
 end;
 
-{ TOpenAPIDefinition.TCallbacks }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Callbacks }
 
-destructor TOpenAPIDefinition.TCallbacks.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Callbacks.Destroy;
 begin
-  FPathItem.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TCallbacks.GetPathItem: TDynamicProperty<TOpenAPIDefinition.TPathItem>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Callbacks.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.PathItem>;
 begin
-  if not Assigned(FPathItem) then
-    FPathItem := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TPathItem>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.PathItem>.Create;
 
-  Result := FPathItem;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TCallbacks.GetPathItemStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Callbacks.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FPathItem);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TCallbacksOrReference }
+{ TOpenAPIDefinition.TOpenAPIDefinition.CallbacksOrReference }
 
-destructor TOpenAPIDefinition.TCallbacksOrReference.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.CallbacksOrReference.Destroy;
 begin
   FReference.Free;
 
@@ -3089,58 +3134,57 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.TCallbacksOrReference.GetReference: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TReference;
+function TOpenAPIDefinition.TOpenAPIDefinition.CallbacksOrReference.GetReference: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TReference.Create;
+    FReference := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Reference.Create;
 
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.TCallbacksOrReference.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.CallbacksOrReference.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.TCallbacksOrReference.GetCallbacks: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TCallbacks;
+function TOpenAPIDefinition.TOpenAPIDefinition.CallbacksOrReference.GetCallbacks: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Callbacks;
 begin
   if not Assigned(FCallbacks) then
-    FCallbacks := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TCallbacks.Create;
+    FCallbacks := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Callbacks.Create;
 
   Result := FCallbacks;
 end;
 
-function TOpenAPIDefinition.TCallbacksOrReference.GetCallbacksStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.CallbacksOrReference.GetCallbacksStored: Boolean;
 begin
   Result := Assigned(FCallbacks);
 end;
 
-{ TOpenAPIDefinition.TExample }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Example }
 
-function TOpenAPIDefinition.TExample.GetSummaryStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Example.GetSummaryStored: Boolean;
 begin
   Result := not FSummary.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TExample.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Example.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-procedure TOpenAPIDefinition.TExample.SetValue(const Value: any);
+function TOpenAPIDefinition.TOpenAPIDefinition.Example.GetValueStored: Boolean;
 begin
-  FValue := Value;
-  FValueIsStored := True;
+  Result := False;
 end;
 
-function TOpenAPIDefinition.TExample.GetExternalValueStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Example.GetExternalValueStored: Boolean;
 begin
   Result := not FExternalValue.IsEmpty;
 end;
 
-{ TOpenAPIDefinition.TExampleOrReference }
+{ TOpenAPIDefinition.TOpenAPIDefinition.ExampleOrReference }
 
-destructor TOpenAPIDefinition.TExampleOrReference.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.ExampleOrReference.Destroy;
 begin
   FReference.Free;
 
@@ -3149,35 +3193,35 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.TExampleOrReference.GetReference: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TReference;
+function TOpenAPIDefinition.TOpenAPIDefinition.ExampleOrReference.GetReference: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TReference.Create;
+    FReference := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Reference.Create;
 
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.TExampleOrReference.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.ExampleOrReference.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.TExampleOrReference.GetExample: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TExample;
+function TOpenAPIDefinition.TOpenAPIDefinition.ExampleOrReference.GetExample: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Example;
 begin
   if not Assigned(FExample) then
-    FExample := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TExample.Create;
+    FExample := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Example.Create;
 
   Result := FExample;
 end;
 
-function TOpenAPIDefinition.TExampleOrReference.GetExampleStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.ExampleOrReference.GetExampleStored: Boolean;
 begin
   Result := Assigned(FExample);
 end;
 
-{ TOpenAPIDefinition.TLink }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Link }
 
-destructor TOpenAPIDefinition.TLink.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Link.Destroy;
 begin
   FParameters.Free;
 
@@ -3186,56 +3230,55 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.TLink.GetOperationRefStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Link.GetOperationRefStored: Boolean;
 begin
   Result := not FOperationRef.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TLink.GetOperationIdStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Link.GetOperationIdStored: Boolean;
 begin
   Result := not FOperationId.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TLink.GetParameters: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TMapOfStrings;
+function TOpenAPIDefinition.TOpenAPIDefinition.Link.GetParameters: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings;
 begin
   if not Assigned(FParameters) then
-    FParameters := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TMapOfStrings.Create;
+    FParameters := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings.Create;
 
   Result := FParameters;
 end;
 
-function TOpenAPIDefinition.TLink.GetParametersStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Link.GetParametersStored: Boolean;
 begin
   Result := Assigned(FParameters);
 end;
 
-procedure TOpenAPIDefinition.TLink.SetRequestBody(const Value: any);
+function TOpenAPIDefinition.TOpenAPIDefinition.Link.GetRequestBodyStored: Boolean;
 begin
-  FRequestBody := Value;
-  FRequestBodyIsStored := True;
+  Result := False;
 end;
 
-function TOpenAPIDefinition.TLink.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Link.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TLink.GetServer: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TServer;
+function TOpenAPIDefinition.TOpenAPIDefinition.Link.GetServer: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Server;
 begin
   if not Assigned(FServer) then
-    FServer := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TServer.Create;
+    FServer := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Server.Create;
 
   Result := FServer;
 end;
 
-function TOpenAPIDefinition.TLink.GetServerStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Link.GetServerStored: Boolean;
 begin
   Result := Assigned(FServer);
 end;
 
-{ TOpenAPIDefinition.TLinkOrReference }
+{ TOpenAPIDefinition.TOpenAPIDefinition.LinkOrReference }
 
-destructor TOpenAPIDefinition.TLinkOrReference.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.LinkOrReference.Destroy;
 begin
   FReference.Free;
 
@@ -3244,35 +3287,35 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.TLinkOrReference.GetReference: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TReference;
+function TOpenAPIDefinition.TOpenAPIDefinition.LinkOrReference.GetReference: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TReference.Create;
+    FReference := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Reference.Create;
 
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.TLinkOrReference.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.LinkOrReference.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.TLinkOrReference.GetLink: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TLink;
+function TOpenAPIDefinition.TOpenAPIDefinition.LinkOrReference.GetLink: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Link;
 begin
   if not Assigned(FLink) then
-    FLink := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TLink.Create;
+    FLink := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Link.Create;
 
   Result := FLink;
 end;
 
-function TOpenAPIDefinition.TLinkOrReference.GetLinkStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.LinkOrReference.GetLinkStored: Boolean;
 begin
   Result := Assigned(FLink);
 end;
 
-{ TOpenAPIDefinition.THeader }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Header }
 
-destructor TOpenAPIDefinition.THeader.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Header.Destroy;
 begin
   FSchema.Free;
 
@@ -3281,24 +3324,22 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.THeader.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Header.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-procedure TOpenAPIDefinition.THeader.SetRequired(const Value: System.Boolean);
+function TOpenAPIDefinition.TOpenAPIDefinition.Header.GetRequiredStored: Boolean;
 begin
-  FRequired := Value;
-  FRequiredIsStored := True;
+  Result := False;
 end;
 
-procedure TOpenAPIDefinition.THeader.SetDeprecated(const Value: System.Boolean);
+function TOpenAPIDefinition.TOpenAPIDefinition.Header.GetDeprecatedStored: Boolean;
 begin
-  FDeprecated := Value;
-  FDeprecatedIsStored := True;
+  Result := False;
 end;
 
-function TOpenAPIDefinition.THeader.GetSchema: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition;
+function TOpenAPIDefinition.TOpenAPIDefinition.Header.GetSchema: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.Create;
@@ -3306,27 +3347,27 @@ begin
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.THeader.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Header.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.THeader.GetContent: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TContent;
+function TOpenAPIDefinition.TOpenAPIDefinition.Header.GetContent: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Content;
 begin
   if not Assigned(FContent) then
-    FContent := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TContent.Create;
+    FContent := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Content.Create;
 
   Result := FContent;
 end;
 
-function TOpenAPIDefinition.THeader.GetContentStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Header.GetContentStored: Boolean;
 begin
   Result := Assigned(FContent);
 end;
 
-{ TOpenAPIDefinition.THeaderOrReference }
+{ TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference }
 
-destructor TOpenAPIDefinition.THeaderOrReference.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference.Destroy;
 begin
   FReference.Free;
 
@@ -3335,107 +3376,106 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.THeaderOrReference.GetReference: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TReference;
+function TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference.GetReference: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TReference.Create;
+    FReference := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Reference.Create;
 
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.THeaderOrReference.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.THeaderOrReference.GetHeader: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.THeader;
+function TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference.GetHeader: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Header;
 begin
   if not Assigned(FHeader) then
-    FHeader := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.THeader.Create;
+    FHeader := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Header.Create;
 
   Result := FHeader;
 end;
 
-function TOpenAPIDefinition.THeaderOrReference.GetHeaderStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.HeaderOrReference.GetHeaderStored: Boolean;
 begin
   Result := Assigned(FHeader);
 end;
 
-{ TOpenAPIDefinition.TTag }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Tag }
 
-destructor TOpenAPIDefinition.TTag.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Tag.Destroy;
 begin
   FExternalDocs.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TTag.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Tag.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TTag.GetExternalDocs: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TExternalDocumentation;
+function TOpenAPIDefinition.TOpenAPIDefinition.Tag.GetExternalDocs: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation;
 begin
   if not Assigned(FExternalDocs) then
-    FExternalDocs := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TExternalDocumentation.Create;
+    FExternalDocs := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ExternalDocumentation.Create;
 
   Result := FExternalDocs;
 end;
 
-function TOpenAPIDefinition.TTag.GetExternalDocsStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Tag.GetExternalDocsStored: Boolean;
 begin
   Result := Assigned(FExternalDocs);
 end;
 
-{ TOpenAPIDefinition.TReference }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Reference }
 
-function TOpenAPIDefinition.TReference.GetRefStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Reference.GetRefStored: Boolean;
 begin
   Result := not FRef.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TReference.GetSummaryStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Reference.GetSummaryStored: Boolean;
 begin
   Result := not FSummary.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TReference.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Reference.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-{ TOpenAPIDefinition.TSchema }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Schema }
 
-destructor TOpenAPIDefinition.TSchema.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Schema.Destroy;
 begin
   FObject.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TSchema.GetObject: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSchema.TObject;
+function TOpenAPIDefinition.TOpenAPIDefinition.Schema.GetObject: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Schema.&Object;
 begin
   if not Assigned(FObject) then
-    FObject := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSchema.TObject.Create;
+    FObject := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Schema.&Object.Create;
 
   Result := FObject;
 end;
 
-function TOpenAPIDefinition.TSchema.GetObjectStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Schema.GetObjectStored: Boolean;
 begin
   Result := Assigned(FObject);
 end;
 
-procedure TOpenAPIDefinition.TSchema.SetBoolean(const Value: System.Boolean);
+function TOpenAPIDefinition.TOpenAPIDefinition.Schema.GetBooleanStored: Boolean;
 begin
-  FBoolean := Value;
-  FBooleanIsStored := True;
+  Result := False;
 end;
 
-{ TOpenAPIDefinition.TSecurityScheme }
+{ TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme }
 
-destructor TOpenAPIDefinition.TSecurityScheme.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.Destroy;
 begin
   FSpecificationExtensions.Free;
 
@@ -3452,116 +3492,116 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.TSecurityScheme.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TSecurityScheme.GetSpecificationExtensions: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSpecificationExtensions;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.GetSpecificationExtensions: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SpecificationExtensions;
 begin
   if not Assigned(FSpecificationExtensions) then
-    FSpecificationExtensions := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSpecificationExtensions.Create;
+    FSpecificationExtensions := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SpecificationExtensions.Create;
 
   Result := FSpecificationExtensions;
 end;
 
-function TOpenAPIDefinition.TSecurityScheme.GetSpecificationExtensionsStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.GetSpecificationExtensionsStored: Boolean;
 begin
   Result := Assigned(FSpecificationExtensions);
 end;
 
-function TOpenAPIDefinition.TSecurityScheme.GetTypeApikey: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecurityScheme.TTypeApikey;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.GetTypeApikey: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeApikey;
 begin
   if not Assigned(FTypeApikey) then
-    FTypeApikey := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecurityScheme.TTypeApikey.Create;
+    FTypeApikey := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeApikey.Create;
 
   Result := FTypeApikey;
 end;
 
-function TOpenAPIDefinition.TSecurityScheme.GetTypeApikeyStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.GetTypeApikeyStored: Boolean;
 begin
   Result := Assigned(FTypeApikey);
 end;
 
-function TOpenAPIDefinition.TSecurityScheme.GetTypeHttp: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecurityScheme.TTypeHttp;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.GetTypeHttp: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeHttp;
 begin
   if not Assigned(FTypeHttp) then
-    FTypeHttp := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecurityScheme.TTypeHttp.Create;
+    FTypeHttp := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeHttp.Create;
 
   Result := FTypeHttp;
 end;
 
-function TOpenAPIDefinition.TSecurityScheme.GetTypeHttpStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.GetTypeHttpStored: Boolean;
 begin
   Result := Assigned(FTypeHttp);
 end;
 
-function TOpenAPIDefinition.TSecurityScheme.GetTypeHttpBearer: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecurityScheme.TTypeHttpBearer;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.GetTypeHttpBearer: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeHttpBearer;
 begin
   if not Assigned(FTypeHttpBearer) then
-    FTypeHttpBearer := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecurityScheme.TTypeHttpBearer.Create;
+    FTypeHttpBearer := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeHttpBearer.Create;
 
   Result := FTypeHttpBearer;
 end;
 
-function TOpenAPIDefinition.TSecurityScheme.GetTypeHttpBearerStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.GetTypeHttpBearerStored: Boolean;
 begin
   Result := Assigned(FTypeHttpBearer);
 end;
 
-function TOpenAPIDefinition.TSecurityScheme.GetTypeOauth2: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecurityScheme.TTypeOauth2;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.GetTypeOauth2: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeOauth2;
 begin
   if not Assigned(FTypeOauth2) then
-    FTypeOauth2 := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecurityScheme.TTypeOauth2.Create;
+    FTypeOauth2 := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeOauth2.Create;
 
   Result := FTypeOauth2;
 end;
 
-function TOpenAPIDefinition.TSecurityScheme.GetTypeOauth2Stored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.GetTypeOauth2Stored: Boolean;
 begin
   Result := Assigned(FTypeOauth2);
 end;
 
-function TOpenAPIDefinition.TSecurityScheme.GetTypeOidc: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecurityScheme.TTypeOidc;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.GetTypeOidc: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeOidc;
 begin
   if not Assigned(FTypeOidc) then
-    FTypeOidc := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecurityScheme.TTypeOidc.Create;
+    FTypeOidc := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeOidc.Create;
 
   Result := FTypeOidc;
 end;
 
-function TOpenAPIDefinition.TSecurityScheme.GetTypeOidcStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.GetTypeOidcStored: Boolean;
 begin
   Result := Assigned(FTypeOidc);
 end;
 
-{ TOpenAPIDefinition.TSecurityScheme.TTypeHttpBearer }
+{ TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeHttpBearer }
 
-function TOpenAPIDefinition.TSecurityScheme.TTypeHttpBearer.GetBearerFormatStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeHttpBearer.GetBearerFormatStored: Boolean;
 begin
   Result := not FBearerFormat.IsEmpty;
 end;
 
-{ TOpenAPIDefinition.TSecurityScheme.TTypeOauth2 }
+{ TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeOauth2 }
 
-destructor TOpenAPIDefinition.TSecurityScheme.TTypeOauth2.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeOauth2.Destroy;
 begin
   FFlows.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TSecurityScheme.TTypeOauth2.GetFlows: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOauthFlows;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.TypeOauth2.GetFlows: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows;
 begin
   if not Assigned(FFlows) then
-    FFlows := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOauthFlows.Create;
+    FFlows := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Create;
 
   Result := FFlows;
 end;
 
-{ TOpenAPIDefinition.TSecuritySchemeOrReference }
+{ TOpenAPIDefinition.TOpenAPIDefinition.SecuritySchemeOrReference }
 
-destructor TOpenAPIDefinition.TSecuritySchemeOrReference.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.SecuritySchemeOrReference.Destroy;
 begin
   FReference.Free;
 
@@ -3570,35 +3610,35 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.TSecuritySchemeOrReference.GetReference: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TReference;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecuritySchemeOrReference.GetReference: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TReference.Create;
+    FReference := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Reference.Create;
 
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.TSecuritySchemeOrReference.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecuritySchemeOrReference.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.TSecuritySchemeOrReference.GetSecurityScheme: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecurityScheme;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecuritySchemeOrReference.GetSecurityScheme: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme;
 begin
   if not Assigned(FSecurityScheme) then
-    FSecurityScheme := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TSecurityScheme.Create;
+    FSecurityScheme := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.SecurityScheme.Create;
 
   Result := FSecurityScheme;
 end;
 
-function TOpenAPIDefinition.TSecuritySchemeOrReference.GetSecuritySchemeStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecuritySchemeOrReference.GetSecuritySchemeStored: Boolean;
 begin
   Result := Assigned(FSecurityScheme);
 end;
 
-{ TOpenAPIDefinition.TOauthFlows }
+{ TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows }
 
-destructor TOpenAPIDefinition.TOauthFlows.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Destroy;
 begin
   FImplicit.Free;
 
@@ -3611,178 +3651,178 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.TOauthFlows.GetImplicit: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOauthFlows.TImplicit;
+function TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.GetImplicit: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Implicit;
 begin
   if not Assigned(FImplicit) then
-    FImplicit := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOauthFlows.TImplicit.Create;
+    FImplicit := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Implicit.Create;
 
   Result := FImplicit;
 end;
 
-function TOpenAPIDefinition.TOauthFlows.GetImplicitStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.GetImplicitStored: Boolean;
 begin
   Result := Assigned(FImplicit);
 end;
 
-function TOpenAPIDefinition.TOauthFlows.GetPassword: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOauthFlows.TPassword;
+function TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.GetPassword: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Password;
 begin
   if not Assigned(FPassword) then
-    FPassword := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOauthFlows.TPassword.Create;
+    FPassword := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Password.Create;
 
   Result := FPassword;
 end;
 
-function TOpenAPIDefinition.TOauthFlows.GetPasswordStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.GetPasswordStored: Boolean;
 begin
   Result := Assigned(FPassword);
 end;
 
-function TOpenAPIDefinition.TOauthFlows.GetClientCredentials: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOauthFlows.TClientCredentials;
+function TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.GetClientCredentials: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.ClientCredentials;
 begin
   if not Assigned(FClientCredentials) then
-    FClientCredentials := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOauthFlows.TClientCredentials.Create;
+    FClientCredentials := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.ClientCredentials.Create;
 
   Result := FClientCredentials;
 end;
 
-function TOpenAPIDefinition.TOauthFlows.GetClientCredentialsStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.GetClientCredentialsStored: Boolean;
 begin
   Result := Assigned(FClientCredentials);
 end;
 
-function TOpenAPIDefinition.TOauthFlows.GetAuthorizationCode: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOauthFlows.TAuthorizationCode;
+function TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.GetAuthorizationCode: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.AuthorizationCode;
 begin
   if not Assigned(FAuthorizationCode) then
-    FAuthorizationCode := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOauthFlows.TAuthorizationCode.Create;
+    FAuthorizationCode := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.AuthorizationCode.Create;
 
   Result := FAuthorizationCode;
 end;
 
-function TOpenAPIDefinition.TOauthFlows.GetAuthorizationCodeStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.GetAuthorizationCodeStored: Boolean;
 begin
   Result := Assigned(FAuthorizationCode);
 end;
 
-{ TOpenAPIDefinition.TOauthFlows.TImplicit }
+{ TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Implicit }
 
-destructor TOpenAPIDefinition.TOauthFlows.TImplicit.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Implicit.Destroy;
 begin
   FScopes.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TOauthFlows.TImplicit.GetRefreshUrlStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Implicit.GetRefreshUrlStored: Boolean;
 begin
   Result := not FRefreshUrl.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TOauthFlows.TImplicit.GetScopes: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TMapOfStrings;
+function TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Implicit.GetScopes: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings;
 begin
   if not Assigned(FScopes) then
-    FScopes := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TMapOfStrings.Create;
+    FScopes := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings.Create;
 
   Result := FScopes;
 end;
 
-{ TOpenAPIDefinition.TOauthFlows.TPassword }
+{ TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Password }
 
-destructor TOpenAPIDefinition.TOauthFlows.TPassword.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Password.Destroy;
 begin
   FScopes.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TOauthFlows.TPassword.GetRefreshUrlStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Password.GetRefreshUrlStored: Boolean;
 begin
   Result := not FRefreshUrl.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TOauthFlows.TPassword.GetScopes: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TMapOfStrings;
+function TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.Password.GetScopes: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings;
 begin
   if not Assigned(FScopes) then
-    FScopes := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TMapOfStrings.Create;
+    FScopes := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings.Create;
 
   Result := FScopes;
 end;
 
-{ TOpenAPIDefinition.TOauthFlows.TClientCredentials }
+{ TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.ClientCredentials }
 
-destructor TOpenAPIDefinition.TOauthFlows.TClientCredentials.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.ClientCredentials.Destroy;
 begin
   FScopes.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TOauthFlows.TClientCredentials.GetRefreshUrlStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.ClientCredentials.GetRefreshUrlStored: Boolean;
 begin
   Result := not FRefreshUrl.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TOauthFlows.TClientCredentials.GetScopes: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TMapOfStrings;
+function TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.ClientCredentials.GetScopes: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings;
 begin
   if not Assigned(FScopes) then
-    FScopes := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TMapOfStrings.Create;
+    FScopes := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings.Create;
 
   Result := FScopes;
 end;
 
-{ TOpenAPIDefinition.TOauthFlows.TAuthorizationCode }
+{ TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.AuthorizationCode }
 
-destructor TOpenAPIDefinition.TOauthFlows.TAuthorizationCode.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.AuthorizationCode.Destroy;
 begin
   FScopes.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TOauthFlows.TAuthorizationCode.GetRefreshUrlStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.AuthorizationCode.GetRefreshUrlStored: Boolean;
 begin
   Result := not FRefreshUrl.IsEmpty;
 end;
 
-function TOpenAPIDefinition.TOauthFlows.TAuthorizationCode.GetScopes: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TMapOfStrings;
+function TOpenAPIDefinition.TOpenAPIDefinition.OauthFlows.AuthorizationCode.GetScopes: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings;
 begin
   if not Assigned(FScopes) then
-    FScopes := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TMapOfStrings.Create;
+    FScopes := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings.Create;
 
   Result := FScopes;
 end;
 
-{ TOpenAPIDefinition.TSecurityRequirement }
+{ TOpenAPIDefinition.TOpenAPIDefinition.SecurityRequirement }
 
-destructor TOpenAPIDefinition.TSecurityRequirement.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.SecurityRequirement.Destroy;
 begin
-  FArray.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TSecurityRequirement.GetArray: TDynamicProperty<TArray<System.String>>;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityRequirement.GetAdditionalProperties: TDynamicProperty<TArray<System.String>>;
 begin
-  if not Assigned(FArray) then
-    FArray := TDynamicProperty<TArray<System.String>>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<TArray<System.String>>.Create;
 
-  Result := FArray;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TSecurityRequirement.GetArrayStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.SecurityRequirement.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FArray);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TSpecificationExtensions }
+{ TOpenAPIDefinition.TOpenAPIDefinition.SpecificationExtensions }
 
-destructor TOpenAPIDefinition.TSpecificationExtensions.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.SpecificationExtensions.Destroy;
 begin
   FPatternProperty.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TSpecificationExtensions.GetPatternProperty: TDynamicProperty<any>;
+function TOpenAPIDefinition.TOpenAPIDefinition.SpecificationExtensions.GetPatternProperty: TDynamicProperty<any>;
 begin
   if not Assigned(FPatternProperty) then
     FPatternProperty := TDynamicProperty<System.Rtti.TValue>.Create;
@@ -3790,89 +3830,87 @@ begin
   Result := FPatternProperty;
 end;
 
-function TOpenAPIDefinition.TSpecificationExtensions.GetPatternPropertyStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.SpecificationExtensions.GetPatternPropertyStored: Boolean;
 begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.TExamples }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Examples }
 
-destructor TOpenAPIDefinition.TExamples.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Examples.Destroy;
 begin
   FExamples.Free;
 
   inherited;
 end;
 
-procedure TOpenAPIDefinition.TExamples.SetExample(const Value: any);
+function TOpenAPIDefinition.TOpenAPIDefinition.Examples.GetExampleStored: Boolean;
 begin
-  FExample := Value;
-  FExampleIsStored := True;
+  Result := False;
 end;
 
-function TOpenAPIDefinition.TExamples.GetExamples: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TExamples.TExamples;
+function TOpenAPIDefinition.TOpenAPIDefinition.Examples.GetExamples: Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Examples.TExamples;
 begin
   if not Assigned(FExamples) then
-    FExamples := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TExamples.TExamples.Create;
+    FExamples := Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.Examples.TExamples.Create;
 
   Result := FExamples;
 end;
 
-function TOpenAPIDefinition.TExamples.GetExamplesStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Examples.GetExamplesStored: Boolean;
 begin
   Result := Assigned(FExamples);
 end;
 
-{ TOpenAPIDefinition.TExamples.TExamples }
+{ TOpenAPIDefinition.TOpenAPIDefinition.Examples.TExamples }
 
-destructor TOpenAPIDefinition.TExamples.TExamples.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.Examples.TExamples.Destroy;
 begin
-  FExampleOrReference.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TExamples.TExamples.GetExampleOrReference: TDynamicProperty<TOpenAPIDefinition.TExampleOrReference>;
+function TOpenAPIDefinition.TOpenAPIDefinition.Examples.TExamples.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.TOpenAPIDefinition.ExampleOrReference>;
 begin
-  if not Assigned(FExampleOrReference) then
-    FExampleOrReference := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TExampleOrReference>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v31.TOpenAPIDefinition.TOpenAPIDefinition.ExampleOrReference>.Create;
 
-  Result := FExampleOrReference;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TExamples.TExamples.GetExampleOrReferenceStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.Examples.TExamples.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FExampleOrReference);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TMapOfStrings }
+{ TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings }
 
-destructor TOpenAPIDefinition.TMapOfStrings.Destroy;
+destructor TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings.Destroy;
 begin
-  FString.Free;
+  FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.TMapOfStrings.GetString: TDynamicProperty<System.String>;
+function TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings.GetAdditionalProperties: TDynamicProperty<System.String>;
 begin
-  if not Assigned(FString) then
-    FString := TDynamicProperty<System.String>.Create;
+  if not Assigned(FAdditionalProperties) then
+    FAdditionalProperties := TDynamicProperty<System.String>.Create;
 
-  Result := FString;
+  Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.TMapOfStrings.GetStringStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.MapOfStrings.GetAdditionalPropertiesStored: Boolean;
 begin
-  Result := Assigned(FString);
+  Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.TExplodeForForm }
+{ TOpenAPIDefinition.TOpenAPIDefinition.ExplodeForForm }
 
-procedure TOpenAPIDefinition.TExplodeForForm.SetExplode(const Value: System.Boolean);
+function TOpenAPIDefinition.TOpenAPIDefinition.ExplodeForForm.GetExplodeStored: Boolean;
 begin
-  FExplode := Value;
-  FExplodeIsStored := True;
+  Result := False;
 end;
 
 end.

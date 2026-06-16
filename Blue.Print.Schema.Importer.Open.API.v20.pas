@@ -8,54 +8,54 @@ type
   TOpenAPI20SchemaLoader = class(TSchemaLoader, ISchemaLoader)
   private
     FImporter: TSchemaImporter;
-    FOpenAPIDefinition: TOpenAPIDefinition;
-    FOpenAPIDefinitions: TDictionary<String, TOpenAPIDefinition>;
+    FOpenAPIDefinition: TOpenAPIDefinition.TOpenAPIDefinition;
+    FOpenAPIDefinitions: TDictionary<String, TOpenAPIDefinition.TOpenAPIDefinition>;
     FUnitFileConfiguration: TUnitFileConfiguration;
 
-    function CheckClassDefinition(const Module: TTypeModuleDefinition; const ClassSchema: Schema; const ClassName: String): TTypeDefinition;
+    function CheckClassDefinition(const Module: TTypeModuleDefinition; const ClassSchema: TOpenAPIDefinition.Schema; const ClassName: String): TTypeDefinition;
     function CreateArrayDefinition(const Module: TTypeModuleDefinition; const TypeName: String; const ArrayItemType: TTypeDefinition): TTypeDefinition;
-    function FindSchemaReference(const Reference: String): Schema;
-    function GenerateSimpleType(const Module: TTypeModuleDefinition; const TypeName: String; const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems; const Enumeration: TArray<TValue>): TTypeDefinition;
-    function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const TypeName: String): TTypeDefinition;
-    function GetSchemaReferenceName(const OpenAPISchema: Schema): String;
-    function LoadOpenAPIDefinition(const Reference: String): TOpenAPIDefinition;
-    function LoadOpenAPIDefinitionFromConfiguration(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;
-    function LoadSchemaReference(const Reference: String; out ReferenceName: String): TOpenAPIDefinition;
+    function FindSchemaReference(const Reference: String): TOpenAPIDefinition.Schema;
+    function GenerateSimpleType(const Module: TTypeModuleDefinition; const TypeName: String; const SimpleType: Schema.simpleTypes; const ArrayItems: TOpenAPIDefinition.PrimitivesItems; const Enumeration: TArray<TValue>): TTypeDefinition;
+    function GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: TOpenAPIDefinition.Schema; const TypeName: String): TTypeDefinition;
+    function GetSchemaReferenceName(const OpenAPISchema: TOpenAPIDefinition.Schema): String;
+    function LoadOpenAPIDefinition(const Reference: String): TOpenAPIDefinition.TOpenAPIDefinition;
+    function LoadOpenAPIDefinitionFromConfiguration(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition.TOpenAPIDefinition;
+    function LoadSchemaReference(const Reference: String; out ReferenceName: String): TOpenAPIDefinition.TOpenAPIDefinition;
 
-    procedure GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
-    procedure LoadClassDefinition(const ClassDefinition: TTypeClassDefinition; const ClassSchema: Schema);
+    procedure GenerateUnitFileDefinition(const MainModule: TTypeModuleDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+    procedure LoadClassDefinition(const ClassDefinition: TTypeClassDefinition; const ClassSchema: TOpenAPIDefinition.Schema);
   public
     constructor Create(const Importer: TSchemaImporter); override;
 
     destructor Destroy; override;
   end;
 
-  THeaderParameterSubSchemaHelper = class helper for HeaderParameterSubSchema
+  THeaderParameterSubSchemaHelper = class helper for TOpenAPIDefinition.HeaderParameterSubSchema
   private
-    function GetSimpleType: simpleTypes;
+    function GetSimpleType: Schema.simpleTypes;
   public
-    property SimpleType: simpleTypes read GetSimpleType;
+    property SimpleType: Schema.simpleTypes read GetSimpleType;
   end;
 
-  TQueryParameterSubSchemaHelper = class helper for QueryParameterSubSchema
+  TQueryParameterSubSchemaHelper = class helper for TOpenAPIDefinition.QueryParameterSubSchema
   private
-    function GetSimpleType: simpleTypes;
+    function GetSimpleType: Schema.simpleTypes;
   public
-    property SimpleType: simpleTypes read GetSimpleType;
+    property SimpleType: Schema.simpleTypes read GetSimpleType;
   end;
 
-  TPathParameterSubSchema = class helper for PathParameterSubSchema
+  TPathParameterSubSchema = class helper for TOpenAPIDefinition.PathParameterSubSchema
   private
-    function GetSimpleType: simpleTypes;
+    function GetSimpleType: Schema.simpleTypes;
   public
-    property SimpleType: simpleTypes read GetSimpleType;
+    property SimpleType: Schema.simpleTypes read GetSimpleType;
   end;
 
-  TFormDataParameterSubSchema = class helper for FormDataParameterSubSchema
+  TFormDataParameterSubSchema = class helper for TOpenAPIDefinition.FormDataParameterSubSchema
   private
-    function GetSimpleType: simpleTypes;
+    function GetSimpleType: Schema.simpleTypes;
   public
-    property SimpleType: simpleTypes read GetSimpleType;
+    property SimpleType: Schema.simpleTypes read GetSimpleType;
   end;
 
 implementation
@@ -67,7 +67,7 @@ const
 
 { TOpenAPI20SchemaLoader }
 
-function TOpenAPI20SchemaLoader.CheckClassDefinition(const Module: TTypeModuleDefinition; const ClassSchema: Schema; const ClassName: String): TTypeDefinition;
+function TOpenAPI20SchemaLoader.CheckClassDefinition(const Module: TTypeModuleDefinition; const ClassSchema: TOpenAPIDefinition.Schema; const ClassName: String): TTypeDefinition;
 begin
   Result := FImporter.FindType(ClassName, Module);
 
@@ -84,7 +84,7 @@ begin
   inherited;
 
   FImporter := Importer;
-  FOpenAPIDefinitions := TDictionary<String, TOpenAPIDefinition>.Create(TIStringComparer.Ordinal);
+  FOpenAPIDefinitions := TDictionary<String, TOpenAPIDefinition.TOpenAPIDefinition>.Create(TIStringComparer.Ordinal);
 end;
 
 function TOpenAPI20SchemaLoader.CreateArrayDefinition(const Module: TTypeModuleDefinition; const TypeName: String; const ArrayItemType: TTypeDefinition): TTypeDefinition;
@@ -99,19 +99,19 @@ begin
   inherited;
 end;
 
-function TOpenAPI20SchemaLoader.FindSchemaReference(const Reference: String): Schema;
+function TOpenAPI20SchemaLoader.FindSchemaReference(const Reference: String): TOpenAPIDefinition.Schema;
 begin
   Result := nil;
   var SchemaName := EmptyStr;
 
   var Schema := LoadSchemaReference(Reference, SchemaName);
 
-  for var Definition in Schema.definitions.schema do
+  for var Definition in Schema.definitions.additionalProperties do
     if Definition.Key = SchemaName then
       Exit(Definition.Value);
 end;
 
-function TOpenAPI20SchemaLoader.GenerateSimpleType(const Module: TTypeModuleDefinition; const TypeName: String; const SimpleType: simpleTypes; const ArrayItems: PrimitivesItems; const Enumeration: TArray<TValue>): TTypeDefinition;
+function TOpenAPI20SchemaLoader.GenerateSimpleType(const Module: TTypeModuleDefinition; const TypeName: String; const SimpleType: Schema.simpleTypes; const ArrayItems: TOpenAPIDefinition.PrimitivesItems; const Enumeration: TArray<TValue>): TTypeDefinition;
 
   function CreateEnumerator: TTypeEnumeration;
   begin
@@ -124,58 +124,48 @@ function TOpenAPI20SchemaLoader.GenerateSimpleType(const Module: TTypeModuleDefi
     Module.Enumerations.Add(Result);
   end;
 
-  function GetArrayType(const ArrayType: PrimitivesItems): TTypeDefinition;
+  function GetArrayType(const ArrayType: TOpenAPIDefinition.PrimitivesItems): TTypeDefinition;
   begin
     case ArrayItems.&type of
-      PrimitivesItems.TType.array: Result := CreateArrayDefinition(Module, TypeName, GetArrayType(ArrayItems.items));
-      PrimitivesItems.TType.boolean: Result := FImporter.BooleanType;
-      PrimitivesItems.TType.integer: Result := FImporter.IntegerType;
-      PrimitivesItems.TType.number: Result := FImporter.DoubleType;
-      PrimitivesItems.TType.string: Result := FImporter.StringType;
+      TOpenAPIDefinition.PrimitivesItems.TType.array: Result := CreateArrayDefinition(Module, TypeName, GetArrayType(ArrayItems.items));
+      TOpenAPIDefinition.PrimitivesItems.TType.boolean: Result := FImporter.BooleanType;
+      TOpenAPIDefinition.PrimitivesItems.TType.integer: Result := FImporter.IntegerType;
+      TOpenAPIDefinition.PrimitivesItems.TType.number: Result := FImporter.DoubleType;
+      TOpenAPIDefinition.PrimitivesItems.TType.string: Result := FImporter.StringType;
       else Result := nil;
     end;
   end;
 
 begin
-  Result := FImporter.FindType(TypeName, Module);
-
-  if not Assigned(Result) then
-    if Assigned(Enumeration) then
-      Result := CreateEnumerator
-    else
-      case SimpleType of
-        simpleTypes.array: Result := CreateArrayDefinition(Module, TypeName, GetArrayType(ArrayItems));
-        simpleTypes.boolean: Result := FImporter.BooleanType;
-        simpleTypes.integer: Result := FImporter.IntegerType;
-        simpleTypes.null: Result := nil;
-        simpleTypes.number: Result := FImporter.DoubleType;
-        simpleTypes.string: Result := FImporter.StringType;
-        else Result := nil;
-      end;
-end;
-
-function TOpenAPI20SchemaLoader.GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: Schema; const TypeName: String): TTypeDefinition;
-begin
-  if OpenAPISchema.IsTypeStored and (OpenAPISchema.&type.simpleTypes = simpleTypes.array) then
-    Result := CreateArrayDefinition(Module, TypeName, GenerateTypeDefinition(Module, OpenAPISchema.items.schema, TypeName + 'ArrayItem'))
+  if Assigned(Enumeration) then
+    Result := CreateEnumerator
   else
-  begin
-    Result := FImporter.FindType(TypeName, Module);
-
-    if not Assigned(Result) then
-      if not OpenAPISchema.ref.IsEmpty then
-        Result := Module.AddDelayedType(GetSchemaReferenceName(OpenAPISchema))
-      else if OpenAPISchema.IsTypeStored then
-        case OpenAPISchema.&type.simpleTypes of
-          simpleTypes.&object: Result := CheckClassDefinition(Module, OpenAPISchema, TypeName);
-          else Result := GenerateSimpleType(Module, TypeName, OpenAPISchema.&type.simpleTypes, nil, OpenAPISchema.enum);
-        end
-      else
-        Abort;
-  end;
+    case SimpleType of
+      Schema.simpleTypes.array: Result := CreateArrayDefinition(Module, TypeName, GetArrayType(ArrayItems));
+      Schema.simpleTypes.boolean: Result := FImporter.BooleanType;
+      Schema.simpleTypes.integer: Result := FImporter.IntegerType;
+      Schema.simpleTypes.null: Result := nil;
+      Schema.simpleTypes.number: Result := FImporter.DoubleType;
+      Schema.simpleTypes.string: Result := FImporter.StringType;
+      else Result := nil;
+    end;
 end;
 
-procedure TOpenAPI20SchemaLoader.GenerateUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+function TOpenAPI20SchemaLoader.GenerateTypeDefinition(const Module: TTypeModuleDefinition; const OpenAPISchema: TOpenAPIDefinition.Schema; const TypeName: String): TTypeDefinition;
+begin
+  if OpenAPISchema.IsTypeStored and OpenAPISchema.&type.IsSimpleTypesStored then
+    case OpenAPISchema.&type.simpleTypes of
+      Schema.simpleTypes.&object: Result := CheckClassDefinition(Module, OpenAPISchema, TypeName);
+      Schema.simpleTypes.&array: Result := CreateArrayDefinition(Module, TypeName, GenerateTypeDefinition(Module, OpenAPISchema.items.schema, TypeName + 'ArrayItem'))
+      else Result := GenerateSimpleType(Module, TypeName, OpenAPISchema.&type.simpleTypes, nil, OpenAPISchema.enum);
+    end
+  else if OpenAPISchema.IsRefStored then
+    Result := Module.AddDelayedType(GetSchemaReferenceName(OpenAPISchema))
+  else
+    Abort;
+end;
+
+procedure TOpenAPI20SchemaLoader.GenerateUnitFileDefinition(const MainModule: TTypeModuleDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
 var
   Service: TTypeInterfaceDefinition;
 
@@ -187,7 +177,7 @@ var
     TypeDefinition.AddAtribute('RemoteName(''%s'')', [RemoteName]);
   end;
 
-  function AddMethod(const Operation: Operation; const RemoteName: String): TTypeMethodDefinition;
+  function AddMethod(const Operation: TOpenAPIDefinition.Operation; const RemoteName: String): TTypeMethodDefinition;
   var
     Method: TTypeMethodDefinition absolute Result;
 
@@ -201,28 +191,28 @@ var
         Result.AddAtribute('Query(''%s'')', [Name]);
     end;
 
-    function AddParameter(const Name: String; const OpenAPISchema: Schema): TTypeParameterDefinition; overload;
+    function AddParameter(const Name: String; const OpenAPISchema: TOpenAPIDefinition.Schema): TTypeParameterDefinition; overload;
     begin
-      Result := AddParameter(Name, GenerateTypeDefinition(UnitDefinition, OpenAPISchema, Name));
+      Result := AddParameter(Name, GenerateTypeDefinition(MainModule, OpenAPISchema, Name));
     end;
 
-    function FindParameterDefinition(const JSONReference: JsonReference): Parameter;
+    function FindParameterDefinition(const JSONReference: TOpenAPIDefinition.JsonReference): TOpenAPIDefinition.Parameter;
     begin
       var ReferenceName := EmptyStr;
       Result := nil;
 
       var ReferenceDefinition := LoadSchemaReference(JSONReference.ref, ReferenceName);
 
-      for var ParameterInfo in ReferenceDefinition.parameters.parameter do
+      for var ParameterInfo in ReferenceDefinition.parameters.additionalProperties do
         if ParameterInfo.Key = ReferenceName then
           Exit(ParameterInfo.Value);
     end;
 
     function FindReturnType: TTypeDefinition;
     var
-      Schemas: TList<Response.TSchema>;
+      Schemas: TList<TOpenAPIDefinition.Response.TSchema>;
 
-      procedure AddSchema(const Schema: Response.TSchema);
+      procedure AddSchema(const Schema: TOpenAPIDefinition.Response.TSchema);
       begin
         if Schema.IsSchemaStored and Schema.schema.IsRefStored then
           for var SchemaToFind in Schemas do
@@ -232,7 +222,7 @@ var
         Schemas.Add(Schema);
       end;
 
-      function GetSchema(const Schema: Response.TSchema): Schema;
+      function GetSchema(const Schema: TOpenAPIDefinition.Response.TSchema): TOpenAPIDefinition.Schema;
       begin
         if Schema.schema.IsRefStored then
           Result := FindSchemaReference(Schema.schema.ref)
@@ -242,7 +232,7 @@ var
 
     begin
       Result := nil;
-      Schemas := TList<Response.TSchema>.Create;
+      Schemas := TList<TOpenAPIDefinition.Response.TSchema>.Create;
 
       for var Return in Operation.responses.responseValue do
         if Return.Value.response.IsSchemaStored then
@@ -254,10 +244,10 @@ var
         var ReturnClassName := Method.Name + 'Return';
 
         if Schemas.Count = 1 then
-          Result := GenerateTypeDefinition(UnitDefinition, Schemas.First.schema, ReturnClassName)
+          Result := GenerateTypeDefinition(MainModule, Schemas.First.schema, ReturnClassName)
         else
         begin
-          Result := FImporter.CreateClassDefinition(UnitDefinition, ReturnClassName);
+          Result := FImporter.CreateClassDefinition(MainModule, ReturnClassName);
 
           for var Schema in Schemas do
             if Schema.IsSchemaStored then
@@ -281,7 +271,7 @@ var
 
     for var ParameterDefinitionItem in Operation.parameters do
     begin
-      var ParameterDefinition: Parameter;
+      var ParameterDefinition: TOpenAPIDefinition.Parameter;
 
       if ParameterDefinitionItem.IsJsonReferenceStored then
         ParameterDefinition := FindParameterDefinition(ParameterDefinitionItem.jsonReference)
@@ -296,28 +286,28 @@ var
 
         if NoBodyParameter.IsHeaderParameterSubSchemaStored then
         begin
-          var Header := NoBodyParameter.headerParameterSubSchema;
+          var Header := NoBodyParameter.HeaderParameterSubSchema;
 
-          var Parameter := AddParameter(Header.name, GenerateSimpleType(UnitDefinition, Header.Name + 'Header', Header.SimpleType, Header.items, Header.enum));
+          var Parameter := AddParameter(Header.name, GenerateSimpleType(MainModule, Header.Name + 'Header', Header.SimpleType, Header.items, Header.enum));
           Parameter.AddAtribute('HeaderValue(''%s'')', [Header.name]);
         end
         else if NoBodyParameter.IsQueryParameterSubSchemaStored then
         begin
-          var Query := NoBodyParameter.queryParameterSubSchema;
+          var Query := NoBodyParameter.QueryParameterSubSchema;
 
-          AddParameter(Query.name, GenerateSimpleType(UnitDefinition, Query.Name + 'Query', Query.SimpleType, Query.items, Query.enum));
+          AddParameter(Query.name, GenerateSimpleType(MainModule, Query.Name + 'Query', Query.SimpleType, Query.items, Query.enum));
         end
         else if NoBodyParameter.IsPathParameterSubSchemaStored then
         begin
-          var Path := NoBodyParameter.pathParameterSubSchema;
+          var Path := NoBodyParameter.PathParameterSubSchema;
 
-          AddParameter(Path.name, GenerateSimpleType(UnitDefinition, Path.Name + 'Path', Path.SimpleType, Path.items, Path.enum));
+          AddParameter(Path.name, GenerateSimpleType(MainModule, Path.Name + 'Path', Path.SimpleType, Path.items, Path.enum));
         end
         else if NoBodyParameter.IsFormDataParameterSubSchemaStored then
         begin
-          var Form := NoBodyParameter.formDataParameterSubSchema;
+          var Form := NoBodyParameter.FormDataParameterSubSchema;
 
-          AddParameter(Form.name, GenerateSimpleType(UnitDefinition, Form.Name + 'Form', Form.SimpleType, Form.items, Form.enum));
+          AddParameter(Form.name, GenerateSimpleType(MainModule, Form.Name + 'Form', Form.SimpleType, Form.items, Form.enum));
         end;
       end;
     end;
@@ -332,17 +322,17 @@ begin
 
   if not UnitFileConfiguration.InterfaceName.IsEmpty then
   begin
-    Service := FImporter.CreateInterfaceDefinition(UnitDefinition, UnitFileConfiguration.InterfaceName);
+    Service := FImporter.CreateInterfaceDefinition(MainModule.ParentUnit, UnitFileConfiguration.InterfaceName);
 
     AddRemoteName(Service, FOpenAPIDefinition.basePath);
   end;
 
-  for var Definition in FOpenAPIDefinition.definitions.schema do
+  for var Definition in FOpenAPIDefinition.definitions.additionalProperties do
   begin
-    var TypeDefinition := GenerateTypeDefinition(UnitDefinition, Definition.Value, Definition.Key);
+    var TypeDefinition := GenerateTypeDefinition(MainModule, Definition.Value, Definition.Key);
 
     if not TypeDefinition.IsEnumeration and not TypeDefinition.IsClassDefinition and not TypeDefinition.IsTypeAlias then
-      UnitDefinition.AddTypeAlias(FImporter.CreateTypeAlias(UnitDefinition, Definition.Key, TypeDefinition));
+      MainModule.AddTypeAlias(FImporter.CreateTypeAlias(MainModule, Definition.Key, TypeDefinition));
   end;
 
   for var PathItem in FOpenAPIDefinition.paths.pathItem do
@@ -370,12 +360,12 @@ begin
   end;
 end;
 
-function TOpenAPI20SchemaLoader.GetSchemaReferenceName(const OpenAPISchema: Schema): String;
+function TOpenAPI20SchemaLoader.GetSchemaReferenceName(const OpenAPISchema: TOpenAPIDefinition.Schema): String;
 begin
   LoadSchemaReference(OpenAPISchema.ref, Result);
 end;
 
-procedure TOpenAPI20SchemaLoader.LoadClassDefinition(const ClassDefinition: TTypeClassDefinition; const ClassSchema: Schema);
+procedure TOpenAPI20SchemaLoader.LoadClassDefinition(const ClassDefinition: TTypeClassDefinition; const ClassSchema: TOpenAPIDefinition.Schema);
 var
   AnnonymusIndex: Integer;
 
@@ -408,17 +398,17 @@ var
     end;
   end;
 
-  procedure DefineProperties(const Properties: Schema);
+  procedure DefineProperties(const Properties: TOpenAPIDefinition.Schema);
   begin
-    for var Prop in Properties.properties.schema do
+    for var Prop in Properties.properties.additionalProperties do
     begin
       var PropertyName := Prop.Key;
 
-      DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, Prop.Value, PropertyName));
+      DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, Prop.Value, 'T' + PropertyName));
     end;
   end;
 
-  function GetPropertyName(const PropertySchema: Schema): String;
+  function GetPropertyName(const PropertySchema: TOpenAPIDefinition.Schema): String;
   begin
     if PropertySchema.IsRefStored then
       Result := GetSchemaReferenceName(PropertySchema)
@@ -457,24 +447,24 @@ begin
   end;
 end;
 
-function TOpenAPI20SchemaLoader.LoadOpenAPIDefinition(const Reference: String): TOpenAPIDefinition;
+function TOpenAPI20SchemaLoader.LoadOpenAPIDefinition(const Reference: String): TOpenAPIDefinition.TOpenAPIDefinition;
 begin
   if not FOpenAPIDefinitions.TryGetValue(Reference, Result) then
   begin
     var Serializer := TBluePrintJsonSerializer.Create as IBluePrintSerializer;
 
-    Result := Serializer.Deserialize(FImporter.LoadFile(Reference), TypeInfo(TOpenAPIDefinition)).AsType<TOpenAPIDefinition>;
+    Result := Serializer.Deserialize(FImporter.LoadFile(Reference), TypeInfo(TOpenAPIDefinition.TOpenAPIDefinition)).AsType<TOpenAPIDefinition.TOpenAPIDefinition>;
 
     FOpenAPIDefinitions.Add(Reference, Result);
   end;
 end;
 
-function TOpenAPI20SchemaLoader.LoadOpenAPIDefinitionFromConfiguration(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition;
+function TOpenAPI20SchemaLoader.LoadOpenAPIDefinitionFromConfiguration(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition.TOpenAPIDefinition;
 begin
   Result := LoadOpenAPIDefinition(UnitFileConfiguration.Reference);
 end;
 
-function TOpenAPI20SchemaLoader.LoadSchemaReference(const Reference: String; out ReferenceName: String): TOpenAPIDefinition;
+function TOpenAPI20SchemaLoader.LoadSchemaReference(const Reference: String; out ReferenceName: String): TOpenAPIDefinition.TOpenAPIDefinition;
 begin
   var References := Reference.Split([REFERENCE_SEPARATOR]);
   var Values := References[1].Split(['/']);
@@ -489,9 +479,9 @@ end;
 
 { THeaderParameterSubSchemaHelper }
 
-function THeaderParameterSubSchemaHelper.GetSimpleType: simpleTypes;
+function THeaderParameterSubSchemaHelper.GetSimpleType: Schema.simpleTypes;
 const
-  SIMPLE_TYPE_CONVERTION: array[TType] of simpleTypes = (simpleTypes.string, simpleTypes.number, simpleTypes.boolean, simpleTypes.integer, simpleTypes.array);
+  SIMPLE_TYPE_CONVERTION: array[TType] of Schema.simpleTypes = (Schema.simpleTypes.string, Schema.simpleTypes.number, Schema.simpleTypes.boolean, Schema.simpleTypes.integer, Schema.simpleTypes.array);
 
 begin
   Result := SIMPLE_TYPE_CONVERTION[&type];
@@ -499,9 +489,9 @@ end;
 
 { TQueryParameterSubSchemaHelper }
 
-function TQueryParameterSubSchemaHelper.GetSimpleType: simpleTypes;
+function TQueryParameterSubSchemaHelper.GetSimpleType: Schema.simpleTypes;
 const
-  SIMPLE_TYPE_CONVERTION: array[TType] of simpleTypes = (simpleTypes.string, simpleTypes.number, simpleTypes.boolean, simpleTypes.integer, simpleTypes.array);
+  SIMPLE_TYPE_CONVERTION: array[TType] of Schema.simpleTypes = (Schema.simpleTypes.string, Schema.simpleTypes.number, Schema.simpleTypes.boolean, Schema.simpleTypes.integer, Schema.simpleTypes.array);
 
 begin
   Result := SIMPLE_TYPE_CONVERTION[&type];
@@ -509,9 +499,9 @@ end;
 
 { TPathParameterSubSchema }
 
-function TPathParameterSubSchema.GetSimpleType: simpleTypes;
+function TPathParameterSubSchema.GetSimpleType: Schema.simpleTypes;
 const
-  SIMPLE_TYPE_CONVERTION: array[TType] of simpleTypes = (simpleTypes.string, simpleTypes.number, simpleTypes.boolean, simpleTypes.integer, simpleTypes.array);
+  SIMPLE_TYPE_CONVERTION: array[TType] of Schema.simpleTypes = (Schema.simpleTypes.string, Schema.simpleTypes.number, Schema.simpleTypes.boolean, Schema.simpleTypes.integer, Schema.simpleTypes.array);
 
 begin
   Result := SIMPLE_TYPE_CONVERTION[&type];
@@ -519,9 +509,9 @@ end;
 
 { TFormDataParameterSubSchema }
 
-function TFormDataParameterSubSchema.GetSimpleType: simpleTypes;
+function TFormDataParameterSubSchema.GetSimpleType: Schema.simpleTypes;
 const
-  SIMPLE_TYPE_CONVERTION: array[TType] of simpleTypes = (simpleTypes.string, simpleTypes.number, simpleTypes.boolean, simpleTypes.integer, simpleTypes.array, simpleTypes.null);
+  SIMPLE_TYPE_CONVERTION: array[TType] of Schema.simpleTypes = (Schema.simpleTypes.string, Schema.simpleTypes.number, Schema.simpleTypes.boolean, Schema.simpleTypes.integer, Schema.simpleTypes.array, Schema.simpleTypes.null);
 
 begin
   Result := SIMPLE_TYPE_CONVERTION[&type];

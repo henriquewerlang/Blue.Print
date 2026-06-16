@@ -38,10 +38,11 @@ type
     function GetContentType: String;
     function GetEnumerationNames(const Enumeration: TRttiType): TArray<String>; overload;
     function GetEnumerationNames(const TypeInfo: PTypeInfo): TArray<String>; overload;
-    function GetEnumerationValue(const TypeInfo: PTypeInfo; const Value: String): TValue;
+    function GetEnumerationValue(const EnumeratorType: TRttiType; const Value: String): TValue;
     function GetFieldName(const RttiObject: TRttiNamedObject): String;
     function GetPublishedProperties(const RttiType: TRttiType): TArray<TRttiProperty>;
     function Serialize(const Value: TValue): String;
+    function TryGetEnumeratorValue(const EnumeratorType: TRttiType; const Value: String; var EnumeratorValue: TValue): Boolean;
 
     procedure SetFormatSettings(const Value: TFormatSettings);
   public
@@ -51,6 +52,8 @@ type
   end;
 
   TBluePrintJSONSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
+  private type
+    TFlatType = (Number, Text, Bool, &Array, &Object, Enumerator);
   private
     function CreateInteger(const Value: Integer): TJSONValue;
     function CreateInt64(const Value: Int64): TJSONValue;
@@ -67,6 +70,7 @@ type
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function DeserializeArray(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
     function DeserializeClassReference(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
+    function DeserializeFlatType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
     function DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue; virtual;
     function Serialize(const Value: TValue): String;
     function SerializeArray(const RttiType: TRttiType; const Value: TValue): TJSONArray;
@@ -75,7 +79,6 @@ type
 
     procedure DeserializeDynamicPropertyValue(const RttiType: TRttiInstanceType; const Instance: TObject; const PropertyName: String; const Value: TJSONValue);
     procedure DeserializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
-    procedure DeserializeFlatObject(const RttiType: TRttiType; const Instance: TValue; const JSONValue: TJSONValue);
     procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
     procedure SerializeDynamicProperty(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
     procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
@@ -205,7 +208,7 @@ begin
 {$IFDEF PAS2JS}
     tkBool,
 {$ENDIF}
-    tkEnumeration: Result := GetEnumerationValue(TypeInfo, Value);
+    tkEnumeration: Result := GetEnumerationValue(FContext.GetType(TypeInfo), Value);
 
 {$IFDEF DCC}
     tkInt64,
@@ -230,7 +233,7 @@ var
 begin
   Result := nil;
 
-  for &Property in RttiType.GetProperties do
+  for &Property in GetPublishedProperties(RttiType) do
   begin
     PatternProperty := &Property.GetAttribute<PatternPropertyAttribute>;
 
@@ -266,31 +269,13 @@ begin
   if Assigned(Attribute) then
     Result := Attribute.Names
   else
-    Result := TRttiEnumerationType(Enumeration).GetNames;
+    Result := (Enumeration as TRttiEnumerationType).GetNames;
 end;
 
-function TBluePrintSerializer.GetEnumerationValue(const TypeInfo: PTypeInfo; const Value: String): TValue;
-
-  function EnumeratoValue: Integer;
-  var
-    EnumName: String;
-
-  begin
-    Result := -1;
-
-    for EnumName in GetEnumerationNames(TypeInfo) do
-    begin
-      Inc(Result);
-
-      if SameText(EnumName, Value) then
-        Exit;
-    end;
-
-    raise EInvalidEnumeratorName.CreateFmt('Invalid enumerator value name %s!', [Value]);
-  end;
-
+function TBluePrintSerializer.GetEnumerationValue(const EnumeratorType: TRttiType; const Value: String): TValue;
 begin
-  Result := TValue.FromOrdinal(TypeInfo, EnumeratoValue);
+  if not TryGetEnumeratorValue(EnumeratorType, Value, Result) then
+    raise EInvalidEnumeratorName.CreateFmt('Invalid enumerator value name %s!', [Value]);
 end;
 
 function TBluePrintSerializer.GetFieldName(const RttiObject: TRttiNamedObject): String;
@@ -353,6 +338,29 @@ end;
 procedure TBluePrintSerializer.SetFormatSettings(const Value: TFormatSettings);
 begin
   FFormatSettings := Value;
+end;
+
+function TBluePrintSerializer.TryGetEnumeratorValue(const EnumeratorType: TRttiType; const Value: String; var EnumeratorValue: TValue): Boolean;
+var
+  EnumName: String;
+  OrdinalValue: Int64;
+
+begin
+  OrdinalValue := -1;
+
+  for EnumName in GetEnumerationNames(EnumeratorType) do
+  begin
+    Inc(OrdinalValue);
+
+    if SameText(EnumName, Value) then
+    begin
+      EnumeratorValue := TValue.FromOrdinal(EnumeratorType.Handle, OrdinalValue);
+
+      Exit(True);
+    end;
+  end;
+
+  Result := False;
 end;
 
 { TBluePrintJSONSerializer }
@@ -560,7 +568,7 @@ begin
     tkBool: Result := TValue.From<Boolean>(JSONValue = True);
 {$ENDIF}
 
-    tkEnumeration: Result := GetEnumerationValue(RttiType.Handle, {$IFDEF PAS2JS}String(JSONValue){$ELSE}JSONValue.Value{$ENDIF});
+    tkEnumeration: Result := GetEnumerationValue(RttiType, {$IFDEF PAS2JS}String(JSONValue){$ELSE}JSONValue.Value{$ENDIF});
 
     tkFloat:
     begin
@@ -581,14 +589,13 @@ begin
     tkClass:
       if IsNull(JSONValue) then
         TValue.Make(nil, RttiType.Handle, Result)
-      else
+      else if RttiType.HasAttribute<FlatAttribute> then
+        Result := DeserializeFlatType(RttiType, JSONValue)
+      else if JSONValue is TJSONObject then
       begin
         Result := TValue.From(CreateObject(RttiType.AsInstance));
 
-        if RttiType.HasAttribute<FlatAttribute> then
-          DeserializeFlatObject(RttiType, Result, JSONValue)
-        else if JSONValue is TJSONObject then
-          DeserializeProperties(RttiType, Result.AsObject, TJSONObject(JSONValue));
+        DeserializeProperties(RttiType, Result.AsObject, TJSONObject(JSONValue));
       end;
 
     tkArray, tkDynArray: Result := DeserializeArray(RttiType, JSONValue);
@@ -721,7 +728,7 @@ var
   JSON: TJSONValue;
 
 begin
-  JSON := {$IFDEF PAS2JS}TJSJSON.Parse{$ELSE}TJSONValue.ParseJSONValue{$ENDIF}(Value);
+  JSON := {$IFDEF PAS2JS}TJSJSON.Parse{$ELSE}TJSONValue.ParseJSONValue{$ENDIF}(Value, False, True);
 
   try
     Result := DeserializeType(FContext.GetType(TypeInfo), JSON);
@@ -808,194 +815,103 @@ begin
   end;
 end;
 
-procedure TBluePrintJSONSerializer.DeserializeFlatObject(const RttiType: TRttiType; const Instance: TValue; const JSONValue: TJSONValue);
-type
-  TJSONTypes = set of TTypeKind;
-
+function TBluePrintJSONSerializer.DeserializeFlatType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
 var
-  PropertyPath: TStack<TRttiProperty>;
+  FlatInfo: FlatAttribute;
+  FlatType: TFlatType;
 
-  function FindPropertyPath(const RttiType: TRttiType; const JSONValue: TJSONValue): Boolean;
+  function IsBooleanValue: Boolean;
+  begin
+    Result := {$IFDEF DCC}JSONValue is TJSONBool{$ELSE}IsBoolean(JSONValue){$ENDIF};
+  end;
+
+  function GetKey(const JSONObject: TJSONObject; const Index: Integer): String;
+  begin
+{$IFDEF DCC}
+    Result := JSONObject.Pairs[Index].JsonString.Value;
+{$ELSE}
+    Result := TJSObject.Keys(JSONObject)[Index];
+{$ENDIF}
+  end;
+
+  function GetValue(const JSONObject: TJSONObject; const FieldName: String): String;
+  begin
+{$IFDEF DCC}
+    var JSONPair := JSONObject.Get(FieldName);
+
+    if Assigned(JSONPair) then
+      Result := JSONPair.JsonValue.Value
+{$ELSE}
+    if GetJSONObject.hasOwnProperty(FieldName) then
+      Result := GetJSONObject[FieldName]
+{$ENDIF}
+    else
+      Result := EmptyStr;
+  end;
+
+  function SameFieldName(const RttiType: TRttiType): Boolean;
   var
-    FlatInfo: FlatAttribute;
-    FlatProperty: TRttiProperty;
-
-    function IsBooleanValue: Boolean;
-    begin
-      Result := {$IFDEF DCC}JSONValue is TJSONBool{$ELSE}IsBoolean(JSONValue){$ENDIF};
-    end;
-
-    function GetJSONObject: TJSONObject;
-    begin
-      Result := {$IFDEF DCC}(JSONValue as TJSONObject){$ELSE}TJSONObject(JSONValue){$ENDIF};
-    end;
-
-    function CheckEnumerationValue(const JSONValue: String; const Values: TArray<String>): Boolean;
-    var
-      Value: String;
-
-    begin
-      Result := False;
-
-      for Value in Values do
-        if AnsiSameText(Value, JSONValue) then
-          Exit(True);
-    end;
-
-    function GetJSONFieldValue(const FieldName: String): TJSONValue;
-    begin
-{$IFDEF DCC}
-      var JSONPair := GetJSONObject.Get(FieldName);
-
-      if Assigned(JSONPair) then
-        Result := JSONPair.JsonValue
-{$ELSE}
-      if GetJSONObject.hasOwnProperty(FieldName) then
-        Result := GetJSONObject[FieldName]
-{$ENDIF}
-      else
-        Result := nil;
-    end;
-
-    function CheckProperty: Boolean;
-
-      function GetJSONType: TTypeKinds;
-      begin
-        if IsNumber(JSONValue) then
-          Result := [tkInteger, {$IFDEF DCC}tkInt64, {$ENDIF}tkFloat]
-        else if IsString(JSONValue) or IsBooleanValue then
-          Result := [{$IFDEF DCC}tkLString, tkUString, tkWChar, tkWString, {$ENDIF}tkChar, tkString, tkEnumeration]
-        else if JSONValue is TJSONArray then
-          Result := [tkArray, tkDynArray]
-        else if JSONValue is TJSONObject then
-          Result := [tkClass]
-        else
-          Result := [];
-      end;
-
-      function CheckFieldExists: Boolean;
-      var
-        JSONFieldName: TJSONValue;
-
-        function HasFields: Boolean;
-        begin
-{$IFDEF DCC}
-          Result := GetJSONObject.Count > 0;
-{$ELSE}
-          Result := Assigned(TJSObject.Keys(GetJSONObject));
-{$ENDIF}
-        end;
-
-      begin
-        JSONFieldName := nil;
-
-        if HasFields then
-{$IFDEF DCC}
-          JSONFieldName := GetJSONObject.Pairs[0].JsonString;
-{$ELSE}
-          JSONFieldName := TJSObject.Keys(GetJSONObject)[0];
-{$ENDIF}
-
-        Result := not HasFields or Assigned(FindPropertyByName(RttiType, GetString(JSONFieldName)));
-      end;
-
-    var
-      TypeKind: TTypeKind;
-
-    begin
-      Result := False;
-      TypeKind := RttiType.TypeKind;
-
-      if TypeKind in GetJSONType then
-        case TypeKind of
-          tkEnumeration: Result := CheckEnumerationValue(GetString(JSONValue), GetEnumerationNames(RttiType));
-          tkClass: Result := CheckFieldExists;
-          else Result := True;
-        end;
-    end;
-
-    function FindEnumeratorProperty: Boolean;
-    var
-      EnumeratorProperty: TRttiProperty;
-      JSONPropertyValue: TJSONValue;
-
-    begin
-      EnumeratorProperty := FindPropertyByName(FlatProperty.PropertyType, FlatInfo.EnumeratorPropertyName);
-      JSONPropertyValue := GetJSONFieldValue(FlatInfo.EnumeratorPropertyName);
-      Result := False;
-
-      if Assigned(EnumeratorProperty) and Assigned(JSONPropertyValue) then
-        case EnumeratorProperty.PropertyType.TypeKind of
-          tkEnumeration: Result := CheckEnumerationValue(GetString(JSONPropertyValue), GetEnumerationNames(EnumeratorProperty.PropertyType));
-          tkClass:
-          begin
-            Result := EnumeratorProperty.PropertyType.HasAttribute<FlatAttribute> and FindPropertyPath(EnumeratorProperty.PropertyType, JSONPropertyValue);
-
-            if Result then
-              PropertyPath.Push(EnumeratorProperty);
-          end;
-        end
-      else
-        Result := FindPropertyPath(FlatProperty.PropertyType, JSONValue);
-
-      if Result then
-        PropertyPath.Push(FlatProperty);
-    end;
+    JSONObject: TJSONObject absolute JSONValue;
 
   begin
-    FlatInfo := RttiType.GetAttribute<FlatAttribute>;
-    Result := False;
+    Result := (JSONObject.Count = 0) or (FindPropertyByName(RttiType, GetKey(JSONObject, 0)) <> nil);
+  end;
 
-    if Assigned(FlatInfo) then
-    begin
-      for FlatProperty in GetPublishedProperties(RttiType) do
-        if not FlatInfo.EnumeratorPropertyName.IsEmpty then
-        begin
-          if FindEnumeratorProperty then
-            Exit(True)
-        end
-        else if FindPropertyPath(FlatProperty.PropertyType, JSONValue) then
-        begin
-          PropertyPath.Push(FlatProperty);
+  function SameEnumeratorName(const RttiType: TRttiType): Boolean;
+  var
+    JSONObject: TJSONObject absolute JSONValue;
+    EnumeratorProperty: TRttiProperty;
+    EnumeratorValue: TValue;
 
-          Exit(True)
-        end;
+  begin
+    EnumeratorProperty := FindPropertyByName(RttiType, FlatInfo.EnumeratorPropertyName);
 
-//      if not FlatInfo.EnumeratorPropertyName.IsEmpty then
-//      begin
-//        PropertyPath.Push(GetPublishedProperties(RttiType)[0]);
-//
-//        Exit(True)
-//      end;
-    end
-    else
-      Result := CheckProperty;
+    Result := Assigned(EnumeratorProperty) and TryGetEnumeratorValue(EnumeratorProperty.PropertyType, GetValue(JSONObject, FlatInfo.EnumeratorPropertyName), EnumeratorValue);
   end;
 
 var
-  CurrentInstance: TValue;
-  &Property: TRttiProperty;
+  FlatProperty: TRttiProperty;
+
+  function LoadPropertyValue(const Value: TValue): TValue;
+  begin
+    Result := CreateObject(FlatProperty.Parent.AsInstance);
+
+    FlatProperty.SetValue(Result.AsObject, Value);
+  end;
 
 begin
-  PropertyPath := TStack<TRttiProperty>.Create;
+  FlatInfo := RttiType.GetAttribute<FlatAttribute>;
 
-  if FindPropertyPath(RttiType, JSONValue) then
-  begin
-    CurrentInstance := Instance;
+  if not FlatInfo.EnumeratorPropertyName.IsEmpty then
+    FlatType := Enumerator
+  else if IsNumber(JSONValue) then
+    FlatType := Number
+  else if IsBooleanValue then
+    FlatType := Bool
+  else if JSONValue is TJSONArray then
+    FlatType := &Array
+  else if JSONValue is TJSONObject then
+    FlatType := &Object
+  else
+    FlatType := Text;
 
-    while PropertyPath.Count > 1 do
+  for FlatProperty in GetPublishedProperties(RttiType) do
+    if FlatProperty.PropertyType.HasAttribute<FlatAttribute> then
     begin
-      &Property := PropertyPath.Pop;
+      Result := DeserializeFlatType(FlatProperty.PropertyType, JSONValue);
 
-      CurrentInstance := CheckPropertyInstance(CurrentInstance, &Property);
-    end;
+      if not Result.IsEmpty then
+        Exit(LoadPropertyValue(Result));
+    end
+    else if (FlatType = Number) and (FlatProperty.PropertyType.TypeKind in [tkInteger, {$IFDEF DCC}tkInt64, {$ENDIF}tkFloat])
+      or (FlatType = Text) and (FlatProperty.PropertyType.TypeKind in [{$IFDEF DCC}tkLString, tkUString, tkWChar, tkWString, {$ENDIF}tkChar, tkString, tkEnumeration])
+      or (FlatType = Bool) and (FlatProperty.PropertyType.Handle = TypeInfo(Boolean))
+      or (FlatType = &Array) and (FlatProperty.PropertyType.TypeKind in [tkArray, tkDynArray])
+      or (FlatType = Enumerator) and SameEnumeratorName(FlatProperty.PropertyType)
+      or (FlatType = &Object) and SameFieldName(FlatProperty.PropertyType) then
+      Exit(LoadPropertyValue(DeserializeType(FlatProperty.PropertyType, JSONValue)));
 
-    &Property := PropertyPath.Pop;
-
-    &Property.SetValue(CurrentInstance.AsObject, DeserializeType(&Property.PropertyType, JSONValue));
-  end;
-
-  PropertyPath.Free;
+  Result := TValue.Empty;
 end;
 
 { TBluePrintXMLSerializer }
@@ -1149,7 +1065,7 @@ begin
 {$IFDEF PAS2JS}
     tkBool,
 {$ENDIF}
-    tkEnumeration: Result := GetEnumerationValue(RttiType.Handle, Node.Text);
+    tkEnumeration: Result := GetEnumerationValue(RttiType, Node.Text);
 
     tkFloat:
     begin
