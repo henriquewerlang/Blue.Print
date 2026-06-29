@@ -4,7 +4,7 @@ interface
 
 {$SCOPEDENUMS ON}
 
-uses System.Generics.Collections, System.SysUtils, Xml.XMLSchema, Blue.Print.JSON.Schema, Blue.Print.Types;
+uses System.Generics.Collections, System.SysUtils, Xml.XMLSchema, Xml.XMLIntf, Blue.Print.JSON.Schema, Blue.Print.Types;
 
 type
   TSchemaImporter = class;
@@ -26,16 +26,18 @@ type
 
   TUnitFileConfiguration = class
   private
-    FReference: String;
     FUnitClassName: String;
     FFileType: TSchemaType;
     FIsFileTypeStored: Boolean;
     FInterfaceName: String;
     FBaseURL: String;
+    FFileName: String;
+    FReference: String;
 
     procedure SetFileType(const Value: TSchemaType);
   published
     property BaseURL: String read FBaseURL write FBaseURL;
+    property FileName: String read FFileName write FFileName;
     property FileType: TSchemaType read FFileType write SetFileType stored FIsFileTypeStored;
     property InterfaceName: String read FInterfaceName write FInterfaceName;
     property IsFileTypeStored: Boolean read FIsFileTypeStored write FIsFileTypeStored;
@@ -49,8 +51,6 @@ type
     FFiles: TArray<TUnitFileConfiguration>;
     FDeclareTypesNamespace: Boolean;
   public
-    constructor Create;
-
     destructor Destroy; override;
   published
     property DeclareTypesNamespace: Boolean read FDeclareTypesNamespace write FDeclareTypesNamespace;
@@ -97,14 +97,26 @@ type
     FTypeName: String;
     FOptional: Boolean;
     FOptionalStored: Boolean;
+    FAttribute: String;
+
     procedure SetOptional(const Value: Boolean);
   public
     property OptionalStored: Boolean read FOptionalStored;
   published
     property TypeName: String read FTypeName write FTypeName;
     property Name: String read FName write FName;
+    property Attribute: String read FAttribute write FAttribute;
     property ChangeType: String read FChangeType write FChangeType;
     property Optional: Boolean read FOptional write SetOptional stored FOptionalStored;
+  end;
+
+  TNamespaceConfiguration = class
+  private
+    FPrefix: String;
+    FNamespace: String;
+  published
+    property Prefix: String read FPrefix write FPrefix;
+    property Namespace: String read FNamespace write FNamespace;
   end;
 
   TConfiguration = class
@@ -115,7 +127,8 @@ type
     FTypeDefinition: TArray<TTypeDefinitionConfiguration>;
     FMaxColumnSize: Integer;
     FImports: TArray<String>;
-    FPropertyDefinition: TArray<TPropertyDefinitionConfiguration>;
+    FPropertyConfiguration: TArray<TPropertyDefinitionConfiguration>;
+    FNamespaces: TArray<TNamespaceConfiguration>;
   public
     constructor Create;
 
@@ -123,9 +136,10 @@ type
   published
     property Imports: TArray<String> read FImports write FImports;
     property MaxColumnSize: Integer read FMaxColumnSize write FMaxColumnSize;
+    property Namespaces: TArray<TNamespaceConfiguration> read FNamespaces write FNamespaces;
     property OutputFolder: String read FOutputFolder write FOutputFolder;
+    property PropertyConfiguration: TArray<TPropertyDefinitionConfiguration> read FPropertyConfiguration write FPropertyConfiguration;
     property SchemaFolder: String read FSchemaFolder write FSchemaFolder;
-    property PropertyDefinition: TArray<TPropertyDefinitionConfiguration> read FPropertyDefinition write FPropertyDefinition;
     property TypeDefinition: TArray<TTypeDefinitionConfiguration> read FTypeDefinition write FTypeDefinition;
     property UnitConfiguration: TArray<TTypeUnitDefinitionConfiguration> read FUnitConfiguration write FUnitConfiguration;
   end;
@@ -134,10 +148,11 @@ type
   private
     FAttributes: TList<String>;
     FParentAttributes: TList<String>;
+    FParentModule: TTypeModuleDefinition;
 
     function GetIsClassDefinition: Boolean;
   public
-    constructor Create;
+    constructor Create(const ParentModule: TTypeModuleDefinition);
 
     destructor Destroy; override;
 
@@ -150,6 +165,7 @@ type
     property Attributes: TList<String> read FAttributes;
     property IsClassDefinition: Boolean read GetIsClassDefinition;
     property ParentAttributes: TList<String> read FParentAttributes;
+    property ParentModule: TTypeModuleDefinition read FParentModule;
   end;
 
   TPropertyDefinition = class(TTypeCommonDefinition)
@@ -191,7 +207,6 @@ type
     FIsObjectType: Boolean;
     FIsStringType: Boolean;
     FName: String;
-    FParentModule: TTypeModuleDefinition;
 
     function GetAsArrayType: TTypeArrayDefinition;
     function GetAsClassDefinition: TTypeClassDefinition;
@@ -212,8 +227,6 @@ type
     function GetIsUnitDefinition: Boolean;
     function GetParentUnit: TTypeUnitDefinition;
   public
-    constructor Create(const ParentModule: TTypeModuleDefinition);
-
     property AsArrayType: TTypeArrayDefinition read GetAsArrayType;
     property AsClassDefinition: TTypeClassDefinition read GetAsClassDefinition;
     property AsInterfaceType: TTypeInterfaceDefinition read GetAsInterfaceType;
@@ -235,7 +248,6 @@ type
     property IsTypeAlias: Boolean read GetIsTypeAlias;
     property IsUnitDefinition: Boolean read GetIsUnitDefinition;
     property Name: String read FName write FName;
-    property ParentModule: TTypeModuleDefinition read FParentModule;
     property ParentUnit: TTypeUnitDefinition read GetParentUnit;
   end;
 
@@ -246,6 +258,7 @@ type
     FEnumerations: TList<TTypeEnumeration>;
     FInterfaces: TList<TTypeInterfaceDefinition>;
     FTypeAlias: TList<TTypeAlias>;
+    FFullLoaded: Boolean;
   public
     constructor Create(const Module: TTypeModuleDefinition);
 
@@ -258,6 +271,7 @@ type
     property Classes: TList<TTypeClassDefinition> read FClasses;
     property DelayedTypes: TList<TTypeDelayedDefinition> read FDelayedTypes;
     property Enumerations: TList<TTypeEnumeration> read FEnumerations write FEnumerations;
+    property FullLoaded: Boolean read FFullLoaded write FFullLoaded;
     property Interfaces: TList<TTypeInterfaceDefinition> read FInterfaces write FInterfaces;
     property TypeAlias: TList<TTypeAlias> read FTypeAlias;
   end;
@@ -306,7 +320,7 @@ type
     FReturn: TTypeDefinition;
     FParameters: TList<TTypeParameterDefinition>;
   public
-    constructor Create;
+    constructor Create(const ParentModule: TTypeModuleDefinition);
 
     destructor Destroy; override;
 
@@ -422,8 +436,6 @@ type
 
   ISchemaLoader = interface
     ['{CBCF837D-0032-46F0-865B-D18C93A6DA79}']
-    function CreateMainModule(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration): TTypeModuleDefinition;
-
     procedure GenerateUnitFileDefinition(const MainModule: TTypeModuleDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
   end;
 
@@ -438,28 +450,29 @@ type
     FDoubleType: TTypeDefinition;
     FInt64Type: TTypeDefinition;
     FIntegerType: TTypeDefinition;
+    FModuleReference: TDictionary<String, TTypeModuleDefinition>;
     FObjectType: TTypeDefinition;
+    FSchemaNamespace: TDictionary<String, String>;
     FStringType: TTypeDefinition;
-    FTimeType: TTypeDefinition;
-    FTypeExternal: TDictionary<String, TTypeDefinition>;
-    FUnits: TList<TTypeUnitDefinition>;
-    FUnitFiles: TDictionary<TUnitFileConfiguration, TTypeUnitDefinition>;
-    FWordType: TTypeDefinition;
-    FTValueType: TTypeDefinition;
-    FSystemUnit: TTypeUnitDefinition;
     FSystemRttiUnit: TTypeUnitDefinition;
+    FSystemUnit: TTypeUnitDefinition;
+    FTimeType: TTypeDefinition;
+    FTValueType: TTypeDefinition;
+    FTypeExternal: TDictionary<String, TTypeDefinition>;
+    FUnitFiles: TDictionary<TUnitFileConfiguration, TTypeUnitDefinition>;
+    FUnits: TList<TTypeUnitDefinition>;
+    FWordType: TTypeDefinition;
 
     function AddTypeExternal(const ModuleName, TypeName: String): TTypeExternal;
     function CreateSchemaLoader(const UnitFileConfiguration: TUnitFileConfiguration): ISchemaLoader;
     function CreateUnit(const UnitConfiguration: TTypeUnitDefinitionConfiguration): TTypeUnitDefinition;
+    function GetModuleDefinitionByReference(const Reference: String; var Module: TTypeModuleDefinition): Boolean;
     function FindTypeDefinitionInModule(const Module: TTypeModuleDefinition; const TypeName: String; var TypeDefinition: TTypeDefinition): Boolean;
     function FindTypeInUnits(const TypeName: String): TTypeDefinition;
     function LoadUnit(const UnitConfiguration: TTypeUnitDefinitionConfiguration): TTypeUnitDefinition;
-    function LoadUnitFromReference(const Reference: String): TTypeUnitDefinition;
 
     procedure GenerateUnitDefinition(const UnitConfiguration: TTypeUnitDefinitionConfiguration);
     procedure LoadInternalTypes;
-    procedure LoadUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
   public
     constructor Create;
 
@@ -469,8 +482,8 @@ type
     function CreateInterfaceDefinition(const ParentUnit: TTypeUnitDefinition; const InterfaceName: String): TTypeInterfaceDefinition;
     function CreateTypeAlias(const Module: TTypeModuleDefinition; const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
-    function FindUnitByReference(const Reference: String): TTypeUnitDefinition;
     function GetFileNameFromSchemaFolder(const FileName: String): String;
+    function GetSchemaNamespaceFromTarget(const Target: String): String;
     function LoadFile(Reference: String): String;
     function LoadFileFromConfiguration(const UnitFileConfiguration: TUnitFileConfiguration): String;
     function LoadRelativePath(const RelativeFolder, FileName: String): String;
@@ -501,8 +514,6 @@ type
   private
     FImporter: TSchemaImporter;
   protected
-    function CreateMainModule(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration): TTypeModuleDefinition;
-
     property Importer: TSchemaImporter read FImporter;
   public
     constructor Create(const Importer: TSchemaImporter); virtual;
@@ -520,11 +531,13 @@ type
     FXMLBuildInType: TDictionary<String, TTypeDefinition>;
 
     function CheckTypeDefinition(const SchemaItem: IXMLTypedSchemaItem; const Module: TTypeModuleDefinition): TTypeDefinition;
+    function CompareClassInheritence(const Left, Right: TTypeClassDefinition): Integer;
     function CreateTypeDefinition(const SchemaItem: IXMLSchemaItem; const Module: TTypeModuleDefinition): TTypeDefinition;
-    function GetAttributeDataType(const Attribute: IXMLAttributeDef): IXMLTypedSchemaItem;
     function FindType(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
-    function FindTypeInProperties(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
-    function FormatSchemaItemName(const SchemaItem: IXMLSchemaItem): String; overload;
+    function FindTypeName(const SchemaItem: IXMLTypedSchemaItem; var TypeName: String): Boolean;
+    function GetNameWithNamespace(const Name, Namespace: String): String; overload;
+    function GetNameWithNamespace(const Node: IXMLNode; const Name: String): String; overload;
+    function HasTypeName(const SchemaItem: IXMLTypedSchemaItem): Boolean;
     function IsElementOptional(const ElementDefinition: IXMLElementDef): Boolean;
 
     procedure GenerateClassDefinitionFromSchema(const ParentModule: TTypeModuleDefinition; const SchemaDefinition: IXMLSchemaDef);
@@ -569,7 +582,7 @@ function OnlyValidChars(const Value: String): String;
 
 implementation
 
-uses System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, System.Generics.Defaults, System.Math, Xml.XMLIntf, XML.XMLDom, Xml.XMLSchemaTags, Soap.WSDLBind, Soap.WSDLIntf, System.Hash, Blue.Print.Serializer,
+uses System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, System.Generics.Defaults, System.Math, XML.XMLDom, Xml.XMLSchemaTags, Soap.WSDLBind, Soap.WSDLIntf, System.Hash, Blue.Print.Serializer,
   Blue.Print.Schema.Importer.Open.API.v20, Blue.Print.Schema.Importer.Open.API.v30;
 
 const
@@ -578,11 +591,6 @@ const
 
 type
   TCaseFunction = reference to function(const Value: String): String;
-
-function CompareClassInheritence(const Left, Right: TTypeClassDefinition): Integer;
-begin
-  Result := IfThen(Assigned(Left.InheritedFrom), 1, 0) - IfThen(Assigned(Right.InheritedFrom), 1, 0);
-end;
 
 function CompareNames(const Name1, Name2: String): Boolean;
 begin
@@ -601,29 +609,18 @@ begin
       Exit('&' + Result);
 end;
 
-function SameCase(const Value: String): String;
-begin
-  Result := Value;
-end;
-
 function OnlyValidChars(const Value: String): String;
 begin
-  var CharCase: TCaseFunction := SameCase;
   Result := EmptyStr;
 
   for var Char in Value do
     if CharInSet(Char, ['0'..'9', 'a'..'z', 'A'..'Z', '_']) then
-    begin
-      Result := Result + CharCase(Char);
-      CharCase := SameCase;
-    end
-    else
-      CharCase := UpperCase;
+      Result := Result + Char;
 end;
 
 function FormatName(Name: String): String;
 begin
-  Name := OnlyValidChars(Name);
+  Name := OnlyValidChars(ExtractLocalName(Name));
   Result := Name.Substring(0, 1).ToUpper + Name.Substring(1);
 end;
 
@@ -632,15 +629,10 @@ begin
   Result := EmptyStr;
 
   for var Split in Value.Split([' ']) do
-      Result := Result + CheckReservedName(OnlyValidChars(Split));
+    Result := Result + CheckReservedName(OnlyValidChars(Split));
 
   if CharInSet(Result[1], ['0'..'9']) then
     Result := 't' + Result;
-end;
-
-function FormatPropertyName(const PropertyName: String): String;
-begin
-  Result := CheckReservedName(OnlyValidChars(PropertyName));
 end;
 
 function NotFormatEnumeratorValue(Value: String): String;
@@ -662,6 +654,8 @@ begin
   inherited;
 
   FBuildInType := TDictionary<String, TTypeDefinition>.Create(TIStringComparer.Ordinal);
+  FModuleReference := TDictionary<String, TTypeModuleDefinition>.Create;
+  FSchemaNamespace := TDictionary<String, String>.Create;
   FTypeExternal := TObjectDictionary<String, TTypeDefinition>.Create([doOwnsValues], TIStringComparer.Ordinal);
   FUnits := TObjectList<TTypeUnitDefinition>.Create;
   FUnitFiles := TDictionary<TUnitFileConfiguration, TTypeUnitDefinition>.Create;
@@ -692,7 +686,7 @@ const
 
   function GetFileType: TSchemaType;
   begin
-    var FileExtension := TPath.GetExtension(UnitFileConfiguration.Reference);
+    var FileExtension := TPath.GetExtension(UnitFileConfiguration.FileName);
 
     for var SchemaExtension := Low(TSchemaType) to High(TSchemaType) do
       if FileExtension = '.' + FILE_SCHEMA_EXTENSION[SchemaExtension] then
@@ -712,6 +706,9 @@ end;
 
 function TSchemaImporter.CreateTypeAlias(const Module: TTypeModuleDefinition; const Alias: String; const TypeDefinition: TTypeDefinition): TTypeAlias;
 begin
+  if not Assigned(TypeDefinition) then
+    raise Exception.CreateFmt('The alias %s as not type defined!', [Alias]);
+
   Result := TTypeAlias.Create(Module);
   Result.Name := Alias;
   Result.TypeDefinition := TypeDefinition;
@@ -728,6 +725,8 @@ end;
 
 destructor TSchemaImporter.Destroy;
 begin
+  FModuleReference.Free;
+
   FTypeExternal.Free;
 
   FBuildInType.Free;
@@ -735,6 +734,8 @@ begin
   FUnits.Free;
 
   FUnitFiles.Free;
+
+  FSchemaNamespace.Free;
 
   inherited;
 end;
@@ -758,7 +759,7 @@ begin
   TypeDefinition := nil;
 
   for var ClassDefinition in Module.Classes do
-    if AnsiSameText(ClassDefinition.Name, TypeName) then
+    if ClassDefinition.Name = TypeName then
     begin
       TypeDefinition := ClassDefinition;
 
@@ -766,7 +767,7 @@ begin
     end;
 
   for var Enumerator in Module.Enumerations do
-    if AnsiSameText(Enumerator.Name, TypeName) then
+    if Enumerator.Name = TypeName then
     begin
       TypeDefinition := Enumerator;
 
@@ -774,7 +775,7 @@ begin
     end;
 
   for var TypeAlias in Module.TypeAlias do
-    if AnsiSameText(TypeAlias.Name, TypeName) then
+    if TypeAlias.Name = TypeName then
     begin
       TypeDefinition := TypeAlias;
 
@@ -791,69 +792,119 @@ function TSchemaImporter.FindTypeInUnits(const TypeName: String): TTypeDefinitio
     TypeDefinition := FindType(TypeName, Module);
 
     Result := Assigned(TypeDefinition);
-
-    if Module.IsClassDefinition then
-      for var AProperty in Module.AsClassDefinition.Properties do
-        if AnsiSameText(AProperty.Name, TypeName) then
-        begin
-          TypeDefinition := AProperty.PropertyType;
-
-          Exit(True);
-        end;
-
-    if not Result then
-      for var ClassDefinition in Module.Classes do
-        if FindTypeDefinitionInModule(ClassDefinition, TypeName, TypeDefinition) or FindAllClasses(ClassDefinition, TypeName, TypeDefinition) then
-          Exit(True);
   end;
 
 begin
   var CurrentModule: TTypeModuleDefinition := nil;
-  var TypeFound: TTypeDefinition := nil;
+  Result := nil;
 
   for var SplitTypeName in TypeName.Split(['.']) do
   begin
     if not Assigned(CurrentModule) then
     begin
       for var UnitDefinition in Units do
-        if FindAllClasses(UnitDefinition, SplitTypeName, TypeFound) then
+        if FindAllClasses(UnitDefinition, SplitTypeName, Result) and Result.IsClassDefinition then
         begin
-          if TypeFound.IsClassDefinition then
-            CurrentModule := TypeFound.AsClassDefinition;
+          CurrentModule := Result.AsClassDefinition;
 
           Break;
         end;
 
-      if not Assigned(TypeFound) then
-        Exit(nil);
+      if not Assigned(Result) then
+        Exit;
     end
-    else if not FindAllClasses(CurrentModule, SplitTypeName, TypeFound) then
+    else if FindAllClasses(CurrentModule, SplitTypeName, Result) then
+    begin
+      if Result.IsClassDefinition then
+        CurrentModule := Result.AsClassDefinition;
+    end
+    else
       Exit(nil);
   end;
-
-  Result := TypeFound;
-end;
-
-function TSchemaImporter.FindUnitByReference(const Reference: String): TTypeUnitDefinition;
-begin
-  for var UnitConfiguration in FUnitFiles do
-    if UnitConfiguration.Key.Reference = Reference then
-      Exit(UnitConfiguration.Value);
-
-  raise Exception.CreateFmt('Unit reference not found %s.', [Reference]);
 end;
 
 procedure TSchemaImporter.GenerateUnitDefinition(const UnitConfiguration: TTypeUnitDefinitionConfiguration);
-begin
-  var UnitDefinition := LoadUnit(UnitConfiguration);
+var
+  UnitFileConfiguration: TUnitFileConfiguration;
 
-  for var UnitFile in UnitConfiguration.Files do
-    LoadUnitFileDefinition(UnitDefinition, UnitFile);
+  function GetReference: String;
+  begin
+    Result := UnitFileConfiguration.Reference;
+
+    if Result.IsEmpty then
+      Result := UnitFileConfiguration.FileName;
+  end;
+
+begin
+  var Module: TTypeModuleDefinition;
+
+  for UnitFileConfiguration in UnitConfiguration.Files do
+    if not GetModuleDefinitionByReference(GetReference, Module) then
+    begin
+      var Loader := CreateSchemaLoader(UnitFileConfiguration);
+
+      Loader.GenerateUnitFileDefinition(Module, UnitFileConfiguration);
+    end;
 end;
 
 function TSchemaImporter.GetFileNameFromSchemaFolder(const FileName: String): String;
 begin
   Result := TPath.GetFullPath(Configuration.SchemaFolder + '\' + FileName);
+end;
+
+function TSchemaImporter.GetModuleDefinitionByReference(const Reference: String; var Module: TTypeModuleDefinition): Boolean;
+
+  function LoadModuleFromConfiguration: TTypeModuleDefinition;
+  var
+    UnitDefinition: TTypeUnitDefinition;
+
+  begin
+    for var UnitConfiguration in Configuration.UnitConfiguration do
+      for var UnitFileConfiguration in UnitConfiguration.Files do
+        if (UnitFileConfiguration.Reference = Reference) or (UnitFileConfiguration.FileName = Reference) then
+        begin
+          if not FUnitFiles.TryGetValue(UnitFileConfiguration, UnitDefinition) then
+            UnitDefinition := LoadUnit(UnitConfiguration);
+
+          if UnitFileConfiguration.UnitClassName.IsEmpty then
+            Exit(UnitDefinition)
+          else
+          begin
+            var MainModule := FindTypeInUnits(UnitFileConfiguration.UnitClassName);
+
+            if not Assigned(MainModule) then
+              MainModule := CreateClassDefinition(UnitDefinition, UnitFileConfiguration.UnitClassName);
+
+            Exit(MainModule.AsClassDefinition);
+          end;
+        end;
+
+    raise Exception.CreateFmt('Can''t find the configuration for file reference %s!', [Reference]);
+  end;
+
+begin
+  Result := FModuleReference.TryGetValue(Reference, Module);
+
+  if Result then
+    Result := Module.FullLoaded
+  else
+  begin
+    Module := LoadModuleFromConfiguration;
+
+    FModuleReference.Add(Reference, Module);
+  end;
+
+  Module.FullLoaded := True;
+end;
+
+function TSchemaImporter.GetSchemaNamespaceFromTarget(const Target: String): String;
+begin
+  if not FSchemaNamespace.TryGetValue(Target, Result) then
+  begin
+    FSchemaNamespace.Add(Target, Format('blue%d', [Succ(FSchemaNamespace.Count)]));
+
+    Result := FSchemaNamespace[Target];
+  end;
 end;
 
 procedure TSchemaImporter.Import;
@@ -895,26 +946,23 @@ begin
     end;
   end;
 
-  for var PropertyConfiguration in Configuration.PropertyDefinition do
+  for var PropertyConfiguration in Configuration.PropertyConfiguration do
   begin
-    var PropertyDefinition: TPropertyDefinition := nil;
     var TypeDefinition := FindTypeInUnits(PropertyConfiguration.TypeName);
 
     if Assigned(TypeDefinition) then
-    begin
-      for var AProperty in TypeDefinition.AsClassDefinition.Properties do
-        if AnsiSameText(AProperty.Name, PropertyConfiguration.Name) then
-          PropertyDefinition := AProperty;
+      for var PropertyDefinition in TypeDefinition.AsClassDefinition.Properties do
+        if PropertyDefinition.Name = PropertyConfiguration.Name then
+        begin
+          if not PropertyConfiguration.Attribute.IsEmpty then
+            PropertyDefinition.AddAtribute(PropertyConfiguration.Attribute);
 
-      if Assigned(PropertyDefinition) then
-      begin
-        if not PropertyConfiguration.ChangeType.IsEmpty then
-          PropertyDefinition.PropertyType := FindType(PropertyConfiguration.ChangeType, TypeDefinition.AsClassDefinition);
+          if not PropertyConfiguration.ChangeType.IsEmpty then
+            PropertyDefinition.PropertyType := FindType(PropertyConfiguration.ChangeType, TypeDefinition.AsClassDefinition);
 
-        if PropertyConfiguration.OptionalStored then
-          PropertyDefinition.Optional := PropertyConfiguration.Optional;
-      end;
-    end;
+          if PropertyConfiguration.OptionalStored then
+            PropertyDefinition.Optional := PropertyConfiguration.Optional;
+        end;
   end;
 
   for var UnitDefinition in Units do
@@ -953,6 +1001,9 @@ begin
       if not TypeExternal.ModuleName.IsEmpty then
         AddTypeExternal(TypeExternal.ModuleName, TypeExternal.Name);
 
+    for var Namespace in Configuration.Namespaces do
+      FSchemaNamespace.Add(Namespace.Namespace, Namespace.Prefix);
+
     LoadImports(Configuration);
   end;
 end;
@@ -986,7 +1037,7 @@ end;
 
 function TSchemaImporter.LoadFileFromConfiguration(const UnitFileConfiguration: TUnitFileConfiguration): String;
 begin
-  var ReferenceName := UnitFileConfiguration.Reference;
+  var ReferenceName := UnitFileConfiguration.FileName;
 
   if not UnitFileConfiguration.BaseURL.IsEmpty then
     ReferenceName := UnitFileConfiguration.BaseURL + '/' + ReferenceName;
@@ -1051,38 +1102,15 @@ begin
   Result := CreateUnit(UnitConfiguration);
 end;
 
-procedure TSchemaImporter.LoadUnitFileDefinition(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
-begin
-  if not FUnitFiles.ContainsKey(UnitFileConfiguration) then
-  begin
-    FUnitFiles.Add(UnitFileConfiguration, UnitDefinition);
-
-    var Loader := CreateSchemaLoader(UnitFileConfiguration);
-    var MainModule := Loader.CreateMainModule(UnitDefinition, UnitFileConfiguration);
-
-    UnitDefinition.MainModule := MainModule;
-
-    Loader.GenerateUnitFileDefinition(MainModule, UnitFileConfiguration);
-  end;
-end;
-
-function TSchemaImporter.LoadUnitFromReference(const Reference: String): TTypeUnitDefinition;
-begin
-  for var UnitConfiguration in Configuration.UnitConfiguration do
-    for var UnitFileConfiguration in UnitConfiguration.Files do
-      if UnitFileConfiguration.Reference = Reference then
-      begin
-        Result := LoadUnit(UnitConfiguration);
-
-        LoadUnitFileDefinition(Result, UnitFileConfiguration);
-
-        Exit;
-      end;
-
-  raise Exception.CreateFmt('Schema file without unit configuration %s!', [ExtractFileName(Reference)]);
-end;
-
 { TXSDSchemaLoader }
+
+function TXSDSchemaLoader.CompareClassInheritence(const Left, Right: TTypeClassDefinition): Integer;
+begin
+  Result := IfThen(Assigned(Left.InheritedFrom), 1, 0) - IfThen(Assigned(Right.InheritedFrom), 1, 0);
+
+  if Result = 0 then
+    Result := Left.ParentModule.Classes.IndexOf(Left) - Right.ParentModule.Classes.IndexOf(Right);
+end;
 
 constructor TXSDSchemaLoader.Create(const Importer: TSchemaImporter);
 begin
@@ -1095,9 +1123,22 @@ end;
 
 function TXSDSchemaLoader.CreateTypeDefinition(const SchemaItem: IXMLSchemaItem; const Module: TTypeModuleDefinition): TTypeDefinition;
 var
+  AttributeType: IXMLAttributeDef;
   ComplexType: IXMLComplexTypeDef;
+  ElementCompositor: IXMLElementCompositor;
   ElementType: IXMLElementDef;
   SimpleType: IXMLSimpleTypeDef;
+
+  function MakeName(const SchemaItem: IXMLSchemaItem): String;
+
+    function GetNamespace: String;
+    begin
+      Result := VarToStrDef(SchemaItem.SchemaDef.TargetNamespace, SchemaItem.NamespaceURI);
+    end;
+
+  begin
+    Result := GetNameWithNamespace(SchemaItem.Name, GetNamespace);
+  end;
 
   function CreateEnumeration: TTypeEnumeration;
   var
@@ -1106,7 +1147,7 @@ var
   begin
     EnumValues := TStringList.Create(dupIgnore, False, False);
     Result := TTypeEnumeration.Create(Module);
-    Result.Name := FormatSchemaItemName(SimpleType);
+    Result.Name := MakeName(SimpleType);
 
     for var A := 0 to Pred(SimpleType.Enumerations.Count) do
     begin
@@ -1135,12 +1176,21 @@ var
     if SimpleType.Enumerations.Count > 0 then
       Result := CreateEnumeration
     else
-      Result := CreateAlias(Module, FormatSchemaItemName(SimpleType), FindType(SimpleType.RestrictionNode.BaseName, Module));
+    begin
+      var TypeName := GetNameWithNamespace(SimpleType, SimpleType.RestrictionNode.BaseName);
+
+      var BaseType := FindType(TypeName, Module);
+
+      if not Assigned(BaseType) then
+        BaseType := Module.AddDelayedType(TypeName);
+
+      Result := CreateAlias(Module, MakeName(SimpleType), BaseType);
+    end;
   end;
 
   function CreateArray: TTypeAlias;
   begin
-    Result := CreateAlias(Module, FormatSchemaItemName(SimpleType), TTypeArrayDefinition.Create(Module, FindType((SimpleType.ContentNode as IXMLSimpleTypeList).ItemType, Module)));
+    Result := CreateAlias(Module, GetNameWithNamespace(SimpleType, SimpleType.Name), TTypeArrayDefinition.Create(Module, FindType((SimpleType.ContentNode as IXMLSimpleTypeList).ItemType, Module)));
   end;
 
   function CreateSimpleType: TTypeDefinition;
@@ -1176,54 +1226,15 @@ var
     end;
   end;
 
-  //  var ElementDataType := CheckTypeDefinition(ElementDefinition);
-  //
-  //  if ElementDataType.IsComplex then
-  //  begin
-  //    Abort;
-  //    var ComplexType := ElementDataType as IXMLComplexTypeDef;
-  //
-  //    if (ComplexType.ElementDefs.Count = 0) and (ComplexType.AttributeDefs.Count = 1) and ComplexType.AttributeDefs[0].HasAttribute(SFixed) then
-  //    begin
-  //      var Attribute := ComplexType.AttributeDefs[0];
-  //      var PropertyType: IXMLTypeDef := nil;
-  //
-  //      if Assigned(ComplexType.BaseType) then
-  //        PropertyType := ComplexType.BaseType
-  //      else
-  //        PropertyType := GetAttributeDataType(Attribute);
-  //
-  //      Result := CreateProperty(PropertyType);
-  //
-  //      AddPropertyAttribute(Result, Attribute);
-  //      Result.Optional := Result.Optional or IsElementOptional(ElementDefinition);
-  //    end
-  //    else
-  //    begin
-  //      CheckClassDefinition(ClassDefinition, ComplexType);
-  //
-  //      Result := CreateProperty(ComplexType);
-  //    end;
-  //  end
-  //  else
-  //  begin
-  //    Result := CreateProperty(ElementDataType);
-  //
-  //    var FixedValue := ElementDefinition.AttributeNodes.FindNode(SFixed);
-  //
-  //    if Assigned(FixedValue) then
-  //      Result.FixedValue := VarToStr(FixedValue.NodeValue);
-  //  end;
-
   function CreateProperty(const ClassDefinition: TTypeClassDefinition; const Name: String; const PropertyType: TTypeDefinition): TPropertyDefinition;
   begin
     Result := ClassDefinition.AddProperty(Name);
     Result.PropertyType := PropertyType;
   end;
 
-  function AddProperty(const ClassDefinition: TTypeClassDefinition; const Element: IXMLElementDef): TPropertyDefinition;
+  function AddProperty(const ClassDefinition: TTypeClassDefinition; const Element: IXMLElementDef; const TypeDefinition: TTypeDefinition): TPropertyDefinition;
   begin
-    Result := CreateProperty(ClassDefinition, Element.Name, CheckTypeDefinition(Element, ClassDefinition));
+    Result := CreateProperty(ClassDefinition, MakeName(Element), TypeDefinition);
     Result.Optional := IsOptional(Element);
 
     if Element.IsRepeating then
@@ -1233,9 +1244,9 @@ var
       Result.AddNamespaceAttribute(Element.Ref.SchemaDef.TargetNamespace);
   end;
 
-  function AddPropertyAttribute(const ClassDefinition: TTypeClassDefinition; const Attribute: IXMLAttributeDef): TPropertyDefinition;
+  function AddPropertyAttribute(const ClassDefinition: TTypeClassDefinition; const Attribute: IXMLAttributeDef; const TypeDefinition: TTypeDefinition): TPropertyDefinition;
   begin
-    Result := CreateProperty(ClassDefinition, Attribute.Name, CheckTypeDefinition(Attribute, ClassDefinition));
+    Result := CreateProperty(ClassDefinition, GetNameWithNamespace(Attribute, Attribute.Name), TypeDefinition);
 
     if Attribute.Fixed = NULL then
       Result.AddXMLAttributeValue
@@ -1245,76 +1256,114 @@ var
     Result.Optional := (Attribute.Use <> NULL) and (Attribute.Use = 'optional');
   end;
 
-  function CreateComplexType: TTypeDefinition;
+  procedure GenerateProperties(const ParentNode: IXMLNode; const Module: TTypeModuleDefinition);
   var
-    ClassDefinition: TTypeClassDefinition;
-
-    procedure GenerateProperties(const Elements: IXMLNodeList);
-    var
-      ElementAttribute: IXMLAttributeDef;
-      ElementDefinition: IXMLElementDef;
-
-    begin
-      var Element := Elements.First;
-
-      while Assigned(Element) do
-      begin
-        if Supports(Element, IXMLElementDef, ElementDefinition) then
-          AddProperty(ClassDefinition, ElementDefinition)
-        else if Supports(Element, IXMLElementCompositor) or Supports(Element, IXMLBaseTypeIndicator) or Supports(Element, IXMLComplexContent) then
-          GenerateProperties(Element.ChildNodes)
-        else if Supports(Element, IXMLAttributeDef, ElementAttribute) then
-          AddPropertyAttribute(ClassDefinition, ElementAttribute)
-        else if Supports(Element, IXMLAnnotation) or (Element.NodeName = '#comment') then
-        else if Element.NodeName = 'any' then
-        else
-          Abort;
-
-        Element := Element.NextSibling;
-      end;
-    end;
-
-  begin
-    ClassDefinition := FImporter.CreateClassDefinition(Module, FormatSchemaItemName(ComplexType));
-    Result := ClassDefinition;
-
-    ClassDefinition.AddNamespaceAttribute(VarToStr(ComplexType.SchemaDef.TargetNamespace));
-
-    case ComplexType.DerivationMethod of
-      dmNone: ;
-      dmComplexExtension: ClassDefinition.InheritedFrom := Module.ParentUnit.MainModule.AddDelayedType(TXMLComplexTypeDef(ComplexType).ContentNode.GetAttribute(SBase));
-      dmComplexRestriction: Abort;
-      dmSimpleExtension: CreateAlias(Module, ComplexType.Name, FindType(ComplexType.BaseTypeName, Module));
-      dmSimpleRestriction: Abort;
-    end;
-
-    GenerateProperties(ComplexType.ChildNodes);
-  end;
-
-  function CreateElementType: TTypeDefinition;
-  var
+    BaseIndicator: IXMLBaseTypeIndicator;
+    ComplexContent: IXMLComplexContent;
     SchemaItem: IXMLSchemaItem;
 
   begin
-    if ElementType.ChildNodes.Count > 0 then
-    begin
-      var CurrentChild := ElementType.ChildNodes.First;
+    var Node := ParentNode.ChildNodes.First;
 
-      while Assigned(CurrentChild) and not Supports(CurrentChild, IXMLSchemaItem, SchemaItem) do
-        CurrentChild := CurrentChild.NextSibling;
+    while Assigned(Node) do
+    begin
+      if Supports(Node, IXMLSchemaItem, SchemaItem) then
+        CreateTypeDefinition(SchemaItem, Module)
+      else if Supports(Node, IXMLBaseTypeIndicator, BaseIndicator) then
+        GenerateProperties(BaseIndicator, Module)
+      else if Supports(Node, IXMLComplexContent, ComplexContent) then
+        GenerateProperties(ComplexContent, Module);
+
+      Node := Node.NextSibling;
+    end;
+  end;
+
+  function CreateComplexType: TTypeDefinition;
+
+    function CreateClassDefinition: TTypeClassDefinition;
+    begin
+      Result := FImporter.CreateClassDefinition(Module, MakeName(ComplexType));
+
+      Result.AddNamespaceAttribute(VarToStr(ComplexType.SchemaDef.TargetNamespace));
+
+      case ComplexType.DerivationMethod of
+        dmNone: ;
+        dmComplexExtension: Result.InheritedFrom := Module.AddDelayedType(GetNameWithNamespace(ComplexType, TXMLComplexTypeDef(ComplexType).ContentNode.GetAttribute(SBase)));
+        dmComplexRestriction: Abort;
+        dmSimpleExtension: ;
+        dmSimpleRestriction: Abort;
+      end;
+
+      GenerateProperties(ComplexType, Result);
+    end;
+
+  begin
+    if ComplexType.DerivationMethod = dmSimpleExtension then
+      Result := CreateAlias(Module, MakeName(ComplexType), FindType(GetNameWithNamespace(ComplexType, ComplexType.BaseTypeName), Module))
+    else
+      Result := CreateClassDefinition;
+  end;
+
+  function FindSchemaItem(const ChildNodes: IXMLNodeList): IXMLSchemaItem;
+  begin
+    var CurrentChild := ChildNodes.First;
+    Result := nil;
+
+    while Assigned(CurrentChild) and not Supports(CurrentChild, IXMLSchemaItem, Result) do
+      CurrentChild := CurrentChild.NextSibling;
+  end;
+
+  function CreateElementType: TTypeDefinition;
+  begin
+    if HasTypeName(ElementType) then
+      Result := CheckTypeDefinition(ElementType, Module)
+    else if ElementType.ChildNodes.Count > 0 then
+    begin
+      var SchemaItem := FindSchemaItem(ElementType.ChildNodes);
 
       if Assigned(SchemaItem) then
       begin
         Result := CreateTypeDefinition(SchemaItem, Module);
-        Result.Name := Result.Name + 'Element';
+        Result.Name := Result.Name + 'ElementType';
       end
       else
-        Result := CheckTypeDefinition(ElementType, Module);
+        Result := Importer.StringType;
     end
     else
       Result := CheckTypeDefinition(ElementType, Module);
 
-    CreateProperty(Module.AsClassDefinition, FormatSchemaItemName(ElementType), Result);
+    AddProperty(Module.AsClassDefinition, ElementType, Result);
+  end;
+
+  function CreateAttributeType: TTypeDefinition;
+  begin
+    if HasTypeName(AttributeType) then
+      Result := CheckTypeDefinition(AttributeType, Module)
+    else if AttributeType.ChildNodes.Count > 0 then
+    begin
+      var SchemaItem := FindSchemaItem(AttributeType.ChildNodes);
+
+      if Assigned(SchemaItem) then
+      begin
+        Result := CreateTypeDefinition(SchemaItem, Module);
+        Result.Name := Result.Name + 'Attribute';
+      end
+      else
+      begin
+        Abort;
+
+        Exit(nil);
+      end;
+    end
+    else
+      Result := CheckTypeDefinition(AttributeType, Module);
+
+    AddPropertyAttribute(Module.AsClassDefinition, AttributeType, Result);
+  end;
+
+  procedure CreateElementCompositor;
+  begin
+    GenerateProperties(ElementCompositor, Module);
   end;
 
 begin
@@ -1324,6 +1373,17 @@ begin
     Result := CreateComplexType
   else if Supports(SchemaItem, IXMLElementDef, ElementType) then
     Result := CreateElementType
+  else if Supports(SchemaItem, IXMLAttributeDef, AttributeType) then
+    Result := CreateAttributeType
+  else if Supports(SchemaItem, IXMLElementCompositor, ElementCompositor) then
+  begin
+    CreateElementCompositor;
+
+    Result := nil;
+  end
+  else if Supports(SchemaItem, IXMLSchemaImport) or Supports(SchemaItem, IXMLSchemaInclude) or Supports(SchemaItem, IXMLAnnotation) then
+    // Type to ignore
+    Result := nil
   else
     Abort;
 end;
@@ -1342,43 +1402,29 @@ var
 begin
   Result := FImporter.FindType(TypeName, Module);
 
-  if not Assigned(Result) and FXMLBuildInType.TryGetValue(ExtractLocalName(TypeName), BuildInType)  then
+  if not Assigned(Result) and FXMLBuildInType.TryGetValue(TypeName, BuildInType)  then
     Result := BuildInType;
 end;
 
-function TXSDSchemaLoader.FindTypeInProperties(const TypeName: String; const Module: TTypeModuleDefinition): TTypeDefinition;
+function TXSDSchemaLoader.FindTypeName(const SchemaItem: IXMLTypedSchemaItem; var TypeName: String): Boolean;
 begin
-  Result := FindType(TypeName, Module);
+  Result := True;
 
-  if not Assigned(Result) then
-    for var ClassDefinition in Module.Classes do
-      for var AProperty in ClassDefinition.Properties do
-        if AProperty.Name = TypeName then
-          Result := AProperty.PropertyType;
-end;
+  if SchemaItem.Attributes[SRef] <> NULL then
+    TypeName := SchemaItem.RefName
+  else if SchemaItem.Attributes[SType] <> NULL then
+    TypeName := SchemaItem.Attributes[SType]
+  else
+    Exit(False);
 
-function TXSDSchemaLoader.FormatSchemaItemName(const SchemaItem: IXMLSchemaItem): String;
-begin
-  Result := SchemaItem.ItemLocalName;
-
-  if SchemaItem.SchemaDef.TargetNamespace <> NULL then
-  begin
-    var Namespace := SchemaItem.SchemaDef.FindNamespaceDecl(SchemaItem.SchemaDef.TargetNamespace);
-
-    if Assigned(Namespace) and (Namespace.LocalName <> Namespace.NodeName) then
-      Result := Format('%s:%s', [Namespace.LocalName, Result]);
-  end;
+  TypeName := GetNameWithNamespace(SchemaItem, TypeName);
 end;
 
 function TXSDSchemaLoader.CheckTypeDefinition(const SchemaItem: IXMLTypedSchemaItem; const Module: TTypeModuleDefinition): TTypeDefinition;
 begin
   var TypeName: String;
 
-  if SchemaItem.Attributes[SRef] <> NULL then
-    TypeName := SchemaItem.RefName
-  else if SchemaItem.Attributes[SType] <> NULL then
-    TypeName := SchemaItem.Attributes[SType]
-  else if SchemaItem.ChildNodes.Count > 0 then
+  if not FindTypeName(SchemaItem, TypeName) and (SchemaItem.ChildNodes.Count > 0) then
     Exit(CreateTypeDefinition(SchemaItem, Module));
 
   Result := FindType(TypeName, Module);
@@ -1397,20 +1443,13 @@ procedure TXSDSchemaLoader.GenerateClassDefinitionFromSchema(const ParentModule:
       SortInheritenceClasses(&Class.Classes);
   end;
 
-begin
-  for var A := 0 to Pred(SchemaDefinition.SimpleTypes.Count) do
-    CreateTypeDefinition(SchemaDefinition.SimpleTypes[A], ParentModule);
+  procedure LoadSchema(const Reference: String; const SchemaDefinition: IXMLSchemaDef);
+  begin
+    var ParentModule: TTypeModuleDefinition;
 
-  for var A := 0 to Pred(SchemaDefinition.ComplexTypes.Count) do
-    CreateTypeDefinition(SchemaDefinition.ComplexTypes[A], ParentModule);
-
-  for var B := 0 to Pred(SchemaDefinition.ElementDefs.Count) do
-    CreateTypeDefinition(SchemaDefinition.ElementDefs[B], ParentModule);
-
-  SortInheritenceClasses(ParentModule.ParentUnit.MainModule.Classes);
-end;
-
-procedure TXSDSchemaLoader.GenerateUnitFileDefinition(const MainModule: TTypeModuleDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+    if not Importer.GetModuleDefinitionByReference(Reference, ParentModule) then
+      GenerateClassDefinitionFromSchema(ParentModule, SchemaDefinition);
+  end;
 
   procedure ProcessReferences(const List: IXMLSchemaDocRefs);
   begin
@@ -1418,49 +1457,99 @@ procedure TXSDSchemaLoader.GenerateUnitFileDefinition(const MainModule: TTypeMod
     begin
       var Reference := List[A];
 
-      FImporter.LoadUnitFromReference(Reference.SchemaLocation);
+      if Assigned(Reference.SchemaRef) then
+        LoadSchema(Reference.SchemaLocation, Reference.SchemaRef);
     end;
   end;
 
+begin
+  ProcessReferences(SchemaDefinition.SchemaImports);
+
+  ProcessReferences(SchemaDefinition.SchemaIncludes);
+
+  var CurrentChild := SchemaDefinition.ChildNodes.First;
+  var SchemaItem: IXMLSchemaItem;
+
+  while Assigned(CurrentChild) do
+  begin
+    if Supports(CurrentChild, IXMLSchemaItem, SchemaItem) then
+      CreateTypeDefinition(SchemaItem, ParentModule);
+
+    CurrentChild := CurrentChild.NextSibling;
+  end;
+
+  SortInheritenceClasses(ParentModule.Classes);
+end;
+
+procedure TXSDSchemaLoader.GenerateUnitFileDefinition(const MainModule: TTypeModuleDefinition; const UnitFileConfiguration: TUnitFileConfiguration);
+
   function LoadFile: IXMLSchemaDoc;
   begin
-    if UnitFileConfiguration.Reference.StartsWith('http') then
+    if UnitFileConfiguration.FileName.StartsWith('http') then
       Result := LoadXMLSchemaStr(FImporter.LoadFileFromConfiguration(UnitFileConfiguration))
     else
-      Result := LoadXMLSchema(FImporter.GetFileNameFromSchemaFolder(UnitFileConfiguration.Reference))
+      Result := LoadXMLSchema(FImporter.GetFileNameFromSchemaFolder(UnitFileConfiguration.FileName))
   end;
 
 begin
   var Schema := LoadFile;
 
-//  ProcessReferences(Schema.SchemaDef.SchemaIncludes);
-//
-//  ProcessReferences(Schema.SchemaDef.SchemaImports);
+  MainModule.FullLoaded := Schema.DocumentElement.HasAttribute(SXMLNS);
 
-  GenerateClassDefinitionFromSchema(MainModule, Schema.SchemaDef);
+  if MainModule.FullLoaded then
+    GenerateClassDefinitionFromSchema(MainModule, Schema.SchemaDef);
 end;
 
-function TXSDSchemaLoader.GetAttributeDataType(const Attribute: IXMLAttributeDef): IXMLTypedSchemaItem;
+function TXSDSchemaLoader.GetNameWithNamespace(const Node: IXMLNode; const Name: String): String;
+
+  function FindNamespace(const Node: IXMLNode): String;
+  begin
+    var CurrentNode := Node;
+    Result := EmptyStr;
+
+    repeat
+      if CurrentNode.HasAttribute(SXMLNS) then
+        Result := CurrentNode.Attributes[SXMLNS];
+
+      CurrentNode := CurrentNode.ParentNode;
+    until not Result.IsEmpty or not Assigned(CurrentNode);
+  end;
+
+  function GetNamespace: String;
+  var
+    SchemaNode: IXMLSchemaNode;
+
+  begin
+    Result := FindNamespace(Node);
+
+    if Result.IsEmpty and Supports(Node, IXMLSchemaNode, SchemaNode) and (SchemaNode.SchemaDef.ParentRefType <> srNone) then
+      Result := FindNamespace(SchemaNode.SchemaDef.ParentSchema);
+  end;
+
 begin
-//  if Attribute.RefName.IsEmpty then
-//    Result := Attribute.DataType
-//  else if Assigned(Attribute.Ref) then
-//    Result := Attribute.Ref.DataType
-//  else
-//  begin
-//    var SchemaDefinition := Attribute.SchemaDef;
-//
-//    while Assigned(SchemaDefinition) do
-//    begin
-//      var SchemaAttribute := SchemaDefinition.AttributeDefs.Find(Attribute.RefName);
-//
-//      if Assigned(SchemaAttribute) then
-//        Exit(SchemaAttribute.DataType);
-//
-//      SchemaDefinition := SchemaDefinition.NextSibling as IXMLSchemaDef;
-//    end;
-//  end;
-  Result := nil;
+  var Namespace: String;
+
+  if Name.Contains(NSDelim) then
+    Namespace := Node.FindNamespaceURI(Name)
+  else
+    Namespace := GetNamespace;
+
+  Result := GetNameWithNamespace(Name, Namespace);
+end;
+
+function TXSDSchemaLoader.GetNameWithNamespace(const Name, Namespace: String): String;
+begin
+  if Namespace.IsEmpty then
+    Abort;
+
+  Result := MakeNodeName(Importer.GetSchemanamespaceFromTarget(Namespace), ExtractLocalName(Name));
+end;
+
+function TXSDSchemaLoader.HasTypeName(const SchemaItem: IXMLTypedSchemaItem): Boolean;
+begin
+  var TypeName: String;
+
+  Result := FindTypeName(SchemaItem, TypeName);
 end;
 
 function TXSDSchemaLoader.IsElementOptional(const ElementDefinition: IXMLElementDef): Boolean;
@@ -1474,7 +1563,7 @@ procedure TXSDSchemaLoader.LoadXSDTypes;
   begin
     Result := TypeDefinition;
 
-    FXMLBuildInType.Add(TypeName, TypeDefinition);
+    FXMLBuildInType.Add(GetNameWithNamespace(TypeName, SXMLSchemaURI_2001), TypeDefinition);
   end;
 
 begin
@@ -1589,24 +1678,77 @@ var
     end;
 
   begin
-    Result := CheckReservedName(FormatName(GetName));
+    Result := CheckReservedName(GetName);
+  end;
+
+  function GetMainModule(const Module: TTypeModuleDefinition): TTypeModuleDefinition;
+  begin
+    Result := Module;
+
+    while Assigned(Result.ParentModule) and not Result.ParentModule.IsUnitDefinition do
+      Result := Result.ParentModule;
   end;
 
   function ResolveTypeDefinition(const TypeDefinition: TTypeDefinition): TTypeDefinition;
   var
     TypeName: String;
 
-    function FindInModules(const CurrentModule, ModuleToIgnore: TTypeModuleDefinition): TTypeDefinition;
+    function ResolveTypeInAllClasses(const Module: TTypeModuleDefinition): TTypeDefinition;
     begin
-      Result := nil;
+      if Module.Name = TypeName then
+        Exit(Module);
 
-      if (CurrentModule <> ModuleToIgnore) and Importer.FindTypeDefinitionInModule(CurrentModule, TypeName, Result) then
+      Result := Importer.FindType(TypeName, Module);
+
+      if Assigned(Result) then
         Exit;
 
-      if CurrentModule.IsUnitDefinition then
-        Result := Importer.FindTypeInUnits(TypeName)
-      else
-        Result := FindInModules(CurrentModule.ParentModule, CurrentModule);
+      for var ClassDefinition in Module.Classes do
+      begin
+        Result := ResolveTypeInAllClasses(ClassDefinition);
+
+        if Assigned(Result) then
+          Exit;
+      end;
+
+      if Module.IsClassDefinition then
+        for var PropertyDefinition in Module.AsClassDefinition.Properties do
+          if PropertyDefinition.Name = TypeName then
+            Exit(PropertyDefinition.PropertyType);
+
+      Result := nil;
+    end;
+
+    function ResolveTypeInModules(const Module: TTypeModuleDefinition): TTypeDefinition;
+    begin
+      Result := ResolveTypeInAllClasses(Module);
+
+      if Assigned(Result) then
+        Exit;
+
+      var ParentUnit := Module.ParentUnit;
+
+      for var UnitDefinition in Importer.Units do
+        if UnitDefinition = ParentUnit then
+        begin
+          for var ClassDefinition in UnitDefinition.Classes do
+            if ClassDefinition <> Module then
+            begin
+              Result := ResolveTypeInAllClasses(ClassDefinition);
+
+              if Assigned(Result) then
+                Exit;
+            end;
+        end
+        else
+        begin
+          Result := ResolveTypeInAllClasses(UnitDefinition);
+
+          if Assigned(Result) then
+            Exit;
+        end;
+
+      Result := nil;
     end;
 
   begin
@@ -1620,7 +1762,7 @@ var
       begin
         TypeName := DelayedType.UnresolvedType;
 
-        DelayedType.TypeResolved := FindInModules(DelayedType.ParentModule, nil);
+        DelayedType.TypeResolved := ResolveTypeInModules(GetMainModule(DelayedType.ParentModule));
 
         if not DelayedType.IsResolved then
           DelayedType.TypeResolved := TUndefinedType.Create(TypeName);
@@ -1636,7 +1778,9 @@ var
   begin
     Result := ResolveTypeDefinition(TypeDefinition);
 
-    if Result.IsTypeAlias then
+    if not Assigned(Result) then
+      raise Exception.CreateFmt('Cannot resolve the type alias %s!', [TypeDefinition.Name])
+    else if Result.IsTypeAlias then
       Result := ResolveTypeAlias(Result.AsTypeAlias.TypeDefinition);
   end;
 
@@ -1652,17 +1796,12 @@ var
 
   function GetArrayItemType(const TypeDefinition: TTypeDefinition): TTypeDefinition;
   begin
-    var BaseType := ResolveTypeDefinition(TypeDefinition);
+    var ResolvedType := ResolveTypeDefinition(TypeDefinition);
 
-    if BaseType.IsArrayType then
-      Result := ResolveTypeDefinition(BaseType.AsArrayType.ArrayType)
+    if ResolvedType.IsArrayType then
+      Result := ResolveTypeDefinition(ResolvedType.AsArrayType.ArrayType)
     else
       Result := TypeDefinition;
-  end;
-
-  function GetArrayItemBaseType(const TypeDefinition: TTypeDefinition): TTypeDefinition;
-  begin
-    Result := ResolveTypeDefinition(GetArrayItemType(TypeDefinition));
   end;
 
   function GetClassImplementationName(ClassDefinition: TTypeClassDefinition): String;
@@ -1677,32 +1816,59 @@ var
     end;
   end;
 
-  function GetPropertyFieldName(const &Property: TPropertyDefinition): String;
+  function FormatPropertyName(const PropertyDefinition: TPropertyDefinition): String;
+
+    function FindTypeWithSamePropertyName: Boolean;
+    begin
+      for var ClassDefinition in PropertyDefinition.ParentModule.Classes do
+        if SameText(ClassDefinition.Name, PropertyDefinition.Name) then
+          Exit(True);
+
+      for var EnumeratorDefinition in PropertyDefinition.ParentModule.Enumerations do
+        if SameText(EnumeratorDefinition.Name, PropertyDefinition.Name) then
+          Exit(True);
+
+      Result := False;
+    end;
+
   begin
-    Result := 'F' + FormatName(&Property.Name);
+    Result := PropertyDefinition.Name;
+
+    if PropertyDefinition.ParentModule = GetMainModule(PropertyDefinition.ParentModule) then
+      Result := CheckNameDeclaration(Result);
+
+    Result := CheckReservedName(OnlyValidChars(ExtractLocalName(Result)));
+
+    if FindTypeWithSamePropertyName then
+      Result := Result + 'Element';
   end;
 
-  function GetStoredFieldName(const &Property: TPropertyDefinition): String;
+  function GetPropertyFieldName(const PropertyDefinition: TPropertyDefinition): String;
   begin
-    Result := Format('%sIsStored', [GetPropertyFieldName(&Property)])
+    Result := 'F' + FormatName(OnlyValidChars(FormatPropertyName(PropertyDefinition)));
   end;
 
-  function GetPropertyGetFunctionName(const &Property: TPropertyDefinition): String;
+  function GetStoredFieldName(const PropertyDefinition: TPropertyDefinition): String;
   begin
-    Result := 'Get' + FormatName(&Property.Name)
+    Result := Format('%sIsStored', [GetPropertyFieldName(PropertyDefinition)])
   end;
 
-  function GetPropertyReadMethod(const &Property: TPropertyDefinition): String;
+  function GetPropertyGetFunctionName(const PropertyDefinition: TPropertyDefinition): String;
   begin
-    if &Property.NeedGetFunction then
-      Result := GetPropertyGetFunctionName(&Property)
+    Result := 'Get' + FormatName(FormatPropertyName(PropertyDefinition));
+  end;
+
+  function GetPropertyReadMethod(const PropertyDefinition: TPropertyDefinition): String;
+  begin
+    if PropertyDefinition.NeedGetFunction then
+      Result := GetPropertyGetFunctionName(PropertyDefinition)
     else
-      Result := GetPropertyFieldName(&Property);
+      Result := GetPropertyFieldName(PropertyDefinition);
   end;
 
-  function GetPropertySetProcedureName(const &Property: TPropertyDefinition): String;
+  function GetPropertySetProcedureName(const PropertyDefinition: TPropertyDefinition): String;
   begin
-    Result := 'Set' + FormatName(&Property.Name);
+    Result := 'Set' + FormatName(FormatPropertyName(PropertyDefinition));
   end;
 
   function GetPropertyWriteMethod(const &Property: TPropertyDefinition): String;
@@ -1919,7 +2085,7 @@ var
 
       function GetNeedDestructor(const PropertyType: TTypeDefinition): Boolean;
       begin
-        Result := PropertyType.IsClassDefinition and not PropertyType.IsObjectType or PropertyType.IsDynamicPropertyType or PropertyType.IsArrayType and GetNeedDestructor(GetArrayItemBaseType(PropertyType));
+        Result := PropertyType.IsClassDefinition and not PropertyType.IsObjectType or PropertyType.IsDynamicPropertyType or PropertyType.IsArrayType and GetNeedDestructor(GetArrayItemType(PropertyType));
       end;
 
       function GetNeedGetFunction(const PropertyType: TTypeDefinition): Boolean;
@@ -1964,8 +2130,8 @@ var
 
         AppendInformation(GetNeedGetFunction(PropertyType) or not &Property.FixedValue.IsEmpty, &Property, TImplementationInformation.NeedGetFunction);
 
-        if not SameText(FormatPropertyName(&Property.Name), &Property.Name) then
-          &Property.AddFieldAttribute(&Property.Name);
+        if ExtractLocalName(FormatPropertyName(&Property)) <> ExtractLocalName(&Property.Name) then
+          &Property.AddFieldAttribute(ExtractLocalName(&Property.Name));
       end;
     end;
 
@@ -2071,7 +2237,7 @@ var
 
         LoadParentAttributes(Ident + WHITE_SPACE_IDENT, GetPropertyType(&Property));
 
-        AddLine('%s  property %s: %s read %s write %s%s;', [Ident, FormatPropertyName(&Property.Name), GetPropertyTypeName(&Property), GetPropertyReadMethod(&Property), GetPropertyWriteMethod(&Property),
+        AddLine('%s  property %s: %s read %s write %s%s;', [Ident, FormatPropertyName(&Property), GetPropertyTypeName(&Property), GetPropertyReadMethod(&Property), GetPropertyWriteMethod(&Property),
           GetStoredPropertyDeclaration(&Property)]);
       end;
     end;
@@ -2182,7 +2348,7 @@ var
 
           AddLine('begin');
 
-          AddLine('  Result := %s;', [CreateObjectClass(GetArrayItemBaseType(PropertyType))]);
+          AddLine('  Result := %s;', [CreateObjectClass(GetArrayItemType(PropertyType))]);
 
           AddLine;
 
@@ -2344,7 +2510,7 @@ var
       if not Result.IsEmpty then
         Result := Result + ', ';
 
-      Result := Result + UnitFile.Reference;
+      Result := Result + UnitFile.FileName;
     end;
   end;
 
@@ -2394,7 +2560,7 @@ var
         if not Result.IsEmpty then
           Result := Result + '; ';
 
-        Result := Result + Format('%s%s: %s', [LoadAttributes, OnlyValidChars(Parameter.Name), GetParameterTypeName(Parameter)]);
+        Result := Result + Format('%s%s: %s', [LoadAttributes, ExtractLocalName(Parameter.Name), GetParameterTypeName(Parameter)]);
       end;
 
       if not Result.IsEmpty then
@@ -2472,9 +2638,9 @@ begin
     AddLine;
   end;
 
-  for var AClass in Classes do
+  for var ClassDefinition in Classes do
   begin
-    GenerateClassDeclaration(WHITE_SPACE_IDENT, AClass);
+    GenerateClassDeclaration(WHITE_SPACE_IDENT, ClassDefinition);
 
     AddLine;
   end;
@@ -2572,7 +2738,7 @@ begin
     if &Property.Name = Name then
       Exit(&Property);
 
-  Result := TPropertyDefinition.Create;
+  Result := TPropertyDefinition.Create(Self);
   Result.Name := Name;
 
   FProperties.Add(Result);
@@ -2660,13 +2826,6 @@ begin
 end;
 
 { TTypeDefinition }
-
-constructor TTypeDefinition.Create(const ParentModule: TTypeModuleDefinition);
-begin
-  inherited Create;
-
-  FParentModule := ParentModule;
-end;
 
 function TTypeDefinition.GetAsArrayType: TTypeArrayDefinition;
 begin
@@ -2998,9 +3157,8 @@ begin
     if SameText(ClassProperty.Name, PropertyName) then
       Exit(ClassProperty);
 
-  Result := TPropertyDefinition.Create;
+  Result := ClassDefinition.AddProperty(PropertyName);
   Result.Optional := True;
-  Result.Name := PropertyName;
   Result.PropertyType := PropertyType;
 
   if not Assigned(Result.PropertyType) then
@@ -3009,8 +3167,6 @@ begin
   for var Required in Schema.&Object.required do
     if Result.Name = Required then
       Result.Optional := False;
-
-  ClassDefinition.Properties.Add(Result);
 end;
 
 destructor TJSONSchemaLoader.Destroy;
@@ -3057,7 +3213,8 @@ function TJSONSchemaLoader.FindTypeReference(const Module: TTypeModuleDefinition
     if Reference.IsEmpty then
       Result := Module.ParentUnit
     else
-      Result := FImporter.LoadUnitFromReference(Reference);
+      Abort;
+//      Result := FImporter.LoadUnitFromReference(Reference);
   end;
 
 begin
@@ -3149,14 +3306,9 @@ const
       Result := CheckUniqueName(DefaultName);
   end;
 
-  function GenerateClassName(const Name: String): String;
-  begin
-    Result := 'T' + FormatName(Name);
-  end;
-
   procedure DefinePropertyCheckingType(const PropertyName: String; const PropertySchema: TSchema);
   begin
-    var PropertyType := CheckTypeDefinition(ClassDefinition, PropertySchema, GenerateClassName(PropertyName));
+    var PropertyType := CheckTypeDefinition(ClassDefinition, PropertySchema, FormatName(PropertyName) + 'Property');
 
     if not PropertyType.IsUnitDefinition then
       DefineProperty(ClassDefinition, Schema, PropertyName, PropertyType);
@@ -3195,7 +3347,7 @@ begin
     begin
       PropertyName := GetPropertyName(PatternPropertySchema.Value, 'PatternProperty');
 
-      var PatternProperty := DefineProperty(ClassDefinition, PatternPropertySchema.Value, PropertyName, CreateDynamicPropertyType(ClassDefinition, CheckTypeDefinition(ClassDefinition, PatternPropertySchema.Value, GenerateClassName(PropertyName))));
+      var PatternProperty := DefineProperty(ClassDefinition, PatternPropertySchema.Value, PropertyName, CreateDynamicPropertyType(ClassDefinition, CheckTypeDefinition(ClassDefinition, PatternPropertySchema.Value, FormatName(PropertyName))));
 
       PatternProperty.AddAtribute('%s(''%s'')', [PATTERN_PROPERTY_NAME, PatternPropertySchema.Key]);
     end;
@@ -3206,7 +3358,7 @@ begin
 
     GenerateProperties(ClassDefinition, Schema.&Object.additionalProperties);
 
-    DefineProperty(ClassDefinition, Schema.&Object.additionalProperties, PropertyName, CreateDynamicPropertyType(ClassDefinition, CheckTypeDefinition(ClassDefinition, Schema.&Object.additionalProperties, 'T' + PropertyName)));
+    DefineProperty(ClassDefinition, Schema.&Object.additionalProperties, PropertyName, CreateDynamicPropertyType(ClassDefinition, CheckTypeDefinition(ClassDefinition, Schema.&Object.additionalProperties, PropertyName + 'X')));
   end;
 end;
 
@@ -3229,13 +3381,13 @@ end;
 
 function TJSONSchemaLoader.LoadSchema(const UnitFileConfiguration: TUnitFileConfiguration): TSchema;
 begin
-  if not FSchemas.TryGetValue(UnitFileConfiguration.Reference, Result) then
+  if not FSchemas.TryGetValue(UnitFileConfiguration.FileName, Result) then
   begin
     var Serializer := TBluePrintJsonSerializer.Create as IBluePrintSerializer;
 
     Result := Serializer.Deserialize(FImporter.LoadFileFromConfiguration(UnitFileConfiguration), TypeInfo(TSchema)).AsType<TSchema>;
 
-    FSchemas.Add(UnitFileConfiguration.Reference, Result);
+    FSchemas.Add(UnitFileConfiguration.FileName, Result);
   end;
 end;
 
@@ -3302,16 +3454,10 @@ begin
   inherited Create(Module);
 
   FArrayType := ArrayType;
+  FName := Format('TArray<%s>', [ArrayType.Name]);
 end;
 
 { TTypeUnitDefinitionConfiguration }
-
-constructor TTypeUnitDefinitionConfiguration.Create;
-begin
-  inherited;
-
-  FDeclareTypesNamespace := True;
-end;
 
 destructor TTypeUnitDefinitionConfiguration.Destroy;
 begin
@@ -3366,7 +3512,7 @@ end;
 
 function TTypeMethodDefinition.AddParameter: TTypeParameterDefinition;
 begin
-  Result := TTypeParameterDefinition.Create;
+  Result := TTypeParameterDefinition.Create(ParentModule);
 
   Parameters.Add(Result);
 end;
@@ -3386,7 +3532,7 @@ begin
   AddAtribute('Put');
 end;
 
-constructor TTypeMethodDefinition.Create;
+constructor TTypeMethodDefinition.Create(const ParentModule: TTypeModuleDefinition);
 begin
   inherited;
 
@@ -3467,11 +3613,11 @@ var
 
   function CheckPartType(const Part: IPart): TTypeDefinition;
   begin
-    var PartTypeName := Part.Type_ + Part.Element;
-    Result := SchemaLoader.FindTypeInProperties(PartTypeName, MainModule);
+    var PartTypeName := SchemaLoader.GetNameWithNamespace(Part, Part.Type_ + Part.Element);
+    Result := SchemaLoader.FindType(PartTypeName, MainModule);
 
     if not Assigned(Result) then
-      Result := TUndefinedType.Create(PartTypeName);
+      Result := MainModule.AddDelayedType(PartTypeName);
   end;
 
   function AddParameter(const Name: String; const &Type: TTypeDefinition): TTypeParameterDefinition;
@@ -3616,7 +3762,7 @@ begin
 
         if Assigned(SOAPOperation) then
         begin
-          ServiceMethod := TTypeMethodDefinition.Create;
+          ServiceMethod := TTypeMethodDefinition.Create(MainModule);
           ServiceMethod.Name := Operation.Name;
           ServiceMethod.Return := LoadReturnType(PortTypeOperation.Output);
           var SOAPAction := SOAPOperation.AttributeNodes.FindNode(SSoapAction);
@@ -3675,10 +3821,11 @@ end;
 
 constructor TTypeCommonDefinition.Create;
 begin
-  inherited;
+  inherited Create;
 
   FAttributes := TList<String>.Create;
   FParentAttributes := TList<String>.Create;
+  FParentModule := ParentModule;
 end;
 
 destructor TTypeCommonDefinition.Destroy;
@@ -3714,21 +3861,6 @@ begin
   inherited Create;
 
   FImporter := Importer;
-end;
-
-function TSchemaLoader.CreateMainModule(const UnitDefinition: TTypeUnitDefinition; const UnitFileConfiguration: TUnitFileConfiguration): TTypeModuleDefinition;
-begin
-  Result := UnitDefinition;
-
-  if not UnitFileConfiguration.UnitClassName.IsEmpty then
-  begin
-    var MainClass := FImporter.FindTypeInUnits(UnitFileConfiguration.UnitClassName);
-
-    if not Assigned(MainClass) then
-      MainClass := FImporter.CreateClassDefinition(UnitDefinition, UnitFileConfiguration.UnitClassName);
-
-    Result := MainClass.AsClassDefinition;
-  end;
 end;
 
 { TPropertyDefinitionConfiguration }

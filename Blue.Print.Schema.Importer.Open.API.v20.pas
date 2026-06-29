@@ -235,31 +235,24 @@ var
       Schemas := TList<TOpenAPIDefinition.Response.TSchema>.Create;
 
       for var Return in Operation.responses.responseValue do
-        if Return.Value.response.IsSchemaStored then
+        if Return.Key.StartsWith('2') and Return.Value.response.IsSchemaStored then
           AddSchema(Return.Value.response.schema);
 
-      if Schemas.IsEmpty then
-      else
+      if not Schemas.IsEmpty then
       begin
         var ReturnClassName := Method.Name + 'Return';
 
         if Schemas.Count = 1 then
           Result := GenerateTypeDefinition(MainModule, Schemas.First.schema, ReturnClassName)
         else
-        begin
-          Result := FImporter.CreateClassDefinition(MainModule, ReturnClassName);
-
-          for var Schema in Schemas do
-            if Schema.IsSchemaStored then
-              LoadClassDefinition(Result.AsClassDefinition, GetSchema(Schema));
-        end;
+          Abort;
       end;
 
       Schemas.Free;
     end;
 
   begin
-    Result := TTypeMethodDefinition.Create;
+    Result := TTypeMethodDefinition.Create(MainModule);
     Result.Name := Operation.operationId;
 
     if Result.Name.IsEmpty then
@@ -381,8 +374,7 @@ var
   begin
     if not FindProperty(PropertyName) then
     begin
-      var NewProperty := TPropertyDefinition.Create;
-      NewProperty.Name := PropertyName;
+      var NewProperty := ClassDefinition.AddProperty(PropertyName);
       NewProperty.PropertyType := PropertyType;
       var Required := False;
 
@@ -393,8 +385,6 @@ var
         Required := Required or (RequiredName = PropertyName);
 
       NewProperty.Optional := not Required;
-
-      ClassDefinition.Properties.Add(NewProperty);
     end;
   end;
 
@@ -404,7 +394,7 @@ var
     begin
       var PropertyName := Prop.Key;
 
-      DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, Prop.Value, 'T' + PropertyName));
+      DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, Prop.Value, PropertyName + 'Property'));
     end;
   end;
 
@@ -461,7 +451,7 @@ end;
 
 function TOpenAPI20SchemaLoader.LoadOpenAPIDefinitionFromConfiguration(const UnitFileConfiguration: TUnitFileConfiguration): TOpenAPIDefinition.TOpenAPIDefinition;
 begin
-  Result := LoadOpenAPIDefinition(UnitFileConfiguration.Reference);
+  Result := LoadOpenAPIDefinition(UnitFileConfiguration.FileName);
 end;
 
 function TOpenAPI20SchemaLoader.LoadSchemaReference(const Reference: String; out ReferenceName: String): TOpenAPIDefinition.TOpenAPIDefinition;
@@ -472,7 +462,7 @@ begin
   if References[0].IsEmpty then
     Result := FOpenAPIDefinition
   else
-    Result := LoadOpenAPIDefinition(FImporter.LoadRelativePath(References[0], FImporter.GetFileNameFromSchemaFolder(FUnitFileConfiguration.Reference)));
+    Result := LoadOpenAPIDefinition(FImporter.LoadRelativePath(References[0], FImporter.GetFileNameFromSchemaFolder(FUnitFileConfiguration.FileName)));
 
   ReferenceName := Values[High(Values)];
 end;
