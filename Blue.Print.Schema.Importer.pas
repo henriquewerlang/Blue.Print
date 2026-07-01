@@ -1703,6 +1703,11 @@ var
       if Assigned(Result) then
         Exit;
 
+      if Module.IsClassDefinition then
+        for var PropertyDefinition in Module.AsClassDefinition.Properties do
+          if PropertyDefinition.Name = TypeName then
+            Exit(PropertyDefinition.PropertyType);
+
       for var ClassDefinition in Module.Classes do
       begin
         Result := ResolveTypeInAllClasses(ClassDefinition);
@@ -1710,11 +1715,6 @@ var
         if Assigned(Result) then
           Exit;
       end;
-
-      if Module.IsClassDefinition then
-        for var PropertyDefinition in Module.AsClassDefinition.Properties do
-          if PropertyDefinition.Name = TypeName then
-            Exit(PropertyDefinition.PropertyType);
 
       Result := nil;
     end;
