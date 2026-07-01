@@ -3702,9 +3702,37 @@ var
     end;
   end;
 
-  function LoadReturnType(const Return: IParam): TTypeDefinition;
+  function LoadReturnType(const Operation: IOperation): TTypeDefinition;
+  var
+    Message: IMessage;
+
+    function HasReturnPart: Boolean;
+    begin
+      for var A := 0 to Pred(Message.Parts.Count) do
+        if Message.Parts[A].Name = 'return' then
+          Exit(True);
+
+      Result := False;
+    end;
+
   begin
-    Result := CheckMessageType(FindMessage(Return.Message));
+    Message := FindMessage(Operation.Output.Message);
+
+    if IsRPCCall and not HasReturnPart then
+    begin
+      var ClassDefinition := Importer.CreateClassDefinition(MainModule, Operation.Name);
+
+      for var A := 0 to Pred(Message.Parts.Count) do
+      begin
+        var Part := Message.Parts[A];
+        var PropertyDefinition := ClassDefinition.AddProperty(Part.Name);
+        PropertyDefinition.PropertyType := CheckPartType(Part);
+      end;
+
+      Result := ClassDefinition;
+    end
+    else
+      Result := CheckMessageType(Message);
   end;
 
   function FindSOAPOperation: IXMLNode;
@@ -3762,14 +3790,15 @@ begin
 
         if Assigned(SOAPOperation) then
         begin
-          ServiceMethod := TTypeMethodDefinition.Create(MainModule);
-          ServiceMethod.Name := Operation.Name;
-          ServiceMethod.Return := LoadReturnType(PortTypeOperation.Output);
-          var SOAPAction := SOAPOperation.AttributeNodes.FindNode(SSoapAction);
           var SOAPStyle := SOAPOperation.AttributeNodes.FindNode(SStyle);
-          XMLNameSpaceAttribute := WSDLDocument.Definition.TargetNameSpace;
 
           IsRPCCall := Assigned(SOAPStyle) and SameText(SOAPStyle.Text, 'rpc');
+
+          ServiceMethod := TTypeMethodDefinition.Create(MainModule);
+          ServiceMethod.Name := Operation.Name;
+          ServiceMethod.Return := LoadReturnType(PortTypeOperation);
+          var SOAPAction := SOAPOperation.AttributeNodes.FindNode(SSoapAction);
+          XMLNameSpaceAttribute := WSDLDocument.Definition.TargetNameSpace;
 
           if IsRPCCall then
           begin
