@@ -3616,6 +3616,11 @@ var
     var PartTypeName := SchemaLoader.GetNameWithNamespace(Part, Part.Type_ + Part.Element);
     Result := SchemaLoader.FindType(PartTypeName, MainModule);
 
+    if Assigned(Result) and not Part.Element.IsEmpty then
+      for var PropertyDefinition in Result.ParentModule.AsClassDefinition.Properties do
+        if PropertyDefinition.Name = PartTypeName then
+          Result := PropertyDefinition.PropertyType;
+
     if not Assigned(Result) then
       Result := MainModule.AddDelayedType(PartTypeName);
   end;
