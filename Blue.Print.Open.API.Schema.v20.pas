@@ -18,61 +18,61 @@ type
 
   TOpenAPIDefinition = class
   public type
-    SchemesListArrayItem = (http, https, ws, wss);
+    schemesListArrayItem = (http, https, ws, wss);
 
-    CollectionFormat = (csv, ssv, tsv, pipes);
+    collectionFormat = (csv, ssv, tsv, pipes);
 
-    CollectionFormatWithMulti = (csv, ssv, tsv, pipes, multi);
+    collectionFormatWithMulti = (csv, ssv, tsv, pipes, multi);
 
     // Forward class declaration
-    Info = class;
-    Contact = class;
-    License = class;
-    Paths = class;
-    Definitions = class;
-    ParameterDefinitions = class;
-    ResponseDefinitions = class;
-    ExternalDocs = class;
-    Examples = class;
-    Operation = class;
-    PathItem = class;
-    Responses = class;
-    ResponseValue = class;
-    Response = class;
-    Headers = class;
-    Header = class;
-    VendorExtension = class;
-    BodyParameter = class;
-    HeaderParameterSubSchema = class;
-    QueryParameterSubSchema = class;
-    FormDataParameterSubSchema = class;
-    PathParameterSubSchema = class;
-    NonBodyParameter = class;
-    Parameter = class;
-    Schema = class;
-    FileSchema = class;
-    PrimitivesItems = class;
-    SecurityRequirement = class;
-    Xml = class;
-    Tag = class;
-    SecurityDefinitions = class;
-    BasicAuthenticationSecurity = class;
-    ApiKeySecurity = class;
-    Oauth2ImplicitSecurity = class;
-    Oauth2PasswordSecurity = class;
-    Oauth2ApplicationSecurity = class;
-    Oauth2AccessCodeSecurity = class;
-    Oauth2Scopes = class;
-    ParametersListArrayItem = class;
-    JsonReference = class;
+    info = class;
+    contact = class;
+    license = class;
+    paths = class;
+    definitions = class;
+    parameterDefinitions = class;
+    responseDefinitions = class;
+    externalDocs = class;
+    examples = class;
+    operation = class;
+    pathItem = class;
+    responses = class;
+    responseValue = class;
+    response = class;
+    headers = class;
+    header = class;
+    vendorExtension = class;
+    bodyParameter = class;
+    headerParameterSubSchema = class;
+    queryParameterSubSchema = class;
+    formDataParameterSubSchema = class;
+    pathParameterSubSchema = class;
+    nonBodyParameter = class;
+    parameter = class;
+    schema = class;
+    fileSchema = class;
+    primitivesItems = class;
+    securityRequirement = class;
+    xml = class;
+    tag = class;
+    securityDefinitions = class;
+    basicAuthenticationSecurity = class;
+    apiKeySecurity = class;
+    oauth2ImplicitSecurity = class;
+    oauth2PasswordSecurity = class;
+    oauth2ApplicationSecurity = class;
+    oauth2AccessCodeSecurity = class;
+    oauth2Scopes = class;
+    parametersListArrayItem = class;
+    jsonReference = class;
     TOpenAPIDefinition = class;
 
     // Types alias
     mimeType = System.String;
-    security = TArray<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.SecurityRequirement>;
+    security = TArray<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.securityRequirement>;
     mediaTypeList = TArray<System.String>;
-    parametersList = TArray<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ParametersListArrayItem>;
-    schemesList = TArray<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.SchemesListArrayItem>;
+    parametersList = TArray<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.parametersListArrayItem>;
+    schemesList = TArray<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schemesListArrayItem>;
     title = System.String;
     description = System.String;
     default = System.Rtti.TValue;
@@ -87,19 +87,19 @@ type
     uniqueItems = System.Boolean;
     enum = TArray<System.Rtti.TValue>;
 
-    Info = class
+    info = class
     private
       FTitle: System.String;
       FVersion: System.String;
       FDescription: System.String;
       FTermsOfService: System.String;
-      FContact: TOpenAPIDefinition.Contact;
-      FLicense: TOpenAPIDefinition.License;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FContact: TOpenAPIDefinition.contact;
+      FLicense: TOpenAPIDefinition.license;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetContact: TOpenAPIDefinition.Contact;
-      function GetLicense: TOpenAPIDefinition.License;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetContact: TOpenAPIDefinition.contact;
+      function GetLicense: TOpenAPIDefinition.license;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetDescriptionStored: Boolean;
       function GetTermsOfServiceStored: Boolean;
       function GetContactStored: Boolean;
@@ -118,20 +118,20 @@ type
       property version: System.String read FVersion write FVersion;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       property termsOfService: System.String read FTermsOfService write FTermsOfService stored GetTermsOfServiceStored;
-      property contact: TOpenAPIDefinition.Contact read GetContact write FContact stored GetContactStored;
-      property license: TOpenAPIDefinition.License read GetLicense write FLicense stored GetLicenseStored;
+      property contact: TOpenAPIDefinition.contact read GetContact write FContact stored GetContactStored;
+      property license: TOpenAPIDefinition.license read GetLicense write FLicense stored GetLicenseStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    Contact = class
+    contact = class
     private
       FName: System.String;
       FUrl: System.String;
       FEmail: System.String;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetNameStored: Boolean;
       function GetUrlStored: Boolean;
       function GetEmailStored: Boolean;
@@ -148,16 +148,16 @@ type
       property url: System.String read FUrl write FUrl stored GetUrlStored;
       property email: System.String read FEmail write FEmail stored GetEmailStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    License = class
+    license = class
     private
       FName: System.String;
       FUrl: System.String;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetUrlStored: Boolean;
       function GetVendorExtensionStored: Boolean;
     public
@@ -169,16 +169,16 @@ type
       property name: System.String read FName write FName;
       property url: System.String read FUrl write FUrl stored GetUrlStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    Paths = class
+    paths = class
     private
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
-      FPathItem: TDynamicProperty<TOpenAPIDefinition.PathItem>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
+      FPathItem: TDynamicProperty<TOpenAPIDefinition.pathItem>;
 
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
-      function GetPathItem: TDynamicProperty<TOpenAPIDefinition.PathItem>;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
+      function GetPathItem: TDynamicProperty<TOpenAPIDefinition.pathItem>;
       function GetVendorExtensionStored: Boolean;
       function GetPathItemStored: Boolean;
     public
@@ -188,60 +188,60 @@ type
       property IsPathItemStored: Boolean read GetPathItemStored;
     published
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
       [PatternProperty('^/')]
-      property pathItem: TDynamicProperty<TOpenAPIDefinition.PathItem> read GetPathItem write FPathItem stored GetPathItemStored;
+      property pathItem: TDynamicProperty<TOpenAPIDefinition.pathItem> read GetPathItem write FPathItem stored GetPathItemStored;
     end;
 
-    Definitions = class
+    definitions = class
     private
-      FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Schema>;
+      FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.schema>;
 
-      function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Schema>;
+      function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.schema>;
       function GetAdditionalPropertiesStored: Boolean;
     public
       destructor Destroy; override;
 
       property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
     published
-      property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Schema> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+      property additionalProperties: TDynamicProperty<TOpenAPIDefinition.schema> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
     end;
 
-    ParameterDefinitions = class
+    parameterDefinitions = class
     private
-      FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Parameter>;
+      FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.parameter>;
 
-      function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Parameter>;
+      function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.parameter>;
       function GetAdditionalPropertiesStored: Boolean;
     public
       destructor Destroy; override;
 
       property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
     published
-      property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Parameter> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+      property additionalProperties: TDynamicProperty<TOpenAPIDefinition.parameter> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
     end;
 
-    ResponseDefinitions = class
+    responseDefinitions = class
     private
-      FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Response>;
+      FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.response>;
 
-      function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Response>;
+      function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.response>;
       function GetAdditionalPropertiesStored: Boolean;
     public
       destructor Destroy; override;
 
       property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
     published
-      property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Response> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+      property additionalProperties: TDynamicProperty<TOpenAPIDefinition.response> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
     end;
 
-    ExternalDocs = class
+    externalDocs = class
     private
       FDescription: System.String;
       FUrl: System.String;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetDescriptionStored: Boolean;
       function GetVendorExtensionStored: Boolean;
     public
@@ -253,20 +253,20 @@ type
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       property url: System.String read FUrl write FUrl;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    Examples = class
+    examples = class
     end;
 
-    Operation = class
+    operation = class
     public type
       // Forward class declaration
-      Tproduces = class;
-      Tconsumes = class;
+      ProducesProperty = class;
+      ConsumesProperty = class;
 
       [Flat]
-      Tproduces = class
+      ProducesProperty = class
       private
         FMediaTypeList: TOpenAPIDefinition.mediaTypeList;
 
@@ -278,7 +278,7 @@ type
       end;
 
       [Flat]
-      Tconsumes = class
+      ConsumesProperty = class
       private
         FMediaTypeList: TOpenAPIDefinition.mediaTypeList;
 
@@ -292,22 +292,22 @@ type
       FTags: TArray<System.String>;
       FSummary: System.String;
       FDescription: System.String;
-      FExternalDocs: TOpenAPIDefinition.ExternalDocs;
+      FExternalDocs: TOpenAPIDefinition.externalDocs;
       FOperationId: System.String;
-      FProduces: TOpenAPIDefinition.Operation.Tproduces;
-      FConsumes: TOpenAPIDefinition.Operation.Tconsumes;
+      FProduces: TOpenAPIDefinition.operation.ProducesProperty;
+      FConsumes: TOpenAPIDefinition.operation.ConsumesProperty;
       FParameters: TOpenAPIDefinition.parametersList;
-      FResponses: TOpenAPIDefinition.Responses;
+      FResponses: TOpenAPIDefinition.responses;
       FSchemes: TOpenAPIDefinition.schemesList;
       FDeprecated: System.Boolean;
       FSecurity: TOpenAPIDefinition.security;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetExternalDocs: TOpenAPIDefinition.ExternalDocs;
-      function GetProduces: TOpenAPIDefinition.Operation.Tproduces;
-      function GetConsumes: TOpenAPIDefinition.Operation.Tconsumes;
-      function GetResponses: TOpenAPIDefinition.Responses;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetExternalDocs: TOpenAPIDefinition.externalDocs;
+      function GetProduces: TOpenAPIDefinition.operation.ProducesProperty;
+      function GetConsumes: TOpenAPIDefinition.operation.ConsumesProperty;
+      function GetResponses: TOpenAPIDefinition.responses;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetTagsStored: Boolean;
       function GetSummaryStored: Boolean;
       function GetDescriptionStored: Boolean;
@@ -323,8 +323,8 @@ type
     public
       destructor Destroy; override;
 
-      function AddParameters: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ParametersListArrayItem;
-      function AddSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.SecurityRequirement;
+      function AddParameters: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.parametersListArrayItem;
+      function AddSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.securityRequirement;
 
       property IsTagsStored: Boolean read GetTagsStored;
       property IsSummaryStored: Boolean read GetSummaryStored;
@@ -342,40 +342,40 @@ type
       property tags: TArray<System.String> read FTags write FTags stored GetTagsStored;
       property summary: System.String read FSummary write FSummary stored GetSummaryStored;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property externalDocs: TOpenAPIDefinition.ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
+      property externalDocs: TOpenAPIDefinition.externalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
       property operationId: System.String read FOperationId write FOperationId stored GetOperationIdStored;
-      property produces: TOpenAPIDefinition.Operation.Tproduces read GetProduces write FProduces stored GetProducesStored;
-      property consumes: TOpenAPIDefinition.Operation.Tconsumes read GetConsumes write FConsumes stored GetConsumesStored;
+      property produces: TOpenAPIDefinition.operation.ProducesProperty read GetProduces write FProduces stored GetProducesStored;
+      property consumes: TOpenAPIDefinition.operation.ConsumesProperty read GetConsumes write FConsumes stored GetConsumesStored;
       property parameters: TOpenAPIDefinition.parametersList read FParameters write FParameters stored GetParametersStored;
-      property responses: TOpenAPIDefinition.Responses read GetResponses write FResponses;
+      property responses: TOpenAPIDefinition.responses read GetResponses write FResponses;
       property schemes: TOpenAPIDefinition.schemesList read FSchemes write FSchemes stored GetSchemesStored;
       property deprecated: System.Boolean read FDeprecated write FDeprecated stored GetDeprecatedStored;
       property security: TOpenAPIDefinition.security read FSecurity write FSecurity stored GetSecurityStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    PathItem = class
+    pathItem = class
     private
       FRef: System.String;
-      FGet: TOpenAPIDefinition.Operation;
-      FPut: TOpenAPIDefinition.Operation;
-      FPost: TOpenAPIDefinition.Operation;
-      FDelete: TOpenAPIDefinition.Operation;
-      FOptions: TOpenAPIDefinition.Operation;
-      FHead: TOpenAPIDefinition.Operation;
-      FPatch: TOpenAPIDefinition.Operation;
+      FGet: TOpenAPIDefinition.operation;
+      FPut: TOpenAPIDefinition.operation;
+      FPost: TOpenAPIDefinition.operation;
+      FDelete: TOpenAPIDefinition.operation;
+      FOptions: TOpenAPIDefinition.operation;
+      FHead: TOpenAPIDefinition.operation;
+      FPatch: TOpenAPIDefinition.operation;
       FParameters: TOpenAPIDefinition.parametersList;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetGet: TOpenAPIDefinition.Operation;
-      function GetPut: TOpenAPIDefinition.Operation;
-      function GetPost: TOpenAPIDefinition.Operation;
-      function GetDelete: TOpenAPIDefinition.Operation;
-      function GetOptions: TOpenAPIDefinition.Operation;
-      function GetHead: TOpenAPIDefinition.Operation;
-      function GetPatch: TOpenAPIDefinition.Operation;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetGet: TOpenAPIDefinition.operation;
+      function GetPut: TOpenAPIDefinition.operation;
+      function GetPost: TOpenAPIDefinition.operation;
+      function GetDelete: TOpenAPIDefinition.operation;
+      function GetOptions: TOpenAPIDefinition.operation;
+      function GetHead: TOpenAPIDefinition.operation;
+      function GetPatch: TOpenAPIDefinition.operation;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetRefStored: Boolean;
       function GetGetStored: Boolean;
       function GetPutStored: Boolean;
@@ -389,7 +389,7 @@ type
     public
       destructor Destroy; override;
 
-      function AddParameters: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ParametersListArrayItem;
+      function AddParameters: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.parametersListArrayItem;
 
       property IsRefStored: Boolean read GetRefStored;
       property IsGetStored: Boolean read GetGetStored;
@@ -403,26 +403,26 @@ type
       property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
     published
       [FieldName('$ref')]
-      property Ref: System.String read FRef write FRef stored GetRefStored;
-      property get: TOpenAPIDefinition.Operation read GetGet write FGet stored GetGetStored;
-      property put: TOpenAPIDefinition.Operation read GetPut write FPut stored GetPutStored;
-      property post: TOpenAPIDefinition.Operation read GetPost write FPost stored GetPostStored;
-      property delete: TOpenAPIDefinition.Operation read GetDelete write FDelete stored GetDeleteStored;
-      property options: TOpenAPIDefinition.Operation read GetOptions write FOptions stored GetOptionsStored;
-      property head: TOpenAPIDefinition.Operation read GetHead write FHead stored GetHeadStored;
-      property patch: TOpenAPIDefinition.Operation read GetPatch write FPatch stored GetPatchStored;
+      property ref: System.String read FRef write FRef stored GetRefStored;
+      property get: TOpenAPIDefinition.operation read GetGet write FGet stored GetGetStored;
+      property put: TOpenAPIDefinition.operation read GetPut write FPut stored GetPutStored;
+      property post: TOpenAPIDefinition.operation read GetPost write FPost stored GetPostStored;
+      property delete: TOpenAPIDefinition.operation read GetDelete write FDelete stored GetDeleteStored;
+      property options: TOpenAPIDefinition.operation read GetOptions write FOptions stored GetOptionsStored;
+      property head: TOpenAPIDefinition.operation read GetHead write FHead stored GetHeadStored;
+      property patch: TOpenAPIDefinition.operation read GetPatch write FPatch stored GetPatchStored;
       property parameters: TOpenAPIDefinition.parametersList read FParameters write FParameters stored GetParametersStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    Responses = class
+    responses = class
     private
-      FResponseValue: TDynamicProperty<TOpenAPIDefinition.ResponseValue>;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FResponseValue: TDynamicProperty<TOpenAPIDefinition.responseValue>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetResponseValue: TDynamicProperty<TOpenAPIDefinition.ResponseValue>;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetResponseValue: TDynamicProperty<TOpenAPIDefinition.responseValue>;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetResponseValueStored: Boolean;
       function GetVendorExtensionStored: Boolean;
     public
@@ -432,19 +432,19 @@ type
       property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
     published
       [PatternProperty('^([0-9]{3})$|^(default)$')]
-      property responseValue: TDynamicProperty<TOpenAPIDefinition.ResponseValue> read GetResponseValue write FResponseValue stored GetResponseValueStored;
+      property responseValue: TDynamicProperty<TOpenAPIDefinition.responseValue> read GetResponseValue write FResponseValue stored GetResponseValueStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
     [Flat]
-    ResponseValue = class
+    responseValue = class
     private
-      FResponse: TOpenAPIDefinition.Response;
-      FJsonReference: TOpenAPIDefinition.JsonReference;
+      FResponse: TOpenAPIDefinition.response;
+      FJsonReference: TOpenAPIDefinition.jsonReference;
 
-      function GetResponse: TOpenAPIDefinition.Response;
-      function GetJsonReference: TOpenAPIDefinition.JsonReference;
+      function GetResponse: TOpenAPIDefinition.response;
+      function GetJsonReference: TOpenAPIDefinition.jsonReference;
       function GetResponseStored: Boolean;
       function GetJsonReferenceStored: Boolean;
     public
@@ -453,23 +453,23 @@ type
       property IsResponseStored: Boolean read GetResponseStored;
       property IsJsonReferenceStored: Boolean read GetJsonReferenceStored;
     published
-      property response: TOpenAPIDefinition.Response read GetResponse write FResponse stored GetResponseStored;
-      property jsonReference: TOpenAPIDefinition.JsonReference read GetJsonReference write FJsonReference stored GetJsonReferenceStored;
+      property response: TOpenAPIDefinition.response read GetResponse write FResponse stored GetResponseStored;
+      property jsonReference: TOpenAPIDefinition.jsonReference read GetJsonReference write FJsonReference stored GetJsonReferenceStored;
     end;
 
-    Response = class
+    response = class
     public type
       // Forward class declaration
-      Tschema = class;
+      SchemaProperty = class;
 
       [Flat]
-      Tschema = class
+      SchemaProperty = class
       private
-        FSchema: TOpenAPIDefinition.Schema;
-        FFileSchema: TOpenAPIDefinition.FileSchema;
+        FSchema: TOpenAPIDefinition.schema;
+        FFileSchema: TOpenAPIDefinition.fileSchema;
 
-        function GetSchema: TOpenAPIDefinition.Schema;
-        function GetFileSchema: TOpenAPIDefinition.FileSchema;
+        function GetSchema: TOpenAPIDefinition.schema;
+        function GetFileSchema: TOpenAPIDefinition.fileSchema;
         function GetSchemaStored: Boolean;
         function GetFileSchemaStored: Boolean;
       public
@@ -478,20 +478,20 @@ type
         property IsSchemaStored: Boolean read GetSchemaStored;
         property IsFileSchemaStored: Boolean read GetFileSchemaStored;
       published
-        property schema: TOpenAPIDefinition.Schema read GetSchema write FSchema stored GetSchemaStored;
-        property fileSchema: TOpenAPIDefinition.FileSchema read GetFileSchema write FFileSchema stored GetFileSchemaStored;
+        property schema: TOpenAPIDefinition.schema read GetSchema write FSchema stored GetSchemaStored;
+        property fileSchema: TOpenAPIDefinition.fileSchema read GetFileSchema write FFileSchema stored GetFileSchemaStored;
       end;
     private
       FDescription: System.String;
-      FSchema: TOpenAPIDefinition.Response.Tschema;
-      FHeaders: TOpenAPIDefinition.Headers;
-      FExamples: TOpenAPIDefinition.Examples;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FSchema: TOpenAPIDefinition.response.SchemaProperty;
+      FHeaders: TOpenAPIDefinition.headers;
+      FExamples: TOpenAPIDefinition.examples;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetSchema: TOpenAPIDefinition.Response.Tschema;
-      function GetHeaders: TOpenAPIDefinition.Headers;
-      function GetExamples: TOpenAPIDefinition.Examples;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetSchema: TOpenAPIDefinition.response.SchemaProperty;
+      function GetHeaders: TOpenAPIDefinition.headers;
+      function GetExamples: TOpenAPIDefinition.examples;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetSchemaStored: Boolean;
       function GetHeadersStored: Boolean;
       function GetExamplesStored: Boolean;
@@ -505,57 +505,57 @@ type
       property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
     published
       property description: System.String read FDescription write FDescription;
-      property schema: TOpenAPIDefinition.Response.Tschema read GetSchema write FSchema stored GetSchemaStored;
-      property headers: TOpenAPIDefinition.Headers read GetHeaders write FHeaders stored GetHeadersStored;
-      property examples: TOpenAPIDefinition.Examples read GetExamples write FExamples stored GetExamplesStored;
+      property schema: TOpenAPIDefinition.response.SchemaProperty read GetSchema write FSchema stored GetSchemaStored;
+      property headers: TOpenAPIDefinition.headers read GetHeaders write FHeaders stored GetHeadersStored;
+      property examples: TOpenAPIDefinition.examples read GetExamples write FExamples stored GetExamplesStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    Headers = class
+    headers = class
     private
-      FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Header>;
+      FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.header>;
 
-      function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Header>;
+      function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.header>;
       function GetAdditionalPropertiesStored: Boolean;
     public
       destructor Destroy; override;
 
       property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
     published
-      property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Header> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+      property additionalProperties: TDynamicProperty<TOpenAPIDefinition.header> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
     end;
 
-    Header = class
+    header = class
     public type
       [EnumValue('string, number, integer, boolean, array')]
-      Ttype = (&string, number, integer, boolean, &array);
+      TypeProperty = (&string, number, integer, boolean, &array);
     private
-      FType: TOpenAPIDefinition.Header.Ttype;
+      FType: TOpenAPIDefinition.header.TypeProperty;
       FFormat: System.String;
-      FItems: TOpenAPIDefinition.PrimitivesItems;
-      FCollectionFormat: TOpenAPIDefinition.CollectionFormat;
+      FItems: TOpenAPIDefinition.primitivesItems;
+      FCollectionFormat: TOpenAPIDefinition.collectionFormat;
       FDefault: TOpenAPIDefinition.default;
       FMaximum: TOpenAPIDefinition.maximum;
       FExclusiveMaximum: TOpenAPIDefinition.exclusiveMaximum;
       FMinimum: TOpenAPIDefinition.minimum;
       FExclusiveMinimum: TOpenAPIDefinition.exclusiveMinimum;
       FMaxLength: TOpenAPIDefinition.maxLength;
-      FMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+      FMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
       FPattern: TOpenAPIDefinition.pattern;
       FMaxItems: TOpenAPIDefinition.maxItems;
-      FMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+      FMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
       FUniqueItems: TOpenAPIDefinition.uniqueItems;
       FEnum: TOpenAPIDefinition.enum;
       FMultipleOf: TOpenAPIDefinition.multipleOf;
       FDescription: System.String;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       FCollectionFormatIsStored: Boolean;
 
-      function GetItems: TOpenAPIDefinition.PrimitivesItems;
-      function GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
-      function GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetItems: TOpenAPIDefinition.primitivesItems;
+      function GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
+      function GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetFormatStored: Boolean;
       function GetItemsStored: Boolean;
       function GetDefaultStored: Boolean;
@@ -573,7 +573,7 @@ type
       function GetMultipleOfStored: Boolean;
       function GetDescriptionStored: Boolean;
       function GetVendorExtensionStored: Boolean;
-      procedure SetCollectionFormat(const Value: TOpenAPIDefinition.CollectionFormat);
+      procedure SetCollectionFormat(const Value: TOpenAPIDefinition.collectionFormat);
     public
       destructor Destroy; override;
 
@@ -597,44 +597,44 @@ type
       property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
     published
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.Header.Ttype read FType write FType;
+      property &type: TOpenAPIDefinition.header.TypeProperty read FType write FType;
       property format: System.String read FFormat write FFormat stored GetFormatStored;
-      property items: TOpenAPIDefinition.PrimitivesItems read GetItems write FItems stored GetItemsStored;
-      property collectionFormat: TOpenAPIDefinition.CollectionFormat read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
+      property items: TOpenAPIDefinition.primitivesItems read GetItems write FItems stored GetItemsStored;
+      property collectionFormat: TOpenAPIDefinition.collectionFormat read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
       property default: TOpenAPIDefinition.default read FDefault write FDefault stored GetDefaultStored;
       property maximum: TOpenAPIDefinition.maximum read FMaximum write FMaximum stored GetMaximumStored;
       property exclusiveMaximum: TOpenAPIDefinition.exclusiveMaximum read FExclusiveMaximum write FExclusiveMaximum stored GetExclusiveMaximumStored;
       property minimum: TOpenAPIDefinition.minimum read FMinimum write FMinimum stored GetMinimumStored;
       property exclusiveMinimum: TOpenAPIDefinition.exclusiveMinimum read FExclusiveMinimum write FExclusiveMinimum stored GetExclusiveMinimumStored;
       property maxLength: TOpenAPIDefinition.maxLength read FMaxLength write FMaxLength stored GetMaxLengthStored;
-      property minLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
+      property minLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
       property pattern: TOpenAPIDefinition.pattern read FPattern write FPattern stored GetPatternStored;
       property maxItems: TOpenAPIDefinition.maxItems read FMaxItems write FMaxItems stored GetMaxItemsStored;
-      property minItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
+      property minItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
       property uniqueItems: TOpenAPIDefinition.uniqueItems read FUniqueItems write FUniqueItems stored GetUniqueItemsStored;
       property enum: TOpenAPIDefinition.enum read FEnum write FEnum stored GetEnumStored;
       property multipleOf: TOpenAPIDefinition.multipleOf read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    VendorExtension = class
+    vendorExtension = class
     end;
 
-    BodyParameter = class
+    bodyParameter = class
     public type
-      Tin = (body);
+      InProperty = (body);
     private
       FDescription: System.String;
       FName: System.String;
-      FIn: TOpenAPIDefinition.BodyParameter.Tin;
+      FIn: TOpenAPIDefinition.bodyParameter.InProperty;
       FRequired: System.Boolean;
-      FSchema: TOpenAPIDefinition.Schema;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FSchema: TOpenAPIDefinition.schema;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetSchema: TOpenAPIDefinition.Schema;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetSchema: TOpenAPIDefinition.schema;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetDescriptionStored: Boolean;
       function GetRequiredStored: Boolean;
       function GetVendorExtensionStored: Boolean;
@@ -648,50 +648,50 @@ type
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       property name: System.String read FName write FName;
       [FieldName('in')]
-      property &in: TOpenAPIDefinition.BodyParameter.Tin read FIn write FIn;
+      property &in: TOpenAPIDefinition.bodyParameter.InProperty read FIn write FIn;
       property required: System.Boolean read FRequired write FRequired stored GetRequiredStored;
-      property schema: TOpenAPIDefinition.Schema read GetSchema write FSchema;
+      property schema: TOpenAPIDefinition.schema read GetSchema write FSchema;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    HeaderParameterSubSchema = class
+    headerParameterSubSchema = class
     public type
-      Tin = (header);
+      InProperty = (header);
 
       [EnumValue('string, number, boolean, integer, array')]
-      Ttype = (&string, number, boolean, integer, &array);
+      TypeProperty = (&string, number, boolean, integer, &array);
     private
       FRequired: System.Boolean;
-      FIn: TOpenAPIDefinition.HeaderParameterSubSchema.Tin;
+      FIn: TOpenAPIDefinition.headerParameterSubSchema.InProperty;
       FDescription: System.String;
       FName: System.String;
-      FType: TOpenAPIDefinition.HeaderParameterSubSchema.Ttype;
+      FType: TOpenAPIDefinition.headerParameterSubSchema.TypeProperty;
       FFormat: System.String;
-      FItems: TOpenAPIDefinition.PrimitivesItems;
-      FCollectionFormat: TOpenAPIDefinition.CollectionFormat;
+      FItems: TOpenAPIDefinition.primitivesItems;
+      FCollectionFormat: TOpenAPIDefinition.collectionFormat;
       FDefault: TOpenAPIDefinition.default;
       FMaximum: TOpenAPIDefinition.maximum;
       FExclusiveMaximum: TOpenAPIDefinition.exclusiveMaximum;
       FMinimum: TOpenAPIDefinition.minimum;
       FExclusiveMinimum: TOpenAPIDefinition.exclusiveMinimum;
       FMaxLength: TOpenAPIDefinition.maxLength;
-      FMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+      FMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
       FPattern: TOpenAPIDefinition.pattern;
       FMaxItems: TOpenAPIDefinition.maxItems;
-      FMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+      FMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
       FUniqueItems: TOpenAPIDefinition.uniqueItems;
       FEnum: TOpenAPIDefinition.enum;
       FMultipleOf: TOpenAPIDefinition.multipleOf;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       FInIsStored: Boolean;
       FTypeIsStored: Boolean;
       FCollectionFormatIsStored: Boolean;
 
-      function GetItems: TOpenAPIDefinition.PrimitivesItems;
-      function GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
-      function GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetItems: TOpenAPIDefinition.primitivesItems;
+      function GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
+      function GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetRequiredStored: Boolean;
       function GetDescriptionStored: Boolean;
       function GetNameStored: Boolean;
@@ -711,9 +711,9 @@ type
       function GetEnumStored: Boolean;
       function GetMultipleOfStored: Boolean;
       function GetVendorExtensionStored: Boolean;
-      procedure SetIn(const Value: TOpenAPIDefinition.HeaderParameterSubSchema.Tin);
-      procedure SetType(const Value: TOpenAPIDefinition.HeaderParameterSubSchema.Ttype);
-      procedure SetCollectionFormat(const Value: TOpenAPIDefinition.CollectionFormat);
+      procedure SetIn(const Value: TOpenAPIDefinition.headerParameterSubSchema.InProperty);
+      procedure SetType(const Value: TOpenAPIDefinition.headerParameterSubSchema.TypeProperty);
+      procedure SetCollectionFormat(const Value: TOpenAPIDefinition.collectionFormat);
     public
       destructor Destroy; override;
 
@@ -742,69 +742,69 @@ type
     published
       property required: System.Boolean read FRequired write FRequired stored GetRequiredStored;
       [FieldName('in')]
-      property &in: TOpenAPIDefinition.HeaderParameterSubSchema.Tin read FIn write SetIn stored FInIsStored;
+      property &in: TOpenAPIDefinition.headerParameterSubSchema.InProperty read FIn write SetIn stored FInIsStored;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       property name: System.String read FName write FName stored GetNameStored;
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.HeaderParameterSubSchema.Ttype read FType write SetType stored FTypeIsStored;
+      property &type: TOpenAPIDefinition.headerParameterSubSchema.TypeProperty read FType write SetType stored FTypeIsStored;
       property format: System.String read FFormat write FFormat stored GetFormatStored;
-      property items: TOpenAPIDefinition.PrimitivesItems read GetItems write FItems stored GetItemsStored;
-      property collectionFormat: TOpenAPIDefinition.CollectionFormat read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
+      property items: TOpenAPIDefinition.primitivesItems read GetItems write FItems stored GetItemsStored;
+      property collectionFormat: TOpenAPIDefinition.collectionFormat read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
       property default: TOpenAPIDefinition.default read FDefault write FDefault stored GetDefaultStored;
       property maximum: TOpenAPIDefinition.maximum read FMaximum write FMaximum stored GetMaximumStored;
       property exclusiveMaximum: TOpenAPIDefinition.exclusiveMaximum read FExclusiveMaximum write FExclusiveMaximum stored GetExclusiveMaximumStored;
       property minimum: TOpenAPIDefinition.minimum read FMinimum write FMinimum stored GetMinimumStored;
       property exclusiveMinimum: TOpenAPIDefinition.exclusiveMinimum read FExclusiveMinimum write FExclusiveMinimum stored GetExclusiveMinimumStored;
       property maxLength: TOpenAPIDefinition.maxLength read FMaxLength write FMaxLength stored GetMaxLengthStored;
-      property minLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
+      property minLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
       property pattern: TOpenAPIDefinition.pattern read FPattern write FPattern stored GetPatternStored;
       property maxItems: TOpenAPIDefinition.maxItems read FMaxItems write FMaxItems stored GetMaxItemsStored;
-      property minItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
+      property minItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
       property uniqueItems: TOpenAPIDefinition.uniqueItems read FUniqueItems write FUniqueItems stored GetUniqueItemsStored;
       property enum: TOpenAPIDefinition.enum read FEnum write FEnum stored GetEnumStored;
       property multipleOf: TOpenAPIDefinition.multipleOf read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    QueryParameterSubSchema = class
+    queryParameterSubSchema = class
     public type
-      Tin = (query);
+      InProperty = (query);
 
       [EnumValue('string, number, boolean, integer, array')]
-      Ttype = (&string, number, boolean, integer, &array);
+      TypeProperty = (&string, number, boolean, integer, &array);
     private
       FRequired: System.Boolean;
-      FIn: TOpenAPIDefinition.QueryParameterSubSchema.Tin;
+      FIn: TOpenAPIDefinition.queryParameterSubSchema.InProperty;
       FDescription: System.String;
       FName: System.String;
       FAllowEmptyValue: System.Boolean;
-      FType: TOpenAPIDefinition.QueryParameterSubSchema.Ttype;
+      FType: TOpenAPIDefinition.queryParameterSubSchema.TypeProperty;
       FFormat: System.String;
-      FItems: TOpenAPIDefinition.PrimitivesItems;
-      FCollectionFormat: TOpenAPIDefinition.CollectionFormatWithMulti;
+      FItems: TOpenAPIDefinition.primitivesItems;
+      FCollectionFormat: TOpenAPIDefinition.collectionFormatWithMulti;
       FDefault: TOpenAPIDefinition.default;
       FMaximum: TOpenAPIDefinition.maximum;
       FExclusiveMaximum: TOpenAPIDefinition.exclusiveMaximum;
       FMinimum: TOpenAPIDefinition.minimum;
       FExclusiveMinimum: TOpenAPIDefinition.exclusiveMinimum;
       FMaxLength: TOpenAPIDefinition.maxLength;
-      FMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+      FMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
       FPattern: TOpenAPIDefinition.pattern;
       FMaxItems: TOpenAPIDefinition.maxItems;
-      FMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+      FMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
       FUniqueItems: TOpenAPIDefinition.uniqueItems;
       FEnum: TOpenAPIDefinition.enum;
       FMultipleOf: TOpenAPIDefinition.multipleOf;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       FInIsStored: Boolean;
       FTypeIsStored: Boolean;
       FCollectionFormatIsStored: Boolean;
 
-      function GetItems: TOpenAPIDefinition.PrimitivesItems;
-      function GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
-      function GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetItems: TOpenAPIDefinition.primitivesItems;
+      function GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
+      function GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetRequiredStored: Boolean;
       function GetDescriptionStored: Boolean;
       function GetNameStored: Boolean;
@@ -825,9 +825,9 @@ type
       function GetEnumStored: Boolean;
       function GetMultipleOfStored: Boolean;
       function GetVendorExtensionStored: Boolean;
-      procedure SetIn(const Value: TOpenAPIDefinition.QueryParameterSubSchema.Tin);
-      procedure SetType(const Value: TOpenAPIDefinition.QueryParameterSubSchema.Ttype);
-      procedure SetCollectionFormat(const Value: TOpenAPIDefinition.CollectionFormatWithMulti);
+      procedure SetIn(const Value: TOpenAPIDefinition.queryParameterSubSchema.InProperty);
+      procedure SetType(const Value: TOpenAPIDefinition.queryParameterSubSchema.TypeProperty);
+      procedure SetCollectionFormat(const Value: TOpenAPIDefinition.collectionFormatWithMulti);
     public
       destructor Destroy; override;
 
@@ -857,70 +857,70 @@ type
     published
       property required: System.Boolean read FRequired write FRequired stored GetRequiredStored;
       [FieldName('in')]
-      property &in: TOpenAPIDefinition.QueryParameterSubSchema.Tin read FIn write SetIn stored FInIsStored;
+      property &in: TOpenAPIDefinition.queryParameterSubSchema.InProperty read FIn write SetIn stored FInIsStored;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       property name: System.String read FName write FName stored GetNameStored;
       property allowEmptyValue: System.Boolean read FAllowEmptyValue write FAllowEmptyValue stored GetAllowEmptyValueStored;
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.QueryParameterSubSchema.Ttype read FType write SetType stored FTypeIsStored;
+      property &type: TOpenAPIDefinition.queryParameterSubSchema.TypeProperty read FType write SetType stored FTypeIsStored;
       property format: System.String read FFormat write FFormat stored GetFormatStored;
-      property items: TOpenAPIDefinition.PrimitivesItems read GetItems write FItems stored GetItemsStored;
-      property collectionFormat: TOpenAPIDefinition.CollectionFormatWithMulti read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
+      property items: TOpenAPIDefinition.primitivesItems read GetItems write FItems stored GetItemsStored;
+      property collectionFormat: TOpenAPIDefinition.collectionFormatWithMulti read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
       property default: TOpenAPIDefinition.default read FDefault write FDefault stored GetDefaultStored;
       property maximum: TOpenAPIDefinition.maximum read FMaximum write FMaximum stored GetMaximumStored;
       property exclusiveMaximum: TOpenAPIDefinition.exclusiveMaximum read FExclusiveMaximum write FExclusiveMaximum stored GetExclusiveMaximumStored;
       property minimum: TOpenAPIDefinition.minimum read FMinimum write FMinimum stored GetMinimumStored;
       property exclusiveMinimum: TOpenAPIDefinition.exclusiveMinimum read FExclusiveMinimum write FExclusiveMinimum stored GetExclusiveMinimumStored;
       property maxLength: TOpenAPIDefinition.maxLength read FMaxLength write FMaxLength stored GetMaxLengthStored;
-      property minLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
+      property minLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
       property pattern: TOpenAPIDefinition.pattern read FPattern write FPattern stored GetPatternStored;
       property maxItems: TOpenAPIDefinition.maxItems read FMaxItems write FMaxItems stored GetMaxItemsStored;
-      property minItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
+      property minItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
       property uniqueItems: TOpenAPIDefinition.uniqueItems read FUniqueItems write FUniqueItems stored GetUniqueItemsStored;
       property enum: TOpenAPIDefinition.enum read FEnum write FEnum stored GetEnumStored;
       property multipleOf: TOpenAPIDefinition.multipleOf read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    FormDataParameterSubSchema = class
+    formDataParameterSubSchema = class
     public type
-      Tin = (formData);
+      InProperty = (formData);
 
       [EnumValue('string, number, boolean, integer, array, file')]
-      Ttype = (&string, number, boolean, integer, &array, &file);
+      TypeProperty = (&string, number, boolean, integer, &array, &file);
     private
       FRequired: System.Boolean;
-      FIn: TOpenAPIDefinition.FormDataParameterSubSchema.Tin;
+      FIn: TOpenAPIDefinition.formDataParameterSubSchema.InProperty;
       FDescription: System.String;
       FName: System.String;
       FAllowEmptyValue: System.Boolean;
-      FType: TOpenAPIDefinition.FormDataParameterSubSchema.Ttype;
+      FType: TOpenAPIDefinition.formDataParameterSubSchema.TypeProperty;
       FFormat: System.String;
-      FItems: TOpenAPIDefinition.PrimitivesItems;
-      FCollectionFormat: TOpenAPIDefinition.CollectionFormatWithMulti;
+      FItems: TOpenAPIDefinition.primitivesItems;
+      FCollectionFormat: TOpenAPIDefinition.collectionFormatWithMulti;
       FDefault: TOpenAPIDefinition.default;
       FMaximum: TOpenAPIDefinition.maximum;
       FExclusiveMaximum: TOpenAPIDefinition.exclusiveMaximum;
       FMinimum: TOpenAPIDefinition.minimum;
       FExclusiveMinimum: TOpenAPIDefinition.exclusiveMinimum;
       FMaxLength: TOpenAPIDefinition.maxLength;
-      FMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+      FMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
       FPattern: TOpenAPIDefinition.pattern;
       FMaxItems: TOpenAPIDefinition.maxItems;
-      FMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+      FMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
       FUniqueItems: TOpenAPIDefinition.uniqueItems;
       FEnum: TOpenAPIDefinition.enum;
       FMultipleOf: TOpenAPIDefinition.multipleOf;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       FInIsStored: Boolean;
       FTypeIsStored: Boolean;
       FCollectionFormatIsStored: Boolean;
 
-      function GetItems: TOpenAPIDefinition.PrimitivesItems;
-      function GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
-      function GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetItems: TOpenAPIDefinition.primitivesItems;
+      function GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
+      function GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetRequiredStored: Boolean;
       function GetDescriptionStored: Boolean;
       function GetNameStored: Boolean;
@@ -941,9 +941,9 @@ type
       function GetEnumStored: Boolean;
       function GetMultipleOfStored: Boolean;
       function GetVendorExtensionStored: Boolean;
-      procedure SetIn(const Value: TOpenAPIDefinition.FormDataParameterSubSchema.Tin);
-      procedure SetType(const Value: TOpenAPIDefinition.FormDataParameterSubSchema.Ttype);
-      procedure SetCollectionFormat(const Value: TOpenAPIDefinition.CollectionFormatWithMulti);
+      procedure SetIn(const Value: TOpenAPIDefinition.formDataParameterSubSchema.InProperty);
+      procedure SetType(const Value: TOpenAPIDefinition.formDataParameterSubSchema.TypeProperty);
+      procedure SetCollectionFormat(const Value: TOpenAPIDefinition.collectionFormatWithMulti);
     public
       destructor Destroy; override;
 
@@ -973,71 +973,71 @@ type
     published
       property required: System.Boolean read FRequired write FRequired stored GetRequiredStored;
       [FieldName('in')]
-      property &in: TOpenAPIDefinition.FormDataParameterSubSchema.Tin read FIn write SetIn stored FInIsStored;
+      property &in: TOpenAPIDefinition.formDataParameterSubSchema.InProperty read FIn write SetIn stored FInIsStored;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       property name: System.String read FName write FName stored GetNameStored;
       property allowEmptyValue: System.Boolean read FAllowEmptyValue write FAllowEmptyValue stored GetAllowEmptyValueStored;
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.FormDataParameterSubSchema.Ttype read FType write SetType stored FTypeIsStored;
+      property &type: TOpenAPIDefinition.formDataParameterSubSchema.TypeProperty read FType write SetType stored FTypeIsStored;
       property format: System.String read FFormat write FFormat stored GetFormatStored;
-      property items: TOpenAPIDefinition.PrimitivesItems read GetItems write FItems stored GetItemsStored;
-      property collectionFormat: TOpenAPIDefinition.CollectionFormatWithMulti read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
+      property items: TOpenAPIDefinition.primitivesItems read GetItems write FItems stored GetItemsStored;
+      property collectionFormat: TOpenAPIDefinition.collectionFormatWithMulti read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
       property default: TOpenAPIDefinition.default read FDefault write FDefault stored GetDefaultStored;
       property maximum: TOpenAPIDefinition.maximum read FMaximum write FMaximum stored GetMaximumStored;
       property exclusiveMaximum: TOpenAPIDefinition.exclusiveMaximum read FExclusiveMaximum write FExclusiveMaximum stored GetExclusiveMaximumStored;
       property minimum: TOpenAPIDefinition.minimum read FMinimum write FMinimum stored GetMinimumStored;
       property exclusiveMinimum: TOpenAPIDefinition.exclusiveMinimum read FExclusiveMinimum write FExclusiveMinimum stored GetExclusiveMinimumStored;
       property maxLength: TOpenAPIDefinition.maxLength read FMaxLength write FMaxLength stored GetMaxLengthStored;
-      property minLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
+      property minLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
       property pattern: TOpenAPIDefinition.pattern read FPattern write FPattern stored GetPatternStored;
       property maxItems: TOpenAPIDefinition.maxItems read FMaxItems write FMaxItems stored GetMaxItemsStored;
-      property minItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
+      property minItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
       property uniqueItems: TOpenAPIDefinition.uniqueItems read FUniqueItems write FUniqueItems stored GetUniqueItemsStored;
       property enum: TOpenAPIDefinition.enum read FEnum write FEnum stored GetEnumStored;
       property multipleOf: TOpenAPIDefinition.multipleOf read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    PathParameterSubSchema = class
+    pathParameterSubSchema = class
     public type
-      Trequired = (True);
+      RequiredProperty = (True);
 
-      Tin = (path);
+      InProperty = (path);
 
       [EnumValue('string, number, boolean, integer, array')]
-      Ttype = (&string, number, boolean, integer, &array);
+      TypeProperty = (&string, number, boolean, integer, &array);
     private
-      FRequired: TOpenAPIDefinition.PathParameterSubSchema.Trequired;
-      FIn: TOpenAPIDefinition.PathParameterSubSchema.Tin;
+      FRequired: TOpenAPIDefinition.pathParameterSubSchema.RequiredProperty;
+      FIn: TOpenAPIDefinition.pathParameterSubSchema.InProperty;
       FDescription: System.String;
       FName: System.String;
-      FType: TOpenAPIDefinition.PathParameterSubSchema.Ttype;
+      FType: TOpenAPIDefinition.pathParameterSubSchema.TypeProperty;
       FFormat: System.String;
-      FItems: TOpenAPIDefinition.PrimitivesItems;
-      FCollectionFormat: TOpenAPIDefinition.CollectionFormat;
+      FItems: TOpenAPIDefinition.primitivesItems;
+      FCollectionFormat: TOpenAPIDefinition.collectionFormat;
       FDefault: TOpenAPIDefinition.default;
       FMaximum: TOpenAPIDefinition.maximum;
       FExclusiveMaximum: TOpenAPIDefinition.exclusiveMaximum;
       FMinimum: TOpenAPIDefinition.minimum;
       FExclusiveMinimum: TOpenAPIDefinition.exclusiveMinimum;
       FMaxLength: TOpenAPIDefinition.maxLength;
-      FMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+      FMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
       FPattern: TOpenAPIDefinition.pattern;
       FMaxItems: TOpenAPIDefinition.maxItems;
-      FMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+      FMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
       FUniqueItems: TOpenAPIDefinition.uniqueItems;
       FEnum: TOpenAPIDefinition.enum;
       FMultipleOf: TOpenAPIDefinition.multipleOf;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       FInIsStored: Boolean;
       FTypeIsStored: Boolean;
       FCollectionFormatIsStored: Boolean;
 
-      function GetItems: TOpenAPIDefinition.PrimitivesItems;
-      function GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
-      function GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetItems: TOpenAPIDefinition.primitivesItems;
+      function GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
+      function GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetDescriptionStored: Boolean;
       function GetNameStored: Boolean;
       function GetFormatStored: Boolean;
@@ -1056,9 +1056,9 @@ type
       function GetEnumStored: Boolean;
       function GetMultipleOfStored: Boolean;
       function GetVendorExtensionStored: Boolean;
-      procedure SetIn(const Value: TOpenAPIDefinition.PathParameterSubSchema.Tin);
-      procedure SetType(const Value: TOpenAPIDefinition.PathParameterSubSchema.Ttype);
-      procedure SetCollectionFormat(const Value: TOpenAPIDefinition.CollectionFormat);
+      procedure SetIn(const Value: TOpenAPIDefinition.pathParameterSubSchema.InProperty);
+      procedure SetType(const Value: TOpenAPIDefinition.pathParameterSubSchema.TypeProperty);
+      procedure SetCollectionFormat(const Value: TOpenAPIDefinition.collectionFormat);
     public
       destructor Destroy; override;
 
@@ -1084,45 +1084,45 @@ type
       property IsMultipleOfStored: Boolean read GetMultipleOfStored;
       property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
     published
-      property required: TOpenAPIDefinition.PathParameterSubSchema.Trequired read FRequired write FRequired;
+      property required: TOpenAPIDefinition.pathParameterSubSchema.RequiredProperty read FRequired write FRequired;
       [FieldName('in')]
-      property &in: TOpenAPIDefinition.PathParameterSubSchema.Tin read FIn write SetIn stored FInIsStored;
+      property &in: TOpenAPIDefinition.pathParameterSubSchema.InProperty read FIn write SetIn stored FInIsStored;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       property name: System.String read FName write FName stored GetNameStored;
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.PathParameterSubSchema.Ttype read FType write SetType stored FTypeIsStored;
+      property &type: TOpenAPIDefinition.pathParameterSubSchema.TypeProperty read FType write SetType stored FTypeIsStored;
       property format: System.String read FFormat write FFormat stored GetFormatStored;
-      property items: TOpenAPIDefinition.PrimitivesItems read GetItems write FItems stored GetItemsStored;
-      property collectionFormat: TOpenAPIDefinition.CollectionFormat read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
+      property items: TOpenAPIDefinition.primitivesItems read GetItems write FItems stored GetItemsStored;
+      property collectionFormat: TOpenAPIDefinition.collectionFormat read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
       property default: TOpenAPIDefinition.default read FDefault write FDefault stored GetDefaultStored;
       property maximum: TOpenAPIDefinition.maximum read FMaximum write FMaximum stored GetMaximumStored;
       property exclusiveMaximum: TOpenAPIDefinition.exclusiveMaximum read FExclusiveMaximum write FExclusiveMaximum stored GetExclusiveMaximumStored;
       property minimum: TOpenAPIDefinition.minimum read FMinimum write FMinimum stored GetMinimumStored;
       property exclusiveMinimum: TOpenAPIDefinition.exclusiveMinimum read FExclusiveMinimum write FExclusiveMinimum stored GetExclusiveMinimumStored;
       property maxLength: TOpenAPIDefinition.maxLength read FMaxLength write FMaxLength stored GetMaxLengthStored;
-      property minLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
+      property minLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
       property pattern: TOpenAPIDefinition.pattern read FPattern write FPattern stored GetPatternStored;
       property maxItems: TOpenAPIDefinition.maxItems read FMaxItems write FMaxItems stored GetMaxItemsStored;
-      property minItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
+      property minItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
       property uniqueItems: TOpenAPIDefinition.uniqueItems read FUniqueItems write FUniqueItems stored GetUniqueItemsStored;
       property enum: TOpenAPIDefinition.enum read FEnum write FEnum stored GetEnumStored;
       property multipleOf: TOpenAPIDefinition.multipleOf read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
     [Flat('in')]
-    NonBodyParameter = class
+    nonBodyParameter = class
     private
-      FHeaderParameterSubSchema: TOpenAPIDefinition.HeaderParameterSubSchema;
-      FFormDataParameterSubSchema: TOpenAPIDefinition.FormDataParameterSubSchema;
-      FQueryParameterSubSchema: TOpenAPIDefinition.QueryParameterSubSchema;
-      FPathParameterSubSchema: TOpenAPIDefinition.PathParameterSubSchema;
+      FHeaderParameterSubSchema: TOpenAPIDefinition.headerParameterSubSchema;
+      FFormDataParameterSubSchema: TOpenAPIDefinition.formDataParameterSubSchema;
+      FQueryParameterSubSchema: TOpenAPIDefinition.queryParameterSubSchema;
+      FPathParameterSubSchema: TOpenAPIDefinition.pathParameterSubSchema;
 
-      function GetHeaderParameterSubSchema: TOpenAPIDefinition.HeaderParameterSubSchema;
-      function GetFormDataParameterSubSchema: TOpenAPIDefinition.FormDataParameterSubSchema;
-      function GetQueryParameterSubSchema: TOpenAPIDefinition.QueryParameterSubSchema;
-      function GetPathParameterSubSchema: TOpenAPIDefinition.PathParameterSubSchema;
+      function GetHeaderParameterSubSchema: TOpenAPIDefinition.headerParameterSubSchema;
+      function GetFormDataParameterSubSchema: TOpenAPIDefinition.formDataParameterSubSchema;
+      function GetQueryParameterSubSchema: TOpenAPIDefinition.queryParameterSubSchema;
+      function GetPathParameterSubSchema: TOpenAPIDefinition.pathParameterSubSchema;
       function GetHeaderParameterSubSchemaStored: Boolean;
       function GetFormDataParameterSubSchemaStored: Boolean;
       function GetQueryParameterSubSchemaStored: Boolean;
@@ -1135,20 +1135,20 @@ type
       property IsQueryParameterSubSchemaStored: Boolean read GetQueryParameterSubSchemaStored;
       property IsPathParameterSubSchemaStored: Boolean read GetPathParameterSubSchemaStored;
     published
-      property headerParameterSubSchema: TOpenAPIDefinition.HeaderParameterSubSchema read GetHeaderParameterSubSchema write FHeaderParameterSubSchema stored GetHeaderParameterSubSchemaStored;
-      property formDataParameterSubSchema: TOpenAPIDefinition.FormDataParameterSubSchema read GetFormDataParameterSubSchema write FFormDataParameterSubSchema stored GetFormDataParameterSubSchemaStored;
-      property queryParameterSubSchema: TOpenAPIDefinition.QueryParameterSubSchema read GetQueryParameterSubSchema write FQueryParameterSubSchema stored GetQueryParameterSubSchemaStored;
-      property pathParameterSubSchema: TOpenAPIDefinition.PathParameterSubSchema read GetPathParameterSubSchema write FPathParameterSubSchema stored GetPathParameterSubSchemaStored;
+      property headerParameterSubSchema: TOpenAPIDefinition.headerParameterSubSchema read GetHeaderParameterSubSchema write FHeaderParameterSubSchema stored GetHeaderParameterSubSchemaStored;
+      property formDataParameterSubSchema: TOpenAPIDefinition.formDataParameterSubSchema read GetFormDataParameterSubSchema write FFormDataParameterSubSchema stored GetFormDataParameterSubSchemaStored;
+      property queryParameterSubSchema: TOpenAPIDefinition.queryParameterSubSchema read GetQueryParameterSubSchema write FQueryParameterSubSchema stored GetQueryParameterSubSchemaStored;
+      property pathParameterSubSchema: TOpenAPIDefinition.pathParameterSubSchema read GetPathParameterSubSchema write FPathParameterSubSchema stored GetPathParameterSubSchemaStored;
     end;
 
     [Flat('in')]
-    Parameter = class
+    parameter = class
     private
-      FBodyParameter: TOpenAPIDefinition.BodyParameter;
-      FNonBodyParameter: TOpenAPIDefinition.NonBodyParameter;
+      FBodyParameter: TOpenAPIDefinition.bodyParameter;
+      FNonBodyParameter: TOpenAPIDefinition.nonBodyParameter;
 
-      function GetBodyParameter: TOpenAPIDefinition.BodyParameter;
-      function GetNonBodyParameter: TOpenAPIDefinition.NonBodyParameter;
+      function GetBodyParameter: TOpenAPIDefinition.bodyParameter;
+      function GetNonBodyParameter: TOpenAPIDefinition.nonBodyParameter;
       function GetBodyParameterStored: Boolean;
       function GetNonBodyParameterStored: Boolean;
     public
@@ -1157,24 +1157,24 @@ type
       property IsBodyParameterStored: Boolean read GetBodyParameterStored;
       property IsNonBodyParameterStored: Boolean read GetNonBodyParameterStored;
     published
-      property bodyParameter: TOpenAPIDefinition.BodyParameter read GetBodyParameter write FBodyParameter stored GetBodyParameterStored;
-      property nonBodyParameter: TOpenAPIDefinition.NonBodyParameter read GetNonBodyParameter write FNonBodyParameter stored GetNonBodyParameterStored;
+      property bodyParameter: TOpenAPIDefinition.bodyParameter read GetBodyParameter write FBodyParameter stored GetBodyParameterStored;
+      property nonBodyParameter: TOpenAPIDefinition.nonBodyParameter read GetNonBodyParameter write FNonBodyParameter stored GetNonBodyParameterStored;
     end;
 
-    Schema = class
+    schema = class
     public type
       // Forward class declaration
-      TadditionalProperties = class;
-      Titems = class;
-      Tproperties = class;
+      AdditionalPropertiesProperty = class;
+      ItemsProperty = class;
+      PropertiesProperty = class;
 
       [Flat]
-      TadditionalProperties = class
+      AdditionalPropertiesProperty = class
       private
-        FSchema: TOpenAPIDefinition.Schema;
+        FSchema: TOpenAPIDefinition.schema;
         FBoolean: System.Boolean;
 
-        function GetSchema: TOpenAPIDefinition.Schema;
+        function GetSchema: TOpenAPIDefinition.schema;
         function GetSchemaStored: Boolean;
         function GetBooleanStored: Boolean;
       public
@@ -1183,44 +1183,44 @@ type
         property IsSchemaStored: Boolean read GetSchemaStored;
         property IsBooleanStored: Boolean read GetBooleanStored;
       published
-        property schema: TOpenAPIDefinition.Schema read GetSchema write FSchema stored GetSchemaStored;
+        property schema: TOpenAPIDefinition.schema read GetSchema write FSchema stored GetSchemaStored;
         property boolean: System.Boolean read FBoolean write FBoolean stored GetBooleanStored;
       end;
 
       [Flat]
-      Titems = class
+      ItemsProperty = class
       private
-        FSchema: TOpenAPIDefinition.Schema;
-        FArray: TArray<TOpenAPIDefinition.Schema>;
+        FSchema: TOpenAPIDefinition.schema;
+        FArray: TArray<TOpenAPIDefinition.schema>;
 
-        function GetSchema: TOpenAPIDefinition.Schema;
+        function GetSchema: TOpenAPIDefinition.schema;
         function GetSchemaStored: Boolean;
         function GetArrayStored: Boolean;
       public
         destructor Destroy; override;
 
-        function AddArray: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema;
+        function AddArray: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema;
 
         property IsSchemaStored: Boolean read GetSchemaStored;
         property IsArrayStored: Boolean read GetArrayStored;
       published
-        property schema: TOpenAPIDefinition.Schema read GetSchema write FSchema stored GetSchemaStored;
+        property schema: TOpenAPIDefinition.schema read GetSchema write FSchema stored GetSchemaStored;
         [FieldName('array')]
-        property &array: TArray<TOpenAPIDefinition.Schema> read FArray write FArray stored GetArrayStored;
+        property &array: TArray<TOpenAPIDefinition.schema> read FArray write FArray stored GetArrayStored;
       end;
 
-      Tproperties = class
+      PropertiesProperty = class
       private
-        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Schema>;
+        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.schema>;
 
-        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Schema>;
+        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.schema>;
         function GetAdditionalPropertiesStored: Boolean;
       public
         destructor Destroy; override;
 
         property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
       published
-        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Schema> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.schema> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       end;
     private
       FRef: System.String;
@@ -1234,37 +1234,37 @@ type
       FMinimum: System.Double;
       FExclusiveMinimum: System.Boolean;
       FMaxLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveInteger;
-      FMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+      FMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
       FPattern: System.String;
       FMaxItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveInteger;
-      FMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+      FMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
       FUniqueItems: System.Boolean;
       FMaxProperties: Blue.Print.JSON.Draft4.Schema.Schema.positiveInteger;
-      FMinProperties: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+      FMinProperties: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
       FRequired: Blue.Print.JSON.Draft4.Schema.Schema.stringArray;
       FEnum: TArray<Blue.Print.JSON.Draft4.Schema.any>;
-      FAdditionalProperties: TOpenAPIDefinition.Schema.TadditionalProperties;
-      FType: Blue.Print.JSON.Draft4.Schema.Schema.Schema.Ttype;
-      FItems: TOpenAPIDefinition.Schema.Titems;
-      FAllOf: TArray<TOpenAPIDefinition.Schema>;
-      FProperties: TOpenAPIDefinition.Schema.Tproperties;
+      FAdditionalProperties: TOpenAPIDefinition.schema.AdditionalPropertiesProperty;
+      FType: Blue.Print.JSON.Draft4.Schema.Schema.Schema.TypeProperty;
+      FItems: TOpenAPIDefinition.schema.ItemsProperty;
+      FAllOf: TArray<TOpenAPIDefinition.schema>;
+      FProperties: TOpenAPIDefinition.schema.PropertiesProperty;
       FDiscriminator: System.String;
       FReadOnly: System.Boolean;
-      FXml: TOpenAPIDefinition.Xml;
-      FExternalDocs: TOpenAPIDefinition.ExternalDocs;
+      FXml: TOpenAPIDefinition.xml;
+      FExternalDocs: TOpenAPIDefinition.externalDocs;
       FExample: any;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
-      function GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
-      function GetMinProperties: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
-      function GetAdditionalProperties: TOpenAPIDefinition.Schema.TadditionalProperties;
-      function GetType: Blue.Print.JSON.Draft4.Schema.Schema.Schema.Ttype;
-      function GetItems: TOpenAPIDefinition.Schema.Titems;
-      function GetProperties: TOpenAPIDefinition.Schema.Tproperties;
-      function GetXml: TOpenAPIDefinition.Xml;
-      function GetExternalDocs: TOpenAPIDefinition.ExternalDocs;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
+      function GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
+      function GetMinProperties: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
+      function GetAdditionalProperties: TOpenAPIDefinition.schema.AdditionalPropertiesProperty;
+      function GetType: Blue.Print.JSON.Draft4.Schema.Schema.Schema.TypeProperty;
+      function GetItems: TOpenAPIDefinition.schema.ItemsProperty;
+      function GetProperties: TOpenAPIDefinition.schema.PropertiesProperty;
+      function GetXml: TOpenAPIDefinition.xml;
+      function GetExternalDocs: TOpenAPIDefinition.externalDocs;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetRefStored: Boolean;
       function GetFormatStored: Boolean;
       function GetTitleStored: Boolean;
@@ -1299,7 +1299,7 @@ type
     public
       destructor Destroy; override;
 
-      function AddAllOf: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema;
+      function AddAllOf: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema;
 
       property IsRefStored: Boolean read GetRefStored;
       property IsFormatStored: Boolean read GetFormatStored;
@@ -1334,7 +1334,7 @@ type
       property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
     published
       [FieldName('$ref')]
-      property Ref: System.String read FRef write FRef stored GetRefStored;
+      property ref: System.String read FRef write FRef stored GetRefStored;
       property format: System.String read FFormat write FFormat stored GetFormatStored;
       property title: System.String read FTitle write FTitle stored GetTitleStored;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
@@ -1345,48 +1345,48 @@ type
       property minimum: System.Double read FMinimum write FMinimum stored GetMinimumStored;
       property exclusiveMinimum: System.Boolean read FExclusiveMinimum write FExclusiveMinimum stored GetExclusiveMinimumStored;
       property maxLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveInteger read FMaxLength write FMaxLength stored GetMaxLengthStored;
-      property minLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
+      property minLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
       property pattern: System.String read FPattern write FPattern stored GetPatternStored;
       property maxItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveInteger read FMaxItems write FMaxItems stored GetMaxItemsStored;
-      property minItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
+      property minItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
       property uniqueItems: System.Boolean read FUniqueItems write FUniqueItems stored GetUniqueItemsStored;
       property maxProperties: Blue.Print.JSON.Draft4.Schema.Schema.positiveInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
-      property minProperties: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
+      property minProperties: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
       property required: Blue.Print.JSON.Draft4.Schema.Schema.stringArray read FRequired write FRequired stored GetRequiredStored;
       property enum: TArray<Blue.Print.JSON.Draft4.Schema.any> read FEnum write FEnum stored GetEnumStored;
-      property additionalProperties: TOpenAPIDefinition.Schema.TadditionalProperties read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+      property additionalProperties: TOpenAPIDefinition.schema.AdditionalPropertiesProperty read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       [FieldName('type')]
-      property &type: Blue.Print.JSON.Draft4.Schema.Schema.Schema.Ttype read GetType write FType stored GetTypeStored;
-      property items: TOpenAPIDefinition.Schema.Titems read GetItems write FItems stored GetItemsStored;
-      property allOf: TArray<TOpenAPIDefinition.Schema> read FAllOf write FAllOf stored GetAllOfStored;
-      property properties: TOpenAPIDefinition.Schema.Tproperties read GetProperties write FProperties stored GetPropertiesStored;
+      property &type: Blue.Print.JSON.Draft4.Schema.Schema.Schema.TypeProperty read GetType write FType stored GetTypeStored;
+      property items: TOpenAPIDefinition.schema.ItemsProperty read GetItems write FItems stored GetItemsStored;
+      property allOf: TArray<TOpenAPIDefinition.schema> read FAllOf write FAllOf stored GetAllOfStored;
+      property properties: TOpenAPIDefinition.schema.PropertiesProperty read GetProperties write FProperties stored GetPropertiesStored;
       property discriminator: System.String read FDiscriminator write FDiscriminator stored GetDiscriminatorStored;
       property readOnly: System.Boolean read FReadOnly write FReadOnly stored GetReadOnlyStored;
-      property xml: TOpenAPIDefinition.Xml read GetXml write FXml stored GetXmlStored;
-      property externalDocs: TOpenAPIDefinition.ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
+      property xml: TOpenAPIDefinition.xml read GetXml write FXml stored GetXmlStored;
+      property externalDocs: TOpenAPIDefinition.externalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
       property example: any read FExample write FExample stored GetExampleStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    FileSchema = class
+    fileSchema = class
     public type
       [EnumValue('file')]
-      Ttype = (&file);
+      TypeProperty = (&file);
     private
       FFormat: System.String;
       FTitle: System.String;
       FDescription: System.String;
       FDefault: Blue.Print.JSON.Draft4.Schema.any;
       FRequired: Blue.Print.JSON.Draft4.Schema.Schema.stringArray;
-      FType: TOpenAPIDefinition.FileSchema.Ttype;
+      FType: TOpenAPIDefinition.fileSchema.TypeProperty;
       FReadOnly: System.Boolean;
-      FExternalDocs: TOpenAPIDefinition.ExternalDocs;
+      FExternalDocs: TOpenAPIDefinition.externalDocs;
       FExample: any;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetExternalDocs: TOpenAPIDefinition.ExternalDocs;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetExternalDocs: TOpenAPIDefinition.externalDocs;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetFormatStored: Boolean;
       function GetTitleStored: Boolean;
       function GetDescriptionStored: Boolean;
@@ -1415,44 +1415,44 @@ type
       property default: Blue.Print.JSON.Draft4.Schema.any read FDefault write FDefault stored GetDefaultStored;
       property required: Blue.Print.JSON.Draft4.Schema.Schema.stringArray read FRequired write FRequired stored GetRequiredStored;
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.FileSchema.Ttype read FType write FType;
+      property &type: TOpenAPIDefinition.fileSchema.TypeProperty read FType write FType;
       property readOnly: System.Boolean read FReadOnly write FReadOnly stored GetReadOnlyStored;
-      property externalDocs: TOpenAPIDefinition.ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
+      property externalDocs: TOpenAPIDefinition.externalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
       property example: any read FExample write FExample stored GetExampleStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    PrimitivesItems = class
+    primitivesItems = class
     public type
       [EnumValue('string, number, integer, boolean, array')]
-      Ttype = (&string, number, integer, boolean, &array);
+      TypeProperty = (&string, number, integer, boolean, &array);
     private
-      FType: TOpenAPIDefinition.PrimitivesItems.Ttype;
+      FType: TOpenAPIDefinition.primitivesItems.TypeProperty;
       FFormat: System.String;
-      FItems: TOpenAPIDefinition.PrimitivesItems;
-      FCollectionFormat: TOpenAPIDefinition.CollectionFormat;
+      FItems: TOpenAPIDefinition.primitivesItems;
+      FCollectionFormat: TOpenAPIDefinition.collectionFormat;
       FDefault: TOpenAPIDefinition.default;
       FMaximum: TOpenAPIDefinition.maximum;
       FExclusiveMaximum: TOpenAPIDefinition.exclusiveMaximum;
       FMinimum: TOpenAPIDefinition.minimum;
       FExclusiveMinimum: TOpenAPIDefinition.exclusiveMinimum;
       FMaxLength: TOpenAPIDefinition.maxLength;
-      FMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+      FMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
       FPattern: TOpenAPIDefinition.pattern;
       FMaxItems: TOpenAPIDefinition.maxItems;
-      FMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+      FMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
       FUniqueItems: TOpenAPIDefinition.uniqueItems;
       FEnum: TOpenAPIDefinition.enum;
       FMultipleOf: TOpenAPIDefinition.multipleOf;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       FTypeIsStored: Boolean;
       FCollectionFormatIsStored: Boolean;
 
-      function GetItems: TOpenAPIDefinition.PrimitivesItems;
-      function GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
-      function GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetItems: TOpenAPIDefinition.primitivesItems;
+      function GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
+      function GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetFormatStored: Boolean;
       function GetItemsStored: Boolean;
       function GetDefaultStored: Boolean;
@@ -1469,8 +1469,8 @@ type
       function GetEnumStored: Boolean;
       function GetMultipleOfStored: Boolean;
       function GetVendorExtensionStored: Boolean;
-      procedure SetType(const Value: TOpenAPIDefinition.PrimitivesItems.Ttype);
-      procedure SetCollectionFormat(const Value: TOpenAPIDefinition.CollectionFormat);
+      procedure SetType(const Value: TOpenAPIDefinition.primitivesItems.TypeProperty);
+      procedure SetCollectionFormat(const Value: TOpenAPIDefinition.collectionFormat);
     public
       destructor Destroy; override;
 
@@ -1494,28 +1494,28 @@ type
       property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
     published
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.PrimitivesItems.Ttype read FType write SetType stored FTypeIsStored;
+      property &type: TOpenAPIDefinition.primitivesItems.TypeProperty read FType write SetType stored FTypeIsStored;
       property format: System.String read FFormat write FFormat stored GetFormatStored;
-      property items: TOpenAPIDefinition.PrimitivesItems read GetItems write FItems stored GetItemsStored;
-      property collectionFormat: TOpenAPIDefinition.CollectionFormat read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
+      property items: TOpenAPIDefinition.primitivesItems read GetItems write FItems stored GetItemsStored;
+      property collectionFormat: TOpenAPIDefinition.collectionFormat read FCollectionFormat write SetCollectionFormat stored FCollectionFormatIsStored;
       property default: TOpenAPIDefinition.default read FDefault write FDefault stored GetDefaultStored;
       property maximum: TOpenAPIDefinition.maximum read FMaximum write FMaximum stored GetMaximumStored;
       property exclusiveMaximum: TOpenAPIDefinition.exclusiveMaximum read FExclusiveMaximum write FExclusiveMaximum stored GetExclusiveMaximumStored;
       property minimum: TOpenAPIDefinition.minimum read FMinimum write FMinimum stored GetMinimumStored;
       property exclusiveMinimum: TOpenAPIDefinition.exclusiveMinimum read FExclusiveMinimum write FExclusiveMinimum stored GetExclusiveMinimumStored;
       property maxLength: TOpenAPIDefinition.maxLength read FMaxLength write FMaxLength stored GetMaxLengthStored;
-      property minLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
+      property minLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
       property pattern: TOpenAPIDefinition.pattern read FPattern write FPattern stored GetPatternStored;
       property maxItems: TOpenAPIDefinition.maxItems read FMaxItems write FMaxItems stored GetMaxItemsStored;
-      property minItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
+      property minItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
       property uniqueItems: TOpenAPIDefinition.uniqueItems read FUniqueItems write FUniqueItems stored GetUniqueItemsStored;
       property enum: TOpenAPIDefinition.enum read FEnum write FEnum stored GetEnumStored;
       property multipleOf: TOpenAPIDefinition.multipleOf read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    SecurityRequirement = class
+    securityRequirement = class
     private
       FAdditionalProperties: TDynamicProperty<TArray<System.String>>;
 
@@ -1529,16 +1529,16 @@ type
       property additionalProperties: TDynamicProperty<TArray<System.String>> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
     end;
 
-    Xml = class
+    xml = class
     private
       FName: System.String;
       FNamespace: System.String;
       FPrefix: System.String;
       FAttribute: System.Boolean;
       FWrapped: System.Boolean;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetNameStored: Boolean;
       function GetNamespaceStored: Boolean;
       function GetPrefixStored: Boolean;
@@ -1561,18 +1561,18 @@ type
       property attribute: System.Boolean read FAttribute write FAttribute stored GetAttributeStored;
       property wrapped: System.Boolean read FWrapped write FWrapped stored GetWrappedStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    Tag = class
+    tag = class
     private
       FName: System.String;
       FDescription: System.String;
-      FExternalDocs: TOpenAPIDefinition.ExternalDocs;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FExternalDocs: TOpenAPIDefinition.externalDocs;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetExternalDocs: TOpenAPIDefinition.ExternalDocs;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetExternalDocs: TOpenAPIDefinition.externalDocs;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetDescriptionStored: Boolean;
       function GetExternalDocsStored: Boolean;
       function GetVendorExtensionStored: Boolean;
@@ -1585,32 +1585,32 @@ type
     published
       property name: System.String read FName write FName;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property externalDocs: TOpenAPIDefinition.ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
+      property externalDocs: TOpenAPIDefinition.externalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    SecurityDefinitions = class
+    securityDefinitions = class
     public type
       // Forward class declaration
-      TadditionalProperties = class;
+      additionalPropertiesType = class;
 
-      [Flat]
-      TadditionalProperties = class
+      [Flat('type')]
+      additionalPropertiesType = class
       private
-        FBasicAuthenticationSecurity: TOpenAPIDefinition.BasicAuthenticationSecurity;
-        FApiKeySecurity: TOpenAPIDefinition.ApiKeySecurity;
-        FOauth2ImplicitSecurity: TOpenAPIDefinition.Oauth2ImplicitSecurity;
-        FOauth2PasswordSecurity: TOpenAPIDefinition.Oauth2PasswordSecurity;
-        FOauth2ApplicationSecurity: TOpenAPIDefinition.Oauth2ApplicationSecurity;
-        FOauth2AccessCodeSecurity: TOpenAPIDefinition.Oauth2AccessCodeSecurity;
+        FBasicAuthenticationSecurity: TOpenAPIDefinition.basicAuthenticationSecurity;
+        FApiKeySecurity: TOpenAPIDefinition.apiKeySecurity;
+        FOauth2ImplicitSecurity: TOpenAPIDefinition.oauth2ImplicitSecurity;
+        FOauth2PasswordSecurity: TOpenAPIDefinition.oauth2PasswordSecurity;
+        FOauth2ApplicationSecurity: TOpenAPIDefinition.oauth2ApplicationSecurity;
+        FOauth2AccessCodeSecurity: TOpenAPIDefinition.oauth2AccessCodeSecurity;
 
-        function GetBasicAuthenticationSecurity: TOpenAPIDefinition.BasicAuthenticationSecurity;
-        function GetApiKeySecurity: TOpenAPIDefinition.ApiKeySecurity;
-        function GetOauth2ImplicitSecurity: TOpenAPIDefinition.Oauth2ImplicitSecurity;
-        function GetOauth2PasswordSecurity: TOpenAPIDefinition.Oauth2PasswordSecurity;
-        function GetOauth2ApplicationSecurity: TOpenAPIDefinition.Oauth2ApplicationSecurity;
-        function GetOauth2AccessCodeSecurity: TOpenAPIDefinition.Oauth2AccessCodeSecurity;
+        function GetBasicAuthenticationSecurity: TOpenAPIDefinition.basicAuthenticationSecurity;
+        function GetApiKeySecurity: TOpenAPIDefinition.apiKeySecurity;
+        function GetOauth2ImplicitSecurity: TOpenAPIDefinition.oauth2ImplicitSecurity;
+        function GetOauth2PasswordSecurity: TOpenAPIDefinition.oauth2PasswordSecurity;
+        function GetOauth2ApplicationSecurity: TOpenAPIDefinition.oauth2ApplicationSecurity;
+        function GetOauth2AccessCodeSecurity: TOpenAPIDefinition.oauth2AccessCodeSecurity;
         function GetBasicAuthenticationSecurityStored: Boolean;
         function GetApiKeySecurityStored: Boolean;
         function GetOauth2ImplicitSecurityStored: Boolean;
@@ -1627,65 +1627,35 @@ type
         property IsOauth2ApplicationSecurityStored: Boolean read GetOauth2ApplicationSecurityStored;
         property IsOauth2AccessCodeSecurityStored: Boolean read GetOauth2AccessCodeSecurityStored;
       published
-        property basicAuthenticationSecurity: TOpenAPIDefinition.BasicAuthenticationSecurity read GetBasicAuthenticationSecurity write FBasicAuthenticationSecurity stored GetBasicAuthenticationSecurityStored;
-        property apiKeySecurity: TOpenAPIDefinition.ApiKeySecurity read GetApiKeySecurity write FApiKeySecurity stored GetApiKeySecurityStored;
-        property oauth2ImplicitSecurity: TOpenAPIDefinition.Oauth2ImplicitSecurity read GetOauth2ImplicitSecurity write FOauth2ImplicitSecurity stored GetOauth2ImplicitSecurityStored;
-        property oauth2PasswordSecurity: TOpenAPIDefinition.Oauth2PasswordSecurity read GetOauth2PasswordSecurity write FOauth2PasswordSecurity stored GetOauth2PasswordSecurityStored;
-        property oauth2ApplicationSecurity: TOpenAPIDefinition.Oauth2ApplicationSecurity read GetOauth2ApplicationSecurity write FOauth2ApplicationSecurity stored GetOauth2ApplicationSecurityStored;
-        property oauth2AccessCodeSecurity: TOpenAPIDefinition.Oauth2AccessCodeSecurity read GetOauth2AccessCodeSecurity write FOauth2AccessCodeSecurity stored GetOauth2AccessCodeSecurityStored;
+        property basicAuthenticationSecurity: TOpenAPIDefinition.basicAuthenticationSecurity read GetBasicAuthenticationSecurity write FBasicAuthenticationSecurity stored GetBasicAuthenticationSecurityStored;
+        property apiKeySecurity: TOpenAPIDefinition.apiKeySecurity read GetApiKeySecurity write FApiKeySecurity stored GetApiKeySecurityStored;
+        property oauth2ImplicitSecurity: TOpenAPIDefinition.oauth2ImplicitSecurity read GetOauth2ImplicitSecurity write FOauth2ImplicitSecurity stored GetOauth2ImplicitSecurityStored;
+        property oauth2PasswordSecurity: TOpenAPIDefinition.oauth2PasswordSecurity read GetOauth2PasswordSecurity write FOauth2PasswordSecurity stored GetOauth2PasswordSecurityStored;
+        property oauth2ApplicationSecurity: TOpenAPIDefinition.oauth2ApplicationSecurity read GetOauth2ApplicationSecurity write FOauth2ApplicationSecurity stored GetOauth2ApplicationSecurityStored;
+        property oauth2AccessCodeSecurity: TOpenAPIDefinition.oauth2AccessCodeSecurity read GetOauth2AccessCodeSecurity write FOauth2AccessCodeSecurity stored GetOauth2AccessCodeSecurityStored;
       end;
     private
-      FBasicAuthenticationSecurity: TOpenAPIDefinition.BasicAuthenticationSecurity;
-      FApiKeySecurity: TOpenAPIDefinition.ApiKeySecurity;
-      FOauth2ImplicitSecurity: TOpenAPIDefinition.Oauth2ImplicitSecurity;
-      FOauth2PasswordSecurity: TOpenAPIDefinition.Oauth2PasswordSecurity;
-      FOauth2ApplicationSecurity: TOpenAPIDefinition.Oauth2ApplicationSecurity;
-      FOauth2AccessCodeSecurity: TOpenAPIDefinition.Oauth2AccessCodeSecurity;
-      FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties>;
+      FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.securityDefinitions.additionalPropertiesType>;
 
-      function GetBasicAuthenticationSecurity: TOpenAPIDefinition.BasicAuthenticationSecurity;
-      function GetApiKeySecurity: TOpenAPIDefinition.ApiKeySecurity;
-      function GetOauth2ImplicitSecurity: TOpenAPIDefinition.Oauth2ImplicitSecurity;
-      function GetOauth2PasswordSecurity: TOpenAPIDefinition.Oauth2PasswordSecurity;
-      function GetOauth2ApplicationSecurity: TOpenAPIDefinition.Oauth2ApplicationSecurity;
-      function GetOauth2AccessCodeSecurity: TOpenAPIDefinition.Oauth2AccessCodeSecurity;
-      function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties>;
-      function GetBasicAuthenticationSecurityStored: Boolean;
-      function GetApiKeySecurityStored: Boolean;
-      function GetOauth2ImplicitSecurityStored: Boolean;
-      function GetOauth2PasswordSecurityStored: Boolean;
-      function GetOauth2ApplicationSecurityStored: Boolean;
-      function GetOauth2AccessCodeSecurityStored: Boolean;
+      function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.securityDefinitions.additionalPropertiesType>;
       function GetAdditionalPropertiesStored: Boolean;
     public
       destructor Destroy; override;
 
-      property IsBasicAuthenticationSecurityStored: Boolean read GetBasicAuthenticationSecurityStored;
-      property IsApiKeySecurityStored: Boolean read GetApiKeySecurityStored;
-      property IsOauth2ImplicitSecurityStored: Boolean read GetOauth2ImplicitSecurityStored;
-      property IsOauth2PasswordSecurityStored: Boolean read GetOauth2PasswordSecurityStored;
-      property IsOauth2ApplicationSecurityStored: Boolean read GetOauth2ApplicationSecurityStored;
-      property IsOauth2AccessCodeSecurityStored: Boolean read GetOauth2AccessCodeSecurityStored;
       property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
     published
-      property basicAuthenticationSecurity: TOpenAPIDefinition.BasicAuthenticationSecurity read GetBasicAuthenticationSecurity write FBasicAuthenticationSecurity stored GetBasicAuthenticationSecurityStored;
-      property apiKeySecurity: TOpenAPIDefinition.ApiKeySecurity read GetApiKeySecurity write FApiKeySecurity stored GetApiKeySecurityStored;
-      property oauth2ImplicitSecurity: TOpenAPIDefinition.Oauth2ImplicitSecurity read GetOauth2ImplicitSecurity write FOauth2ImplicitSecurity stored GetOauth2ImplicitSecurityStored;
-      property oauth2PasswordSecurity: TOpenAPIDefinition.Oauth2PasswordSecurity read GetOauth2PasswordSecurity write FOauth2PasswordSecurity stored GetOauth2PasswordSecurityStored;
-      property oauth2ApplicationSecurity: TOpenAPIDefinition.Oauth2ApplicationSecurity read GetOauth2ApplicationSecurity write FOauth2ApplicationSecurity stored GetOauth2ApplicationSecurityStored;
-      property oauth2AccessCodeSecurity: TOpenAPIDefinition.Oauth2AccessCodeSecurity read GetOauth2AccessCodeSecurity write FOauth2AccessCodeSecurity stored GetOauth2AccessCodeSecurityStored;
-      property additionalProperties: TDynamicProperty<TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+      property additionalProperties: TDynamicProperty<TOpenAPIDefinition.securityDefinitions.additionalPropertiesType> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
     end;
 
-    BasicAuthenticationSecurity = class
+    basicAuthenticationSecurity = class
     public type
-      Ttype = (basic);
+      TypeProperty = (basic);
     private
-      FType: TOpenAPIDefinition.BasicAuthenticationSecurity.Ttype;
+      FType: TOpenAPIDefinition.basicAuthenticationSecurity.TypeProperty;
       FDescription: System.String;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetDescriptionStored: Boolean;
       function GetVendorExtensionStored: Boolean;
     public
@@ -1695,25 +1665,25 @@ type
       property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
     published
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.BasicAuthenticationSecurity.Ttype read FType write FType;
+      property &type: TOpenAPIDefinition.basicAuthenticationSecurity.TypeProperty read FType write FType;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    ApiKeySecurity = class
+    apiKeySecurity = class
     public type
-      Ttype = (apiKey);
+      TypeProperty = (apiKey);
 
-      Tin = (header, query);
+      InProperty = (header, query);
     private
-      FType: TOpenAPIDefinition.ApiKeySecurity.Ttype;
+      FType: TOpenAPIDefinition.apiKeySecurity.TypeProperty;
       FName: System.String;
-      FIn: TOpenAPIDefinition.ApiKeySecurity.Tin;
+      FIn: TOpenAPIDefinition.apiKeySecurity.InProperty;
       FDescription: System.String;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetDescriptionStored: Boolean;
       function GetVendorExtensionStored: Boolean;
     public
@@ -1723,30 +1693,30 @@ type
       property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
     published
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.ApiKeySecurity.Ttype read FType write FType;
+      property &type: TOpenAPIDefinition.apiKeySecurity.TypeProperty read FType write FType;
       property name: System.String read FName write FName;
       [FieldName('in')]
-      property &in: TOpenAPIDefinition.ApiKeySecurity.Tin read FIn write FIn;
+      property &in: TOpenAPIDefinition.apiKeySecurity.InProperty read FIn write FIn;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    Oauth2ImplicitSecurity = class
+    oauth2ImplicitSecurity = class
     public type
-      Ttype = (oauth2);
+      TypeProperty = (oauth2);
 
-      Tflow = (implicit);
+      FlowProperty = (implicit);
     private
-      FType: TOpenAPIDefinition.Oauth2ImplicitSecurity.Ttype;
-      FFlow: TOpenAPIDefinition.Oauth2ImplicitSecurity.Tflow;
-      FScopes: TOpenAPIDefinition.Oauth2Scopes;
+      FType: TOpenAPIDefinition.oauth2ImplicitSecurity.TypeProperty;
+      FFlow: TOpenAPIDefinition.oauth2ImplicitSecurity.FlowProperty;
+      FScopes: TOpenAPIDefinition.oauth2Scopes;
       FAuthorizationUrl: System.String;
       FDescription: System.String;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetScopes: TOpenAPIDefinition.Oauth2Scopes;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetScopes: TOpenAPIDefinition.oauth2Scopes;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetScopesStored: Boolean;
       function GetDescriptionStored: Boolean;
       function GetVendorExtensionStored: Boolean;
@@ -1758,30 +1728,30 @@ type
       property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
     published
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.Oauth2ImplicitSecurity.Ttype read FType write FType;
-      property flow: TOpenAPIDefinition.Oauth2ImplicitSecurity.Tflow read FFlow write FFlow;
-      property scopes: TOpenAPIDefinition.Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
+      property &type: TOpenAPIDefinition.oauth2ImplicitSecurity.TypeProperty read FType write FType;
+      property flow: TOpenAPIDefinition.oauth2ImplicitSecurity.FlowProperty read FFlow write FFlow;
+      property scopes: TOpenAPIDefinition.oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
       property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    Oauth2PasswordSecurity = class
+    oauth2PasswordSecurity = class
     public type
-      Ttype = (oauth2);
+      TypeProperty = (oauth2);
 
-      Tflow = (password);
+      FlowProperty = (password);
     private
-      FType: TOpenAPIDefinition.Oauth2PasswordSecurity.Ttype;
-      FFlow: TOpenAPIDefinition.Oauth2PasswordSecurity.Tflow;
-      FScopes: TOpenAPIDefinition.Oauth2Scopes;
+      FType: TOpenAPIDefinition.oauth2PasswordSecurity.TypeProperty;
+      FFlow: TOpenAPIDefinition.oauth2PasswordSecurity.FlowProperty;
+      FScopes: TOpenAPIDefinition.oauth2Scopes;
       FTokenUrl: System.String;
       FDescription: System.String;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetScopes: TOpenAPIDefinition.Oauth2Scopes;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetScopes: TOpenAPIDefinition.oauth2Scopes;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetScopesStored: Boolean;
       function GetDescriptionStored: Boolean;
       function GetVendorExtensionStored: Boolean;
@@ -1793,30 +1763,30 @@ type
       property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
     published
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.Oauth2PasswordSecurity.Ttype read FType write FType;
-      property flow: TOpenAPIDefinition.Oauth2PasswordSecurity.Tflow read FFlow write FFlow;
-      property scopes: TOpenAPIDefinition.Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
+      property &type: TOpenAPIDefinition.oauth2PasswordSecurity.TypeProperty read FType write FType;
+      property flow: TOpenAPIDefinition.oauth2PasswordSecurity.FlowProperty read FFlow write FFlow;
+      property scopes: TOpenAPIDefinition.oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
       property tokenUrl: System.String read FTokenUrl write FTokenUrl;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    Oauth2ApplicationSecurity = class
+    oauth2ApplicationSecurity = class
     public type
-      Ttype = (oauth2);
+      TypeProperty = (oauth2);
 
-      Tflow = (application);
+      FlowProperty = (application);
     private
-      FType: TOpenAPIDefinition.Oauth2ApplicationSecurity.Ttype;
-      FFlow: TOpenAPIDefinition.Oauth2ApplicationSecurity.Tflow;
-      FScopes: TOpenAPIDefinition.Oauth2Scopes;
+      FType: TOpenAPIDefinition.oauth2ApplicationSecurity.TypeProperty;
+      FFlow: TOpenAPIDefinition.oauth2ApplicationSecurity.FlowProperty;
+      FScopes: TOpenAPIDefinition.oauth2Scopes;
       FTokenUrl: System.String;
       FDescription: System.String;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetScopes: TOpenAPIDefinition.Oauth2Scopes;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetScopes: TOpenAPIDefinition.oauth2Scopes;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetScopesStored: Boolean;
       function GetDescriptionStored: Boolean;
       function GetVendorExtensionStored: Boolean;
@@ -1828,31 +1798,31 @@ type
       property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
     published
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.Oauth2ApplicationSecurity.Ttype read FType write FType;
-      property flow: TOpenAPIDefinition.Oauth2ApplicationSecurity.Tflow read FFlow write FFlow;
-      property scopes: TOpenAPIDefinition.Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
+      property &type: TOpenAPIDefinition.oauth2ApplicationSecurity.TypeProperty read FType write FType;
+      property flow: TOpenAPIDefinition.oauth2ApplicationSecurity.FlowProperty read FFlow write FFlow;
+      property scopes: TOpenAPIDefinition.oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
       property tokenUrl: System.String read FTokenUrl write FTokenUrl;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    Oauth2AccessCodeSecurity = class
+    oauth2AccessCodeSecurity = class
     public type
-      Ttype = (oauth2);
+      TypeProperty = (oauth2);
 
-      Tflow = (accessCode);
+      FlowProperty = (accessCode);
     private
-      FType: TOpenAPIDefinition.Oauth2AccessCodeSecurity.Ttype;
-      FFlow: TOpenAPIDefinition.Oauth2AccessCodeSecurity.Tflow;
-      FScopes: TOpenAPIDefinition.Oauth2Scopes;
+      FType: TOpenAPIDefinition.oauth2AccessCodeSecurity.TypeProperty;
+      FFlow: TOpenAPIDefinition.oauth2AccessCodeSecurity.FlowProperty;
+      FScopes: TOpenAPIDefinition.oauth2Scopes;
       FAuthorizationUrl: System.String;
       FTokenUrl: System.String;
       FDescription: System.String;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetScopes: TOpenAPIDefinition.Oauth2Scopes;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetScopes: TOpenAPIDefinition.oauth2Scopes;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetScopesStored: Boolean;
       function GetDescriptionStored: Boolean;
       function GetVendorExtensionStored: Boolean;
@@ -1864,17 +1834,17 @@ type
       property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
     published
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.Oauth2AccessCodeSecurity.Ttype read FType write FType;
-      property flow: TOpenAPIDefinition.Oauth2AccessCodeSecurity.Tflow read FFlow write FFlow;
-      property scopes: TOpenAPIDefinition.Oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
+      property &type: TOpenAPIDefinition.oauth2AccessCodeSecurity.TypeProperty read FType write FType;
+      property flow: TOpenAPIDefinition.oauth2AccessCodeSecurity.FlowProperty read FFlow write FFlow;
+      property scopes: TOpenAPIDefinition.oauth2Scopes read GetScopes write FScopes stored GetScopesStored;
       property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
       property tokenUrl: System.String read FTokenUrl write FTokenUrl;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
 
-    Oauth2Scopes = class
+    oauth2Scopes = class
     private
       FAdditionalProperties: TDynamicProperty<System.String>;
 
@@ -1889,13 +1859,13 @@ type
     end;
 
     [Flat]
-    ParametersListArrayItem = class
+    parametersListArrayItem = class
     private
-      FParameter: TOpenAPIDefinition.Parameter;
-      FJsonReference: TOpenAPIDefinition.JsonReference;
+      FParameter: TOpenAPIDefinition.parameter;
+      FJsonReference: TOpenAPIDefinition.jsonReference;
 
-      function GetParameter: TOpenAPIDefinition.Parameter;
-      function GetJsonReference: TOpenAPIDefinition.JsonReference;
+      function GetParameter: TOpenAPIDefinition.parameter;
+      function GetJsonReference: TOpenAPIDefinition.jsonReference;
       function GetParameterStored: Boolean;
       function GetJsonReferenceStored: Boolean;
     public
@@ -1904,29 +1874,29 @@ type
       property IsParameterStored: Boolean read GetParameterStored;
       property IsJsonReferenceStored: Boolean read GetJsonReferenceStored;
     published
-      property parameter: TOpenAPIDefinition.Parameter read GetParameter write FParameter stored GetParameterStored;
-      property jsonReference: TOpenAPIDefinition.JsonReference read GetJsonReference write FJsonReference stored GetJsonReferenceStored;
+      property parameter: TOpenAPIDefinition.parameter read GetParameter write FParameter stored GetParameterStored;
+      property jsonReference: TOpenAPIDefinition.jsonReference read GetJsonReference write FJsonReference stored GetJsonReferenceStored;
     end;
 
-    JsonReference = class
+    jsonReference = class
     private
       FRef: System.String;
     published
       [FieldName('$ref')]
-      property Ref: System.String read FRef write FRef;
+      property ref: System.String read FRef write FRef;
     end;
 
     TOpenAPIDefinition = class
     public type
       [EnumValue('2.0')]
-      Tswagger = (t20);
+      SwaggerProperty = (t20);
 
       // Forward class declaration
-      Tconsumes = class;
-      Tproduces = class;
+      ConsumesProperty = class;
+      ProducesProperty = class;
 
       [Flat]
-      Tconsumes = class
+      ConsumesProperty = class
       private
         FMediaTypeList: TOpenAPIDefinition.mediaTypeList;
 
@@ -1938,7 +1908,7 @@ type
       end;
 
       [Flat]
-      Tproduces = class
+      ProducesProperty = class
       private
         FMediaTypeList: TOpenAPIDefinition.mediaTypeList;
 
@@ -1949,33 +1919,33 @@ type
         property mediaTypeList: TOpenAPIDefinition.mediaTypeList read FMediaTypeList write FMediaTypeList stored GetMediaTypeListStored;
       end;
     private
-      FSwagger: TOpenAPIDefinition.TOpenAPIDefinition.Tswagger;
-      FInfo: TOpenAPIDefinition.Info;
+      FSwagger: TOpenAPIDefinition.TOpenAPIDefinition.SwaggerProperty;
+      FInfo: TOpenAPIDefinition.info;
       FHost: System.String;
       FBasePath: System.String;
       FSchemes: TOpenAPIDefinition.schemesList;
-      FConsumes: TOpenAPIDefinition.TOpenAPIDefinition.Tconsumes;
-      FProduces: TOpenAPIDefinition.TOpenAPIDefinition.Tproduces;
-      FPaths: TOpenAPIDefinition.Paths;
-      FDefinitions: TOpenAPIDefinition.Definitions;
-      FParameters: TOpenAPIDefinition.ParameterDefinitions;
-      FResponses: TOpenAPIDefinition.ResponseDefinitions;
+      FConsumes: TOpenAPIDefinition.TOpenAPIDefinition.ConsumesProperty;
+      FProduces: TOpenAPIDefinition.TOpenAPIDefinition.ProducesProperty;
+      FPaths: TOpenAPIDefinition.paths;
+      FDefinitions: TOpenAPIDefinition.definitions;
+      FParameters: TOpenAPIDefinition.parameterDefinitions;
+      FResponses: TOpenAPIDefinition.responseDefinitions;
       FSecurity: TOpenAPIDefinition.security;
-      FSecurityDefinitions: TOpenAPIDefinition.SecurityDefinitions;
-      FTags: TArray<TOpenAPIDefinition.Tag>;
-      FExternalDocs: TOpenAPIDefinition.ExternalDocs;
-      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      FSecurityDefinitions: TOpenAPIDefinition.securityDefinitions;
+      FTags: TArray<TOpenAPIDefinition.tag>;
+      FExternalDocs: TOpenAPIDefinition.externalDocs;
+      FVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 
-      function GetInfo: TOpenAPIDefinition.Info;
-      function GetConsumes: TOpenAPIDefinition.TOpenAPIDefinition.Tconsumes;
-      function GetProduces: TOpenAPIDefinition.TOpenAPIDefinition.Tproduces;
-      function GetPaths: TOpenAPIDefinition.Paths;
-      function GetDefinitions: TOpenAPIDefinition.Definitions;
-      function GetParameters: TOpenAPIDefinition.ParameterDefinitions;
-      function GetResponses: TOpenAPIDefinition.ResponseDefinitions;
-      function GetSecurityDefinitions: TOpenAPIDefinition.SecurityDefinitions;
-      function GetExternalDocs: TOpenAPIDefinition.ExternalDocs;
-      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+      function GetInfo: TOpenAPIDefinition.info;
+      function GetConsumes: TOpenAPIDefinition.TOpenAPIDefinition.ConsumesProperty;
+      function GetProduces: TOpenAPIDefinition.TOpenAPIDefinition.ProducesProperty;
+      function GetPaths: TOpenAPIDefinition.paths;
+      function GetDefinitions: TOpenAPIDefinition.definitions;
+      function GetParameters: TOpenAPIDefinition.parameterDefinitions;
+      function GetResponses: TOpenAPIDefinition.responseDefinitions;
+      function GetSecurityDefinitions: TOpenAPIDefinition.securityDefinitions;
+      function GetExternalDocs: TOpenAPIDefinition.externalDocs;
+      function GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
       function GetHostStored: Boolean;
       function GetBasePathStored: Boolean;
       function GetSchemesStored: Boolean;
@@ -1992,8 +1962,8 @@ type
     public
       destructor Destroy; override;
 
-      function AddSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.SecurityRequirement;
-      function AddTags: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Tag;
+      function AddSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.securityRequirement;
+      function AddTags: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.tag;
 
       property IsHostStored: Boolean read GetHostStored;
       property IsBasePathStored: Boolean read GetBasePathStored;
@@ -2009,23 +1979,23 @@ type
       property IsExternalDocsStored: Boolean read GetExternalDocsStored;
       property IsVendorExtensionStored: Boolean read GetVendorExtensionStored;
     published
-      property swagger: TOpenAPIDefinition.TOpenAPIDefinition.Tswagger read FSwagger write FSwagger;
-      property info: TOpenAPIDefinition.Info read GetInfo write FInfo;
+      property swagger: TOpenAPIDefinition.TOpenAPIDefinition.SwaggerProperty read FSwagger write FSwagger;
+      property info: TOpenAPIDefinition.info read GetInfo write FInfo;
       property host: System.String read FHost write FHost stored GetHostStored;
       property basePath: System.String read FBasePath write FBasePath stored GetBasePathStored;
       property schemes: TOpenAPIDefinition.schemesList read FSchemes write FSchemes stored GetSchemesStored;
-      property consumes: TOpenAPIDefinition.TOpenAPIDefinition.Tconsumes read GetConsumes write FConsumes stored GetConsumesStored;
-      property produces: TOpenAPIDefinition.TOpenAPIDefinition.Tproduces read GetProduces write FProduces stored GetProducesStored;
-      property paths: TOpenAPIDefinition.Paths read GetPaths write FPaths;
-      property definitions: TOpenAPIDefinition.Definitions read GetDefinitions write FDefinitions stored GetDefinitionsStored;
-      property parameters: TOpenAPIDefinition.ParameterDefinitions read GetParameters write FParameters stored GetParametersStored;
-      property responses: TOpenAPIDefinition.ResponseDefinitions read GetResponses write FResponses stored GetResponsesStored;
+      property consumes: TOpenAPIDefinition.TOpenAPIDefinition.ConsumesProperty read GetConsumes write FConsumes stored GetConsumesStored;
+      property produces: TOpenAPIDefinition.TOpenAPIDefinition.ProducesProperty read GetProduces write FProduces stored GetProducesStored;
+      property paths: TOpenAPIDefinition.paths read GetPaths write FPaths;
+      property definitions: TOpenAPIDefinition.definitions read GetDefinitions write FDefinitions stored GetDefinitionsStored;
+      property parameters: TOpenAPIDefinition.parameterDefinitions read GetParameters write FParameters stored GetParametersStored;
+      property responses: TOpenAPIDefinition.responseDefinitions read GetResponses write FResponses stored GetResponsesStored;
       property security: TOpenAPIDefinition.security read FSecurity write FSecurity stored GetSecurityStored;
-      property securityDefinitions: TOpenAPIDefinition.SecurityDefinitions read GetSecurityDefinitions write FSecurityDefinitions stored GetSecurityDefinitionsStored;
-      property tags: TArray<TOpenAPIDefinition.Tag> read FTags write FTags stored GetTagsStored;
-      property externalDocs: TOpenAPIDefinition.ExternalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
+      property securityDefinitions: TOpenAPIDefinition.securityDefinitions read GetSecurityDefinitions write FSecurityDefinitions stored GetSecurityDefinitionsStored;
+      property tags: TArray<TOpenAPIDefinition.tag> read FTags write FTags stored GetTagsStored;
+      property externalDocs: TOpenAPIDefinition.externalDocs read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
       [PatternProperty('^x-')]
-      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
+      property vendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension> read GetVendorExtension write FVendorExtension stored GetVendorExtensionStored;
     end;
   end;
 
@@ -2033,9 +2003,9 @@ implementation
 
 uses System.SysUtils;
 
-{ TOpenAPIDefinition.Info }
+{ TOpenAPIDefinition.info }
 
-destructor TOpenAPIDefinition.Info.Destroy;
+destructor TOpenAPIDefinition.info.Destroy;
 begin
   FContact.Free;
 
@@ -2046,122 +2016,122 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Info.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.info.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Info.GetTermsOfServiceStored: Boolean;
+function TOpenAPIDefinition.info.GetTermsOfServiceStored: Boolean;
 begin
   Result := not FTermsOfService.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Info.GetContact: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Contact;
+function TOpenAPIDefinition.info.GetContact: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.contact;
 begin
   if not Assigned(FContact) then
-    FContact := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Contact.Create;
+    FContact := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.contact.Create;
 
   Result := FContact;
 end;
 
-function TOpenAPIDefinition.Info.GetContactStored: Boolean;
+function TOpenAPIDefinition.info.GetContactStored: Boolean;
 begin
   Result := Assigned(FContact);
 end;
 
-function TOpenAPIDefinition.Info.GetLicense: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.License;
+function TOpenAPIDefinition.info.GetLicense: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.license;
 begin
   if not Assigned(FLicense) then
-    FLicense := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.License.Create;
+    FLicense := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.license.Create;
 
   Result := FLicense;
 end;
 
-function TOpenAPIDefinition.Info.GetLicenseStored: Boolean;
+function TOpenAPIDefinition.info.GetLicenseStored: Boolean;
 begin
   Result := Assigned(FLicense);
 end;
 
-function TOpenAPIDefinition.Info.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.info.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.Info.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.info.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.Contact }
+{ TOpenAPIDefinition.contact }
 
-destructor TOpenAPIDefinition.Contact.Destroy;
+destructor TOpenAPIDefinition.contact.Destroy;
 begin
   FVendorExtension.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Contact.GetNameStored: Boolean;
+function TOpenAPIDefinition.contact.GetNameStored: Boolean;
 begin
   Result := not FName.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Contact.GetUrlStored: Boolean;
+function TOpenAPIDefinition.contact.GetUrlStored: Boolean;
 begin
   Result := not FUrl.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Contact.GetEmailStored: Boolean;
+function TOpenAPIDefinition.contact.GetEmailStored: Boolean;
 begin
   Result := not FEmail.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Contact.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.contact.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.Contact.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.contact.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.License }
+{ TOpenAPIDefinition.license }
 
-destructor TOpenAPIDefinition.License.Destroy;
+destructor TOpenAPIDefinition.license.Destroy;
 begin
   FVendorExtension.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.License.GetUrlStored: Boolean;
+function TOpenAPIDefinition.license.GetUrlStored: Boolean;
 begin
   Result := not FUrl.IsEmpty;
 end;
 
-function TOpenAPIDefinition.License.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.license.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.License.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.license.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.Paths }
+{ TOpenAPIDefinition.paths }
 
-destructor TOpenAPIDefinition.Paths.Destroy;
+destructor TOpenAPIDefinition.paths.Destroy;
 begin
   FVendorExtension.Free;
 
@@ -2170,128 +2140,128 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Paths.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.paths.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.Paths.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.paths.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-function TOpenAPIDefinition.Paths.GetPathItem: TDynamicProperty<TOpenAPIDefinition.PathItem>;
+function TOpenAPIDefinition.paths.GetPathItem: TDynamicProperty<TOpenAPIDefinition.pathItem>;
 begin
   if not Assigned(FPathItem) then
-    FPathItem := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.PathItem>.Create;
+    FPathItem := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.pathItem>.Create;
 
   Result := FPathItem;
 end;
 
-function TOpenAPIDefinition.Paths.GetPathItemStored: Boolean;
+function TOpenAPIDefinition.paths.GetPathItemStored: Boolean;
 begin
   Result := Assigned(FPathItem);
 end;
 
-{ TOpenAPIDefinition.Definitions }
+{ TOpenAPIDefinition.definitions }
 
-destructor TOpenAPIDefinition.Definitions.Destroy;
+destructor TOpenAPIDefinition.definitions.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Definitions.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Schema>;
+function TOpenAPIDefinition.definitions.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.schema>;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema>.Create;
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema>.Create;
 
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Definitions.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.definitions.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.ParameterDefinitions }
+{ TOpenAPIDefinition.parameterDefinitions }
 
-destructor TOpenAPIDefinition.ParameterDefinitions.Destroy;
+destructor TOpenAPIDefinition.parameterDefinitions.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.ParameterDefinitions.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Parameter>;
+function TOpenAPIDefinition.parameterDefinitions.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.parameter>;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Parameter>.Create;
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.parameter>.Create;
 
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.ParameterDefinitions.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.parameterDefinitions.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.ResponseDefinitions }
+{ TOpenAPIDefinition.responseDefinitions }
 
-destructor TOpenAPIDefinition.ResponseDefinitions.Destroy;
+destructor TOpenAPIDefinition.responseDefinitions.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.ResponseDefinitions.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Response>;
+function TOpenAPIDefinition.responseDefinitions.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.response>;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Response>.Create;
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.response>.Create;
 
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.ResponseDefinitions.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.responseDefinitions.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.ExternalDocs }
+{ TOpenAPIDefinition.externalDocs }
 
-destructor TOpenAPIDefinition.ExternalDocs.Destroy;
+destructor TOpenAPIDefinition.externalDocs.Destroy;
 begin
   FVendorExtension.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.ExternalDocs.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.externalDocs.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.ExternalDocs.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.externalDocs.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.ExternalDocs.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.externalDocs.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.Operation }
+{ TOpenAPIDefinition.operation }
 
-destructor TOpenAPIDefinition.Operation.Destroy;
+destructor TOpenAPIDefinition.operation.Destroy;
 begin
   FExternalDocs.Free;
 
@@ -2312,137 +2282,137 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Operation.GetTagsStored: Boolean;
+function TOpenAPIDefinition.operation.GetTagsStored: Boolean;
 begin
   Result := Assigned(FTags);
 end;
 
-function TOpenAPIDefinition.Operation.GetSummaryStored: Boolean;
+function TOpenAPIDefinition.operation.GetSummaryStored: Boolean;
 begin
   Result := not FSummary.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Operation.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.operation.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Operation.GetExternalDocs: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ExternalDocs;
+function TOpenAPIDefinition.operation.GetExternalDocs: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.externalDocs;
 begin
   if not Assigned(FExternalDocs) then
-    FExternalDocs := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ExternalDocs.Create;
+    FExternalDocs := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.externalDocs.Create;
 
   Result := FExternalDocs;
 end;
 
-function TOpenAPIDefinition.Operation.GetExternalDocsStored: Boolean;
+function TOpenAPIDefinition.operation.GetExternalDocsStored: Boolean;
 begin
   Result := Assigned(FExternalDocs);
 end;
 
-function TOpenAPIDefinition.Operation.GetOperationIdStored: Boolean;
+function TOpenAPIDefinition.operation.GetOperationIdStored: Boolean;
 begin
   Result := not FOperationId.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Operation.GetProduces: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation.Tproduces;
+function TOpenAPIDefinition.operation.GetProduces: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation.ProducesProperty;
 begin
   if not Assigned(FProduces) then
-    FProduces := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation.Tproduces.Create;
+    FProduces := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation.ProducesProperty.Create;
 
   Result := FProduces;
 end;
 
-function TOpenAPIDefinition.Operation.GetProducesStored: Boolean;
+function TOpenAPIDefinition.operation.GetProducesStored: Boolean;
 begin
   Result := Assigned(FProduces);
 end;
 
-function TOpenAPIDefinition.Operation.GetConsumes: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation.Tconsumes;
+function TOpenAPIDefinition.operation.GetConsumes: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation.ConsumesProperty;
 begin
   if not Assigned(FConsumes) then
-    FConsumes := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation.Tconsumes.Create;
+    FConsumes := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation.ConsumesProperty.Create;
 
   Result := FConsumes;
 end;
 
-function TOpenAPIDefinition.Operation.GetConsumesStored: Boolean;
+function TOpenAPIDefinition.operation.GetConsumesStored: Boolean;
 begin
   Result := Assigned(FConsumes);
 end;
 
-function TOpenAPIDefinition.Operation.AddParameters: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ParametersListArrayItem;
+function TOpenAPIDefinition.operation.AddParameters: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.parametersListArrayItem;
 begin
-  Result := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ParametersListArrayItem.Create;
+  Result := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.parametersListArrayItem.Create;
 
   FParameters := FParameters + [Result];
 end;
 
-function TOpenAPIDefinition.Operation.GetParametersStored: Boolean;
+function TOpenAPIDefinition.operation.GetParametersStored: Boolean;
 begin
   Result := Assigned(FParameters);
 end;
 
-function TOpenAPIDefinition.Operation.GetResponses: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Responses;
+function TOpenAPIDefinition.operation.GetResponses: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.responses;
 begin
   if not Assigned(FResponses) then
-    FResponses := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Responses.Create;
+    FResponses := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.responses.Create;
 
   Result := FResponses;
 end;
 
-function TOpenAPIDefinition.Operation.GetSchemesStored: Boolean;
+function TOpenAPIDefinition.operation.GetSchemesStored: Boolean;
 begin
   Result := Assigned(FSchemes);
 end;
 
-function TOpenAPIDefinition.Operation.GetDeprecatedStored: Boolean;
+function TOpenAPIDefinition.operation.GetDeprecatedStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.Operation.AddSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.SecurityRequirement;
+function TOpenAPIDefinition.operation.AddSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.securityRequirement;
 begin
-  Result := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.SecurityRequirement.Create;
+  Result := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.securityRequirement.Create;
 
   FSecurity := FSecurity + [Result];
 end;
 
-function TOpenAPIDefinition.Operation.GetSecurityStored: Boolean;
+function TOpenAPIDefinition.operation.GetSecurityStored: Boolean;
 begin
   Result := Assigned(FSecurity);
 end;
 
-function TOpenAPIDefinition.Operation.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.operation.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.Operation.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.operation.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.Operation.Tproduces }
+{ TOpenAPIDefinition.operation.ProducesProperty }
 
-function TOpenAPIDefinition.Operation.Tproduces.GetMediaTypeListStored: Boolean;
+function TOpenAPIDefinition.operation.ProducesProperty.GetMediaTypeListStored: Boolean;
 begin
   Result := Assigned(FMediaTypeList);
 end;
 
-{ TOpenAPIDefinition.Operation.Tconsumes }
+{ TOpenAPIDefinition.operation.ConsumesProperty }
 
-function TOpenAPIDefinition.Operation.Tconsumes.GetMediaTypeListStored: Boolean;
+function TOpenAPIDefinition.operation.ConsumesProperty.GetMediaTypeListStored: Boolean;
 begin
   Result := Assigned(FMediaTypeList);
 end;
 
-{ TOpenAPIDefinition.PathItem }
+{ TOpenAPIDefinition.pathItem }
 
-destructor TOpenAPIDefinition.PathItem.Destroy;
+destructor TOpenAPIDefinition.pathItem.Destroy;
 begin
   FGet.Free;
 
@@ -2466,130 +2436,130 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.PathItem.GetRefStored: Boolean;
+function TOpenAPIDefinition.pathItem.GetRefStored: Boolean;
 begin
   Result := not FRef.IsEmpty;
 end;
 
-function TOpenAPIDefinition.PathItem.GetGet: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation;
+function TOpenAPIDefinition.pathItem.GetGet: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation;
 begin
   if not Assigned(FGet) then
-    FGet := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation.Create;
+    FGet := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation.Create;
 
   Result := FGet;
 end;
 
-function TOpenAPIDefinition.PathItem.GetGetStored: Boolean;
+function TOpenAPIDefinition.pathItem.GetGetStored: Boolean;
 begin
   Result := Assigned(FGet);
 end;
 
-function TOpenAPIDefinition.PathItem.GetPut: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation;
+function TOpenAPIDefinition.pathItem.GetPut: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation;
 begin
   if not Assigned(FPut) then
-    FPut := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation.Create;
+    FPut := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation.Create;
 
   Result := FPut;
 end;
 
-function TOpenAPIDefinition.PathItem.GetPutStored: Boolean;
+function TOpenAPIDefinition.pathItem.GetPutStored: Boolean;
 begin
   Result := Assigned(FPut);
 end;
 
-function TOpenAPIDefinition.PathItem.GetPost: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation;
+function TOpenAPIDefinition.pathItem.GetPost: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation;
 begin
   if not Assigned(FPost) then
-    FPost := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation.Create;
+    FPost := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation.Create;
 
   Result := FPost;
 end;
 
-function TOpenAPIDefinition.PathItem.GetPostStored: Boolean;
+function TOpenAPIDefinition.pathItem.GetPostStored: Boolean;
 begin
   Result := Assigned(FPost);
 end;
 
-function TOpenAPIDefinition.PathItem.GetDelete: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation;
+function TOpenAPIDefinition.pathItem.GetDelete: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation;
 begin
   if not Assigned(FDelete) then
-    FDelete := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation.Create;
+    FDelete := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation.Create;
 
   Result := FDelete;
 end;
 
-function TOpenAPIDefinition.PathItem.GetDeleteStored: Boolean;
+function TOpenAPIDefinition.pathItem.GetDeleteStored: Boolean;
 begin
   Result := Assigned(FDelete);
 end;
 
-function TOpenAPIDefinition.PathItem.GetOptions: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation;
+function TOpenAPIDefinition.pathItem.GetOptions: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation;
 begin
   if not Assigned(FOptions) then
-    FOptions := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation.Create;
+    FOptions := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation.Create;
 
   Result := FOptions;
 end;
 
-function TOpenAPIDefinition.PathItem.GetOptionsStored: Boolean;
+function TOpenAPIDefinition.pathItem.GetOptionsStored: Boolean;
 begin
   Result := Assigned(FOptions);
 end;
 
-function TOpenAPIDefinition.PathItem.GetHead: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation;
+function TOpenAPIDefinition.pathItem.GetHead: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation;
 begin
   if not Assigned(FHead) then
-    FHead := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation.Create;
+    FHead := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation.Create;
 
   Result := FHead;
 end;
 
-function TOpenAPIDefinition.PathItem.GetHeadStored: Boolean;
+function TOpenAPIDefinition.pathItem.GetHeadStored: Boolean;
 begin
   Result := Assigned(FHead);
 end;
 
-function TOpenAPIDefinition.PathItem.GetPatch: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation;
+function TOpenAPIDefinition.pathItem.GetPatch: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation;
 begin
   if not Assigned(FPatch) then
-    FPatch := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Operation.Create;
+    FPatch := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.operation.Create;
 
   Result := FPatch;
 end;
 
-function TOpenAPIDefinition.PathItem.GetPatchStored: Boolean;
+function TOpenAPIDefinition.pathItem.GetPatchStored: Boolean;
 begin
   Result := Assigned(FPatch);
 end;
 
-function TOpenAPIDefinition.PathItem.AddParameters: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ParametersListArrayItem;
+function TOpenAPIDefinition.pathItem.AddParameters: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.parametersListArrayItem;
 begin
-  Result := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ParametersListArrayItem.Create;
+  Result := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.parametersListArrayItem.Create;
 
   FParameters := FParameters + [Result];
 end;
 
-function TOpenAPIDefinition.PathItem.GetParametersStored: Boolean;
+function TOpenAPIDefinition.pathItem.GetParametersStored: Boolean;
 begin
   Result := Assigned(FParameters);
 end;
 
-function TOpenAPIDefinition.PathItem.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.pathItem.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.PathItem.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.pathItem.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.Responses }
+{ TOpenAPIDefinition.responses }
 
-destructor TOpenAPIDefinition.Responses.Destroy;
+destructor TOpenAPIDefinition.responses.Destroy;
 begin
   FResponseValue.Free;
 
@@ -2598,35 +2568,35 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Responses.GetResponseValue: TDynamicProperty<TOpenAPIDefinition.ResponseValue>;
+function TOpenAPIDefinition.responses.GetResponseValue: TDynamicProperty<TOpenAPIDefinition.responseValue>;
 begin
   if not Assigned(FResponseValue) then
-    FResponseValue := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ResponseValue>.Create;
+    FResponseValue := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.responseValue>.Create;
 
   Result := FResponseValue;
 end;
 
-function TOpenAPIDefinition.Responses.GetResponseValueStored: Boolean;
+function TOpenAPIDefinition.responses.GetResponseValueStored: Boolean;
 begin
   Result := Assigned(FResponseValue);
 end;
 
-function TOpenAPIDefinition.Responses.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.responses.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.Responses.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.responses.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.ResponseValue }
+{ TOpenAPIDefinition.responseValue }
 
-destructor TOpenAPIDefinition.ResponseValue.Destroy;
+destructor TOpenAPIDefinition.responseValue.Destroy;
 begin
   FResponse.Free;
 
@@ -2635,35 +2605,35 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.ResponseValue.GetResponse: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Response;
+function TOpenAPIDefinition.responseValue.GetResponse: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.response;
 begin
   if not Assigned(FResponse) then
-    FResponse := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Response.Create;
+    FResponse := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.response.Create;
 
   Result := FResponse;
 end;
 
-function TOpenAPIDefinition.ResponseValue.GetResponseStored: Boolean;
+function TOpenAPIDefinition.responseValue.GetResponseStored: Boolean;
 begin
   Result := Assigned(FResponse);
 end;
 
-function TOpenAPIDefinition.ResponseValue.GetJsonReference: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.JsonReference;
+function TOpenAPIDefinition.responseValue.GetJsonReference: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.jsonReference;
 begin
   if not Assigned(FJsonReference) then
-    FJsonReference := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.JsonReference.Create;
+    FJsonReference := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.jsonReference.Create;
 
   Result := FJsonReference;
 end;
 
-function TOpenAPIDefinition.ResponseValue.GetJsonReferenceStored: Boolean;
+function TOpenAPIDefinition.responseValue.GetJsonReferenceStored: Boolean;
 begin
   Result := Assigned(FJsonReference);
 end;
 
-{ TOpenAPIDefinition.Response }
+{ TOpenAPIDefinition.response }
 
-destructor TOpenAPIDefinition.Response.Destroy;
+destructor TOpenAPIDefinition.response.Destroy;
 begin
   FSchema.Free;
 
@@ -2676,61 +2646,61 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Response.GetSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Response.Tschema;
+function TOpenAPIDefinition.response.GetSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.response.SchemaProperty;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Response.Tschema.Create;
+    FSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.response.SchemaProperty.Create;
 
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.Response.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.response.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.Response.GetHeaders: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Headers;
+function TOpenAPIDefinition.response.GetHeaders: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.headers;
 begin
   if not Assigned(FHeaders) then
-    FHeaders := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Headers.Create;
+    FHeaders := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.headers.Create;
 
   Result := FHeaders;
 end;
 
-function TOpenAPIDefinition.Response.GetHeadersStored: Boolean;
+function TOpenAPIDefinition.response.GetHeadersStored: Boolean;
 begin
   Result := Assigned(FHeaders);
 end;
 
-function TOpenAPIDefinition.Response.GetExamples: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Examples;
+function TOpenAPIDefinition.response.GetExamples: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.examples;
 begin
   if not Assigned(FExamples) then
-    FExamples := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Examples.Create;
+    FExamples := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.examples.Create;
 
   Result := FExamples;
 end;
 
-function TOpenAPIDefinition.Response.GetExamplesStored: Boolean;
+function TOpenAPIDefinition.response.GetExamplesStored: Boolean;
 begin
   Result := Assigned(FExamples);
 end;
 
-function TOpenAPIDefinition.Response.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.response.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.Response.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.response.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.Response.Tschema }
+{ TOpenAPIDefinition.response.SchemaProperty }
 
-destructor TOpenAPIDefinition.Response.Tschema.Destroy;
+destructor TOpenAPIDefinition.response.SchemaProperty.Destroy;
 begin
   FSchema.Free;
 
@@ -2739,57 +2709,57 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Response.Tschema.GetSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.response.SchemaProperty.GetSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema.Create;
+    FSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema.Create;
 
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.Response.Tschema.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.response.SchemaProperty.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.Response.Tschema.GetFileSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.FileSchema;
+function TOpenAPIDefinition.response.SchemaProperty.GetFileSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.fileSchema;
 begin
   if not Assigned(FFileSchema) then
-    FFileSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.FileSchema.Create;
+    FFileSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.fileSchema.Create;
 
   Result := FFileSchema;
 end;
 
-function TOpenAPIDefinition.Response.Tschema.GetFileSchemaStored: Boolean;
+function TOpenAPIDefinition.response.SchemaProperty.GetFileSchemaStored: Boolean;
 begin
   Result := Assigned(FFileSchema);
 end;
 
-{ TOpenAPIDefinition.Headers }
+{ TOpenAPIDefinition.headers }
 
-destructor TOpenAPIDefinition.Headers.Destroy;
+destructor TOpenAPIDefinition.headers.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Headers.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Header>;
+function TOpenAPIDefinition.headers.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.header>;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Header>.Create;
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.header>.Create;
 
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Headers.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.headers.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.Header }
+{ TOpenAPIDefinition.header }
 
-destructor TOpenAPIDefinition.Header.Destroy;
+destructor TOpenAPIDefinition.header.Destroy;
 begin
   FItems.Free;
 
@@ -2802,132 +2772,132 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Header.GetFormatStored: Boolean;
+function TOpenAPIDefinition.header.GetFormatStored: Boolean;
 begin
   Result := not FFormat.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Header.GetItems: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.PrimitivesItems;
+function TOpenAPIDefinition.header.GetItems: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.primitivesItems;
 begin
   if not Assigned(FItems) then
-    FItems := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.PrimitivesItems.Create;
+    FItems := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.primitivesItems.Create;
 
   Result := FItems;
 end;
 
-function TOpenAPIDefinition.Header.GetItemsStored: Boolean;
+function TOpenAPIDefinition.header.GetItemsStored: Boolean;
 begin
   Result := Assigned(FItems);
 end;
 
-procedure TOpenAPIDefinition.Header.SetCollectionFormat(const Value: TOpenAPIDefinition.CollectionFormat);
+procedure TOpenAPIDefinition.header.SetCollectionFormat(const Value: TOpenAPIDefinition.collectionFormat);
 begin
   FCollectionFormat := Value;
   FCollectionFormatIsStored := True;
 end;
 
-function TOpenAPIDefinition.Header.GetDefaultStored: Boolean;
+function TOpenAPIDefinition.header.GetDefaultStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.Header.GetMaximumStored: Boolean;
+function TOpenAPIDefinition.header.GetMaximumStored: Boolean;
 begin
   Result := FMaximum <> 0;
 end;
 
-function TOpenAPIDefinition.Header.GetExclusiveMaximumStored: Boolean;
+function TOpenAPIDefinition.header.GetExclusiveMaximumStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.Header.GetMinimumStored: Boolean;
+function TOpenAPIDefinition.header.GetMinimumStored: Boolean;
 begin
   Result := FMinimum <> 0;
 end;
 
-function TOpenAPIDefinition.Header.GetExclusiveMinimumStored: Boolean;
+function TOpenAPIDefinition.header.GetExclusiveMinimumStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.Header.GetMaxLengthStored: Boolean;
+function TOpenAPIDefinition.header.GetMaxLengthStored: Boolean;
 begin
   Result := FMaxLength <> 0;
 end;
 
-function TOpenAPIDefinition.Header.GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+function TOpenAPIDefinition.header.GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
 begin
   if not Assigned(FMinLength) then
-    FMinLength := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
+    FMinLength := Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0.Create;
 
   Result := FMinLength;
 end;
 
-function TOpenAPIDefinition.Header.GetMinLengthStored: Boolean;
+function TOpenAPIDefinition.header.GetMinLengthStored: Boolean;
 begin
   Result := Assigned(FMinLength);
 end;
 
-function TOpenAPIDefinition.Header.GetPatternStored: Boolean;
+function TOpenAPIDefinition.header.GetPatternStored: Boolean;
 begin
   Result := not FPattern.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Header.GetMaxItemsStored: Boolean;
+function TOpenAPIDefinition.header.GetMaxItemsStored: Boolean;
 begin
   Result := FMaxItems <> 0;
 end;
 
-function TOpenAPIDefinition.Header.GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+function TOpenAPIDefinition.header.GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
 begin
   if not Assigned(FMinItems) then
-    FMinItems := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
+    FMinItems := Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0.Create;
 
   Result := FMinItems;
 end;
 
-function TOpenAPIDefinition.Header.GetMinItemsStored: Boolean;
+function TOpenAPIDefinition.header.GetMinItemsStored: Boolean;
 begin
   Result := Assigned(FMinItems);
 end;
 
-function TOpenAPIDefinition.Header.GetUniqueItemsStored: Boolean;
+function TOpenAPIDefinition.header.GetUniqueItemsStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.Header.GetEnumStored: Boolean;
+function TOpenAPIDefinition.header.GetEnumStored: Boolean;
 begin
   Result := Assigned(FEnum);
 end;
 
-function TOpenAPIDefinition.Header.GetMultipleOfStored: Boolean;
+function TOpenAPIDefinition.header.GetMultipleOfStored: Boolean;
 begin
   Result := FMultipleOf <> 0;
 end;
 
-function TOpenAPIDefinition.Header.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.header.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Header.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.header.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.Header.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.header.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.BodyParameter }
+{ TOpenAPIDefinition.bodyParameter }
 
-destructor TOpenAPIDefinition.BodyParameter.Destroy;
+destructor TOpenAPIDefinition.bodyParameter.Destroy;
 begin
   FSchema.Free;
 
@@ -2936,40 +2906,40 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.BodyParameter.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.bodyParameter.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.BodyParameter.GetRequiredStored: Boolean;
+function TOpenAPIDefinition.bodyParameter.GetRequiredStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.BodyParameter.GetSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.bodyParameter.GetSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema.Create;
+    FSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema.Create;
 
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.BodyParameter.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.bodyParameter.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.BodyParameter.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.bodyParameter.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.HeaderParameterSubSchema }
+{ TOpenAPIDefinition.headerParameterSubSchema }
 
-destructor TOpenAPIDefinition.HeaderParameterSubSchema.Destroy;
+destructor TOpenAPIDefinition.headerParameterSubSchema.Destroy;
 begin
   FItems.Free;
 
@@ -2982,154 +2952,154 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetRequiredStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetRequiredStored: Boolean;
 begin
   Result := False;
 end;
 
-procedure TOpenAPIDefinition.HeaderParameterSubSchema.SetIn(const Value: TOpenAPIDefinition.HeaderParameterSubSchema.Tin);
+procedure TOpenAPIDefinition.headerParameterSubSchema.SetIn(const Value: TOpenAPIDefinition.headerParameterSubSchema.InProperty);
 begin
   FIn := Value;
   FInIsStored := True;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetNameStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetNameStored: Boolean;
 begin
   Result := not FName.IsEmpty;
 end;
 
-procedure TOpenAPIDefinition.HeaderParameterSubSchema.SetType(const Value: TOpenAPIDefinition.HeaderParameterSubSchema.Ttype);
+procedure TOpenAPIDefinition.headerParameterSubSchema.SetType(const Value: TOpenAPIDefinition.headerParameterSubSchema.TypeProperty);
 begin
   FType := Value;
   FTypeIsStored := True;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetFormatStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetFormatStored: Boolean;
 begin
   Result := not FFormat.IsEmpty;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetItems: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.PrimitivesItems;
+function TOpenAPIDefinition.headerParameterSubSchema.GetItems: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.primitivesItems;
 begin
   if not Assigned(FItems) then
-    FItems := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.PrimitivesItems.Create;
+    FItems := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.primitivesItems.Create;
 
   Result := FItems;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetItemsStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetItemsStored: Boolean;
 begin
   Result := Assigned(FItems);
 end;
 
-procedure TOpenAPIDefinition.HeaderParameterSubSchema.SetCollectionFormat(const Value: TOpenAPIDefinition.CollectionFormat);
+procedure TOpenAPIDefinition.headerParameterSubSchema.SetCollectionFormat(const Value: TOpenAPIDefinition.collectionFormat);
 begin
   FCollectionFormat := Value;
   FCollectionFormatIsStored := True;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetDefaultStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetDefaultStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetMaximumStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetMaximumStored: Boolean;
 begin
   Result := FMaximum <> 0;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetExclusiveMaximumStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetExclusiveMaximumStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetMinimumStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetMinimumStored: Boolean;
 begin
   Result := FMinimum <> 0;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetExclusiveMinimumStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetExclusiveMinimumStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetMaxLengthStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetMaxLengthStored: Boolean;
 begin
   Result := FMaxLength <> 0;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+function TOpenAPIDefinition.headerParameterSubSchema.GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
 begin
   if not Assigned(FMinLength) then
-    FMinLength := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
+    FMinLength := Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0.Create;
 
   Result := FMinLength;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetMinLengthStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetMinLengthStored: Boolean;
 begin
   Result := Assigned(FMinLength);
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetPatternStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetPatternStored: Boolean;
 begin
   Result := not FPattern.IsEmpty;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetMaxItemsStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetMaxItemsStored: Boolean;
 begin
   Result := FMaxItems <> 0;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+function TOpenAPIDefinition.headerParameterSubSchema.GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
 begin
   if not Assigned(FMinItems) then
-    FMinItems := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
+    FMinItems := Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0.Create;
 
   Result := FMinItems;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetMinItemsStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetMinItemsStored: Boolean;
 begin
   Result := Assigned(FMinItems);
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetUniqueItemsStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetUniqueItemsStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetEnumStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetEnumStored: Boolean;
 begin
   Result := Assigned(FEnum);
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetMultipleOfStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetMultipleOfStored: Boolean;
 begin
   Result := FMultipleOf <> 0;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.headerParameterSubSchema.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.HeaderParameterSubSchema.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.headerParameterSubSchema.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.QueryParameterSubSchema }
+{ TOpenAPIDefinition.queryParameterSubSchema }
 
-destructor TOpenAPIDefinition.QueryParameterSubSchema.Destroy;
+destructor TOpenAPIDefinition.queryParameterSubSchema.Destroy;
 begin
   FItems.Free;
 
@@ -3142,159 +3112,159 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetRequiredStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetRequiredStored: Boolean;
 begin
   Result := False;
 end;
 
-procedure TOpenAPIDefinition.QueryParameterSubSchema.SetIn(const Value: TOpenAPIDefinition.QueryParameterSubSchema.Tin);
+procedure TOpenAPIDefinition.queryParameterSubSchema.SetIn(const Value: TOpenAPIDefinition.queryParameterSubSchema.InProperty);
 begin
   FIn := Value;
   FInIsStored := True;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetNameStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetNameStored: Boolean;
 begin
   Result := not FName.IsEmpty;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetAllowEmptyValueStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetAllowEmptyValueStored: Boolean;
 begin
   Result := False;
 end;
 
-procedure TOpenAPIDefinition.QueryParameterSubSchema.SetType(const Value: TOpenAPIDefinition.QueryParameterSubSchema.Ttype);
+procedure TOpenAPIDefinition.queryParameterSubSchema.SetType(const Value: TOpenAPIDefinition.queryParameterSubSchema.TypeProperty);
 begin
   FType := Value;
   FTypeIsStored := True;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetFormatStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetFormatStored: Boolean;
 begin
   Result := not FFormat.IsEmpty;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetItems: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.PrimitivesItems;
+function TOpenAPIDefinition.queryParameterSubSchema.GetItems: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.primitivesItems;
 begin
   if not Assigned(FItems) then
-    FItems := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.PrimitivesItems.Create;
+    FItems := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.primitivesItems.Create;
 
   Result := FItems;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetItemsStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetItemsStored: Boolean;
 begin
   Result := Assigned(FItems);
 end;
 
-procedure TOpenAPIDefinition.QueryParameterSubSchema.SetCollectionFormat(const Value: TOpenAPIDefinition.CollectionFormatWithMulti);
+procedure TOpenAPIDefinition.queryParameterSubSchema.SetCollectionFormat(const Value: TOpenAPIDefinition.collectionFormatWithMulti);
 begin
   FCollectionFormat := Value;
   FCollectionFormatIsStored := True;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetDefaultStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetDefaultStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetMaximumStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetMaximumStored: Boolean;
 begin
   Result := FMaximum <> 0;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetExclusiveMaximumStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetExclusiveMaximumStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetMinimumStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetMinimumStored: Boolean;
 begin
   Result := FMinimum <> 0;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetExclusiveMinimumStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetExclusiveMinimumStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetMaxLengthStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetMaxLengthStored: Boolean;
 begin
   Result := FMaxLength <> 0;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+function TOpenAPIDefinition.queryParameterSubSchema.GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
 begin
   if not Assigned(FMinLength) then
-    FMinLength := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
+    FMinLength := Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0.Create;
 
   Result := FMinLength;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetMinLengthStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetMinLengthStored: Boolean;
 begin
   Result := Assigned(FMinLength);
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetPatternStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetPatternStored: Boolean;
 begin
   Result := not FPattern.IsEmpty;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetMaxItemsStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetMaxItemsStored: Boolean;
 begin
   Result := FMaxItems <> 0;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+function TOpenAPIDefinition.queryParameterSubSchema.GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
 begin
   if not Assigned(FMinItems) then
-    FMinItems := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
+    FMinItems := Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0.Create;
 
   Result := FMinItems;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetMinItemsStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetMinItemsStored: Boolean;
 begin
   Result := Assigned(FMinItems);
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetUniqueItemsStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetUniqueItemsStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetEnumStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetEnumStored: Boolean;
 begin
   Result := Assigned(FEnum);
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetMultipleOfStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetMultipleOfStored: Boolean;
 begin
   Result := FMultipleOf <> 0;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.queryParameterSubSchema.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.QueryParameterSubSchema.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.queryParameterSubSchema.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.FormDataParameterSubSchema }
+{ TOpenAPIDefinition.formDataParameterSubSchema }
 
-destructor TOpenAPIDefinition.FormDataParameterSubSchema.Destroy;
+destructor TOpenAPIDefinition.formDataParameterSubSchema.Destroy;
 begin
   FItems.Free;
 
@@ -3307,159 +3277,159 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetRequiredStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetRequiredStored: Boolean;
 begin
   Result := False;
 end;
 
-procedure TOpenAPIDefinition.FormDataParameterSubSchema.SetIn(const Value: TOpenAPIDefinition.FormDataParameterSubSchema.Tin);
+procedure TOpenAPIDefinition.formDataParameterSubSchema.SetIn(const Value: TOpenAPIDefinition.formDataParameterSubSchema.InProperty);
 begin
   FIn := Value;
   FInIsStored := True;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetNameStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetNameStored: Boolean;
 begin
   Result := not FName.IsEmpty;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetAllowEmptyValueStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetAllowEmptyValueStored: Boolean;
 begin
   Result := False;
 end;
 
-procedure TOpenAPIDefinition.FormDataParameterSubSchema.SetType(const Value: TOpenAPIDefinition.FormDataParameterSubSchema.Ttype);
+procedure TOpenAPIDefinition.formDataParameterSubSchema.SetType(const Value: TOpenAPIDefinition.formDataParameterSubSchema.TypeProperty);
 begin
   FType := Value;
   FTypeIsStored := True;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetFormatStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetFormatStored: Boolean;
 begin
   Result := not FFormat.IsEmpty;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetItems: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.PrimitivesItems;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetItems: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.primitivesItems;
 begin
   if not Assigned(FItems) then
-    FItems := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.PrimitivesItems.Create;
+    FItems := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.primitivesItems.Create;
 
   Result := FItems;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetItemsStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetItemsStored: Boolean;
 begin
   Result := Assigned(FItems);
 end;
 
-procedure TOpenAPIDefinition.FormDataParameterSubSchema.SetCollectionFormat(const Value: TOpenAPIDefinition.CollectionFormatWithMulti);
+procedure TOpenAPIDefinition.formDataParameterSubSchema.SetCollectionFormat(const Value: TOpenAPIDefinition.collectionFormatWithMulti);
 begin
   FCollectionFormat := Value;
   FCollectionFormatIsStored := True;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetDefaultStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetDefaultStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetMaximumStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetMaximumStored: Boolean;
 begin
   Result := FMaximum <> 0;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetExclusiveMaximumStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetExclusiveMaximumStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetMinimumStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetMinimumStored: Boolean;
 begin
   Result := FMinimum <> 0;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetExclusiveMinimumStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetExclusiveMinimumStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetMaxLengthStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetMaxLengthStored: Boolean;
 begin
   Result := FMaxLength <> 0;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
 begin
   if not Assigned(FMinLength) then
-    FMinLength := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
+    FMinLength := Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0.Create;
 
   Result := FMinLength;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetMinLengthStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetMinLengthStored: Boolean;
 begin
   Result := Assigned(FMinLength);
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetPatternStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetPatternStored: Boolean;
 begin
   Result := not FPattern.IsEmpty;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetMaxItemsStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetMaxItemsStored: Boolean;
 begin
   Result := FMaxItems <> 0;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
 begin
   if not Assigned(FMinItems) then
-    FMinItems := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
+    FMinItems := Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0.Create;
 
   Result := FMinItems;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetMinItemsStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetMinItemsStored: Boolean;
 begin
   Result := Assigned(FMinItems);
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetUniqueItemsStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetUniqueItemsStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetEnumStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetEnumStored: Boolean;
 begin
   Result := Assigned(FEnum);
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetMultipleOfStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetMultipleOfStored: Boolean;
 begin
   Result := FMultipleOf <> 0;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.FormDataParameterSubSchema.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.formDataParameterSubSchema.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.PathParameterSubSchema }
+{ TOpenAPIDefinition.pathParameterSubSchema }
 
-destructor TOpenAPIDefinition.PathParameterSubSchema.Destroy;
+destructor TOpenAPIDefinition.pathParameterSubSchema.Destroy;
 begin
   FItems.Free;
 
@@ -3472,149 +3442,149 @@ begin
   inherited;
 end;
 
-procedure TOpenAPIDefinition.PathParameterSubSchema.SetIn(const Value: TOpenAPIDefinition.PathParameterSubSchema.Tin);
+procedure TOpenAPIDefinition.pathParameterSubSchema.SetIn(const Value: TOpenAPIDefinition.pathParameterSubSchema.InProperty);
 begin
   FIn := Value;
   FInIsStored := True;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetNameStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetNameStored: Boolean;
 begin
   Result := not FName.IsEmpty;
 end;
 
-procedure TOpenAPIDefinition.PathParameterSubSchema.SetType(const Value: TOpenAPIDefinition.PathParameterSubSchema.Ttype);
+procedure TOpenAPIDefinition.pathParameterSubSchema.SetType(const Value: TOpenAPIDefinition.pathParameterSubSchema.TypeProperty);
 begin
   FType := Value;
   FTypeIsStored := True;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetFormatStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetFormatStored: Boolean;
 begin
   Result := not FFormat.IsEmpty;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetItems: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.PrimitivesItems;
+function TOpenAPIDefinition.pathParameterSubSchema.GetItems: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.primitivesItems;
 begin
   if not Assigned(FItems) then
-    FItems := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.PrimitivesItems.Create;
+    FItems := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.primitivesItems.Create;
 
   Result := FItems;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetItemsStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetItemsStored: Boolean;
 begin
   Result := Assigned(FItems);
 end;
 
-procedure TOpenAPIDefinition.PathParameterSubSchema.SetCollectionFormat(const Value: TOpenAPIDefinition.CollectionFormat);
+procedure TOpenAPIDefinition.pathParameterSubSchema.SetCollectionFormat(const Value: TOpenAPIDefinition.collectionFormat);
 begin
   FCollectionFormat := Value;
   FCollectionFormatIsStored := True;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetDefaultStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetDefaultStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetMaximumStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetMaximumStored: Boolean;
 begin
   Result := FMaximum <> 0;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetExclusiveMaximumStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetExclusiveMaximumStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetMinimumStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetMinimumStored: Boolean;
 begin
   Result := FMinimum <> 0;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetExclusiveMinimumStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetExclusiveMinimumStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetMaxLengthStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetMaxLengthStored: Boolean;
 begin
   Result := FMaxLength <> 0;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+function TOpenAPIDefinition.pathParameterSubSchema.GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
 begin
   if not Assigned(FMinLength) then
-    FMinLength := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
+    FMinLength := Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0.Create;
 
   Result := FMinLength;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetMinLengthStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetMinLengthStored: Boolean;
 begin
   Result := Assigned(FMinLength);
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetPatternStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetPatternStored: Boolean;
 begin
   Result := not FPattern.IsEmpty;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetMaxItemsStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetMaxItemsStored: Boolean;
 begin
   Result := FMaxItems <> 0;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+function TOpenAPIDefinition.pathParameterSubSchema.GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
 begin
   if not Assigned(FMinItems) then
-    FMinItems := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
+    FMinItems := Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0.Create;
 
   Result := FMinItems;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetMinItemsStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetMinItemsStored: Boolean;
 begin
   Result := Assigned(FMinItems);
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetUniqueItemsStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetUniqueItemsStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetEnumStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetEnumStored: Boolean;
 begin
   Result := Assigned(FEnum);
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetMultipleOfStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetMultipleOfStored: Boolean;
 begin
   Result := FMultipleOf <> 0;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.pathParameterSubSchema.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.PathParameterSubSchema.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.pathParameterSubSchema.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.NonBodyParameter }
+{ TOpenAPIDefinition.nonBodyParameter }
 
-destructor TOpenAPIDefinition.NonBodyParameter.Destroy;
+destructor TOpenAPIDefinition.nonBodyParameter.Destroy;
 begin
   FHeaderParameterSubSchema.Free;
 
@@ -3627,61 +3597,61 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.NonBodyParameter.GetHeaderParameterSubSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.HeaderParameterSubSchema;
+function TOpenAPIDefinition.nonBodyParameter.GetHeaderParameterSubSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.headerParameterSubSchema;
 begin
   if not Assigned(FHeaderParameterSubSchema) then
-    FHeaderParameterSubSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.HeaderParameterSubSchema.Create;
+    FHeaderParameterSubSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.headerParameterSubSchema.Create;
 
   Result := FHeaderParameterSubSchema;
 end;
 
-function TOpenAPIDefinition.NonBodyParameter.GetHeaderParameterSubSchemaStored: Boolean;
+function TOpenAPIDefinition.nonBodyParameter.GetHeaderParameterSubSchemaStored: Boolean;
 begin
   Result := Assigned(FHeaderParameterSubSchema);
 end;
 
-function TOpenAPIDefinition.NonBodyParameter.GetFormDataParameterSubSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.FormDataParameterSubSchema;
+function TOpenAPIDefinition.nonBodyParameter.GetFormDataParameterSubSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.formDataParameterSubSchema;
 begin
   if not Assigned(FFormDataParameterSubSchema) then
-    FFormDataParameterSubSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.FormDataParameterSubSchema.Create;
+    FFormDataParameterSubSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.formDataParameterSubSchema.Create;
 
   Result := FFormDataParameterSubSchema;
 end;
 
-function TOpenAPIDefinition.NonBodyParameter.GetFormDataParameterSubSchemaStored: Boolean;
+function TOpenAPIDefinition.nonBodyParameter.GetFormDataParameterSubSchemaStored: Boolean;
 begin
   Result := Assigned(FFormDataParameterSubSchema);
 end;
 
-function TOpenAPIDefinition.NonBodyParameter.GetQueryParameterSubSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.QueryParameterSubSchema;
+function TOpenAPIDefinition.nonBodyParameter.GetQueryParameterSubSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.queryParameterSubSchema;
 begin
   if not Assigned(FQueryParameterSubSchema) then
-    FQueryParameterSubSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.QueryParameterSubSchema.Create;
+    FQueryParameterSubSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.queryParameterSubSchema.Create;
 
   Result := FQueryParameterSubSchema;
 end;
 
-function TOpenAPIDefinition.NonBodyParameter.GetQueryParameterSubSchemaStored: Boolean;
+function TOpenAPIDefinition.nonBodyParameter.GetQueryParameterSubSchemaStored: Boolean;
 begin
   Result := Assigned(FQueryParameterSubSchema);
 end;
 
-function TOpenAPIDefinition.NonBodyParameter.GetPathParameterSubSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.PathParameterSubSchema;
+function TOpenAPIDefinition.nonBodyParameter.GetPathParameterSubSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.pathParameterSubSchema;
 begin
   if not Assigned(FPathParameterSubSchema) then
-    FPathParameterSubSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.PathParameterSubSchema.Create;
+    FPathParameterSubSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.pathParameterSubSchema.Create;
 
   Result := FPathParameterSubSchema;
 end;
 
-function TOpenAPIDefinition.NonBodyParameter.GetPathParameterSubSchemaStored: Boolean;
+function TOpenAPIDefinition.nonBodyParameter.GetPathParameterSubSchemaStored: Boolean;
 begin
   Result := Assigned(FPathParameterSubSchema);
 end;
 
-{ TOpenAPIDefinition.Parameter }
+{ TOpenAPIDefinition.parameter }
 
-destructor TOpenAPIDefinition.Parameter.Destroy;
+destructor TOpenAPIDefinition.parameter.Destroy;
 begin
   FBodyParameter.Free;
 
@@ -3690,35 +3660,35 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Parameter.GetBodyParameter: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.BodyParameter;
+function TOpenAPIDefinition.parameter.GetBodyParameter: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.bodyParameter;
 begin
   if not Assigned(FBodyParameter) then
-    FBodyParameter := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.BodyParameter.Create;
+    FBodyParameter := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.bodyParameter.Create;
 
   Result := FBodyParameter;
 end;
 
-function TOpenAPIDefinition.Parameter.GetBodyParameterStored: Boolean;
+function TOpenAPIDefinition.parameter.GetBodyParameterStored: Boolean;
 begin
   Result := Assigned(FBodyParameter);
 end;
 
-function TOpenAPIDefinition.Parameter.GetNonBodyParameter: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.NonBodyParameter;
+function TOpenAPIDefinition.parameter.GetNonBodyParameter: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.nonBodyParameter;
 begin
   if not Assigned(FNonBodyParameter) then
-    FNonBodyParameter := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.NonBodyParameter.Create;
+    FNonBodyParameter := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.nonBodyParameter.Create;
 
   Result := FNonBodyParameter;
 end;
 
-function TOpenAPIDefinition.Parameter.GetNonBodyParameterStored: Boolean;
+function TOpenAPIDefinition.parameter.GetNonBodyParameterStored: Boolean;
 begin
   Result := Assigned(FNonBodyParameter);
 end;
 
-{ TOpenAPIDefinition.Schema }
+{ TOpenAPIDefinition.schema }
 
-destructor TOpenAPIDefinition.Schema.Destroy;
+destructor TOpenAPIDefinition.schema.Destroy;
 begin
   FMinLength.Free;
 
@@ -3746,278 +3716,278 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Schema.GetRefStored: Boolean;
+function TOpenAPIDefinition.schema.GetRefStored: Boolean;
 begin
   Result := not FRef.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Schema.GetFormatStored: Boolean;
+function TOpenAPIDefinition.schema.GetFormatStored: Boolean;
 begin
   Result := not FFormat.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Schema.GetTitleStored: Boolean;
+function TOpenAPIDefinition.schema.GetTitleStored: Boolean;
 begin
   Result := not FTitle.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Schema.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.schema.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Schema.GetDefaultStored: Boolean;
+function TOpenAPIDefinition.schema.GetDefaultStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.Schema.GetMultipleOfStored: Boolean;
+function TOpenAPIDefinition.schema.GetMultipleOfStored: Boolean;
 begin
   Result := FMultipleOf <> 0;
 end;
 
-function TOpenAPIDefinition.Schema.GetMaximumStored: Boolean;
+function TOpenAPIDefinition.schema.GetMaximumStored: Boolean;
 begin
   Result := FMaximum <> 0;
 end;
 
-function TOpenAPIDefinition.Schema.GetExclusiveMaximumStored: Boolean;
+function TOpenAPIDefinition.schema.GetExclusiveMaximumStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.Schema.GetMinimumStored: Boolean;
+function TOpenAPIDefinition.schema.GetMinimumStored: Boolean;
 begin
   Result := FMinimum <> 0;
 end;
 
-function TOpenAPIDefinition.Schema.GetExclusiveMinimumStored: Boolean;
+function TOpenAPIDefinition.schema.GetExclusiveMinimumStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.Schema.GetMaxLengthStored: Boolean;
+function TOpenAPIDefinition.schema.GetMaxLengthStored: Boolean;
 begin
   Result := FMaxLength <> 0;
 end;
 
-function TOpenAPIDefinition.Schema.GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+function TOpenAPIDefinition.schema.GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
 begin
   if not Assigned(FMinLength) then
-    FMinLength := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
+    FMinLength := Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0.Create;
 
   Result := FMinLength;
 end;
 
-function TOpenAPIDefinition.Schema.GetMinLengthStored: Boolean;
+function TOpenAPIDefinition.schema.GetMinLengthStored: Boolean;
 begin
   Result := Assigned(FMinLength);
 end;
 
-function TOpenAPIDefinition.Schema.GetPatternStored: Boolean;
+function TOpenAPIDefinition.schema.GetPatternStored: Boolean;
 begin
   Result := not FPattern.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Schema.GetMaxItemsStored: Boolean;
+function TOpenAPIDefinition.schema.GetMaxItemsStored: Boolean;
 begin
   Result := FMaxItems <> 0;
 end;
 
-function TOpenAPIDefinition.Schema.GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+function TOpenAPIDefinition.schema.GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
 begin
   if not Assigned(FMinItems) then
-    FMinItems := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
+    FMinItems := Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0.Create;
 
   Result := FMinItems;
 end;
 
-function TOpenAPIDefinition.Schema.GetMinItemsStored: Boolean;
+function TOpenAPIDefinition.schema.GetMinItemsStored: Boolean;
 begin
   Result := Assigned(FMinItems);
 end;
 
-function TOpenAPIDefinition.Schema.GetUniqueItemsStored: Boolean;
+function TOpenAPIDefinition.schema.GetUniqueItemsStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.Schema.GetMaxPropertiesStored: Boolean;
+function TOpenAPIDefinition.schema.GetMaxPropertiesStored: Boolean;
 begin
   Result := FMaxProperties <> 0;
 end;
 
-function TOpenAPIDefinition.Schema.GetMinProperties: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+function TOpenAPIDefinition.schema.GetMinProperties: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
 begin
   if not Assigned(FMinProperties) then
-    FMinProperties := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
+    FMinProperties := Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0.Create;
 
   Result := FMinProperties;
 end;
 
-function TOpenAPIDefinition.Schema.GetMinPropertiesStored: Boolean;
+function TOpenAPIDefinition.schema.GetMinPropertiesStored: Boolean;
 begin
   Result := Assigned(FMinProperties);
 end;
 
-function TOpenAPIDefinition.Schema.GetRequiredStored: Boolean;
+function TOpenAPIDefinition.schema.GetRequiredStored: Boolean;
 begin
   Result := Assigned(FRequired);
 end;
 
-function TOpenAPIDefinition.Schema.GetEnumStored: Boolean;
+function TOpenAPIDefinition.schema.GetEnumStored: Boolean;
 begin
   Result := Assigned(FEnum);
 end;
 
-function TOpenAPIDefinition.Schema.GetAdditionalProperties: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema.TadditionalProperties;
+function TOpenAPIDefinition.schema.GetAdditionalProperties: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema.AdditionalPropertiesProperty;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema.TadditionalProperties.Create;
+    FAdditionalProperties := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema.AdditionalPropertiesProperty.Create;
 
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Schema.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.schema.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-function TOpenAPIDefinition.Schema.GetType: Blue.Print.JSON.Draft4.Schema.Schema.Schema.Ttype;
+function TOpenAPIDefinition.schema.GetType: Blue.Print.JSON.Draft4.Schema.Schema.Schema.TypeProperty;
 begin
   if not Assigned(FType) then
-    FType := Blue.Print.JSON.Draft4.Schema.Schema.Schema.Ttype.Create;
+    FType := Blue.Print.JSON.Draft4.Schema.Schema.Schema.TypeProperty.Create;
 
   Result := FType;
 end;
 
-function TOpenAPIDefinition.Schema.GetTypeStored: Boolean;
+function TOpenAPIDefinition.schema.GetTypeStored: Boolean;
 begin
   Result := Assigned(FType);
 end;
 
-function TOpenAPIDefinition.Schema.GetItems: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema.Titems;
+function TOpenAPIDefinition.schema.GetItems: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema.ItemsProperty;
 begin
   if not Assigned(FItems) then
-    FItems := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema.Titems.Create;
+    FItems := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema.ItemsProperty.Create;
 
   Result := FItems;
 end;
 
-function TOpenAPIDefinition.Schema.GetItemsStored: Boolean;
+function TOpenAPIDefinition.schema.GetItemsStored: Boolean;
 begin
   Result := Assigned(FItems);
 end;
 
-function TOpenAPIDefinition.Schema.AddAllOf: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.schema.AddAllOf: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema;
 begin
-  Result := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema.Create;
+  Result := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema.Create;
 
   FAllOf := FAllOf + [Result];
 end;
 
-function TOpenAPIDefinition.Schema.GetAllOfStored: Boolean;
+function TOpenAPIDefinition.schema.GetAllOfStored: Boolean;
 begin
   Result := Assigned(FAllOf);
 end;
 
-function TOpenAPIDefinition.Schema.GetProperties: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema.Tproperties;
+function TOpenAPIDefinition.schema.GetProperties: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema.PropertiesProperty;
 begin
   if not Assigned(FProperties) then
-    FProperties := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema.Tproperties.Create;
+    FProperties := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema.PropertiesProperty.Create;
 
   Result := FProperties;
 end;
 
-function TOpenAPIDefinition.Schema.GetPropertiesStored: Boolean;
+function TOpenAPIDefinition.schema.GetPropertiesStored: Boolean;
 begin
   Result := Assigned(FProperties);
 end;
 
-function TOpenAPIDefinition.Schema.GetDiscriminatorStored: Boolean;
+function TOpenAPIDefinition.schema.GetDiscriminatorStored: Boolean;
 begin
   Result := not FDiscriminator.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Schema.GetReadOnlyStored: Boolean;
+function TOpenAPIDefinition.schema.GetReadOnlyStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.Schema.GetXml: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Xml;
+function TOpenAPIDefinition.schema.GetXml: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.xml;
 begin
   if not Assigned(FXml) then
-    FXml := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Xml.Create;
+    FXml := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.xml.Create;
 
   Result := FXml;
 end;
 
-function TOpenAPIDefinition.Schema.GetXmlStored: Boolean;
+function TOpenAPIDefinition.schema.GetXmlStored: Boolean;
 begin
   Result := Assigned(FXml);
 end;
 
-function TOpenAPIDefinition.Schema.GetExternalDocs: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ExternalDocs;
+function TOpenAPIDefinition.schema.GetExternalDocs: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.externalDocs;
 begin
   if not Assigned(FExternalDocs) then
-    FExternalDocs := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ExternalDocs.Create;
+    FExternalDocs := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.externalDocs.Create;
 
   Result := FExternalDocs;
 end;
 
-function TOpenAPIDefinition.Schema.GetExternalDocsStored: Boolean;
+function TOpenAPIDefinition.schema.GetExternalDocsStored: Boolean;
 begin
   Result := Assigned(FExternalDocs);
 end;
 
-function TOpenAPIDefinition.Schema.GetExampleStored: Boolean;
+function TOpenAPIDefinition.schema.GetExampleStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.Schema.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.schema.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.Schema.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.schema.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.Schema.TadditionalProperties }
+{ TOpenAPIDefinition.schema.AdditionalPropertiesProperty }
 
-destructor TOpenAPIDefinition.Schema.TadditionalProperties.Destroy;
+destructor TOpenAPIDefinition.schema.AdditionalPropertiesProperty.Destroy;
 begin
   FSchema.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Schema.TadditionalProperties.GetSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.schema.AdditionalPropertiesProperty.GetSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema.Create;
+    FSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema.Create;
 
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.Schema.TadditionalProperties.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.schema.AdditionalPropertiesProperty.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.Schema.TadditionalProperties.GetBooleanStored: Boolean;
+function TOpenAPIDefinition.schema.AdditionalPropertiesProperty.GetBooleanStored: Boolean;
 begin
   Result := False;
 end;
 
-{ TOpenAPIDefinition.Schema.Titems }
+{ TOpenAPIDefinition.schema.ItemsProperty }
 
-destructor TOpenAPIDefinition.Schema.Titems.Destroy;
+destructor TOpenAPIDefinition.schema.ItemsProperty.Destroy;
 begin
   FSchema.Free;
 
@@ -4027,56 +3997,56 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Schema.Titems.GetSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.schema.ItemsProperty.GetSchema: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema.Create;
+    FSchema := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema.Create;
 
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.Schema.Titems.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.schema.ItemsProperty.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.Schema.Titems.AddArray: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.schema.ItemsProperty.AddArray: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema;
 begin
-  Result := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema.Create;
+  Result := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema.Create;
 
   FArray := FArray + [Result];
 end;
 
-function TOpenAPIDefinition.Schema.Titems.GetArrayStored: Boolean;
+function TOpenAPIDefinition.schema.ItemsProperty.GetArrayStored: Boolean;
 begin
   Result := Assigned(FArray);
 end;
 
-{ TOpenAPIDefinition.Schema.Tproperties }
+{ TOpenAPIDefinition.schema.PropertiesProperty }
 
-destructor TOpenAPIDefinition.Schema.Tproperties.Destroy;
+destructor TOpenAPIDefinition.schema.PropertiesProperty.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Schema.Tproperties.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Schema>;
+function TOpenAPIDefinition.schema.PropertiesProperty.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.schema>;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Schema>.Create;
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.schema>.Create;
 
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Schema.Tproperties.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.schema.PropertiesProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.FileSchema }
+{ TOpenAPIDefinition.fileSchema }
 
-destructor TOpenAPIDefinition.FileSchema.Destroy;
+destructor TOpenAPIDefinition.fileSchema.Destroy;
 begin
   FExternalDocs.Free;
 
@@ -4085,70 +4055,70 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.FileSchema.GetFormatStored: Boolean;
+function TOpenAPIDefinition.fileSchema.GetFormatStored: Boolean;
 begin
   Result := not FFormat.IsEmpty;
 end;
 
-function TOpenAPIDefinition.FileSchema.GetTitleStored: Boolean;
+function TOpenAPIDefinition.fileSchema.GetTitleStored: Boolean;
 begin
   Result := not FTitle.IsEmpty;
 end;
 
-function TOpenAPIDefinition.FileSchema.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.fileSchema.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.FileSchema.GetDefaultStored: Boolean;
+function TOpenAPIDefinition.fileSchema.GetDefaultStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.FileSchema.GetRequiredStored: Boolean;
+function TOpenAPIDefinition.fileSchema.GetRequiredStored: Boolean;
 begin
   Result := Assigned(FRequired);
 end;
 
-function TOpenAPIDefinition.FileSchema.GetReadOnlyStored: Boolean;
+function TOpenAPIDefinition.fileSchema.GetReadOnlyStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.FileSchema.GetExternalDocs: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ExternalDocs;
+function TOpenAPIDefinition.fileSchema.GetExternalDocs: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.externalDocs;
 begin
   if not Assigned(FExternalDocs) then
-    FExternalDocs := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ExternalDocs.Create;
+    FExternalDocs := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.externalDocs.Create;
 
   Result := FExternalDocs;
 end;
 
-function TOpenAPIDefinition.FileSchema.GetExternalDocsStored: Boolean;
+function TOpenAPIDefinition.fileSchema.GetExternalDocsStored: Boolean;
 begin
   Result := Assigned(FExternalDocs);
 end;
 
-function TOpenAPIDefinition.FileSchema.GetExampleStored: Boolean;
+function TOpenAPIDefinition.fileSchema.GetExampleStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.FileSchema.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.fileSchema.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.FileSchema.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.fileSchema.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.PrimitivesItems }
+{ TOpenAPIDefinition.primitivesItems }
 
-destructor TOpenAPIDefinition.PrimitivesItems.Destroy;
+destructor TOpenAPIDefinition.primitivesItems.Destroy;
 begin
   FItems.Free;
 
@@ -4161,140 +4131,140 @@ begin
   inherited;
 end;
 
-procedure TOpenAPIDefinition.PrimitivesItems.SetType(const Value: TOpenAPIDefinition.PrimitivesItems.Ttype);
+procedure TOpenAPIDefinition.primitivesItems.SetType(const Value: TOpenAPIDefinition.primitivesItems.TypeProperty);
 begin
   FType := Value;
   FTypeIsStored := True;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetFormatStored: Boolean;
+function TOpenAPIDefinition.primitivesItems.GetFormatStored: Boolean;
 begin
   Result := not FFormat.IsEmpty;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetItems: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.PrimitivesItems;
+function TOpenAPIDefinition.primitivesItems.GetItems: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.primitivesItems;
 begin
   if not Assigned(FItems) then
-    FItems := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.PrimitivesItems.Create;
+    FItems := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.primitivesItems.Create;
 
   Result := FItems;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetItemsStored: Boolean;
+function TOpenAPIDefinition.primitivesItems.GetItemsStored: Boolean;
 begin
   Result := Assigned(FItems);
 end;
 
-procedure TOpenAPIDefinition.PrimitivesItems.SetCollectionFormat(const Value: TOpenAPIDefinition.CollectionFormat);
+procedure TOpenAPIDefinition.primitivesItems.SetCollectionFormat(const Value: TOpenAPIDefinition.collectionFormat);
 begin
   FCollectionFormat := Value;
   FCollectionFormatIsStored := True;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetDefaultStored: Boolean;
+function TOpenAPIDefinition.primitivesItems.GetDefaultStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetMaximumStored: Boolean;
+function TOpenAPIDefinition.primitivesItems.GetMaximumStored: Boolean;
 begin
   Result := FMaximum <> 0;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetExclusiveMaximumStored: Boolean;
+function TOpenAPIDefinition.primitivesItems.GetExclusiveMaximumStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetMinimumStored: Boolean;
+function TOpenAPIDefinition.primitivesItems.GetMinimumStored: Boolean;
 begin
   Result := FMinimum <> 0;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetExclusiveMinimumStored: Boolean;
+function TOpenAPIDefinition.primitivesItems.GetExclusiveMinimumStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetMaxLengthStored: Boolean;
+function TOpenAPIDefinition.primitivesItems.GetMaxLengthStored: Boolean;
 begin
   Result := FMaxLength <> 0;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+function TOpenAPIDefinition.primitivesItems.GetMinLength: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
 begin
   if not Assigned(FMinLength) then
-    FMinLength := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
+    FMinLength := Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0.Create;
 
   Result := FMinLength;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetMinLengthStored: Boolean;
+function TOpenAPIDefinition.primitivesItems.GetMinLengthStored: Boolean;
 begin
   Result := Assigned(FMinLength);
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetPatternStored: Boolean;
+function TOpenAPIDefinition.primitivesItems.GetPatternStored: Boolean;
 begin
   Result := not FPattern.IsEmpty;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetMaxItemsStored: Boolean;
+function TOpenAPIDefinition.primitivesItems.GetMaxItemsStored: Boolean;
 begin
   Result := FMaxItems <> 0;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0;
+function TOpenAPIDefinition.primitivesItems.GetMinItems: Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0;
 begin
   if not Assigned(FMinItems) then
-    FMinItems := Blue.Print.JSON.Draft4.Schema.Schema.PositiveIntegerDefault0.Create;
+    FMinItems := Blue.Print.JSON.Draft4.Schema.Schema.positiveIntegerDefault0.Create;
 
   Result := FMinItems;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetMinItemsStored: Boolean;
+function TOpenAPIDefinition.primitivesItems.GetMinItemsStored: Boolean;
 begin
   Result := Assigned(FMinItems);
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetUniqueItemsStored: Boolean;
+function TOpenAPIDefinition.primitivesItems.GetUniqueItemsStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetEnumStored: Boolean;
+function TOpenAPIDefinition.primitivesItems.GetEnumStored: Boolean;
 begin
   Result := Assigned(FEnum);
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetMultipleOfStored: Boolean;
+function TOpenAPIDefinition.primitivesItems.GetMultipleOfStored: Boolean;
 begin
   Result := FMultipleOf <> 0;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.primitivesItems.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.PrimitivesItems.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.primitivesItems.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.SecurityRequirement }
+{ TOpenAPIDefinition.securityRequirement }
 
-destructor TOpenAPIDefinition.SecurityRequirement.Destroy;
+destructor TOpenAPIDefinition.securityRequirement.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.SecurityRequirement.GetAdditionalProperties: TDynamicProperty<TArray<System.String>>;
+function TOpenAPIDefinition.securityRequirement.GetAdditionalProperties: TDynamicProperty<TArray<System.String>>;
 begin
   if not Assigned(FAdditionalProperties) then
     FAdditionalProperties := TDynamicProperty<TArray<System.String>>.Create;
@@ -4302,61 +4272,61 @@ begin
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.SecurityRequirement.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.securityRequirement.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.Xml }
+{ TOpenAPIDefinition.xml }
 
-destructor TOpenAPIDefinition.Xml.Destroy;
+destructor TOpenAPIDefinition.xml.Destroy;
 begin
   FVendorExtension.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Xml.GetNameStored: Boolean;
+function TOpenAPIDefinition.xml.GetNameStored: Boolean;
 begin
   Result := not FName.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Xml.GetNamespaceStored: Boolean;
+function TOpenAPIDefinition.xml.GetNamespaceStored: Boolean;
 begin
   Result := not FNamespace.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Xml.GetPrefixStored: Boolean;
+function TOpenAPIDefinition.xml.GetPrefixStored: Boolean;
 begin
   Result := not FPrefix.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Xml.GetAttributeStored: Boolean;
+function TOpenAPIDefinition.xml.GetAttributeStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.Xml.GetWrappedStored: Boolean;
+function TOpenAPIDefinition.xml.GetWrappedStored: Boolean;
 begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.Xml.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.xml.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.Xml.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.xml.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.Tag }
+{ TOpenAPIDefinition.tag }
 
-destructor TOpenAPIDefinition.Tag.Destroy;
+destructor TOpenAPIDefinition.tag.Destroy;
 begin
   FExternalDocs.Free;
 
@@ -4365,152 +4335,62 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Tag.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.tag.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Tag.GetExternalDocs: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ExternalDocs;
+function TOpenAPIDefinition.tag.GetExternalDocs: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.externalDocs;
 begin
   if not Assigned(FExternalDocs) then
-    FExternalDocs := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ExternalDocs.Create;
+    FExternalDocs := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.externalDocs.Create;
 
   Result := FExternalDocs;
 end;
 
-function TOpenAPIDefinition.Tag.GetExternalDocsStored: Boolean;
+function TOpenAPIDefinition.tag.GetExternalDocsStored: Boolean;
 begin
   Result := Assigned(FExternalDocs);
 end;
 
-function TOpenAPIDefinition.Tag.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.tag.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.Tag.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.tag.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.SecurityDefinitions }
+{ TOpenAPIDefinition.securityDefinitions }
 
-destructor TOpenAPIDefinition.SecurityDefinitions.Destroy;
+destructor TOpenAPIDefinition.securityDefinitions.Destroy;
 begin
-  FBasicAuthenticationSecurity.Free;
-
-  FApiKeySecurity.Free;
-
-  FOauth2ImplicitSecurity.Free;
-
-  FOauth2PasswordSecurity.Free;
-
-  FOauth2ApplicationSecurity.Free;
-
-  FOauth2AccessCodeSecurity.Free;
-
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.SecurityDefinitions.GetBasicAuthenticationSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.BasicAuthenticationSecurity;
-begin
-  if not Assigned(FBasicAuthenticationSecurity) then
-    FBasicAuthenticationSecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.BasicAuthenticationSecurity.Create;
-
-  Result := FBasicAuthenticationSecurity;
-end;
-
-function TOpenAPIDefinition.SecurityDefinitions.GetBasicAuthenticationSecurityStored: Boolean;
-begin
-  Result := Assigned(FBasicAuthenticationSecurity);
-end;
-
-function TOpenAPIDefinition.SecurityDefinitions.GetApiKeySecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ApiKeySecurity;
-begin
-  if not Assigned(FApiKeySecurity) then
-    FApiKeySecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ApiKeySecurity.Create;
-
-  Result := FApiKeySecurity;
-end;
-
-function TOpenAPIDefinition.SecurityDefinitions.GetApiKeySecurityStored: Boolean;
-begin
-  Result := Assigned(FApiKeySecurity);
-end;
-
-function TOpenAPIDefinition.SecurityDefinitions.GetOauth2ImplicitSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2ImplicitSecurity;
-begin
-  if not Assigned(FOauth2ImplicitSecurity) then
-    FOauth2ImplicitSecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2ImplicitSecurity.Create;
-
-  Result := FOauth2ImplicitSecurity;
-end;
-
-function TOpenAPIDefinition.SecurityDefinitions.GetOauth2ImplicitSecurityStored: Boolean;
-begin
-  Result := Assigned(FOauth2ImplicitSecurity);
-end;
-
-function TOpenAPIDefinition.SecurityDefinitions.GetOauth2PasswordSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2PasswordSecurity;
-begin
-  if not Assigned(FOauth2PasswordSecurity) then
-    FOauth2PasswordSecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2PasswordSecurity.Create;
-
-  Result := FOauth2PasswordSecurity;
-end;
-
-function TOpenAPIDefinition.SecurityDefinitions.GetOauth2PasswordSecurityStored: Boolean;
-begin
-  Result := Assigned(FOauth2PasswordSecurity);
-end;
-
-function TOpenAPIDefinition.SecurityDefinitions.GetOauth2ApplicationSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2ApplicationSecurity;
-begin
-  if not Assigned(FOauth2ApplicationSecurity) then
-    FOauth2ApplicationSecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2ApplicationSecurity.Create;
-
-  Result := FOauth2ApplicationSecurity;
-end;
-
-function TOpenAPIDefinition.SecurityDefinitions.GetOauth2ApplicationSecurityStored: Boolean;
-begin
-  Result := Assigned(FOauth2ApplicationSecurity);
-end;
-
-function TOpenAPIDefinition.SecurityDefinitions.GetOauth2AccessCodeSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2AccessCodeSecurity;
-begin
-  if not Assigned(FOauth2AccessCodeSecurity) then
-    FOauth2AccessCodeSecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2AccessCodeSecurity.Create;
-
-  Result := FOauth2AccessCodeSecurity;
-end;
-
-function TOpenAPIDefinition.SecurityDefinitions.GetOauth2AccessCodeSecurityStored: Boolean;
-begin
-  Result := Assigned(FOauth2AccessCodeSecurity);
-end;
-
-function TOpenAPIDefinition.SecurityDefinitions.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties>;
+function TOpenAPIDefinition.securityDefinitions.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.securityDefinitions.additionalPropertiesType>;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties>.Create;
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.securityDefinitions.additionalPropertiesType>.Create;
 
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.SecurityDefinitions.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.securityDefinitions.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties }
+{ TOpenAPIDefinition.securityDefinitions.additionalPropertiesType }
 
-destructor TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties.Destroy;
+destructor TOpenAPIDefinition.securityDefinitions.additionalPropertiesType.Destroy;
 begin
   FBasicAuthenticationSecurity.Free;
 
@@ -4527,141 +4407,141 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties.GetBasicAuthenticationSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.BasicAuthenticationSecurity;
+function TOpenAPIDefinition.securityDefinitions.additionalPropertiesType.GetBasicAuthenticationSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.basicAuthenticationSecurity;
 begin
   if not Assigned(FBasicAuthenticationSecurity) then
-    FBasicAuthenticationSecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.BasicAuthenticationSecurity.Create;
+    FBasicAuthenticationSecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.basicAuthenticationSecurity.Create;
 
   Result := FBasicAuthenticationSecurity;
 end;
 
-function TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties.GetBasicAuthenticationSecurityStored: Boolean;
+function TOpenAPIDefinition.securityDefinitions.additionalPropertiesType.GetBasicAuthenticationSecurityStored: Boolean;
 begin
   Result := Assigned(FBasicAuthenticationSecurity);
 end;
 
-function TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties.GetApiKeySecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ApiKeySecurity;
+function TOpenAPIDefinition.securityDefinitions.additionalPropertiesType.GetApiKeySecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.apiKeySecurity;
 begin
   if not Assigned(FApiKeySecurity) then
-    FApiKeySecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ApiKeySecurity.Create;
+    FApiKeySecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.apiKeySecurity.Create;
 
   Result := FApiKeySecurity;
 end;
 
-function TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties.GetApiKeySecurityStored: Boolean;
+function TOpenAPIDefinition.securityDefinitions.additionalPropertiesType.GetApiKeySecurityStored: Boolean;
 begin
   Result := Assigned(FApiKeySecurity);
 end;
 
-function TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties.GetOauth2ImplicitSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2ImplicitSecurity;
+function TOpenAPIDefinition.securityDefinitions.additionalPropertiesType.GetOauth2ImplicitSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.oauth2ImplicitSecurity;
 begin
   if not Assigned(FOauth2ImplicitSecurity) then
-    FOauth2ImplicitSecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2ImplicitSecurity.Create;
+    FOauth2ImplicitSecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.oauth2ImplicitSecurity.Create;
 
   Result := FOauth2ImplicitSecurity;
 end;
 
-function TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties.GetOauth2ImplicitSecurityStored: Boolean;
+function TOpenAPIDefinition.securityDefinitions.additionalPropertiesType.GetOauth2ImplicitSecurityStored: Boolean;
 begin
   Result := Assigned(FOauth2ImplicitSecurity);
 end;
 
-function TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties.GetOauth2PasswordSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2PasswordSecurity;
+function TOpenAPIDefinition.securityDefinitions.additionalPropertiesType.GetOauth2PasswordSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.oauth2PasswordSecurity;
 begin
   if not Assigned(FOauth2PasswordSecurity) then
-    FOauth2PasswordSecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2PasswordSecurity.Create;
+    FOauth2PasswordSecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.oauth2PasswordSecurity.Create;
 
   Result := FOauth2PasswordSecurity;
 end;
 
-function TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties.GetOauth2PasswordSecurityStored: Boolean;
+function TOpenAPIDefinition.securityDefinitions.additionalPropertiesType.GetOauth2PasswordSecurityStored: Boolean;
 begin
   Result := Assigned(FOauth2PasswordSecurity);
 end;
 
-function TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties.GetOauth2ApplicationSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2ApplicationSecurity;
+function TOpenAPIDefinition.securityDefinitions.additionalPropertiesType.GetOauth2ApplicationSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.oauth2ApplicationSecurity;
 begin
   if not Assigned(FOauth2ApplicationSecurity) then
-    FOauth2ApplicationSecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2ApplicationSecurity.Create;
+    FOauth2ApplicationSecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.oauth2ApplicationSecurity.Create;
 
   Result := FOauth2ApplicationSecurity;
 end;
 
-function TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties.GetOauth2ApplicationSecurityStored: Boolean;
+function TOpenAPIDefinition.securityDefinitions.additionalPropertiesType.GetOauth2ApplicationSecurityStored: Boolean;
 begin
   Result := Assigned(FOauth2ApplicationSecurity);
 end;
 
-function TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties.GetOauth2AccessCodeSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2AccessCodeSecurity;
+function TOpenAPIDefinition.securityDefinitions.additionalPropertiesType.GetOauth2AccessCodeSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.oauth2AccessCodeSecurity;
 begin
   if not Assigned(FOauth2AccessCodeSecurity) then
-    FOauth2AccessCodeSecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2AccessCodeSecurity.Create;
+    FOauth2AccessCodeSecurity := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.oauth2AccessCodeSecurity.Create;
 
   Result := FOauth2AccessCodeSecurity;
 end;
 
-function TOpenAPIDefinition.SecurityDefinitions.TadditionalProperties.GetOauth2AccessCodeSecurityStored: Boolean;
+function TOpenAPIDefinition.securityDefinitions.additionalPropertiesType.GetOauth2AccessCodeSecurityStored: Boolean;
 begin
   Result := Assigned(FOauth2AccessCodeSecurity);
 end;
 
-{ TOpenAPIDefinition.BasicAuthenticationSecurity }
+{ TOpenAPIDefinition.basicAuthenticationSecurity }
 
-destructor TOpenAPIDefinition.BasicAuthenticationSecurity.Destroy;
+destructor TOpenAPIDefinition.basicAuthenticationSecurity.Destroy;
 begin
   FVendorExtension.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.BasicAuthenticationSecurity.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.basicAuthenticationSecurity.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.BasicAuthenticationSecurity.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.basicAuthenticationSecurity.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.BasicAuthenticationSecurity.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.basicAuthenticationSecurity.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.ApiKeySecurity }
+{ TOpenAPIDefinition.apiKeySecurity }
 
-destructor TOpenAPIDefinition.ApiKeySecurity.Destroy;
+destructor TOpenAPIDefinition.apiKeySecurity.Destroy;
 begin
   FVendorExtension.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.ApiKeySecurity.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.apiKeySecurity.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.ApiKeySecurity.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.apiKeySecurity.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.ApiKeySecurity.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.apiKeySecurity.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.Oauth2ImplicitSecurity }
+{ TOpenAPIDefinition.oauth2ImplicitSecurity }
 
-destructor TOpenAPIDefinition.Oauth2ImplicitSecurity.Destroy;
+destructor TOpenAPIDefinition.oauth2ImplicitSecurity.Destroy;
 begin
   FScopes.Free;
 
@@ -4670,40 +4550,40 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Oauth2ImplicitSecurity.GetScopes: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2Scopes;
+function TOpenAPIDefinition.oauth2ImplicitSecurity.GetScopes: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.oauth2Scopes;
 begin
   if not Assigned(FScopes) then
-    FScopes := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2Scopes.Create;
+    FScopes := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.oauth2Scopes.Create;
 
   Result := FScopes;
 end;
 
-function TOpenAPIDefinition.Oauth2ImplicitSecurity.GetScopesStored: Boolean;
+function TOpenAPIDefinition.oauth2ImplicitSecurity.GetScopesStored: Boolean;
 begin
   Result := Assigned(FScopes);
 end;
 
-function TOpenAPIDefinition.Oauth2ImplicitSecurity.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.oauth2ImplicitSecurity.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Oauth2ImplicitSecurity.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.oauth2ImplicitSecurity.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.Oauth2ImplicitSecurity.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.oauth2ImplicitSecurity.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.Oauth2PasswordSecurity }
+{ TOpenAPIDefinition.oauth2PasswordSecurity }
 
-destructor TOpenAPIDefinition.Oauth2PasswordSecurity.Destroy;
+destructor TOpenAPIDefinition.oauth2PasswordSecurity.Destroy;
 begin
   FScopes.Free;
 
@@ -4712,40 +4592,40 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Oauth2PasswordSecurity.GetScopes: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2Scopes;
+function TOpenAPIDefinition.oauth2PasswordSecurity.GetScopes: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.oauth2Scopes;
 begin
   if not Assigned(FScopes) then
-    FScopes := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2Scopes.Create;
+    FScopes := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.oauth2Scopes.Create;
 
   Result := FScopes;
 end;
 
-function TOpenAPIDefinition.Oauth2PasswordSecurity.GetScopesStored: Boolean;
+function TOpenAPIDefinition.oauth2PasswordSecurity.GetScopesStored: Boolean;
 begin
   Result := Assigned(FScopes);
 end;
 
-function TOpenAPIDefinition.Oauth2PasswordSecurity.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.oauth2PasswordSecurity.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Oauth2PasswordSecurity.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.oauth2PasswordSecurity.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.Oauth2PasswordSecurity.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.oauth2PasswordSecurity.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.Oauth2ApplicationSecurity }
+{ TOpenAPIDefinition.oauth2ApplicationSecurity }
 
-destructor TOpenAPIDefinition.Oauth2ApplicationSecurity.Destroy;
+destructor TOpenAPIDefinition.oauth2ApplicationSecurity.Destroy;
 begin
   FScopes.Free;
 
@@ -4754,40 +4634,40 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Oauth2ApplicationSecurity.GetScopes: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2Scopes;
+function TOpenAPIDefinition.oauth2ApplicationSecurity.GetScopes: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.oauth2Scopes;
 begin
   if not Assigned(FScopes) then
-    FScopes := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2Scopes.Create;
+    FScopes := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.oauth2Scopes.Create;
 
   Result := FScopes;
 end;
 
-function TOpenAPIDefinition.Oauth2ApplicationSecurity.GetScopesStored: Boolean;
+function TOpenAPIDefinition.oauth2ApplicationSecurity.GetScopesStored: Boolean;
 begin
   Result := Assigned(FScopes);
 end;
 
-function TOpenAPIDefinition.Oauth2ApplicationSecurity.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.oauth2ApplicationSecurity.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Oauth2ApplicationSecurity.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.oauth2ApplicationSecurity.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.Oauth2ApplicationSecurity.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.oauth2ApplicationSecurity.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.Oauth2AccessCodeSecurity }
+{ TOpenAPIDefinition.oauth2AccessCodeSecurity }
 
-destructor TOpenAPIDefinition.Oauth2AccessCodeSecurity.Destroy;
+destructor TOpenAPIDefinition.oauth2AccessCodeSecurity.Destroy;
 begin
   FScopes.Free;
 
@@ -4796,47 +4676,47 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Oauth2AccessCodeSecurity.GetScopes: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2Scopes;
+function TOpenAPIDefinition.oauth2AccessCodeSecurity.GetScopes: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.oauth2Scopes;
 begin
   if not Assigned(FScopes) then
-    FScopes := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Oauth2Scopes.Create;
+    FScopes := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.oauth2Scopes.Create;
 
   Result := FScopes;
 end;
 
-function TOpenAPIDefinition.Oauth2AccessCodeSecurity.GetScopesStored: Boolean;
+function TOpenAPIDefinition.oauth2AccessCodeSecurity.GetScopesStored: Boolean;
 begin
   Result := Assigned(FScopes);
 end;
 
-function TOpenAPIDefinition.Oauth2AccessCodeSecurity.GetDescriptionStored: Boolean;
+function TOpenAPIDefinition.oauth2AccessCodeSecurity.GetDescriptionStored: Boolean;
 begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Oauth2AccessCodeSecurity.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.oauth2AccessCodeSecurity.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
 
-function TOpenAPIDefinition.Oauth2AccessCodeSecurity.GetVendorExtensionStored: Boolean;
+function TOpenAPIDefinition.oauth2AccessCodeSecurity.GetVendorExtensionStored: Boolean;
 begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.Oauth2Scopes }
+{ TOpenAPIDefinition.oauth2Scopes }
 
-destructor TOpenAPIDefinition.Oauth2Scopes.Destroy;
+destructor TOpenAPIDefinition.oauth2Scopes.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Oauth2Scopes.GetAdditionalProperties: TDynamicProperty<System.String>;
+function TOpenAPIDefinition.oauth2Scopes.GetAdditionalProperties: TDynamicProperty<System.String>;
 begin
   if not Assigned(FAdditionalProperties) then
     FAdditionalProperties := TDynamicProperty<System.String>.Create;
@@ -4844,14 +4724,14 @@ begin
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Oauth2Scopes.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.oauth2Scopes.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.ParametersListArrayItem }
+{ TOpenAPIDefinition.parametersListArrayItem }
 
-destructor TOpenAPIDefinition.ParametersListArrayItem.Destroy;
+destructor TOpenAPIDefinition.parametersListArrayItem.Destroy;
 begin
   FParameter.Free;
 
@@ -4860,28 +4740,28 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.ParametersListArrayItem.GetParameter: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Parameter;
+function TOpenAPIDefinition.parametersListArrayItem.GetParameter: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.parameter;
 begin
   if not Assigned(FParameter) then
-    FParameter := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Parameter.Create;
+    FParameter := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.parameter.Create;
 
   Result := FParameter;
 end;
 
-function TOpenAPIDefinition.ParametersListArrayItem.GetParameterStored: Boolean;
+function TOpenAPIDefinition.parametersListArrayItem.GetParameterStored: Boolean;
 begin
   Result := Assigned(FParameter);
 end;
 
-function TOpenAPIDefinition.ParametersListArrayItem.GetJsonReference: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.JsonReference;
+function TOpenAPIDefinition.parametersListArrayItem.GetJsonReference: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.jsonReference;
 begin
   if not Assigned(FJsonReference) then
-    FJsonReference := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.JsonReference.Create;
+    FJsonReference := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.jsonReference.Create;
 
   Result := FJsonReference;
 end;
 
-function TOpenAPIDefinition.ParametersListArrayItem.GetJsonReferenceStored: Boolean;
+function TOpenAPIDefinition.parametersListArrayItem.GetJsonReferenceStored: Boolean;
 begin
   Result := Assigned(FJsonReference);
 end;
@@ -4919,10 +4799,10 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.TOpenAPIDefinition.GetInfo: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Info;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetInfo: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.info;
 begin
   if not Assigned(FInfo) then
-    FInfo := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Info.Create;
+    FInfo := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.info.Create;
 
   Result := FInfo;
 end;
@@ -4942,10 +4822,10 @@ begin
   Result := Assigned(FSchemes);
 end;
 
-function TOpenAPIDefinition.TOpenAPIDefinition.GetConsumes: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.TOpenAPIDefinition.Tconsumes;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetConsumes: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.TOpenAPIDefinition.ConsumesProperty;
 begin
   if not Assigned(FConsumes) then
-    FConsumes := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.TOpenAPIDefinition.Tconsumes.Create;
+    FConsumes := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.TOpenAPIDefinition.ConsumesProperty.Create;
 
   Result := FConsumes;
 end;
@@ -4955,10 +4835,10 @@ begin
   Result := Assigned(FConsumes);
 end;
 
-function TOpenAPIDefinition.TOpenAPIDefinition.GetProduces: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.TOpenAPIDefinition.Tproduces;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetProduces: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.TOpenAPIDefinition.ProducesProperty;
 begin
   if not Assigned(FProduces) then
-    FProduces := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.TOpenAPIDefinition.Tproduces.Create;
+    FProduces := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.TOpenAPIDefinition.ProducesProperty.Create;
 
   Result := FProduces;
 end;
@@ -4968,18 +4848,18 @@ begin
   Result := Assigned(FProduces);
 end;
 
-function TOpenAPIDefinition.TOpenAPIDefinition.GetPaths: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Paths;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetPaths: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.paths;
 begin
   if not Assigned(FPaths) then
-    FPaths := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Paths.Create;
+    FPaths := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.paths.Create;
 
   Result := FPaths;
 end;
 
-function TOpenAPIDefinition.TOpenAPIDefinition.GetDefinitions: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Definitions;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetDefinitions: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.definitions;
 begin
   if not Assigned(FDefinitions) then
-    FDefinitions := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Definitions.Create;
+    FDefinitions := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.definitions.Create;
 
   Result := FDefinitions;
 end;
@@ -4989,10 +4869,10 @@ begin
   Result := Assigned(FDefinitions);
 end;
 
-function TOpenAPIDefinition.TOpenAPIDefinition.GetParameters: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ParameterDefinitions;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetParameters: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.parameterDefinitions;
 begin
   if not Assigned(FParameters) then
-    FParameters := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ParameterDefinitions.Create;
+    FParameters := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.parameterDefinitions.Create;
 
   Result := FParameters;
 end;
@@ -5002,10 +4882,10 @@ begin
   Result := Assigned(FParameters);
 end;
 
-function TOpenAPIDefinition.TOpenAPIDefinition.GetResponses: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ResponseDefinitions;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetResponses: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.responseDefinitions;
 begin
   if not Assigned(FResponses) then
-    FResponses := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ResponseDefinitions.Create;
+    FResponses := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.responseDefinitions.Create;
 
   Result := FResponses;
 end;
@@ -5015,9 +4895,9 @@ begin
   Result := Assigned(FResponses);
 end;
 
-function TOpenAPIDefinition.TOpenAPIDefinition.AddSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.SecurityRequirement;
+function TOpenAPIDefinition.TOpenAPIDefinition.AddSecurity: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.securityRequirement;
 begin
-  Result := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.SecurityRequirement.Create;
+  Result := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.securityRequirement.Create;
 
   FSecurity := FSecurity + [Result];
 end;
@@ -5027,10 +4907,10 @@ begin
   Result := Assigned(FSecurity);
 end;
 
-function TOpenAPIDefinition.TOpenAPIDefinition.GetSecurityDefinitions: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.SecurityDefinitions;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetSecurityDefinitions: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.securityDefinitions;
 begin
   if not Assigned(FSecurityDefinitions) then
-    FSecurityDefinitions := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.SecurityDefinitions.Create;
+    FSecurityDefinitions := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.securityDefinitions.Create;
 
   Result := FSecurityDefinitions;
 end;
@@ -5040,9 +4920,9 @@ begin
   Result := Assigned(FSecurityDefinitions);
 end;
 
-function TOpenAPIDefinition.TOpenAPIDefinition.AddTags: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Tag;
+function TOpenAPIDefinition.TOpenAPIDefinition.AddTags: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.tag;
 begin
-  Result := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.Tag.Create;
+  Result := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.tag.Create;
 
   FTags := FTags + [Result];
 end;
@@ -5052,10 +4932,10 @@ begin
   Result := Assigned(FTags);
 end;
 
-function TOpenAPIDefinition.TOpenAPIDefinition.GetExternalDocs: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ExternalDocs;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetExternalDocs: Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.externalDocs;
 begin
   if not Assigned(FExternalDocs) then
-    FExternalDocs := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.ExternalDocs.Create;
+    FExternalDocs := Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.externalDocs.Create;
 
   Result := FExternalDocs;
 end;
@@ -5065,10 +4945,10 @@ begin
   Result := Assigned(FExternalDocs);
 end;
 
-function TOpenAPIDefinition.TOpenAPIDefinition.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.VendorExtension>;
+function TOpenAPIDefinition.TOpenAPIDefinition.GetVendorExtension: TDynamicProperty<TOpenAPIDefinition.vendorExtension>;
 begin
   if not Assigned(FVendorExtension) then
-    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.VendorExtension>.Create;
+    FVendorExtension := TDynamicProperty<Blue.Print.Open.API.Schema.v20.TOpenAPIDefinition.vendorExtension>.Create;
 
   Result := FVendorExtension;
 end;
@@ -5078,16 +4958,16 @@ begin
   Result := Assigned(FVendorExtension);
 end;
 
-{ TOpenAPIDefinition.TOpenAPIDefinition.Tconsumes }
+{ TOpenAPIDefinition.TOpenAPIDefinition.ConsumesProperty }
 
-function TOpenAPIDefinition.TOpenAPIDefinition.Tconsumes.GetMediaTypeListStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.ConsumesProperty.GetMediaTypeListStored: Boolean;
 begin
   Result := Assigned(FMediaTypeList);
 end;
 
-{ TOpenAPIDefinition.TOpenAPIDefinition.Tproduces }
+{ TOpenAPIDefinition.TOpenAPIDefinition.ProducesProperty }
 
-function TOpenAPIDefinition.TOpenAPIDefinition.Tproduces.GetMediaTypeListStored: Boolean;
+function TOpenAPIDefinition.TOpenAPIDefinition.ProducesProperty.GetMediaTypeListStored: Boolean;
 begin
   Result := Assigned(FMediaTypeList);
 end;

@@ -127,11 +127,11 @@ function TOpenAPI20SchemaLoader.GenerateSimpleType(const Module: TTypeModuleDefi
   function GetArrayType(const ArrayType: TOpenAPIDefinition.PrimitivesItems): TTypeDefinition;
   begin
     case ArrayItems.&type of
-      TOpenAPIDefinition.PrimitivesItems.TType.array: Result := CreateArrayDefinition(Module, TypeName, GetArrayType(ArrayItems.items));
-      TOpenAPIDefinition.PrimitivesItems.TType.boolean: Result := FImporter.BooleanType;
-      TOpenAPIDefinition.PrimitivesItems.TType.integer: Result := FImporter.IntegerType;
-      TOpenAPIDefinition.PrimitivesItems.TType.number: Result := FImporter.DoubleType;
-      TOpenAPIDefinition.PrimitivesItems.TType.string: Result := FImporter.StringType;
+      TOpenAPIDefinition.PrimitivesItems.TypeProperty.array: Result := CreateArrayDefinition(Module, TypeName, GetArrayType(ArrayItems.items));
+      TOpenAPIDefinition.PrimitivesItems.TypeProperty.boolean: Result := FImporter.BooleanType;
+      TOpenAPIDefinition.PrimitivesItems.TypeProperty.integer: Result := FImporter.IntegerType;
+      TOpenAPIDefinition.PrimitivesItems.TypeProperty.number: Result := FImporter.DoubleType;
+      TOpenAPIDefinition.PrimitivesItems.TypeProperty.string: Result := FImporter.StringType;
       else Result := nil;
     end;
   end;
@@ -210,9 +210,9 @@ var
 
     function FindReturnType: TTypeDefinition;
     var
-      Schemas: TList<TOpenAPIDefinition.Response.TSchema>;
+      Schemas: TList<TOpenAPIDefinition.Response.SchemaProperty>;
 
-      procedure AddSchema(const Schema: TOpenAPIDefinition.Response.TSchema);
+      procedure AddSchema(const Schema: TOpenAPIDefinition.Response.SchemaProperty);
       begin
         if Schema.IsSchemaStored and Schema.schema.IsRefStored then
           for var SchemaToFind in Schemas do
@@ -222,7 +222,7 @@ var
         Schemas.Add(Schema);
       end;
 
-      function GetSchema(const Schema: TOpenAPIDefinition.Response.TSchema): TOpenAPIDefinition.Schema;
+      function GetSchema(const Schema: TOpenAPIDefinition.Response.SchemaProperty): TOpenAPIDefinition.Schema;
       begin
         if Schema.schema.IsRefStored then
           Result := FindSchemaReference(Schema.schema.ref)
@@ -232,7 +232,7 @@ var
 
     begin
       Result := nil;
-      Schemas := TList<TOpenAPIDefinition.Response.TSchema>.Create;
+      Schemas := TList<TOpenAPIDefinition.Response.SchemaProperty>.Create;
 
       for var Return in Operation.responses.responseValue do
         if Return.Key.StartsWith('2') and Return.Value.response.IsSchemaStored then
@@ -362,40 +362,49 @@ procedure TOpenAPI20SchemaLoader.LoadClassDefinition(const ClassDefinition: TTyp
 var
   AnnonymusIndex: Integer;
 
-  function FindProperty(const PropertyName: String): Boolean;
+  function FindProperty(const PropertyName: String): TPropertyDefinition;
   begin
-    Result := False;
+    Result := nil;
 
-    for var &Property in ClassDefinition.Properties do
-      Result := Result or SameText(&Property.Name, PropertyName);
+    for var PropertyDefinition in ClassDefinition.Properties do
+      if PropertyDefinition.Name = PropertyName then
+        Exit(PropertyDefinition);
   end;
 
-  procedure DefinePropety(const PropertyName: String; const PropertyType: TTypeDefinition);
+  function DefinePropety(const PropertyName: String; const PropertyType: TTypeDefinition): TPropertyDefinition;
   begin
-    if not FindProperty(PropertyName) then
+    Result := FindProperty(PropertyName);
+
+    if not Assigned(Result) then
     begin
-      var NewProperty := ClassDefinition.AddProperty(PropertyName);
-      NewProperty.PropertyType := PropertyType;
+      Result := ClassDefinition.AddProperty(PropertyName);
+      Result.PropertyType := PropertyType;
       var Required := False;
 
-      if not Assigned(NewProperty.PropertyType) then
+      if not Assigned(Result.PropertyType) then
         raise Exception.Create('Property type not found!');
 
       for var RequiredName in ClassSchema.required do
         Required := Required or (RequiredName = PropertyName);
 
-      NewProperty.Optional := not Required;
+      Result.Optional := not Required;
     end;
   end;
 
-  procedure DefineProperties(const Properties: TOpenAPIDefinition.Schema);
+  function HasProperties: Boolean;
   begin
-    for var Prop in Properties.properties.additionalProperties do
-    begin
-      var PropertyName := Prop.Key;
+    Result := ClassSchema.IsPropertiesStored and ClassSchema.properties.IsAdditionalPropertiesStored;
+  end;
 
-      DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, Prop.Value, PropertyName + 'Property'));
-    end;
+  procedure DefineProperties;
+  begin
+    if HasProperties then
+      for var Prop in ClassSchema.properties.additionalProperties do
+      begin
+        var PropertyName := Prop.Key;
+
+        DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, Prop.Value, PropertyName + 'Property'));
+      end;
   end;
 
   function GetPropertyName(const PropertySchema: TOpenAPIDefinition.Schema): String;
@@ -406,7 +415,7 @@ var
     begin
       Inc(AnnonymusIndex);
 
-      Result := ClassName;
+      Result := ClassDefinition.Name + 'Property';
 
       if AnnonymusIndex > 1 then
         Result := Result + AnnonymusIndex.ToString;
@@ -416,16 +425,19 @@ var
 begin
   AnnonymusIndex := 0;
 
-  DefineProperties(ClassSchema);
+  DefineProperties;
 
-  if ClassSchema.IsAllOfStored then
+  if ClassSchema.IsAllOfStored and not HasProperties then
     ClassDefinition.AddFlatAttribute;
 
   for var AllOfSchema in ClassSchema.allOf do
   begin
     var PropertyName := GetPropertyName(AllOfSchema);
 
-    DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, AllOfSchema, PropertyName));
+    var PropertyDefinition := DefinePropety(PropertyName, GenerateTypeDefinition(ClassDefinition, AllOfSchema, PropertyName));
+
+    if HasProperties then
+      PropertyDefinition.AddFlatAttribute;
   end;
 
   if ClassSchema.IsXmlStored then
@@ -471,7 +483,7 @@ end;
 
 function THeaderParameterSubSchemaHelper.GetSimpleType: Schema.simpleTypes;
 const
-  SIMPLE_TYPE_CONVERTION: array[TType] of Schema.simpleTypes = (Schema.simpleTypes.string, Schema.simpleTypes.number, Schema.simpleTypes.boolean, Schema.simpleTypes.integer, Schema.simpleTypes.array);
+  SIMPLE_TYPE_CONVERTION: array[TypeProperty] of Schema.simpleTypes = (Schema.simpleTypes.string, Schema.simpleTypes.number, Schema.simpleTypes.boolean, Schema.simpleTypes.integer, Schema.simpleTypes.array);
 
 begin
   Result := SIMPLE_TYPE_CONVERTION[&type];
@@ -481,7 +493,7 @@ end;
 
 function TQueryParameterSubSchemaHelper.GetSimpleType: Schema.simpleTypes;
 const
-  SIMPLE_TYPE_CONVERTION: array[TType] of Schema.simpleTypes = (Schema.simpleTypes.string, Schema.simpleTypes.number, Schema.simpleTypes.boolean, Schema.simpleTypes.integer, Schema.simpleTypes.array);
+  SIMPLE_TYPE_CONVERTION: array[TypeProperty] of Schema.simpleTypes = (Schema.simpleTypes.string, Schema.simpleTypes.number, Schema.simpleTypes.boolean, Schema.simpleTypes.integer, Schema.simpleTypes.array);
 
 begin
   Result := SIMPLE_TYPE_CONVERTION[&type];
@@ -491,7 +503,7 @@ end;
 
 function TPathParameterSubSchema.GetSimpleType: Schema.simpleTypes;
 const
-  SIMPLE_TYPE_CONVERTION: array[TType] of Schema.simpleTypes = (Schema.simpleTypes.string, Schema.simpleTypes.number, Schema.simpleTypes.boolean, Schema.simpleTypes.integer, Schema.simpleTypes.array);
+  SIMPLE_TYPE_CONVERTION: array[TypeProperty] of Schema.simpleTypes = (Schema.simpleTypes.string, Schema.simpleTypes.number, Schema.simpleTypes.boolean, Schema.simpleTypes.integer, Schema.simpleTypes.array);
 
 begin
   Result := SIMPLE_TYPE_CONVERTION[&type];
@@ -501,7 +513,7 @@ end;
 
 function TFormDataParameterSubSchema.GetSimpleType: Schema.simpleTypes;
 const
-  SIMPLE_TYPE_CONVERTION: array[TType] of Schema.simpleTypes = (Schema.simpleTypes.string, Schema.simpleTypes.number, Schema.simpleTypes.boolean, Schema.simpleTypes.integer, Schema.simpleTypes.array, Schema.simpleTypes.null);
+  SIMPLE_TYPE_CONVERTION: array[TypeProperty] of Schema.simpleTypes = (Schema.simpleTypes.string, Schema.simpleTypes.number, Schema.simpleTypes.boolean, Schema.simpleTypes.integer, Schema.simpleTypes.array, Schema.simpleTypes.null);
 
 begin
   Result := SIMPLE_TYPE_CONVERTION[&type];

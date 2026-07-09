@@ -160,6 +160,8 @@ type
 
     procedure AddAtribute(const Attribute: String); overload;
     procedure AddAtribute(const Attribute: String; const Params: array of const); overload;
+    procedure AddFlatAttribute; overload;
+    procedure AddFlatAttribute(const EnumeratorPropertyName: String); overload;
     procedure AddNamespaceAttribute(const Namespace: String);
 
     property Attributes: TList<String> read FAttributes;
@@ -294,8 +296,6 @@ type
 
     procedure AddAtribute(const Value: String); overload;
     procedure AddAtribute(const Value: String; const Values: array of const); overload;
-    procedure AddFlatAttribute; overload;
-    procedure AddFlatAttribute(const EnumeratorPropertyName: String); overload;
 
     property Informations: TImplementationInformations read FInformations write FInformations;
     property InheritedFrom: TTypeDefinition read FInheritedFrom write FInheritedFrom;
@@ -958,7 +958,7 @@ begin
             PropertyDefinition.AddAtribute(PropertyConfiguration.Attribute);
 
           if not PropertyConfiguration.ChangeType.IsEmpty then
-            PropertyDefinition.PropertyType := FindType(PropertyConfiguration.ChangeType, TypeDefinition.AsClassDefinition);
+            PropertyDefinition.PropertyType := FindType(PropertyConfiguration.ChangeType, TypeDefinition.ParentModule);
 
           if PropertyConfiguration.OptionalStored then
             PropertyDefinition.Optional := PropertyConfiguration.Optional;
@@ -1705,7 +1705,7 @@ var
 
       if Module.IsClassDefinition then
         for var PropertyDefinition in Module.AsClassDefinition.Properties do
-          if PropertyDefinition.Name = TypeName then
+          if (PropertyDefinition.Name = TypeName) and not PropertyDefinition.PropertyType.IsDelayedType then
             Exit(PropertyDefinition.PropertyType);
 
       for var ClassDefinition in Module.Classes do
@@ -1758,7 +1758,7 @@ var
     begin
       var DelayedType := Result.AsDelayedType;
 
-      if not DelayedType.IsResolved then
+      if not DelayedType.IsResolved or DelayedType.TypeResolved.IsDelayedType then
       begin
         TypeName := DelayedType.UnresolvedType;
 
@@ -2712,24 +2712,9 @@ begin
   Attributes.Add(Value);
 end;
 
-procedure TTypeClassDefinition.AddFlatAttribute;
-begin
-  AddFlatAttribute(EmptyStr);
-end;
-
 procedure TTypeClassDefinition.AddAtribute(const Value: String; const Values: array of const);
 begin
   AddAtribute(Format(Value, Values));
-end;
-
-procedure TTypeClassDefinition.AddFlatAttribute(const EnumeratorPropertyName: String);
-begin
-  var Parameter := EmptyStr;
-
-  if not EnumeratorPropertyName.IsEmpty then
-    Parameter := Format('(''%s'')', [EnumeratorPropertyName]);
-
-  AddAtribute(Format('Flat%s', [Parameter]));
 end;
 
 function TTypeClassDefinition.AddProperty(const Name: String): TPropertyDefinition;
@@ -2987,9 +2972,6 @@ function TJSONSchemaLoader.CheckTypeDefinition(const Module: TTypeModuleDefiniti
 
     Module.Enumerations.Add(Result);
 
-    if not Module.IsUnitDefinition then
-      Result.Name := FormatName(Result.Name);
-
     for var EnumeratorValue in Schema.&Object.enum do
       Result.Values.Add(EnumeratorValue.ToString);
   end;
@@ -3190,11 +3172,6 @@ function TJSONSchemaLoader.FindAllTypes(const TypeName: String; const Module: TT
 begin
   Result := FImporter.FindType(TypeName, Module);
 
-//  if not Assigned(Result) then
-//    for var DelayedType in Module.DelayedTypes do
-//      if DelayedType.UnresolvedType = TypeName then
-//        Exit(DelayedType);
-
   if not Assigned(Result) then
   begin
     var MainUnitType := Module.ParentUnit.MainModule;
@@ -3208,42 +3185,55 @@ end;
 
 function TJSONSchemaLoader.FindTypeReference(const Module: TTypeModuleDefinition; const Schema: TSchema): TTypeDefinition;
 
-  function FindModuleReference(const Reference: String): TTypeUnitDefinition;
+  function FindModuleReference(const Reference: String): TTypeModuleDefinition;
   begin
     if Reference.IsEmpty then
       Result := Module.ParentUnit
     else
-      Abort;
-//      Result := FImporter.LoadUnitFromReference(Reference);
+      FImporter.GetModuleDefinitionByReference(Reference, Result);
+  end;
+
+  function FindPropertyValue(const Module: TTypeModuleDefinition; const PropertyName: String): TTypeDefinition;
+  begin
+    for var PropertyDefinition in Module.AsClassDefinition.Properties do
+      if PropertyDefinition.Name = PropertyName then
+        Exit(PropertyDefinition.PropertyType);
+
+    Result := Module.AddDelayedType(PropertyName);
+  end;
+
+  function FindTypeDefinition(const Module: TTypeModuleDefinition; const TypeName: String): TTypeDefinition;
+  begin
+    if not FImporter.FindTypeDefinitionInModule(Module, TypeName, Result) then
+      Result := Module.AddDelayedType(TypeName);
   end;
 
 begin
   if Schema.&Object.IsRefStored then
   begin
     var ReferenceName := EmptyStr;
-    var References := Schema.&Object.ref.Split(['#']);
+    var References := Schema.&Object.ref.Split(['#'], TStringSplitOptions.ExcludeLastEmpty);
     Result := nil;
 
-    var CurrentModule := FindModuleReference(References[0]) as TTypeModuleDefinition;
-
     if Length(References) = 1 then
-      Result := CurrentModule
+      Result := Module
     else
     begin
-      CurrentModule := CurrentModule.AsUnitDefinition.MainModule;
-      var ReferenceType := References[1].Split(['/']);
+      var CurrentModule := FindModuleReference(References[0]) as TTypeModuleDefinition;
+      var ReferenceType := References[1].Split(['/'], TStringSplitOptions.ExcludeEmpty);
 
-      for var A := Succ(Low(ReferenceType)) to High(ReferenceType) do
+      for var A := 0 to High(ReferenceType) div 2 do
       begin
         ReferenceName := ReferenceType[A];
+        var TypeName := ReferenceType[Succ(A)];
 
-        if (ReferenceName = '$defs') or (ReferenceName = 'definitions') then
-          Result := nil
-        else if FImporter.FindTypeDefinitionInModule(CurrentModule, ReferenceName, Result) then
-          if Result.IsClassDefinition then
-            CurrentModule := Result.AsClassDefinition
-          else
-            Exit;
+        if ReferenceName = 'properties' then
+          Result := FindPropertyValue(CurrentModule, TypeName)
+        else if (ReferenceName = '$defs') or (ReferenceName = 'definitions') then
+          Result := FindTypeDefinition(CurrentModule, TypeName);
+
+        if Result.IsClassDefinition then
+          CurrentModule := Result.AsClassDefinition
       end;
 
       if ReferenceName.IsEmpty then
@@ -3356,9 +3346,7 @@ begin
   begin
     PropertyName := 'additionalProperties';
 
-    GenerateProperties(ClassDefinition, Schema.&Object.additionalProperties);
-
-    DefineProperty(ClassDefinition, Schema.&Object.additionalProperties, PropertyName, CreateDynamicPropertyType(ClassDefinition, CheckTypeDefinition(ClassDefinition, Schema.&Object.additionalProperties, PropertyName + 'X')));
+    DefineProperty(ClassDefinition, Schema.&Object.additionalProperties, PropertyName, CreateDynamicPropertyType(ClassDefinition, CheckTypeDefinition(ClassDefinition, Schema.&Object.additionalProperties, PropertyName + 'Type')));
   end;
 end;
 
@@ -3845,6 +3833,21 @@ end;
 procedure TTypeCommonDefinition.AddAtribute(const Attribute: String; const Params: array of const);
 begin
   AddAtribute(Format(Attribute, Params));
+end;
+
+procedure TTypeCommonDefinition.AddFlatAttribute(const EnumeratorPropertyName: String);
+begin
+  var Parameter := EmptyStr;
+
+  if not EnumeratorPropertyName.IsEmpty then
+    Parameter := Format('(''%s'')', [EnumeratorPropertyName]);
+
+  AddAtribute(Format('Flat%s', [Parameter]));
+end;
+
+procedure TTypeCommonDefinition.AddFlatAttribute;
+begin
+  AddFlatAttribute(EmptyStr);
 end;
 
 procedure TTypeCommonDefinition.AddNamespaceAttribute(const Namespace: String);
