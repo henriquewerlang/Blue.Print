@@ -174,6 +174,10 @@ type
     procedure WhenDeserializeANullValueArrayCantRaiseAnyError;
     [Test]
     procedure WhenTryToDeserializeAnEnumeratorMustIgnoreTheCaseOfTheName;
+    [Test]
+    procedure WhenThePropertyHasTheFlatAttributeMustLoadAllPropertiesFromTheTypeInTheCurrentJSON;
+    [Test]
+    procedure WhenDeserializeAClassWithFlatPropertyMustLoadThePropertyHasExpected;
   end;
 
   [TestFixture]
@@ -872,6 +876,25 @@ type
     property TheClass: TClassToEnumerator read FTheClass write FTheClass;
   end;
 
+  TMyAnotherClass = class
+  private
+    FProp1: String;
+    FProp2: Integer;
+  published
+    property Prop1: String read FProp1 write FProp1;
+    property Prop2: Integer read FProp2 write FProp2;
+  end;
+
+  TClassWithFlatProperty = class
+  private
+    FFlat: TMyAnotherClass;
+    FMyProp: Integer;
+  published
+    property MyProp: Integer read FMyProp write FMyProp;
+    [Flat]
+    property Flat: TMyAnotherClass read FFlat write FFlat;
+  end;
+
   ISOAPService = interface(IInvokable)
     ['{BBBBC6F3-1730-40F4-A1B1-CC7CA6F08F5D}']
     procedure MyMethod(const MyParam: Integer);
@@ -1294,6 +1317,21 @@ begin
   Value.Free;
 end;
 
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAClassWithFlatPropertyMustLoadThePropertyHasExpected;
+begin
+  var Value := FSerializer.Deserialize('{"MyProp":123,"Prop1":"abc","Prop2":456}', TypeInfo(TClassWithFlatProperty)).AsType<TClassWithFlatProperty>;
+
+  Assert.IsNotNil(Value.Flat);
+
+  Assert.AreEqual(123, Value.MyProp);
+  Assert.AreEqual('abc', Value.Flat.Prop1);
+  Assert.AreEqual(456, Value.Flat.Prop2);
+
+  Value.Flat.Free;
+
+  Value.Free;
+end;
+
 procedure TBluePrintJsonSerializerTest.WhenDeserializeADateOrTimeMustLoadTheFieldsAsExpected;
 begin
   var Value := FSerializer.Deserialize('{"MyDate":"2024-05-21T00:00:00.000Z","MyTime":"1899-12-30T01:02:03.000Z","MyDateTime":"2024-05-21T01:02:03.000Z"}', TypeInfo(TMyDateAndTimeClass));
@@ -1325,6 +1363,8 @@ end;
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAFlatClassWithEnumeratorNameAndTheJSONDontHaveTheEnumeratorValueMustGetTheFirstPropertyFromTheFlatClassAndLoadTheClass;
 begin
   var Value := FSerializer.Deserialize('{"Value":"MyValue"}', TypeInfo(TMyGroupingClass)).AsType<TMyGroupingClass>;
+
+  Assert.IsNotNil(Value);
 
   Assert.IsNotNil(Value.Separator1);
 
@@ -1693,6 +1733,20 @@ begin
   Assert.AreEqual(1, Value.DynamicProperty.Count);
 
   Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenThePropertyHasTheFlatAttributeMustLoadAllPropertiesFromTheTypeInTheCurrentJSON;
+begin
+  var MyClass := TClassWithFlatProperty.Create;
+  MyClass.Flat := TMyAnotherClass.Create;
+
+  var Value := FSerializer.Serialize(MyClass);
+
+  Assert.AreEqual('{"MyProp":0,"Prop1":"","Prop2":0}', Value);
+
+  MyClass.Flat.Free;
+
+  MyClass.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenTheValueTypeIsATValueRecordMustSerializeThenInternalValueOfThisType;

@@ -65,7 +65,6 @@ type
     function IsBoolean(const JSONValue: TJSONValue): Boolean;
     function IsNull(const JSONValue: TJSONValue): Boolean;
     function IsNumber(const JSONValue: TJSONValue): Boolean;
-    function IsString(const JSONValue: TJSONValue): Boolean;
   protected
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function DeserializeArray(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
@@ -430,7 +429,10 @@ var
 begin
   for &Property in GetPublishedProperties(RttiType) do
     if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).{$IFDEF DCC}PropInfo{$ELSE}PropertyTypeInfo{$ENDIF}) then
-      JSONObject.AddPair(GetFieldName(&Property), SerializeType(&Property.PropertyType, &Property.GetValue(Instance)));
+      if &Property.HasAttribute<FlatAttribute> then
+        SerializeProperties(&Property.PropertyType, &Property.GetValue(Instance).AsObject, JSONObject)
+      else
+        JSONObject.AddPair(GetFieldName(&Property), SerializeType(&Property.PropertyType, &Property.GetValue(Instance)));
 end;
 
 function TBluePrintJSONSerializer.SerializeType(const RttiType: TRttiType; const Value: TValue): TJSONValue;
@@ -548,7 +550,15 @@ begin
         DeserializeDynamicPropertyValue(Prop.PropertyType.AsInstance, DynamicPropertyInstance.AsObject, GetKeyValue, GetValue);
       end
       else
-        Prop.SetValue(Instance, DeserializeType(Prop.PropertyType, GetValue));
+        Prop.SetValue(Instance, DeserializeType(Prop.PropertyType, GetValue))
+    else
+      for Prop in GetPublishedProperties(RttiType) do
+        if Prop.HasAttribute<FlatAttribute> then
+        begin
+          Prop.SetValue(Instance, DeserializeType(Prop.PropertyType, JSONObject));
+
+          Exit;
+        end;
   end;
 end;
 
@@ -596,7 +606,9 @@ begin
         Result := TValue.From(CreateObject(RttiType.AsInstance));
 
         DeserializeProperties(RttiType, Result.AsObject, TJSONObject(JSONValue));
-      end;
+      end
+      else
+        Result := TValue.Empty;
 
     tkArray, tkDynArray: Result := DeserializeArray(RttiType, JSONValue);
 
@@ -675,15 +687,6 @@ begin
   Result := JSONValue is TJSONNumber;
 {$ELSE}
   Result := JSApi.JS.IsNumber(JSONValue);
-{$ENDIF}
-end;
-
-function TBluePrintJSONSerializer.IsString(const JSONValue: TJSONValue): Boolean;
-begin
-{$IFDEF DCC}
-  Result := JSONValue is TJSONString;
-{$ELSE}
-  Result := JSApi.JS.IsString(JSONValue);
 {$ENDIF}
 end;
 
@@ -854,7 +857,7 @@ var
     JSONObject: TJSONObject absolute JSONValue;
 
   begin
-    Result := (JSONObject.Count = 0) or (FindPropertyByName(RttiType, GetKey(JSONObject, 0)) <> nil);
+    Result := (RttiType.TypeKind = tkClass) and ((JSONObject.Count = 0) or (FindPropertyByName(RttiType, GetKey(JSONObject, 0)) <> nil));
   end;
 
   function SameEnumeratorName(const RttiType: TRttiType): Boolean;
