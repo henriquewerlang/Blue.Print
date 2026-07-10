@@ -1234,7 +1234,12 @@ var
 
   function AddProperty(const ClassDefinition: TTypeClassDefinition; const Element: IXMLElementDef; const TypeDefinition: TTypeDefinition): TPropertyDefinition;
   begin
-    Result := CreateProperty(ClassDefinition, MakeName(Element), TypeDefinition);
+    var PropertyName := MakeName(Element);
+
+    if not ElementType.HasAttribute(SName) then
+      PropertyName := 'Anonymous' + PropertyName;
+
+    Result := CreateProperty(ClassDefinition, PropertyName, TypeDefinition);
     Result.Optional := IsOptional(Element);
 
     if Element.IsRepeating then
@@ -1705,7 +1710,7 @@ var
 
       if Module.IsClassDefinition then
         for var PropertyDefinition in Module.AsClassDefinition.Properties do
-          if (PropertyDefinition.Name = TypeName) and not PropertyDefinition.PropertyType.IsDelayedType then
+          if PropertyDefinition.Name = TypeName then
             Exit(PropertyDefinition.PropertyType);
 
       for var ClassDefinition in Module.Classes do
