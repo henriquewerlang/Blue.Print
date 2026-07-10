@@ -853,45 +853,60 @@ begin
 end;
 
 function TSchemaImporter.GetModuleDefinitionByReference(const Reference: String; var Module: TTypeModuleDefinition): Boolean;
+var
+  UnitConfiguration: TTypeUnitDefinitionConfiguration;
 
-  function LoadModuleFromConfiguration: TTypeModuleDefinition;
-  var
-    UnitDefinition: TTypeUnitDefinition;
-
+  function FindUnitFileConfigurationByReference: TUnitFileConfiguration;
   begin
-    for var UnitConfiguration in Configuration.UnitConfiguration do
-      for var UnitFileConfiguration in UnitConfiguration.Files do
+    for var TypeUnitConfiguration in Configuration.UnitConfiguration do
+      for var UnitFileConfiguration in TypeUnitConfiguration.Files do
         if (UnitFileConfiguration.Reference = Reference) or (UnitFileConfiguration.FileName = Reference) then
         begin
-          if not FUnitFiles.TryGetValue(UnitFileConfiguration, UnitDefinition) then
-            UnitDefinition := LoadUnit(UnitConfiguration);
+          UnitConfiguration := TypeUnitConfiguration;
 
-          if UnitFileConfiguration.UnitClassName.IsEmpty then
-            Exit(UnitDefinition)
-          else
-          begin
-            var MainModule := FindTypeInUnits(UnitFileConfiguration.UnitClassName);
-
-            if not Assigned(MainModule) then
-              MainModule := CreateClassDefinition(UnitDefinition, UnitFileConfiguration.UnitClassName);
-
-            Exit(MainModule.AsClassDefinition);
-          end;
+          Exit(UnitFileConfiguration);
         end;
 
     raise Exception.CreateFmt('Can''t find the configuration for file reference %s!', [Reference]);
   end;
 
+  function LoadModuleFromConfiguration(const UnitFileConfiguration: TUnitFileConfiguration): TTypeModuleDefinition;
+  var
+    UnitDefinition: TTypeUnitDefinition;
+
+  begin
+    if not FUnitFiles.TryGetValue(UnitFileConfiguration, UnitDefinition) then
+    begin
+      UnitDefinition := LoadUnit(UnitConfiguration);
+
+      FUnitFiles.Add(UnitFileConfiguration, UnitDefinition);
+    end;
+
+    if UnitFileConfiguration.UnitClassName.IsEmpty then
+      Exit(UnitDefinition)
+    else
+    begin
+      var MainModule := FindTypeInUnits(UnitFileConfiguration.UnitClassName);
+
+      if not Assigned(MainModule) then
+        MainModule := CreateClassDefinition(UnitDefinition, UnitFileConfiguration.UnitClassName);
+
+      Exit(MainModule.AsClassDefinition);
+    end;
+  end;
+
 begin
-  Result := FModuleReference.TryGetValue(Reference, Module);
+  var UnitFileConfiguration := FindUnitFileConfigurationByReference;
+
+  Result := FModuleReference.TryGetValue(UnitFileConfiguration.Reference, Module);
 
   if Result then
     Result := Module.FullLoaded
   else
   begin
-    Module := LoadModuleFromConfiguration;
+    Module := LoadModuleFromConfiguration(UnitFileConfiguration);
 
-    FModuleReference.Add(Reference, Module);
+    FModuleReference.Add(UnitFileConfiguration.Reference, Module);
   end;
 
   Module.FullLoaded := True;
