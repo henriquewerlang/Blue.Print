@@ -444,7 +444,7 @@ begin
   begin
     ClassDefinition.AddAtribute('XML');
 
-    if ClassSchema.xml.name <> ClassName then
+    if ClassSchema.xml.name <> ClassDefinition.Name then
       ClassDefinition.AddAtribute('DocumentName(''%s'')', [ClassSchema.xml.name]);
   end;
 end;
