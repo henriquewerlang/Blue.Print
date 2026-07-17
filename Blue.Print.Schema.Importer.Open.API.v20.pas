@@ -115,13 +115,20 @@ function TOpenAPI20SchemaLoader.GenerateSimpleType(const Module: TTypeModuleDefi
 
   function CreateEnumerator: TTypeEnumeration;
   begin
-    Result := TTypeEnumeration.Create(Module);
-    Result.Name := TypeName;
+    var TypeFinded := Importer.FindType(TypeName, Module);
 
-    for var EnumeratorValue in Enumeration do
-      Result.Values.Add(EnumeratorValue.ToString);
+    if Assigned(TypeFinded) then
+      Result := TypeFinded.AsTypeEnumeration
+    else
+    begin
+      Result := TTypeEnumeration.Create(Module);
+      Result.Name := TypeName;
 
-    Module.Enumerations.Add(Result);
+      for var EnumeratorValue in Enumeration do
+        Result.Values.Add(EnumeratorValue.ToString);
+
+      Module.Enumerations.Add(Result);
+    end;
   end;
 
   function GetArrayType(const ArrayType: TOpenAPIDefinition.PrimitivesItems): TTypeDefinition;
