@@ -1694,7 +1694,7 @@ var
         if (TypeConfiguration.Name = ClassDefinition.Name) and not TypeConfiguration.ChangeName.IsEmpty then
           Exit(TypeConfiguration.ChangeName);
 
-      Result := CheckNameDeclaration(ClassDefinition.Name);
+      Result := CheckNameDeclaration(ClassDefinition.Name.Substring(Succ(ClassDefinition.Name.LastDelimiter('.'))));
     end;
 
   begin
@@ -2129,7 +2129,7 @@ var
 
       function GetStoredInformation(const PropertyType: TTypeDefinition): TImplementationInformations;
       begin
-        if PropertyType.IsEnumeration or PropertyType.IsExternal then
+        if PropertyType.IsEnumeration or PropertyType.IsExternal or (PropertyType = Importer.BooleanType) then
           Result := [TImplementationInformation.NeedIsStoredField, TImplementationInformation.NeedSetProcedure]
         else
           Result := [TImplementationInformation.NeedIsStoredFunction];
