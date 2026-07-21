@@ -129,6 +129,7 @@ type
     FImports: TArray<String>;
     FPropertyConfiguration: TArray<TPropertyDefinitionConfiguration>;
     FNamespaces: TArray<TNamespaceConfiguration>;
+    FUnitDelimiter: Char;
   public
     constructor Create;
 
@@ -141,6 +142,7 @@ type
     property PropertyConfiguration: TArray<TPropertyDefinitionConfiguration> read FPropertyConfiguration write FPropertyConfiguration;
     property SchemaFolder: String read FSchemaFolder write FSchemaFolder;
     property TypeDefinition: TArray<TTypeDefinitionConfiguration> read FTypeDefinition write FTypeDefinition;
+    property UnitDelimiter: Char read FUnitDelimiter write FUnitDelimiter;
     property UnitConfiguration: TArray<TTypeUnitDefinitionConfiguration> read FUnitConfiguration write FUnitConfiguration;
   end;
 
@@ -791,7 +793,7 @@ begin
   var CurrentModule: TTypeModuleDefinition := nil;
   Result := nil;
 
-  for var SplitTypeName in TypeName.Split(['.']) do
+  for var SplitTypeName in TypeName.Split([Configuration.UnitDelimiter]) do
   begin
     if not Assigned(CurrentModule) then
     begin
@@ -2950,6 +2952,7 @@ constructor TConfiguration.Create;
 begin
   inherited;
 
+  FUnitDelimiter := '.';
   FMaxColumnSize := 80;
 end;
 
