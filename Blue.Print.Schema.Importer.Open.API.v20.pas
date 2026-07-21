@@ -13,6 +13,7 @@ type
     FUnitFileConfiguration: TUnitFileConfiguration;
 
     function CheckClassDefinition(const Module: TTypeModuleDefinition; const ClassSchema: TOpenAPIDefinition.Schema; const ClassName: String): TTypeDefinition;
+    function CheckType(const Module: TTypeModuleDefinition; const TypeName: String; const SimpleType: Schema.simpleTypes; const ArrayItems: TOpenAPIDefinition.PrimitivesItems; const Enumeration: TArray<TValue>): TTypeDefinition;
     function CreateArrayDefinition(const Module: TTypeModuleDefinition; const TypeName: String; const ArrayItemType: TTypeDefinition): TTypeDefinition;
     function FindSchemaReference(const Reference: String): TOpenAPIDefinition.Schema;
     function GenerateSimpleType(const Module: TTypeModuleDefinition; const TypeName: String; const SimpleType: Schema.simpleTypes; const ArrayItems: TOpenAPIDefinition.PrimitivesItems; const Enumeration: TArray<TValue>): TTypeDefinition;
@@ -77,6 +78,15 @@ begin
 
     LoadClassDefinition(Result.AsClassDefinition, ClassSchema);
   end;
+end;
+
+function TOpenAPI20SchemaLoader.CheckType(const Module: TTypeModuleDefinition; const TypeName: String; const SimpleType: Schema.simpleTypes; const ArrayItems: TOpenAPIDefinition.PrimitivesItems;
+  const Enumeration: TArray<TValue>): TTypeDefinition;
+begin
+  Result := Importer.FindType(TypeName, Module);
+
+  if not Assigned(Result) then
+    Result := GenerateSimpleType(Module, TypeName, SimpleType, ArrayItems, Enumeration);
 end;
 
 constructor TOpenAPI20SchemaLoader.Create(const Importer: TSchemaImporter);
@@ -184,18 +194,15 @@ var
     TypeDefinition.AddAtribute('RemoteName(''%s'')', [RemoteName]);
   end;
 
-  function AddMethod(const Operation: TOpenAPIDefinition.Operation; const RemoteName: String): TTypeMethodDefinition;
+  procedure AddMethod(const Operation: TOpenAPIDefinition.Operation; const RemoteName, AttributeName: String);
   var
-    Method: TTypeMethodDefinition absolute Result;
+    Method: TTypeMethodDefinition;
 
     function AddParameter(const Name: String; const ParameterType: TTypeDefinition): TTypeParameterDefinition; overload;
     begin
       Result := Method.AddParameter;
       Result.Name := OnlyValidChars(Name);
       Result.ParameterType := ParameterType;
-
-      if Result.Name <> Name then
-        Result.AddAtribute('Query(''%s'')', [Name]);
     end;
 
     function AddParameter(const Name: String; const OpenAPISchema: TOpenAPIDefinition.Schema): TTypeParameterDefinition; overload;
@@ -258,61 +265,104 @@ var
       Schemas.Free;
     end;
 
-  begin
-    Result := TTypeMethodDefinition.Create(MainModule);
-    Result.Name := Operation.operationId;
-
-    if Result.Name.IsEmpty then
-      Result.Name := OnlyValidChars(RemoteName);
-
-    AddRemoteName(Result, RemoteName);
-
-    Result.Return := FindReturnType;
-
-    for var ParameterDefinitionItem in Operation.parameters do
+    function GetParameter(const ParameterSchema: TOpenAPIDefinition.parametersListArrayItem): TOpenAPIDefinition.Parameter;
     begin
-      var ParameterDefinition: TOpenAPIDefinition.Parameter;
-
-      if ParameterDefinitionItem.IsJsonReferenceStored then
-        ParameterDefinition := FindParameterDefinition(ParameterDefinitionItem.jsonReference)
+      if ParameterSchema.IsJsonReferenceStored then
+        Result := FindParameterDefinition(ParameterSchema.jsonReference)
       else
-        ParameterDefinition := ParameterDefinitionItem.parameter;
+        Result := ParameterSchema.parameter;
+    end;
 
-      if ParameterDefinition.IsBodyParameterStored then
-        AddParameter(ParameterDefinition.bodyParameter.name, ParameterDefinition.bodyParameter.schema)
-      else if ParameterDefinition.IsNonBodyParameterStored then
+    function IsRequired(const Parameter: TOpenAPIDefinition.Parameter): Boolean;
+    begin
+      Result := Parameter.IsBodyParameterStored;
+
+      if not Result then
       begin
-        var NoBodyParameter := ParameterDefinition.nonBodyParameter;
+        var NonBodyParameter := parameter.nonBodyParameter;
 
-        if NoBodyParameter.IsHeaderParameterSubSchemaStored then
-        begin
-          var Header := NoBodyParameter.HeaderParameterSubSchema;
-
-          var Parameter := AddParameter(Header.name, GenerateSimpleType(MainModule, Header.Name + 'Header', Header.SimpleType, Header.items, Header.enum));
-          Parameter.AddAtribute('HeaderValue(''%s'')', [Header.name]);
-        end
-        else if NoBodyParameter.IsQueryParameterSubSchemaStored then
-        begin
-          var Query := NoBodyParameter.QueryParameterSubSchema;
-
-          AddParameter(Query.name, GenerateSimpleType(MainModule, Query.Name + 'Query', Query.SimpleType, Query.items, Query.enum));
-        end
-        else if NoBodyParameter.IsPathParameterSubSchemaStored then
-        begin
-          var Path := NoBodyParameter.PathParameterSubSchema;
-
-          AddParameter(Path.name, GenerateSimpleType(MainModule, Path.Name + 'Path', Path.SimpleType, Path.items, Path.enum));
-        end
-        else if NoBodyParameter.IsFormDataParameterSubSchemaStored then
-        begin
-          var Form := NoBodyParameter.FormDataParameterSubSchema;
-
-          AddParameter(Form.name, GenerateSimpleType(MainModule, Form.Name + 'Form', Form.SimpleType, Form.items, Form.enum));
-        end;
+        Result := NonBodyParameter.IsFormDataParameterSubSchemaStored and NonBodyParameter.formDataParameterSubSchema.required or NonBodyParameter.IsHeaderParameterSubSchemaStored and NonBodyParameter.headerParameterSubSchema.required
+          or NonBodyParameter.IsQueryParameterSubSchemaStored and NonBodyParameter.queryParameterSubSchema.required or NonBodyParameter.IsPathParameterSubSchemaStored;
       end;
     end;
 
-    Service.Methods.Add(Method);
+  begin
+    var CurrentParameter: NativeInt;
+    var LastOptionalParameter: NativeInt := 0;
+    var ParameterCount := Length(Operation.parameters);
+
+    repeat
+      CurrentParameter := 0;
+      Method := TTypeMethodDefinition.Create(MainModule);
+      Method.Name := Operation.operationId;
+
+      if Method.Name.IsEmpty then
+        Method.Name := OnlyValidChars(RemoteName);
+
+      if '/' + Method.Name <> RemoteName then
+        AddRemoteName(Method, RemoteName);
+
+      Method.Return := FindReturnType;
+
+      for var ParameterSchema in Operation.parameters do
+      begin
+        var ParameterDefinition := GetParameter(ParameterSchema);
+
+        if not IsRequired(ParameterDefinition) and (CurrentParameter >= LastOptionalParameter) then
+        begin
+          LastOptionalParameter := Succ(CurrentParameter);
+
+          Break;
+        end;
+
+        Inc(CurrentParameter);
+
+        if ParameterDefinition.IsBodyParameterStored then
+          AddParameter(ParameterDefinition.bodyParameter.name, ParameterDefinition.bodyParameter.schema)
+        else if ParameterDefinition.IsNonBodyParameterStored then
+        begin
+          var NoBodyParameter := ParameterDefinition.nonBodyParameter;
+
+          if NoBodyParameter.IsHeaderParameterSubSchemaStored then
+          begin
+            var Header := NoBodyParameter.HeaderParameterSubSchema;
+
+            var Parameter := AddParameter(Header.name, CheckType(MainModule, Header.Name + 'Header', Header.SimpleType, Header.items, Header.enum));
+            Parameter.AddAtribute('HeaderValue(''%s'')', [Header.name]);
+          end
+          else if NoBodyParameter.IsQueryParameterSubSchemaStored then
+          begin
+            var Query := NoBodyParameter.QueryParameterSubSchema;
+            var QueryAttribute := EmptyStr;
+
+            var Parameter := AddParameter(Query.name, CheckType(MainModule, Query.Name + 'Query', Query.SimpleType, Query.items, Query.enum));
+
+            if Parameter.Name <> Query.name then
+              QueryAttribute := Format('(''%s'')', [Query.name]);
+
+            Parameter.AddAtribute('Query%s', [QueryAttribute]);
+          end
+          else if NoBodyParameter.IsPathParameterSubSchemaStored then
+          begin
+            var Path := NoBodyParameter.PathParameterSubSchema;
+            var Parameter := AddParameter(Path.name, CheckType(MainModule, Path.Name + 'Path', Path.SimpleType, Path.items, Path.enum));
+
+            Parameter.AddAtribute('PathName');
+          end
+          else if NoBodyParameter.IsFormDataParameterSubSchemaStored then
+          begin
+            var Form := NoBodyParameter.FormDataParameterSubSchema;
+            var Parameter := AddParameter(Form.name, CheckType(MainModule, Form.Name + 'Form', Form.SimpleType, Form.items, Form.enum));
+
+            Parameter.AddAtribute('FormURLEncoded');
+          end;
+        end;
+      end;
+
+      Method.AddAtribute(AttributeName);
+
+      Service.Methods.Add(Method);
+    until CurrentParameter >= ParameterCount;
   end;
 
 begin
@@ -338,25 +388,25 @@ begin
   for var PathItem in FOpenAPIDefinition.paths.pathItem do
   begin
     if PathItem.Value.IsGetStored then
-      AddMethod(PathItem.Value.get, PathItem.Key).AddGetAttribute;
+      AddMethod(PathItem.Value.get, PathItem.Key, 'Get');
 
     if PathItem.Value.IsPostStored then
-      AddMethod(PathItem.Value.post, PathItem.Key).AddPostAttribute;
+      AddMethod(PathItem.Value.post, PathItem.Key, 'Post');
 
     if PathItem.Value.IsPutStored then
-      AddMethod(PathItem.Value.put, PathItem.Key).AddPutAttribute;
+      AddMethod(PathItem.Value.put, PathItem.Key, 'Put');
 
     if PathItem.Value.IsDeleteStored then
-      AddMethod(PathItem.Value.delete, PathItem.Key).AddDeleteAttribute;
+      AddMethod(PathItem.Value.delete, PathItem.Key, 'Delete');
 
     if PathItem.Value.IsOptionsStored then
-      AddMethod(PathItem.Value.options, PathItem.Key).AddOptionsAttribute;
+      AddMethod(PathItem.Value.options, PathItem.Key, 'Options');
 
     if PathItem.Value.IsPatchStored then
-      AddMethod(PathItem.Value.patch, PathItem.Key).AddPatchAttribute;
+      AddMethod(PathItem.Value.patch, PathItem.Key, 'Patch');
 
     if PathItem.Value.IsHeadStored then
-      AddMethod(PathItem.Value.head, PathItem.Key);
+      AddMethod(PathItem.Value.head, PathItem.Key, 'Head');
   end;
 end;
 
