@@ -23,7 +23,7 @@ type
 {$IFDEF PAS2JS}
   PTypeInfo = TTypeInfo;
 {$ENDIF}
-  TParameterType = (Body, Query, Path, Header);
+  TParameterType = (Body, Query, Path, PathName, Header, FormURLEncoded);
   TRequestFile = {$IFDEF PAS2JS}TJSHTMLFile{$ELSE}TAbstractWebRequestFile{$ENDIF};
   TRequestMethod = (Delete, Get, Patch, Post, Put, Options);
   TResponseFile = {$IFDEF PAS2JS}TJSBlob{$ELSE}TStream{$ENDIF};
@@ -189,19 +189,36 @@ type
     constructor Create;
   end;
 
-  QueryAttribute = class(TParameterAttribute)
+  TParameterNamedAttribute = class(TParameterAttribute)
   private
     FName: String;
+
+    constructor Create(const ParameterType: TParameterType; const Name: String);
+  public
+    property Name: String read FName write FName;
+  end;
+
+  QueryAttribute = class(TParameterNamedAttribute)
   public
     constructor Create; overload;
     constructor Create(const Name: String); overload;
-
-    property Name: String read FName write FName;
   end;
 
   PathAttribute = class(TParameterAttribute)
   public
     constructor Create;
+  end;
+
+  PathNameAttribute = class(TParameterNamedAttribute)
+  public
+    constructor Create; overload;
+    constructor Create(const Name: String); overload;
+  end;
+
+  FormURLEncodedAttribute = class(TParameterNamedAttribute)
+  public
+    constructor Create; overload;
+    constructor Create(const Name: String); overload;
   end;
 
   HeaderValueAttribute = class(TParameterAttribute)
@@ -500,14 +517,12 @@ end;
 
 constructor QueryAttribute.Create;
 begin
-  inherited Create(TParameterType.Query);
+  Create(EmptyStr);
 end;
 
 constructor QueryAttribute.Create(const Name: String);
 begin
-  Create;
-
-  FName := Name;
+  inherited Create(TParameterType.Query, Name);
 end;
 
 { PathAttribute }
@@ -860,6 +875,39 @@ end;
 function TSOAPEnvelop.GetSOAPHeaderStored: Boolean;
 begin
   Result := Assigned(SOAPHeader.Parts);
+end;
+
+{ FormURLEncodedAttribute }
+
+constructor FormURLEncodedAttribute.Create;
+begin
+  Create(EmptyStr);
+end;
+
+constructor FormURLEncodedAttribute.Create(const Name: String);
+begin
+  inherited Create(TParameterType.FormURLEncoded, Name);
+end;
+
+{ TParameterNamedAttribute }
+
+constructor TParameterNamedAttribute.Create(const ParameterType: TParameterType; const Name: String);
+begin
+  inherited Create(ParameterType);
+
+  FName := Name;
+end;
+
+{ PathNameAttribute }
+
+constructor PathNameAttribute.Create(const Name: String);
+begin
+  inherited Create(TParameterType.PathName, Name);
+end;
+
+constructor PathNameAttribute.Create;
+begin
+  Create(EmptyStr);
 end;
 
 end.

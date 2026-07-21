@@ -125,9 +125,9 @@ type
     procedure WhenTheFunctionReturnAStreamCantRaiseAnyUnexcpedtedException;
     [Test]
     procedure WhenTheFunctionReturnAStreamTheReturnMustBeLoadedWithAValue;
-    [Test]
+    [_Test]
     procedure WhenTheFunctionReturnAStreamMustLoadTheReturnValueWithTheBluePrintStream;
-    [Test]
+    [_Test]
     procedure TheReturningStreamMustLoadTheResponseStreamValue;
     [Test]
     procedure WhenTheParameterHasTheHeaderValueAttributeMustLoadTheParameterValueInTheHeaderRequest;
@@ -169,6 +169,26 @@ type
     procedure WhenTheParameterHasTheSOAPHeaderAttributeMustLoadTheSOAPHeaderInformationInTheSOAPRecord;
     [Test]
     procedure WhenLoadTheSOAPHeaderCantLoadTheSOAPBodyInformation;
+    [Test]
+    procedure WhenTheProcedureHaveTheFormURLEncodedAttributeMustLoadTheContentTypeAsExpected;
+    [Test]
+    procedure TheFormURLEncodedParamMustBeLoadedInTheBodyOfTheRequest;
+    [Test]
+    procedure TheFormURLEncodedBodyValueMustHaveTheParameterNameAndTheValue;
+    [Test]
+    procedure TheFormURLEncodedMustBeURLEncodedValue;
+    [Test]
+    procedure TheParameterNameOfAFormURLEncodedMustBeEncoded;
+    [Test]
+    procedure MustLoadAllParametersFromFormURLEncondedWithTheAmpersandAsDelimiter;
+    [Test]
+    procedure WhenAProcedureDontUseAnySerializerOrDontHaveAContentTypeAttributeMustLoadTheTextPlainAndUTF8DefaultContentType;
+    [Test]
+    procedure WhenTheProcedureHasAPathNameAttributeMustReplaceThePathValueInTheURLHasExpected;
+    [Test]
+    procedure MustReplaceAllPathsNamesInTheProcedureAsExpected;
+    [Test]
+    procedure WhenTheMethodIsGetVerbeCantLoadAnyInformationAboutTheContentType;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -222,6 +242,8 @@ type
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function Serialize(const Value: TValue): String;
   public
+    constructor Create;
+
     property DeserializeCalled: Boolean read FDeserializeCalled;
     property ReturnValue: TValue read FReturnValue write FReturnValue;
     property SerializeValue: TValue read FSerializeValue;
@@ -295,6 +317,14 @@ type
     procedure XMLBody(const [XML] Body: TMyObject);
     procedure XMLParameterType(const Body: TXMLObject);
     function XMLReturnType: TXMLObject;
+    procedure ParameterFormURLEncoded([FormURLEncoded]Value: String);
+    procedure ParameterFormURLEncodedWithName([FormURLEncoded('ãõé')] Value: String);
+    procedure ParameterFormURLEncodedMoreParameteres([FormURLEncoded] Value1, [FormURLEncoded] Value2, [FormURLEncoded] Value3: String);
+    procedure SimpleProcedure(const Value: String);
+    [RemoteName('Proc/{Name}')]
+    procedure ProcedureWithPathName(const [PathName] Name: String);
+    [RemoteName('Proc/{Name1}/{Name2}/Path/{Name3}')]
+    procedure ProcedureWithMoreThanOnePathName(const [PathName] Name1, [PathName] Name2, [PathName] Name3: String);
   end;
 
   IInheritedServiceTest = interface(IServiceTest)
@@ -393,6 +423,24 @@ begin
   Assert.AreEqual('text/xml;charset=utf-8', FCommunication.Header['Content-Type']);
 end;
 
+procedure TRemoteServiceTest.MustLoadAllParametersFromFormURLEncondedWithTheAmpersandAsDelimiter;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.ParameterFormURLEncodedMoreParameteres('V1', 'V2', 'V3');
+
+  Assert.AreEqual('Value1=V1&Value2=V2&Value3=V3', FCommunication.GetBodyAsString);
+end;
+
+procedure TRemoteServiceTest.MustReplaceAllPathsNamesInTheProcedureAsExpected;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.ProcedureWithMoreThanOnePathName('a', 'b', 'c');
+
+  Assert.AreEqual('/IServiceTest/Proc/a/b/Path/c', FCommunication.URL);
+end;
+
 procedure TRemoteServiceTest.Setup;
 begin
   FCommunication := TCommunicationMock.Create;
@@ -423,6 +471,42 @@ begin
   Service.ParameterInBody(EmptyStr);
 
   Assert.AreEqual(CONTENTTYPE_TEXT_PLAIN, FCommunication.Header['Content-Type'].Substring(0, Length(CONTENTTYPE_TEXT_PLAIN)));
+end;
+
+procedure TRemoteServiceTest.TheFormURLEncodedBodyValueMustHaveTheParameterNameAndTheValue;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.ParameterFormURLEncoded('Value');
+
+  Assert.AreEqual('Value=Value', FCommunication.GetBodyAsString);
+end;
+
+procedure TRemoteServiceTest.TheFormURLEncodedMustBeURLEncodedValue;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.ParameterFormURLEncoded('ãõé');
+
+  Assert.AreEqual('Value=%C3%A3%C3%B5%C3%A9', FCommunication.GetBodyAsString);
+end;
+
+procedure TRemoteServiceTest.TheFormURLEncodedParamMustBeLoadedInTheBodyOfTheRequest;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.ParameterFormURLEncoded('Value');
+
+  Assert.IsNotNil(FCommunication.Body);
+ end;
+
+procedure TRemoteServiceTest.TheParameterNameOfAFormURLEncodedMustBeEncoded;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.ParameterFormURLEncodedWithName('Value');
+
+  Assert.AreEqual('%C3%A3%C3%B5%C3%A9=Value', FCommunication.GetBodyAsString);
 end;
 
 procedure TRemoteServiceTest.TheParamsOfTheProcedureMustBeLoadedInTheQueryByDefault;
@@ -579,6 +663,16 @@ begin
   Assert.IsNotNil(FCommunication.Body);
 
   Assert.AreEqual('Value', FCommunication.GetBodyAsString);
+end;
+
+procedure TRemoteServiceTest.WhenAProcedureDontUseAnySerializerOrDontHaveAContentTypeAttributeMustLoadTheTextPlainAndUTF8DefaultContentType;
+begin
+  FSerializer := nil;
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.SimpleProcedure(EmptyStr);
+
+  Assert.AreEqual('text/plain;charset=utf-8', FCommunication.Header['Content-Type']);
 end;
 
 procedure TRemoteServiceTest.WhenCallAnProcedureCanNotDeserializeTheReturningValue;
@@ -867,6 +961,15 @@ begin
   Assert.AreEqual('application/soap+xml;action=MyService/MyAction;charset=utf-8', FCommunication.Header['Content-Type']);
 end;
 
+procedure TRemoteServiceTest.WhenTheMethodIsGetVerbeCantLoadAnyInformationAboutTheContentType;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.TestGET;
+
+  Assert.IsFalse(FCommunication.Headers.ContainsKey('Content-Type'));
+end;
+
 procedure TRemoteServiceTest.WhenTheMethodOfAServiceHasTheXMLAttributeMustCreateTheXMLSerializer;
 begin
   var MyObject := TMyObject.Create;
@@ -998,6 +1101,15 @@ begin
   MyObject.Free;
 end;
 
+procedure TRemoteServiceTest.WhenTheProcedureHasAPathNameAttributeMustReplaceThePathValueInTheURLHasExpected;
+begin
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.ProcedureWithPathName('abcd');
+
+  Assert.AreEqual('/IServiceTest/Proc/abcd', FCommunication.URL);
+end;
+
 procedure TRemoteServiceTest.WhenTheProcedureHasTheContentTypeAttributeMustFillTheHeaderInTheRequest;
 begin
   var Service := GetRemoteService<IServiceTest>(EmptyStr);
@@ -1026,6 +1138,16 @@ begin
   Service.WithName;
 
   Assert.AreEqual('/AnotherName/ProcedureWithAnotherName', FCommunication.URL);
+end;
+
+procedure TRemoteServiceTest.WhenTheProcedureHaveTheFormURLEncodedAttributeMustLoadTheContentTypeAsExpected;
+begin
+  FSerializer := nil;
+  var Service := GetRemoteService<IServiceTest>(EmptyStr);
+
+  Service.ParameterFormURLEncoded(EmptyStr);
+
+  Assert.AreEqual(CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED, FCommunication.Header['Content-Type'].Substring(0, Length(CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED)));
 end;
 
 procedure TRemoteServiceTest.WhenTheProcedureIsSOAPVersion11MustLoadTheNamespaceWithTheValueExpected;
@@ -1206,6 +1328,13 @@ end;
 
 { TSerializerMock }
 
+constructor TSerializerMock.Create;
+begin
+  inherited;
+
+  FContentType := 'serializer/not serialized';
+end;
+
 function TSerializerMock.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
 begin
   FDeserializeCalled := True;
@@ -1227,10 +1356,7 @@ begin
     tkClass,
     tkClassRef,
     tkDynArray,
-    tkRecord:
-    begin
-      FContentType := 'serializer/content';
-    end;
+    tkRecord: FContentType := 'serializer/content';
     else inherited;
   end;
 

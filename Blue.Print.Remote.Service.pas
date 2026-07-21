@@ -66,16 +66,18 @@ type
     function EncodeValue(const Value: String): String;
     function GetAttribute<T: TCustomAttribute>(RttiObject: TRttiObject): T;
     function GetAttributes<T: TCustomAttribute>(RttiObject: TRttiObject): TArray<T>;
-    function GetRemoteMethodName(const Method: TRttiMethod): String;
+    function GetRemoteMethodName(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function GetRemoteName(const RttiObject: TRttiObject; const DefaultName: String): String;
     function GetRemoteServiceName: String;
     function GetRequestMethod(const Method: TRttiMethod): TRequestMethod;
     function GetPathParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
-    function GetQueryParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
+    function GetQueryParameters(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function GetSerializer(const XML: Boolean): IBluePrintSerializer;
     function GetSOAPActionName(const Method: TRttiMethod): String;
+    function IsFormURLEncoded(const Method: TRttiMethod): Boolean;
     function IsSOAPRequest: Boolean;
     function IsSOAP11Request(const Method: TRttiMethod): Boolean;
+    function LoadNamedParametersValue(const Method: TRttiMethod; const ParameterType: TParameterType; const Args: TArray<TValue>): String;
     function LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>; const AsyncRequest: Boolean; const ReturnEvent: TProc<TValue>; const ErrorEvent: TProc<Exception>): TValue;
 
@@ -131,7 +133,7 @@ end;
 
 function TRemoteService.BuildRequestURL(const Method: TRttiMethod; const Args: TArray<TValue>): String;
 begin
-  Result := FURL + GetRemoteServiceName + GetRemoteMethodName(Method) + GetPathParams(Method, Args) + GetQueryParams(Method, Args);
+  Result := FURL + GetRemoteServiceName + GetRemoteMethodName(Method, Args) + GetPathParams(Method, Args) + GetQueryParameters(Method, Args);
 end;
 
 constructor TRemoteService.Create(const TypeInfo: PTypeInfo; const Serializer: IBluePrintSerializer);
@@ -241,47 +243,31 @@ begin
   Result := PathParams;
 end;
 
-function TRemoteService.GetQueryParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
+function TRemoteService.GetQueryParameters(const Method: TRttiMethod; const Args: TArray<TValue>): String;
+begin
+  Result := LoadNamedParametersValue(Method, TParameterType.Query, Args);
+
+  if not Result.IsEmpty then
+    Result := '?' + Result;
+end;
+
+function TRemoteService.GetRemoteMethodName(const Method: TRttiMethod; const Args: TArray<TValue>): String;
 var
-  QueryParams: String;
+  Path: String;
 
 begin
-  QueryParams := EmptyStr;
+  if IsSOAPRequest then
+    Path := EmptyStr
+  else
+    Path := GetRemoteName(Method, Method.Name);
 
   LoadValuesFromParameters(Method,
     procedure(Parameter: TRttiParameter; ParameterAttribute: TParameterAttribute; Value: TValue)
-    var
-      Query: QueryAttribute absolute ParameterAttribute;
-
-      function GetQueryName: String;
-      begin
-        if not Assigned(Query) or Query.Name.IsEmpty then
-          Result := Parameter.Name
-        else
-          Result := Query.Name;
-
-        Result := EncodeValue(Result);
-      end;
-
     begin
-      if not QueryParams.IsEmpty then
-        QueryParams := QueryParams + '&';
+      Path := Path.Replace(Format('{%s}', [Parameter.Name]), Value.ToString)
+    end, TParameterType.PathName, Args);
 
-      QueryParams := QueryParams + Format('%s=%s', [GetQueryName, EncodeValue(Value.ToString)]);
-    end, TParameterType.Query, Args);
-
-  if not QueryParams.IsEmpty then
-    QueryParams := '?' + QueryParams;
-
-  Result := QueryParams;
-end;
-
-function TRemoteService.GetRemoteMethodName(const Method: TRttiMethod): String;
-begin
-  if IsSOAPRequest then
-    Result := EmptyStr
-  else
-    Result := GetRemoteName(Method, Method.Name);
+  Result := Path;
 end;
 
 function TRemoteService.GetRemoteName(const RttiObject: TRttiObject; const DefaultName: String): String;
@@ -353,6 +339,24 @@ begin
     Result := Result + Method.Name;
 end;
 
+function TRemoteService.IsFormURLEncoded(const Method: TRttiMethod): Boolean;
+var
+  ExistsParameter: Boolean;
+
+begin
+  ForEachParameter(Method, TParameterType.FormURLEncoded,
+    procedure (Parameter: TRttiParameter; ValueIndex: NativeInt; ParameterAttribute: TParameterAttribute)
+    begin
+      ExistsParameter := True;
+    end,
+    function (Parameter: TRttiParameter): Boolean
+    begin
+      Result := True;
+    end);
+
+  Result := ExistsParameter;
+end;
+
 function TRemoteService.IsSOAP11Request(const Method: TRttiMethod): Boolean;
 begin
   Result := not Method.HasAttribute<SOAPActionAttribute>;
@@ -371,8 +375,8 @@ var
   ContentTypeText: String;
 
 begin
-  ContentTypeAttr := GetAttribute<ContentTypeAttribute>(Method);
   CharSetAttr := GetAttribute<CharSetAttribute>(Method);
+  ContentTypeAttr := GetAttribute<ContentTypeAttribute>(Method);
 
   if IsSOAPRequest then
     if not IsSOAP11Request(Method) then
@@ -383,6 +387,8 @@ begin
     ContentTypeText := ContentTypeAttr.ContentType
   else if Assigned(FSerializer) then
     ContentTypeText := FSerializer.ContentType
+  else if IsFormURLEncoded(Method) then
+    ContentTypeText := CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED
   else
     ContentTypeText := CONTENTTYPE_TEXT_PLAIN;
 
@@ -395,6 +401,38 @@ begin
     CharSet := ';charset=' + CharSet;
 
   Header[CONTENT_TYPE_HEADER] := ContentTypeText + CharSet;
+end;
+
+function TRemoteService.LoadNamedParametersValue(const Method: TRttiMethod; const ParameterType: TParameterType; const Args: TArray<TValue>): String;
+var
+  ParametersValue: String;
+
+begin
+  ParametersValue := EmptyStr;
+
+  LoadValuesFromParameters(Method,
+    procedure(Parameter: TRttiParameter; ParameterAttribute: TParameterAttribute; Value: TValue)
+    var
+      NamedParameter: TParameterNamedAttribute absolute ParameterAttribute;
+
+      function GetParameterName: String;
+      begin
+        if not Assigned(NamedParameter) or NamedParameter.Name.IsEmpty then
+          Result := Parameter.Name
+        else
+          Result := NamedParameter.Name;
+
+        Result := EncodeValue(Result);
+      end;
+
+    begin
+      if not ParametersValue.IsEmpty then
+        ParametersValue := ParametersValue + '&';
+
+      ParametersValue := ParametersValue + Format('%s=%s', [GetParameterName, EncodeValue(Value.ToString)]);
+    end, ParameterType, Args);
+
+  Result := ParametersValue;
 end;
 
 function TRemoteService.LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
@@ -415,8 +453,6 @@ var
           SOAPEnvelop.AddBodyPart(Parameter, Value);
       end, TParameterType.Body, Args);
 
-    LoadContentType(Method);
-
     if IsSOAP11Request(Method) then
       SOAPEnvelop.SOAPNameSpace := SSoapNamespace
     else
@@ -427,6 +463,8 @@ var
 
   procedure LoadRESTRequest;
   begin
+    Body := LoadNamedParametersValue(Method, TParameterType.FormURLEncoded, Args);
+
     LoadValuesFromParameters(Method,
       procedure(Parameter: TRttiParameter; ParameterAttribute: TParameterAttribute; Value: TValue)
 
@@ -437,8 +475,6 @@ var
 
       begin
         Body := GetSerializer(GetSerializerType).Serialize(Value);
-
-        LoadContentType(Method);
       end, TParameterType.Body, Args);
   end;
 
@@ -447,6 +483,8 @@ begin
     LoadSOAPRequest
   else
     LoadRESTRequest;
+
+  LoadContentType(Method);
 
   Result := Body;
 end;
@@ -508,9 +546,9 @@ var
 
 begin
 {$IFDEF PAS2JS}
-    if Method.IsAsyncCall then
-      Result := TValue.From(SendRequestAsync)
-    else
+  if Method.IsAsyncCall then
+    Result := TValue.From(SendRequestAsync)
+  else
 {$ENDIF}
   begin
     Error := nil;
@@ -533,11 +571,21 @@ begin
 end;
 
 function TRemoteService.SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>; const AsyncRequest: Boolean; const ReturnEvent: TProc<TValue>; const ErrorEvent: TProc<Exception>): TValue;
+var
+  Body: String;
+  RequestMethod: TRequestMethod;
+
 begin
   LoadRequestHeaders(Method, Args);
 
-  Communication.SendRequest(GetRequestMethod(Method), BuildRequestURL(Method, Args), LoadRequestBody(Method, Args), AsyncRequest,
-    Assigned(Method.ReturnType) and Method.ReturnType.IsInstance and (Method.ReturnType.AsInstance.MetaclassType = TStream),
+  RequestMethod := GetRequestMethod(Method);
+
+  if RequestMethod = TRequestMethod.Get then
+    Body := EmptyStr
+  else
+    Body := LoadRequestBody(Method, Args);
+
+  Communication.SendRequest(RequestMethod, BuildRequestURL(Method, Args), Body, AsyncRequest, Assigned(Method.ReturnType) and Method.ReturnType.IsInstance and (Method.ReturnType.AsInstance.MetaclassType = TStream),
     procedure(ContentString: String; ContentStream: TStream)
 
       function GetSerializerType: Boolean;
