@@ -318,7 +318,11 @@ var
         Inc(CurrentParameter);
 
         if ParameterDefinition.IsBodyParameterStored then
-          AddParameter(ParameterDefinition.bodyParameter.name, ParameterDefinition.bodyParameter.schema)
+        begin
+          var Parameter := AddParameter(ParameterDefinition.bodyParameter.name, ParameterDefinition.bodyParameter.schema);
+
+          Parameter.AddAtribute('Body');
+        end
         else if ParameterDefinition.IsNonBodyParameterStored then
         begin
           var NoBodyParameter := ParameterDefinition.nonBodyParameter;
