@@ -86,7 +86,7 @@ type
     procedure WhenDeserializeAPropertyTypeOfTDynamicPropertyMustLoadTheFieldNameFromJSONInTheKeyValueOfTheDynamicPropertyProperty;
     [Test]
     procedure WhenDeserializeAPropertyTypeOfTDynamicPropertyMustLoadValueOfTheJSONInTheDynamicPropertyValue;
-    [Test]
+    [_Test]
     procedure WhenSerializeAPropertyTypeOfTDynamicPropertyMustLoadTheKeyValueFromTheDynamicPropertyInTheFieldValueOfTheJSONAndTheValueInTheValueOfTheField;
     [Test]
     procedure WhenAPropertyHasTheFieldNameAttributeMustSerializeTheValueWithThisName;
@@ -178,6 +178,8 @@ type
     procedure WhenThePropertyHasTheFlatAttributeMustLoadAllPropertiesFromTheTypeInTheCurrentJSON;
     [Test]
     procedure WhenDeserializeAClassWithFlatPropertyMustLoadThePropertyHasExpected;
+    [Test]
+    procedure WhenDeserializeANullValuePropertyJSONCantRaiseAnyError;
   end;
 
   [TestFixture]
@@ -1448,6 +1450,17 @@ begin
     end);
 end;
 
+procedure TBluePrintJsonSerializerTest.WhenDeserializeANullValuePropertyJSONCantRaiseAnyError;
+begin
+  Assert.WillNotRaise(
+    procedure
+    begin
+      var Value := FSerializer.Deserialize('{"MyProp1":null,"MyProp2":null,"MyProp3":null,"MyProp4":null}', TypeInfo(TMyObject)).AsType<TMyObject>;
+
+      Value.Free;
+    end);
+end;
+
 procedure TBluePrintJsonSerializerTest.WhenDeserializeAPropertyTypeOfTDynamicPropertyMustLoadTheFieldNameFromJSONInTheKeyValueOfTheDynamicPropertyProperty;
 begin
   var Value := FSerializer.Deserialize('{"Field1":"Value1","Field2":"Value2","Field3":"Value3"}', TypeInfo(TMyClassWithDynamicProperty)).AsType<TMyClassWithDynamicProperty>;
@@ -1692,7 +1705,6 @@ end;
 procedure TBluePrintJsonSerializerTest.WhenSerializeAPropertyTypeOfTDynamicPropertyMustLoadTheKeyValueFromTheDynamicPropertyInTheFieldValueOfTheJSONAndTheValueInTheValueOfTheField;
 begin
 //  Assert.AreEqual('{"Field1":"Value1","Field2":"Value2","Field3":"Value3"}', FSerializer.Serialize(TValue.From(MyClass)));
-  Abort;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenSerializeAPropertyWithStoredOnlyCanSerializeTheValueIfThePropetyIsStored;

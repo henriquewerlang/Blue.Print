@@ -543,14 +543,16 @@ begin
     Prop := FindProperty;
 
     if Assigned(Prop) then
+    begin
       if Prop.PropertyType.IsDynamicProperty then
       begin
         DynamicPropertyInstance := CheckPropertyInstance(TValue.From(Instance), Prop);
 
         DeserializeDynamicPropertyValue(Prop.PropertyType.AsInstance, DynamicPropertyInstance.AsObject, GetKeyValue, GetValue);
       end
-      else
+      else if not IsNull(GetValue) then
         Prop.SetValue(Instance, DeserializeType(Prop.PropertyType, GetValue))
+    end
     else
       for Prop in GetPublishedProperties(RttiType) do
         if Prop.HasAttribute<FlatAttribute> then
