@@ -18,17 +18,22 @@ type
     property Header[const HeaderName: String]: String write SetHeader;
   end;
 
+  ILog = interface
+    ['{48815E2F-0791-4058-A40E-40A3F1CA7445}']
+    procedure Save(const Log: String);
+  end;
+
   IHTTPCommunication = interface
     ['{8E39F66A-C72B-4314-80B1-D24F1AF4F247}']
-    function GetResponseHeader(const HeaderName: String): String;
+    function GetResponseHeader: TStringList;
 
-    procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
+    procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<Integer, String, TStream>);
     procedure SetCertificate(const FileName, Password: String); overload;
     procedure SetCertificate(const Value: TStream; const Password: String); overload;
     procedure SetHeader(const HeaderName, Value: String);
 
     property Header[const HeaderName: String]: String write SetHeader;
-    property ResponseHeader[const HeaderName: String]: String read GetResponseHeader;
+    property ResponseHeader: TStringList read GetResponseHeader;
   end;
 
   THTTPCommunication = class(TInterfacedObject, IHTTPCommunication)
@@ -42,9 +47,9 @@ type
     FResponse: IHTTPResponse;
     {$ENDIF}
 
-    function GetResponseHeader(const HeaderName: String): String;
+    function GetResponseHeader: TStringList;
 
-    procedure SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
+    procedure SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<Integer, String, TStream>);
     procedure SetCertificate(const FileName, Password: String); overload;
     procedure SetCertificate(const Value: TStream; const Password: String); overload;
     procedure SetHeader(const HeaderName, Value: String);
@@ -61,6 +66,7 @@ type
     FInterfaceType: TRttiInterfaceType;
     FSerializer: IBluePrintSerializer;
     FURL: String;
+    FLog: ILog;
 
     function BuildRequestURL(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function EncodeValue(const Value: String): String;
@@ -79,12 +85,13 @@ type
     function IsSOAP11Request(const Method: TRttiMethod): Boolean;
     function LoadNamedParametersValue(const Method: TRttiMethod; const ParameterType: TParameterType; const Args: TArray<TValue>): String;
     function LoadRequestBody(const Method: TRttiMethod; const Args: TArray<TValue>): String;
-    function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>; const AsyncRequest: Boolean; const ReturnEvent: TProc<TValue>; const ErrorEvent: TProc<Exception>): TValue;
+    function SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>; const AsyncRequest: Boolean): TValue;
 
     procedure ForEachParameter(const Method: TRttiMethod; const ParameterType: TParameterType; const LoadFunction: TProc<TRttiParameter, NativeInt, TParameterAttribute>; const CheckParameterFlags: TFunc<TRttiParameter, Boolean>);
     procedure LoadContentType(const Method: TRttiMethod);
     procedure LoadRequestHeaders(const Method: TRttiMethod; const Args: TArray<TValue>);
     procedure LoadValuesFromParameters(const Method: TRttiMethod; const LoadFunction: TProc<TRttiParameter, TParameterAttribute, TValue>; const ParameterType: TParameterType; const Args: TArray<TValue>);
+    procedure SaveLog(const Message: String; const Args: array of const);
     procedure SetCertificate(const FileName, Password: String); overload;
     procedure SetCertificate(const Value: TStream; const Password: String); overload;
     procedure SetHeader(const HeaderName, Value: String);
@@ -104,6 +111,7 @@ type
     function GetService<T: IInvokable>(const URL: String): T;
 
     property Communication: IHTTPCommunication read FCommunication write FCommunication;
+    property Log: ILog read FLog write FLog;
     property Serializer: IBluePrintSerializer read FSerializer write FSerializer;
   end;
 
@@ -116,6 +124,7 @@ uses System.NetEncoding, REST.Types, Soap.SOAPConst;
 const
   COMPILER_OFFSET = {$IFDEF PAS2JS}0{$ELSE}1{$ENDIF};
   CONTENT_TYPE_HEADER = 'Content-Type';
+  REQUEST_METHOD_NAME: array[TRequestMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT', 'OPTIONS');
 {$IFDEF PAS2JS}
   CONTENTTYPE_APPLICATION_SOAP_XML = 'application/soap+xml';
   CONTENTTYPE_TEXT_PLAIN = 'text/plain';
@@ -128,6 +137,12 @@ begin
   Accepted := True;
 end;
 {$ENDIF}
+
+type
+  TEmptyLog = class(TInterfacedObject, ILog)
+  private
+    procedure Save(const Log: String);
+  end;
 
 { TRemoteService }
 
@@ -143,6 +158,7 @@ begin
   FCommunication := THTTPCommunication.Create;
   FContext := TRttiContext.Create;
   FInterfaceType := FContext.GetType(TypeInfo).AsInterface;
+  FLog := TEmptyLog.Create;
   FSerializer := Serializer;
 end;
 
@@ -492,18 +508,32 @@ end;
 procedure TRemoteService.LoadRequestHeaders(const Method: TRttiMethod; const Args: TArray<TValue>);
 var
   Attribute: HeaderAttribute;
+  HeaderName: String;
+  HeaderValue: String;
 
 begin
   for Attribute in GetAttributes<HeaderAttribute>(Method) do
-    Header[Attribute.Name] := Attribute.Value;
+  begin
+    HeaderName := Attribute.Name;
+    HeaderValue := Attribute.Value;
+
+    SaveLog('%s: %s', [HeaderName, HeaderValue]);
+
+    Header[HeaderName] := HeaderValue;
+  end;
 
   LoadValuesFromParameters(Method,
     procedure (Parameter: TRttiParameter; ParameterAttribute: TParameterAttribute; Value: TValue)
     var
-      HeaderValue: HeaderValueAttribute absolute ParameterAttribute;
+      HeaderAttribute: HeaderValueAttribute absolute ParameterAttribute;
 
     begin
-      Header[HeaderValue.Name] := Value.ToString;
+      HeaderName := HeaderAttribute.Name;
+      HeaderValue := Value.ToString;
+
+      SaveLog('%s: %s', [HeaderName, HeaderValue]);
+
+      Header[HeaderName] := HeaderValue;
     end, TParameterType.Header, Args);
 end;
 
@@ -521,72 +551,64 @@ begin
 end;
 
 procedure TRemoteService.OnInvokeMethod(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue);
-var
-  Error: Exception;
-  ReturnValue: TValue;
-
 {$IFDEF PAS2JS}
+
   function SendRequestAsync: TJSPromise;
   begin
     Result := TJSPromise.New(
       procedure (Resolve, Reject: TProc<JSValue>)
       begin
-        SendRequest(Method, Args, True,
-          procedure (Value: TValue)
-          begin
-            Resolve(Value.AsJSValue);
-          end,
-          procedure (Error: Exception)
-          begin
+        try
+          Resolve(SendRequest(Method, Args, True).AsJSValue);
+        except
+          on Error: Exception do
             Reject(Error);
-          end);
+        end;
       end);
   end;
-{$ENDIF}
 
+{$ENDIF}
 begin
 {$IFDEF PAS2JS}
   if Method.IsAsyncCall then
     Result := TValue.From(SendRequestAsync)
   else
 {$ENDIF}
-  begin
-    Error := nil;
-
-    SendRequest(Method, Args, False,
-      procedure (Value: TValue)
-      begin
-        ReturnValue := Value;
-      end,
-      procedure (E: Exception)
-      begin
-        Error := E;
-      end);
-
-    Result := ReturnValue;
-
-    if Assigned(Error) then
-      raise Error;
-  end;
+  Result := SendRequest(Method, Args, False);
 end;
 
-function TRemoteService.SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>; const AsyncRequest: Boolean; const ReturnEvent: TProc<TValue>; const ErrorEvent: TProc<Exception>): TValue;
+procedure TRemoteService.SaveLog(const Message: String; const Args: array of const);
+begin
+  Log.Save(Format(Message, Args));
+end;
+
+function TRemoteService.SendRequest(const Method: TRttiMethod; const Args: TArray<TValue>; const AsyncRequest: Boolean): TValue;
 var
   Body: String;
   RequestMethod: TRequestMethod;
+  ReturnValue: TValue;
+  URL: String;
 
 begin
-  LoadRequestHeaders(Method, Args);
-
   RequestMethod := GetRequestMethod(Method);
+  URL := BuildRequestURL(Method, Args);
+
+  SaveLog('%s: %s', [REQUEST_METHOD_NAME[RequestMethod], URL]);
+
+  LoadRequestHeaders(Method, Args);
 
   if RequestMethod = TRequestMethod.Get then
     Body := EmptyStr
   else
+  begin
     Body := LoadRequestBody(Method, Args);
 
-  Communication.SendRequest(RequestMethod, BuildRequestURL(Method, Args), Body, AsyncRequest, Assigned(Method.ReturnType) and Method.ReturnType.IsInstance and (Method.ReturnType.AsInstance.MetaclassType = TStream),
-    procedure(ContentString: String; ContentStream: TStream)
+    if not Body.IsEmpty then
+      SaveLog('Body:'#13#10'%s', [Body]);
+  end;
+
+  Communication.SendRequest(RequestMethod, URL, Body, AsyncRequest, Assigned(Method.ReturnType) and Method.ReturnType.IsInstance and (Method.ReturnType.AsInstance.MetaclassType = TStream),
+    procedure(StatusCode: Integer; ContentString: String; ContentStream: TStream)
 
       function GetSerializerType: Boolean;
       begin
@@ -594,13 +616,27 @@ begin
       end;
 
     begin
-      if Assigned(ContentStream) then
-        ReturnEvent(TValue.From(ContentStream))
-      else if not ContentString.IsEmpty then
-        ReturnEvent(GetSerializer(GetSerializerType).Deserialize(ContentString, Method.ReturnType.Handle))
-      else
-        ReturnEvent(TValue.Empty);
-    end, ErrorEvent);
+      SaveLog('Status Code: %d', [StatusCode]);
+
+      SaveLog(Communication.ResponseHeader.Text, []);
+
+      SaveLog(ContentString, []);
+
+      case StatusCode of
+        0..299:
+        begin
+          if Assigned(ContentStream) then
+            ReturnValue := TValue.From(ContentStream)
+          else if not ContentString.IsEmpty and Assigned(Method.ReturnType) then
+            ReturnValue := GetSerializer(GetSerializerType).Deserialize(ContentString, Method.ReturnType.Handle)
+          else
+            ReturnValue := TValue.Empty;
+        end;
+        HTTP_STATUS_BAD_REQUEST: raise EHTTPErrorBadRequest.Create(ContentString);
+        HTTP_STATUS_NOT_FOUND: raise EHTTPErrorNotFound.Create;
+        else raise EHTTPStatusError.Create(StatusCode, ContentString);
+      end;
+    end);
 
   ForEachParameter(Method, TParameterType.Header,
     procedure (Parameter: TRttiParameter; ValueIndex: NativeInt; ParameterAttribute: TParameterAttribute)
@@ -608,12 +644,14 @@ begin
       HeaderValue: HeaderValueAttribute absolute ParameterAttribute;
 
     begin
-      Args[ValueIndex] := TValue.From(Communication.ResponseHeader[HeaderValue.Name]);
+      Args[ValueIndex] := TValue.From(Communication.ResponseHeader.Values[HeaderValue.Name]);
     end,
     function (Parameter: TRttiParameter): Boolean
     begin
       Result := Parameter.Flags * [pfOut, pfVar] <> [];
     end);
+
+  Result := ReturnValue;
 end;
 
 procedure TRemoteService.SetCertificate(const FileName, Password: String);
@@ -650,29 +688,16 @@ begin
   inherited;
 end;
 
-function THTTPCommunication.GetResponseHeader(const HeaderName: String): String;
+function THTTPCommunication.GetResponseHeader: TStringList;
 begin
-  Result := FResponseHeaders.Values[HeaderName];
+  Result := FResponseHeaders;
 end;
 
-procedure THTTPCommunication.SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
-const
-  REQUEST_METHOD_NAME: array[TRequestMethod] of String = ('DELETE', 'GET', 'PATCH', 'POST', 'PUT', 'OPTIONS');
-
+procedure THTTPCommunication.SendRequest(const RequestMethod: TRequestMethod; const URLString, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<Integer, String, TStream>);
 var
   Connection: {$IFDEF PAS2JS}TJSXMLHttpRequest{$ELSE}THTTPClient{$ENDIF};
   ContentStream: TStream;
   ContentString: String;
-
-  procedure CheckStatusCode(const StatusCode: Integer);
-  begin
-    case StatusCode of
-      0..299: CompleteEvent(ContentString, ContentStream);
-      400: ErrorEvent(EHTTPErrorBadRequest.Create(ContentString));
-      404: ErrorEvent(EHTTPErrorNotFound.Create);
-      else ErrorEvent(EHTTPStatusError.Create(StatusCode, ContentString))
-    end;
-  end;
 
   procedure LoadHeaders;
   var
@@ -703,7 +728,7 @@ begin
       else
         ContentString := Connection.ResponseText;
 
-      CheckStatusCode(Connection.Status);
+      CompleteEvent(FResponse.StatusCode, ContentString, ContentStream);
     end;
 
   if ReturnStream then
@@ -744,7 +769,7 @@ begin
     for var HeaderValue in FResponse.Headers do
       FResponseHeaders.Values[HeaderValue.Name] := HeaderValue.Value;
 
-    CheckStatusCode(FResponse.StatusCode);
+    CompleteEvent(FResponse.StatusCode, ContentString, ContentStream);
   finally
     BodyStream.Free;
 
@@ -768,6 +793,13 @@ end;
 procedure THTTPCommunication.SetHeader(const HeaderName, Value: String);
 begin
   FHeaders.Values[HeaderName] := Value;
+end;
+
+{ TEmptyLog }
+
+procedure TEmptyLog.Save(const Log: String);
+begin
+
 end;
 
 end.

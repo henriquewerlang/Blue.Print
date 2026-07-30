@@ -6,6 +6,7 @@ uses System.Rtti, System.Classes, System.TypInfo, System.Generics.Collections, S
 
 type
   TCommunicationMock = class;
+  TLogMock = class;
   TSerializerMock = class;
 
   [TestFixture]
@@ -13,6 +14,8 @@ type
   private
     FCommunication: TCommunicationMock;
     FCommunicationInterface: IHTTPCommunication;
+    FLog: TLogMock;
+    FLogInterface: ILog;
     FSerializer: TSerializerMock;
     FSerializerInterface: IBluePrintSerializer;
 
@@ -189,6 +192,50 @@ type
     procedure MustReplaceAllPathsNamesInTheProcedureAsExpected;
     [Test]
     procedure WhenTheMethodIsGetVerbeCantLoadAnyInformationAboutTheContentType;
+    [Test]
+    procedure WhenCreateTheRemoteServiceMustLoadTheLogInterfaceToDonRaiseAnyError;
+    [Test]
+    procedure WhenSendARequesMustRegisterTheLogInformationAboutThis;
+    [Test]
+    procedure WhenSendARequestMustSaveTheURLInformationFromRequisition;
+    [Test]
+    procedure MustLoadTheHeadersInTheRequestInTheLog;
+    [Test]
+    procedure MustLoadTheAllHeadersInTheRequestInTheLog;
+    [Test]
+    procedure MustLoadTheHeadersValuesInTheRequestInTheLog;
+    [Test]
+    procedure WhenTheParametersHasHeadersValuesMustLoadTheHeadersInTheLog;
+    [Test]
+    procedure WhenTheParametersHasHeadersValuesMustLoadTheValuesInTheLog;
+    [Test]
+    procedure WhenTheProcedureHasAParameterToLoadTheBodyInformationMustLoadThisValueInTheLog;
+    [Test]
+    procedure WhenTheRequestDontHaveBodyValueCantLoadTheBodyInformationInTheLogFile;
+    [Test]
+    procedure WhenTheBodyValueIsEmptyCantLoadTheInformationInTheLog;
+    [Test]
+    procedure WhenTheReturnCodeFromRemoteServiceIs404CodeMustRaiseAnExceptionAsExpected;
+    [Test]
+    procedure WhenTheReturnCodeFromRemoteServiceIsNotAKnowValueMustRaiseACommomException;
+    [Test]
+    procedure WhenRaiseAnErrorFromStatusCodeMustLoadTheCodeInTheException;
+    [Test]
+    procedure TheContentStringFromReturnMustBeLoadedInTheExceptionTheIsRaised;
+    [Test]
+    procedure WhenTheReturnCodeIsOKCantRaiseAnyError;
+    [Test]
+    procedure WhenTheReturnCodeIsBadRequestMustRaiseTheExceptionAsExpected;
+    [Test]
+    procedure WhenTheBadRequestIsRaisedMustLoadTheContentStringValueInTheMessageException;
+    [Test]
+    procedure WhenTheRequestReturnMustLoadTheStatusCodeInTheLog;
+    [Test]
+    procedure WhenTheRequestReturnHeadersValuesMustLoadTheValuesInTheLogFile;
+    [Test]
+    procedure WhenTheRequestReturnSomeContentMustLoadTheContentInTheLog;
+    [Test]
+    procedure WhenTheInterfaceIsAProcedureAndTheRequestAsContentStringLoadedCantRaiseAnyError;
   end;
 
   TCommunicationMock = class(TInterfacedObject, IHTTPCommunication)
@@ -203,12 +250,13 @@ type
     FCertificateStream: TStream;
     FCertificateFileName: String;
     FCertificatePassword: String;
-    FReturnHeaders: TDictionary<String, String>;
+    FReturnHeaders: TStringList;
+    FStatusCode: Integer;
 
     function GetHeader(const HeaderName: String): String;
-    function GetResponseHeader(const HeaderName: String): String;
+    function GetResponseHeader: TStringList;
 
-    procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
+    procedure SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<Integer, String, TStream>);
     procedure SetCertificate(const FileName, Password: String); overload;
     procedure SetCertificate(const Value: TStream; const Password: String); overload;
     procedure SetHeader(const HeaderName, Value: String);
@@ -230,6 +278,7 @@ type
     property RequestMethod: TRequestMethod read FRequestMethod;
     property RequestSended: Boolean read FRequestSended;
     property ReturnHeader[const HeaderName: String]: String write SetReturnHeader;
+    property StatusCode: Integer read FStatusCode write FStatusCode;
     property URL: String read FURL;
   end;
 
@@ -247,6 +296,19 @@ type
     property DeserializeCalled: Boolean read FDeserializeCalled;
     property ReturnValue: TValue read FReturnValue write FReturnValue;
     property SerializeValue: TValue read FSerializeValue;
+  end;
+
+  TLogMock = class(TInterfacedObject, ILog)
+  private
+    FLogMessages: TList<String>;
+
+    procedure Save(const Log: String);
+  public
+    constructor Create;
+
+    destructor Destroy; override;
+
+    property LogMessages: TList<String> read FLogMessages write FLogMessages;
   end;
 
   TMyObject = class
@@ -325,6 +387,7 @@ type
     procedure ProcedureWithPathName(const [PathName] Name: String);
     [RemoteName('Proc/{Name1}/{Name2}/Path/{Name3}')]
     procedure ProcedureWithMoreThanOnePathName(const [PathName] Name1, [PathName] Name2, [PathName] Name3: String);
+    procedure ProcedureWithMoreThanOneHeaderAttribute(const [HeaderValue('Header1')] Header1, [HeaderValue('Header2')] Header2, [HeaderValue('Header3')] Header3: String);
   end;
 
   IInheritedServiceTest = interface(IServiceTest)
@@ -398,6 +461,7 @@ function TRemoteServiceTest.CreateRemoteService<T>: TRemoteService;
 begin
   Result := TRemoteService.Create(TypeInfo(T), FSerializer);
   Result.Communication := FCommunication;
+  Result.Log := FLog;
 end;
 
 function TRemoteServiceTest.GetRemoteService<T>(const URL: String): T;
@@ -432,6 +496,33 @@ begin
   Assert.AreEqual('Value1=V1&Value2=V2&Value3=V3', FCommunication.GetBodyAsString);
 end;
 
+procedure TRemoteServiceTest.MustLoadTheAllHeadersInTheRequestInTheLog;
+begin
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  Service.TestHeader;
+
+  Assert.GreaterThan(5, FLog.LogMessages.Count);
+end;
+
+procedure TRemoteServiceTest.MustLoadTheHeadersInTheRequestInTheLog;
+begin
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  Service.TestHeader;
+
+  Assert.GreaterThan(1, FLog.LogMessages.Count);
+end;
+
+procedure TRemoteServiceTest.MustLoadTheHeadersValuesInTheRequestInTheLog;
+begin
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  Service.TestHeader;
+
+  Assert.AreEqual('MethodHeader: Method Header', FLog.LogMessages[1]);
+end;
+
 procedure TRemoteServiceTest.MustReplaceAllPathsNamesInTheProcedureAsExpected;
 begin
   var Service := GetRemoteService<IServiceTest>(EmptyStr);
@@ -445,6 +536,8 @@ procedure TRemoteServiceTest.Setup;
 begin
   FCommunication := TCommunicationMock.Create;
   FCommunicationInterface := FCommunication;
+  FLog := TLogMock.Create;
+  FLogInterface := FLog;
   FSerializer := TSerializerMock.Create;
   FSerializerInterface := FSerializer;
 end;
@@ -452,7 +545,22 @@ end;
 procedure TRemoteServiceTest.TearDown;
 begin
   FCommunicationInterface := nil;
+  FLogInterface := nil;
   FSerializerInterface := nil;
+end;
+
+procedure TRemoteServiceTest.TheContentStringFromReturnMustBeLoadedInTheExceptionTheIsRaised;
+begin
+  FCommunication.StatusCode := 999;
+  FCommunication.ResponseValueString := 'Value';
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  try
+    Service.TestProcedure;
+  except
+    on Error: EHTTPStatusError do
+      Assert.AreEqual('Value', Error.Message);
+  end;
 end;
 
 procedure TRemoteServiceTest.TheDefaultCharSetMustBeUTF8;
@@ -702,6 +810,13 @@ begin
   RemoteClass.Free;
 end;
 
+procedure TRemoteServiceTest.WhenCreateTheRemoteServiceMustLoadTheLogInterfaceToDonRaiseAnyError;
+begin
+  var RemoteClass := TRemoteService.Create(TypeInfo(IServiceNamed), nil);
+
+  Assert.IsNotNil(RemoteClass.Log);
+end;
+
 procedure TRemoteServiceTest.WhenFillAHeaderWithTheIHeadersInterfaceMustLoadTheValueInTheHeaderOfTheCommunication;
 begin
   var Service := GetRemoteService<IServiceTest>(EmptyStr) as IHeaders;
@@ -775,6 +890,37 @@ begin
   Assert.AreEqual(0, Length(FSerializer.SerializeValue.AsType<TSOAPEnvelop>.SOAPBody.Parts));
 end;
 
+procedure TRemoteServiceTest.WhenRaiseAnErrorFromStatusCodeMustLoadTheCodeInTheException;
+begin
+  FCommunication.StatusCode := 999;
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  try
+    Service.TestProcedure;
+  except
+    on Error: EHTTPStatusError do
+      Assert.AreEqual(999, Error.StatusCode);
+  end;
+end;
+
+procedure TRemoteServiceTest.WhenSendARequesMustRegisterTheLogInformationAboutThis;
+begin
+  var Service := GetRemoteService<IServiceNamed>(EmptyStr);
+
+  Service.Proc;
+
+  Assert.GreaterThan(0, FLog.LogMessages.Count);
+end;
+
+procedure TRemoteServiceTest.WhenSendARequestMustSaveTheURLInformationFromRequisition;
+begin
+  var Service := GetRemoteService<IServiceNamed>('mysite.com');
+
+  Service.Proc;
+
+  Assert.AreEqual('POST: mysite.com/AnotherName/Proc', FLog.LogMessages.First);
+end;
+
 procedure TRemoteServiceTest.WhenSendASOAPRequestMustSerializeTheSOAPEnvelopInTheRequest;
 begin
   var Service := GetRemoteService<ISOAPService>('Host');
@@ -782,6 +928,29 @@ begin
   Service.SoapBodyMethod('Value');
 
   Assert.AreEqual(TypeInfo(TSOAPEnvelop), FSerializer.SerializeValue.TypeInfo);
+end;
+
+procedure TRemoteServiceTest.WhenTheBadRequestIsRaisedMustLoadTheContentStringValueInTheMessageException;
+begin
+  FCommunication.StatusCode := HTTP_STATUS_BAD_REQUEST;
+  FCommunication.ResponseValueString := 'Value';
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  try
+    Service.TestProcedure;
+  except
+    on Error: EHTTPErrorBadRequest do
+      Assert.AreEqual('Value', Error.Message);
+  end;
+end;
+
+procedure TRemoteServiceTest.WhenTheBodyValueIsEmptyCantLoadTheInformationInTheLog;
+begin
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  Service.ParameterInBody(EmptyStr);
+
+  Assert.IsFalse(FLog.LogMessages.Last.StartsWith('Body'));
 end;
 
 procedure TRemoteServiceTest.WhenTheCharSetAttributeIsEmptyCantLoadTheCharSetInTheContentHeader;
@@ -904,6 +1073,18 @@ begin
   Service.SoapMethod(EmptyStr);
 
   Assert.AreEqual('application/soap+xml;action=MyService/SoapMethod;charset=utf-8', FCommunication.Header['Content-Type']);
+end;
+
+procedure TRemoteServiceTest.WhenTheInterfaceIsAProcedureAndTheRequestAsContentStringLoadedCantRaiseAnyError;
+begin
+  FCommunication.ResponseValueString := 'Return Value';
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  Assert.WillNotRaise(
+    procedure
+    begin
+      Service.TestGET;
+    end);
 end;
 
 procedure TRemoteServiceTest.WhenTheInterfaceIsASOAPServiceTheContentTypeMustBeTheSOAPContentType;
@@ -1087,6 +1268,26 @@ begin
   MyObject.Free;
 end;
 
+procedure TRemoteServiceTest.WhenTheParametersHasHeadersValuesMustLoadTheHeadersInTheLog;
+begin
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  Service.ProcedureWithMoreThanOneHeaderAttribute('A', 'B', 'C');
+
+  Assert.GreaterThan(6, FLog.LogMessages.Count);
+end;
+
+procedure TRemoteServiceTest.WhenTheParametersHasHeadersValuesMustLoadTheValuesInTheLog;
+begin
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  Service.ProcedureWithMoreThanOneHeaderAttribute('A', 'B', 'C');
+
+  Assert.AreEqual('Header1: A', FLog.LogMessages[3]);
+  Assert.AreEqual('Header2: B', FLog.LogMessages[4]);
+  Assert.AreEqual('Header3: C', FLog.LogMessages[5]);
+end;
+
 procedure TRemoteServiceTest.WhenTheParameterTypeHasTheXMLAttributeMustCreateTheXMLSerializer;
 begin
   var MyObject := TXMLObject.Create;
@@ -1099,6 +1300,16 @@ begin
   Assert.AreEqual(TBluePrintXMLSerializer, TObject(RemoteClass.Serializer).ClassType);
 
   MyObject.Free;
+end;
+
+procedure TRemoteServiceTest.WhenTheProcedureHasAParameterToLoadTheBodyInformationMustLoadThisValueInTheLog;
+begin
+  FSerializer.ReturnValue := 'Body Serialized Value';
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  Service.ParameterInBody('Body Value');
+
+  Assert.AreEqual('Body:'#13#10'Body Serialized Value', FLog.LogMessages[3]);
 end;
 
 procedure TRemoteServiceTest.WhenTheProcedureHasAPathNameAttributeMustReplaceThePathValueInTheURLHasExpected;
@@ -1195,6 +1406,15 @@ begin
   Assert.AreEqual('/AnotherName', FCommunication.URL);
 end;
 
+procedure TRemoteServiceTest.WhenTheRequestDontHaveBodyValueCantLoadTheBodyInformationInTheLogFile;
+begin
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  Service.TestGET;
+
+  Assert.IsFalse(FLog.LogMessages.Last.StartsWith('Body'));
+end;
+
 procedure TRemoteServiceTest.WhenTheRequestDontHaveParamInBodyCantLoadTheBodyRequest;
 begin
   var Service := GetRemoteService<IServiceTest>(EmptyStr);
@@ -1215,6 +1435,91 @@ begin
   Assert.AreEqual('serializer/content;charset=utf-8', FCommunication.Header['Content-Type']);
 
   MyObject.Free;
+end;
+
+procedure TRemoteServiceTest.WhenTheRequestReturnHeadersValuesMustLoadTheValuesInTheLogFile;
+begin
+  FCommunication.ReturnHeader['Header1'] := 'A';
+  FCommunication.ReturnHeader['Header2'] := 'B';
+  FCommunication.ReturnHeader['Header3'] := 'C';
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  Service.TestGET;
+
+  Assert.GreaterThan(4, FLog.LogMessages.Count);
+
+  Assert.AreEqual('Header1=A'#13#10'Header2=B'#13#10'Header3=C'#13#10, FLog.LogMessages[4]);
+end;
+
+procedure TRemoteServiceTest.WhenTheRequestReturnMustLoadTheStatusCodeInTheLog;
+begin
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  Service.TestGET;
+
+  Assert.GreaterThan(3, FLog.LogMessages.Count);
+
+  Assert.AreEqual('Status Code: 200', FLog.LogMessages[3]);
+end;
+
+procedure TRemoteServiceTest.WhenTheRequestReturnSomeContentMustLoadTheContentInTheLog;
+begin
+  FCommunication.ResponseValueString := 'Content Return';
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  Service.TestGET;
+
+  Assert.GreaterThan(5, FLog.LogMessages.Count);
+
+  Assert.AreEqual('Content Return', FLog.LogMessages[5]);
+end;
+
+procedure TRemoteServiceTest.WhenTheReturnCodeFromRemoteServiceIs404CodeMustRaiseAnExceptionAsExpected;
+begin
+  FCommunication.StatusCode := HTTP_STATUS_NOT_FOUND;
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  Assert.WillRaise(
+    procedure
+    begin
+      Service.TestProcedure
+    end, EHTTPErrorNotFound);
+end;
+
+procedure TRemoteServiceTest.WhenTheReturnCodeFromRemoteServiceIsNotAKnowValueMustRaiseACommomException;
+begin
+  FCommunication.StatusCode := 999;
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  Assert.WillRaise(
+    procedure
+    begin
+      Service.TestProcedure
+    end, EHTTPStatusError);
+end;
+
+procedure TRemoteServiceTest.WhenTheReturnCodeIsBadRequestMustRaiseTheExceptionAsExpected;
+begin
+  FCommunication.StatusCode := HTTP_STATUS_BAD_REQUEST;
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  Assert.WillRaise(
+    procedure
+    begin
+      Service.TestProcedure
+    end, EHTTPErrorBadRequest);
+end;
+
+procedure TRemoteServiceTest.WhenTheReturnCodeIsOKCantRaiseAnyError;
+begin
+  FCommunication.StatusCode := HTTP_STATUS_OK;
+  var Service := GetRemoteService<IServiceTest>('mysite.com');
+
+  Assert.WillNotRaise(
+    procedure
+    begin
+      Service.TestProcedure
+    end);
 end;
 
 procedure TRemoteServiceTest.WhenTheReturnTypeOfAFunctionHasTheXMLAttributeMustCreateTheXMLSerializer;
@@ -1250,7 +1555,8 @@ begin
 
   FHeaders := TDictionary<String, String>.Create;
   FResponseValueStream := TMemoryStream.Create;
-  FReturnHeaders := TDictionary<String, String>.Create;
+  FReturnHeaders := TStringList.Create;
+  FStatusCode := HTTP_STATUS_OK;
 end;
 
 destructor TCommunicationMock.Destroy;
@@ -1282,13 +1588,12 @@ begin
   FHeaders.TryGetValue(HeaderName, Result);
 end;
 
-function TCommunicationMock.GetResponseHeader(const HeaderName: String): String;
+function TCommunicationMock.GetResponseHeader: TStringList;
 begin
-  if not FReturnHeaders.TryGetValue(HeaderName, Result) then
-    Result := EmptyStr;
+  Result := FReturnHeaders;
 end;
 
-procedure TCommunicationMock.SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<String, TStream>; const ErrorEvent: TProc<Exception>);
+procedure TCommunicationMock.SendRequest(const RequestMethod: TRequestMethod; const URL, Body: String; const AsyncRequest, ReturnStream: Boolean; const CompleteEvent: TProc<Integer, String, TStream>);
 begin
   FRequestMethod := RequestMethod;
   FRequestSended := True;
@@ -1301,7 +1606,7 @@ begin
   if not Body.IsEmpty then
     FBody := TStringStream.Create(Body);
 
-  CompleteEvent(ResponseValueString, Stream);
+  CompleteEvent(StatusCode, ResponseValueString, Stream);
 end;
 
 procedure TCommunicationMock.SetCertificate(const Value: TStream; const Password: String);
@@ -1323,7 +1628,7 @@ end;
 
 procedure TCommunicationMock.SetReturnHeader(const HeaderName, Value: String);
 begin
-  FReturnHeaders.AddOrSetValue(HeaderName, Value);
+  FReturnHeaders.Values[HeaderName] := Value;
 end;
 
 { TSerializerMock }
@@ -1361,6 +1666,25 @@ begin
   end;
 
   Result := FReturnValue.AsString;
+end;
+
+{ TLogMock }
+
+constructor TLogMock.Create;
+begin
+  FLogMessages := TList<String>.Create;
+end;
+
+destructor TLogMock.Destroy;
+begin
+  FLogMessages.Free;
+
+  inherited;
+end;
+
+procedure TLogMock.Save(const Log: String);
+begin
+  FLogMessages.Add(Log);
 end;
 
 end.
