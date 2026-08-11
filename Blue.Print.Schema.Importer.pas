@@ -3649,21 +3649,6 @@ var
     end;
   end;
 
-  function CheckMessageType(const Message: IMessage): TTypeDefinition;
-  var
-    Part: IPart;
-
-  begin
-    Result := nil;
-
-    for var A := 0 to Pred(Message.Parts.Count) do
-    begin
-      Part := Message.Parts[A];
-
-      Result := CheckPartType(Part);
-    end;
-  end;
-
   function FindSOAPNode(const ParentNode: IXMLNode; const Name: String): IXMLNode;
   begin
     Result := ParentNode.ChildNodes.FindNode(Name, SOAPNamespace);
@@ -3675,13 +3660,14 @@ var
 
     if Assigned(Header) then
     begin
-      var MessageType := CheckMessageType(FindMessage(Header.Attributes['message']));
-      var ParameterName := Operation.Input.Name;
+      var Message := FindMessage(Header.Attributes['message']);
 
-      if ParameterName.IsEmpty then
-        ParameterName := MessageType.Name;
+      for var A := 0 to Pred(Message.Parts.Count) do
+      begin
+        var Part := Message.Parts[A];
 
-      AddHeaderParameter(ParameterName, MessageType);
+        AddHeaderParameter(Part.Name, CheckPartType(Part));
+      end;
     end;
   end;
 
@@ -3715,7 +3701,7 @@ var
       Result := ClassDefinition;
     end
     else
-      Result := CheckMessageType(Message);
+      Result := CheckPartType(Message.Parts[0]);
   end;
 
   function FindSOAPOperation: IXMLNode;
