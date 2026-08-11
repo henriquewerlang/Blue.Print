@@ -577,8 +577,8 @@ function OnlyValidChars(const Value: String): String;
 
 implementation
 
-uses System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, System.Generics.Defaults, System.Math, XML.XMLDom, Xml.XMLSchemaTags, Soap.WSDLBind, Soap.WSDLIntf, System.Hash, Blue.Print.Serializer,
-  Blue.Print.Schema.Importer.Open.API.v20, Blue.Print.Schema.Importer.Open.API.v30;
+uses System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, System.Generics.Defaults, System.Math, XML.XMLDom, Xml.XMLSchemaTags, Soap.WSDLBind, Soap.WSDLIntf, System.Hash, Xml.OMNIXMLDom,
+  Blue.Print.Serializer, Blue.Print.Schema.Importer.Open.API.v20, Blue.Print.Schema.Importer.Open.API.v30;
 
 const
   REFERENCE_SEPARATOR = '#';
@@ -1500,10 +1500,14 @@ procedure TXSDSchemaLoader.GenerateUnitFileDefinition(const MainModule: TTypeMod
 
   function LoadFile: IXMLSchemaDoc;
   begin
+    var SchemaDoc := TXMLSchemaDoc.Create(nil);
+    SchemaDoc.DOMVendor := OmniXML4Factory;
+    Result := SchemaDoc;
+
     if UnitFileConfiguration.FileName.StartsWith('http') then
-      Result := LoadXMLSchemaStr(FImporter.LoadFileFromConfiguration(UnitFileConfiguration))
+      SchemaDoc.LoadFromXML(FImporter.LoadFileFromConfiguration(UnitFileConfiguration))
     else
-      Result := LoadXMLSchema(FImporter.GetFileNameFromSchemaFolder(UnitFileConfiguration.FileName))
+      SchemaDoc.LoadFromFile(FImporter.GetFileNameFromSchemaFolder(UnitFileConfiguration.FileName))
   end;
 
 begin
