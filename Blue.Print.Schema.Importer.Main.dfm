@@ -4,13 +4,16 @@ object Main: TMain
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'XSD Importer'
   ClientHeight = 95
-  ClientWidth = 442
+  ClientWidth = 527
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
+  DesignSize = (
+    527
+    95)
   TextHeight = 15
   object lblConfigurationFile: TLabel
     Left = 8
@@ -32,19 +35,23 @@ object Main: TMain
   object ConfigurationFile: TEdit
     Left = 8
     Top = 29
-    Width = 393
+    Width = 478
     Height = 23
+    Anchors = [akLeft, akTop, akRight]
     TabOrder = 0
     TextHint = 'Configuration file name'
+    ExplicitWidth = 393
   end
   object SelectConfigurationFile: TButton
-    Left = 407
+    Left = 492
     Top = 29
     Width = 26
     Height = 23
+    Anchors = [akTop, akRight]
     Caption = '...'
     TabOrder = 1
     OnClick = SelectConfigurationFileClick
+    ExplicitLeft = 407
   end
   object OpenConfigurationFile: TFileOpenDialog
     FavoriteLinks = <>
