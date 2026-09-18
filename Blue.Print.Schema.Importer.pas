@@ -4,7 +4,7 @@ interface
 
 {$SCOPEDENUMS ON}
 
-uses System.Generics.Collections, System.SysUtils, Xml.XMLSchema, Xml.XMLIntf, Blue.Print.JSON.Schema, Blue.Print.Types;
+uses System.Generics.Collections, System.SysUtils, Xml.XMLSchema, Xml.XMLIntf, Blue.Print.JSON.Schema, System.Net.URLClient, Blue.Print.Types;
 
 type
   TSchemaImporter = class;
@@ -439,6 +439,7 @@ type
     FBooleanType: TTypeDefinition;
     FBuildInType: TDictionary<String, TTypeDefinition>;
     FCardinalType: TTypeDefinition;
+    FCertificate: TCertificate;
     FConfiguration: TConfiguration;
     FDateTimeType: TTypeDefinition;
     FDateType: TTypeDefinition;
@@ -468,6 +469,7 @@ type
 
     procedure GenerateUnitDefinition(const UnitConfiguration: TTypeUnitDefinitionConfiguration);
     procedure LoadInternalTypes;
+    procedure SelectCertificate(const Sender: TObject; const ARequest: TURLRequest; const ACertificateList: TCertificateList; var AnIndex: Integer);
   public
     constructor Create;
 
@@ -577,8 +579,8 @@ function OnlyValidChars(const Value: String): String;
 
 implementation
 
-uses System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, System.Generics.Defaults, System.Math, XML.XMLDom, Xml.XMLSchemaTags, Soap.WSDLBind, Soap.WSDLIntf, System.Hash, Xml.OMNIXMLDom,
-  Blue.Print.Serializer, Blue.Print.Schema.Importer.Open.API.v20, Blue.Print.Schema.Importer.Open.API.v30;
+uses System.Classes, System.IOUtils, System.Variants, System.Net.HttpClient, System.Rtti, System.Generics.Defaults, System.Math, XML.XMLDom, Xml.XMLSchemaTags, Soap.WSDLBind, Soap.WSDLIntf, System.Hash, Xml.OMNIXMLDom, Winapi.Windows,
+  System.Net.HttpClient.Win, Blue.Print.Serializer, Blue.Print.Schema.Importer.Open.API.v20, Blue.Print.Schema.Importer.Open.API.v30;
 
 const
   REFERENCE_SEPARATOR = '#';
@@ -1023,6 +1025,8 @@ function TSchemaImporter.LoadFile(Reference: String): String;
   function DownloadFile(const URL: String): String;
   begin
     var Connection := THTTPClient.Create;
+    Connection.OnNeedClientCertificate := SelectCertificate;
+
     var Response := Connection.Execute('GET', URL) as IHTTPResponse;
 
     if Response.StatusCode = 200 then
@@ -1110,6 +1114,18 @@ begin
       Exit(&Unit);
 
   Result := CreateUnit(UnitConfiguration);
+end;
+
+procedure TSchemaImporter.SelectCertificate(const Sender: TObject; const ARequest: TURLRequest; const ACertificateList: TCertificateList; var AnIndex: Integer);
+begin
+  if not FCertificate.CertName.IsEmpty or ShowSelectCertificateDialog(GetForegroundWindow(), '', '', FCertificate) then
+    for var A := 0 to ACertificateList.Count - 1 do
+      if FCertificate.SerialNum = ACertificateList[A].SerialNum then
+      begin
+        AnIndex := A;
+
+        Exit;
+      end;
 end;
 
 { TXSDSchemaLoader }
