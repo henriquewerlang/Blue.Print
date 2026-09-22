@@ -59,17 +59,18 @@ type
       private
         FBoolean: System.Boolean;
         FAdditionalItemsProperty: Schema.Schema.AdditionalItemsProperty;
+        FBooleanIsStored: Boolean;
 
         function GetAdditionalItemsProperty: Schema.Schema.AdditionalItemsProperty;
-        function GetBooleanStored: Boolean;
         function GetAdditionalItemsPropertyStored: Boolean;
+        procedure SetBoolean(const Value: System.Boolean);
       public
         destructor Destroy; override;
 
-        property IsBooleanStored: Boolean read GetBooleanStored;
+        property IsBooleanStored: Boolean read FBooleanIsStored;
         property IsAdditionalItemsPropertyStored: Boolean read GetAdditionalItemsPropertyStored;
       published
-        property boolean: System.Boolean read FBoolean write FBoolean stored GetBooleanStored;
+        property boolean: System.Boolean read FBoolean write SetBoolean stored FBooleanIsStored;
         property AdditionalItemsProperty: Schema.Schema.AdditionalItemsProperty read GetAdditionalItemsProperty write FAdditionalItemsProperty stored GetAdditionalItemsPropertyStored;
       end;
 
@@ -99,17 +100,18 @@ type
       private
         FBoolean: System.Boolean;
         FAdditionalPropertiesProperty: Schema.Schema.AdditionalPropertiesProperty;
+        FBooleanIsStored: Boolean;
 
         function GetAdditionalPropertiesProperty: Schema.Schema.AdditionalPropertiesProperty;
-        function GetBooleanStored: Boolean;
         function GetAdditionalPropertiesPropertyStored: Boolean;
+        procedure SetBoolean(const Value: System.Boolean);
       public
         destructor Destroy; override;
 
-        property IsBooleanStored: Boolean read GetBooleanStored;
+        property IsBooleanStored: Boolean read FBooleanIsStored;
         property IsAdditionalPropertiesPropertyStored: Boolean read GetAdditionalPropertiesPropertyStored;
       published
-        property boolean: System.Boolean read FBoolean write FBoolean stored GetBooleanStored;
+        property boolean: System.Boolean read FBoolean write SetBoolean stored FBooleanIsStored;
         property AdditionalPropertiesProperty: Schema.Schema.AdditionalPropertiesProperty read GetAdditionalPropertiesProperty write FAdditionalPropertiesProperty stored GetAdditionalPropertiesPropertyStored;
       end;
 
@@ -242,6 +244,9 @@ type
       FAnyOf: Schema.schemaArray;
       FOneOf: Schema.schemaArray;
       FNot: Schema.Schema;
+      FExclusiveMaximumIsStored: Boolean;
+      FExclusiveMinimumIsStored: Boolean;
+      FUniqueItemsIsStored: Boolean;
 
       function GetMinLength: Schema.positiveIntegerDefault0;
       function GetAdditionalItems: Schema.Schema.AdditionalItemsProperty;
@@ -262,9 +267,7 @@ type
       function GetDefaultStored: Boolean;
       function GetMultipleOfStored: Boolean;
       function GetMaximumStored: Boolean;
-      function GetExclusiveMaximumStored: Boolean;
       function GetMinimumStored: Boolean;
-      function GetExclusiveMinimumStored: Boolean;
       function GetMaxLengthStored: Boolean;
       function GetMinLengthStored: Boolean;
       function GetPatternStored: Boolean;
@@ -272,7 +275,6 @@ type
       function GetItemsStored: Boolean;
       function GetMaxItemsStored: Boolean;
       function GetMinItemsStored: Boolean;
-      function GetUniqueItemsStored: Boolean;
       function GetMaxPropertiesStored: Boolean;
       function GetMinPropertiesStored: Boolean;
       function GetRequiredStored: Boolean;
@@ -288,6 +290,9 @@ type
       function GetAnyOfStored: Boolean;
       function GetOneOfStored: Boolean;
       function GetNotStored: Boolean;
+      procedure SetExclusiveMaximum(const Value: System.Boolean);
+      procedure SetExclusiveMinimum(const Value: System.Boolean);
+      procedure SetUniqueItems(const Value: System.Boolean);
     public
       destructor Destroy; override;
 
@@ -302,9 +307,9 @@ type
       property IsDefaultStored: Boolean read GetDefaultStored;
       property IsMultipleOfStored: Boolean read GetMultipleOfStored;
       property IsMaximumStored: Boolean read GetMaximumStored;
-      property IsExclusiveMaximumStored: Boolean read GetExclusiveMaximumStored;
+      property IsExclusiveMaximumStored: Boolean read FExclusiveMaximumIsStored;
       property IsMinimumStored: Boolean read GetMinimumStored;
-      property IsExclusiveMinimumStored: Boolean read GetExclusiveMinimumStored;
+      property IsExclusiveMinimumStored: Boolean read FExclusiveMinimumIsStored;
       property IsMaxLengthStored: Boolean read GetMaxLengthStored;
       property IsMinLengthStored: Boolean read GetMinLengthStored;
       property IsPatternStored: Boolean read GetPatternStored;
@@ -312,7 +317,7 @@ type
       property IsItemsStored: Boolean read GetItemsStored;
       property IsMaxItemsStored: Boolean read GetMaxItemsStored;
       property IsMinItemsStored: Boolean read GetMinItemsStored;
-      property IsUniqueItemsStored: Boolean read GetUniqueItemsStored;
+      property IsUniqueItemsStored: Boolean read FUniqueItemsIsStored;
       property IsMaxPropertiesStored: Boolean read GetMaxPropertiesStored;
       property IsMinPropertiesStored: Boolean read GetMinPropertiesStored;
       property IsRequiredStored: Boolean read GetRequiredStored;
@@ -337,9 +342,9 @@ type
       property default: any read FDefault write FDefault stored GetDefaultStored;
       property multipleOf: System.Double read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
       property maximum: System.Double read FMaximum write FMaximum stored GetMaximumStored;
-      property exclusiveMaximum: System.Boolean read FExclusiveMaximum write FExclusiveMaximum stored GetExclusiveMaximumStored;
+      property exclusiveMaximum: System.Boolean read FExclusiveMaximum write SetExclusiveMaximum stored FExclusiveMaximumIsStored;
       property minimum: System.Double read FMinimum write FMinimum stored GetMinimumStored;
-      property exclusiveMinimum: System.Boolean read FExclusiveMinimum write FExclusiveMinimum stored GetExclusiveMinimumStored;
+      property exclusiveMinimum: System.Boolean read FExclusiveMinimum write SetExclusiveMinimum stored FExclusiveMinimumIsStored;
       property maxLength: Schema.positiveInteger read FMaxLength write FMaxLength stored GetMaxLengthStored;
       property minLength: Schema.positiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
       property pattern: System.String read FPattern write FPattern stored GetPatternStored;
@@ -347,7 +352,7 @@ type
       property items: Schema.Schema.ItemsProperty read GetItems write FItems stored GetItemsStored;
       property maxItems: Schema.positiveInteger read FMaxItems write FMaxItems stored GetMaxItemsStored;
       property minItems: Schema.positiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
-      property uniqueItems: System.Boolean read FUniqueItems write FUniqueItems stored GetUniqueItemsStored;
+      property uniqueItems: System.Boolean read FUniqueItems write SetUniqueItems stored FUniqueItemsIsStored;
       property maxProperties: Schema.positiveInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
       property minProperties: Schema.positiveIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
       property required: Schema.stringArray read FRequired write FRequired stored GetRequiredStored;
@@ -454,9 +459,10 @@ begin
   Result := FMaximum <> 0;
 end;
 
-function Schema.Schema.GetExclusiveMaximumStored: Boolean;
+procedure Schema.Schema.SetExclusiveMaximum(const Value: System.Boolean);
 begin
-  Result := False;
+  FExclusiveMaximum := Value;
+  FExclusiveMaximumIsStored := True;
 end;
 
 function Schema.Schema.GetMinimumStored: Boolean;
@@ -464,9 +470,10 @@ begin
   Result := FMinimum <> 0;
 end;
 
-function Schema.Schema.GetExclusiveMinimumStored: Boolean;
+procedure Schema.Schema.SetExclusiveMinimum(const Value: System.Boolean);
 begin
-  Result := False;
+  FExclusiveMinimum := Value;
+  FExclusiveMinimumIsStored := True;
 end;
 
 function Schema.Schema.GetMaxLengthStored: Boolean;
@@ -536,9 +543,10 @@ begin
   Result := Assigned(FMinItems);
 end;
 
-function Schema.Schema.GetUniqueItemsStored: Boolean;
+procedure Schema.Schema.SetUniqueItems(const Value: System.Boolean);
 begin
-  Result := False;
+  FUniqueItems := Value;
+  FUniqueItemsIsStored := True;
 end;
 
 function Schema.Schema.GetMaxPropertiesStored: Boolean;
@@ -710,9 +718,10 @@ begin
   inherited;
 end;
 
-function Schema.Schema.AdditionalItemsProperty.GetBooleanStored: Boolean;
+procedure Schema.Schema.AdditionalItemsProperty.SetBoolean(const Value: System.Boolean);
 begin
-  Result := False;
+  FBoolean := Value;
+  FBooleanIsStored := True;
 end;
 
 function Schema.Schema.AdditionalItemsProperty.GetAdditionalItemsProperty: Blue.Print.JSON.Draft4.Schema.Schema.Schema.AdditionalItemsProperty;
@@ -774,9 +783,10 @@ begin
   inherited;
 end;
 
-function Schema.Schema.AdditionalPropertiesProperty.GetBooleanStored: Boolean;
+procedure Schema.Schema.AdditionalPropertiesProperty.SetBoolean(const Value: System.Boolean);
 begin
-  Result := False;
+  FBoolean := Value;
+  FBooleanIsStored := True;
 end;
 
 function Schema.Schema.AdditionalPropertiesProperty.GetAdditionalPropertiesProperty: Blue.Print.JSON.Draft4.Schema.Schema.Schema.AdditionalPropertiesProperty;

@@ -169,9 +169,9 @@ type
     Server = class
     public type
       // Forward class declaration
-      TVariables = class;
+      VariablesProperty = class;
 
-      TVariables = class
+      VariablesProperty = class
       private
         FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.ServerVariable>;
 
@@ -187,10 +187,10 @@ type
     private
       FUrl: System.String;
       FDescription: System.String;
-      FVariables: TOpenAPIDefinition.Server.TVariables;
+      FVariables: TOpenAPIDefinition.Server.VariablesProperty;
       FPatternProperty: TDynamicProperty<any>;
 
-      function GetVariables: TOpenAPIDefinition.Server.TVariables;
+      function GetVariables: TOpenAPIDefinition.Server.VariablesProperty;
       function GetPatternProperty: TDynamicProperty<any>;
       function GetDescriptionStored: Boolean;
       function GetVariablesStored: Boolean;
@@ -204,7 +204,7 @@ type
     published
       property url: System.String read FUrl write FUrl;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property variables: TOpenAPIDefinition.Server.TVariables read GetVariables write FVariables stored GetVariablesStored;
+      property variables: TOpenAPIDefinition.Server.VariablesProperty read GetVariables write FVariables stored GetVariablesStored;
       [PatternProperty('^x-')]
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
     end;
@@ -237,23 +237,23 @@ type
     Components = class
     public type
       // Forward class declaration
-      TSchemas = class;
-      TResponses = class;
-      TParameters = class;
-      TExamples = class;
-      TRequestBodies = class;
-      THeaders = class;
-      TSecuritySchemes = class;
-      TLinks = class;
-      TCallbacks = class;
+      SchemasProperty = class;
+      ResponsesProperty = class;
+      ParametersProperty = class;
+      ExamplesProperty = class;
+      RequestBodiesProperty = class;
+      HeadersProperty = class;
+      SecuritySchemesProperty = class;
+      LinksProperty = class;
+      CallbacksProperty = class;
 
-      TSchemas = class
+      SchemasProperty = class
       public type
         // Forward class declaration
-        TPatternProperty = class;
+        PatternProperty = class;
 
         [Flat]
-        TPatternProperty = class
+        PatternProperty = class
         private
           FSchema: TOpenAPIDefinition.Schema;
           FReference: TOpenAPIDefinition.Reference;
@@ -272,9 +272,9 @@ type
           property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
         end;
       private
-        FPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TSchemas.TPatternProperty>;
+        FPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.SchemasProperty.PatternProperty>;
 
-        function GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TSchemas.TPatternProperty>;
+        function GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.SchemasProperty.PatternProperty>;
         function GetPatternPropertyStored: Boolean;
       public
         destructor Destroy; override;
@@ -282,16 +282,17 @@ type
         property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
       published
         [PatternProperty('^[a-zA-Z0-9\.\-_]+$')]
-        property PatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TSchemas.TPatternProperty> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
+        [FieldName('PatternProperty')]
+        property PatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.SchemasProperty.PatternProperty> read GetPatternPropertyElement write FPatternPropertyElement stored GetPatternPropertyStored;
       end;
 
-      TResponses = class
+      ResponsesProperty = class
       public type
         // Forward class declaration
-        TPatternProperty = class;
+        PatternProperty = class;
 
         [Flat]
-        TPatternProperty = class
+        PatternProperty = class
         private
           FReference: TOpenAPIDefinition.Reference;
           FResponse: TOpenAPIDefinition.Response;
@@ -310,9 +311,9 @@ type
           property Response: TOpenAPIDefinition.Response read GetResponse write FResponse stored GetResponseStored;
         end;
       private
-        FPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TResponses.TPatternProperty>;
+        FPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.ResponsesProperty.PatternProperty>;
 
-        function GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TResponses.TPatternProperty>;
+        function GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.ResponsesProperty.PatternProperty>;
         function GetPatternPropertyStored: Boolean;
       public
         destructor Destroy; override;
@@ -320,16 +321,17 @@ type
         property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
       published
         [PatternProperty('^[a-zA-Z0-9\.\-_]+$')]
-        property PatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TResponses.TPatternProperty> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
+        [FieldName('PatternProperty')]
+        property PatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.ResponsesProperty.PatternProperty> read GetPatternPropertyElement write FPatternPropertyElement stored GetPatternPropertyStored;
       end;
 
-      TParameters = class
+      ParametersProperty = class
       public type
         // Forward class declaration
-        TPatternProperty = class;
+        PatternProperty = class;
 
         [Flat]
-        TPatternProperty = class
+        PatternProperty = class
         private
           FReference: TOpenAPIDefinition.Reference;
           FParameter: TOpenAPIDefinition.Parameter;
@@ -348,9 +350,9 @@ type
           property Parameter: TOpenAPIDefinition.Parameter read GetParameter write FParameter stored GetParameterStored;
         end;
       private
-        FPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TParameters.TPatternProperty>;
+        FPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.ParametersProperty.PatternProperty>;
 
-        function GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TParameters.TPatternProperty>;
+        function GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.ParametersProperty.PatternProperty>;
         function GetPatternPropertyStored: Boolean;
       public
         destructor Destroy; override;
@@ -358,16 +360,17 @@ type
         property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
       published
         [PatternProperty('^[a-zA-Z0-9\.\-_]+$')]
-        property PatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TParameters.TPatternProperty> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
+        [FieldName('PatternProperty')]
+        property PatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.ParametersProperty.PatternProperty> read GetPatternPropertyElement write FPatternPropertyElement stored GetPatternPropertyStored;
       end;
 
-      TExamples = class
+      ExamplesProperty = class
       public type
         // Forward class declaration
-        TPatternProperty = class;
+        PatternProperty = class;
 
         [Flat]
-        TPatternProperty = class
+        PatternProperty = class
         private
           FReference: TOpenAPIDefinition.Reference;
           FExample: TOpenAPIDefinition.Example;
@@ -386,9 +389,9 @@ type
           property Example: TOpenAPIDefinition.Example read GetExample write FExample stored GetExampleStored;
         end;
       private
-        FPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TExamples.TPatternProperty>;
+        FPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.ExamplesProperty.PatternProperty>;
 
-        function GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TExamples.TPatternProperty>;
+        function GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.ExamplesProperty.PatternProperty>;
         function GetPatternPropertyStored: Boolean;
       public
         destructor Destroy; override;
@@ -396,16 +399,17 @@ type
         property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
       published
         [PatternProperty('^[a-zA-Z0-9\.\-_]+$')]
-        property PatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TExamples.TPatternProperty> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
+        [FieldName('PatternProperty')]
+        property PatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.ExamplesProperty.PatternProperty> read GetPatternPropertyElement write FPatternPropertyElement stored GetPatternPropertyStored;
       end;
 
-      TRequestBodies = class
+      RequestBodiesProperty = class
       public type
         // Forward class declaration
-        TPatternProperty = class;
+        PatternProperty = class;
 
         [Flat]
-        TPatternProperty = class
+        PatternProperty = class
         private
           FReference: TOpenAPIDefinition.Reference;
           FRequestBody: TOpenAPIDefinition.RequestBody;
@@ -424,9 +428,9 @@ type
           property RequestBody: TOpenAPIDefinition.RequestBody read GetRequestBody write FRequestBody stored GetRequestBodyStored;
         end;
       private
-        FPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TRequestBodies.TPatternProperty>;
+        FPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.RequestBodiesProperty.PatternProperty>;
 
-        function GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TRequestBodies.TPatternProperty>;
+        function GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.RequestBodiesProperty.PatternProperty>;
         function GetPatternPropertyStored: Boolean;
       public
         destructor Destroy; override;
@@ -434,16 +438,17 @@ type
         property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
       published
         [PatternProperty('^[a-zA-Z0-9\.\-_]+$')]
-        property PatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TRequestBodies.TPatternProperty> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
+        [FieldName('PatternProperty')]
+        property PatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.RequestBodiesProperty.PatternProperty> read GetPatternPropertyElement write FPatternPropertyElement stored GetPatternPropertyStored;
       end;
 
-      THeaders = class
+      HeadersProperty = class
       public type
         // Forward class declaration
-        TPatternProperty = class;
+        PatternProperty = class;
 
         [Flat]
-        TPatternProperty = class
+        PatternProperty = class
         private
           FReference: TOpenAPIDefinition.Reference;
           FHeader: TOpenAPIDefinition.Header;
@@ -462,9 +467,9 @@ type
           property Header: TOpenAPIDefinition.Header read GetHeader write FHeader stored GetHeaderStored;
         end;
       private
-        FPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.THeaders.TPatternProperty>;
+        FPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.HeadersProperty.PatternProperty>;
 
-        function GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.THeaders.TPatternProperty>;
+        function GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.HeadersProperty.PatternProperty>;
         function GetPatternPropertyStored: Boolean;
       public
         destructor Destroy; override;
@@ -472,16 +477,17 @@ type
         property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
       published
         [PatternProperty('^[a-zA-Z0-9\.\-_]+$')]
-        property PatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.THeaders.TPatternProperty> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
+        [FieldName('PatternProperty')]
+        property PatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.HeadersProperty.PatternProperty> read GetPatternPropertyElement write FPatternPropertyElement stored GetPatternPropertyStored;
       end;
 
-      TSecuritySchemes = class
+      SecuritySchemesProperty = class
       public type
         // Forward class declaration
-        TPatternProperty = class;
+        PatternProperty = class;
 
         [Flat]
-        TPatternProperty = class
+        PatternProperty = class
         private
           FReference: TOpenAPIDefinition.Reference;
           FSecurityScheme: TOpenAPIDefinition.SecurityScheme;
@@ -500,9 +506,9 @@ type
           property SecurityScheme: TOpenAPIDefinition.SecurityScheme read GetSecurityScheme write FSecurityScheme stored GetSecuritySchemeStored;
         end;
       private
-        FPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TSecuritySchemes.TPatternProperty>;
+        FPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.SecuritySchemesProperty.PatternProperty>;
 
-        function GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TSecuritySchemes.TPatternProperty>;
+        function GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.SecuritySchemesProperty.PatternProperty>;
         function GetPatternPropertyStored: Boolean;
       public
         destructor Destroy; override;
@@ -510,16 +516,17 @@ type
         property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
       published
         [PatternProperty('^[a-zA-Z0-9\.\-_]+$')]
-        property PatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TSecuritySchemes.TPatternProperty> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
+        [FieldName('PatternProperty')]
+        property PatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.SecuritySchemesProperty.PatternProperty> read GetPatternPropertyElement write FPatternPropertyElement stored GetPatternPropertyStored;
       end;
 
-      TLinks = class
+      LinksProperty = class
       public type
         // Forward class declaration
-        TPatternProperty = class;
+        PatternProperty = class;
 
         [Flat]
-        TPatternProperty = class
+        PatternProperty = class
         private
           FReference: TOpenAPIDefinition.Reference;
           FLink: TOpenAPIDefinition.Link;
@@ -538,9 +545,9 @@ type
           property Link: TOpenAPIDefinition.Link read GetLink write FLink stored GetLinkStored;
         end;
       private
-        FPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TLinks.TPatternProperty>;
+        FPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.LinksProperty.PatternProperty>;
 
-        function GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TLinks.TPatternProperty>;
+        function GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.LinksProperty.PatternProperty>;
         function GetPatternPropertyStored: Boolean;
       public
         destructor Destroy; override;
@@ -548,16 +555,17 @@ type
         property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
       published
         [PatternProperty('^[a-zA-Z0-9\.\-_]+$')]
-        property PatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TLinks.TPatternProperty> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
+        [FieldName('PatternProperty')]
+        property PatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.LinksProperty.PatternProperty> read GetPatternPropertyElement write FPatternPropertyElement stored GetPatternPropertyStored;
       end;
 
-      TCallbacks = class
+      CallbacksProperty = class
       public type
         // Forward class declaration
-        TPatternProperty = class;
+        PatternProperty = class;
 
         [Flat]
-        TPatternProperty = class
+        PatternProperty = class
         private
           FReference: TOpenAPIDefinition.Reference;
           FCallback: TOpenAPIDefinition.Callback;
@@ -576,9 +584,9 @@ type
           property Callback: TOpenAPIDefinition.Callback read GetCallback write FCallback stored GetCallbackStored;
         end;
       private
-        FPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TCallbacks.TPatternProperty>;
+        FPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.CallbacksProperty.PatternProperty>;
 
-        function GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TCallbacks.TPatternProperty>;
+        function GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.CallbacksProperty.PatternProperty>;
         function GetPatternPropertyStored: Boolean;
       public
         destructor Destroy; override;
@@ -586,29 +594,30 @@ type
         property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
       published
         [PatternProperty('^[a-zA-Z0-9\.\-_]+$')]
-        property PatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TCallbacks.TPatternProperty> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
+        [FieldName('PatternProperty')]
+        property PatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.CallbacksProperty.PatternProperty> read GetPatternPropertyElement write FPatternPropertyElement stored GetPatternPropertyStored;
       end;
     private
-      FSchemas: TOpenAPIDefinition.Components.TSchemas;
-      FResponses: TOpenAPIDefinition.Components.TResponses;
-      FParameters: TOpenAPIDefinition.Components.TParameters;
-      FExamples: TOpenAPIDefinition.Components.TExamples;
-      FRequestBodies: TOpenAPIDefinition.Components.TRequestBodies;
-      FHeaders: TOpenAPIDefinition.Components.THeaders;
-      FSecuritySchemes: TOpenAPIDefinition.Components.TSecuritySchemes;
-      FLinks: TOpenAPIDefinition.Components.TLinks;
-      FCallbacks: TOpenAPIDefinition.Components.TCallbacks;
+      FSchemas: TOpenAPIDefinition.Components.SchemasProperty;
+      FResponses: TOpenAPIDefinition.Components.ResponsesProperty;
+      FParameters: TOpenAPIDefinition.Components.ParametersProperty;
+      FExamples: TOpenAPIDefinition.Components.ExamplesProperty;
+      FRequestBodies: TOpenAPIDefinition.Components.RequestBodiesProperty;
+      FHeaders: TOpenAPIDefinition.Components.HeadersProperty;
+      FSecuritySchemes: TOpenAPIDefinition.Components.SecuritySchemesProperty;
+      FLinks: TOpenAPIDefinition.Components.LinksProperty;
+      FCallbacks: TOpenAPIDefinition.Components.CallbacksProperty;
       FPatternProperty: TDynamicProperty<any>;
 
-      function GetSchemas: TOpenAPIDefinition.Components.TSchemas;
-      function GetResponses: TOpenAPIDefinition.Components.TResponses;
-      function GetParameters: TOpenAPIDefinition.Components.TParameters;
-      function GetExamples: TOpenAPIDefinition.Components.TExamples;
-      function GetRequestBodies: TOpenAPIDefinition.Components.TRequestBodies;
-      function GetHeaders: TOpenAPIDefinition.Components.THeaders;
-      function GetSecuritySchemes: TOpenAPIDefinition.Components.TSecuritySchemes;
-      function GetLinks: TOpenAPIDefinition.Components.TLinks;
-      function GetCallbacks: TOpenAPIDefinition.Components.TCallbacks;
+      function GetSchemas: TOpenAPIDefinition.Components.SchemasProperty;
+      function GetResponses: TOpenAPIDefinition.Components.ResponsesProperty;
+      function GetParameters: TOpenAPIDefinition.Components.ParametersProperty;
+      function GetExamples: TOpenAPIDefinition.Components.ExamplesProperty;
+      function GetRequestBodies: TOpenAPIDefinition.Components.RequestBodiesProperty;
+      function GetHeaders: TOpenAPIDefinition.Components.HeadersProperty;
+      function GetSecuritySchemes: TOpenAPIDefinition.Components.SecuritySchemesProperty;
+      function GetLinks: TOpenAPIDefinition.Components.LinksProperty;
+      function GetCallbacks: TOpenAPIDefinition.Components.CallbacksProperty;
       function GetPatternProperty: TDynamicProperty<any>;
       function GetSchemasStored: Boolean;
       function GetResponsesStored: Boolean;
@@ -634,15 +643,15 @@ type
       property IsCallbacksStored: Boolean read GetCallbacksStored;
       property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
     published
-      property schemas: TOpenAPIDefinition.Components.TSchemas read GetSchemas write FSchemas stored GetSchemasStored;
-      property responses: TOpenAPIDefinition.Components.TResponses read GetResponses write FResponses stored GetResponsesStored;
-      property parameters: TOpenAPIDefinition.Components.TParameters read GetParameters write FParameters stored GetParametersStored;
-      property examples: TOpenAPIDefinition.Components.TExamples read GetExamples write FExamples stored GetExamplesStored;
-      property requestBodies: TOpenAPIDefinition.Components.TRequestBodies read GetRequestBodies write FRequestBodies stored GetRequestBodiesStored;
-      property headers: TOpenAPIDefinition.Components.THeaders read GetHeaders write FHeaders stored GetHeadersStored;
-      property securitySchemes: TOpenAPIDefinition.Components.TSecuritySchemes read GetSecuritySchemes write FSecuritySchemes stored GetSecuritySchemesStored;
-      property links: TOpenAPIDefinition.Components.TLinks read GetLinks write FLinks stored GetLinksStored;
-      property callbacks: TOpenAPIDefinition.Components.TCallbacks read GetCallbacks write FCallbacks stored GetCallbacksStored;
+      property schemas: TOpenAPIDefinition.Components.SchemasProperty read GetSchemas write FSchemas stored GetSchemasStored;
+      property responses: TOpenAPIDefinition.Components.ResponsesProperty read GetResponses write FResponses stored GetResponsesStored;
+      property parameters: TOpenAPIDefinition.Components.ParametersProperty read GetParameters write FParameters stored GetParametersStored;
+      property examples: TOpenAPIDefinition.Components.ExamplesProperty read GetExamples write FExamples stored GetExamplesStored;
+      property requestBodies: TOpenAPIDefinition.Components.RequestBodiesProperty read GetRequestBodies write FRequestBodies stored GetRequestBodiesStored;
+      property headers: TOpenAPIDefinition.Components.HeadersProperty read GetHeaders write FHeaders stored GetHeadersStored;
+      property securitySchemes: TOpenAPIDefinition.Components.SecuritySchemesProperty read GetSecuritySchemes write FSecuritySchemes stored GetSecuritySchemesStored;
+      property links: TOpenAPIDefinition.Components.LinksProperty read GetLinks write FLinks stored GetLinksStored;
+      property callbacks: TOpenAPIDefinition.Components.CallbacksProperty read GetCallbacks write FCallbacks stored GetCallbacksStored;
       [PatternProperty('^x-')]
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
     end;
@@ -650,19 +659,19 @@ type
     Schema = class
     public type
       [EnumValue('array, boolean, integer, number, object, string')]
-      TType = (&array, boolean, integer, number, &object, &string);
+      TypeProperty = (&array, boolean, integer, number, &object, &string);
 
       // Forward class declaration
-      TNot = class;
-      TAllOfArrayItem = class;
-      TOneOfArrayItem = class;
-      TAnyOfArrayItem = class;
-      TItems = class;
-      TProperties = class;
-      TAdditionalProperties = class;
+      NotProperty = class;
+      AllOfPropertyArrayItem = class;
+      OneOfPropertyArrayItem = class;
+      AnyOfPropertyArrayItem = class;
+      ItemsProperty = class;
+      PropertiesProperty = class;
+      AdditionalPropertiesProperty = class;
 
       [Flat]
-      TNot = class
+      NotProperty = class
       private
         FSchema: TOpenAPIDefinition.Schema;
         FReference: TOpenAPIDefinition.Reference;
@@ -682,7 +691,7 @@ type
       end;
 
       [Flat]
-      TAllOfArrayItem = class
+      AllOfPropertyArrayItem = class
       private
         FSchema: TOpenAPIDefinition.Schema;
         FReference: TOpenAPIDefinition.Reference;
@@ -702,7 +711,7 @@ type
       end;
 
       [Flat]
-      TOneOfArrayItem = class
+      OneOfPropertyArrayItem = class
       private
         FSchema: TOpenAPIDefinition.Schema;
         FReference: TOpenAPIDefinition.Reference;
@@ -722,7 +731,7 @@ type
       end;
 
       [Flat]
-      TAnyOfArrayItem = class
+      AnyOfPropertyArrayItem = class
       private
         FSchema: TOpenAPIDefinition.Schema;
         FReference: TOpenAPIDefinition.Reference;
@@ -742,7 +751,7 @@ type
       end;
 
       [Flat]
-      TItems = class
+      ItemsProperty = class
       private
         FSchema: TOpenAPIDefinition.Schema;
         FReference: TOpenAPIDefinition.Reference;
@@ -761,13 +770,13 @@ type
         property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
       end;
 
-      TProperties = class
+      PropertiesProperty = class
       public type
         // Forward class declaration
-        TadditionalProperties = class;
+        additionalPropertiesType = class;
 
         [Flat]
-        TadditionalProperties = class
+        additionalPropertiesType = class
         private
           FSchema: TOpenAPIDefinition.Schema;
           FReference: TOpenAPIDefinition.Reference;
@@ -786,50 +795,41 @@ type
           property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
         end;
       private
-        FSchema: TOpenAPIDefinition.Schema;
-        FReference: TOpenAPIDefinition.Reference;
-        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Schema.TProperties.TadditionalProperties>;
+        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Schema.PropertiesProperty.additionalPropertiesType>;
 
-        function GetSchema: TOpenAPIDefinition.Schema;
-        function GetReference: TOpenAPIDefinition.Reference;
-        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Schema.TProperties.TadditionalProperties>;
-        function GetSchemaStored: Boolean;
-        function GetReferenceStored: Boolean;
+        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Schema.PropertiesProperty.additionalPropertiesType>;
         function GetAdditionalPropertiesStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsSchemaStored: Boolean read GetSchemaStored;
-        property IsReferenceStored: Boolean read GetReferenceStored;
         property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
       published
-        property Schema: TOpenAPIDefinition.Schema read GetSchema write FSchema stored GetSchemaStored;
-        property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
-        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Schema.TProperties.TadditionalProperties> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Schema.PropertiesProperty.additionalPropertiesType> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       end;
 
       [Flat]
-      TAdditionalProperties = class
+      AdditionalPropertiesProperty = class
       private
         FSchema: TOpenAPIDefinition.Schema;
         FReference: TOpenAPIDefinition.Reference;
         FBoolean: System.Boolean;
+        FBooleanIsStored: Boolean;
 
         function GetSchema: TOpenAPIDefinition.Schema;
         function GetReference: TOpenAPIDefinition.Reference;
         function GetSchemaStored: Boolean;
         function GetReferenceStored: Boolean;
-        function GetBooleanStored: Boolean;
+        procedure SetBoolean(const Value: System.Boolean);
       public
         destructor Destroy; override;
 
         property IsSchemaStored: Boolean read GetSchemaStored;
         property IsReferenceStored: Boolean read GetReferenceStored;
-        property IsBooleanStored: Boolean read GetBooleanStored;
+        property IsBooleanStored: Boolean read FBooleanIsStored;
       published
         property Schema: TOpenAPIDefinition.Schema read GetSchema write FSchema stored GetSchemaStored;
         property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
-        property boolean: System.Boolean read FBoolean write FBoolean stored GetBooleanStored;
+        property boolean: System.Boolean read FBoolean write SetBoolean stored FBooleanIsStored;
       end;
     private
       FTitle: System.String;
@@ -848,14 +848,14 @@ type
       FMinProperties: System.Integer;
       FRequired: TArray<System.String>;
       FEnum: TArray<any>;
-      FType: TOpenAPIDefinition.Schema.TType;
-      FNot: TOpenAPIDefinition.Schema.TNot;
-      FAllOf: TArray<TOpenAPIDefinition.Schema.TAllOfArrayItem>;
-      FOneOf: TArray<TOpenAPIDefinition.Schema.TOneOfArrayItem>;
-      FAnyOf: TArray<TOpenAPIDefinition.Schema.TAnyOfArrayItem>;
-      FItems: TOpenAPIDefinition.Schema.TItems;
-      FProperties: TOpenAPIDefinition.Schema.TProperties;
-      FAdditionalProperties: TOpenAPIDefinition.Schema.TAdditionalProperties;
+      FType: TOpenAPIDefinition.Schema.TypeProperty;
+      FNot: TOpenAPIDefinition.Schema.NotProperty;
+      FAllOf: TArray<TOpenAPIDefinition.Schema.AllOfPropertyArrayItem>;
+      FOneOf: TArray<TOpenAPIDefinition.Schema.OneOfPropertyArrayItem>;
+      FAnyOf: TArray<TOpenAPIDefinition.Schema.AnyOfPropertyArrayItem>;
+      FItems: TOpenAPIDefinition.Schema.ItemsProperty;
+      FProperties: TOpenAPIDefinition.Schema.PropertiesProperty;
+      FAdditionalProperties: TOpenAPIDefinition.Schema.AdditionalPropertiesProperty;
       FDescription: System.String;
       FFormat: System.String;
       FDefault: any;
@@ -868,12 +868,19 @@ type
       FDeprecated: System.Boolean;
       FXml: TOpenAPIDefinition.XML;
       FPatternProperty: TDynamicProperty<any>;
+      FExclusiveMaximumIsStored: Boolean;
+      FExclusiveMinimumIsStored: Boolean;
+      FUniqueItemsIsStored: Boolean;
       FTypeIsStored: Boolean;
+      FNullableIsStored: Boolean;
+      FReadOnlyIsStored: Boolean;
+      FWriteOnlyIsStored: Boolean;
+      FDeprecatedIsStored: Boolean;
 
-      function GetNot: TOpenAPIDefinition.Schema.TNot;
-      function GetItems: TOpenAPIDefinition.Schema.TItems;
-      function GetProperties: TOpenAPIDefinition.Schema.TProperties;
-      function GetAdditionalProperties: TOpenAPIDefinition.Schema.TAdditionalProperties;
+      function GetNot: TOpenAPIDefinition.Schema.NotProperty;
+      function GetItems: TOpenAPIDefinition.Schema.ItemsProperty;
+      function GetProperties: TOpenAPIDefinition.Schema.PropertiesProperty;
+      function GetAdditionalProperties: TOpenAPIDefinition.Schema.AdditionalPropertiesProperty;
       function GetDiscriminator: TOpenAPIDefinition.Discriminator;
       function GetExternalDocs: TOpenAPIDefinition.ExternalDocumentation;
       function GetXml: TOpenAPIDefinition.XML;
@@ -881,15 +888,12 @@ type
       function GetTitleStored: Boolean;
       function GetMultipleOfStored: Boolean;
       function GetMaximumStored: Boolean;
-      function GetExclusiveMaximumStored: Boolean;
       function GetMinimumStored: Boolean;
-      function GetExclusiveMinimumStored: Boolean;
       function GetMaxLengthStored: Boolean;
       function GetMinLengthStored: Boolean;
       function GetPatternStored: Boolean;
       function GetMaxItemsStored: Boolean;
       function GetMinItemsStored: Boolean;
-      function GetUniqueItemsStored: Boolean;
       function GetMaxPropertiesStored: Boolean;
       function GetMinPropertiesStored: Boolean;
       function GetRequiredStored: Boolean;
@@ -904,35 +908,38 @@ type
       function GetDescriptionStored: Boolean;
       function GetFormatStored: Boolean;
       function GetDefaultStored: Boolean;
-      function GetNullableStored: Boolean;
       function GetDiscriminatorStored: Boolean;
-      function GetReadOnlyStored: Boolean;
-      function GetWriteOnlyStored: Boolean;
       function GetExampleStored: Boolean;
       function GetExternalDocsStored: Boolean;
-      function GetDeprecatedStored: Boolean;
       function GetXmlStored: Boolean;
       function GetPatternPropertyStored: Boolean;
-      procedure SetType(const Value: TOpenAPIDefinition.Schema.TType);
+      procedure SetExclusiveMaximum(const Value: System.Boolean);
+      procedure SetExclusiveMinimum(const Value: System.Boolean);
+      procedure SetUniqueItems(const Value: System.Boolean);
+      procedure SetType(const Value: TOpenAPIDefinition.Schema.TypeProperty);
+      procedure SetNullable(const Value: System.Boolean);
+      procedure SetReadOnly(const Value: System.Boolean);
+      procedure SetWriteOnly(const Value: System.Boolean);
+      procedure SetDeprecated(const Value: System.Boolean);
     public
       destructor Destroy; override;
 
-      function AddAllOf: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TAllOfArrayItem;
-      function AddOneOf: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TOneOfArrayItem;
-      function AddAnyOf: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TAnyOfArrayItem;
+      function AddAllOf: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.AllOfPropertyArrayItem;
+      function AddOneOf: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.OneOfPropertyArrayItem;
+      function AddAnyOf: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.AnyOfPropertyArrayItem;
 
       property IsTitleStored: Boolean read GetTitleStored;
       property IsMultipleOfStored: Boolean read GetMultipleOfStored;
       property IsMaximumStored: Boolean read GetMaximumStored;
-      property IsExclusiveMaximumStored: Boolean read GetExclusiveMaximumStored;
+      property IsExclusiveMaximumStored: Boolean read FExclusiveMaximumIsStored;
       property IsMinimumStored: Boolean read GetMinimumStored;
-      property IsExclusiveMinimumStored: Boolean read GetExclusiveMinimumStored;
+      property IsExclusiveMinimumStored: Boolean read FExclusiveMinimumIsStored;
       property IsMaxLengthStored: Boolean read GetMaxLengthStored;
       property IsMinLengthStored: Boolean read GetMinLengthStored;
       property IsPatternStored: Boolean read GetPatternStored;
       property IsMaxItemsStored: Boolean read GetMaxItemsStored;
       property IsMinItemsStored: Boolean read GetMinItemsStored;
-      property IsUniqueItemsStored: Boolean read GetUniqueItemsStored;
+      property IsUniqueItemsStored: Boolean read FUniqueItemsIsStored;
       property IsMaxPropertiesStored: Boolean read GetMaxPropertiesStored;
       property IsMinPropertiesStored: Boolean read GetMinPropertiesStored;
       property IsRequiredStored: Boolean read GetRequiredStored;
@@ -948,52 +955,52 @@ type
       property IsDescriptionStored: Boolean read GetDescriptionStored;
       property IsFormatStored: Boolean read GetFormatStored;
       property IsDefaultStored: Boolean read GetDefaultStored;
-      property IsNullableStored: Boolean read GetNullableStored;
+      property IsNullableStored: Boolean read FNullableIsStored;
       property IsDiscriminatorStored: Boolean read GetDiscriminatorStored;
-      property IsReadOnlyStored: Boolean read GetReadOnlyStored;
-      property IsWriteOnlyStored: Boolean read GetWriteOnlyStored;
+      property IsReadOnlyStored: Boolean read FReadOnlyIsStored;
+      property IsWriteOnlyStored: Boolean read FWriteOnlyIsStored;
       property IsExampleStored: Boolean read GetExampleStored;
       property IsExternalDocsStored: Boolean read GetExternalDocsStored;
-      property IsDeprecatedStored: Boolean read GetDeprecatedStored;
+      property IsDeprecatedStored: Boolean read FDeprecatedIsStored;
       property IsXmlStored: Boolean read GetXmlStored;
       property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
     published
       property title: System.String read FTitle write FTitle stored GetTitleStored;
       property multipleOf: System.Double read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
       property maximum: System.Double read FMaximum write FMaximum stored GetMaximumStored;
-      property exclusiveMaximum: System.Boolean read FExclusiveMaximum write FExclusiveMaximum stored GetExclusiveMaximumStored;
+      property exclusiveMaximum: System.Boolean read FExclusiveMaximum write SetExclusiveMaximum stored FExclusiveMaximumIsStored;
       property minimum: System.Double read FMinimum write FMinimum stored GetMinimumStored;
-      property exclusiveMinimum: System.Boolean read FExclusiveMinimum write FExclusiveMinimum stored GetExclusiveMinimumStored;
+      property exclusiveMinimum: System.Boolean read FExclusiveMinimum write SetExclusiveMinimum stored FExclusiveMinimumIsStored;
       property maxLength: System.Integer read FMaxLength write FMaxLength stored GetMaxLengthStored;
       property minLength: System.Integer read FMinLength write FMinLength stored GetMinLengthStored;
       property pattern: System.String read FPattern write FPattern stored GetPatternStored;
       property maxItems: System.Integer read FMaxItems write FMaxItems stored GetMaxItemsStored;
       property minItems: System.Integer read FMinItems write FMinItems stored GetMinItemsStored;
-      property uniqueItems: System.Boolean read FUniqueItems write FUniqueItems stored GetUniqueItemsStored;
+      property uniqueItems: System.Boolean read FUniqueItems write SetUniqueItems stored FUniqueItemsIsStored;
       property maxProperties: System.Integer read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
       property minProperties: System.Integer read FMinProperties write FMinProperties stored GetMinPropertiesStored;
       property required: TArray<System.String> read FRequired write FRequired stored GetRequiredStored;
       property enum: TArray<any> read FEnum write FEnum stored GetEnumStored;
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.Schema.TType read FType write SetType stored FTypeIsStored;
+      property &type: TOpenAPIDefinition.Schema.TypeProperty read FType write SetType stored FTypeIsStored;
       [FieldName('not')]
-      property &not: TOpenAPIDefinition.Schema.TNot read GetNot write FNot stored GetNotStored;
-      property allOf: TArray<TOpenAPIDefinition.Schema.TAllOfArrayItem> read FAllOf write FAllOf stored GetAllOfStored;
-      property oneOf: TArray<TOpenAPIDefinition.Schema.TOneOfArrayItem> read FOneOf write FOneOf stored GetOneOfStored;
-      property anyOf: TArray<TOpenAPIDefinition.Schema.TAnyOfArrayItem> read FAnyOf write FAnyOf stored GetAnyOfStored;
-      property items: TOpenAPIDefinition.Schema.TItems read GetItems write FItems stored GetItemsStored;
-      property properties: TOpenAPIDefinition.Schema.TProperties read GetProperties write FProperties stored GetPropertiesStored;
-      property additionalProperties: TOpenAPIDefinition.Schema.TAdditionalProperties read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+      property &not: TOpenAPIDefinition.Schema.NotProperty read GetNot write FNot stored GetNotStored;
+      property allOf: TArray<TOpenAPIDefinition.Schema.AllOfPropertyArrayItem> read FAllOf write FAllOf stored GetAllOfStored;
+      property oneOf: TArray<TOpenAPIDefinition.Schema.OneOfPropertyArrayItem> read FOneOf write FOneOf stored GetOneOfStored;
+      property anyOf: TArray<TOpenAPIDefinition.Schema.AnyOfPropertyArrayItem> read FAnyOf write FAnyOf stored GetAnyOfStored;
+      property items: TOpenAPIDefinition.Schema.ItemsProperty read GetItems write FItems stored GetItemsStored;
+      property properties: TOpenAPIDefinition.Schema.PropertiesProperty read GetProperties write FProperties stored GetPropertiesStored;
+      property additionalProperties: TOpenAPIDefinition.Schema.AdditionalPropertiesProperty read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       property format: System.String read FFormat write FFormat stored GetFormatStored;
       property default: any read FDefault write FDefault stored GetDefaultStored;
-      property nullable: System.Boolean read FNullable write FNullable stored GetNullableStored;
+      property nullable: System.Boolean read FNullable write SetNullable stored FNullableIsStored;
       property discriminator: TOpenAPIDefinition.Discriminator read GetDiscriminator write FDiscriminator stored GetDiscriminatorStored;
-      property readOnly: System.Boolean read FReadOnly write FReadOnly stored GetReadOnlyStored;
-      property writeOnly: System.Boolean read FWriteOnly write FWriteOnly stored GetWriteOnlyStored;
+      property readOnly: System.Boolean read FReadOnly write SetReadOnly stored FReadOnlyIsStored;
+      property writeOnly: System.Boolean read FWriteOnly write SetWriteOnly stored FWriteOnlyIsStored;
       property example: any read FExample write FExample stored GetExampleStored;
       property externalDocs: TOpenAPIDefinition.ExternalDocumentation read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
-      property deprecated: System.Boolean read FDeprecated write FDeprecated stored GetDeprecatedStored;
+      property deprecated: System.Boolean read FDeprecated write SetDeprecated stored FDeprecatedIsStored;
       property xml: TOpenAPIDefinition.XML read GetXml write FXml stored GetXmlStored;
       [PatternProperty('^x-')]
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
@@ -1002,9 +1009,9 @@ type
     Discriminator = class
     public type
       // Forward class declaration
-      TMapping = class;
+      MappingProperty = class;
 
-      TMapping = class
+      MappingProperty = class
       private
         FAdditionalProperties: TDynamicProperty<System.String>;
 
@@ -1019,9 +1026,9 @@ type
       end;
     private
       FPropertyName: System.String;
-      FMapping: TOpenAPIDefinition.Discriminator.TMapping;
+      FMapping: TOpenAPIDefinition.Discriminator.MappingProperty;
 
-      function GetMapping: TOpenAPIDefinition.Discriminator.TMapping;
+      function GetMapping: TOpenAPIDefinition.Discriminator.MappingProperty;
       function GetMappingStored: Boolean;
     public
       destructor Destroy; override;
@@ -1029,7 +1036,7 @@ type
       property IsMappingStored: Boolean read GetMappingStored;
     published
       property propertyName: System.String read FPropertyName write FPropertyName;
-      property mapping: TOpenAPIDefinition.Discriminator.TMapping read GetMapping write FMapping stored GetMappingStored;
+      property mapping: TOpenAPIDefinition.Discriminator.MappingProperty read GetMapping write FMapping stored GetMappingStored;
     end;
 
     XML = class
@@ -1040,29 +1047,31 @@ type
       FAttribute: System.Boolean;
       FWrapped: System.Boolean;
       FPatternProperty: TDynamicProperty<any>;
+      FAttributeIsStored: Boolean;
+      FWrappedIsStored: Boolean;
 
       function GetPatternProperty: TDynamicProperty<any>;
       function GetNameStored: Boolean;
       function GetNamespaceStored: Boolean;
       function GetPrefixStored: Boolean;
-      function GetAttributeStored: Boolean;
-      function GetWrappedStored: Boolean;
       function GetPatternPropertyStored: Boolean;
+      procedure SetAttribute(const Value: System.Boolean);
+      procedure SetWrapped(const Value: System.Boolean);
     public
       destructor Destroy; override;
 
       property IsNameStored: Boolean read GetNameStored;
       property IsNamespaceStored: Boolean read GetNamespaceStored;
       property IsPrefixStored: Boolean read GetPrefixStored;
-      property IsAttributeStored: Boolean read GetAttributeStored;
-      property IsWrappedStored: Boolean read GetWrappedStored;
+      property IsAttributeStored: Boolean read FAttributeIsStored;
+      property IsWrappedStored: Boolean read FWrappedIsStored;
       property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
     published
       property name: System.String read FName write FName stored GetNameStored;
       property namespace: System.String read FNamespace write FNamespace stored GetNamespaceStored;
       property prefix: System.String read FPrefix write FPrefix stored GetPrefixStored;
-      property attribute: System.Boolean read FAttribute write FAttribute stored GetAttributeStored;
-      property wrapped: System.Boolean read FWrapped write FWrapped stored GetWrappedStored;
+      property attribute: System.Boolean read FAttribute write SetAttribute stored FAttributeIsStored;
+      property wrapped: System.Boolean read FWrapped write SetWrapped stored FWrappedIsStored;
       [PatternProperty('^x-')]
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
     end;
@@ -1070,17 +1079,17 @@ type
     Response = class
     public type
       // Forward class declaration
-      THeaders = class;
-      TContent = class;
-      TLinks = class;
+      HeadersProperty = class;
+      ContentProperty = class;
+      LinksProperty = class;
 
-      THeaders = class
+      HeadersProperty = class
       public type
         // Forward class declaration
-        TadditionalProperties = class;
+        additionalPropertiesType = class;
 
         [Flat]
-        TadditionalProperties = class
+        additionalPropertiesType = class
         private
           FHeader: TOpenAPIDefinition.Header;
           FReference: TOpenAPIDefinition.Reference;
@@ -1099,29 +1108,19 @@ type
           property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
         end;
       private
-        FHeader: TOpenAPIDefinition.Header;
-        FReference: TOpenAPIDefinition.Reference;
-        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Response.THeaders.TadditionalProperties>;
+        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Response.HeadersProperty.additionalPropertiesType>;
 
-        function GetHeader: TOpenAPIDefinition.Header;
-        function GetReference: TOpenAPIDefinition.Reference;
-        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Response.THeaders.TadditionalProperties>;
-        function GetHeaderStored: Boolean;
-        function GetReferenceStored: Boolean;
+        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Response.HeadersProperty.additionalPropertiesType>;
         function GetAdditionalPropertiesStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsHeaderStored: Boolean read GetHeaderStored;
-        property IsReferenceStored: Boolean read GetReferenceStored;
         property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
       published
-        property Header: TOpenAPIDefinition.Header read GetHeader write FHeader stored GetHeaderStored;
-        property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
-        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Response.THeaders.TadditionalProperties> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Response.HeadersProperty.additionalPropertiesType> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       end;
 
-      TContent = class
+      ContentProperty = class
       private
         FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType>;
 
@@ -1135,13 +1134,13 @@ type
         property additionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       end;
 
-      TLinks = class
+      LinksProperty = class
       public type
         // Forward class declaration
-        TadditionalProperties = class;
+        additionalPropertiesType = class;
 
         [Flat]
-        TadditionalProperties = class
+        additionalPropertiesType = class
         private
           FLink: TOpenAPIDefinition.Link;
           FReference: TOpenAPIDefinition.Reference;
@@ -1160,37 +1159,27 @@ type
           property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
         end;
       private
-        FLink: TOpenAPIDefinition.Link;
-        FReference: TOpenAPIDefinition.Reference;
-        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Response.TLinks.TadditionalProperties>;
+        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Response.LinksProperty.additionalPropertiesType>;
 
-        function GetLink: TOpenAPIDefinition.Link;
-        function GetReference: TOpenAPIDefinition.Reference;
-        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Response.TLinks.TadditionalProperties>;
-        function GetLinkStored: Boolean;
-        function GetReferenceStored: Boolean;
+        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Response.LinksProperty.additionalPropertiesType>;
         function GetAdditionalPropertiesStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsLinkStored: Boolean read GetLinkStored;
-        property IsReferenceStored: Boolean read GetReferenceStored;
         property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
       published
-        property Link: TOpenAPIDefinition.Link read GetLink write FLink stored GetLinkStored;
-        property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
-        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Response.TLinks.TadditionalProperties> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Response.LinksProperty.additionalPropertiesType> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       end;
     private
       FDescription: System.String;
-      FHeaders: TOpenAPIDefinition.Response.THeaders;
-      FContent: TOpenAPIDefinition.Response.TContent;
-      FLinks: TOpenAPIDefinition.Response.TLinks;
+      FHeaders: TOpenAPIDefinition.Response.HeadersProperty;
+      FContent: TOpenAPIDefinition.Response.ContentProperty;
+      FLinks: TOpenAPIDefinition.Response.LinksProperty;
       FPatternProperty: TDynamicProperty<any>;
 
-      function GetHeaders: TOpenAPIDefinition.Response.THeaders;
-      function GetContent: TOpenAPIDefinition.Response.TContent;
-      function GetLinks: TOpenAPIDefinition.Response.TLinks;
+      function GetHeaders: TOpenAPIDefinition.Response.HeadersProperty;
+      function GetContent: TOpenAPIDefinition.Response.ContentProperty;
+      function GetLinks: TOpenAPIDefinition.Response.LinksProperty;
       function GetPatternProperty: TDynamicProperty<any>;
       function GetHeadersStored: Boolean;
       function GetContentStored: Boolean;
@@ -1205,23 +1194,22 @@ type
       property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
     published
       property description: System.String read FDescription write FDescription;
-      property headers: TOpenAPIDefinition.Response.THeaders read GetHeaders write FHeaders stored GetHeadersStored;
-      property content: TOpenAPIDefinition.Response.TContent read GetContent write FContent stored GetContentStored;
-      property links: TOpenAPIDefinition.Response.TLinks read GetLinks write FLinks stored GetLinksStored;
+      property headers: TOpenAPIDefinition.Response.HeadersProperty read GetHeaders write FHeaders stored GetHeadersStored;
+      property content: TOpenAPIDefinition.Response.ContentProperty read GetContent write FContent stored GetContentStored;
+      property links: TOpenAPIDefinition.Response.LinksProperty read GetLinks write FLinks stored GetLinksStored;
       [PatternProperty('^x-')]
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
     end;
 
-    [Flat]
     MediaType = class
     public type
       // Forward class declaration
-      TSchema = class;
-      TExamples = class;
-      TEncoding = class;
+      SchemaProperty = class;
+      ExamplesProperty = class;
+      EncodingProperty = class;
 
       [Flat]
-      TSchema = class
+      SchemaProperty = class
       private
         FSchema: TOpenAPIDefinition.Schema;
         FReference: TOpenAPIDefinition.Reference;
@@ -1240,13 +1228,13 @@ type
         property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
       end;
 
-      TExamples = class
+      ExamplesProperty = class
       public type
         // Forward class declaration
-        TadditionalProperties = class;
+        additionalPropertiesType = class;
 
         [Flat]
-        TadditionalProperties = class
+        additionalPropertiesType = class
         private
           FExample: TOpenAPIDefinition.Example;
           FReference: TOpenAPIDefinition.Reference;
@@ -1265,29 +1253,19 @@ type
           property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
         end;
       private
-        FExample: TOpenAPIDefinition.Example;
-        FReference: TOpenAPIDefinition.Reference;
-        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType.TExamples.TadditionalProperties>;
+        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType.ExamplesProperty.additionalPropertiesType>;
 
-        function GetExample: TOpenAPIDefinition.Example;
-        function GetReference: TOpenAPIDefinition.Reference;
-        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType.TExamples.TadditionalProperties>;
-        function GetExampleStored: Boolean;
-        function GetReferenceStored: Boolean;
+        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType.ExamplesProperty.additionalPropertiesType>;
         function GetAdditionalPropertiesStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsExampleStored: Boolean read GetExampleStored;
-        property IsReferenceStored: Boolean read GetReferenceStored;
         property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
       published
-        property Example: TOpenAPIDefinition.Example read GetExample write FExample stored GetExampleStored;
-        property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
-        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType.TExamples.TadditionalProperties> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType.ExamplesProperty.additionalPropertiesType> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       end;
 
-      TEncoding = class
+      EncodingProperty = class
       private
         FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Encoding>;
 
@@ -1301,16 +1279,16 @@ type
         property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Encoding> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       end;
     private
-      FSchema: TOpenAPIDefinition.MediaType.TSchema;
+      FSchema: TOpenAPIDefinition.MediaType.SchemaProperty;
       FExample: any;
-      FExamples: TOpenAPIDefinition.MediaType.TExamples;
-      FEncoding: TOpenAPIDefinition.MediaType.TEncoding;
+      FExamples: TOpenAPIDefinition.MediaType.ExamplesProperty;
+      FEncoding: TOpenAPIDefinition.MediaType.EncodingProperty;
       FExampleXORExamples: TOpenAPIDefinition.ExampleXORExamples;
       FPatternProperty: TDynamicProperty<any>;
 
-      function GetSchema: TOpenAPIDefinition.MediaType.TSchema;
-      function GetExamples: TOpenAPIDefinition.MediaType.TExamples;
-      function GetEncoding: TOpenAPIDefinition.MediaType.TEncoding;
+      function GetSchema: TOpenAPIDefinition.MediaType.SchemaProperty;
+      function GetExamples: TOpenAPIDefinition.MediaType.ExamplesProperty;
+      function GetEncoding: TOpenAPIDefinition.MediaType.EncodingProperty;
       function GetPatternProperty: TDynamicProperty<any>;
       function GetSchemaStored: Boolean;
       function GetExampleStored: Boolean;
@@ -1328,10 +1306,10 @@ type
       property IsExampleXORExamplesStored: Boolean read GetExampleXORExamplesStored;
       property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
     published
-      property schema: TOpenAPIDefinition.MediaType.TSchema read GetSchema write FSchema stored GetSchemaStored;
+      property schema: TOpenAPIDefinition.MediaType.SchemaProperty read GetSchema write FSchema stored GetSchemaStored;
       property example: any read FExample write FExample stored GetExampleStored;
-      property examples: TOpenAPIDefinition.MediaType.TExamples read GetExamples write FExamples stored GetExamplesStored;
-      property encoding: TOpenAPIDefinition.MediaType.TEncoding read GetEncoding write FEncoding stored GetEncodingStored;
+      property examples: TOpenAPIDefinition.MediaType.ExamplesProperty read GetExamples write FExamples stored GetExamplesStored;
+      property encoding: TOpenAPIDefinition.MediaType.EncodingProperty read GetEncoding write FEncoding stored GetEncodingStored;
       property ExampleXORExamples: TOpenAPIDefinition.ExampleXORExamples read FExampleXORExamples write FExampleXORExamples stored GetExampleXORExamplesStored;
       [PatternProperty('^x-')]
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
@@ -1368,18 +1346,17 @@ type
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
     end;
 
-    [Flat]
     Header = class
     public type
-      TStyle = (simple);
+      StyleProperty = (simple);
 
       // Forward class declaration
-      TSchema = class;
-      TContent = class;
-      TExamples = class;
+      SchemaProperty = class;
+      ContentProperty = class;
+      ExamplesProperty = class;
 
       [Flat]
-      TSchema = class
+      SchemaProperty = class
       private
         FSchema: TOpenAPIDefinition.Schema;
         FReference: TOpenAPIDefinition.Reference;
@@ -1398,7 +1375,7 @@ type
         property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
       end;
 
-      TContent = class
+      ContentProperty = class
       private
         FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType>;
 
@@ -1412,13 +1389,13 @@ type
         property additionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       end;
 
-      TExamples = class
+      ExamplesProperty = class
       public type
         // Forward class declaration
-        TadditionalProperties = class;
+        additionalPropertiesType = class;
 
         [Flat]
-        TadditionalProperties = class
+        additionalPropertiesType = class
         private
           FExample: TOpenAPIDefinition.Example;
           FReference: TOpenAPIDefinition.Reference;
@@ -1437,55 +1414,45 @@ type
           property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
         end;
       private
-        FExample: TOpenAPIDefinition.Example;
-        FReference: TOpenAPIDefinition.Reference;
-        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Header.TExamples.TadditionalProperties>;
+        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Header.ExamplesProperty.additionalPropertiesType>;
 
-        function GetExample: TOpenAPIDefinition.Example;
-        function GetReference: TOpenAPIDefinition.Reference;
-        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Header.TExamples.TadditionalProperties>;
-        function GetExampleStored: Boolean;
-        function GetReferenceStored: Boolean;
+        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Header.ExamplesProperty.additionalPropertiesType>;
         function GetAdditionalPropertiesStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsExampleStored: Boolean read GetExampleStored;
-        property IsReferenceStored: Boolean read GetReferenceStored;
         property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
       published
-        property Example: TOpenAPIDefinition.Example read GetExample write FExample stored GetExampleStored;
-        property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
-        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Header.TExamples.TadditionalProperties> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Header.ExamplesProperty.additionalPropertiesType> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       end;
     private
       FDescription: System.String;
       FRequired: System.Boolean;
       FDeprecated: System.Boolean;
       FAllowEmptyValue: System.Boolean;
-      FStyle: TOpenAPIDefinition.Header.TStyle;
+      FStyle: TOpenAPIDefinition.Header.StyleProperty;
       FExplode: System.Boolean;
       FAllowReserved: System.Boolean;
-      FSchema: TOpenAPIDefinition.Header.TSchema;
-      FContent: TOpenAPIDefinition.Header.TContent;
+      FSchema: TOpenAPIDefinition.Header.SchemaProperty;
+      FContent: TOpenAPIDefinition.Header.ContentProperty;
       FExample: any;
-      FExamples: TOpenAPIDefinition.Header.TExamples;
+      FExamples: TOpenAPIDefinition.Header.ExamplesProperty;
       FExampleXORExamples: TOpenAPIDefinition.ExampleXORExamples;
       FSchemaXORContent: TOpenAPIDefinition.SchemaXORContent;
       FPatternProperty: TDynamicProperty<any>;
+      FRequiredIsStored: Boolean;
+      FDeprecatedIsStored: Boolean;
+      FAllowEmptyValueIsStored: Boolean;
       FStyleIsStored: Boolean;
+      FExplodeIsStored: Boolean;
+      FAllowReservedIsStored: Boolean;
 
-      function GetSchema: TOpenAPIDefinition.Header.TSchema;
-      function GetContent: TOpenAPIDefinition.Header.TContent;
-      function GetExamples: TOpenAPIDefinition.Header.TExamples;
+      function GetSchema: TOpenAPIDefinition.Header.SchemaProperty;
+      function GetContent: TOpenAPIDefinition.Header.ContentProperty;
+      function GetExamples: TOpenAPIDefinition.Header.ExamplesProperty;
       function GetSchemaXORContent: TOpenAPIDefinition.SchemaXORContent;
       function GetPatternProperty: TDynamicProperty<any>;
       function GetDescriptionStored: Boolean;
-      function GetRequiredStored: Boolean;
-      function GetDeprecatedStored: Boolean;
-      function GetAllowEmptyValueStored: Boolean;
-      function GetExplodeStored: Boolean;
-      function GetAllowReservedStored: Boolean;
       function GetSchemaStored: Boolean;
       function GetContentStored: Boolean;
       function GetExampleStored: Boolean;
@@ -1493,17 +1460,22 @@ type
       function GetExampleXORExamplesStored: Boolean;
       function GetSchemaXORContentStored: Boolean;
       function GetPatternPropertyStored: Boolean;
-      procedure SetStyle(const Value: TOpenAPIDefinition.Header.TStyle);
+      procedure SetRequired(const Value: System.Boolean);
+      procedure SetDeprecated(const Value: System.Boolean);
+      procedure SetAllowEmptyValue(const Value: System.Boolean);
+      procedure SetStyle(const Value: TOpenAPIDefinition.Header.StyleProperty);
+      procedure SetExplode(const Value: System.Boolean);
+      procedure SetAllowReserved(const Value: System.Boolean);
     public
       destructor Destroy; override;
 
       property IsDescriptionStored: Boolean read GetDescriptionStored;
-      property IsRequiredStored: Boolean read GetRequiredStored;
-      property IsDeprecatedStored: Boolean read GetDeprecatedStored;
-      property IsAllowEmptyValueStored: Boolean read GetAllowEmptyValueStored;
+      property IsRequiredStored: Boolean read FRequiredIsStored;
+      property IsDeprecatedStored: Boolean read FDeprecatedIsStored;
+      property IsAllowEmptyValueStored: Boolean read FAllowEmptyValueIsStored;
       property IsStyleStored: Boolean read FStyleIsStored;
-      property IsExplodeStored: Boolean read GetExplodeStored;
-      property IsAllowReservedStored: Boolean read GetAllowReservedStored;
+      property IsExplodeStored: Boolean read FExplodeIsStored;
+      property IsAllowReservedStored: Boolean read FAllowReservedIsStored;
       property IsSchemaStored: Boolean read GetSchemaStored;
       property IsContentStored: Boolean read GetContentStored;
       property IsExampleStored: Boolean read GetExampleStored;
@@ -1513,16 +1485,16 @@ type
       property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
     published
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property required: System.Boolean read FRequired write FRequired stored GetRequiredStored;
-      property deprecated: System.Boolean read FDeprecated write FDeprecated stored GetDeprecatedStored;
-      property allowEmptyValue: System.Boolean read FAllowEmptyValue write FAllowEmptyValue stored GetAllowEmptyValueStored;
-      property style: TOpenAPIDefinition.Header.TStyle read FStyle write SetStyle stored FStyleIsStored;
-      property explode: System.Boolean read FExplode write FExplode stored GetExplodeStored;
-      property allowReserved: System.Boolean read FAllowReserved write FAllowReserved stored GetAllowReservedStored;
-      property schema: TOpenAPIDefinition.Header.TSchema read GetSchema write FSchema stored GetSchemaStored;
-      property content: TOpenAPIDefinition.Header.TContent read GetContent write FContent stored GetContentStored;
+      property required: System.Boolean read FRequired write SetRequired stored FRequiredIsStored;
+      property deprecated: System.Boolean read FDeprecated write SetDeprecated stored FDeprecatedIsStored;
+      property allowEmptyValue: System.Boolean read FAllowEmptyValue write SetAllowEmptyValue stored FAllowEmptyValueIsStored;
+      property style: TOpenAPIDefinition.Header.StyleProperty read FStyle write SetStyle stored FStyleIsStored;
+      property explode: System.Boolean read FExplode write SetExplode stored FExplodeIsStored;
+      property allowReserved: System.Boolean read FAllowReserved write SetAllowReserved stored FAllowReservedIsStored;
+      property schema: TOpenAPIDefinition.Header.SchemaProperty read GetSchema write FSchema stored GetSchemaStored;
+      property content: TOpenAPIDefinition.Header.ContentProperty read GetContent write FContent stored GetContentStored;
       property example: any read FExample write FExample stored GetExampleStored;
-      property examples: TOpenAPIDefinition.Header.TExamples read GetExamples write FExamples stored GetExamplesStored;
+      property examples: TOpenAPIDefinition.Header.ExamplesProperty read GetExamples write FExamples stored GetExamplesStored;
       property ExampleXORExamples: TOpenAPIDefinition.ExampleXORExamples read FExampleXORExamples write FExampleXORExamples stored GetExampleXORExamplesStored;
       property SchemaXORContent: TOpenAPIDefinition.SchemaXORContent read GetSchemaXORContent write FSchemaXORContent stored GetSchemaXORContentStored;
       [PatternProperty('^x-')]
@@ -1553,10 +1525,10 @@ type
     PathItem = class
     public type
       // Forward class declaration
-      TParametersArrayItem = class;
+      ParametersPropertyArrayItem = class;
 
       [Flat]
-      TParametersArrayItem = class
+      ParametersPropertyArrayItem = class
       private
         FParameter: TOpenAPIDefinition.Parameter;
         FReference: TOpenAPIDefinition.Reference;
@@ -1587,7 +1559,7 @@ type
       FPatch: TOpenAPIDefinition.Operation;
       FTrace: TOpenAPIDefinition.Operation;
       FServers: TArray<TOpenAPIDefinition.Server>;
-      FParameters: TArray<TOpenAPIDefinition.PathItem.TParametersArrayItem>;
+      FParameters: TArray<TOpenAPIDefinition.PathItem.ParametersPropertyArrayItem>;
       FPatternProperty: TDynamicProperty<any>;
 
       function GetGet: TOpenAPIDefinition.Operation;
@@ -1617,7 +1589,7 @@ type
       destructor Destroy; override;
 
       function AddServers: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Server;
-      function AddParameters: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.PathItem.TParametersArrayItem;
+      function AddParameters: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.PathItem.ParametersPropertyArrayItem;
 
       property IsRefStored: Boolean read GetRefStored;
       property IsSummaryStored: Boolean read GetSummaryStored;
@@ -1635,7 +1607,7 @@ type
       property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
     published
       [FieldName('$ref')]
-      property Ref: System.String read FRef write FRef stored GetRefStored;
+      property ref: System.String read FRef write FRef stored GetRefStored;
       property summary: System.String read FSummary write FSummary stored GetSummaryStored;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       property get: TOpenAPIDefinition.Operation read GetGet write FGet stored GetGetStored;
@@ -1647,7 +1619,7 @@ type
       property patch: TOpenAPIDefinition.Operation read GetPatch write FPatch stored GetPatchStored;
       property trace: TOpenAPIDefinition.Operation read GetTrace write FTrace stored GetTraceStored;
       property servers: TArray<TOpenAPIDefinition.Server> read FServers write FServers stored GetServersStored;
-      property parameters: TArray<TOpenAPIDefinition.PathItem.TParametersArrayItem> read FParameters write FParameters stored GetParametersStored;
+      property parameters: TArray<TOpenAPIDefinition.PathItem.ParametersPropertyArrayItem> read FParameters write FParameters stored GetParametersStored;
       [PatternProperty('^x-')]
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
     end;
@@ -1655,12 +1627,12 @@ type
     Operation = class
     public type
       // Forward class declaration
-      TParametersArrayItem = class;
-      TRequestBody = class;
-      TCallbacks = class;
+      ParametersPropertyArrayItem = class;
+      RequestBodyProperty = class;
+      CallbacksProperty = class;
 
       [Flat]
-      TParametersArrayItem = class
+      ParametersPropertyArrayItem = class
       private
         FParameter: TOpenAPIDefinition.Parameter;
         FReference: TOpenAPIDefinition.Reference;
@@ -1680,7 +1652,7 @@ type
       end;
 
       [Flat]
-      TRequestBody = class
+      RequestBodyProperty = class
       private
         FRequestBody: TOpenAPIDefinition.RequestBody;
         FReference: TOpenAPIDefinition.Reference;
@@ -1699,13 +1671,13 @@ type
         property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
       end;
 
-      TCallbacks = class
+      CallbacksProperty = class
       public type
         // Forward class declaration
-        TadditionalProperties = class;
+        additionalPropertiesType = class;
 
         [Flat]
-        TadditionalProperties = class
+        additionalPropertiesType = class
         private
           FCallback: TOpenAPIDefinition.Callback;
           FReference: TOpenAPIDefinition.Reference;
@@ -1724,26 +1696,16 @@ type
           property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
         end;
       private
-        FCallback: TOpenAPIDefinition.Callback;
-        FReference: TOpenAPIDefinition.Reference;
-        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Operation.TCallbacks.TadditionalProperties>;
+        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Operation.CallbacksProperty.additionalPropertiesType>;
 
-        function GetCallback: TOpenAPIDefinition.Callback;
-        function GetReference: TOpenAPIDefinition.Reference;
-        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Operation.TCallbacks.TadditionalProperties>;
-        function GetCallbackStored: Boolean;
-        function GetReferenceStored: Boolean;
+        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Operation.CallbacksProperty.additionalPropertiesType>;
         function GetAdditionalPropertiesStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsCallbackStored: Boolean read GetCallbackStored;
-        property IsReferenceStored: Boolean read GetReferenceStored;
         property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
       published
-        property Callback: TOpenAPIDefinition.Callback read GetCallback write FCallback stored GetCallbackStored;
-        property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
-        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Operation.TCallbacks.TadditionalProperties> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Operation.CallbacksProperty.additionalPropertiesType> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       end;
     private
       FTags: TArray<System.String>;
@@ -1751,19 +1713,20 @@ type
       FDescription: System.String;
       FExternalDocs: TOpenAPIDefinition.ExternalDocumentation;
       FOperationId: System.String;
-      FParameters: TArray<TOpenAPIDefinition.Operation.TParametersArrayItem>;
-      FRequestBody: TOpenAPIDefinition.Operation.TRequestBody;
+      FParameters: TArray<TOpenAPIDefinition.Operation.ParametersPropertyArrayItem>;
+      FRequestBody: TOpenAPIDefinition.Operation.RequestBodyProperty;
       FResponses: TOpenAPIDefinition.Responses;
-      FCallbacks: TOpenAPIDefinition.Operation.TCallbacks;
+      FCallbacks: TOpenAPIDefinition.Operation.CallbacksProperty;
       FDeprecated: System.Boolean;
       FSecurity: TArray<TOpenAPIDefinition.SecurityRequirement>;
       FServers: TArray<TOpenAPIDefinition.Server>;
       FPatternProperty: TDynamicProperty<any>;
+      FDeprecatedIsStored: Boolean;
 
       function GetExternalDocs: TOpenAPIDefinition.ExternalDocumentation;
-      function GetRequestBody: TOpenAPIDefinition.Operation.TRequestBody;
+      function GetRequestBody: TOpenAPIDefinition.Operation.RequestBodyProperty;
       function GetResponses: TOpenAPIDefinition.Responses;
-      function GetCallbacks: TOpenAPIDefinition.Operation.TCallbacks;
+      function GetCallbacks: TOpenAPIDefinition.Operation.CallbacksProperty;
       function GetPatternProperty: TDynamicProperty<any>;
       function GetTagsStored: Boolean;
       function GetSummaryStored: Boolean;
@@ -1773,14 +1736,14 @@ type
       function GetParametersStored: Boolean;
       function GetRequestBodyStored: Boolean;
       function GetCallbacksStored: Boolean;
-      function GetDeprecatedStored: Boolean;
       function GetSecurityStored: Boolean;
       function GetServersStored: Boolean;
       function GetPatternPropertyStored: Boolean;
+      procedure SetDeprecated(const Value: System.Boolean);
     public
       destructor Destroy; override;
 
-      function AddParameters: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Operation.TParametersArrayItem;
+      function AddParameters: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Operation.ParametersPropertyArrayItem;
       function AddSecurity: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.SecurityRequirement;
       function AddServers: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Server;
 
@@ -1792,7 +1755,7 @@ type
       property IsParametersStored: Boolean read GetParametersStored;
       property IsRequestBodyStored: Boolean read GetRequestBodyStored;
       property IsCallbacksStored: Boolean read GetCallbacksStored;
-      property IsDeprecatedStored: Boolean read GetDeprecatedStored;
+      property IsDeprecatedStored: Boolean read FDeprecatedIsStored;
       property IsSecurityStored: Boolean read GetSecurityStored;
       property IsServersStored: Boolean read GetServersStored;
       property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
@@ -1802,11 +1765,11 @@ type
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       property externalDocs: TOpenAPIDefinition.ExternalDocumentation read GetExternalDocs write FExternalDocs stored GetExternalDocsStored;
       property operationId: System.String read FOperationId write FOperationId stored GetOperationIdStored;
-      property parameters: TArray<TOpenAPIDefinition.Operation.TParametersArrayItem> read FParameters write FParameters stored GetParametersStored;
-      property requestBody: TOpenAPIDefinition.Operation.TRequestBody read GetRequestBody write FRequestBody stored GetRequestBodyStored;
+      property parameters: TArray<TOpenAPIDefinition.Operation.ParametersPropertyArrayItem> read FParameters write FParameters stored GetParametersStored;
+      property requestBody: TOpenAPIDefinition.Operation.RequestBodyProperty read GetRequestBody write FRequestBody stored GetRequestBodyStored;
       property responses: TOpenAPIDefinition.Responses read GetResponses write FResponses;
-      property callbacks: TOpenAPIDefinition.Operation.TCallbacks read GetCallbacks write FCallbacks stored GetCallbacksStored;
-      property deprecated: System.Boolean read FDeprecated write FDeprecated stored GetDeprecatedStored;
+      property callbacks: TOpenAPIDefinition.Operation.CallbacksProperty read GetCallbacks write FCallbacks stored GetCallbacksStored;
+      property deprecated: System.Boolean read FDeprecated write SetDeprecated stored FDeprecatedIsStored;
       property security: TArray<TOpenAPIDefinition.SecurityRequirement> read FSecurity write FSecurity stored GetSecurityStored;
       property servers: TArray<TOpenAPIDefinition.Server> read FServers write FServers stored GetServersStored;
       [PatternProperty('^x-')]
@@ -1816,11 +1779,11 @@ type
     Responses = class
     public type
       // Forward class declaration
-      TDefault = class;
-      TPatternProperty = class;
+      DefaultProperty = class;
+      PatternProperty = class;
 
       [Flat]
-      TDefault = class
+      DefaultProperty = class
       private
         FResponse: TOpenAPIDefinition.Response;
         FReference: TOpenAPIDefinition.Reference;
@@ -1840,7 +1803,7 @@ type
       end;
 
       [Flat]
-      TPatternProperty = class
+      PatternProperty = class
       private
         FResponse: TOpenAPIDefinition.Response;
         FReference: TOpenAPIDefinition.Reference;
@@ -1859,12 +1822,12 @@ type
         property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
       end;
     private
-      FDefault: TOpenAPIDefinition.Responses.TDefault;
-      FPatternProperty: TDynamicProperty<TOpenAPIDefinition.Responses.TPatternProperty>;
+      FDefault: TOpenAPIDefinition.Responses.DefaultProperty;
+      FPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Responses.PatternProperty>;
       FPatternProperty2: TDynamicProperty<any>;
 
-      function GetDefault: TOpenAPIDefinition.Responses.TDefault;
-      function GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Responses.TPatternProperty>;
+      function GetDefault: TOpenAPIDefinition.Responses.DefaultProperty;
+      function GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Responses.PatternProperty>;
       function GetPatternProperty2: TDynamicProperty<any>;
       function GetDefaultStored: Boolean;
       function GetPatternPropertyStored: Boolean;
@@ -1876,9 +1839,10 @@ type
       property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
       property IsPatternProperty2Stored: Boolean read GetPatternProperty2Stored;
     published
-      property default: TOpenAPIDefinition.Responses.TDefault read GetDefault write FDefault stored GetDefaultStored;
+      property default: TOpenAPIDefinition.Responses.DefaultProperty read GetDefault write FDefault stored GetDefaultStored;
       [PatternProperty('^[1-5](?:\d{2}|XX)$')]
-      property PatternProperty: TDynamicProperty<TOpenAPIDefinition.Responses.TPatternProperty> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
+      [FieldName('PatternProperty')]
+      property PatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Responses.PatternProperty> read GetPatternPropertyElement write FPatternPropertyElement stored GetPatternPropertyStored;
       [PatternProperty('^x-')]
       property PatternProperty2: TDynamicProperty<any> read GetPatternProperty2 write FPatternProperty2 stored GetPatternProperty2Stored;
     end;
@@ -1948,16 +1912,15 @@ type
     SchemaXORContent = class
     end;
 
-    [Flat]
     Parameter = class
     public type
       // Forward class declaration
-      TSchema = class;
-      TContent = class;
-      TExamples = class;
+      SchemaProperty = class;
+      ContentProperty = class;
+      ExamplesProperty = class;
 
       [Flat]
-      TSchema = class
+      SchemaProperty = class
       private
         FSchema: TOpenAPIDefinition.Schema;
         FReference: TOpenAPIDefinition.Reference;
@@ -1976,7 +1939,7 @@ type
         property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
       end;
 
-      TContent = class
+      ContentProperty = class
       private
         FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType>;
 
@@ -1990,13 +1953,13 @@ type
         property additionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       end;
 
-      TExamples = class
+      ExamplesProperty = class
       public type
         // Forward class declaration
-        TadditionalProperties = class;
+        additionalPropertiesType = class;
 
         [Flat]
-        TadditionalProperties = class
+        additionalPropertiesType = class
         private
           FExample: TOpenAPIDefinition.Example;
           FReference: TOpenAPIDefinition.Reference;
@@ -2015,26 +1978,16 @@ type
           property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
         end;
       private
-        FExample: TOpenAPIDefinition.Example;
-        FReference: TOpenAPIDefinition.Reference;
-        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Parameter.TExamples.TadditionalProperties>;
+        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Parameter.ExamplesProperty.additionalPropertiesType>;
 
-        function GetExample: TOpenAPIDefinition.Example;
-        function GetReference: TOpenAPIDefinition.Reference;
-        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Parameter.TExamples.TadditionalProperties>;
-        function GetExampleStored: Boolean;
-        function GetReferenceStored: Boolean;
+        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Parameter.ExamplesProperty.additionalPropertiesType>;
         function GetAdditionalPropertiesStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsExampleStored: Boolean read GetExampleStored;
-        property IsReferenceStored: Boolean read GetReferenceStored;
         property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
       published
-        property Example: TOpenAPIDefinition.Example read GetExample write FExample stored GetExampleStored;
-        property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
-        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Parameter.TExamples.TadditionalProperties> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Parameter.ExamplesProperty.additionalPropertiesType> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       end;
     private
       FName: System.String;
@@ -2046,10 +1999,10 @@ type
       FStyle: System.String;
       FExplode: System.Boolean;
       FAllowReserved: System.Boolean;
-      FSchema: TOpenAPIDefinition.Parameter.TSchema;
-      FContent: TOpenAPIDefinition.Parameter.TContent;
+      FSchema: TOpenAPIDefinition.Parameter.SchemaProperty;
+      FContent: TOpenAPIDefinition.Parameter.ContentProperty;
       FExample: any;
-      FExamples: TOpenAPIDefinition.Parameter.TExamples;
+      FExamples: TOpenAPIDefinition.Parameter.ExamplesProperty;
       FExampleXORExamples: TOpenAPIDefinition.ExampleXORExamples;
       FSchemaXORContent: TOpenAPIDefinition.SchemaXORContent;
       FPathParameter: TOpenAPIDefinition.PathParameter;
@@ -2057,10 +2010,15 @@ type
       FHeaderParameter: TOpenAPIDefinition.HeaderParameter;
       FCookieParameter: TOpenAPIDefinition.CookieParameter;
       FPatternProperty: TDynamicProperty<any>;
+      FRequiredIsStored: Boolean;
+      FDeprecatedIsStored: Boolean;
+      FAllowEmptyValueIsStored: Boolean;
+      FExplodeIsStored: Boolean;
+      FAllowReservedIsStored: Boolean;
 
-      function GetSchema: TOpenAPIDefinition.Parameter.TSchema;
-      function GetContent: TOpenAPIDefinition.Parameter.TContent;
-      function GetExamples: TOpenAPIDefinition.Parameter.TExamples;
+      function GetSchema: TOpenAPIDefinition.Parameter.SchemaProperty;
+      function GetContent: TOpenAPIDefinition.Parameter.ContentProperty;
+      function GetExamples: TOpenAPIDefinition.Parameter.ExamplesProperty;
       function GetSchemaXORContent: TOpenAPIDefinition.SchemaXORContent;
       function GetPathParameter: TOpenAPIDefinition.PathParameter;
       function GetQueryParameter: TOpenAPIDefinition.QueryParameter;
@@ -2068,12 +2026,7 @@ type
       function GetCookieParameter: TOpenAPIDefinition.CookieParameter;
       function GetPatternProperty: TDynamicProperty<any>;
       function GetDescriptionStored: Boolean;
-      function GetRequiredStored: Boolean;
-      function GetDeprecatedStored: Boolean;
-      function GetAllowEmptyValueStored: Boolean;
       function GetStyleStored: Boolean;
-      function GetExplodeStored: Boolean;
-      function GetAllowReservedStored: Boolean;
       function GetSchemaStored: Boolean;
       function GetContentStored: Boolean;
       function GetExampleStored: Boolean;
@@ -2085,16 +2038,21 @@ type
       function GetHeaderParameterStored: Boolean;
       function GetCookieParameterStored: Boolean;
       function GetPatternPropertyStored: Boolean;
+      procedure SetRequired(const Value: System.Boolean);
+      procedure SetDeprecated(const Value: System.Boolean);
+      procedure SetAllowEmptyValue(const Value: System.Boolean);
+      procedure SetExplode(const Value: System.Boolean);
+      procedure SetAllowReserved(const Value: System.Boolean);
     public
       destructor Destroy; override;
 
       property IsDescriptionStored: Boolean read GetDescriptionStored;
-      property IsRequiredStored: Boolean read GetRequiredStored;
-      property IsDeprecatedStored: Boolean read GetDeprecatedStored;
-      property IsAllowEmptyValueStored: Boolean read GetAllowEmptyValueStored;
+      property IsRequiredStored: Boolean read FRequiredIsStored;
+      property IsDeprecatedStored: Boolean read FDeprecatedIsStored;
+      property IsAllowEmptyValueStored: Boolean read FAllowEmptyValueIsStored;
       property IsStyleStored: Boolean read GetStyleStored;
-      property IsExplodeStored: Boolean read GetExplodeStored;
-      property IsAllowReservedStored: Boolean read GetAllowReservedStored;
+      property IsExplodeStored: Boolean read FExplodeIsStored;
+      property IsAllowReservedStored: Boolean read FAllowReservedIsStored;
       property IsSchemaStored: Boolean read GetSchemaStored;
       property IsContentStored: Boolean read GetContentStored;
       property IsExampleStored: Boolean read GetExampleStored;
@@ -2111,21 +2069,25 @@ type
       [FieldName('in')]
       property &in: System.String read FIn write FIn;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property required: System.Boolean read FRequired write FRequired stored GetRequiredStored;
-      property deprecated: System.Boolean read FDeprecated write FDeprecated stored GetDeprecatedStored;
-      property allowEmptyValue: System.Boolean read FAllowEmptyValue write FAllowEmptyValue stored GetAllowEmptyValueStored;
+      property required: System.Boolean read FRequired write SetRequired stored FRequiredIsStored;
+      property deprecated: System.Boolean read FDeprecated write SetDeprecated stored FDeprecatedIsStored;
+      property allowEmptyValue: System.Boolean read FAllowEmptyValue write SetAllowEmptyValue stored FAllowEmptyValueIsStored;
       property style: System.String read FStyle write FStyle stored GetStyleStored;
-      property explode: System.Boolean read FExplode write FExplode stored GetExplodeStored;
-      property allowReserved: System.Boolean read FAllowReserved write FAllowReserved stored GetAllowReservedStored;
-      property schema: TOpenAPIDefinition.Parameter.TSchema read GetSchema write FSchema stored GetSchemaStored;
-      property content: TOpenAPIDefinition.Parameter.TContent read GetContent write FContent stored GetContentStored;
+      property explode: System.Boolean read FExplode write SetExplode stored FExplodeIsStored;
+      property allowReserved: System.Boolean read FAllowReserved write SetAllowReserved stored FAllowReservedIsStored;
+      property schema: TOpenAPIDefinition.Parameter.SchemaProperty read GetSchema write FSchema stored GetSchemaStored;
+      property content: TOpenAPIDefinition.Parameter.ContentProperty read GetContent write FContent stored GetContentStored;
       property example: any read FExample write FExample stored GetExampleStored;
-      property examples: TOpenAPIDefinition.Parameter.TExamples read GetExamples write FExamples stored GetExamplesStored;
+      property examples: TOpenAPIDefinition.Parameter.ExamplesProperty read GetExamples write FExamples stored GetExamplesStored;
       property ExampleXORExamples: TOpenAPIDefinition.ExampleXORExamples read FExampleXORExamples write FExampleXORExamples stored GetExampleXORExamplesStored;
       property SchemaXORContent: TOpenAPIDefinition.SchemaXORContent read GetSchemaXORContent write FSchemaXORContent stored GetSchemaXORContentStored;
+      [Flat('in')]
       property PathParameter: TOpenAPIDefinition.PathParameter read GetPathParameter write FPathParameter stored GetPathParameterStored;
+      [Flat('in')]
       property QueryParameter: TOpenAPIDefinition.QueryParameter read GetQueryParameter write FQueryParameter stored GetQueryParameterStored;
+      [Flat('in')]
       property HeaderParameter: TOpenAPIDefinition.HeaderParameter read GetHeaderParameter write FHeaderParameter stored GetHeaderParameterStored;
+      [Flat('in')]
       property CookieParameter: TOpenAPIDefinition.CookieParameter read GetCookieParameter write FCookieParameter stored GetCookieParameterStored;
       [PatternProperty('^x-')]
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
@@ -2133,103 +2095,103 @@ type
 
     PathParameter = class
     public type
-      TIn = (path);
+      InProperty = (path);
 
       [EnumValue('matrix, label, simple')]
-      TStyle = (matrix, &label, simple);
+      StyleProperty = (matrix, &label, simple);
 
-      TRequired = (True);
+      RequiredProperty = (True);
     private
-      FIn: TOpenAPIDefinition.PathParameter.TIn;
-      FStyle: TOpenAPIDefinition.PathParameter.TStyle;
-      FRequired: TOpenAPIDefinition.PathParameter.TRequired;
+      FIn: TOpenAPIDefinition.PathParameter.InProperty;
+      FStyle: TOpenAPIDefinition.PathParameter.StyleProperty;
+      FRequired: TOpenAPIDefinition.PathParameter.RequiredProperty;
       FInIsStored: Boolean;
       FStyleIsStored: Boolean;
 
-      procedure SetIn(const Value: TOpenAPIDefinition.PathParameter.TIn);
-      procedure SetStyle(const Value: TOpenAPIDefinition.PathParameter.TStyle);
+      procedure SetIn(const Value: TOpenAPIDefinition.PathParameter.InProperty);
+      procedure SetStyle(const Value: TOpenAPIDefinition.PathParameter.StyleProperty);
     public
       property IsInStored: Boolean read FInIsStored;
       property IsStyleStored: Boolean read FStyleIsStored;
     published
       [FieldName('in')]
-      property &in: TOpenAPIDefinition.PathParameter.TIn read FIn write SetIn stored FInIsStored;
-      property style: TOpenAPIDefinition.PathParameter.TStyle read FStyle write SetStyle stored FStyleIsStored;
-      property required: TOpenAPIDefinition.PathParameter.TRequired read FRequired write FRequired;
+      property &in: TOpenAPIDefinition.PathParameter.InProperty read FIn write SetIn stored FInIsStored;
+      property style: TOpenAPIDefinition.PathParameter.StyleProperty read FStyle write SetStyle stored FStyleIsStored;
+      property required: TOpenAPIDefinition.PathParameter.RequiredProperty read FRequired write FRequired;
     end;
 
     QueryParameter = class
     public type
-      TIn = (query);
+      InProperty = (query);
 
-      TStyle = (form, spaceDelimited, pipeDelimited, deepObject);
+      StyleProperty = (form, spaceDelimited, pipeDelimited, deepObject);
     private
-      FIn: TOpenAPIDefinition.QueryParameter.TIn;
-      FStyle: TOpenAPIDefinition.QueryParameter.TStyle;
+      FIn: TOpenAPIDefinition.QueryParameter.InProperty;
+      FStyle: TOpenAPIDefinition.QueryParameter.StyleProperty;
       FInIsStored: Boolean;
       FStyleIsStored: Boolean;
 
-      procedure SetIn(const Value: TOpenAPIDefinition.QueryParameter.TIn);
-      procedure SetStyle(const Value: TOpenAPIDefinition.QueryParameter.TStyle);
+      procedure SetIn(const Value: TOpenAPIDefinition.QueryParameter.InProperty);
+      procedure SetStyle(const Value: TOpenAPIDefinition.QueryParameter.StyleProperty);
     public
       property IsInStored: Boolean read FInIsStored;
       property IsStyleStored: Boolean read FStyleIsStored;
     published
       [FieldName('in')]
-      property &in: TOpenAPIDefinition.QueryParameter.TIn read FIn write SetIn stored FInIsStored;
-      property style: TOpenAPIDefinition.QueryParameter.TStyle read FStyle write SetStyle stored FStyleIsStored;
+      property &in: TOpenAPIDefinition.QueryParameter.InProperty read FIn write SetIn stored FInIsStored;
+      property style: TOpenAPIDefinition.QueryParameter.StyleProperty read FStyle write SetStyle stored FStyleIsStored;
     end;
 
     HeaderParameter = class
     public type
-      TIn = (header);
+      InProperty = (header);
 
-      TStyle = (simple);
+      StyleProperty = (simple);
     private
-      FIn: TOpenAPIDefinition.HeaderParameter.TIn;
-      FStyle: TOpenAPIDefinition.HeaderParameter.TStyle;
+      FIn: TOpenAPIDefinition.HeaderParameter.InProperty;
+      FStyle: TOpenAPIDefinition.HeaderParameter.StyleProperty;
       FInIsStored: Boolean;
       FStyleIsStored: Boolean;
 
-      procedure SetIn(const Value: TOpenAPIDefinition.HeaderParameter.TIn);
-      procedure SetStyle(const Value: TOpenAPIDefinition.HeaderParameter.TStyle);
+      procedure SetIn(const Value: TOpenAPIDefinition.HeaderParameter.InProperty);
+      procedure SetStyle(const Value: TOpenAPIDefinition.HeaderParameter.StyleProperty);
     public
       property IsInStored: Boolean read FInIsStored;
       property IsStyleStored: Boolean read FStyleIsStored;
     published
       [FieldName('in')]
-      property &in: TOpenAPIDefinition.HeaderParameter.TIn read FIn write SetIn stored FInIsStored;
-      property style: TOpenAPIDefinition.HeaderParameter.TStyle read FStyle write SetStyle stored FStyleIsStored;
+      property &in: TOpenAPIDefinition.HeaderParameter.InProperty read FIn write SetIn stored FInIsStored;
+      property style: TOpenAPIDefinition.HeaderParameter.StyleProperty read FStyle write SetStyle stored FStyleIsStored;
     end;
 
     CookieParameter = class
     public type
-      TIn = (cookie);
+      InProperty = (cookie);
 
-      TStyle = (form);
+      StyleProperty = (form);
     private
-      FIn: TOpenAPIDefinition.CookieParameter.TIn;
-      FStyle: TOpenAPIDefinition.CookieParameter.TStyle;
+      FIn: TOpenAPIDefinition.CookieParameter.InProperty;
+      FStyle: TOpenAPIDefinition.CookieParameter.StyleProperty;
       FInIsStored: Boolean;
       FStyleIsStored: Boolean;
 
-      procedure SetIn(const Value: TOpenAPIDefinition.CookieParameter.TIn);
-      procedure SetStyle(const Value: TOpenAPIDefinition.CookieParameter.TStyle);
+      procedure SetIn(const Value: TOpenAPIDefinition.CookieParameter.InProperty);
+      procedure SetStyle(const Value: TOpenAPIDefinition.CookieParameter.StyleProperty);
     public
       property IsInStored: Boolean read FInIsStored;
       property IsStyleStored: Boolean read FStyleIsStored;
     published
       [FieldName('in')]
-      property &in: TOpenAPIDefinition.CookieParameter.TIn read FIn write SetIn stored FInIsStored;
-      property style: TOpenAPIDefinition.CookieParameter.TStyle read FStyle write SetStyle stored FStyleIsStored;
+      property &in: TOpenAPIDefinition.CookieParameter.InProperty read FIn write SetIn stored FInIsStored;
+      property style: TOpenAPIDefinition.CookieParameter.StyleProperty read FStyle write SetStyle stored FStyleIsStored;
     end;
 
     RequestBody = class
     public type
       // Forward class declaration
-      TContent = class;
+      ContentProperty = class;
 
-      TContent = class
+      ContentProperty = class
       private
         FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType>;
 
@@ -2244,25 +2206,26 @@ type
       end;
     private
       FDescription: System.String;
-      FContent: TOpenAPIDefinition.RequestBody.TContent;
+      FContent: TOpenAPIDefinition.RequestBody.ContentProperty;
       FRequired: System.Boolean;
       FPatternProperty: TDynamicProperty<any>;
+      FRequiredIsStored: Boolean;
 
-      function GetContent: TOpenAPIDefinition.RequestBody.TContent;
+      function GetContent: TOpenAPIDefinition.RequestBody.ContentProperty;
       function GetPatternProperty: TDynamicProperty<any>;
       function GetDescriptionStored: Boolean;
-      function GetRequiredStored: Boolean;
       function GetPatternPropertyStored: Boolean;
+      procedure SetRequired(const Value: System.Boolean);
     public
       destructor Destroy; override;
 
       property IsDescriptionStored: Boolean read GetDescriptionStored;
-      property IsRequiredStored: Boolean read GetRequiredStored;
+      property IsRequiredStored: Boolean read FRequiredIsStored;
       property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
     published
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property content: TOpenAPIDefinition.RequestBody.TContent read GetContent write FContent;
-      property required: System.Boolean read FRequired write FRequired stored GetRequiredStored;
+      property content: TOpenAPIDefinition.RequestBody.ContentProperty read GetContent write FContent;
+      property required: System.Boolean read FRequired write SetRequired stored FRequiredIsStored;
       [PatternProperty('^x-')]
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
     end;
@@ -2299,13 +2262,13 @@ type
 
     APIKeySecurityScheme = class
     public type
-      TType = (apiKey);
+      TypeProperty = (apiKey);
 
-      TIn = (header, query, cookie);
+      InProperty = (header, query, cookie);
     private
-      FType: TOpenAPIDefinition.APIKeySecurityScheme.TType;
+      FType: TOpenAPIDefinition.APIKeySecurityScheme.TypeProperty;
       FName: System.String;
-      FIn: TOpenAPIDefinition.APIKeySecurityScheme.TIn;
+      FIn: TOpenAPIDefinition.APIKeySecurityScheme.InProperty;
       FDescription: System.String;
       FPatternProperty: TDynamicProperty<any>;
 
@@ -2319,24 +2282,23 @@ type
       property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
     published
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.APIKeySecurityScheme.TType read FType write FType;
+      property &type: TOpenAPIDefinition.APIKeySecurityScheme.TypeProperty read FType write FType;
       property name: System.String read FName write FName;
       [FieldName('in')]
-      property &in: TOpenAPIDefinition.APIKeySecurityScheme.TIn read FIn write FIn;
+      property &in: TOpenAPIDefinition.APIKeySecurityScheme.InProperty read FIn write FIn;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       [PatternProperty('^x-')]
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
     end;
 
-    [Flat]
     HTTPSecurityScheme = class
     public type
-      TType = (http);
+      TypeProperty = (http);
     private
       FScheme: System.String;
       FBearerFormat: System.String;
       FDescription: System.String;
-      FType: TOpenAPIDefinition.HTTPSecurityScheme.TType;
+      FType: TOpenAPIDefinition.HTTPSecurityScheme.TypeProperty;
       FPatternProperty: TDynamicProperty<any>;
 
       function GetPatternProperty: TDynamicProperty<any>;
@@ -2354,16 +2316,16 @@ type
       property bearerFormat: System.String read FBearerFormat write FBearerFormat stored GetBearerFormatStored;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.HTTPSecurityScheme.TType read FType write FType;
+      property &type: TOpenAPIDefinition.HTTPSecurityScheme.TypeProperty read FType write FType;
       [PatternProperty('^x-')]
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
     end;
 
     OAuth2SecurityScheme = class
     public type
-      TType = (oauth2);
+      TypeProperty = (oauth2);
     private
-      FType: TOpenAPIDefinition.OAuth2SecurityScheme.TType;
+      FType: TOpenAPIDefinition.OAuth2SecurityScheme.TypeProperty;
       FFlows: TOpenAPIDefinition.OAuthFlows;
       FDescription: System.String;
       FPatternProperty: TDynamicProperty<any>;
@@ -2379,7 +2341,7 @@ type
       property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
     published
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.OAuth2SecurityScheme.TType read FType write FType;
+      property &type: TOpenAPIDefinition.OAuth2SecurityScheme.TypeProperty read FType write FType;
       property flows: TOpenAPIDefinition.OAuthFlows read GetFlows write FFlows;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       [PatternProperty('^x-')]
@@ -2388,9 +2350,9 @@ type
 
     OpenIdConnectSecurityScheme = class
     public type
-      TType = (openIdConnect);
+      TypeProperty = (openIdConnect);
     private
-      FType: TOpenAPIDefinition.OpenIdConnectSecurityScheme.TType;
+      FType: TOpenAPIDefinition.OpenIdConnectSecurityScheme.TypeProperty;
       FOpenIdConnectUrl: System.String;
       FDescription: System.String;
       FPatternProperty: TDynamicProperty<any>;
@@ -2405,7 +2367,7 @@ type
       property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
     published
       [FieldName('type')]
-      property &type: TOpenAPIDefinition.OpenIdConnectSecurityScheme.TType read FType write FType;
+      property &type: TOpenAPIDefinition.OpenIdConnectSecurityScheme.TypeProperty read FType write FType;
       property openIdConnectUrl: System.String read FOpenIdConnectUrl write FOpenIdConnectUrl;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       [PatternProperty('^x-')]
@@ -2450,9 +2412,9 @@ type
     ImplicitOAuthFlow = class
     public type
       // Forward class declaration
-      TScopes = class;
+      ScopesProperty = class;
 
-      TScopes = class
+      ScopesProperty = class
       private
         FAdditionalProperties: TDynamicProperty<System.String>;
 
@@ -2468,10 +2430,10 @@ type
     private
       FAuthorizationUrl: System.String;
       FRefreshUrl: System.String;
-      FScopes: TOpenAPIDefinition.ImplicitOAuthFlow.TScopes;
+      FScopes: TOpenAPIDefinition.ImplicitOAuthFlow.ScopesProperty;
       FPatternProperty: TDynamicProperty<any>;
 
-      function GetScopes: TOpenAPIDefinition.ImplicitOAuthFlow.TScopes;
+      function GetScopes: TOpenAPIDefinition.ImplicitOAuthFlow.ScopesProperty;
       function GetPatternProperty: TDynamicProperty<any>;
       function GetRefreshUrlStored: Boolean;
       function GetPatternPropertyStored: Boolean;
@@ -2483,7 +2445,7 @@ type
     published
       property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
       property refreshUrl: System.String read FRefreshUrl write FRefreshUrl stored GetRefreshUrlStored;
-      property scopes: TOpenAPIDefinition.ImplicitOAuthFlow.TScopes read GetScopes write FScopes;
+      property scopes: TOpenAPIDefinition.ImplicitOAuthFlow.ScopesProperty read GetScopes write FScopes;
       [PatternProperty('^x-')]
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
     end;
@@ -2491,9 +2453,9 @@ type
     PasswordOAuthFlow = class
     public type
       // Forward class declaration
-      TScopes = class;
+      ScopesProperty = class;
 
-      TScopes = class
+      ScopesProperty = class
       private
         FAdditionalProperties: TDynamicProperty<System.String>;
 
@@ -2509,10 +2471,10 @@ type
     private
       FTokenUrl: System.String;
       FRefreshUrl: System.String;
-      FScopes: TOpenAPIDefinition.PasswordOAuthFlow.TScopes;
+      FScopes: TOpenAPIDefinition.PasswordOAuthFlow.ScopesProperty;
       FPatternProperty: TDynamicProperty<any>;
 
-      function GetScopes: TOpenAPIDefinition.PasswordOAuthFlow.TScopes;
+      function GetScopes: TOpenAPIDefinition.PasswordOAuthFlow.ScopesProperty;
       function GetPatternProperty: TDynamicProperty<any>;
       function GetRefreshUrlStored: Boolean;
       function GetPatternPropertyStored: Boolean;
@@ -2524,7 +2486,7 @@ type
     published
       property tokenUrl: System.String read FTokenUrl write FTokenUrl;
       property refreshUrl: System.String read FRefreshUrl write FRefreshUrl stored GetRefreshUrlStored;
-      property scopes: TOpenAPIDefinition.PasswordOAuthFlow.TScopes read GetScopes write FScopes;
+      property scopes: TOpenAPIDefinition.PasswordOAuthFlow.ScopesProperty read GetScopes write FScopes;
       [PatternProperty('^x-')]
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
     end;
@@ -2532,9 +2494,9 @@ type
     ClientCredentialsFlow = class
     public type
       // Forward class declaration
-      TScopes = class;
+      ScopesProperty = class;
 
-      TScopes = class
+      ScopesProperty = class
       private
         FAdditionalProperties: TDynamicProperty<System.String>;
 
@@ -2550,10 +2512,10 @@ type
     private
       FTokenUrl: System.String;
       FRefreshUrl: System.String;
-      FScopes: TOpenAPIDefinition.ClientCredentialsFlow.TScopes;
+      FScopes: TOpenAPIDefinition.ClientCredentialsFlow.ScopesProperty;
       FPatternProperty: TDynamicProperty<any>;
 
-      function GetScopes: TOpenAPIDefinition.ClientCredentialsFlow.TScopes;
+      function GetScopes: TOpenAPIDefinition.ClientCredentialsFlow.ScopesProperty;
       function GetPatternProperty: TDynamicProperty<any>;
       function GetRefreshUrlStored: Boolean;
       function GetPatternPropertyStored: Boolean;
@@ -2565,7 +2527,7 @@ type
     published
       property tokenUrl: System.String read FTokenUrl write FTokenUrl;
       property refreshUrl: System.String read FRefreshUrl write FRefreshUrl stored GetRefreshUrlStored;
-      property scopes: TOpenAPIDefinition.ClientCredentialsFlow.TScopes read GetScopes write FScopes;
+      property scopes: TOpenAPIDefinition.ClientCredentialsFlow.ScopesProperty read GetScopes write FScopes;
       [PatternProperty('^x-')]
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
     end;
@@ -2573,9 +2535,9 @@ type
     AuthorizationCodeOAuthFlow = class
     public type
       // Forward class declaration
-      TScopes = class;
+      ScopesProperty = class;
 
-      TScopes = class
+      ScopesProperty = class
       private
         FAdditionalProperties: TDynamicProperty<System.String>;
 
@@ -2592,10 +2554,10 @@ type
       FAuthorizationUrl: System.String;
       FTokenUrl: System.String;
       FRefreshUrl: System.String;
-      FScopes: TOpenAPIDefinition.AuthorizationCodeOAuthFlow.TScopes;
+      FScopes: TOpenAPIDefinition.AuthorizationCodeOAuthFlow.ScopesProperty;
       FPatternProperty: TDynamicProperty<any>;
 
-      function GetScopes: TOpenAPIDefinition.AuthorizationCodeOAuthFlow.TScopes;
+      function GetScopes: TOpenAPIDefinition.AuthorizationCodeOAuthFlow.ScopesProperty;
       function GetPatternProperty: TDynamicProperty<any>;
       function GetRefreshUrlStored: Boolean;
       function GetPatternPropertyStored: Boolean;
@@ -2608,7 +2570,7 @@ type
       property authorizationUrl: System.String read FAuthorizationUrl write FAuthorizationUrl;
       property tokenUrl: System.String read FTokenUrl write FTokenUrl;
       property refreshUrl: System.String read FRefreshUrl write FRefreshUrl stored GetRefreshUrlStored;
-      property scopes: TOpenAPIDefinition.AuthorizationCodeOAuthFlow.TScopes read GetScopes write FScopes;
+      property scopes: TOpenAPIDefinition.AuthorizationCodeOAuthFlow.ScopesProperty read GetScopes write FScopes;
       [PatternProperty('^x-')]
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
     end;
@@ -2616,9 +2578,9 @@ type
     Link = class
     public type
       // Forward class declaration
-      TParameters = class;
+      ParametersProperty = class;
 
-      TParameters = class
+      ParametersProperty = class
       private
         FAdditionalProperties: TDynamicProperty<any>;
 
@@ -2634,13 +2596,13 @@ type
     private
       FOperationId: System.String;
       FOperationRef: System.String;
-      FParameters: TOpenAPIDefinition.Link.TParameters;
+      FParameters: TOpenAPIDefinition.Link.ParametersProperty;
       FRequestBody: any;
       FDescription: System.String;
       FServer: TOpenAPIDefinition.Server;
       FPatternProperty: TDynamicProperty<any>;
 
-      function GetParameters: TOpenAPIDefinition.Link.TParameters;
+      function GetParameters: TOpenAPIDefinition.Link.ParametersProperty;
       function GetServer: TOpenAPIDefinition.Server;
       function GetPatternProperty: TDynamicProperty<any>;
       function GetOperationIdStored: Boolean;
@@ -2663,7 +2625,7 @@ type
     published
       property operationId: System.String read FOperationId write FOperationId stored GetOperationIdStored;
       property operationRef: System.String read FOperationRef write FOperationRef stored GetOperationRefStored;
-      property parameters: TOpenAPIDefinition.Link.TParameters read GetParameters write FParameters stored GetParametersStored;
+      property parameters: TOpenAPIDefinition.Link.ParametersProperty read GetParameters write FParameters stored GetParametersStored;
       property requestBody: any read FRequestBody write FRequestBody stored GetRequestBodyStored;
       property description: System.String read FDescription write FDescription stored GetDescriptionStored;
       property server: TOpenAPIDefinition.Server read GetServer write FServer stored GetServerStored;
@@ -2693,18 +2655,18 @@ type
 
     Encoding = class
     public type
-      TStyle = (form, spaceDelimited, pipeDelimited, deepObject);
+      StyleProperty = (form, spaceDelimited, pipeDelimited, deepObject);
 
       // Forward class declaration
-      THeaders = class;
+      HeadersProperty = class;
 
-      THeaders = class
+      HeadersProperty = class
       public type
         // Forward class declaration
-        TadditionalProperties = class;
+        additionalPropertiesType = class;
 
         [Flat]
-        TadditionalProperties = class
+        additionalPropertiesType = class
         private
           FHeader: TOpenAPIDefinition.Header;
           FReference: TOpenAPIDefinition.Reference;
@@ -2723,59 +2685,51 @@ type
           property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
         end;
       private
-        FHeader: TOpenAPIDefinition.Header;
-        FReference: TOpenAPIDefinition.Reference;
-        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Encoding.THeaders.TadditionalProperties>;
+        FAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Encoding.HeadersProperty.additionalPropertiesType>;
 
-        function GetHeader: TOpenAPIDefinition.Header;
-        function GetReference: TOpenAPIDefinition.Reference;
-        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Encoding.THeaders.TadditionalProperties>;
-        function GetHeaderStored: Boolean;
-        function GetReferenceStored: Boolean;
+        function GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Encoding.HeadersProperty.additionalPropertiesType>;
         function GetAdditionalPropertiesStored: Boolean;
       public
         destructor Destroy; override;
 
-        property IsHeaderStored: Boolean read GetHeaderStored;
-        property IsReferenceStored: Boolean read GetReferenceStored;
         property IsAdditionalPropertiesStored: Boolean read GetAdditionalPropertiesStored;
       published
-        property Header: TOpenAPIDefinition.Header read GetHeader write FHeader stored GetHeaderStored;
-        property Reference: TOpenAPIDefinition.Reference read GetReference write FReference stored GetReferenceStored;
-        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Encoding.THeaders.TadditionalProperties> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+        property additionalProperties: TDynamicProperty<TOpenAPIDefinition.Encoding.HeadersProperty.additionalPropertiesType> read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       end;
     private
       FContentType: System.String;
-      FHeaders: TOpenAPIDefinition.Encoding.THeaders;
-      FStyle: TOpenAPIDefinition.Encoding.TStyle;
+      FHeaders: TOpenAPIDefinition.Encoding.HeadersProperty;
+      FStyle: TOpenAPIDefinition.Encoding.StyleProperty;
       FExplode: System.Boolean;
       FAllowReserved: System.Boolean;
       FPatternProperty: TDynamicProperty<any>;
       FStyleIsStored: Boolean;
+      FExplodeIsStored: Boolean;
+      FAllowReservedIsStored: Boolean;
 
-      function GetHeaders: TOpenAPIDefinition.Encoding.THeaders;
+      function GetHeaders: TOpenAPIDefinition.Encoding.HeadersProperty;
       function GetPatternProperty: TDynamicProperty<any>;
       function GetContentTypeStored: Boolean;
       function GetHeadersStored: Boolean;
-      function GetExplodeStored: Boolean;
-      function GetAllowReservedStored: Boolean;
       function GetPatternPropertyStored: Boolean;
-      procedure SetStyle(const Value: TOpenAPIDefinition.Encoding.TStyle);
+      procedure SetStyle(const Value: TOpenAPIDefinition.Encoding.StyleProperty);
+      procedure SetExplode(const Value: System.Boolean);
+      procedure SetAllowReserved(const Value: System.Boolean);
     public
       destructor Destroy; override;
 
       property IsContentTypeStored: Boolean read GetContentTypeStored;
       property IsHeadersStored: Boolean read GetHeadersStored;
       property IsStyleStored: Boolean read FStyleIsStored;
-      property IsExplodeStored: Boolean read GetExplodeStored;
-      property IsAllowReservedStored: Boolean read GetAllowReservedStored;
+      property IsExplodeStored: Boolean read FExplodeIsStored;
+      property IsAllowReservedStored: Boolean read FAllowReservedIsStored;
       property IsPatternPropertyStored: Boolean read GetPatternPropertyStored;
     published
       property contentType: System.String read FContentType write FContentType stored GetContentTypeStored;
-      property headers: TOpenAPIDefinition.Encoding.THeaders read GetHeaders write FHeaders stored GetHeadersStored;
-      property style: TOpenAPIDefinition.Encoding.TStyle read FStyle write SetStyle stored FStyleIsStored;
-      property explode: System.Boolean read FExplode write FExplode stored GetExplodeStored;
-      property allowReserved: System.Boolean read FAllowReserved write FAllowReserved stored GetAllowReservedStored;
+      property headers: TOpenAPIDefinition.Encoding.HeadersProperty read GetHeaders write FHeaders stored GetHeadersStored;
+      property style: TOpenAPIDefinition.Encoding.StyleProperty read FStyle write SetStyle stored FStyleIsStored;
+      property explode: System.Boolean read FExplode write SetExplode stored FExplodeIsStored;
+      property allowReserved: System.Boolean read FAllowReserved write SetAllowReserved stored FAllowReservedIsStored;
       [PatternProperty('^x-')]
       property PatternProperty: TDynamicProperty<any> read GetPatternProperty write FPatternProperty stored GetPatternPropertyStored;
     end;
@@ -2998,10 +2952,10 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Server.GetVariables: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Server.TVariables;
+function TOpenAPIDefinition.Server.GetVariables: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Server.VariablesProperty;
 begin
   if not Assigned(FVariables) then
-    FVariables := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Server.TVariables.Create;
+    FVariables := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Server.VariablesProperty.Create;
 
   Result := FVariables;
 end;
@@ -3024,16 +2978,16 @@ begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.Server.TVariables }
+{ TOpenAPIDefinition.Server.VariablesProperty }
 
-destructor TOpenAPIDefinition.Server.TVariables.Destroy;
+destructor TOpenAPIDefinition.Server.VariablesProperty.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Server.TVariables.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.ServerVariable>;
+function TOpenAPIDefinition.Server.VariablesProperty.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.ServerVariable>;
 begin
   if not Assigned(FAdditionalProperties) then
     FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.ServerVariable>.Create;
@@ -3041,7 +2995,7 @@ begin
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Server.TVariables.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.Server.VariablesProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
@@ -3105,10 +3059,10 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.GetSchemas: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TSchemas;
+function TOpenAPIDefinition.Components.GetSchemas: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.SchemasProperty;
 begin
   if not Assigned(FSchemas) then
-    FSchemas := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TSchemas.Create;
+    FSchemas := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.SchemasProperty.Create;
 
   Result := FSchemas;
 end;
@@ -3118,10 +3072,10 @@ begin
   Result := Assigned(FSchemas);
 end;
 
-function TOpenAPIDefinition.Components.GetResponses: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TResponses;
+function TOpenAPIDefinition.Components.GetResponses: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.ResponsesProperty;
 begin
   if not Assigned(FResponses) then
-    FResponses := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TResponses.Create;
+    FResponses := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.ResponsesProperty.Create;
 
   Result := FResponses;
 end;
@@ -3131,10 +3085,10 @@ begin
   Result := Assigned(FResponses);
 end;
 
-function TOpenAPIDefinition.Components.GetParameters: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TParameters;
+function TOpenAPIDefinition.Components.GetParameters: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.ParametersProperty;
 begin
   if not Assigned(FParameters) then
-    FParameters := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TParameters.Create;
+    FParameters := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.ParametersProperty.Create;
 
   Result := FParameters;
 end;
@@ -3144,10 +3098,10 @@ begin
   Result := Assigned(FParameters);
 end;
 
-function TOpenAPIDefinition.Components.GetExamples: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TExamples;
+function TOpenAPIDefinition.Components.GetExamples: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.ExamplesProperty;
 begin
   if not Assigned(FExamples) then
-    FExamples := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TExamples.Create;
+    FExamples := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.ExamplesProperty.Create;
 
   Result := FExamples;
 end;
@@ -3157,10 +3111,10 @@ begin
   Result := Assigned(FExamples);
 end;
 
-function TOpenAPIDefinition.Components.GetRequestBodies: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TRequestBodies;
+function TOpenAPIDefinition.Components.GetRequestBodies: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.RequestBodiesProperty;
 begin
   if not Assigned(FRequestBodies) then
-    FRequestBodies := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TRequestBodies.Create;
+    FRequestBodies := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.RequestBodiesProperty.Create;
 
   Result := FRequestBodies;
 end;
@@ -3170,10 +3124,10 @@ begin
   Result := Assigned(FRequestBodies);
 end;
 
-function TOpenAPIDefinition.Components.GetHeaders: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.THeaders;
+function TOpenAPIDefinition.Components.GetHeaders: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.HeadersProperty;
 begin
   if not Assigned(FHeaders) then
-    FHeaders := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.THeaders.Create;
+    FHeaders := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.HeadersProperty.Create;
 
   Result := FHeaders;
 end;
@@ -3183,10 +3137,10 @@ begin
   Result := Assigned(FHeaders);
 end;
 
-function TOpenAPIDefinition.Components.GetSecuritySchemes: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TSecuritySchemes;
+function TOpenAPIDefinition.Components.GetSecuritySchemes: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.SecuritySchemesProperty;
 begin
   if not Assigned(FSecuritySchemes) then
-    FSecuritySchemes := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TSecuritySchemes.Create;
+    FSecuritySchemes := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.SecuritySchemesProperty.Create;
 
   Result := FSecuritySchemes;
 end;
@@ -3196,10 +3150,10 @@ begin
   Result := Assigned(FSecuritySchemes);
 end;
 
-function TOpenAPIDefinition.Components.GetLinks: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TLinks;
+function TOpenAPIDefinition.Components.GetLinks: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.LinksProperty;
 begin
   if not Assigned(FLinks) then
-    FLinks := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TLinks.Create;
+    FLinks := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.LinksProperty.Create;
 
   Result := FLinks;
 end;
@@ -3209,10 +3163,10 @@ begin
   Result := Assigned(FLinks);
 end;
 
-function TOpenAPIDefinition.Components.GetCallbacks: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TCallbacks;
+function TOpenAPIDefinition.Components.GetCallbacks: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.CallbacksProperty;
 begin
   if not Assigned(FCallbacks) then
-    FCallbacks := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TCallbacks.Create;
+    FCallbacks := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.CallbacksProperty.Create;
 
   Result := FCallbacks;
 end;
@@ -3235,31 +3189,31 @@ begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.Components.TSchemas }
+{ TOpenAPIDefinition.Components.SchemasProperty }
 
-destructor TOpenAPIDefinition.Components.TSchemas.Destroy;
+destructor TOpenAPIDefinition.Components.SchemasProperty.Destroy;
 begin
-  FPatternProperty.Free;
+  FPatternPropertyElement.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.TSchemas.GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TSchemas.TPatternProperty>;
+function TOpenAPIDefinition.Components.SchemasProperty.GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.SchemasProperty.PatternProperty>;
 begin
-  if not Assigned(FPatternProperty) then
-    FPatternProperty := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TSchemas.TPatternProperty>.Create;
+  if not Assigned(FPatternPropertyElement) then
+    FPatternPropertyElement := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.SchemasProperty.PatternProperty>.Create;
 
-  Result := FPatternProperty;
+  Result := FPatternPropertyElement;
 end;
 
-function TOpenAPIDefinition.Components.TSchemas.GetPatternPropertyStored: Boolean;
+function TOpenAPIDefinition.Components.SchemasProperty.GetPatternPropertyStored: Boolean;
 begin
-  Result := Assigned(FPatternProperty);
+  Result := Assigned(FPatternPropertyElement);
 end;
 
-{ TOpenAPIDefinition.Components.TSchemas.TPatternProperty }
+{ TOpenAPIDefinition.Components.SchemasProperty.PatternProperty }
 
-destructor TOpenAPIDefinition.Components.TSchemas.TPatternProperty.Destroy;
+destructor TOpenAPIDefinition.Components.SchemasProperty.PatternProperty.Destroy;
 begin
   FSchema.Free;
 
@@ -3268,7 +3222,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.TSchemas.TPatternProperty.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.Components.SchemasProperty.PatternProperty.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.Create;
@@ -3276,12 +3230,12 @@ begin
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.Components.TSchemas.TPatternProperty.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.Components.SchemasProperty.PatternProperty.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.Components.TSchemas.TPatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Components.SchemasProperty.PatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -3289,36 +3243,36 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Components.TSchemas.TPatternProperty.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Components.SchemasProperty.PatternProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-{ TOpenAPIDefinition.Components.TResponses }
+{ TOpenAPIDefinition.Components.ResponsesProperty }
 
-destructor TOpenAPIDefinition.Components.TResponses.Destroy;
+destructor TOpenAPIDefinition.Components.ResponsesProperty.Destroy;
 begin
-  FPatternProperty.Free;
+  FPatternPropertyElement.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.TResponses.GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TResponses.TPatternProperty>;
+function TOpenAPIDefinition.Components.ResponsesProperty.GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.ResponsesProperty.PatternProperty>;
 begin
-  if not Assigned(FPatternProperty) then
-    FPatternProperty := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TResponses.TPatternProperty>.Create;
+  if not Assigned(FPatternPropertyElement) then
+    FPatternPropertyElement := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.ResponsesProperty.PatternProperty>.Create;
 
-  Result := FPatternProperty;
+  Result := FPatternPropertyElement;
 end;
 
-function TOpenAPIDefinition.Components.TResponses.GetPatternPropertyStored: Boolean;
+function TOpenAPIDefinition.Components.ResponsesProperty.GetPatternPropertyStored: Boolean;
 begin
-  Result := Assigned(FPatternProperty);
+  Result := Assigned(FPatternPropertyElement);
 end;
 
-{ TOpenAPIDefinition.Components.TResponses.TPatternProperty }
+{ TOpenAPIDefinition.Components.ResponsesProperty.PatternProperty }
 
-destructor TOpenAPIDefinition.Components.TResponses.TPatternProperty.Destroy;
+destructor TOpenAPIDefinition.Components.ResponsesProperty.PatternProperty.Destroy;
 begin
   FReference.Free;
 
@@ -3327,7 +3281,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.TResponses.TPatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Components.ResponsesProperty.PatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -3335,12 +3289,12 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Components.TResponses.TPatternProperty.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Components.ResponsesProperty.PatternProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.Components.TResponses.TPatternProperty.GetResponse: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response;
+function TOpenAPIDefinition.Components.ResponsesProperty.PatternProperty.GetResponse: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response;
 begin
   if not Assigned(FResponse) then
     FResponse := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.Create;
@@ -3348,36 +3302,36 @@ begin
   Result := FResponse;
 end;
 
-function TOpenAPIDefinition.Components.TResponses.TPatternProperty.GetResponseStored: Boolean;
+function TOpenAPIDefinition.Components.ResponsesProperty.PatternProperty.GetResponseStored: Boolean;
 begin
   Result := Assigned(FResponse);
 end;
 
-{ TOpenAPIDefinition.Components.TParameters }
+{ TOpenAPIDefinition.Components.ParametersProperty }
 
-destructor TOpenAPIDefinition.Components.TParameters.Destroy;
+destructor TOpenAPIDefinition.Components.ParametersProperty.Destroy;
 begin
-  FPatternProperty.Free;
+  FPatternPropertyElement.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.TParameters.GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TParameters.TPatternProperty>;
+function TOpenAPIDefinition.Components.ParametersProperty.GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.ParametersProperty.PatternProperty>;
 begin
-  if not Assigned(FPatternProperty) then
-    FPatternProperty := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TParameters.TPatternProperty>.Create;
+  if not Assigned(FPatternPropertyElement) then
+    FPatternPropertyElement := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.ParametersProperty.PatternProperty>.Create;
 
-  Result := FPatternProperty;
+  Result := FPatternPropertyElement;
 end;
 
-function TOpenAPIDefinition.Components.TParameters.GetPatternPropertyStored: Boolean;
+function TOpenAPIDefinition.Components.ParametersProperty.GetPatternPropertyStored: Boolean;
 begin
-  Result := Assigned(FPatternProperty);
+  Result := Assigned(FPatternPropertyElement);
 end;
 
-{ TOpenAPIDefinition.Components.TParameters.TPatternProperty }
+{ TOpenAPIDefinition.Components.ParametersProperty.PatternProperty }
 
-destructor TOpenAPIDefinition.Components.TParameters.TPatternProperty.Destroy;
+destructor TOpenAPIDefinition.Components.ParametersProperty.PatternProperty.Destroy;
 begin
   FReference.Free;
 
@@ -3386,7 +3340,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.TParameters.TPatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Components.ParametersProperty.PatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -3394,12 +3348,12 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Components.TParameters.TPatternProperty.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Components.ParametersProperty.PatternProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.Components.TParameters.TPatternProperty.GetParameter: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter;
+function TOpenAPIDefinition.Components.ParametersProperty.PatternProperty.GetParameter: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter;
 begin
   if not Assigned(FParameter) then
     FParameter := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.Create;
@@ -3407,36 +3361,36 @@ begin
   Result := FParameter;
 end;
 
-function TOpenAPIDefinition.Components.TParameters.TPatternProperty.GetParameterStored: Boolean;
+function TOpenAPIDefinition.Components.ParametersProperty.PatternProperty.GetParameterStored: Boolean;
 begin
   Result := Assigned(FParameter);
 end;
 
-{ TOpenAPIDefinition.Components.TExamples }
+{ TOpenAPIDefinition.Components.ExamplesProperty }
 
-destructor TOpenAPIDefinition.Components.TExamples.Destroy;
+destructor TOpenAPIDefinition.Components.ExamplesProperty.Destroy;
 begin
-  FPatternProperty.Free;
+  FPatternPropertyElement.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.TExamples.GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TExamples.TPatternProperty>;
+function TOpenAPIDefinition.Components.ExamplesProperty.GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.ExamplesProperty.PatternProperty>;
 begin
-  if not Assigned(FPatternProperty) then
-    FPatternProperty := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TExamples.TPatternProperty>.Create;
+  if not Assigned(FPatternPropertyElement) then
+    FPatternPropertyElement := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.ExamplesProperty.PatternProperty>.Create;
 
-  Result := FPatternProperty;
+  Result := FPatternPropertyElement;
 end;
 
-function TOpenAPIDefinition.Components.TExamples.GetPatternPropertyStored: Boolean;
+function TOpenAPIDefinition.Components.ExamplesProperty.GetPatternPropertyStored: Boolean;
 begin
-  Result := Assigned(FPatternProperty);
+  Result := Assigned(FPatternPropertyElement);
 end;
 
-{ TOpenAPIDefinition.Components.TExamples.TPatternProperty }
+{ TOpenAPIDefinition.Components.ExamplesProperty.PatternProperty }
 
-destructor TOpenAPIDefinition.Components.TExamples.TPatternProperty.Destroy;
+destructor TOpenAPIDefinition.Components.ExamplesProperty.PatternProperty.Destroy;
 begin
   FReference.Free;
 
@@ -3445,7 +3399,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.TExamples.TPatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Components.ExamplesProperty.PatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -3453,12 +3407,12 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Components.TExamples.TPatternProperty.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Components.ExamplesProperty.PatternProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.Components.TExamples.TPatternProperty.GetExample: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example;
+function TOpenAPIDefinition.Components.ExamplesProperty.PatternProperty.GetExample: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example;
 begin
   if not Assigned(FExample) then
     FExample := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example.Create;
@@ -3466,36 +3420,36 @@ begin
   Result := FExample;
 end;
 
-function TOpenAPIDefinition.Components.TExamples.TPatternProperty.GetExampleStored: Boolean;
+function TOpenAPIDefinition.Components.ExamplesProperty.PatternProperty.GetExampleStored: Boolean;
 begin
   Result := Assigned(FExample);
 end;
 
-{ TOpenAPIDefinition.Components.TRequestBodies }
+{ TOpenAPIDefinition.Components.RequestBodiesProperty }
 
-destructor TOpenAPIDefinition.Components.TRequestBodies.Destroy;
+destructor TOpenAPIDefinition.Components.RequestBodiesProperty.Destroy;
 begin
-  FPatternProperty.Free;
+  FPatternPropertyElement.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.TRequestBodies.GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TRequestBodies.TPatternProperty>;
+function TOpenAPIDefinition.Components.RequestBodiesProperty.GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.RequestBodiesProperty.PatternProperty>;
 begin
-  if not Assigned(FPatternProperty) then
-    FPatternProperty := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TRequestBodies.TPatternProperty>.Create;
+  if not Assigned(FPatternPropertyElement) then
+    FPatternPropertyElement := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.RequestBodiesProperty.PatternProperty>.Create;
 
-  Result := FPatternProperty;
+  Result := FPatternPropertyElement;
 end;
 
-function TOpenAPIDefinition.Components.TRequestBodies.GetPatternPropertyStored: Boolean;
+function TOpenAPIDefinition.Components.RequestBodiesProperty.GetPatternPropertyStored: Boolean;
 begin
-  Result := Assigned(FPatternProperty);
+  Result := Assigned(FPatternPropertyElement);
 end;
 
-{ TOpenAPIDefinition.Components.TRequestBodies.TPatternProperty }
+{ TOpenAPIDefinition.Components.RequestBodiesProperty.PatternProperty }
 
-destructor TOpenAPIDefinition.Components.TRequestBodies.TPatternProperty.Destroy;
+destructor TOpenAPIDefinition.Components.RequestBodiesProperty.PatternProperty.Destroy;
 begin
   FReference.Free;
 
@@ -3504,7 +3458,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.TRequestBodies.TPatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Components.RequestBodiesProperty.PatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -3512,12 +3466,12 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Components.TRequestBodies.TPatternProperty.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Components.RequestBodiesProperty.PatternProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.Components.TRequestBodies.TPatternProperty.GetRequestBody: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.RequestBody;
+function TOpenAPIDefinition.Components.RequestBodiesProperty.PatternProperty.GetRequestBody: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.RequestBody;
 begin
   if not Assigned(FRequestBody) then
     FRequestBody := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.RequestBody.Create;
@@ -3525,36 +3479,36 @@ begin
   Result := FRequestBody;
 end;
 
-function TOpenAPIDefinition.Components.TRequestBodies.TPatternProperty.GetRequestBodyStored: Boolean;
+function TOpenAPIDefinition.Components.RequestBodiesProperty.PatternProperty.GetRequestBodyStored: Boolean;
 begin
   Result := Assigned(FRequestBody);
 end;
 
-{ TOpenAPIDefinition.Components.THeaders }
+{ TOpenAPIDefinition.Components.HeadersProperty }
 
-destructor TOpenAPIDefinition.Components.THeaders.Destroy;
+destructor TOpenAPIDefinition.Components.HeadersProperty.Destroy;
 begin
-  FPatternProperty.Free;
+  FPatternPropertyElement.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.THeaders.GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.THeaders.TPatternProperty>;
+function TOpenAPIDefinition.Components.HeadersProperty.GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.HeadersProperty.PatternProperty>;
 begin
-  if not Assigned(FPatternProperty) then
-    FPatternProperty := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.THeaders.TPatternProperty>.Create;
+  if not Assigned(FPatternPropertyElement) then
+    FPatternPropertyElement := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.HeadersProperty.PatternProperty>.Create;
 
-  Result := FPatternProperty;
+  Result := FPatternPropertyElement;
 end;
 
-function TOpenAPIDefinition.Components.THeaders.GetPatternPropertyStored: Boolean;
+function TOpenAPIDefinition.Components.HeadersProperty.GetPatternPropertyStored: Boolean;
 begin
-  Result := Assigned(FPatternProperty);
+  Result := Assigned(FPatternPropertyElement);
 end;
 
-{ TOpenAPIDefinition.Components.THeaders.TPatternProperty }
+{ TOpenAPIDefinition.Components.HeadersProperty.PatternProperty }
 
-destructor TOpenAPIDefinition.Components.THeaders.TPatternProperty.Destroy;
+destructor TOpenAPIDefinition.Components.HeadersProperty.PatternProperty.Destroy;
 begin
   FReference.Free;
 
@@ -3563,7 +3517,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.THeaders.TPatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Components.HeadersProperty.PatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -3571,12 +3525,12 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Components.THeaders.TPatternProperty.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Components.HeadersProperty.PatternProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.Components.THeaders.TPatternProperty.GetHeader: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header;
+function TOpenAPIDefinition.Components.HeadersProperty.PatternProperty.GetHeader: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header;
 begin
   if not Assigned(FHeader) then
     FHeader := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.Create;
@@ -3584,36 +3538,36 @@ begin
   Result := FHeader;
 end;
 
-function TOpenAPIDefinition.Components.THeaders.TPatternProperty.GetHeaderStored: Boolean;
+function TOpenAPIDefinition.Components.HeadersProperty.PatternProperty.GetHeaderStored: Boolean;
 begin
   Result := Assigned(FHeader);
 end;
 
-{ TOpenAPIDefinition.Components.TSecuritySchemes }
+{ TOpenAPIDefinition.Components.SecuritySchemesProperty }
 
-destructor TOpenAPIDefinition.Components.TSecuritySchemes.Destroy;
+destructor TOpenAPIDefinition.Components.SecuritySchemesProperty.Destroy;
 begin
-  FPatternProperty.Free;
+  FPatternPropertyElement.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.TSecuritySchemes.GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TSecuritySchemes.TPatternProperty>;
+function TOpenAPIDefinition.Components.SecuritySchemesProperty.GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.SecuritySchemesProperty.PatternProperty>;
 begin
-  if not Assigned(FPatternProperty) then
-    FPatternProperty := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TSecuritySchemes.TPatternProperty>.Create;
+  if not Assigned(FPatternPropertyElement) then
+    FPatternPropertyElement := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.SecuritySchemesProperty.PatternProperty>.Create;
 
-  Result := FPatternProperty;
+  Result := FPatternPropertyElement;
 end;
 
-function TOpenAPIDefinition.Components.TSecuritySchemes.GetPatternPropertyStored: Boolean;
+function TOpenAPIDefinition.Components.SecuritySchemesProperty.GetPatternPropertyStored: Boolean;
 begin
-  Result := Assigned(FPatternProperty);
+  Result := Assigned(FPatternPropertyElement);
 end;
 
-{ TOpenAPIDefinition.Components.TSecuritySchemes.TPatternProperty }
+{ TOpenAPIDefinition.Components.SecuritySchemesProperty.PatternProperty }
 
-destructor TOpenAPIDefinition.Components.TSecuritySchemes.TPatternProperty.Destroy;
+destructor TOpenAPIDefinition.Components.SecuritySchemesProperty.PatternProperty.Destroy;
 begin
   FReference.Free;
 
@@ -3622,7 +3576,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.TSecuritySchemes.TPatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Components.SecuritySchemesProperty.PatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -3630,12 +3584,12 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Components.TSecuritySchemes.TPatternProperty.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Components.SecuritySchemesProperty.PatternProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.Components.TSecuritySchemes.TPatternProperty.GetSecurityScheme: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.SecurityScheme;
+function TOpenAPIDefinition.Components.SecuritySchemesProperty.PatternProperty.GetSecurityScheme: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.SecurityScheme;
 begin
   if not Assigned(FSecurityScheme) then
     FSecurityScheme := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.SecurityScheme.Create;
@@ -3643,36 +3597,36 @@ begin
   Result := FSecurityScheme;
 end;
 
-function TOpenAPIDefinition.Components.TSecuritySchemes.TPatternProperty.GetSecuritySchemeStored: Boolean;
+function TOpenAPIDefinition.Components.SecuritySchemesProperty.PatternProperty.GetSecuritySchemeStored: Boolean;
 begin
   Result := Assigned(FSecurityScheme);
 end;
 
-{ TOpenAPIDefinition.Components.TLinks }
+{ TOpenAPIDefinition.Components.LinksProperty }
 
-destructor TOpenAPIDefinition.Components.TLinks.Destroy;
+destructor TOpenAPIDefinition.Components.LinksProperty.Destroy;
 begin
-  FPatternProperty.Free;
+  FPatternPropertyElement.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.TLinks.GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TLinks.TPatternProperty>;
+function TOpenAPIDefinition.Components.LinksProperty.GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.LinksProperty.PatternProperty>;
 begin
-  if not Assigned(FPatternProperty) then
-    FPatternProperty := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TLinks.TPatternProperty>.Create;
+  if not Assigned(FPatternPropertyElement) then
+    FPatternPropertyElement := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.LinksProperty.PatternProperty>.Create;
 
-  Result := FPatternProperty;
+  Result := FPatternPropertyElement;
 end;
 
-function TOpenAPIDefinition.Components.TLinks.GetPatternPropertyStored: Boolean;
+function TOpenAPIDefinition.Components.LinksProperty.GetPatternPropertyStored: Boolean;
 begin
-  Result := Assigned(FPatternProperty);
+  Result := Assigned(FPatternPropertyElement);
 end;
 
-{ TOpenAPIDefinition.Components.TLinks.TPatternProperty }
+{ TOpenAPIDefinition.Components.LinksProperty.PatternProperty }
 
-destructor TOpenAPIDefinition.Components.TLinks.TPatternProperty.Destroy;
+destructor TOpenAPIDefinition.Components.LinksProperty.PatternProperty.Destroy;
 begin
   FReference.Free;
 
@@ -3681,7 +3635,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.TLinks.TPatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Components.LinksProperty.PatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -3689,12 +3643,12 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Components.TLinks.TPatternProperty.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Components.LinksProperty.PatternProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.Components.TLinks.TPatternProperty.GetLink: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Link;
+function TOpenAPIDefinition.Components.LinksProperty.PatternProperty.GetLink: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Link;
 begin
   if not Assigned(FLink) then
     FLink := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Link.Create;
@@ -3702,36 +3656,36 @@ begin
   Result := FLink;
 end;
 
-function TOpenAPIDefinition.Components.TLinks.TPatternProperty.GetLinkStored: Boolean;
+function TOpenAPIDefinition.Components.LinksProperty.PatternProperty.GetLinkStored: Boolean;
 begin
   Result := Assigned(FLink);
 end;
 
-{ TOpenAPIDefinition.Components.TCallbacks }
+{ TOpenAPIDefinition.Components.CallbacksProperty }
 
-destructor TOpenAPIDefinition.Components.TCallbacks.Destroy;
+destructor TOpenAPIDefinition.Components.CallbacksProperty.Destroy;
 begin
-  FPatternProperty.Free;
+  FPatternPropertyElement.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.TCallbacks.GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Components.TCallbacks.TPatternProperty>;
+function TOpenAPIDefinition.Components.CallbacksProperty.GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Components.CallbacksProperty.PatternProperty>;
 begin
-  if not Assigned(FPatternProperty) then
-    FPatternProperty := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.TCallbacks.TPatternProperty>.Create;
+  if not Assigned(FPatternPropertyElement) then
+    FPatternPropertyElement := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Components.CallbacksProperty.PatternProperty>.Create;
 
-  Result := FPatternProperty;
+  Result := FPatternPropertyElement;
 end;
 
-function TOpenAPIDefinition.Components.TCallbacks.GetPatternPropertyStored: Boolean;
+function TOpenAPIDefinition.Components.CallbacksProperty.GetPatternPropertyStored: Boolean;
 begin
-  Result := Assigned(FPatternProperty);
+  Result := Assigned(FPatternPropertyElement);
 end;
 
-{ TOpenAPIDefinition.Components.TCallbacks.TPatternProperty }
+{ TOpenAPIDefinition.Components.CallbacksProperty.PatternProperty }
 
-destructor TOpenAPIDefinition.Components.TCallbacks.TPatternProperty.Destroy;
+destructor TOpenAPIDefinition.Components.CallbacksProperty.PatternProperty.Destroy;
 begin
   FReference.Free;
 
@@ -3740,7 +3694,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Components.TCallbacks.TPatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Components.CallbacksProperty.PatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -3748,12 +3702,12 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Components.TCallbacks.TPatternProperty.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Components.CallbacksProperty.PatternProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.Components.TCallbacks.TPatternProperty.GetCallback: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Callback;
+function TOpenAPIDefinition.Components.CallbacksProperty.PatternProperty.GetCallback: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Callback;
 begin
   if not Assigned(FCallback) then
     FCallback := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Callback.Create;
@@ -3761,7 +3715,7 @@ begin
   Result := FCallback;
 end;
 
-function TOpenAPIDefinition.Components.TCallbacks.TPatternProperty.GetCallbackStored: Boolean;
+function TOpenAPIDefinition.Components.CallbacksProperty.PatternProperty.GetCallbackStored: Boolean;
 begin
   Result := Assigned(FCallback);
 end;
@@ -3813,9 +3767,10 @@ begin
   Result := FMaximum <> 0;
 end;
 
-function TOpenAPIDefinition.Schema.GetExclusiveMaximumStored: Boolean;
+procedure TOpenAPIDefinition.Schema.SetExclusiveMaximum(const Value: System.Boolean);
 begin
-  Result := False;
+  FExclusiveMaximum := Value;
+  FExclusiveMaximumIsStored := True;
 end;
 
 function TOpenAPIDefinition.Schema.GetMinimumStored: Boolean;
@@ -3823,9 +3778,10 @@ begin
   Result := FMinimum <> 0;
 end;
 
-function TOpenAPIDefinition.Schema.GetExclusiveMinimumStored: Boolean;
+procedure TOpenAPIDefinition.Schema.SetExclusiveMinimum(const Value: System.Boolean);
 begin
-  Result := False;
+  FExclusiveMinimum := Value;
+  FExclusiveMinimumIsStored := True;
 end;
 
 function TOpenAPIDefinition.Schema.GetMaxLengthStored: Boolean;
@@ -3853,9 +3809,10 @@ begin
   Result := FMinItems <> 0;
 end;
 
-function TOpenAPIDefinition.Schema.GetUniqueItemsStored: Boolean;
+procedure TOpenAPIDefinition.Schema.SetUniqueItems(const Value: System.Boolean);
 begin
-  Result := False;
+  FUniqueItems := Value;
+  FUniqueItemsIsStored := True;
 end;
 
 function TOpenAPIDefinition.Schema.GetMaxPropertiesStored: Boolean;
@@ -3878,16 +3835,16 @@ begin
   Result := Assigned(FEnum);
 end;
 
-procedure TOpenAPIDefinition.Schema.SetType(const Value: TOpenAPIDefinition.Schema.TType);
+procedure TOpenAPIDefinition.Schema.SetType(const Value: TOpenAPIDefinition.Schema.TypeProperty);
 begin
   FType := Value;
   FTypeIsStored := True;
 end;
 
-function TOpenAPIDefinition.Schema.GetNot: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TNot;
+function TOpenAPIDefinition.Schema.GetNot: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.NotProperty;
 begin
   if not Assigned(FNot) then
-    FNot := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TNot.Create;
+    FNot := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.NotProperty.Create;
 
   Result := FNot;
 end;
@@ -3897,9 +3854,9 @@ begin
   Result := Assigned(FNot);
 end;
 
-function TOpenAPIDefinition.Schema.AddAllOf: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TAllOfArrayItem;
+function TOpenAPIDefinition.Schema.AddAllOf: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.AllOfPropertyArrayItem;
 begin
-  Result := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TAllOfArrayItem.Create;
+  Result := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.AllOfPropertyArrayItem.Create;
 
   FAllOf := FAllOf + [Result];
 end;
@@ -3909,9 +3866,9 @@ begin
   Result := Assigned(FAllOf);
 end;
 
-function TOpenAPIDefinition.Schema.AddOneOf: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TOneOfArrayItem;
+function TOpenAPIDefinition.Schema.AddOneOf: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.OneOfPropertyArrayItem;
 begin
-  Result := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TOneOfArrayItem.Create;
+  Result := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.OneOfPropertyArrayItem.Create;
 
   FOneOf := FOneOf + [Result];
 end;
@@ -3921,9 +3878,9 @@ begin
   Result := Assigned(FOneOf);
 end;
 
-function TOpenAPIDefinition.Schema.AddAnyOf: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TAnyOfArrayItem;
+function TOpenAPIDefinition.Schema.AddAnyOf: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.AnyOfPropertyArrayItem;
 begin
-  Result := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TAnyOfArrayItem.Create;
+  Result := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.AnyOfPropertyArrayItem.Create;
 
   FAnyOf := FAnyOf + [Result];
 end;
@@ -3933,10 +3890,10 @@ begin
   Result := Assigned(FAnyOf);
 end;
 
-function TOpenAPIDefinition.Schema.GetItems: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TItems;
+function TOpenAPIDefinition.Schema.GetItems: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.ItemsProperty;
 begin
   if not Assigned(FItems) then
-    FItems := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TItems.Create;
+    FItems := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.ItemsProperty.Create;
 
   Result := FItems;
 end;
@@ -3946,10 +3903,10 @@ begin
   Result := Assigned(FItems);
 end;
 
-function TOpenAPIDefinition.Schema.GetProperties: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TProperties;
+function TOpenAPIDefinition.Schema.GetProperties: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.PropertiesProperty;
 begin
   if not Assigned(FProperties) then
-    FProperties := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TProperties.Create;
+    FProperties := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.PropertiesProperty.Create;
 
   Result := FProperties;
 end;
@@ -3959,10 +3916,10 @@ begin
   Result := Assigned(FProperties);
 end;
 
-function TOpenAPIDefinition.Schema.GetAdditionalProperties: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TAdditionalProperties;
+function TOpenAPIDefinition.Schema.GetAdditionalProperties: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.AdditionalPropertiesProperty;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TAdditionalProperties.Create;
+    FAdditionalProperties := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.AdditionalPropertiesProperty.Create;
 
   Result := FAdditionalProperties;
 end;
@@ -3987,9 +3944,10 @@ begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.Schema.GetNullableStored: Boolean;
+procedure TOpenAPIDefinition.Schema.SetNullable(const Value: System.Boolean);
 begin
-  Result := False;
+  FNullable := Value;
+  FNullableIsStored := True;
 end;
 
 function TOpenAPIDefinition.Schema.GetDiscriminator: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Discriminator;
@@ -4005,14 +3963,16 @@ begin
   Result := Assigned(FDiscriminator);
 end;
 
-function TOpenAPIDefinition.Schema.GetReadOnlyStored: Boolean;
+procedure TOpenAPIDefinition.Schema.SetReadOnly(const Value: System.Boolean);
 begin
-  Result := False;
+  FReadOnly := Value;
+  FReadOnlyIsStored := True;
 end;
 
-function TOpenAPIDefinition.Schema.GetWriteOnlyStored: Boolean;
+procedure TOpenAPIDefinition.Schema.SetWriteOnly(const Value: System.Boolean);
 begin
-  Result := False;
+  FWriteOnly := Value;
+  FWriteOnlyIsStored := True;
 end;
 
 function TOpenAPIDefinition.Schema.GetExampleStored: Boolean;
@@ -4033,9 +3993,10 @@ begin
   Result := Assigned(FExternalDocs);
 end;
 
-function TOpenAPIDefinition.Schema.GetDeprecatedStored: Boolean;
+procedure TOpenAPIDefinition.Schema.SetDeprecated(const Value: System.Boolean);
 begin
-  Result := False;
+  FDeprecated := Value;
+  FDeprecatedIsStored := True;
 end;
 
 function TOpenAPIDefinition.Schema.GetXml: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.XML;
@@ -4064,9 +4025,9 @@ begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.Schema.TNot }
+{ TOpenAPIDefinition.Schema.NotProperty }
 
-destructor TOpenAPIDefinition.Schema.TNot.Destroy;
+destructor TOpenAPIDefinition.Schema.NotProperty.Destroy;
 begin
   FSchema.Free;
 
@@ -4075,7 +4036,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Schema.TNot.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.Schema.NotProperty.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.Create;
@@ -4083,12 +4044,12 @@ begin
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.Schema.TNot.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.Schema.NotProperty.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.Schema.TNot.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Schema.NotProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -4096,14 +4057,14 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Schema.TNot.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Schema.NotProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-{ TOpenAPIDefinition.Schema.TAllOfArrayItem }
+{ TOpenAPIDefinition.Schema.AllOfPropertyArrayItem }
 
-destructor TOpenAPIDefinition.Schema.TAllOfArrayItem.Destroy;
+destructor TOpenAPIDefinition.Schema.AllOfPropertyArrayItem.Destroy;
 begin
   FSchema.Free;
 
@@ -4112,7 +4073,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Schema.TAllOfArrayItem.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.Schema.AllOfPropertyArrayItem.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.Create;
@@ -4120,12 +4081,12 @@ begin
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.Schema.TAllOfArrayItem.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.Schema.AllOfPropertyArrayItem.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.Schema.TAllOfArrayItem.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Schema.AllOfPropertyArrayItem.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -4133,14 +4094,14 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Schema.TAllOfArrayItem.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Schema.AllOfPropertyArrayItem.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-{ TOpenAPIDefinition.Schema.TOneOfArrayItem }
+{ TOpenAPIDefinition.Schema.OneOfPropertyArrayItem }
 
-destructor TOpenAPIDefinition.Schema.TOneOfArrayItem.Destroy;
+destructor TOpenAPIDefinition.Schema.OneOfPropertyArrayItem.Destroy;
 begin
   FSchema.Free;
 
@@ -4149,7 +4110,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Schema.TOneOfArrayItem.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.Schema.OneOfPropertyArrayItem.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.Create;
@@ -4157,12 +4118,12 @@ begin
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.Schema.TOneOfArrayItem.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.Schema.OneOfPropertyArrayItem.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.Schema.TOneOfArrayItem.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Schema.OneOfPropertyArrayItem.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -4170,14 +4131,14 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Schema.TOneOfArrayItem.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Schema.OneOfPropertyArrayItem.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-{ TOpenAPIDefinition.Schema.TAnyOfArrayItem }
+{ TOpenAPIDefinition.Schema.AnyOfPropertyArrayItem }
 
-destructor TOpenAPIDefinition.Schema.TAnyOfArrayItem.Destroy;
+destructor TOpenAPIDefinition.Schema.AnyOfPropertyArrayItem.Destroy;
 begin
   FSchema.Free;
 
@@ -4186,7 +4147,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Schema.TAnyOfArrayItem.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.Schema.AnyOfPropertyArrayItem.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.Create;
@@ -4194,12 +4155,12 @@ begin
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.Schema.TAnyOfArrayItem.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.Schema.AnyOfPropertyArrayItem.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.Schema.TAnyOfArrayItem.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Schema.AnyOfPropertyArrayItem.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -4207,14 +4168,14 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Schema.TAnyOfArrayItem.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Schema.AnyOfPropertyArrayItem.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-{ TOpenAPIDefinition.Schema.TItems }
+{ TOpenAPIDefinition.Schema.ItemsProperty }
 
-destructor TOpenAPIDefinition.Schema.TItems.Destroy;
+destructor TOpenAPIDefinition.Schema.ItemsProperty.Destroy;
 begin
   FSchema.Free;
 
@@ -4223,7 +4184,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Schema.TItems.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.Schema.ItemsProperty.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.Create;
@@ -4231,12 +4192,12 @@ begin
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.Schema.TItems.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.Schema.ItemsProperty.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.Schema.TItems.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Schema.ItemsProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -4244,66 +4205,36 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Schema.TItems.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Schema.ItemsProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-{ TOpenAPIDefinition.Schema.TProperties }
+{ TOpenAPIDefinition.Schema.PropertiesProperty }
 
-destructor TOpenAPIDefinition.Schema.TProperties.Destroy;
+destructor TOpenAPIDefinition.Schema.PropertiesProperty.Destroy;
 begin
-  FSchema.Free;
-
-  FReference.Free;
-
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Schema.TProperties.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
-begin
-  if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.Create;
-
-  Result := FSchema;
-end;
-
-function TOpenAPIDefinition.Schema.TProperties.GetSchemaStored: Boolean;
-begin
-  Result := Assigned(FSchema);
-end;
-
-function TOpenAPIDefinition.Schema.TProperties.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
-begin
-  if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
-
-  Result := FReference;
-end;
-
-function TOpenAPIDefinition.Schema.TProperties.GetReferenceStored: Boolean;
-begin
-  Result := Assigned(FReference);
-end;
-
-function TOpenAPIDefinition.Schema.TProperties.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Schema.TProperties.TadditionalProperties>;
+function TOpenAPIDefinition.Schema.PropertiesProperty.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Schema.PropertiesProperty.additionalPropertiesType>;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.TProperties.TadditionalProperties>.Create;
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.PropertiesProperty.additionalPropertiesType>.Create;
 
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Schema.TProperties.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.Schema.PropertiesProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.Schema.TProperties.TadditionalProperties }
+{ TOpenAPIDefinition.Schema.PropertiesProperty.additionalPropertiesType }
 
-destructor TOpenAPIDefinition.Schema.TProperties.TadditionalProperties.Destroy;
+destructor TOpenAPIDefinition.Schema.PropertiesProperty.additionalPropertiesType.Destroy;
 begin
   FSchema.Free;
 
@@ -4312,7 +4243,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Schema.TProperties.TadditionalProperties.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.Schema.PropertiesProperty.additionalPropertiesType.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.Create;
@@ -4320,12 +4251,12 @@ begin
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.Schema.TProperties.TadditionalProperties.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.Schema.PropertiesProperty.additionalPropertiesType.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.Schema.TProperties.TadditionalProperties.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Schema.PropertiesProperty.additionalPropertiesType.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -4333,14 +4264,14 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Schema.TProperties.TadditionalProperties.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Schema.PropertiesProperty.additionalPropertiesType.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-{ TOpenAPIDefinition.Schema.TAdditionalProperties }
+{ TOpenAPIDefinition.Schema.AdditionalPropertiesProperty }
 
-destructor TOpenAPIDefinition.Schema.TAdditionalProperties.Destroy;
+destructor TOpenAPIDefinition.Schema.AdditionalPropertiesProperty.Destroy;
 begin
   FSchema.Free;
 
@@ -4349,7 +4280,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Schema.TAdditionalProperties.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.Schema.AdditionalPropertiesProperty.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.Create;
@@ -4357,12 +4288,12 @@ begin
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.Schema.TAdditionalProperties.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.Schema.AdditionalPropertiesProperty.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.Schema.TAdditionalProperties.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Schema.AdditionalPropertiesProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -4370,14 +4301,15 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Schema.TAdditionalProperties.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Schema.AdditionalPropertiesProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-function TOpenAPIDefinition.Schema.TAdditionalProperties.GetBooleanStored: Boolean;
+procedure TOpenAPIDefinition.Schema.AdditionalPropertiesProperty.SetBoolean(const Value: System.Boolean);
 begin
-  Result := False;
+  FBoolean := Value;
+  FBooleanIsStored := True;
 end;
 
 { TOpenAPIDefinition.Discriminator }
@@ -4389,10 +4321,10 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Discriminator.GetMapping: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Discriminator.TMapping;
+function TOpenAPIDefinition.Discriminator.GetMapping: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Discriminator.MappingProperty;
 begin
   if not Assigned(FMapping) then
-    FMapping := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Discriminator.TMapping.Create;
+    FMapping := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Discriminator.MappingProperty.Create;
 
   Result := FMapping;
 end;
@@ -4402,16 +4334,16 @@ begin
   Result := Assigned(FMapping);
 end;
 
-{ TOpenAPIDefinition.Discriminator.TMapping }
+{ TOpenAPIDefinition.Discriminator.MappingProperty }
 
-destructor TOpenAPIDefinition.Discriminator.TMapping.Destroy;
+destructor TOpenAPIDefinition.Discriminator.MappingProperty.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Discriminator.TMapping.GetAdditionalProperties: TDynamicProperty<System.String>;
+function TOpenAPIDefinition.Discriminator.MappingProperty.GetAdditionalProperties: TDynamicProperty<System.String>;
 begin
   if not Assigned(FAdditionalProperties) then
     FAdditionalProperties := TDynamicProperty<System.String>.Create;
@@ -4419,7 +4351,7 @@ begin
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Discriminator.TMapping.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.Discriminator.MappingProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
@@ -4448,14 +4380,16 @@ begin
   Result := not FPrefix.IsEmpty;
 end;
 
-function TOpenAPIDefinition.XML.GetAttributeStored: Boolean;
+procedure TOpenAPIDefinition.XML.SetAttribute(const Value: System.Boolean);
 begin
-  Result := False;
+  FAttribute := Value;
+  FAttributeIsStored := True;
 end;
 
-function TOpenAPIDefinition.XML.GetWrappedStored: Boolean;
+procedure TOpenAPIDefinition.XML.SetWrapped(const Value: System.Boolean);
 begin
-  Result := False;
+  FWrapped := Value;
+  FWrappedIsStored := True;
 end;
 
 function TOpenAPIDefinition.XML.GetPatternProperty: TDynamicProperty<any>;
@@ -4486,10 +4420,10 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Response.GetHeaders: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.THeaders;
+function TOpenAPIDefinition.Response.GetHeaders: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.HeadersProperty;
 begin
   if not Assigned(FHeaders) then
-    FHeaders := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.THeaders.Create;
+    FHeaders := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.HeadersProperty.Create;
 
   Result := FHeaders;
 end;
@@ -4499,10 +4433,10 @@ begin
   Result := Assigned(FHeaders);
 end;
 
-function TOpenAPIDefinition.Response.GetContent: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.TContent;
+function TOpenAPIDefinition.Response.GetContent: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.ContentProperty;
 begin
   if not Assigned(FContent) then
-    FContent := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.TContent.Create;
+    FContent := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.ContentProperty.Create;
 
   Result := FContent;
 end;
@@ -4512,10 +4446,10 @@ begin
   Result := Assigned(FContent);
 end;
 
-function TOpenAPIDefinition.Response.GetLinks: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.TLinks;
+function TOpenAPIDefinition.Response.GetLinks: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.LinksProperty;
 begin
   if not Assigned(FLinks) then
-    FLinks := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.TLinks.Create;
+    FLinks := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.LinksProperty.Create;
 
   Result := FLinks;
 end;
@@ -4538,61 +4472,31 @@ begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.Response.THeaders }
+{ TOpenAPIDefinition.Response.HeadersProperty }
 
-destructor TOpenAPIDefinition.Response.THeaders.Destroy;
+destructor TOpenAPIDefinition.Response.HeadersProperty.Destroy;
 begin
-  FHeader.Free;
-
-  FReference.Free;
-
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Response.THeaders.GetHeader: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header;
-begin
-  if not Assigned(FHeader) then
-    FHeader := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.Create;
-
-  Result := FHeader;
-end;
-
-function TOpenAPIDefinition.Response.THeaders.GetHeaderStored: Boolean;
-begin
-  Result := Assigned(FHeader);
-end;
-
-function TOpenAPIDefinition.Response.THeaders.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
-begin
-  if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
-
-  Result := FReference;
-end;
-
-function TOpenAPIDefinition.Response.THeaders.GetReferenceStored: Boolean;
-begin
-  Result := Assigned(FReference);
-end;
-
-function TOpenAPIDefinition.Response.THeaders.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Response.THeaders.TadditionalProperties>;
+function TOpenAPIDefinition.Response.HeadersProperty.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Response.HeadersProperty.additionalPropertiesType>;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.THeaders.TadditionalProperties>.Create;
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.HeadersProperty.additionalPropertiesType>.Create;
 
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Response.THeaders.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.Response.HeadersProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.Response.THeaders.TadditionalProperties }
+{ TOpenAPIDefinition.Response.HeadersProperty.additionalPropertiesType }
 
-destructor TOpenAPIDefinition.Response.THeaders.TadditionalProperties.Destroy;
+destructor TOpenAPIDefinition.Response.HeadersProperty.additionalPropertiesType.Destroy;
 begin
   FHeader.Free;
 
@@ -4601,7 +4505,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Response.THeaders.TadditionalProperties.GetHeader: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header;
+function TOpenAPIDefinition.Response.HeadersProperty.additionalPropertiesType.GetHeader: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header;
 begin
   if not Assigned(FHeader) then
     FHeader := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.Create;
@@ -4609,12 +4513,12 @@ begin
   Result := FHeader;
 end;
 
-function TOpenAPIDefinition.Response.THeaders.TadditionalProperties.GetHeaderStored: Boolean;
+function TOpenAPIDefinition.Response.HeadersProperty.additionalPropertiesType.GetHeaderStored: Boolean;
 begin
   Result := Assigned(FHeader);
 end;
 
-function TOpenAPIDefinition.Response.THeaders.TadditionalProperties.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Response.HeadersProperty.additionalPropertiesType.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -4622,21 +4526,21 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Response.THeaders.TadditionalProperties.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Response.HeadersProperty.additionalPropertiesType.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-{ TOpenAPIDefinition.Response.TContent }
+{ TOpenAPIDefinition.Response.ContentProperty }
 
-destructor TOpenAPIDefinition.Response.TContent.Destroy;
+destructor TOpenAPIDefinition.Response.ContentProperty.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Response.TContent.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType>;
+function TOpenAPIDefinition.Response.ContentProperty.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType>;
 begin
   if not Assigned(FAdditionalProperties) then
     FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType>.Create;
@@ -4644,66 +4548,36 @@ begin
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Response.TContent.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.Response.ContentProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.Response.TLinks }
+{ TOpenAPIDefinition.Response.LinksProperty }
 
-destructor TOpenAPIDefinition.Response.TLinks.Destroy;
+destructor TOpenAPIDefinition.Response.LinksProperty.Destroy;
 begin
-  FLink.Free;
-
-  FReference.Free;
-
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Response.TLinks.GetLink: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Link;
-begin
-  if not Assigned(FLink) then
-    FLink := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Link.Create;
-
-  Result := FLink;
-end;
-
-function TOpenAPIDefinition.Response.TLinks.GetLinkStored: Boolean;
-begin
-  Result := Assigned(FLink);
-end;
-
-function TOpenAPIDefinition.Response.TLinks.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
-begin
-  if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
-
-  Result := FReference;
-end;
-
-function TOpenAPIDefinition.Response.TLinks.GetReferenceStored: Boolean;
-begin
-  Result := Assigned(FReference);
-end;
-
-function TOpenAPIDefinition.Response.TLinks.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Response.TLinks.TadditionalProperties>;
+function TOpenAPIDefinition.Response.LinksProperty.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Response.LinksProperty.additionalPropertiesType>;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.TLinks.TadditionalProperties>.Create;
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.LinksProperty.additionalPropertiesType>.Create;
 
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Response.TLinks.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.Response.LinksProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.Response.TLinks.TadditionalProperties }
+{ TOpenAPIDefinition.Response.LinksProperty.additionalPropertiesType }
 
-destructor TOpenAPIDefinition.Response.TLinks.TadditionalProperties.Destroy;
+destructor TOpenAPIDefinition.Response.LinksProperty.additionalPropertiesType.Destroy;
 begin
   FLink.Free;
 
@@ -4712,7 +4586,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Response.TLinks.TadditionalProperties.GetLink: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Link;
+function TOpenAPIDefinition.Response.LinksProperty.additionalPropertiesType.GetLink: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Link;
 begin
   if not Assigned(FLink) then
     FLink := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Link.Create;
@@ -4720,12 +4594,12 @@ begin
   Result := FLink;
 end;
 
-function TOpenAPIDefinition.Response.TLinks.TadditionalProperties.GetLinkStored: Boolean;
+function TOpenAPIDefinition.Response.LinksProperty.additionalPropertiesType.GetLinkStored: Boolean;
 begin
   Result := Assigned(FLink);
 end;
 
-function TOpenAPIDefinition.Response.TLinks.TadditionalProperties.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Response.LinksProperty.additionalPropertiesType.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -4733,7 +4607,7 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Response.TLinks.TadditionalProperties.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Response.LinksProperty.additionalPropertiesType.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
@@ -4753,10 +4627,10 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.MediaType.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType.TSchema;
+function TOpenAPIDefinition.MediaType.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType.SchemaProperty;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType.TSchema.Create;
+    FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType.SchemaProperty.Create;
 
   Result := FSchema;
 end;
@@ -4771,10 +4645,10 @@ begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.MediaType.GetExamples: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType.TExamples;
+function TOpenAPIDefinition.MediaType.GetExamples: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType.ExamplesProperty;
 begin
   if not Assigned(FExamples) then
-    FExamples := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType.TExamples.Create;
+    FExamples := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType.ExamplesProperty.Create;
 
   Result := FExamples;
 end;
@@ -4784,10 +4658,10 @@ begin
   Result := Assigned(FExamples);
 end;
 
-function TOpenAPIDefinition.MediaType.GetEncoding: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType.TEncoding;
+function TOpenAPIDefinition.MediaType.GetEncoding: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType.EncodingProperty;
 begin
   if not Assigned(FEncoding) then
-    FEncoding := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType.TEncoding.Create;
+    FEncoding := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType.EncodingProperty.Create;
 
   Result := FEncoding;
 end;
@@ -4815,9 +4689,9 @@ begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.MediaType.TSchema }
+{ TOpenAPIDefinition.MediaType.SchemaProperty }
 
-destructor TOpenAPIDefinition.MediaType.TSchema.Destroy;
+destructor TOpenAPIDefinition.MediaType.SchemaProperty.Destroy;
 begin
   FSchema.Free;
 
@@ -4826,7 +4700,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.MediaType.TSchema.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.MediaType.SchemaProperty.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.Create;
@@ -4834,12 +4708,12 @@ begin
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.MediaType.TSchema.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.MediaType.SchemaProperty.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.MediaType.TSchema.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.MediaType.SchemaProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -4847,66 +4721,36 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.MediaType.TSchema.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.MediaType.SchemaProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-{ TOpenAPIDefinition.MediaType.TExamples }
+{ TOpenAPIDefinition.MediaType.ExamplesProperty }
 
-destructor TOpenAPIDefinition.MediaType.TExamples.Destroy;
+destructor TOpenAPIDefinition.MediaType.ExamplesProperty.Destroy;
 begin
-  FExample.Free;
-
-  FReference.Free;
-
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.MediaType.TExamples.GetExample: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example;
-begin
-  if not Assigned(FExample) then
-    FExample := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example.Create;
-
-  Result := FExample;
-end;
-
-function TOpenAPIDefinition.MediaType.TExamples.GetExampleStored: Boolean;
-begin
-  Result := Assigned(FExample);
-end;
-
-function TOpenAPIDefinition.MediaType.TExamples.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
-begin
-  if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
-
-  Result := FReference;
-end;
-
-function TOpenAPIDefinition.MediaType.TExamples.GetReferenceStored: Boolean;
-begin
-  Result := Assigned(FReference);
-end;
-
-function TOpenAPIDefinition.MediaType.TExamples.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType.TExamples.TadditionalProperties>;
+function TOpenAPIDefinition.MediaType.ExamplesProperty.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType.ExamplesProperty.additionalPropertiesType>;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType.TExamples.TadditionalProperties>.Create;
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType.ExamplesProperty.additionalPropertiesType>.Create;
 
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.MediaType.TExamples.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.MediaType.ExamplesProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.MediaType.TExamples.TadditionalProperties }
+{ TOpenAPIDefinition.MediaType.ExamplesProperty.additionalPropertiesType }
 
-destructor TOpenAPIDefinition.MediaType.TExamples.TadditionalProperties.Destroy;
+destructor TOpenAPIDefinition.MediaType.ExamplesProperty.additionalPropertiesType.Destroy;
 begin
   FExample.Free;
 
@@ -4915,7 +4759,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.MediaType.TExamples.TadditionalProperties.GetExample: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example;
+function TOpenAPIDefinition.MediaType.ExamplesProperty.additionalPropertiesType.GetExample: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example;
 begin
   if not Assigned(FExample) then
     FExample := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example.Create;
@@ -4923,12 +4767,12 @@ begin
   Result := FExample;
 end;
 
-function TOpenAPIDefinition.MediaType.TExamples.TadditionalProperties.GetExampleStored: Boolean;
+function TOpenAPIDefinition.MediaType.ExamplesProperty.additionalPropertiesType.GetExampleStored: Boolean;
 begin
   Result := Assigned(FExample);
 end;
 
-function TOpenAPIDefinition.MediaType.TExamples.TadditionalProperties.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.MediaType.ExamplesProperty.additionalPropertiesType.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -4936,21 +4780,21 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.MediaType.TExamples.TadditionalProperties.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.MediaType.ExamplesProperty.additionalPropertiesType.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-{ TOpenAPIDefinition.MediaType.TEncoding }
+{ TOpenAPIDefinition.MediaType.EncodingProperty }
 
-destructor TOpenAPIDefinition.MediaType.TEncoding.Destroy;
+destructor TOpenAPIDefinition.MediaType.EncodingProperty.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.MediaType.TEncoding.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Encoding>;
+function TOpenAPIDefinition.MediaType.EncodingProperty.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Encoding>;
 begin
   if not Assigned(FAdditionalProperties) then
     FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Encoding>.Create;
@@ -4958,7 +4802,7 @@ begin
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.MediaType.TEncoding.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.MediaType.EncodingProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
@@ -5027,41 +4871,46 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Header.GetRequiredStored: Boolean;
+procedure TOpenAPIDefinition.Header.SetRequired(const Value: System.Boolean);
 begin
-  Result := False;
+  FRequired := Value;
+  FRequiredIsStored := True;
 end;
 
-function TOpenAPIDefinition.Header.GetDeprecatedStored: Boolean;
+procedure TOpenAPIDefinition.Header.SetDeprecated(const Value: System.Boolean);
 begin
-  Result := False;
+  FDeprecated := Value;
+  FDeprecatedIsStored := True;
 end;
 
-function TOpenAPIDefinition.Header.GetAllowEmptyValueStored: Boolean;
+procedure TOpenAPIDefinition.Header.SetAllowEmptyValue(const Value: System.Boolean);
 begin
-  Result := False;
+  FAllowEmptyValue := Value;
+  FAllowEmptyValueIsStored := True;
 end;
 
-procedure TOpenAPIDefinition.Header.SetStyle(const Value: TOpenAPIDefinition.Header.TStyle);
+procedure TOpenAPIDefinition.Header.SetStyle(const Value: TOpenAPIDefinition.Header.StyleProperty);
 begin
   FStyle := Value;
   FStyleIsStored := True;
 end;
 
-function TOpenAPIDefinition.Header.GetExplodeStored: Boolean;
+procedure TOpenAPIDefinition.Header.SetExplode(const Value: System.Boolean);
 begin
-  Result := False;
+  FExplode := Value;
+  FExplodeIsStored := True;
 end;
 
-function TOpenAPIDefinition.Header.GetAllowReservedStored: Boolean;
+procedure TOpenAPIDefinition.Header.SetAllowReserved(const Value: System.Boolean);
 begin
-  Result := False;
+  FAllowReserved := Value;
+  FAllowReservedIsStored := True;
 end;
 
-function TOpenAPIDefinition.Header.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.TSchema;
+function TOpenAPIDefinition.Header.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.SchemaProperty;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.TSchema.Create;
+    FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.SchemaProperty.Create;
 
   Result := FSchema;
 end;
@@ -5071,10 +4920,10 @@ begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.Header.GetContent: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.TContent;
+function TOpenAPIDefinition.Header.GetContent: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.ContentProperty;
 begin
   if not Assigned(FContent) then
-    FContent := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.TContent.Create;
+    FContent := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.ContentProperty.Create;
 
   Result := FContent;
 end;
@@ -5089,10 +4938,10 @@ begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.Header.GetExamples: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.TExamples;
+function TOpenAPIDefinition.Header.GetExamples: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.ExamplesProperty;
 begin
   if not Assigned(FExamples) then
-    FExamples := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.TExamples.Create;
+    FExamples := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.ExamplesProperty.Create;
 
   Result := FExamples;
 end;
@@ -5133,9 +4982,9 @@ begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.Header.TSchema }
+{ TOpenAPIDefinition.Header.SchemaProperty }
 
-destructor TOpenAPIDefinition.Header.TSchema.Destroy;
+destructor TOpenAPIDefinition.Header.SchemaProperty.Destroy;
 begin
   FSchema.Free;
 
@@ -5144,7 +4993,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Header.TSchema.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.Header.SchemaProperty.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.Create;
@@ -5152,12 +5001,12 @@ begin
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.Header.TSchema.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.Header.SchemaProperty.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.Header.TSchema.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Header.SchemaProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -5165,21 +5014,21 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Header.TSchema.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Header.SchemaProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-{ TOpenAPIDefinition.Header.TContent }
+{ TOpenAPIDefinition.Header.ContentProperty }
 
-destructor TOpenAPIDefinition.Header.TContent.Destroy;
+destructor TOpenAPIDefinition.Header.ContentProperty.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Header.TContent.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType>;
+function TOpenAPIDefinition.Header.ContentProperty.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType>;
 begin
   if not Assigned(FAdditionalProperties) then
     FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType>.Create;
@@ -5187,66 +5036,36 @@ begin
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Header.TContent.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.Header.ContentProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.Header.TExamples }
+{ TOpenAPIDefinition.Header.ExamplesProperty }
 
-destructor TOpenAPIDefinition.Header.TExamples.Destroy;
+destructor TOpenAPIDefinition.Header.ExamplesProperty.Destroy;
 begin
-  FExample.Free;
-
-  FReference.Free;
-
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Header.TExamples.GetExample: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example;
-begin
-  if not Assigned(FExample) then
-    FExample := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example.Create;
-
-  Result := FExample;
-end;
-
-function TOpenAPIDefinition.Header.TExamples.GetExampleStored: Boolean;
-begin
-  Result := Assigned(FExample);
-end;
-
-function TOpenAPIDefinition.Header.TExamples.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
-begin
-  if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
-
-  Result := FReference;
-end;
-
-function TOpenAPIDefinition.Header.TExamples.GetReferenceStored: Boolean;
-begin
-  Result := Assigned(FReference);
-end;
-
-function TOpenAPIDefinition.Header.TExamples.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Header.TExamples.TadditionalProperties>;
+function TOpenAPIDefinition.Header.ExamplesProperty.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Header.ExamplesProperty.additionalPropertiesType>;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.TExamples.TadditionalProperties>.Create;
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.ExamplesProperty.additionalPropertiesType>.Create;
 
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Header.TExamples.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.Header.ExamplesProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.Header.TExamples.TadditionalProperties }
+{ TOpenAPIDefinition.Header.ExamplesProperty.additionalPropertiesType }
 
-destructor TOpenAPIDefinition.Header.TExamples.TadditionalProperties.Destroy;
+destructor TOpenAPIDefinition.Header.ExamplesProperty.additionalPropertiesType.Destroy;
 begin
   FExample.Free;
 
@@ -5255,7 +5074,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Header.TExamples.TadditionalProperties.GetExample: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example;
+function TOpenAPIDefinition.Header.ExamplesProperty.additionalPropertiesType.GetExample: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example;
 begin
   if not Assigned(FExample) then
     FExample := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example.Create;
@@ -5263,12 +5082,12 @@ begin
   Result := FExample;
 end;
 
-function TOpenAPIDefinition.Header.TExamples.TadditionalProperties.GetExampleStored: Boolean;
+function TOpenAPIDefinition.Header.ExamplesProperty.additionalPropertiesType.GetExampleStored: Boolean;
 begin
   Result := Assigned(FExample);
 end;
 
-function TOpenAPIDefinition.Header.TExamples.TadditionalProperties.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Header.ExamplesProperty.additionalPropertiesType.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -5276,7 +5095,7 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Header.TExamples.TadditionalProperties.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Header.ExamplesProperty.additionalPropertiesType.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
@@ -5480,9 +5299,9 @@ begin
   Result := Assigned(FServers);
 end;
 
-function TOpenAPIDefinition.PathItem.AddParameters: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.PathItem.TParametersArrayItem;
+function TOpenAPIDefinition.PathItem.AddParameters: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.PathItem.ParametersPropertyArrayItem;
 begin
-  Result := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.PathItem.TParametersArrayItem.Create;
+  Result := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.PathItem.ParametersPropertyArrayItem.Create;
 
   FParameters := FParameters + [Result];
 end;
@@ -5505,9 +5324,9 @@ begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.PathItem.TParametersArrayItem }
+{ TOpenAPIDefinition.PathItem.ParametersPropertyArrayItem }
 
-destructor TOpenAPIDefinition.PathItem.TParametersArrayItem.Destroy;
+destructor TOpenAPIDefinition.PathItem.ParametersPropertyArrayItem.Destroy;
 begin
   FParameter.Free;
 
@@ -5516,7 +5335,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.PathItem.TParametersArrayItem.GetParameter: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter;
+function TOpenAPIDefinition.PathItem.ParametersPropertyArrayItem.GetParameter: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter;
 begin
   if not Assigned(FParameter) then
     FParameter := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.Create;
@@ -5524,12 +5343,12 @@ begin
   Result := FParameter;
 end;
 
-function TOpenAPIDefinition.PathItem.TParametersArrayItem.GetParameterStored: Boolean;
+function TOpenAPIDefinition.PathItem.ParametersPropertyArrayItem.GetParameterStored: Boolean;
 begin
   Result := Assigned(FParameter);
 end;
 
-function TOpenAPIDefinition.PathItem.TParametersArrayItem.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.PathItem.ParametersPropertyArrayItem.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -5537,7 +5356,7 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.PathItem.TParametersArrayItem.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.PathItem.ParametersPropertyArrayItem.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
@@ -5601,9 +5420,9 @@ begin
   Result := not FOperationId.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Operation.AddParameters: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Operation.TParametersArrayItem;
+function TOpenAPIDefinition.Operation.AddParameters: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Operation.ParametersPropertyArrayItem;
 begin
-  Result := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Operation.TParametersArrayItem.Create;
+  Result := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Operation.ParametersPropertyArrayItem.Create;
 
   FParameters := FParameters + [Result];
 end;
@@ -5613,10 +5432,10 @@ begin
   Result := Assigned(FParameters);
 end;
 
-function TOpenAPIDefinition.Operation.GetRequestBody: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Operation.TRequestBody;
+function TOpenAPIDefinition.Operation.GetRequestBody: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Operation.RequestBodyProperty;
 begin
   if not Assigned(FRequestBody) then
-    FRequestBody := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Operation.TRequestBody.Create;
+    FRequestBody := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Operation.RequestBodyProperty.Create;
 
   Result := FRequestBody;
 end;
@@ -5634,10 +5453,10 @@ begin
   Result := FResponses;
 end;
 
-function TOpenAPIDefinition.Operation.GetCallbacks: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Operation.TCallbacks;
+function TOpenAPIDefinition.Operation.GetCallbacks: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Operation.CallbacksProperty;
 begin
   if not Assigned(FCallbacks) then
-    FCallbacks := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Operation.TCallbacks.Create;
+    FCallbacks := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Operation.CallbacksProperty.Create;
 
   Result := FCallbacks;
 end;
@@ -5647,9 +5466,10 @@ begin
   Result := Assigned(FCallbacks);
 end;
 
-function TOpenAPIDefinition.Operation.GetDeprecatedStored: Boolean;
+procedure TOpenAPIDefinition.Operation.SetDeprecated(const Value: System.Boolean);
 begin
-  Result := False;
+  FDeprecated := Value;
+  FDeprecatedIsStored := True;
 end;
 
 function TOpenAPIDefinition.Operation.AddSecurity: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.SecurityRequirement;
@@ -5689,9 +5509,9 @@ begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.Operation.TParametersArrayItem }
+{ TOpenAPIDefinition.Operation.ParametersPropertyArrayItem }
 
-destructor TOpenAPIDefinition.Operation.TParametersArrayItem.Destroy;
+destructor TOpenAPIDefinition.Operation.ParametersPropertyArrayItem.Destroy;
 begin
   FParameter.Free;
 
@@ -5700,7 +5520,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Operation.TParametersArrayItem.GetParameter: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter;
+function TOpenAPIDefinition.Operation.ParametersPropertyArrayItem.GetParameter: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter;
 begin
   if not Assigned(FParameter) then
     FParameter := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.Create;
@@ -5708,12 +5528,12 @@ begin
   Result := FParameter;
 end;
 
-function TOpenAPIDefinition.Operation.TParametersArrayItem.GetParameterStored: Boolean;
+function TOpenAPIDefinition.Operation.ParametersPropertyArrayItem.GetParameterStored: Boolean;
 begin
   Result := Assigned(FParameter);
 end;
 
-function TOpenAPIDefinition.Operation.TParametersArrayItem.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Operation.ParametersPropertyArrayItem.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -5721,14 +5541,14 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Operation.TParametersArrayItem.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Operation.ParametersPropertyArrayItem.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-{ TOpenAPIDefinition.Operation.TRequestBody }
+{ TOpenAPIDefinition.Operation.RequestBodyProperty }
 
-destructor TOpenAPIDefinition.Operation.TRequestBody.Destroy;
+destructor TOpenAPIDefinition.Operation.RequestBodyProperty.Destroy;
 begin
   FRequestBody.Free;
 
@@ -5737,7 +5557,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Operation.TRequestBody.GetRequestBody: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.RequestBody;
+function TOpenAPIDefinition.Operation.RequestBodyProperty.GetRequestBody: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.RequestBody;
 begin
   if not Assigned(FRequestBody) then
     FRequestBody := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.RequestBody.Create;
@@ -5745,12 +5565,12 @@ begin
   Result := FRequestBody;
 end;
 
-function TOpenAPIDefinition.Operation.TRequestBody.GetRequestBodyStored: Boolean;
+function TOpenAPIDefinition.Operation.RequestBodyProperty.GetRequestBodyStored: Boolean;
 begin
   Result := Assigned(FRequestBody);
 end;
 
-function TOpenAPIDefinition.Operation.TRequestBody.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Operation.RequestBodyProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -5758,66 +5578,36 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Operation.TRequestBody.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Operation.RequestBodyProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-{ TOpenAPIDefinition.Operation.TCallbacks }
+{ TOpenAPIDefinition.Operation.CallbacksProperty }
 
-destructor TOpenAPIDefinition.Operation.TCallbacks.Destroy;
+destructor TOpenAPIDefinition.Operation.CallbacksProperty.Destroy;
 begin
-  FCallback.Free;
-
-  FReference.Free;
-
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Operation.TCallbacks.GetCallback: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Callback;
-begin
-  if not Assigned(FCallback) then
-    FCallback := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Callback.Create;
-
-  Result := FCallback;
-end;
-
-function TOpenAPIDefinition.Operation.TCallbacks.GetCallbackStored: Boolean;
-begin
-  Result := Assigned(FCallback);
-end;
-
-function TOpenAPIDefinition.Operation.TCallbacks.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
-begin
-  if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
-
-  Result := FReference;
-end;
-
-function TOpenAPIDefinition.Operation.TCallbacks.GetReferenceStored: Boolean;
-begin
-  Result := Assigned(FReference);
-end;
-
-function TOpenAPIDefinition.Operation.TCallbacks.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Operation.TCallbacks.TadditionalProperties>;
+function TOpenAPIDefinition.Operation.CallbacksProperty.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Operation.CallbacksProperty.additionalPropertiesType>;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Operation.TCallbacks.TadditionalProperties>.Create;
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Operation.CallbacksProperty.additionalPropertiesType>.Create;
 
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Operation.TCallbacks.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.Operation.CallbacksProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.Operation.TCallbacks.TadditionalProperties }
+{ TOpenAPIDefinition.Operation.CallbacksProperty.additionalPropertiesType }
 
-destructor TOpenAPIDefinition.Operation.TCallbacks.TadditionalProperties.Destroy;
+destructor TOpenAPIDefinition.Operation.CallbacksProperty.additionalPropertiesType.Destroy;
 begin
   FCallback.Free;
 
@@ -5826,7 +5616,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Operation.TCallbacks.TadditionalProperties.GetCallback: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Callback;
+function TOpenAPIDefinition.Operation.CallbacksProperty.additionalPropertiesType.GetCallback: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Callback;
 begin
   if not Assigned(FCallback) then
     FCallback := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Callback.Create;
@@ -5834,12 +5624,12 @@ begin
   Result := FCallback;
 end;
 
-function TOpenAPIDefinition.Operation.TCallbacks.TadditionalProperties.GetCallbackStored: Boolean;
+function TOpenAPIDefinition.Operation.CallbacksProperty.additionalPropertiesType.GetCallbackStored: Boolean;
 begin
   Result := Assigned(FCallback);
 end;
 
-function TOpenAPIDefinition.Operation.TCallbacks.TadditionalProperties.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Operation.CallbacksProperty.additionalPropertiesType.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -5847,7 +5637,7 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Operation.TCallbacks.TadditionalProperties.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Operation.CallbacksProperty.additionalPropertiesType.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
@@ -5858,17 +5648,17 @@ destructor TOpenAPIDefinition.Responses.Destroy;
 begin
   FDefault.Free;
 
-  FPatternProperty.Free;
+  FPatternPropertyElement.Free;
 
   FPatternProperty2.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Responses.GetDefault: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Responses.TDefault;
+function TOpenAPIDefinition.Responses.GetDefault: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Responses.DefaultProperty;
 begin
   if not Assigned(FDefault) then
-    FDefault := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Responses.TDefault.Create;
+    FDefault := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Responses.DefaultProperty.Create;
 
   Result := FDefault;
 end;
@@ -5878,17 +5668,17 @@ begin
   Result := Assigned(FDefault);
 end;
 
-function TOpenAPIDefinition.Responses.GetPatternProperty: TDynamicProperty<TOpenAPIDefinition.Responses.TPatternProperty>;
+function TOpenAPIDefinition.Responses.GetPatternPropertyElement: TDynamicProperty<TOpenAPIDefinition.Responses.PatternProperty>;
 begin
-  if not Assigned(FPatternProperty) then
-    FPatternProperty := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Responses.TPatternProperty>.Create;
+  if not Assigned(FPatternPropertyElement) then
+    FPatternPropertyElement := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Responses.PatternProperty>.Create;
 
-  Result := FPatternProperty;
+  Result := FPatternPropertyElement;
 end;
 
 function TOpenAPIDefinition.Responses.GetPatternPropertyStored: Boolean;
 begin
-  Result := Assigned(FPatternProperty);
+  Result := Assigned(FPatternPropertyElement);
 end;
 
 function TOpenAPIDefinition.Responses.GetPatternProperty2: TDynamicProperty<any>;
@@ -5904,9 +5694,9 @@ begin
   Result := Assigned(FPatternProperty2);
 end;
 
-{ TOpenAPIDefinition.Responses.TDefault }
+{ TOpenAPIDefinition.Responses.DefaultProperty }
 
-destructor TOpenAPIDefinition.Responses.TDefault.Destroy;
+destructor TOpenAPIDefinition.Responses.DefaultProperty.Destroy;
 begin
   FResponse.Free;
 
@@ -5915,7 +5705,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Responses.TDefault.GetResponse: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response;
+function TOpenAPIDefinition.Responses.DefaultProperty.GetResponse: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response;
 begin
   if not Assigned(FResponse) then
     FResponse := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.Create;
@@ -5923,12 +5713,12 @@ begin
   Result := FResponse;
 end;
 
-function TOpenAPIDefinition.Responses.TDefault.GetResponseStored: Boolean;
+function TOpenAPIDefinition.Responses.DefaultProperty.GetResponseStored: Boolean;
 begin
   Result := Assigned(FResponse);
 end;
 
-function TOpenAPIDefinition.Responses.TDefault.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Responses.DefaultProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -5936,14 +5726,14 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Responses.TDefault.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Responses.DefaultProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-{ TOpenAPIDefinition.Responses.TPatternProperty }
+{ TOpenAPIDefinition.Responses.PatternProperty }
 
-destructor TOpenAPIDefinition.Responses.TPatternProperty.Destroy;
+destructor TOpenAPIDefinition.Responses.PatternProperty.Destroy;
 begin
   FResponse.Free;
 
@@ -5952,7 +5742,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Responses.TPatternProperty.GetResponse: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response;
+function TOpenAPIDefinition.Responses.PatternProperty.GetResponse: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response;
 begin
   if not Assigned(FResponse) then
     FResponse := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Response.Create;
@@ -5960,12 +5750,12 @@ begin
   Result := FResponse;
 end;
 
-function TOpenAPIDefinition.Responses.TPatternProperty.GetResponseStored: Boolean;
+function TOpenAPIDefinition.Responses.PatternProperty.GetResponseStored: Boolean;
 begin
   Result := Assigned(FResponse);
 end;
 
-function TOpenAPIDefinition.Responses.TPatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Responses.PatternProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -5973,7 +5763,7 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Responses.TPatternProperty.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Responses.PatternProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
@@ -6099,19 +5889,22 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Parameter.GetRequiredStored: Boolean;
+procedure TOpenAPIDefinition.Parameter.SetRequired(const Value: System.Boolean);
 begin
-  Result := False;
+  FRequired := Value;
+  FRequiredIsStored := True;
 end;
 
-function TOpenAPIDefinition.Parameter.GetDeprecatedStored: Boolean;
+procedure TOpenAPIDefinition.Parameter.SetDeprecated(const Value: System.Boolean);
 begin
-  Result := False;
+  FDeprecated := Value;
+  FDeprecatedIsStored := True;
 end;
 
-function TOpenAPIDefinition.Parameter.GetAllowEmptyValueStored: Boolean;
+procedure TOpenAPIDefinition.Parameter.SetAllowEmptyValue(const Value: System.Boolean);
 begin
-  Result := False;
+  FAllowEmptyValue := Value;
+  FAllowEmptyValueIsStored := True;
 end;
 
 function TOpenAPIDefinition.Parameter.GetStyleStored: Boolean;
@@ -6119,20 +5912,22 @@ begin
   Result := not FStyle.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Parameter.GetExplodeStored: Boolean;
+procedure TOpenAPIDefinition.Parameter.SetExplode(const Value: System.Boolean);
 begin
-  Result := False;
+  FExplode := Value;
+  FExplodeIsStored := True;
 end;
 
-function TOpenAPIDefinition.Parameter.GetAllowReservedStored: Boolean;
+procedure TOpenAPIDefinition.Parameter.SetAllowReserved(const Value: System.Boolean);
 begin
-  Result := False;
+  FAllowReserved := Value;
+  FAllowReservedIsStored := True;
 end;
 
-function TOpenAPIDefinition.Parameter.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.TSchema;
+function TOpenAPIDefinition.Parameter.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.SchemaProperty;
 begin
   if not Assigned(FSchema) then
-    FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.TSchema.Create;
+    FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.SchemaProperty.Create;
 
   Result := FSchema;
 end;
@@ -6142,10 +5937,10 @@ begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.Parameter.GetContent: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.TContent;
+function TOpenAPIDefinition.Parameter.GetContent: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.ContentProperty;
 begin
   if not Assigned(FContent) then
-    FContent := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.TContent.Create;
+    FContent := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.ContentProperty.Create;
 
   Result := FContent;
 end;
@@ -6160,10 +5955,10 @@ begin
   Result := False;
 end;
 
-function TOpenAPIDefinition.Parameter.GetExamples: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.TExamples;
+function TOpenAPIDefinition.Parameter.GetExamples: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.ExamplesProperty;
 begin
   if not Assigned(FExamples) then
-    FExamples := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.TExamples.Create;
+    FExamples := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.ExamplesProperty.Create;
 
   Result := FExamples;
 end;
@@ -6256,9 +6051,9 @@ begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.Parameter.TSchema }
+{ TOpenAPIDefinition.Parameter.SchemaProperty }
 
-destructor TOpenAPIDefinition.Parameter.TSchema.Destroy;
+destructor TOpenAPIDefinition.Parameter.SchemaProperty.Destroy;
 begin
   FSchema.Free;
 
@@ -6267,7 +6062,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Parameter.TSchema.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
+function TOpenAPIDefinition.Parameter.SchemaProperty.GetSchema: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema;
 begin
   if not Assigned(FSchema) then
     FSchema := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Schema.Create;
@@ -6275,12 +6070,12 @@ begin
   Result := FSchema;
 end;
 
-function TOpenAPIDefinition.Parameter.TSchema.GetSchemaStored: Boolean;
+function TOpenAPIDefinition.Parameter.SchemaProperty.GetSchemaStored: Boolean;
 begin
   Result := Assigned(FSchema);
 end;
 
-function TOpenAPIDefinition.Parameter.TSchema.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Parameter.SchemaProperty.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -6288,21 +6083,21 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Parameter.TSchema.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Parameter.SchemaProperty.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
-{ TOpenAPIDefinition.Parameter.TContent }
+{ TOpenAPIDefinition.Parameter.ContentProperty }
 
-destructor TOpenAPIDefinition.Parameter.TContent.Destroy;
+destructor TOpenAPIDefinition.Parameter.ContentProperty.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Parameter.TContent.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType>;
+function TOpenAPIDefinition.Parameter.ContentProperty.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType>;
 begin
   if not Assigned(FAdditionalProperties) then
     FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType>.Create;
@@ -6310,66 +6105,36 @@ begin
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Parameter.TContent.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.Parameter.ContentProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.Parameter.TExamples }
+{ TOpenAPIDefinition.Parameter.ExamplesProperty }
 
-destructor TOpenAPIDefinition.Parameter.TExamples.Destroy;
+destructor TOpenAPIDefinition.Parameter.ExamplesProperty.Destroy;
 begin
-  FExample.Free;
-
-  FReference.Free;
-
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Parameter.TExamples.GetExample: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example;
-begin
-  if not Assigned(FExample) then
-    FExample := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example.Create;
-
-  Result := FExample;
-end;
-
-function TOpenAPIDefinition.Parameter.TExamples.GetExampleStored: Boolean;
-begin
-  Result := Assigned(FExample);
-end;
-
-function TOpenAPIDefinition.Parameter.TExamples.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
-begin
-  if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
-
-  Result := FReference;
-end;
-
-function TOpenAPIDefinition.Parameter.TExamples.GetReferenceStored: Boolean;
-begin
-  Result := Assigned(FReference);
-end;
-
-function TOpenAPIDefinition.Parameter.TExamples.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Parameter.TExamples.TadditionalProperties>;
+function TOpenAPIDefinition.Parameter.ExamplesProperty.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Parameter.ExamplesProperty.additionalPropertiesType>;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.TExamples.TadditionalProperties>.Create;
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Parameter.ExamplesProperty.additionalPropertiesType>.Create;
 
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Parameter.TExamples.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.Parameter.ExamplesProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.Parameter.TExamples.TadditionalProperties }
+{ TOpenAPIDefinition.Parameter.ExamplesProperty.additionalPropertiesType }
 
-destructor TOpenAPIDefinition.Parameter.TExamples.TadditionalProperties.Destroy;
+destructor TOpenAPIDefinition.Parameter.ExamplesProperty.additionalPropertiesType.Destroy;
 begin
   FExample.Free;
 
@@ -6378,7 +6143,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Parameter.TExamples.TadditionalProperties.GetExample: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example;
+function TOpenAPIDefinition.Parameter.ExamplesProperty.additionalPropertiesType.GetExample: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example;
 begin
   if not Assigned(FExample) then
     FExample := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Example.Create;
@@ -6386,12 +6151,12 @@ begin
   Result := FExample;
 end;
 
-function TOpenAPIDefinition.Parameter.TExamples.TadditionalProperties.GetExampleStored: Boolean;
+function TOpenAPIDefinition.Parameter.ExamplesProperty.additionalPropertiesType.GetExampleStored: Boolean;
 begin
   Result := Assigned(FExample);
 end;
 
-function TOpenAPIDefinition.Parameter.TExamples.TadditionalProperties.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Parameter.ExamplesProperty.additionalPropertiesType.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -6399,20 +6164,20 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Parameter.TExamples.TadditionalProperties.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Parameter.ExamplesProperty.additionalPropertiesType.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;
 
 { TOpenAPIDefinition.PathParameter }
 
-procedure TOpenAPIDefinition.PathParameter.SetIn(const Value: TOpenAPIDefinition.PathParameter.TIn);
+procedure TOpenAPIDefinition.PathParameter.SetIn(const Value: TOpenAPIDefinition.PathParameter.InProperty);
 begin
   FIn := Value;
   FInIsStored := True;
 end;
 
-procedure TOpenAPIDefinition.PathParameter.SetStyle(const Value: TOpenAPIDefinition.PathParameter.TStyle);
+procedure TOpenAPIDefinition.PathParameter.SetStyle(const Value: TOpenAPIDefinition.PathParameter.StyleProperty);
 begin
   FStyle := Value;
   FStyleIsStored := True;
@@ -6420,13 +6185,13 @@ end;
 
 { TOpenAPIDefinition.QueryParameter }
 
-procedure TOpenAPIDefinition.QueryParameter.SetIn(const Value: TOpenAPIDefinition.QueryParameter.TIn);
+procedure TOpenAPIDefinition.QueryParameter.SetIn(const Value: TOpenAPIDefinition.QueryParameter.InProperty);
 begin
   FIn := Value;
   FInIsStored := True;
 end;
 
-procedure TOpenAPIDefinition.QueryParameter.SetStyle(const Value: TOpenAPIDefinition.QueryParameter.TStyle);
+procedure TOpenAPIDefinition.QueryParameter.SetStyle(const Value: TOpenAPIDefinition.QueryParameter.StyleProperty);
 begin
   FStyle := Value;
   FStyleIsStored := True;
@@ -6434,13 +6199,13 @@ end;
 
 { TOpenAPIDefinition.HeaderParameter }
 
-procedure TOpenAPIDefinition.HeaderParameter.SetIn(const Value: TOpenAPIDefinition.HeaderParameter.TIn);
+procedure TOpenAPIDefinition.HeaderParameter.SetIn(const Value: TOpenAPIDefinition.HeaderParameter.InProperty);
 begin
   FIn := Value;
   FInIsStored := True;
 end;
 
-procedure TOpenAPIDefinition.HeaderParameter.SetStyle(const Value: TOpenAPIDefinition.HeaderParameter.TStyle);
+procedure TOpenAPIDefinition.HeaderParameter.SetStyle(const Value: TOpenAPIDefinition.HeaderParameter.StyleProperty);
 begin
   FStyle := Value;
   FStyleIsStored := True;
@@ -6448,13 +6213,13 @@ end;
 
 { TOpenAPIDefinition.CookieParameter }
 
-procedure TOpenAPIDefinition.CookieParameter.SetIn(const Value: TOpenAPIDefinition.CookieParameter.TIn);
+procedure TOpenAPIDefinition.CookieParameter.SetIn(const Value: TOpenAPIDefinition.CookieParameter.InProperty);
 begin
   FIn := Value;
   FInIsStored := True;
 end;
 
-procedure TOpenAPIDefinition.CookieParameter.SetStyle(const Value: TOpenAPIDefinition.CookieParameter.TStyle);
+procedure TOpenAPIDefinition.CookieParameter.SetStyle(const Value: TOpenAPIDefinition.CookieParameter.StyleProperty);
 begin
   FStyle := Value;
   FStyleIsStored := True;
@@ -6476,17 +6241,18 @@ begin
   Result := not FDescription.IsEmpty;
 end;
 
-function TOpenAPIDefinition.RequestBody.GetContent: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.RequestBody.TContent;
+function TOpenAPIDefinition.RequestBody.GetContent: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.RequestBody.ContentProperty;
 begin
   if not Assigned(FContent) then
-    FContent := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.RequestBody.TContent.Create;
+    FContent := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.RequestBody.ContentProperty.Create;
 
   Result := FContent;
 end;
 
-function TOpenAPIDefinition.RequestBody.GetRequiredStored: Boolean;
+procedure TOpenAPIDefinition.RequestBody.SetRequired(const Value: System.Boolean);
 begin
-  Result := False;
+  FRequired := Value;
+  FRequiredIsStored := True;
 end;
 
 function TOpenAPIDefinition.RequestBody.GetPatternProperty: TDynamicProperty<any>;
@@ -6502,16 +6268,16 @@ begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.RequestBody.TContent }
+{ TOpenAPIDefinition.RequestBody.ContentProperty }
 
-destructor TOpenAPIDefinition.RequestBody.TContent.Destroy;
+destructor TOpenAPIDefinition.RequestBody.ContentProperty.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.RequestBody.TContent.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType>;
+function TOpenAPIDefinition.RequestBody.ContentProperty.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.MediaType>;
 begin
   if not Assigned(FAdditionalProperties) then
     FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.MediaType>.Create;
@@ -6519,7 +6285,7 @@ begin
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.RequestBody.TContent.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.RequestBody.ContentProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
@@ -6812,10 +6578,10 @@ begin
   Result := not FRefreshUrl.IsEmpty;
 end;
 
-function TOpenAPIDefinition.ImplicitOAuthFlow.GetScopes: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.ImplicitOAuthFlow.TScopes;
+function TOpenAPIDefinition.ImplicitOAuthFlow.GetScopes: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.ImplicitOAuthFlow.ScopesProperty;
 begin
   if not Assigned(FScopes) then
-    FScopes := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.ImplicitOAuthFlow.TScopes.Create;
+    FScopes := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.ImplicitOAuthFlow.ScopesProperty.Create;
 
   Result := FScopes;
 end;
@@ -6833,16 +6599,16 @@ begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.ImplicitOAuthFlow.TScopes }
+{ TOpenAPIDefinition.ImplicitOAuthFlow.ScopesProperty }
 
-destructor TOpenAPIDefinition.ImplicitOAuthFlow.TScopes.Destroy;
+destructor TOpenAPIDefinition.ImplicitOAuthFlow.ScopesProperty.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.ImplicitOAuthFlow.TScopes.GetAdditionalProperties: TDynamicProperty<System.String>;
+function TOpenAPIDefinition.ImplicitOAuthFlow.ScopesProperty.GetAdditionalProperties: TDynamicProperty<System.String>;
 begin
   if not Assigned(FAdditionalProperties) then
     FAdditionalProperties := TDynamicProperty<System.String>.Create;
@@ -6850,7 +6616,7 @@ begin
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.ImplicitOAuthFlow.TScopes.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.ImplicitOAuthFlow.ScopesProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
@@ -6871,10 +6637,10 @@ begin
   Result := not FRefreshUrl.IsEmpty;
 end;
 
-function TOpenAPIDefinition.PasswordOAuthFlow.GetScopes: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.PasswordOAuthFlow.TScopes;
+function TOpenAPIDefinition.PasswordOAuthFlow.GetScopes: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.PasswordOAuthFlow.ScopesProperty;
 begin
   if not Assigned(FScopes) then
-    FScopes := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.PasswordOAuthFlow.TScopes.Create;
+    FScopes := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.PasswordOAuthFlow.ScopesProperty.Create;
 
   Result := FScopes;
 end;
@@ -6892,16 +6658,16 @@ begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.PasswordOAuthFlow.TScopes }
+{ TOpenAPIDefinition.PasswordOAuthFlow.ScopesProperty }
 
-destructor TOpenAPIDefinition.PasswordOAuthFlow.TScopes.Destroy;
+destructor TOpenAPIDefinition.PasswordOAuthFlow.ScopesProperty.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.PasswordOAuthFlow.TScopes.GetAdditionalProperties: TDynamicProperty<System.String>;
+function TOpenAPIDefinition.PasswordOAuthFlow.ScopesProperty.GetAdditionalProperties: TDynamicProperty<System.String>;
 begin
   if not Assigned(FAdditionalProperties) then
     FAdditionalProperties := TDynamicProperty<System.String>.Create;
@@ -6909,7 +6675,7 @@ begin
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.PasswordOAuthFlow.TScopes.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.PasswordOAuthFlow.ScopesProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
@@ -6930,10 +6696,10 @@ begin
   Result := not FRefreshUrl.IsEmpty;
 end;
 
-function TOpenAPIDefinition.ClientCredentialsFlow.GetScopes: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.ClientCredentialsFlow.TScopes;
+function TOpenAPIDefinition.ClientCredentialsFlow.GetScopes: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.ClientCredentialsFlow.ScopesProperty;
 begin
   if not Assigned(FScopes) then
-    FScopes := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.ClientCredentialsFlow.TScopes.Create;
+    FScopes := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.ClientCredentialsFlow.ScopesProperty.Create;
 
   Result := FScopes;
 end;
@@ -6951,16 +6717,16 @@ begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.ClientCredentialsFlow.TScopes }
+{ TOpenAPIDefinition.ClientCredentialsFlow.ScopesProperty }
 
-destructor TOpenAPIDefinition.ClientCredentialsFlow.TScopes.Destroy;
+destructor TOpenAPIDefinition.ClientCredentialsFlow.ScopesProperty.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.ClientCredentialsFlow.TScopes.GetAdditionalProperties: TDynamicProperty<System.String>;
+function TOpenAPIDefinition.ClientCredentialsFlow.ScopesProperty.GetAdditionalProperties: TDynamicProperty<System.String>;
 begin
   if not Assigned(FAdditionalProperties) then
     FAdditionalProperties := TDynamicProperty<System.String>.Create;
@@ -6968,7 +6734,7 @@ begin
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.ClientCredentialsFlow.TScopes.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.ClientCredentialsFlow.ScopesProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
@@ -6989,10 +6755,10 @@ begin
   Result := not FRefreshUrl.IsEmpty;
 end;
 
-function TOpenAPIDefinition.AuthorizationCodeOAuthFlow.GetScopes: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.AuthorizationCodeOAuthFlow.TScopes;
+function TOpenAPIDefinition.AuthorizationCodeOAuthFlow.GetScopes: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.AuthorizationCodeOAuthFlow.ScopesProperty;
 begin
   if not Assigned(FScopes) then
-    FScopes := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.AuthorizationCodeOAuthFlow.TScopes.Create;
+    FScopes := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.AuthorizationCodeOAuthFlow.ScopesProperty.Create;
 
   Result := FScopes;
 end;
@@ -7010,16 +6776,16 @@ begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.AuthorizationCodeOAuthFlow.TScopes }
+{ TOpenAPIDefinition.AuthorizationCodeOAuthFlow.ScopesProperty }
 
-destructor TOpenAPIDefinition.AuthorizationCodeOAuthFlow.TScopes.Destroy;
+destructor TOpenAPIDefinition.AuthorizationCodeOAuthFlow.ScopesProperty.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.AuthorizationCodeOAuthFlow.TScopes.GetAdditionalProperties: TDynamicProperty<System.String>;
+function TOpenAPIDefinition.AuthorizationCodeOAuthFlow.ScopesProperty.GetAdditionalProperties: TDynamicProperty<System.String>;
 begin
   if not Assigned(FAdditionalProperties) then
     FAdditionalProperties := TDynamicProperty<System.String>.Create;
@@ -7027,7 +6793,7 @@ begin
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.AuthorizationCodeOAuthFlow.TScopes.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.AuthorizationCodeOAuthFlow.ScopesProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
@@ -7055,10 +6821,10 @@ begin
   Result := not FOperationRef.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Link.GetParameters: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Link.TParameters;
+function TOpenAPIDefinition.Link.GetParameters: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Link.ParametersProperty;
 begin
   if not Assigned(FParameters) then
-    FParameters := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Link.TParameters.Create;
+    FParameters := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Link.ParametersProperty.Create;
 
   Result := FParameters;
 end;
@@ -7104,16 +6870,16 @@ begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.Link.TParameters }
+{ TOpenAPIDefinition.Link.ParametersProperty }
 
-destructor TOpenAPIDefinition.Link.TParameters.Destroy;
+destructor TOpenAPIDefinition.Link.ParametersProperty.Destroy;
 begin
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Link.TParameters.GetAdditionalProperties: TDynamicProperty<any>;
+function TOpenAPIDefinition.Link.ParametersProperty.GetAdditionalProperties: TDynamicProperty<any>;
 begin
   if not Assigned(FAdditionalProperties) then
     FAdditionalProperties := TDynamicProperty<System.Rtti.TValue>.Create;
@@ -7121,7 +6887,7 @@ begin
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Link.TParameters.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.Link.ParametersProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
@@ -7179,10 +6945,10 @@ begin
   Result := not FContentType.IsEmpty;
 end;
 
-function TOpenAPIDefinition.Encoding.GetHeaders: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Encoding.THeaders;
+function TOpenAPIDefinition.Encoding.GetHeaders: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Encoding.HeadersProperty;
 begin
   if not Assigned(FHeaders) then
-    FHeaders := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Encoding.THeaders.Create;
+    FHeaders := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Encoding.HeadersProperty.Create;
 
   Result := FHeaders;
 end;
@@ -7192,20 +6958,22 @@ begin
   Result := Assigned(FHeaders);
 end;
 
-procedure TOpenAPIDefinition.Encoding.SetStyle(const Value: TOpenAPIDefinition.Encoding.TStyle);
+procedure TOpenAPIDefinition.Encoding.SetStyle(const Value: TOpenAPIDefinition.Encoding.StyleProperty);
 begin
   FStyle := Value;
   FStyleIsStored := True;
 end;
 
-function TOpenAPIDefinition.Encoding.GetExplodeStored: Boolean;
+procedure TOpenAPIDefinition.Encoding.SetExplode(const Value: System.Boolean);
 begin
-  Result := False;
+  FExplode := Value;
+  FExplodeIsStored := True;
 end;
 
-function TOpenAPIDefinition.Encoding.GetAllowReservedStored: Boolean;
+procedure TOpenAPIDefinition.Encoding.SetAllowReserved(const Value: System.Boolean);
 begin
-  Result := False;
+  FAllowReserved := Value;
+  FAllowReservedIsStored := True;
 end;
 
 function TOpenAPIDefinition.Encoding.GetPatternProperty: TDynamicProperty<any>;
@@ -7221,61 +6989,31 @@ begin
   Result := Assigned(FPatternProperty);
 end;
 
-{ TOpenAPIDefinition.Encoding.THeaders }
+{ TOpenAPIDefinition.Encoding.HeadersProperty }
 
-destructor TOpenAPIDefinition.Encoding.THeaders.Destroy;
+destructor TOpenAPIDefinition.Encoding.HeadersProperty.Destroy;
 begin
-  FHeader.Free;
-
-  FReference.Free;
-
   FAdditionalProperties.Free;
 
   inherited;
 end;
 
-function TOpenAPIDefinition.Encoding.THeaders.GetHeader: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header;
-begin
-  if not Assigned(FHeader) then
-    FHeader := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.Create;
-
-  Result := FHeader;
-end;
-
-function TOpenAPIDefinition.Encoding.THeaders.GetHeaderStored: Boolean;
-begin
-  Result := Assigned(FHeader);
-end;
-
-function TOpenAPIDefinition.Encoding.THeaders.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
-begin
-  if not Assigned(FReference) then
-    FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
-
-  Result := FReference;
-end;
-
-function TOpenAPIDefinition.Encoding.THeaders.GetReferenceStored: Boolean;
-begin
-  Result := Assigned(FReference);
-end;
-
-function TOpenAPIDefinition.Encoding.THeaders.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Encoding.THeaders.TadditionalProperties>;
+function TOpenAPIDefinition.Encoding.HeadersProperty.GetAdditionalProperties: TDynamicProperty<TOpenAPIDefinition.Encoding.HeadersProperty.additionalPropertiesType>;
 begin
   if not Assigned(FAdditionalProperties) then
-    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Encoding.THeaders.TadditionalProperties>.Create;
+    FAdditionalProperties := TDynamicProperty<Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Encoding.HeadersProperty.additionalPropertiesType>.Create;
 
   Result := FAdditionalProperties;
 end;
 
-function TOpenAPIDefinition.Encoding.THeaders.GetAdditionalPropertiesStored: Boolean;
+function TOpenAPIDefinition.Encoding.HeadersProperty.GetAdditionalPropertiesStored: Boolean;
 begin
   Result := Assigned(FAdditionalProperties);
 end;
 
-{ TOpenAPIDefinition.Encoding.THeaders.TadditionalProperties }
+{ TOpenAPIDefinition.Encoding.HeadersProperty.additionalPropertiesType }
 
-destructor TOpenAPIDefinition.Encoding.THeaders.TadditionalProperties.Destroy;
+destructor TOpenAPIDefinition.Encoding.HeadersProperty.additionalPropertiesType.Destroy;
 begin
   FHeader.Free;
 
@@ -7284,7 +7022,7 @@ begin
   inherited;
 end;
 
-function TOpenAPIDefinition.Encoding.THeaders.TadditionalProperties.GetHeader: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header;
+function TOpenAPIDefinition.Encoding.HeadersProperty.additionalPropertiesType.GetHeader: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header;
 begin
   if not Assigned(FHeader) then
     FHeader := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Header.Create;
@@ -7292,12 +7030,12 @@ begin
   Result := FHeader;
 end;
 
-function TOpenAPIDefinition.Encoding.THeaders.TadditionalProperties.GetHeaderStored: Boolean;
+function TOpenAPIDefinition.Encoding.HeadersProperty.additionalPropertiesType.GetHeaderStored: Boolean;
 begin
   Result := Assigned(FHeader);
 end;
 
-function TOpenAPIDefinition.Encoding.THeaders.TadditionalProperties.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
+function TOpenAPIDefinition.Encoding.HeadersProperty.additionalPropertiesType.GetReference: Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference;
 begin
   if not Assigned(FReference) then
     FReference := Blue.Print.Open.API.Schema.v30.TOpenAPIDefinition.Reference.Create;
@@ -7305,7 +7043,7 @@ begin
   Result := FReference;
 end;
 
-function TOpenAPIDefinition.Encoding.THeaders.TadditionalProperties.GetReferenceStored: Boolean;
+function TOpenAPIDefinition.Encoding.HeadersProperty.additionalPropertiesType.GetReferenceStored: Boolean;
 begin
   Result := Assigned(FReference);
 end;

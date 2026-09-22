@@ -98,6 +98,7 @@ type
     FOptional: Boolean;
     FOptionalStored: Boolean;
     FAttribute: String;
+    FFlatEnumerator: String;
 
     procedure SetOptional(const Value: Boolean);
   public
@@ -107,6 +108,7 @@ type
     property Name: String read FName write FName;
     property Attribute: String read FAttribute write FAttribute;
     property ChangeType: String read FChangeType write FChangeType;
+    property FlatEnumerator: String read FFlatEnumerator write FFlatEnumerator;
     property Optional: Boolean read FOptional write SetOptional stored FOptionalStored;
   end;
 
@@ -974,6 +976,9 @@ begin
 
           if PropertyConfiguration.OptionalStored then
             PropertyDefinition.Optional := PropertyConfiguration.Optional;
+
+          if not PropertyConfiguration.FlatEnumerator.IsEmpty then
+            PropertyDefinition.AddFlatAttribute(PropertyConfiguration.FlatEnumerator);
         end;
   end;
 
@@ -3050,7 +3055,7 @@ function TJSONSchemaLoader.CheckTypeDefinition(const Module: TTypeModuleDefiniti
       if not TypeConfiguration.FlatEnumerator.IsEmpty and (TypeConfiguration.Name = TypeName) then
         FlatField := TypeConfiguration.FlatEnumerator;
 
-    if not FlatField.IsEmpty or IsFlatSchema(Schema) then
+    if not FlatField.IsEmpty or not Schema.&Object.IsPropertiesStored and IsFlatSchema(Schema) then
       ClassDefinition.AddFlatAttribute(FlatField);
   end;
 
