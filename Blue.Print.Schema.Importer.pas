@@ -1665,7 +1665,7 @@ begin
   Result := ExtractLocalName(Name);
 
   if Name.Contains(NSDelim) and UnitConfiguration.DeclareTypesNamespace then
-    Result := Result + '_' + ExtractPrefix(Name)
+    Result := Result + '_' + ExtractPrefix(Name);
 end;
 
 constructor TTypeUnitDefinition.Create;
@@ -1718,7 +1718,35 @@ var
     end;
 
   begin
-    Result := CheckReservedName(GetName);
+    var NormalChar :=
+      function (const TheChar: Char): Char
+      begin
+        Result := TheChar;
+      end;
+    var UpChar :=
+      function (const TheChar: Char): Char
+      begin
+        Result := UpCase(TheChar);
+      end;
+    Result := GetName;
+
+    var FormatChar := UpChar;
+    var NewName := EmptyStr;
+
+    for var Char in Result do
+      if CharInSet(Char, ['0'..'9', 'a'..'z', 'A'..'Z', '_']) then
+      begin
+        NewName := NewName + FormatChar(Char);
+
+        FormatChar := NormalChar;
+      end
+      else
+        FormatChar := UpChar;
+
+    if not SameText(Result, NewName) then
+      Result := NewName;
+
+    Result := CheckReservedName(Result);
   end;
 
   function GetMainModule(const Module: TTypeModuleDefinition): TTypeModuleDefinition;
@@ -1858,14 +1886,14 @@ var
 
   function FormatPropertyName(const PropertyDefinition: TPropertyDefinition): String;
 
-    function FindTypeWithSamePropertyName: Boolean;
+    function FindTypeWithSamePropertyName(const PropertyName: String): Boolean;
     begin
       for var ClassDefinition in PropertyDefinition.ParentModule.Classes do
-        if SameText(ClassDefinition.Name, PropertyDefinition.Name) then
+        if SameText(GetClassName(ClassDefinition), PropertyName) then
           Exit(True);
 
       for var EnumeratorDefinition in PropertyDefinition.ParentModule.Enumerations do
-        if SameText(EnumeratorDefinition.Name, PropertyDefinition.Name) then
+        if SameText(EnumeratorDefinition.Name, PropertyName) then
           Exit(True);
 
       Result := False;
@@ -1879,8 +1907,8 @@ var
 
     Result := CheckReservedName(OnlyValidChars(ExtractLocalName(Result)));
 
-    if FindTypeWithSamePropertyName then
-      Result := Result + 'Element';
+    if FindTypeWithSamePropertyName(Result) then
+      Result := OnlyValidChars(Result) + 'Element';
   end;
 
   function GetPropertyFieldName(const PropertyDefinition: TPropertyDefinition): String;
