@@ -128,9 +128,9 @@ type
     procedure WhenTheFunctionReturnAStreamCantRaiseAnyUnexcpedtedException;
     [Test]
     procedure WhenTheFunctionReturnAStreamTheReturnMustBeLoadedWithAValue;
-    [_Test]
+//    [Test]
     procedure WhenTheFunctionReturnAStreamMustLoadTheReturnValueWithTheBluePrintStream;
-    [_Test]
+//    [Test]
     procedure TheReturningStreamMustLoadTheResponseStreamValue;
     [Test]
     procedure WhenTheParameterHasTheHeaderValueAttributeMustLoadTheParameterValueInTheHeaderRequest;
