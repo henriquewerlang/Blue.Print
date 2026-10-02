@@ -325,9 +325,19 @@ var
       UnitFile.Delete(Pred(UnitFile.Count));
     end;
 
+    function FormatName(const Name: String): String;
+    begin
+      var ReservedNames := ['type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'string', 'const', 'not', 'in', 'file', 'is', 'end', 'label'];
+      Result := Name.Substring(Succ(Name.IndexOf(TYPE_NAME_SEPARATOR)));
+
+      for var ReservedName in ReservedNames do
+        if SameText(Result, ReservedName) then
+          Exit('&' + Result);
+    end;
+
     function FormatTypeName(const TypeDefinition: TTypeDefinition): String;
     begin
-      Result := TypeDefinition.Name.Substring(Succ(TypeDefinition.Name.IndexOf(TYPE_NAME_SEPARATOR)));
+      Result := FormatName(TypeDefinition.Name);
     end;
 
     procedure GenerateEnumerationsDeclaration(const IndentationLevel: Integer; const ModuleDefinition: TTypeModuleDefinition);
@@ -346,7 +356,8 @@ var
         begin
           EnumerationList.Clear;
 
-          EnumerationList.AddStrings(Enumerator.Values);
+          for var Value in Enumerator.Values do
+            EnumerationList.Add(FormatName(Value));
 
           AddLine(CurrentIndentation, '%s = (%s);', [FormatTypeName(Enumerator), EnumerationList.Text]);
 
