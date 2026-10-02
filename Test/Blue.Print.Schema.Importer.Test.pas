@@ -25,11 +25,13 @@ type
   [TestFixture]
   TSchemaImporterTest = class
   private
+    FConverter: TSchemaConverterMock;
     FConfiguration: TConfiguration;
     FImporter: TSchemaImporter;
 
     function CreateNamespace(const Namespace, Prefix: String): TNamespaceConfiguration;
-    function FormatFileName(const UnitConfiguration: TUnitConfiguration): String;
+
+    procedure CompareUnitDeclaration(const UnitDeclaration: String; const UnitConfiguration: TUnitConfiguration);
   public
     [Setup]
     procedure Setup;
@@ -85,6 +87,16 @@ type
     procedure WhenGenerateTheUnitMustLoadTheFileHasExpected;
     [Test]
     procedure WhenTheUnitHasMoreThanOneClassMustLoadAllClassesInTheUnit;
+    [Test]
+    procedure WhenTheMainClassHasAnotherClassAppendedMustLoadThisClassInPublicTypeSectionFromTheMainClass;
+    [Test]
+    procedure WhenAClassHasMoreThanOneClassMustLoadAllClassesInThePublicTypeDefinition;
+    [Test]
+    procedure ThePublicTypeDeclarationMustBeRecursive;
+    [Test]
+    procedure WhenTheClassHasEnumerationDeclaredMustLoadInThePublicTypeOfTheClassDeclaration;
+    [Test]
+    procedure MustDeclareAllEnumerationsInTheClassDefinition;
   end;
 
   [TestFixture]
@@ -106,8 +118,6 @@ type
     [Test]
     procedure WhenCallTheConvertFunctionWithoutAMainsClassLoadedMustRaiseAnError;
     [Test]
-    procedure MustLoadTheMainClassPropertyWithTheParameterOfTheConvertFunction;
-    [Test]
     procedure WhenTheSchemaDoesntHaveTheSchemaFileLoadedMustRaiseAnError;
     [Test]
     procedure WhenCallTheLoadSchemaProcedureMustLoadTheNamespacePropertyOfTheSchema;
@@ -118,16 +128,19 @@ type
   TSchemaConverterMock = class(TInterfacedObject, ISchemaConverter)
   private
     FTimesCalled: Integer;
-    FMainClass: TTypeClassDefinition;
     FSchemaText: String;
     FNamespace: String;
+    FWhenExecuteConvert: TProc<TTypeClassDefinition, TSchema>;
+    FWhenExecuteLoadSchema: TProc<TSchema>;
 
     procedure Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
     procedure LoadSchema(const Schema: TSchema);
   public
     constructor Create;
 
-    property MainClass: TTypeClassDefinition read FMainClass write FMainClass;
+    property WhenExecuteConvert: TProc<TTypeClassDefinition, TSchema> read FWhenExecuteConvert write FWhenExecuteConvert;
+    property WhenExecuteLoadSchema: TProc<TSchema> read FWhenExecuteLoadSchema write FWhenExecuteLoadSchema;
+
     property Namespace: String read FNamespace write FNamespace;
     property SchemaText: String read FSchemaText write FSchemaText;
     property TimesCalled: Integer read FTimesCalled write FTimesCalled;
@@ -154,6 +167,17 @@ begin
     end);
 end;
 
+procedure TSchemaImporterTest.CompareUnitDeclaration(const UnitDeclaration: String; const UnitConfiguration: TUnitConfiguration);
+
+  function FormatFileName(const UnitConfiguration: TUnitConfiguration): String;
+  begin
+    Result := Format('%s\%s.pas', [FConfiguration.OutputFolder, UnitConfiguration.Name]);
+  end;
+
+begin
+  Assert.AreEqual(UnitDeclaration, TFile.ReadAllText(FormatFileName(UnitConfiguration)));
+end;
+
 function TSchemaImporterTest.CreateNamespace(const Namespace, Prefix: String): TNamespaceConfiguration;
 begin
   Result := TNamespaceConfiguration.Create;
@@ -173,11 +197,6 @@ begin
   FImporter.Import(FConfiguration);
 
   Assert.AreEqual(3, Converter.TimesCalled);
-end;
-
-function TSchemaImporterTest.FormatFileName(const UnitConfiguration: TUnitConfiguration): String;
-begin
-  Result := Format('%s\%s.pas', [FConfiguration.OutputFolder, UnitConfiguration.Name]);
 end;
 
 procedure TSchemaImporterTest.IfAnUnitDontHaveTheNameLoadedMustRaiseError;
@@ -270,9 +289,66 @@ begin
   FConfiguration.Units[0].SchemaFiles[0].SchemaType := TSchemaType.OpenAPI30;
   TSchemaImporter.Converters[TSchemaType.OpenAPI30] := Converter;
 
+  Converter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      Assert.AreEqual('my:MyMainClassName', MainClass.Name);
+    end;
+
+  FImporter.Import(FConfiguration);
+end;
+
+procedure TSchemaImporterTest.MustDeclareAllEnumerationsInTheClassDefinition;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      var Enumerator := TTypeEnumerationDefinition.Create;
+      Enumerator.Name := 'MyEnumerator';
+
+      Enumerator.AddEnumeration('a');
+
+      Enumerator.AddEnumeration('b');
+
+      Enumerator.AddEnumeration('c');
+
+      MainClass.AddEnumerationDefinition(Enumerator);
+
+      Enumerator := TTypeEnumerationDefinition.Create;
+
+      Enumerator.Name := 'MyEnumerator2';
+
+      Enumerator.AddEnumeration('a');
+
+      Enumerator.AddEnumeration('b');
+
+      Enumerator.AddEnumeration('c');
+
+      MainClass.AddEnumerationDefinition(Enumerator);
+    end;
+
   FImporter.Import(FConfiguration);
 
-  Assert.AreEqual('my:MyMainClassName', Converter.MainClass.Name);
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      public type
+        MyEnumerator = (a, b, c);
+
+        MyEnumerator2 = (a, b, c);
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.MustSaveAllUnitsInTheOutputFolderHasExpected;
@@ -307,8 +383,9 @@ begin
   FConfiguration.Namespaces := [CreateNamespace('My Namespace', 'my')];
   FConfiguration.OutputFolder := TPath.GetTempPath + ChangeFileExt(ExtractFileName(TPath.GetTempFileName), EmptyStr);
   FConfiguration.Units := [CreateUnit('MyUnit', [CreateSchemaFile('MainModule')]), CreateUnit('MyUnit2', [CreateSchemaFile('MainModule2'), CreateSchemaFile('MainModule3')])];
+  FConverter := TSchemaConverterMock.Create;
   FImporter := TSchemaImporter.Create;
-  TSchemaImporter.Converters[TSchemaType.OpenAPI20] := TSchemaConverterMock.Create;
+  TSchemaImporter.Converters[TSchemaType.OpenAPI20] := FConverter;
 end;
 
 procedure TSchemaImporterTest.TearDown;
@@ -318,6 +395,102 @@ begin
   FImporter.Free;
 
   inherited;
+end;
+
+procedure TSchemaImporterTest.ThePublicTypeDeclarationMustBeRecursive;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+
+      function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
+      begin
+        Result := TTypeClassDefinition.Create;
+        Result.Name := Name;
+
+        Parent.AddClassDefinition(Result);
+      end;
+
+    begin
+      AddClass('ns3:TMyClass3', AddClass('ns2:TMyClass2', AddClass('ns:TMyClass', MainClass)));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      public type
+        TMyClass = class
+        public type
+          TMyClass2 = class
+          public type
+            TMyClass3 = class
+            end;
+          end;
+        end;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenAClassHasMoreThanOneClassMustLoadAllClassesInThePublicTypeDefinition;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+
+      procedure AddClass(const Name: String);
+      begin
+        var MyClass := TTypeClassDefinition.Create;
+        MyClass.Name := Name;
+
+        MainClass.AddClassDefinition(MyClass);
+      end;
+
+    begin
+      AddClass('ns:TMyClass');
+
+      AddClass('ns2:TMyClass2');
+
+      AddClass('ns3:TMyClass3');
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      public type
+        TMyClass = class
+        end;
+
+        TMyClass2 = class
+        end;
+
+        TMyClass3 = class
+        end;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenAnUnitConfigurationHasTheSameNameFromAnotherConfigurationMustRaiseAnError;
@@ -360,22 +533,21 @@ procedure TSchemaImporterTest.WhenGenerateTheUnitMustLoadTheFileHasExpected;
 begin
   FImporter.Import(FConfiguration);
 
-  Assert.AreEqual(
+  CompareUnitDeclaration(
     '''
     unit MyUnit;
 
     interface
 
     type
-      TMainModule = class
+      MainModule = class
       end;
 
     implementation
 
     end.
 
-    ''',
-    TFile.ReadAllText(FormatFileName(FConfiguration.Units[0])));
+    ''', FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenImportMustLoadTheSchemaOfAllUnitConfigurated;
@@ -410,9 +582,13 @@ begin
   FConfiguration.Units[0].SchemaFiles[0].SchemaType := TSchemaType.OpenAPI30;
   TSchemaImporter.Converters[TSchemaType.OpenAPI30] := Converter;
 
-  FImporter.Import(FConfiguration);
+  Converter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      Assert.AreEqual('Prefix:MyMainClassName', MainClass.Name);
+    end;
 
-  Assert.AreEqual('Prefix:MyMainClassName', Converter.MainClass.Name);
+  FImporter.Import(FConfiguration);
 end;
 
 procedure TSchemaImporterTest.WhenLoadTheSchemaFileFromSistemaMustPassTheTextToTheLoadLoadSchemaFunction;
@@ -429,6 +605,45 @@ begin
   Assert.AreEqual(Payload, Converter.SchemaText);
 end;
 
+procedure TSchemaImporterTest.WhenTheClassHasEnumerationDeclaredMustLoadInThePublicTypeOfTheClassDeclaration;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      var Enumerator := TTypeEnumerationDefinition.Create;
+      Enumerator.Name := 'MyEnumerator';
+
+      Enumerator.AddEnumeration('a');
+
+      Enumerator.AddEnumeration('b');
+
+      Enumerator.AddEnumeration('c');
+
+      MainClass.AddEnumerationDefinition(Enumerator);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      public type
+        MyEnumerator = (a, b, c);
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
 procedure TSchemaImporterTest.WhenTheConverterDoesntExistsMustRaiseAnError;
 begin
   TSchemaImporter.Converters[TSchemaType.OpenAPI20] := nil;
@@ -440,6 +655,40 @@ begin
     end, ESchemaConverterNotRegistered);
 end;
 
+procedure TSchemaImporterTest.WhenTheMainClassHasAnotherClassAppendedMustLoadThisClassInPublicTypeSectionFromTheMainClass;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      var MyClass := TTypeClassDefinition.Create;
+      MyClass.Name := 'ns:TMyClass';
+
+      MainClass.AddClassDefinition(MyClass);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      public type
+        TMyClass = class
+        end;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
 procedure TSchemaImporterTest.WhenTheMainClassHasTheSameNameInTwoDifferentConfigurationsTheyCannotShareTheSameClassInstance;
 begin
   var Converter := TSchemaConverterMock.Create;
@@ -448,12 +697,23 @@ begin
   FConfiguration.Units[0].SchemaFiles[0].SchemaType := TSchemaType.OpenAPI20;
   FConfiguration.Units[1].SchemaFiles[0].MainModuleName := 'MyMainClassName2';
   FConfiguration.Units[1].SchemaFiles[0].SchemaType := TSchemaType.OpenAPI30;
+  var MainClassAssert: TTypeClassDefinition := nil;
   TSchemaImporter.Converters[TSchemaType.OpenAPI20] := Converter;
   TSchemaImporter.Converters[TSchemaType.OpenAPI30] := Converter2;
 
-  FImporter.Import(FConfiguration);
+  Converter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClassAssert := MainClass;
+    end;
 
-  Assert.IsFalse(Converter.MainClass = Converter2.MainClass);
+  Converter2.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      Assert.IsFalse(MainClassAssert = MainClass);
+    end;
+
+  FImporter.Import(FConfiguration);
 end;
 
 procedure TSchemaImporterTest.WhenTheNameOfMainClassIsTheSameInAnotherSchemaFileMustUseTheSameClassDeclaration;
@@ -464,16 +724,29 @@ begin
   FConfiguration.Units[0].SchemaFiles[0].SchemaType := TSchemaType.OpenAPI30;
   FConfiguration.Units[1].SchemaFiles[0].MainModuleName := 'MyMainClassName';
   FConfiguration.Units[1].SchemaFiles[0].SchemaType := TSchemaType.OpenAPI31;
+  var MainClassAssert: TTypeClassDefinition := nil;
   TSchemaImporter.Converters[TSchemaType.OpenAPI30] := Converter;
   TSchemaImporter.Converters[TSchemaType.OpenAPI31] := Converter2;
 
-  FImporter.Import(FConfiguration);
+  Converter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClassAssert := MainClass;
+    end;
 
-  Assert.AreEqual(Converter.MainClass, Converter2.MainClass);
+  Converter2.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      Assert.AreEqual(MainClassAssert, MainClass);
+    end;
+
+  FImporter.Import(FConfiguration);
 end;
 
 procedure TSchemaImporterTest.WhenTheNamespaceDoesntHaveThePrefixNameConfigurationMustRaiseAnError;
 begin
+  FConfiguration.Namespaces[0].Free;
+
   FConfiguration.Namespaces := nil;
 
   Assert.WillRaise(
@@ -487,17 +760,17 @@ procedure TSchemaImporterTest.WhenTheUnitHasMoreThanOneClassMustLoadAllClassesIn
 begin
   FImporter.Import(FConfiguration);
 
-  Assert.AreEqual(
+  CompareUnitDeclaration(
     '''
     unit MyUnit2;
 
     interface
 
     type
-      TMainModule2 = class
+      MainModule2 = class
       end;
 
-      TMainModule3 = class
+      MainModule3 = class
       end;
 
     implementation
@@ -505,7 +778,7 @@ begin
     end.
 
     ''',
-    TFile.ReadAllText(FormatFileName(FConfiguration.Units[1])));
+    FConfiguration.Units[1]);
 end;
 
 procedure TSchemaImporterTest.WhenTryToImportWithoutAConfigurationLoadedMustRaiseError;
@@ -526,13 +799,6 @@ begin
     begin
       FConverter.Convert(FMainClass, nil);
     end, ESchemaNotLoaded);
-end;
-
-procedure TSchemaConverterMockTeste.MustLoadTheMainClassPropertyWithTheParameterOfTheConvertFunction;
-begin
-  FConverter.Convert(FMainClass, FSchema);
-
-  Assert.AreEqual(FMainClass, FConverterClass.MainClass);
 end;
 
 procedure TSchemaConverterMockTeste.Setup;
@@ -617,6 +883,9 @@ end;
 
 procedure TSchemaConverterMock.Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
 begin
+  if Assigned(WhenExecuteConvert) then
+    WhenExecuteConvert(MainClass, Schema);
+
   if not Assigned(Schema) then
     raise ESchemaNotLoaded.Create;
 
@@ -626,7 +895,6 @@ begin
   if not Assigned(MainClass) then
     raise EMainClassMustBeLoaded.Create;
 
-  FMainClass := MainClass;
   SchemaText := Schema.SchemaText;
 
   Inc(FTimesCalled);
@@ -641,6 +909,9 @@ end;
 
 procedure TSchemaConverterMock.LoadSchema(const Schema: TSchema);
 begin
+  if Assigned(WhenExecuteLoadSchema) then
+    WhenExecuteLoadSchema(Schema);
+
   Schema.Namespace := Namespace;
 end;
 
