@@ -97,6 +97,10 @@ type
     procedure WhenTheClassHasEnumerationDeclaredMustLoadInThePublicTypeOfTheClassDeclaration;
     [Test]
     procedure MustDeclareAllEnumerationsInTheClassDefinition;
+    [Test]
+    procedure WhenTheTypeHasAReservedNameTheTypeMustUseTheAmpersandBeforeTheName;
+    [Test]
+    procedure IfTheEnumeratorValueHasAReservedNameMustAppendTheAmpersandBeforeTheName;
   end;
 
   [TestFixture]
@@ -222,6 +226,41 @@ begin
     begin
       FImporter.Import(FConfiguration);
     end, ENeedUnitsConfiguration);
+end;
+
+procedure TSchemaImporterTest.IfTheEnumeratorValueHasAReservedNameMustAppendTheAmpersandBeforeTheName;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      var Enumerator := TTypeEnumerationDefinition.Create;
+      Enumerator.Name := 'ens:MyEnum';
+
+      Enumerator.AddEnumeration('if');
+
+      MainClass.AddEnumerationDefinition(Enumerator);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      public type
+        MyEnum = (&if);
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.IfTheOutputFolderDoesntExistsMustCreateTheFolder;
@@ -754,6 +793,54 @@ begin
     begin
       FImporter.Import(FConfiguration);
     end, ESchemaNamespaceWithouConfiguraton);
+end;
+
+procedure TSchemaImporterTest.WhenTheTypeHasAReservedNameTheTypeMustUseTheAmpersandBeforeTheName;
+begin
+  var ReservedNames := ['type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'string', 'const', 'not', 'in', 'file', 'is', 'end', 'label'];
+
+  for var ReservedName in ReservedNames do
+  begin
+    FConverter.WhenExecuteConvert :=
+      procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+      begin
+        var Enumerator := TTypeEnumerationDefinition.Create;
+        Enumerator.Name := 'ens:' + ReservedName;
+
+        Enumerator.AddEnumeration('a');
+
+        MainClass.AddEnumerationDefinition(Enumerator);
+
+        var ClassDefinition := TTypeClassDefinition.Create;
+        ClassDefinition.Name := 'cns:' + ReservedName;
+
+        MainClass.AddClassDefinition(ClassDefinition);
+      end;
+
+    FImporter.Import(FConfiguration);
+
+    CompareUnitDeclaration(Format(
+      '''
+      unit MyUnit;
+
+      interface
+
+      type
+        MainModule = class
+        public type
+          &%0:s = (a);
+
+          &%0:s = class
+          end;
+        end;
+
+      implementation
+
+      end.
+
+      ''',
+      [ReservedName]), FConfiguration.Units[0]);
+  end;
 end;
 
 procedure TSchemaImporterTest.WhenTheUnitHasMoreThanOneClassMustLoadAllClassesInTheUnit;
