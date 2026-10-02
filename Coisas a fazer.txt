@@ -4,3 +4,4 @@ Criar o esquema de namespace para agrupar os tipos por arquivos, ou subesquemas.
 No esquema do JSON tem que organizar como montar os namespaces dele.
 O importador vai ser o centro e os tipos específicos vão importar os esquemas XSD ou JSON.
 * Tem que ver uma forma de um específico acionar o importador para importar o arquivo de dependência.
+Não permitir os importadores individuais importar as próprias dependências, tem que estar configurado antes de importar

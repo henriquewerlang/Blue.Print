@@ -131,15 +131,11 @@
         <DCCReference Include="Blue.Print.Schema.Importer.Main.pas">
             <Form>Main</Form>
         </DCCReference>
-        <DCCReference Include="Blue.Print.Schema.Importer.pas"/>
         <DCCReference Include="Blue.Print.Serializer.pas"/>
-        <DCCReference Include="Blue.Print.Types.pas"/>
-        <DCCReference Include="Blue.Print.JSON.Schema.pas"/>
-        <DCCReference Include="Blue.Print.JSON.Draft4.Schema.pas"/>
-        <DCCReference Include="Blue.Print.Open.API.Schema.v20.pas"/>
-        <DCCReference Include="Blue.Print.Schema.Importer.Open.API.v20.pas"/>
-        <DCCReference Include="Blue.Print.Open.API.Schema.v30.pas"/>
-        <DCCReference Include="Blue.Print.Schema.Importer.Open.API.v30.pas"/>
+        <DCCReference Include="Blue.Print.Types.pas">
+            <Form>$R *.res</Form>
+        </DCCReference>
+        <DCCReference Include="Blue.Print.Schema.Importer.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
