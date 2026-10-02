@@ -111,15 +111,23 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="..\Blue.Print.Web.Module.pas"/>
-        <DCCReference Include="Blue.Print.Web.Module.Test.pas"/>
-        <DCCReference Include="..\Blue.Print.Remote.Service.pas"/>
-        <DCCReference Include="Blue.Print.Remote.Service.Test.pas"/>
         <DCCReference Include="..\Blue.Print.Types.pas"/>
+        <DCCReference Include="Blue.Print.Web.Module.Test.pas"/>
+        <DCCReference Include="..\Blue.Print.Web.Module.pas"/>
+        <DCCReference Include="Blue.Print.Remote.Service.Test.pas"/>
+        <DCCReference Include="..\Blue.Print.Remote.Service.pas"/>
         <DCCReference Include="Blue.Print.Content.Parser.Test.pas"/>
         <DCCReference Include="Blue.Print.Request.Mock.pas"/>
-        <DCCReference Include="..\Blue.Print.Serializer.pas"/>
         <DCCReference Include="Blue.Print.Serializer.Test.pas"/>
+        <DCCReference Include="..\Blue.Print.Serializer.pas"/>
+        <DCCReference Include="Blue.Print.Schema.Importer.Test.pas"/>
+        <DCCReference Include="..\Blue.Print.Schema.Importer.pas"/>
+        <DCCReference Include="Blue.Print.OpenAPI20.Schema.Converter.pas"/>
+        <DCCReference Include="Blue.Print.OpenAPI30.Schema.Converter.pas"/>
+        <DCCReference Include="Blue.Print.OpenAPI31.Schema.Converter.pas"/>
+        <DCCReference Include="Blue.Print.OpenAPI32.Schema.Converter.pas"/>
+        <DCCReference Include="Blue.Print.XSD.Schema.Converter.pas"/>
+        <DCCReference Include="Blue.Print.WSDL.Schema.Converter.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
@@ -165,11 +173,15 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
+                <DeployFile LocalName="Win32\Debug\Blue.Print.Test.exe" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Win32">
+                        <RemoteName>Blue.Print.Test.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="Win64\Debug\Blue.Print.Test.exe" Configuration="Debug" Class="ProjectOutput"/>
-                <DeployFile LocalName="Win64\Debug\Blue.Print.Test.rsm" Configuration="Debug" Class="DebugSymbols"/>
                 <DeployFile LocalName="bin\Delphi.Rest.Test.exe" Configuration="Debug" Class="ProjectOutput"/>
                 <DeployFile LocalName="bin\Win64\Debug\Delphi.Rest.Test.exe" Configuration="Debug" Class="ProjectOutput"/>
-                <DeployFile LocalName="bin\Win64\Debug\Delphi.Rest.Test.rsm" Configuration="Debug" Class="DebugSymbols"/>
                 <DeployClass Name="AdditionalDebugSymbols">
                     <Platform Name="OSX32">
                         <Operation>1</Operation>
