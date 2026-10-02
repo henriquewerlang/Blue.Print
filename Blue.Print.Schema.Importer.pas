@@ -79,13 +79,30 @@ type
     function AsClassDefinition: TTypeClassDefinition;
   end;
 
+  TTypeEnumerationDefinition = class(TTypeDefinition)
+  private
+    FValues: TArray<String>;
+  public
+    procedure AddEnumeration(const Value: String);
+
+    property Values: TArray<String> read FValues;
+  end;
+
   TTypeModuleDefinition = class(TTypeDefinition)
   private
     FClasses: TArray<TTypeClassDefinition>;
+    FEnumerations: TArray<TTypeEnumerationDefinition>;
+
+    function GetHasTypes: Boolean;
   public
+    destructor Destroy; override;
+
     procedure AddClassDefinition(const ClassDefinition: TTypeClassDefinition);
+    procedure AddEnumerationDefinition(const EnumerationDefinition: TTypeEnumerationDefinition);
 
     property Classes: TArray<TTypeClassDefinition> read FClasses;
+    property Enumerations: TArray<TTypeEnumerationDefinition> read FEnumerations;
+    property HasTypes: Boolean read GetHasTypes;
   end;
 
   TTypeClassDefinition = class(TTypeModuleDefinition)
@@ -271,23 +288,41 @@ var
       raise ESchemaNamespaceNotLoaded.Create;
   end;
 
-  procedure GenerateUnitDefinition(const UnitDefinition: TTypeUnitDefinition);
+  procedure GenerateUnitDeclaration(const UnitDefinition: TTypeUnitDefinition);
   var
     UnitFile: TStringList;
 
-    procedure AddLine(const Line: String); overload;
+    procedure AddLine(const IndentationLevel: Integer; const Line: String); overload;
+
+      function Indentation(const Level: Integer): String;
+      const
+        INDENTATION_SIZE = 2;
+        WHITE_SPACE = ' ';
+
+      begin
+        Result := StringOfChar(WHITE_SPACE, Level * INDENTATION_SIZE);
+      end;
+
     begin
-      UnitFile.Add(Line);
+      UnitFile.Add(Indentation(IndentationLevel) + Line);
     end;
 
-    procedure AddLine(const Line: String; Args: array of const); overload;
+    procedure AddLine(const IndentationLevel: Integer; const Line: String; Args: array of const); overload;
     begin
-      UnitFile.Add(Format(Line, Args));
+      AddLine(IndentationLevel, Format(Line, Args));
     end;
 
     procedure AddWhiteLine;
+    const
+      NO_IDENTATION_LEVEL = 0;
+
     begin
-      AddLine(EmptyStr);
+      AddLine(NO_IDENTATION_LEVEL, EmptyStr);
+    end;
+
+    procedure RemoveLastLine;
+    begin
+      UnitFile.Delete(Pred(UnitFile.Count));
     end;
 
     function FormatTypeName(const TypeDefinition: TTypeDefinition): String;
@@ -295,16 +330,60 @@ var
       Result := TypeDefinition.Name.Substring(Succ(TypeDefinition.Name.IndexOf(TYPE_NAME_SEPARATOR)));
     end;
 
-    procedure GenerateClassDefinition(const ModuleDefinition: TTypeModuleDefinition);
+    procedure GenerateEnumerationsDeclaration(const IndentationLevel: Integer; const ModuleDefinition: TTypeModuleDefinition);
+    const
+      ENUMERATION_SEPARATOR = ', ';
+
+    begin
+      if Assigned(ModuleDefinition.Enumerations) then
+      begin
+        var CurrentIndentation := Succ(IndentationLevel);
+        var EnumerationList := TStringList.Create;
+        EnumerationList.LineBreak := ENUMERATION_SEPARATOR;
+        EnumerationList.TrailingLineBreak := False;
+
+        for var Enumerator in ModuleDefinition.Enumerations do
+        begin
+          EnumerationList.Clear;
+
+          EnumerationList.AddStrings(Enumerator.Values);
+
+          AddLine(CurrentIndentation, '%s = (%s);', [FormatTypeName(Enumerator), EnumerationList.Text]);
+
+          AddWhiteLine;
+        end;
+
+        EnumerationList.Free;
+      end;
+    end;
+
+    procedure GenerateModuleDeclaration(const IndentationLevel: Integer; const ModuleDefinition: TTypeModuleDefinition);
     begin
       for var ClassDefinition in ModuleDefinition.Classes do
       begin
-        AddLine('  T%s = class', [FormatTypeName(ClassDefinition)]);
-        AddLine('  end;');
+        var CurrentIndentation := Succ(IndentationLevel);
+
+        AddLine(CurrentIndentation, '%s = class', [FormatTypeName(ClassDefinition)]);
+
+        if ClassDefinition.HasTypes then
+        begin
+          AddLine(CurrentIndentation, 'public type');
+
+          GenerateEnumerationsDeclaration(CurrentIndentation, ClassDefinition);
+
+          GenerateModuleDeclaration(CurrentIndentation, ClassDefinition);
+
+          RemoveLastLine;
+        end;
+
+        AddLine(CurrentIndentation, 'end;');
 
         AddWhiteLine;
       end;
     end;
+
+  const
+    INDENTATION_STARTING_LEVEL = 0;
 
   begin
     var UnitFileName := IncludeTrailingPathDelimiter(Configuration.OutputFolder) + UnitDefinition.Name + '.pas';
@@ -312,23 +391,23 @@ var
 
     ForceDirectories(ExtractFilePath(UnitFileName));
 
-    AddLine('unit %s;', [UnitDefinition.Name]);
+    AddLine(INDENTATION_STARTING_LEVEL, 'unit %s;', [UnitDefinition.Name]);
 
     AddWhiteLine;
 
-    AddLine('interface');
+    AddLine(INDENTATION_STARTING_LEVEL, 'interface');
 
     AddWhiteLine;
 
-    AddLine('type');
+    AddLine(INDENTATION_STARTING_LEVEL, 'type');
 
-    GenerateClassDefinition(UnitDefinition);
+    GenerateModuleDeclaration(INDENTATION_STARTING_LEVEL, UnitDefinition);
 
-    AddLine('implementation');
+    AddLine(INDENTATION_STARTING_LEVEL, 'implementation');
 
     AddWhiteLine;
 
-    AddLine('end.');
+    AddLine(INDENTATION_STARTING_LEVEL, 'end.');
 
     UnitFile.SaveToFile(UnitFileName, TEncoding.UTF8);
 
@@ -368,7 +447,7 @@ begin
     end;
 
     for var UnitDefinition in Units.Values do
-      GenerateUnitDefinition(UnitDefinition);
+      GenerateUnitDeclaration(UnitDefinition);
   finally
     Namespaces.Free;
 
@@ -495,6 +574,34 @@ end;
 procedure TTypeModuleDefinition.AddClassDefinition(const ClassDefinition: TTypeClassDefinition);
 begin
   FClasses := FClasses + [ClassDefinition];
+end;
+
+procedure TTypeModuleDefinition.AddEnumerationDefinition(const EnumerationDefinition: TTypeEnumerationDefinition);
+begin
+  FEnumerations := FEnumerations + [EnumerationDefinition];
+end;
+
+destructor TTypeModuleDefinition.Destroy;
+begin
+  for var ClassDefinition in Classes do
+    ClassDefinition.Free;
+
+  for var EnumerationDefinition in Enumerations do
+    EnumerationDefinition.Free;
+
+  inherited;
+end;
+
+function TTypeModuleDefinition.GetHasTypes: Boolean;
+begin
+  Result := Assigned(Classes) or Assigned(Enumerations);
+end;
+
+{ TTypeEnumerationDefinition }
+
+procedure TTypeEnumerationDefinition.AddEnumeration(const Value: String);
+begin
+  FValues := FValues + [Value];
 end;
 
 end.
