@@ -4,7 +4,7 @@ interface
 
 {$SCOPEDENUMS ON}
 
-uses System.SysUtils, System.Rtti, System.Generics.Collections;
+uses System.Classes, System.SysUtils, System.Rtti, System.Generics.Collections;
 
 type
   TTypeClassDefinition = class;
@@ -81,11 +81,17 @@ type
 
   TTypeEnumerationDefinition = class(TTypeDefinition)
   private
-    FValues: TArray<String>;
+    FValues: TStringList;
   public
+    constructor Create;
+
+    destructor Destroy; override;
+
+    class function CreateEnumeratorList: TStringList;
+
     procedure AddEnumeration(const Value: String);
 
-    property Values: TArray<String> read FValues;
+    property Values: TStringList read FValues;
   end;
 
   TTypeModuleDefinition = class(TTypeDefinition)
@@ -183,7 +189,7 @@ type
 
 implementation
 
-uses System.IOUtils, System.Classes;
+uses System.IOUtils, System.Character;
 
 { TSchemaImporter }
 
@@ -341,23 +347,30 @@ var
     end;
 
     procedure GenerateEnumerationsDeclaration(const IndentationLevel: Integer; const ModuleDefinition: TTypeModuleDefinition);
-    const
-      ENUMERATION_SEPARATOR = ', ';
-
     begin
       if Assigned(ModuleDefinition.Enumerations) then
       begin
         var CurrentIndentation := Succ(IndentationLevel);
-        var EnumerationList := TStringList.Create;
-        EnumerationList.LineBreak := ENUMERATION_SEPARATOR;
-        EnumerationList.TrailingLineBreak := False;
+        var EnumerationList := TTypeEnumerationDefinition.CreateEnumeratorList;
+        var ValueNameChanged := False;
 
         for var Enumerator in ModuleDefinition.Enumerations do
         begin
           EnumerationList.Clear;
 
           for var Value in Enumerator.Values do
-            EnumerationList.Add(FormatName(Value));
+          begin
+            var FormattedValue := FormatName(Value);
+
+            if FormattedValue[1].IsNumber then
+              FormattedValue := 't' + FormattedValue;
+
+            ValueNameChanged := ValueNameChanged or not SameText(FormattedValue, Value);
+            EnumerationList.Add(FormattedValue);
+          end;
+
+          if ValueNameChanged then
+            AddLine(CurrentIndentation, '[EnumValue(''%s'')]', [Enumerator.Values.Text]);
 
           AddLine(CurrentIndentation, '%s = (%s);', [FormatTypeName(Enumerator), EnumerationList.Text]);
 
@@ -612,7 +625,31 @@ end;
 
 procedure TTypeEnumerationDefinition.AddEnumeration(const Value: String);
 begin
-  FValues := FValues + [Value];
+  FValues.Add(Value);
+end;
+
+constructor TTypeEnumerationDefinition.Create;
+begin
+  inherited;
+
+  FValues := CreateEnumeratorList;
+end;
+
+class function TTypeEnumerationDefinition.CreateEnumeratorList: TStringList;
+const
+  ENUMERATION_SEPARATOR = ', ';
+
+begin
+  Result := TStringList.Create;
+  Result.LineBreak := ENUMERATION_SEPARATOR;
+  Result.TrailingLineBreak := False;
+end;
+
+destructor TTypeEnumerationDefinition.Destroy;
+begin
+  FValues.Free;
+
+  inherited;
 end;
 
 end.
