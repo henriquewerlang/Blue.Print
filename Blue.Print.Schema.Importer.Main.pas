@@ -2,7 +2,7 @@
 
 interface
 
-uses Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Controls, System.Classes, Blue.Print.Schema.Importer, Vcl.Menus;
+uses Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Controls, System.Classes, Vcl.Menus;
 
 type
   TMain = class(TForm)
@@ -12,9 +12,6 @@ type
     SelectConfigurationFile: TButton;
     OpenConfigurationFile: TFileOpenDialog;
     procedure SelectConfigurationFileClick(Sender: TObject);
-    procedure ImportSchemaClick(Sender: TObject);
-  private
-    procedure GenerateFile(const Importer: TSchemaImporter);
   end;
 
 var
@@ -27,20 +24,6 @@ implementation
 uses System.SysUtils, System.Types;
 
 { TMain }
-
-procedure TMain.ImportSchemaClick(Sender: TObject);
-begin
-  GenerateFile(TSchemaImporter.Create);
-end;
-
-procedure TMain.GenerateFile(const Importer: TSchemaImporter);
-begin
-  Importer.LoadConfig(ConfigurationFile.Text);
-
-  Importer.Import;
-
-  Importer.Free;
-end;
 
 procedure TMain.SelectConfigurationFileClick(Sender: TObject);
 begin

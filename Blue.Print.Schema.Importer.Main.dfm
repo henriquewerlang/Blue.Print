@@ -30,7 +30,6 @@ object Main: TMain
     Caption = 'Import'
     Default = True
     TabOrder = 2
-    OnClick = ImportSchemaClick
   end
   object ConfigurationFile: TEdit
     Left = 8
