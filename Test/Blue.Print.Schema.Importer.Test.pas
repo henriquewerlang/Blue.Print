@@ -101,6 +101,8 @@ type
     procedure WhenTheTypeHasAReservedNameTheTypeMustUseTheAmpersandBeforeTheName;
     [Test]
     procedure IfTheEnumeratorValueHasAReservedNameMustAppendTheAmpersandBeforeTheName;
+    [Test]
+    procedure WhenTheEnumeratorValueHaveOnlyNumberMustInsertALetterBeforeTheNumberAndAppendTheEnumValueAttribute;
   end;
 
   [TestFixture]
@@ -252,6 +254,7 @@ begin
     type
       MainModule = class
       public type
+        [EnumValue('if')]
         MyEnum = (&if);
       end;
 
@@ -692,6 +695,46 @@ begin
     begin
       FImporter.Import(FConfiguration);
     end, ESchemaConverterNotRegistered);
+end;
+
+procedure TSchemaImporterTest.WhenTheEnumeratorValueHaveOnlyNumberMustInsertALetterBeforeTheNumberAndAppendTheEnumValueAttribute;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      var Enumerator := TTypeEnumerationDefinition.Create;
+      Enumerator.Name := 'ens:MyEnum';
+
+      Enumerator.AddEnumeration('1');
+
+      Enumerator.AddEnumeration('2');
+
+      Enumerator.AddEnumeration('3');
+
+      MainClass.AddEnumerationDefinition(Enumerator);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      public type
+        [EnumValue('1, 2, 3')]
+        MyEnum = (t1, t2, t3);
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenTheMainClassHasAnotherClassAppendedMustLoadThisClassInPublicTypeSectionFromTheMainClass;
