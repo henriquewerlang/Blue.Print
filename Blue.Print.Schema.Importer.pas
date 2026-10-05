@@ -7,6 +7,7 @@ interface
 uses System.Classes, System.SysUtils, System.Rtti, System.Generics.Collections;
 
 type
+  TTypeArrayDefinition = class;
   TTypeClassDefinition = class;
   TUnitConfiguration = class;
 
@@ -75,8 +76,15 @@ type
   end;
 
   TTypeDefinition = class(TTypeCommonDefinition)
+  private
+    function GetIsClassDefinition: Boolean;
+    function GetIsArrayDefinition: Boolean;
   public
+    function AsArrayDefinition: TTypeArrayDefinition;
     function AsClassDefinition: TTypeClassDefinition;
+
+    property IsArrayDefinition: Boolean read GetIsArrayDefinition;
+    property IsClassDefinition: Boolean read GetIsClassDefinition;
   end;
 
   TTypeEnumerationDefinition = class(TTypeDefinition)
@@ -92,6 +100,13 @@ type
     procedure AddEnumeration(const Value: String);
 
     property Values: TStringList read FValues;
+  end;
+
+  TTypeArrayDefinition = class(TTypeDefinition)
+  private
+    FArrayType: TTypeDefinition;
+  public
+    property ArrayType: TTypeDefinition read FArrayType write FArrayType;
   end;
 
   TTypeModuleDefinition = class(TTypeDefinition)
@@ -111,7 +126,22 @@ type
     property HasTypes: Boolean read GetHasTypes;
   end;
 
+  TTypePropertyDefinition = class(TTypeCommonDefinition)
+  private
+    FPropertyType: TTypeDefinition;
+  public
+    property PropertyType: TTypeDefinition read FPropertyType write FPropertyType;
+  end;
+
   TTypeClassDefinition = class(TTypeModuleDefinition)
+  private
+    FProperties: TArray<TTypePropertyDefinition>;
+    function GetHasProperties: Boolean;
+  public
+    function AddProperty(const Name: String; const PropertyType: TTypeDefinition): TTypePropertyDefinition;
+
+    property HasProperties: Boolean read GetHasProperties;
+    property Properties: TArray<TTypePropertyDefinition> read FProperties write FProperties;
   end;
 
   TTypeUnitDefinition = class(TTypeModuleDefinition)
@@ -295,6 +325,9 @@ var
   end;
 
   procedure GenerateUnitDeclaration(const UnitDefinition: TTypeUnitDefinition);
+  const
+    SPECIAL_CHARACTER_SCAPE_CHAR = '&';
+
   var
     UnitFile: TStringList;
 
@@ -338,12 +371,50 @@ var
 
       for var ReservedName in ReservedNames do
         if SameText(Result, ReservedName) then
-          Exit('&' + Result);
+          Result := SPECIAL_CHARACTER_SCAPE_CHAR + Result;
+    end;
+
+    function RemoveSpecialCharacters(const Name: String): String;
+    begin
+      var NormalChar :=
+        function (const Char: Char): Char
+        begin
+          Result := Char;
+        end;
+      var UpperChar :=
+        function (const Char: Char): Char
+        begin
+          Result := Char.ToUpper;
+        end;
+
+      var FormatChar := UpperChar;
+
+      for var Character in Name do
+        if Character.IsLetter or Character.IsNumber or (Character = SPECIAL_CHARACTER_SCAPE_CHAR) then
+        begin
+          Result := Result + FormatChar(Character);
+
+          FormatChar := NormalChar;
+        end
+        else
+          FormatChar := UpperChar;
     end;
 
     function FormatTypeName(const TypeDefinition: TTypeDefinition): String;
+
+      function CheckSpecialCharacter(const Name: String): String;
+      begin
+        Result := RemoveSpecialCharacters(Name);
+
+        if not SameText(Result, Name) then
+          Result := 'T' + Result;
+      end;
+
     begin
-      Result := FormatName(TypeDefinition.Name);
+      if TypeDefinition.IsArrayDefinition then
+        Result := Format('TArray<%s>', [FormatTypeName(TypeDefinition.AsArrayDefinition.ArrayType)])
+      else
+        Result := CheckSpecialCharacter(FormatName(TypeDefinition.Name));
     end;
 
     procedure GenerateEnumerationsDeclaration(const IndentationLevel: Integer; const ModuleDefinition: TTypeModuleDefinition);
@@ -381,6 +452,75 @@ var
       end;
     end;
 
+    function FormatFieldName(const PropertyDefinition: TTypePropertyDefinition): String;
+    begin
+      Result := 'F' + RemoveSpecialCharacters(PropertyDefinition.Name);
+    end;
+
+    function FormatPropertyName(const PropertyDefinition: TTypePropertyDefinition): String;
+    begin
+      Result := FormatName(PropertyDefinition.Name);
+    end;
+
+    function NeedGetFunction(const PropertyDefinition: TTypePropertyDefinition): Boolean;
+    begin
+      Result := PropertyDefinition.PropertyType.IsClassDefinition;
+    end;
+
+    function FormatGetFunctionName(const PropertyDefinition: TTypePropertyDefinition): String;
+    begin
+      Result := 'Get' + FormatPropertyName(PropertyDefinition);
+    end;
+
+    function FormatPropertyReaderName(const PropertyDefinition: TTypePropertyDefinition): String;
+    begin
+      if NeedGetFunction(PropertyDefinition) then
+        Result := FormatGetFunctionName(PropertyDefinition)
+      else
+        Result := FormatFieldName(PropertyDefinition);
+    end;
+
+    function FormatPropertyTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
+    begin
+      Result := FormatTypeName(PropertyDefinition.PropertyType);
+    end;
+
+    function PropertyNeedImplementation(const PropertyDefinition: TTypePropertyDefinition): Boolean;
+    begin
+      Result := NeedGetFunction(PropertyDefinition);
+    end;
+
+    procedure GenerateFieldsDeclaration(const IndentationLevel: Integer; const ClassDefinition: TTypeClassDefinition);
+    begin
+      if ClassDefinition.HasProperties then
+      begin
+        var CurrentIndentation := Succ(IndentationLevel);
+
+        AddLine(IndentationLevel, 'private');
+
+        for var PropertyDefinition in ClassDefinition.Properties do
+          AddLine(CurrentIndentation, '%s: %s;', [FormatFieldName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
+
+        for var PropertyDefinition in ClassDefinition.Properties do
+          if NeedGetFunction(PropertyDefinition) then
+            AddLine(CurrentIndentation, 'function %s: %s;', [FormatGetFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
+      end;
+    end;
+
+    procedure GeneratePropertiessDeclaration(const IndentationLevel: Integer; const ClassDefinition: TTypeClassDefinition);
+    begin
+      if ClassDefinition.HasProperties then
+      begin
+        var CurrentIndentation := Succ(IndentationLevel);
+
+        AddLine(IndentationLevel, 'published');
+
+        for var PropertyDefinition in ClassDefinition.Properties do
+          AddLine(CurrentIndentation, 'property %s: %s read %s write %s;', [FormatPropertyName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition), FormatPropertyReaderName(PropertyDefinition),
+            FormatFieldName(PropertyDefinition)]);
+      end;
+    end;
+
     procedure GenerateModuleDeclaration(const IndentationLevel: Integer; const ModuleDefinition: TTypeModuleDefinition);
     begin
       for var ClassDefinition in ModuleDefinition.Classes do
@@ -388,6 +528,8 @@ var
         var CurrentIndentation := Succ(IndentationLevel);
 
         AddLine(CurrentIndentation, '%s = class', [FormatTypeName(ClassDefinition)]);
+
+        GenerateFieldsDeclaration(CurrentIndentation, ClassDefinition);
 
         if ClassDefinition.HasTypes then
         begin
@@ -400,38 +542,86 @@ var
           RemoveLastLine;
         end;
 
+        GeneratePropertiessDeclaration(CurrentIndentation, ClassDefinition);
+
         AddLine(CurrentIndentation, 'end;');
 
         AddWhiteLine;
       end;
     end;
 
+    function ClassNeedImplementationSection(const ClassDefinition: TTypeClassDefinition): Boolean;
+    begin
+      for var PropertyDefinition in ClassDefinition.Properties do
+        if PropertyNeedImplementation(PropertyDefinition) then
+          Exit(True);
+
+      Result := False;
+    end;
+
+    function NeedImplementationSection(const ModuleDefinition: TTypeModuleDefinition): Boolean;
+    begin
+      Result := False;
+
+      for var ClassDefinition in ModuleDefinition.Classes do
+        Result := ClassNeedImplementationSection(ClassDefinition) or NeedImplementationSection(ClassDefinition);
+    end;
+
   const
     INDENTATION_STARTING_LEVEL = 0;
 
   begin
+    var IndentationLevel := INDENTATION_STARTING_LEVEL;
     var UnitFileName := IncludeTrailingPathDelimiter(Configuration.OutputFolder) + UnitDefinition.Name + '.pas';
     UnitFile := TStringList.Create;
 
     ForceDirectories(ExtractFilePath(UnitFileName));
 
-    AddLine(INDENTATION_STARTING_LEVEL, 'unit %s;', [UnitDefinition.Name]);
+    AddLine(IndentationLevel, 'unit %s;', [UnitDefinition.Name]);
 
     AddWhiteLine;
 
-    AddLine(INDENTATION_STARTING_LEVEL, 'interface');
+    AddLine(IndentationLevel, 'interface');
 
     AddWhiteLine;
 
-    AddLine(INDENTATION_STARTING_LEVEL, 'type');
+    AddLine(IndentationLevel, 'type');
 
-    GenerateModuleDeclaration(INDENTATION_STARTING_LEVEL, UnitDefinition);
+    GenerateModuleDeclaration(IndentationLevel, UnitDefinition);
 
-    AddLine(INDENTATION_STARTING_LEVEL, 'implementation');
+    AddLine(IndentationLevel, 'implementation');
 
     AddWhiteLine;
 
-    AddLine(INDENTATION_STARTING_LEVEL, 'end.');
+    if NeedImplementationSection(UnitDefinition) then
+      for var ClassDefinition in UnitDefinition.Classes do
+      begin
+        AddLine(IndentationLevel, '{ %s }', [FormatTypeName(ClassDefinition)]);
+
+        AddWhiteLine;
+
+        for var PropertyDefinition in ClassDefinition.Properties do
+          if NeedGetFunction(PropertyDefinition) then
+          begin
+            AddLine(IndentationLevel, 'function %s.%s: %s;', [FormatTypeName(ClassDefinition), FormatGetFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
+
+            AddLine(IndentationLevel, 'begin');
+
+            AddLine(IndentationLevel, '  if not Assigned(%s) then', [FormatFieldName(PropertyDefinition)]);
+
+            AddLine(IndentationLevel, '    %s := %s.Create;', [FormatFieldName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
+
+            AddWhiteLine;
+
+            AddLine(IndentationLevel, '  Result := %s;', [FormatFieldName(PropertyDefinition)]);
+
+            AddLine(IndentationLevel, 'end;');
+
+            AddWhiteLine;
+          end;
+      end;
+
+    AddLine(IndentationLevel, 'end.');
 
     UnitFile.SaveToFile(UnitFileName, TEncoding.UTF8);
 
@@ -574,9 +764,24 @@ end;
 
 { TTypeDefinition }
 
+function TTypeDefinition.AsArrayDefinition: TTypeArrayDefinition;
+begin
+  Result := Self as TTypeArrayDefinition;
+end;
+
 function TTypeDefinition.AsClassDefinition: TTypeClassDefinition;
 begin
   Result := Self as TTypeClassDefinition;
+end;
+
+function TTypeDefinition.GetIsArrayDefinition: Boolean;
+begin
+  Result := Self is TTypeArrayDefinition;
+end;
+
+function TTypeDefinition.GetIsClassDefinition: Boolean;
+begin
+  Result := Self is TTypeClassDefinition;
 end;
 
 { ESchemaNamespaceNotLoaded }
@@ -650,6 +855,22 @@ begin
   FValues.Free;
 
   inherited;
+end;
+
+{ TTypeClassDefinition }
+
+function TTypeClassDefinition.AddProperty(const Name: String; const PropertyType: TTypeDefinition): TTypePropertyDefinition;
+begin
+  Result := TTypePropertyDefinition.Create;
+  Result.Name := Name;
+  Result.PropertyType := PropertyType;
+
+  FProperties := FProperties + [Result];
+end;
+
+function TTypeClassDefinition.GetHasProperties: Boolean;
+begin
+  Result := Assigned(FProperties);
 end;
 
 end.
