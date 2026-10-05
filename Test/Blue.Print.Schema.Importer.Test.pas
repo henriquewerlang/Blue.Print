@@ -103,6 +103,20 @@ type
     procedure IfTheEnumeratorValueHasAReservedNameMustAppendTheAmpersandBeforeTheName;
     [Test]
     procedure WhenTheEnumeratorValueHaveOnlyNumberMustInsertALetterBeforeTheNumberAndAppendTheEnumValueAttribute;
+    [Test]
+    procedure WhenTheClassNameHasAnySpecialCharacterMustFormatTheNameToRemoveThisCharatersAndFixTheNameToCompileTheUnitCorrectly;
+    [Test]
+    procedure WhenTheClassDefinitionHaveAPropertyMustDeclareThePropertyInTheUnit;
+    [Test]
+    procedure MustDeclareAllPropertiesOfTheClassHasExpected;
+    [Test]
+    procedure WhenThePropertyHasAnSpecialCharacterMustAppendTheAmpersandBeforeTheClassName;
+    [Test]
+    procedure WhenTheClassTypeIsAClassDefinitionMustDeclareTheGetFunctionAndCreateTheClassIfTheValueIsntLoaded;
+    [Test]
+    procedure WhenThePropertyNeedTheGetFunctionMustDeclareAllFunctionsHasExpected;
+    [Test]
+    procedure WhenThePropertyTypeIsAnArrayMustDeclareTheTypeWithTheTArraySystemType;
   end;
 
   [TestFixture]
@@ -393,6 +407,47 @@ begin
     FConfiguration.Units[0]);
 end;
 
+procedure TSchemaImporterTest.MustDeclareAllPropertiesOfTheClassHasExpected;
+begin
+  var SimpleType := TTypeDefinition.Create;
+  SimpleType.Name := 'SimpleType';
+
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', SimpleType);
+      MainClass.AddProperty('MyProperty2', SimpleType);
+      MainClass.AddProperty('MyProperty3', SimpleType);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      private
+        FMyProperty: SimpleType;
+        FMyProperty2: SimpleType;
+        FMyProperty3: SimpleType;
+      published
+        property MyProperty: SimpleType read FMyProperty write FMyProperty;
+        property MyProperty2: SimpleType read FMyProperty2 write FMyProperty2;
+        property MyProperty3: SimpleType read FMyProperty3 write FMyProperty3;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
 procedure TSchemaImporterTest.MustSaveAllUnitsInTheOutputFolderHasExpected;
 begin
   FImporter.Import(FConfiguration);
@@ -647,6 +702,41 @@ begin
   Assert.AreEqual(Payload, Converter.SchemaText);
 end;
 
+procedure TSchemaImporterTest.WhenTheClassDefinitionHaveAPropertyMustDeclareThePropertyInTheUnit;
+begin
+  var SimpleType := TTypeDefinition.Create;
+  SimpleType.Name := 'SimpleType';
+
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', SimpleType);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      private
+        FMyProperty: SimpleType;
+      published
+        property MyProperty: SimpleType read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
 procedure TSchemaImporterTest.WhenTheClassHasEnumerationDeclaredMustLoadInThePublicTypeOfTheClassDeclaration;
 begin
   FConverter.WhenExecuteConvert :=
@@ -679,6 +769,86 @@ begin
       end;
 
     implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenTheClassNameHasAnySpecialCharacterMustFormatTheNameToRemoveThisCharatersAndFixTheNameToCompileTheUnitCorrectly;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      var MyClass := TTypeClassDefinition.Create;
+      MyClass.Name := 'ns:my.special-class;name';
+
+      MainClass.AddClassDefinition(MyClass);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      public type
+        TMySpecialClassName = class
+        end;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenTheClassTypeIsAClassDefinitionMustDeclareTheGetFunctionAndCreateTheClassIfTheValueIsntLoaded;
+begin
+  var SimpleType := TTypeClassDefinition.Create;
+  SimpleType.Name := 'SimpleType';
+
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', SimpleType);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      private
+        FMyProperty: SimpleType;
+        function GetMyProperty: SimpleType;
+      published
+        property MyProperty: SimpleType read GetMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    function MainModule.GetMyProperty: SimpleType;
+    begin
+      if not Assigned(FMyProperty) then
+        FMyProperty := SimpleType.Create;
+
+      Result := FMyProperty;
+    end;
 
     end.
 
@@ -836,6 +1006,137 @@ begin
     begin
       FImporter.Import(FConfiguration);
     end, ESchemaNamespaceWithouConfiguraton);
+end;
+
+procedure TSchemaImporterTest.WhenThePropertyHasAnSpecialCharacterMustAppendTheAmpersandBeforeTheClassName;
+begin
+  var SimpleType := TTypeDefinition.Create;
+  SimpleType.Name := 'SimpleType';
+
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('if', SimpleType);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      private
+        FIf: SimpleType;
+      published
+        property &if: SimpleType read FIf write FIf;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenThePropertyNeedTheGetFunctionMustDeclareAllFunctionsHasExpected;
+begin
+  var SimpleType := TTypeClassDefinition.Create;
+  SimpleType.Name := 'SimpleType';
+
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', SimpleType);
+
+      MainClass.AddProperty('MyProperty2', SimpleType);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      private
+        FMyProperty: SimpleType;
+        FMyProperty2: SimpleType;
+        function GetMyProperty: SimpleType;
+        function GetMyProperty2: SimpleType;
+      published
+        property MyProperty: SimpleType read GetMyProperty write FMyProperty;
+        property MyProperty2: SimpleType read GetMyProperty2 write FMyProperty2;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    function MainModule.GetMyProperty: SimpleType;
+    begin
+      if not Assigned(FMyProperty) then
+        FMyProperty := SimpleType.Create;
+
+      Result := FMyProperty;
+    end;
+
+    function MainModule.GetMyProperty2: SimpleType;
+    begin
+      if not Assigned(FMyProperty2) then
+        FMyProperty2 := SimpleType.Create;
+
+      Result := FMyProperty2;
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenThePropertyTypeIsAnArrayMustDeclareTheTypeWithTheTArraySystemType;
+begin
+  var SimpleType := TTypeDefinition.Create;
+  SimpleType.Name := 'SimpleType';
+  var TheArrray := TTypeArrayDefinition.Create;
+  TheArrray.ArrayType := SimpleType;
+
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', TheArrray);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      private
+        FMyProperty: TArray<SimpleType>;
+      published
+        property MyProperty: TArray<SimpleType> read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenTheTypeHasAReservedNameTheTypeMustUseTheAmpersandBeforeTheName;
