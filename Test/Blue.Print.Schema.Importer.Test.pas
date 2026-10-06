@@ -117,6 +117,8 @@ type
     procedure WhenThePropertyNeedTheGetFunctionMustDeclareAllFunctionsHasExpected;
     [Test]
     procedure WhenThePropertyTypeIsAnArrayMustDeclareTheTypeWithTheTArraySystemType;
+    [Test]
+    procedure WhenTheArrayTypeIsAnObjectMustCreateTheAddFunctionForTheType;
   end;
 
   [TestFixture]
@@ -700,6 +702,67 @@ begin
   FImporter.Import(FConfiguration);
 
   Assert.AreEqual(Payload, Converter.SchemaText);
+end;
+
+procedure TSchemaImporterTest.WhenTheArrayTypeIsAnObjectMustCreateTheAddFunctionForTheType;
+begin
+  var SimpleType := TTypeClassDefinition.Create;
+  SimpleType.Name := 'SimpleType';
+  var TheArrray := TTypeArrayDefinition.Create;
+  TheArrray.ArrayType := SimpleType;
+
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', TheArrray);
+
+      MainClass.AddProperty('MyProperty2', TheArrray);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      private
+        FMyProperty: TArray<SimpleType>;
+        FMyProperty2: TArray<SimpleType>;
+      public
+        function AddMyProperty: SimpleType;
+        function AddMyProperty2: SimpleType;
+      published
+        property MyProperty: TArray<SimpleType> read FMyProperty write FMyProperty;
+        property MyProperty2: TArray<SimpleType> read FMyProperty2 write FMyProperty2;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    function MainModule.AddMyProperty: SimpleType;
+    begin
+      Result := SimpleType.Create;
+
+      FMyProperty := FMyProperty + [Result];
+    end;
+
+    function MainModule.AddMyProperty2: SimpleType;
+    begin
+      Result := SimpleType.Create;
+
+      FMyProperty2 := FMyProperty2 + [Result];
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+
 end;
 
 procedure TSchemaImporterTest.WhenTheClassDefinitionHaveAPropertyMustDeclareThePropertyInTheUnit;
