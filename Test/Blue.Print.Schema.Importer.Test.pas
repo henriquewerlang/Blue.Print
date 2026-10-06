@@ -119,6 +119,8 @@ type
     procedure WhenThePropertyTypeIsAnArrayMustDeclareTheTypeWithTheTArraySystemType;
     [Test]
     procedure WhenTheArrayTypeIsAnObjectMustCreateTheAddFunctionForTheType;
+    [Test]
+    procedure WhenThePropertyIsOptionalMustCreateTheFieldForStoreTheIsStoredInfoAndCreateTheSetFunctionForTheProperty;
   end;
 
   [TestFixture]
@@ -762,7 +764,6 @@ begin
 
     ''',
     FConfiguration.Units[0]);
-
 end;
 
 procedure TSchemaImporterTest.WhenTheClassDefinitionHaveAPropertyMustDeclareThePropertyInTheUnit;
@@ -1099,6 +1100,66 @@ begin
       end;
 
     implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenThePropertyIsOptionalMustCreateTheFieldForStoreTheIsStoredInfoAndCreateTheSetFunctionForTheProperty;
+begin
+  var SimpleType := TTypeDefinition.Create;
+  SimpleType.Name := 'SimpleType';
+
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', SimpleType).Optional := True;
+
+      MainClass.AddProperty('MyProperty2', SimpleType).Optional := True;
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      private
+        FMyProperty: SimpleType;
+        FMyPropertyStored: Boolean;
+        FMyProperty2: SimpleType;
+        FMyProperty2Stored: Boolean;
+        procedure SetMyProperty(const Value: SimpleType);
+        procedure SetMyProperty2(const Value: SimpleType);
+      public
+        property IsMyPropertyStored: Boolean read FMyPropertyStored;
+        property IsMyProperty2Stored: Boolean read FMyProperty2Stored;
+      published
+        property MyProperty: SimpleType read FMyProperty write SetMyProperty stored FMyPropertyStored;
+        property MyProperty2: SimpleType read FMyProperty2 write SetMyProperty2 stored FMyProperty2Stored;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    procedure MainModule.SetMyProperty(const Value: SimpleType);
+    begin
+      FMyProperty := Value;
+      FMyPropertyStored := True;
+    end;
+
+    procedure MainModule.SetMyProperty2(const Value: SimpleType);
+    begin
+      FMyProperty2 := Value;
+      FMyProperty2Stored := True;
+    end;
 
     end.
 

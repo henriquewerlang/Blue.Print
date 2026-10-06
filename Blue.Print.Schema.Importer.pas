@@ -129,7 +129,9 @@ type
   TTypePropertyDefinition = class(TTypeCommonDefinition)
   private
     FPropertyType: TTypeDefinition;
+    FOptional: Boolean;
   public
+    property Optional: Boolean read FOptional write FOptional;
     property PropertyType: TTypeDefinition read FPropertyType write FPropertyType;
   end;
 
@@ -475,6 +477,11 @@ var
       Result := PropertyDefinition.PropertyType.IsClassDefinition;
     end;
 
+    function NeedSetFunction(const PropertyDefinition: TTypePropertyDefinition): Boolean;
+    begin
+      Result := PropertyDefinition.Optional;
+    end;
+
     function NeedAddFunction(const PropertyDefinition: TTypePropertyDefinition): Boolean;
     begin
       Result := PropertyDefinition.PropertyType.IsArrayDefinition and PropertyDefinition.PropertyType.AsArrayDefinition.ArrayType.IsClassDefinition;
@@ -485,9 +492,24 @@ var
       Result := 'Get' + FormatPropertyName(PropertyDefinition);
     end;
 
+    function FormatSetFunctionName(const PropertyDefinition: TTypePropertyDefinition): String;
+    begin
+      Result := 'Set' + FormatPropertyName(PropertyDefinition);
+    end;
+
     function FormatAddFunctionName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
       Result := 'Add' + FormatPropertyName(PropertyDefinition);
+    end;
+
+    function FormatPropertyTypeName(const PropertyDefinition: TTypePropertyDefinition; const GetSubtypeName: Boolean = False): String;
+    begin
+      Result := FormatTypeName(PropertyDefinition.PropertyType, GetSubtypeName);
+    end;
+
+    function FormatSetFunctionHeader(const PropertyDefinition: TTypePropertyDefinition): String;
+    begin
+      Result := Format('%s(const Value: %s)', [FormatSetFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
     end;
 
     function FormatPropertyReaderName(const PropertyDefinition: TTypePropertyDefinition): String;
@@ -498,14 +520,25 @@ var
         Result := FormatFieldName(PropertyDefinition);
     end;
 
-    function FormatPropertyTypeName(const PropertyDefinition: TTypePropertyDefinition; const GetSubtypeName: Boolean = False): String;
+    function FormatPropertyWriterName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
-      Result := FormatTypeName(PropertyDefinition.PropertyType, GetSubtypeName);
+      if NeedSetFunction(PropertyDefinition) then
+        Result := FormatSetFunctionName(PropertyDefinition)
+      else
+        Result := FormatFieldName(PropertyDefinition);
     end;
 
-    function PropertyNeedImplementation(const PropertyDefinition: TTypePropertyDefinition): Boolean;
+    function FormatStoredFieldName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
-      Result := NeedGetFunction(PropertyDefinition);
+      Result := Format('%sStored', [FormatFieldName(PropertyDefinition)]);
+    end;
+
+    function FormatPropertyStoredName(const PropertyDefinition: TTypePropertyDefinition): String;
+    begin
+      if PropertyDefinition.Optional then
+        Result := Format(' stored %s', [FormatStoredFieldName(PropertyDefinition)])
+      else
+        Result := EmptyStr;
     end;
 
     procedure GenerateFieldsDeclaration(const IndentationLevel: Integer; const ClassDefinition: TTypeClassDefinition);
@@ -517,35 +550,50 @@ var
         AddLine(IndentationLevel, 'private');
 
         for var PropertyDefinition in ClassDefinition.Properties do
+        begin
           AddLine(CurrentIndentation, '%s: %s;', [FormatFieldName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
 
+          if PropertyDefinition.Optional then
+            AddLine(CurrentIndentation, '%s: Boolean;', [FormatStoredFieldName(PropertyDefinition)]);
+        end;
+
         for var PropertyDefinition in ClassDefinition.Properties do
+        begin
           if NeedGetFunction(PropertyDefinition) then
             AddLine(CurrentIndentation, 'function %s: %s;', [FormatGetFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
+
+          if NeedSetFunction(PropertyDefinition) then
+            AddLine(CurrentIndentation, 'procedure %s;', [FormatSetFunctionHeader(PropertyDefinition)]);
+        end;
       end;
     end;
 
     procedure GeneratePublicFunctions(const IndentationLevel: Integer; const ClassDefinition: TTypeClassDefinition);
 
-      function HasArrayProperties: Boolean;
+      function NeedPublicSection: Boolean;
       begin
         for var PropertyDefinition in ClassDefinition.Properties do
-          if NeedAddFunction(PropertyDefinition) then
+          if PropertyDefinition.Optional or NeedAddFunction(PropertyDefinition) then
             Exit(True);
 
         Result := False;
       end;
 
     begin
-      if HasArrayProperties then
-      begin
-        var CurrentIndentation := Succ(IndentationLevel);
+      var CurrentIndentation := Succ(IndentationLevel);
 
+      if NeedPublicSection then
+      begin
         AddLine(IndentationLevel, 'public');
 
         for var PropertyDefinition in ClassDefinition.Properties do
+        begin
           if NeedAddFunction(PropertyDefinition) then
             AddLine(CurrentIndentation, 'function %s: %s;', [FormatAddFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition, True)]);
+
+          if PropertyDefinition.Optional then
+            AddLine(CurrentIndentation, 'property Is%sStored: Boolean read %s;', [FormatPropertyName(PropertyDefinition), FormatStoredFieldName(PropertyDefinition)]);
+        end;
       end;
     end;
 
@@ -558,8 +606,8 @@ var
         AddLine(IndentationLevel, 'published');
 
         for var PropertyDefinition in ClassDefinition.Properties do
-          AddLine(CurrentIndentation, 'property %s: %s read %s write %s;', [FormatPropertyName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition), FormatPropertyReaderName(PropertyDefinition),
-            FormatFieldName(PropertyDefinition)]);
+          AddLine(CurrentIndentation, 'property %s: %s read %s write %s%s;', [FormatPropertyName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition), FormatPropertyReaderName(PropertyDefinition),
+            FormatPropertyWriterName(PropertyDefinition), FormatPropertyStoredName(PropertyDefinition)]);
       end;
     end;
 
@@ -597,7 +645,7 @@ var
     function ClassNeedImplementationSection(const ClassDefinition: TTypeClassDefinition): Boolean;
     begin
       for var PropertyDefinition in ClassDefinition.Properties do
-        if PropertyNeedImplementation(PropertyDefinition) or NeedAddFunction(PropertyDefinition) then
+        if NeedGetFunction(PropertyDefinition) or NeedSetFunction(PropertyDefinition) or NeedAddFunction(PropertyDefinition) then
           Exit(True);
 
       Result := False;
@@ -676,6 +724,20 @@ var
             AddWhiteLine;
 
             AddLine(IndentationLevel, '  %0:s := %0:s + [Result];', [FormatFieldName(PropertyDefinition)]);
+
+            AddLine(IndentationLevel, 'end;');
+
+            AddWhiteLine;
+          end;
+
+          if NeedSetFunction(PropertyDefinition) then
+          begin
+            AddLine(IndentationLevel, 'procedure %s.%s;', [FormatTypeName(ClassDefinition), FormatSetFunctionHeader(PropertyDefinition)]);
+
+            AddLine(IndentationLevel, 'begin');
+
+            AddLine(IndentationLevel, '  %s := Value;', [FormatFieldName(PropertyDefinition)]);
+            AddLine(IndentationLevel, '  %s := True;', [FormatStoredFieldName(PropertyDefinition)]);
 
             AddLine(IndentationLevel, 'end;');
 
