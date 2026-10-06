@@ -400,7 +400,7 @@ var
           FormatChar := UpperChar;
     end;
 
-    function FormatTypeName(const TypeDefinition: TTypeDefinition): String;
+    function FormatTypeName(const TypeDefinition: TTypeDefinition; const GetSubtypeName: Boolean = False): String;
 
       function CheckSpecialCharacter(const Name: String): String;
       begin
@@ -410,9 +410,17 @@ var
           Result := 'T' + Result;
       end;
 
+      function FormatArrayTypeName(const TypeDefinition: TTypeDefinition): String;
+      begin
+        Result := FormatTypeName(TypeDefinition.AsArrayDefinition.ArrayType);
+      end;
+
     begin
       if TypeDefinition.IsArrayDefinition then
-        Result := Format('TArray<%s>', [FormatTypeName(TypeDefinition.AsArrayDefinition.ArrayType)])
+        if GetSubtypeName then
+          Result := FormatArrayTypeName(TypeDefinition)
+        else
+          Result := Format('TArray<%s>', [FormatArrayTypeName(TypeDefinition)])
       else
         Result := CheckSpecialCharacter(FormatName(TypeDefinition.Name));
     end;
@@ -467,9 +475,19 @@ var
       Result := PropertyDefinition.PropertyType.IsClassDefinition;
     end;
 
+    function NeedAddFunction(const PropertyDefinition: TTypePropertyDefinition): Boolean;
+    begin
+      Result := PropertyDefinition.PropertyType.IsArrayDefinition and PropertyDefinition.PropertyType.AsArrayDefinition.ArrayType.IsClassDefinition;
+    end;
+
     function FormatGetFunctionName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
       Result := 'Get' + FormatPropertyName(PropertyDefinition);
+    end;
+
+    function FormatAddFunctionName(const PropertyDefinition: TTypePropertyDefinition): String;
+    begin
+      Result := 'Add' + FormatPropertyName(PropertyDefinition);
     end;
 
     function FormatPropertyReaderName(const PropertyDefinition: TTypePropertyDefinition): String;
@@ -480,9 +498,9 @@ var
         Result := FormatFieldName(PropertyDefinition);
     end;
 
-    function FormatPropertyTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
+    function FormatPropertyTypeName(const PropertyDefinition: TTypePropertyDefinition; const GetSubtypeName: Boolean = False): String;
     begin
-      Result := FormatTypeName(PropertyDefinition.PropertyType);
+      Result := FormatTypeName(PropertyDefinition.PropertyType, GetSubtypeName);
     end;
 
     function PropertyNeedImplementation(const PropertyDefinition: TTypePropertyDefinition): Boolean;
@@ -507,7 +525,31 @@ var
       end;
     end;
 
-    procedure GeneratePropertiessDeclaration(const IndentationLevel: Integer; const ClassDefinition: TTypeClassDefinition);
+    procedure GeneratePublicFunctions(const IndentationLevel: Integer; const ClassDefinition: TTypeClassDefinition);
+
+      function HasArrayProperties: Boolean;
+      begin
+        for var PropertyDefinition in ClassDefinition.Properties do
+          if NeedAddFunction(PropertyDefinition) then
+            Exit(True);
+
+        Result := False;
+      end;
+
+    begin
+      if HasArrayProperties then
+      begin
+        var CurrentIndentation := Succ(IndentationLevel);
+
+        AddLine(IndentationLevel, 'public');
+
+        for var PropertyDefinition in ClassDefinition.Properties do
+          if NeedAddFunction(PropertyDefinition) then
+            AddLine(CurrentIndentation, 'function %s: %s;', [FormatAddFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition, True)]);
+      end;
+    end;
+
+    procedure GeneratePropertiesDeclaration(const IndentationLevel: Integer; const ClassDefinition: TTypeClassDefinition);
     begin
       if ClassDefinition.HasProperties then
       begin
@@ -531,6 +573,8 @@ var
 
         GenerateFieldsDeclaration(CurrentIndentation, ClassDefinition);
 
+        GeneratePublicFunctions(CurrentIndentation, ClassDefinition);
+
         if ClassDefinition.HasTypes then
         begin
           AddLine(CurrentIndentation, 'public type');
@@ -542,7 +586,7 @@ var
           RemoveLastLine;
         end;
 
-        GeneratePropertiessDeclaration(CurrentIndentation, ClassDefinition);
+        GeneratePropertiesDeclaration(CurrentIndentation, ClassDefinition);
 
         AddLine(CurrentIndentation, 'end;');
 
@@ -553,7 +597,7 @@ var
     function ClassNeedImplementationSection(const ClassDefinition: TTypeClassDefinition): Boolean;
     begin
       for var PropertyDefinition in ClassDefinition.Properties do
-        if PropertyNeedImplementation(PropertyDefinition) then
+        if PropertyNeedImplementation(PropertyDefinition) or NeedAddFunction(PropertyDefinition) then
           Exit(True);
 
       Result := False;
@@ -601,6 +645,7 @@ var
         AddWhiteLine;
 
         for var PropertyDefinition in ClassDefinition.Properties do
+        begin
           if NeedGetFunction(PropertyDefinition) then
           begin
             AddLine(IndentationLevel, 'function %s.%s: %s;', [FormatTypeName(ClassDefinition), FormatGetFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
@@ -619,6 +664,24 @@ var
 
             AddWhiteLine;
           end;
+
+          if NeedAddFunction(PropertyDefinition) then
+          begin
+            AddLine(IndentationLevel, 'function %s.%s: %s;', [FormatTypeName(ClassDefinition), FormatAddFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition, True)]);
+
+            AddLine(IndentationLevel, 'begin');
+
+            AddLine(IndentationLevel, '  Result := %s.Create;', [FormatPropertyTypeName(PropertyDefinition, True)]);
+
+            AddWhiteLine;
+
+            AddLine(IndentationLevel, '  %0:s := %0:s + [Result];', [FormatFieldName(PropertyDefinition)]);
+
+            AddLine(IndentationLevel, 'end;');
+
+            AddWhiteLine;
+          end;
+        end;
       end;
 
     AddLine(IndentationLevel, 'end.');
