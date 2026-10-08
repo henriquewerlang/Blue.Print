@@ -16,6 +16,7 @@ uses
   Blue.Print.Schema.Importer.Test in 'Blue.Print.Schema.Importer.Test.pas',
   Blue.Print.Schema.Importer in '..\Blue.Print.Schema.Importer.pas',
   Blue.Print.OpenAPI20.Schema.Converter in '..\Blue.Print.OpenAPI20.Schema.Converter.pas',
+  Blue.Print.OpenAPI30.Schema.Converter.Test in 'Blue.Print.OpenAPI30.Schema.Converter.Test.pas',
   Blue.Print.OpenAPI30.Schema.Converter in '..\Blue.Print.OpenAPI30.Schema.Converter.pas',
   Blue.Print.OpenAPI31.Schema.Converter in '..\Blue.Print.OpenAPI31.Schema.Converter.pas',
   Blue.Print.OpenAPI32.Schema.Converter in '..\Blue.Print.OpenAPI32.Schema.Converter.pas',
