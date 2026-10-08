@@ -123,6 +123,7 @@
         <DCCReference Include="Blue.Print.Schema.Importer.Test.pas"/>
         <DCCReference Include="..\Blue.Print.Schema.Importer.pas"/>
         <DCCReference Include="..\Blue.Print.OpenAPI20.Schema.Converter.pas"/>
+        <DCCReference Include="Blue.Print.OpenAPI30.Schema.Converter.Test.pas"/>
         <DCCReference Include="..\Blue.Print.OpenAPI30.Schema.Converter.pas"/>
         <DCCReference Include="..\Blue.Print.OpenAPI31.Schema.Converter.pas"/>
         <DCCReference Include="..\Blue.Print.OpenAPI32.Schema.Converter.pas"/>

@@ -198,10 +198,12 @@ type
     FNamespace: String;
     FSchemaText: String;
     FSchemaFile: TSchemaFileConfiguration;
+    FSchemaValue: TValue;
   public
     property Namespace: String read FNamespace write FNamespace;
     property SchemaFile: TSchemaFileConfiguration read FSchemaFile write FSchemaFile;
     property SchemaText: String read FSchemaText write FSchemaText;
+    property SchemaValue: TValue read FSchemaValue write FSchemaValue;
   end;
 
   ISchemaConverter = interface
