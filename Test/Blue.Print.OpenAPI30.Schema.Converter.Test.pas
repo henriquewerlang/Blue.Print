@@ -2,7 +2,7 @@
 
 interface
 
-uses Test.Insight.Framework, Blue.Print.Schema.Importer, Blue.Print.OpenAPI30.Schema.Converter;
+uses System.Generics.Collections, Test.Insight.Framework, Blue.Print.Schema.Importer, Blue.Print.OpenAPI30.Schema.Converter;
 
 type
   [TestFixture]
@@ -10,7 +10,9 @@ type
   private
     FConverter: ISchemaConverter;
     FMainClass: TTypeClassDefinition;
+    FNamespaces: TDictionary<String, String>;
     FSchema: TSchema;
+    FTypes: TDictionary<String, TTypeDefinition>;
   public
     [Setup]
     procedure Setup;
@@ -85,7 +87,10 @@ procedure TOpenAPI30SchemaConverterTest.Setup;
 begin
   FConverter := TOpenAPI30SchemaConverter.Create;
   FMainClass := TTypeClassDefinition.Create;
-  FSchema := TSchema.Create;
+  FNamespaces := TDictionary<String, String>.Create;
+  FTypes := TDictionary<String, TTypeDefinition>.Create;
+
+  FSchema := TSchema.Create(FNamespaces, FTypes);
   FSchema.SchemaFile := TSchemaFileConfiguration.Create;
   FSchema.SchemaText := '{"id":"http://mysite.com"}';
 end;
@@ -93,6 +98,10 @@ end;
 procedure TOpenAPI30SchemaConverterTest.TearDown;
 begin
   FConverter := nil;
+
+  FTypes.Free;
+
+  FNamespaces.Free;
 
   FMainClass.Free;
 
