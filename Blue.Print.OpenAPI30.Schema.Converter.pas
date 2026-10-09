@@ -22,16 +22,16 @@ begin
   var RequestBodies := TTypeClassDefinition.Create;
   RequestBodies.Name := 'requestBodies';
 
-  MainClass.AddClassDefinition(RequestBodies);
+  Schema.AddClassDefinition(MainClass, Schema.Namespace, RequestBodies);
 
   var AClass := TTypeClassDefinition.Create;
-  RequestBodies.AddClassDefinition(AClass);
+  Schema.AddClassDefinition(RequestBodies, Schema.Namespace, AClass);
 
   AClass := TTypeClassDefinition.Create;
-  RequestBodies.AddClassDefinition(AClass);
+  Schema.AddClassDefinition(RequestBodies, Schema.Namespace, AClass);
 
   AClass := TTypeClassDefinition.Create;
-  RequestBodies.AddClassDefinition(AClass);
+  Schema.AddClassDefinition(RequestBodies, Schema.Namespace, AClass);
 end;
 
 procedure TOpenAPI30SchemaConverter.LoadSchema(const Schema: TSchema);

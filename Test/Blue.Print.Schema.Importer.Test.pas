@@ -2,7 +2,7 @@
 
 interface
 
-uses System.SysUtils, System.Rtti, Test.Insight.Framework, Blue.Print.Schema.Importer;
+uses System.SysUtils, System.Rtti, System.Generics.Collections, Test.Insight.Framework, Blue.Print.Schema.Importer;
 
 type
   TSchemaConverterMock = class;
@@ -147,6 +147,44 @@ type
     procedure WhenCallTheLoadSchemaProcedureMustLoadTheNamespacePropertyOfTheSchema;
     [Test]
     procedure WhenLoadTheSchemaMustLoadTheNamespacePropertyInTheSchemaNamespace;
+  end;
+
+  [TestFixture]
+  TSchemaTest = class
+  private
+    FNamespace: String;
+    FNamespaces: TDictionary<String, String>;
+    FSchema: TSchema;
+    FTypes: TDictionary<String, TTypeDefinition>;
+  public
+    [Setup]
+    procedure Setup;
+    [TearDown]
+    procedure TearDown;
+    [Test]
+    procedure WhenTryToAddAClassDefinitionAndTheNamespaceDoesntExistsMustRaiseAnError;
+    [Test]
+    procedure WhenAddTheClassDefinitionMustAppendTheClassInTheParentModuleClassList;
+    [Test]
+    procedure AfterAddTheClassDefinitionMustAppendThePrefixNamespaceInTheClassNameDefinition;
+    [Test]
+    procedure WhenAddTheClassDefinitionMustLoadTheValueInTheTypesList;
+    [Test]
+    procedure TheKeyValueFromTypeMustBeTheNamespaceWithTheClassNameHasExpected;
+    [Test]
+    procedure MustAppenTheClassInTheValueOsTheTypes;
+    [Test]
+    procedure WhenFindTheAndTheTypeIsFoundedMustReturnTheTypeHasExpected;
+    [Test]
+    procedure WhenAddMoreThanOneClassMustAppendAllClassesInTheParentModule;
+    [Test]
+    procedure WhenAddASubclassInsideTheAnotherClassMustAppendTheParentNameinTheTypesList;
+    [Test]
+    procedure WhenAddASubclassInsideAnotherSubclassMustAppendAllParentsNamesinTheTypeList;
+    [Test]
+    procedure WhenAddAClassDefinitionMustLoadTheParentModuleHasExpected;
+    [Test]
+    procedure TheUnitNameCantBeAppendedToTheTypeNameInTheTypesList;
   end;
 
   TSchemaConverterMock = class(TInterfacedObject, ISchemaConverter)
@@ -450,6 +488,8 @@ begin
 
     ''',
     FConfiguration.Units[0]);
+
+  SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.MustSaveAllUnitsInTheOutputFolderHasExpected;
@@ -503,16 +543,16 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
 
-      function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
+      function AddClass(const Namespace, Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
       begin
         Result := TTypeClassDefinition.Create;
         Result.Name := Name;
 
-        Parent.AddClassDefinition(Result);
+        Schema.AddClassDefinition(Parent, Namespace, Result);
       end;
 
     begin
-      AddClass('ns3:TMyClass3', AddClass('ns2:TMyClass2', AddClass('ns:TMyClass', MainClass)));
+      AddClass('My Namespace', 'TMyClass3', AddClass('My Namespace', 'TMyClass2', AddClass('My Namespace', 'TMyClass', MainClass)));
     end;
 
   FImporter.Import(FConfiguration);
@@ -549,20 +589,20 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
 
-      procedure AddClass(const Name: String);
+      procedure AddClass(const Namespace, Name: String);
       begin
         var MyClass := TTypeClassDefinition.Create;
         MyClass.Name := Name;
 
-        MainClass.AddClassDefinition(MyClass);
+        Schema.AddClassDefinition(MainClass, Namespace, MyClass);
       end;
 
     begin
-      AddClass('ns:TMyClass');
+      AddClass('My Namespace', 'TMyClass');
 
-      AddClass('ns2:TMyClass2');
+      AddClass('My Namespace', 'TMyClass2');
 
-      AddClass('ns3:TMyClass3');
+      AddClass('My Namespace', 'TMyClass3');
     end;
 
   FImporter.Import(FConfiguration);
@@ -764,6 +804,10 @@ begin
 
     ''',
     FConfiguration.Units[0]);
+
+  TheArrray.Free;
+
+  SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.WhenTheClassDefinitionHaveAPropertyMustDeclareThePropertyInTheUnit;
@@ -799,6 +843,8 @@ begin
 
     ''',
     FConfiguration.Units[0]);
+
+  SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.WhenTheClassHasEnumerationDeclaredMustLoadInThePublicTypeOfTheClassDeclaration;
@@ -846,9 +892,9 @@ begin
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
       var MyClass := TTypeClassDefinition.Create;
-      MyClass.Name := 'ns:my.special-class;name';
+      MyClass.Name := 'my.special-class;name';
 
-      MainClass.AddClassDefinition(MyClass);
+      Schema.AddClassDefinition(MainClass, 'My Namespace', MyClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -918,6 +964,8 @@ begin
 
     ''',
     FConfiguration.Units[0]);
+
+  SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.WhenTheConverterDoesntExistsMustRaiseAnError;
@@ -977,9 +1025,9 @@ begin
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
       var MyClass := TTypeClassDefinition.Create;
-      MyClass.Name := 'ns:TMyClass';
+      MyClass.Name := 'TMyClass';
 
-      MainClass.AddClassDefinition(MyClass);
+      Schema.AddClassDefinition(MainClass, Schema.Namespace, MyClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -1069,7 +1117,7 @@ begin
     procedure
     begin
       FImporter.Import(FConfiguration);
-    end, ESchemaNamespaceWithouConfiguraton);
+    end, ESchemaNamespaceWithoutConfiguraton);
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyHasAnSpecialCharacterMustAppendTheAmpersandBeforeTheClassName;
@@ -1105,6 +1153,8 @@ begin
 
     ''',
     FConfiguration.Units[0]);
+
+  SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyIsOptionalMustCreateTheFieldForStoreTheIsStoredInfoAndCreateTheSetFunctionForTheProperty;
@@ -1165,6 +1215,8 @@ begin
 
     ''',
     FConfiguration.Units[0]);
+
+  SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyNeedTheGetFunctionMustDeclareAllFunctionsHasExpected;
@@ -1224,6 +1276,8 @@ begin
 
     ''',
     FConfiguration.Units[0]);
+
+  SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyTypeIsAnArrayMustDeclareTheTypeWithTheTArraySystemType;
@@ -1261,6 +1315,10 @@ begin
 
     ''',
     FConfiguration.Units[0]);
+
+  TheArrray.Free;
+
+  SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.WhenTheTypeHasAReservedNameTheTypeMustUseTheAmpersandBeforeTheName;
@@ -1280,9 +1338,9 @@ begin
         MainClass.AddEnumerationDefinition(Enumerator);
 
         var ClassDefinition := TTypeClassDefinition.Create;
-        ClassDefinition.Name := 'cns:' + ReservedName;
+        ClassDefinition.Name := ReservedName;
 
-        MainClass.AddClassDefinition(ClassDefinition);
+        Schema.AddClassDefinition(MainClass, 'My Namespace', ClassDefinition);
       end;
 
     FImporter.Import(FConfiguration);
@@ -1360,7 +1418,7 @@ procedure TSchemaConverterMockTeste.Setup;
 begin
   FConverterClass := TSchemaConverterMock.Create;
   FMainClass := TTypeClassDefinition.Create;
-  FSchema := TSchema.Create;
+  FSchema := TSchema.Create(nil, nil);
   FSchema.SchemaFile := TSchemaFileConfiguration.Create;
 
   FConverter := FConverterClass;
@@ -1411,7 +1469,7 @@ end;
 
 procedure TSchemaConverterMockTeste.WhenTheSchemaDoesntHaveTheSchemaFileLoadedMustRaiseAnError;
 begin
-  FSchema.SchemaFile := nil;
+  FreeAndNil(FSchema.SchemaFile);
 
   Assert.WillRaise(
     procedure
@@ -1475,6 +1533,212 @@ end;
 constructor ESchemaFileConfigurationMustBeLoaded.Create;
 begin
   inherited Create('The schema file configuration must be loaded!');
+end;
+
+{ TSchemaTest }
+
+procedure TSchemaTest.AfterAddTheClassDefinitionMustAppendThePrefixNamespaceInTheClassNameDefinition;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  CurrentClassDefinition.Name := 'MyClass';
+  var ParentModule := TTypeClassDefinition.Create;
+
+  FSchema.AddClassDefinition(ParentModule, FNamespace, CurrentClassDefinition);
+
+  Assert.AreEqual('my:MyClass', CurrentClassDefinition.Name);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaTest.MustAppenTheClassInTheValueOsTheTypes;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  CurrentClassDefinition.Name := 'AClassName';
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FSchema.AddClassDefinition(ParentModule, FNamespace, CurrentClassDefinition);
+
+  Assert.AreEqual(CurrentClassDefinition, FTypes['my:AClassName']);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaTest.Setup;
+begin
+  FNamespace := 'My namespace';
+  FNamespaces := TDictionary<String, String>.Create;
+  FTypes := TDictionary<String, TTypeDefinition>.Create;
+
+  FSchema := TSchema.Create(FNamespaces, FTypes);
+
+  FNamespaces.Add(FNamespace, 'my');
+end;
+
+procedure TSchemaTest.TearDown;
+begin
+  FTypes.Free;
+
+  FNamespaces.Free;
+
+  FSchema.Free;
+end;
+
+procedure TSchemaTest.TheKeyValueFromTypeMustBeTheNamespaceWithTheClassNameHasExpected;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  CurrentClassDefinition.Name := 'AClassName';
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FSchema.AddClassDefinition(ParentModule, FNamespace, CurrentClassDefinition);
+
+  Assert.AreEqual('my:AClassName', FTypes.Keys.ToArray[0]);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaTest.TheUnitNameCantBeAppendedToTheTypeNameInTheTypesList;
+begin
+  var ClassDefinition := TTypeClassDefinition.Create;
+  ClassDefinition.Name := 'MainClass';
+  var ParentModule := TTypeUnitDefinition.Create;
+  ParentModule.Name := 'MyUnit';
+
+  FSchema.AddClassDefinition(ParentModule, FNamespace, ClassDefinition);
+
+  Assert.AreEqual(1, FTypes.Count);
+
+  Assert.AreEqual('my:MainClass', FTypes.Keys.ToArray[0]);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaTest.WhenAddAClassDefinitionMustLoadTheParentModuleHasExpected;
+begin
+  var ClassDefinition := TTypeClassDefinition.Create;
+  ClassDefinition.Name := 'MainClass';
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FSchema.AddClassDefinition(ParentModule, FNamespace, ClassDefinition);
+
+  Assert.AreEqual(ParentModule, ClassDefinition.ParentModule);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaTest.WhenAddASubclassInsideAnotherSubclassMustAppendAllParentsNamesinTheTypeList;
+begin
+  var ClassDefinition := TTypeClassDefinition.Create;
+  ClassDefinition.Name := 'MainClass';
+  var ClassDefinition2 := TTypeClassDefinition.Create;
+  ClassDefinition2.Name := 'ChildClass';
+  var ClassDefinition3 := TTypeClassDefinition.Create;
+  ClassDefinition3.Name := 'AnotherClass';
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FSchema.AddClassDefinition(ParentModule, FNamespace, ClassDefinition);
+
+  FSchema.AddClassDefinition(ClassDefinition, FNamespace, ClassDefinition2);
+
+  FSchema.AddClassDefinition(ClassDefinition2, FNamespace, ClassDefinition3);
+
+  Assert.IsTrue(FTypes.ContainsKey('my:MainClass.my:ChildClass.my:AnotherClass'), 'Class name not found!');
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaTest.WhenAddASubclassInsideTheAnotherClassMustAppendTheParentNameinTheTypesList;
+begin
+  var ClassDefinition := TTypeClassDefinition.Create;
+  ClassDefinition.Name := 'MainClass';
+  var ClassDefinition2 := TTypeClassDefinition.Create;
+  ClassDefinition2.Name := 'ChildClass';
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FSchema.AddClassDefinition(ParentModule, FNamespace, ClassDefinition);
+
+  FSchema.AddClassDefinition(ClassDefinition, FNamespace, ClassDefinition2);
+
+  Assert.IsTrue(FTypes.ContainsKey('my:MainClass.my:ChildClass'), 'Class name not found!');
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaTest.WhenAddMoreThanOneClassMustAppendAllClassesInTheParentModule;
+begin
+  var ClassDefinition := TTypeClassDefinition.Create;
+  ClassDefinition.Name := 'AClassName';
+  var ClassDefinition2 := TTypeClassDefinition.Create;
+  ClassDefinition2.Name := 'AClassName2';
+  var ParentModule := TTypeClassDefinition.Create;
+
+  FSchema.AddClassDefinition(ParentModule, FNamespace, ClassDefinition);
+
+  FSchema.AddClassDefinition(ParentModule, FNamespace, ClassDefinition2);
+
+  Assert.AreEqual(2, Length(ParentModule.Classes));
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaTest.WhenAddTheClassDefinitionMustAppendTheClassInTheParentModuleClassList;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  var ParentModule := TTypeClassDefinition.Create;
+
+  FSchema.AddClassDefinition(ParentModule, FNamespace, CurrentClassDefinition);
+
+  Assert.AreEqual(1, Length(ParentModule.Classes));
+
+  Assert.AreEqual(ParentModule.Classes[0], CurrentClassDefinition);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaTest.WhenAddTheClassDefinitionMustLoadTheValueInTheTypesList;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  CurrentClassDefinition.Name := 'AClassName';
+  var ParentModule := TTypeClassDefinition.Create;
+
+  FSchema.AddClassDefinition(ParentModule, FNamespace, CurrentClassDefinition);
+
+  Assert.AreEqual(1, FTypes.Count);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaTest.WhenFindTheAndTheTypeIsFoundedMustReturnTheTypeHasExpected;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  CurrentClassDefinition.Name := 'AClassName';
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FSchema.AddClassDefinition(ParentModule, FNamespace, CurrentClassDefinition);
+
+  var ReturningType := FSchema.FindType(FNamespace, 'AClassName');
+
+  Assert.IsNotNil(ReturningType);
+
+  Assert.AreEqual(CurrentClassDefinition, ReturningType);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaTest.WhenTryToAddAClassDefinitionAndTheNamespaceDoesntExistsMustRaiseAnError;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  CurrentClassDefinition.Name := 'AClassName';
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  Assert.WillRaise(
+    procedure
+    begin
+      FSchema.AddClassDefinition(ParentModule, 'Invalid Namespace', CurrentClassDefinition);
+    end, ESchemaNamespaceWithoutConfiguraton);
+
+  CurrentClassDefinition.Free;
+
+  ParentModule.Free;
 end;
 
 end.
