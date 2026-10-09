@@ -9,6 +9,7 @@ uses System.Classes, System.SysUtils, System.Rtti, System.Generics.Collections;
 type
   TTypeArrayDefinition = class;
   TTypeClassDefinition = class;
+  TTypeModuleDefinition = class;
   TUnitConfiguration = class;
 
   ENeedConfiguration = class(Exception)
@@ -61,7 +62,7 @@ type
     constructor Create;
   end;
 
-  ESchemaNamespaceWithouConfiguraton = class(Exception)
+  ESchemaNamespaceWithoutConfiguraton = class(Exception)
   public
     constructor Create(const Namespace: String);
   end;
@@ -77,14 +78,18 @@ type
 
   TTypeDefinition = class(TTypeCommonDefinition)
   private
+    FParentModule: TTypeModuleDefinition;
     function GetIsClassDefinition: Boolean;
     function GetIsArrayDefinition: Boolean;
+    function GetIsUnitDefinition: Boolean;
   public
     function AsArrayDefinition: TTypeArrayDefinition;
     function AsClassDefinition: TTypeClassDefinition;
 
     property IsArrayDefinition: Boolean read GetIsArrayDefinition;
     property IsClassDefinition: Boolean read GetIsClassDefinition;
+    property IsUnitDefinition: Boolean read GetIsUnitDefinition;
+    property ParentModule: TTypeModuleDefinition read FParentModule;
   end;
 
   TTypeEnumerationDefinition = class(TTypeDefinition)
@@ -118,7 +123,6 @@ type
   public
     destructor Destroy; override;
 
-    procedure AddClassDefinition(const ClassDefinition: TTypeClassDefinition);
     procedure AddEnumerationDefinition(const EnumerationDefinition: TTypeEnumerationDefinition);
 
     property Classes: TArray<TTypeClassDefinition> read FClasses;
@@ -140,6 +144,8 @@ type
     FProperties: TArray<TTypePropertyDefinition>;
     function GetHasProperties: Boolean;
   public
+    destructor Destroy; override;
+
     function AddProperty(const Name: String; const PropertyType: TTypeDefinition): TTypePropertyDefinition;
 
     property HasProperties: Boolean read GetHasProperties;
@@ -196,10 +202,20 @@ type
   TSchema = class
   private
     FNamespace: String;
+    FNamespaces: TDictionary<String, String>;
     FSchemaText: String;
     FSchemaFile: TSchemaFileConfiguration;
     FSchemaValue: TValue;
+    FTypes: TDictionary<String, TTypeDefinition>;
+
+    function MakeTypeName(const Namespace, Name: String): String;
   public
+    constructor Create(const Namespaces: TDictionary<String, String>; const Types: TDictionary<String, TTypeDefinition>);
+
+    function FindType(const Namespace, Name: String): TTypeDefinition;
+
+    procedure AddClassDefinition(const ParentModule: TTypeModuleDefinition; const Namespace: String; const ClassDefinition: TTypeClassDefinition);
+
     property Namespace: String read FNamespace write FNamespace;
     property SchemaFile: TSchemaFileConfiguration read FSchemaFile write FSchemaFile;
     property SchemaText: String read FSchemaText write FSchemaText;
@@ -225,11 +241,12 @@ implementation
 
 uses System.IOUtils, System.Character;
 
+const
+  TYPE_NAMESPACE_SEPARATOR = ':';
+
 { TSchemaImporter }
 
 procedure TSchemaImporter.Import(const Configuration: TConfiguration);
-const
-  TYPE_NAME_SEPARATOR = ':';
 var
   Namespaces: TDictionary<String, String>;
   Types: TDictionary<String, TTypeDefinition>;
@@ -284,40 +301,28 @@ var
       Result := CreateUnitDefinition(UnitConfiguration);
   end;
 
-  function CreateMainClass(const UnitDefinition: TTypeUnitDefinition; const Name: String): TTypeClassDefinition;
+  function CreateMainClass(const UnitDefinition: TTypeUnitDefinition; const Schema: TSchema; const Name: String): TTypeClassDefinition;
   begin
     Result := TTypeClassDefinition.Create;
     Result.Name := Name;
 
-    UnitDefinition.AddClassDefinition(Result);
-
-    Types.Add(Name, Result);
-  end;
-
-  function GetNamespacePrefix(const Schema: TSchema): String;
-  begin
-    if not Namespaces.TryGetValue(Schema.Namespace, Result) then
-      raise ESchemaNamespaceWithouConfiguraton.Create(Schema.Namespace);
-  end;
-
-  function MakeTypeName(const Prefix, Name: String): String;
-  begin
-    Result := Prefix + TYPE_NAME_SEPARATOR + Name;
+    Schema.AddClassDefinition(UnitDefinition, Schema.Namespace, Result);
   end;
 
   function LoadMainClass(const UnitDefinition: TTypeUnitDefinition; const Schema: TSchema): TTypeClassDefinition;
   begin
-    var Name := MakeTypeName(GetNamespacePrefix(Schema), Schema.SchemaFile.MainModuleName);
+    var MainModuleName := Schema.SchemaFile.MainModuleName;
+    var TypeFound := Schema.FindType(Schema.Namespace, MainModuleName);
 
-    if Types.ContainsKey(Name) then
-      Result := Types[Name].AsClassDefinition
+    if Assigned(TypeFound) then
+      Result := TypeFound.AsClassDefinition
     else
-      Result := CreateMainClass(UnitDefinition, Name);
+      Result := CreateMainClass(UnitDefinition, Schema, MainModuleName);
   end;
 
   function CreateSchema(const SchemaFile: TSchemaFileConfiguration): TSchema;
   begin
-    Result := TSchema.Create;
+    Result := TSchema.Create(Namespaces, Types);
     Result.SchemaFile := SchemaFile;
     Result.SchemaText := TFile.ReadAllText(SchemaFile.FileName);
   end;
@@ -371,7 +376,7 @@ var
     function FormatName(const Name: String): String;
     begin
       var ReservedNames := ['type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'string', 'const', 'not', 'in', 'file', 'is', 'end', 'label'];
-      Result := Name.Substring(Succ(Name.IndexOf(TYPE_NAME_SEPARATOR)));
+      Result := Name.Substring(Succ(Name.IndexOf(TYPE_NAMESPACE_SEPARATOR)));
 
       for var ReservedName in ReservedNames do
         if SameText(Result, ReservedName) then
@@ -911,6 +916,11 @@ begin
   Result := Self is TTypeClassDefinition;
 end;
 
+function TTypeDefinition.GetIsUnitDefinition: Boolean;
+begin
+  Result := Self is TTypeUnitDefinition;
+end;
+
 { ESchemaNamespaceNotLoaded }
 
 constructor ESchemaNamespaceNotLoaded.Create;
@@ -918,19 +928,14 @@ begin
   inherited Create('Must load the namespace information in the schema class!');
 end;
 
-{ ESchemaNamespaceWithouConfiguraton }
+{ ESchemaNamespaceWithoutConfiguraton }
 
-constructor ESchemaNamespaceWithouConfiguraton.Create(const Namespace: String);
+constructor ESchemaNamespaceWithoutConfiguraton.Create(const Namespace: String);
 begin
   inherited CreateFmt('The namespace %s doesn''t have prefix configuration, must configurate the "Namespaces" configuration!', [Namespace]);
 end;
 
 { TTypeModuleDefinition }
-
-procedure TTypeModuleDefinition.AddClassDefinition(const ClassDefinition: TTypeClassDefinition);
-begin
-  FClasses := FClasses + [ClassDefinition];
-end;
 
 procedure TTypeModuleDefinition.AddEnumerationDefinition(const EnumerationDefinition: TTypeEnumerationDefinition);
 begin
@@ -995,9 +1000,61 @@ begin
   FProperties := FProperties + [Result];
 end;
 
+destructor TTypeClassDefinition.Destroy;
+begin
+  for var PropertyDefinition in Properties do
+    PropertyDefinition.Free;
+
+  inherited;
+end;
+
 function TTypeClassDefinition.GetHasProperties: Boolean;
 begin
   Result := Assigned(FProperties);
+end;
+
+{ TSchema }
+
+procedure TSchema.AddClassDefinition(const ParentModule: TTypeModuleDefinition; const Namespace: String; const ClassDefinition: TTypeClassDefinition);
+const
+  TYPE_SEPARATOR = '.';
+
+  function LoadTypeName(const TypeDefinition: TTypeDefinition): String;
+  begin
+    Result := TypeDefinition.Name;
+
+    if Assigned(TypeDefinition.ParentModule) and not TypeDefinition.ParentModule.IsUnitDefinition then
+      Result := LoadTypeName(TypeDefinition.ParentModule) + TYPE_SEPARATOR + Result;
+  end;
+
+begin
+  ClassDefinition.Name := MakeTypeName(Namespace, ClassDefinition.Name);
+  ClassDefinition.FParentModule := ParentModule;
+  ParentModule.FClasses := ParentModule.FClasses + [ClassDefinition];
+
+  FTypes.Add(LoadTypeName(ClassDefinition), ClassDefinition);
+end;
+
+constructor TSchema.Create(const Namespaces: TDictionary<String, String>; const Types: TDictionary<String, TTypeDefinition>);
+begin
+  inherited  Create;
+
+  FNamespaces := Namespaces;
+  FTypes := Types;
+end;
+
+function TSchema.FindType(const Namespace, Name: String): TTypeDefinition;
+begin
+  if not FTypes.TryGetValue(MakeTypeName(Namespace, Name), Result) then
+    Result := nil;
+end;
+
+function TSchema.MakeTypeName(const Namespace, Name: String): String;
+begin
+  if FNamespaces.TryGetValue(Namespace, Result) then
+    Result := Result + TYPE_NAMESPACE_SEPARATOR + Name
+  else
+    raise ESchemaNamespaceWithoutConfiguraton.Create(Namespace);
 end;
 
 end.
