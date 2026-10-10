@@ -418,21 +418,60 @@ begin
 end;
 
 procedure TBluePrintJSONSerializer.SerializeDynamicProperty(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
+var
+  KeyField: TRttiField;
+  Index: Integer;
+  PairType: TRttiType;
+  PairValue: TValue;
+  PropertyValue: TValue;
+  ValueField: TRttiField;
+
+  function GetArrayType: TRttiType;
+  begin
+    Result := FContext.GetType(PropertyValue.TypeInfo);
+
+    if Result is TRttiArrayType then
+      Result := TRttiArrayType(Result).ElementType
+    else
+      Result := TRttiDynamicArrayType(Result).ElementType;
+  end;
+
 begin
-  raise Exception.Create('Not implemented yet!');
+  PropertyValue := RttiType.GetMethod('ToArray').Invoke(Instance, []);
+
+  PairType := GetArrayType;
+
+  KeyField := PairType.GetField('Key');
+  ValueField := PairType.GetField('Value');
+
+  for Index := 0 to Pred(PropertyValue.GetArrayLength) do
+  begin
+    PairValue := PropertyValue.GetArrayElement(Index);
+
+    JSONObject.AddPair(KeyField.GetValue(PairValue.GetReferenceToRawData).AsString, SerializeType(ValueField.FieldType, ValueField.GetValue(PairValue.GetReferenceToRawData)));
+  end;
 end;
 
 procedure TBluePrintJSONSerializer.SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
 var
-  &Property: TRttiProperty;
+  PropertyRtti: TRttiProperty;
+  PropertyType: TRttiType;
+  PropertyValue: TValue;
 
 begin
-  for &Property in GetPublishedProperties(RttiType) do
-    if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(&Property).{$IFDEF DCC}PropInfo{$ELSE}PropertyTypeInfo{$ENDIF}) then
-      if &Property.HasAttribute<FlatAttribute> then
-        SerializeProperties(&Property.PropertyType, &Property.GetValue(Instance).AsObject, JSONObject)
+  for PropertyRtti in GetPublishedProperties(RttiType) do
+    if System.TypInfo.IsStoredProp(Instance, TRttiInstanceProperty(PropertyRtti).{$IFDEF DCC}PropInfo{$ELSE}PropertyTypeInfo{$ENDIF}) then
+    begin
+      PropertyType := PropertyRtti.PropertyType;
+      PropertyValue := PropertyRtti.GetValue(Instance);
+
+      if PropertyRtti.HasAttribute<FlatAttribute> then
+        SerializeProperties(PropertyType, PropertyValue.AsObject, JSONObject)
+      else if PropertyType.IsDynamicProperty then
+        SerializeDynamicProperty(PropertyType.AsInstance, PropertyValue.AsObject, JSONObject)
       else
-        JSONObject.AddPair(GetFieldName(&Property), SerializeType(&Property.PropertyType, &Property.GetValue(Instance)));
+        JSONObject.AddPair(GetFieldName(PropertyRtti), SerializeType(PropertyType, PropertyValue));
+    end;
 end;
 
 function TBluePrintJSONSerializer.SerializeType(const RttiType: TRttiType; const Value: TValue): TJSONValue;
@@ -491,10 +530,7 @@ begin
       begin
         Result := CreateJSONObject;
 
-        if RttiType.IsDynamicProperty then
-          SerializeDynamicProperty(FContext.GetType(Value.TypeInfo).AsInstance, Value.AsObject, TJSONObject(Result))
-        else
-          SerializeProperties(FContext.GetType(Value.TypeInfo), Value.AsObject, TJSONObject(Result));
+        SerializeProperties(FContext.GetType(Value.TypeInfo), Value.AsObject, TJSONObject(Result));
       end;
 
     tkArray, tkDynArray: Result := SerializeArray(RttiType, Value);

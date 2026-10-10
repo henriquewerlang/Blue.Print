@@ -385,7 +385,6 @@ type
   TDynamicProperty<V> = class(TList<TPair<String, V>>)
   private
     function GetDynamicPropertyItem(const Key: String): V;
-    function GetValues: TArray<V>;
 
     procedure SetDynamicPropertyItem(const Key: String; const Value: V);
   public
@@ -395,7 +394,6 @@ type
     procedure Add(const Key: String; const Value: V);
 
     property DynamicProperty[const Key: String]: V read GetDynamicPropertyItem write SetDynamicPropertyItem; default;
-    property Values: TArray<V> read GetValues;
   end;
 
   TRttiTypeHelper = class helper for TRttiType
@@ -774,17 +772,6 @@ begin
     Result := Items[ItemIndex].Value
   else
     Result := Default(V);
-end;
-
-function TDynamicProperty<V>.GetValues: TArray<V>;
-var
-  Item: TPair<String, V>;
-
-begin
-  Result := nil;
-
-  for Item in Self do
-    Result := Result + [Item.Value];
 end;
 
 function TDynamicProperty<V>.IndexOf(const Key: String): NativeInt;

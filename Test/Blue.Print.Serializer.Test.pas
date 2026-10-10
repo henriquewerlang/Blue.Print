@@ -86,7 +86,7 @@ type
     procedure WhenDeserializeAPropertyTypeOfTDynamicPropertyMustLoadTheFieldNameFromJSONInTheKeyValueOfTheDynamicPropertyProperty;
     [Test]
     procedure WhenDeserializeAPropertyTypeOfTDynamicPropertyMustLoadValueOfTheJSONInTheDynamicPropertyValue;
-    [_Test]
+    [Test]
     procedure WhenSerializeAPropertyTypeOfTDynamicPropertyMustLoadTheKeyValueFromTheDynamicPropertyInTheFieldValueOfTheJSONAndTheValueInTheValueOfTheField;
     [Test]
     procedure WhenAPropertyHasTheFieldNameAttributeMustSerializeTheValueWithThisName;
@@ -180,6 +180,8 @@ type
     procedure WhenDeserializeAClassWithFlatPropertyMustLoadThePropertyHasExpected;
     [Test]
     procedure WhenDeserializeANullValuePropertyJSONCantRaiseAnyError;
+    [Test]
+    procedure TheValueOfTheDynamicPropertyMustBeSerializedHasExpected;
   end;
 
   [TestFixture]
@@ -640,10 +642,22 @@ type
   TMyClassWithDynamicProperty = class
   private
     FDynamicProperty: TDynamicProperty<String>;
+    function GetDynamicProperty: TDynamicProperty<String>;
   public
     destructor Destroy; override;
   published
-    property DynamicProperty: TDynamicProperty<String> read FDynamicProperty write FDynamicProperty;
+    property DynamicProperty: TDynamicProperty<String> read GetDynamicProperty write FDynamicProperty;
+  end;
+
+  TMyClassWithDynamicPropertyWithType = class
+  private
+    FDynamicProperty: TDynamicProperty<TObject>;
+  public
+    constructor Create;
+
+    destructor Destroy; override;
+  published
+    property DynamicProperty: TDynamicProperty<TObject> read FDynamicProperty write FDynamicProperty;
   end;
 
   TMyClassWithDynamicPropertyWithPattern = class
@@ -1046,6 +1060,24 @@ end;
 procedure TBluePrintJsonSerializerTest.Setup;
 begin
   FSerializer := TBluePrintJsonSerializer.Create;
+end;
+
+procedure TBluePrintJsonSerializerTest.TheValueOfTheDynamicPropertyMustBeSerializedHasExpected;
+begin
+  var MyBoolean1 := TMyBooleanClass.Create;
+  var MyBoolean2 := TMyBooleanClass.Create;
+  var MyBoolean3 := TMyBooleanClass.Create;
+  var MyClass := TMyClassWithDynamicPropertyWithType.Create;
+
+  MyClass.DynamicProperty.Add('Value1', MyBoolean1);
+
+  MyClass.DynamicProperty.Add('Value2', MyBoolean1);
+
+  MyClass.DynamicProperty.Add('Value3', MyBoolean1);
+
+  Assert.AreEqual('{"Value1":{"MyProp":false},"Value2":{"MyProp":false},"Value3":{"MyProp":false}}', FSerializer.Serialize(TValue.From(MyClass)));
+
+  MyClass.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenAClassAsTheFlatAttributeMustLoadOnlyPublishedProperties;
@@ -1704,7 +1736,17 @@ end;
 
 procedure TBluePrintJsonSerializerTest.WhenSerializeAPropertyTypeOfTDynamicPropertyMustLoadTheKeyValueFromTheDynamicPropertyInTheFieldValueOfTheJSONAndTheValueInTheValueOfTheField;
 begin
-//  Assert.AreEqual('{"Field1":"Value1","Field2":"Value2","Field3":"Value3"}', FSerializer.Serialize(TValue.From(MyClass)));
+  var MyClass := TMyClassWithDynamicProperty.Create;
+
+  MyClass.DynamicProperty.Add('Field1', 'Value');
+
+  MyClass.DynamicProperty.Add('Field2', 'Value');
+
+  MyClass.DynamicProperty.Add('Field3', 'Value');
+
+  Assert.AreEqual('{"Field1":"Value","Field2":"Value","Field3":"Value"}', FSerializer.Serialize(TValue.From(MyClass)));
+
+  MyClass.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenSerializeAPropertyWithStoredOnlyCanSerializeTheValueIfThePropetyIsStored;
@@ -2573,6 +2615,14 @@ begin
   inherited;
 end;
 
+function TMyClassWithDynamicProperty.GetDynamicProperty: TDynamicProperty<String>;
+begin
+  if not Assigned(FDynamicProperty) then
+    FDynamicProperty := TDynamicProperty<String>.Create;
+
+  Result := FDynamicProperty;
+end;
+
 { TMyClassWithDynamicPropertyAndProperties }
 
 destructor TMyClassWithDynamicPropertyAndProperties.Destroy;
@@ -2596,6 +2646,22 @@ end;
 function TMyRecordWithStore.GetMyFieldStored: Boolean;
 begin
   Result := MyFieldStored;
+end;
+
+{ TMyClassWithDynamicPropertyWithType }
+
+constructor TMyClassWithDynamicPropertyWithType.Create;
+begin
+  inherited Create;
+
+  FDynamicProperty := TDynamicProperty<TObject>.Create;
+end;
+
+destructor TMyClassWithDynamicPropertyWithType.Destroy;
+begin
+  FDynamicProperty.Free;
+
+  inherited;
 end;
 
 end.
