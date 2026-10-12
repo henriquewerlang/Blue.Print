@@ -382,19 +382,15 @@ type
     procedure AddHeaderPart(const Parameter: TRttiParameter; const Value: TValue);
   end;
 
-  TDynamicProperty<V> = class(TList<TPair<String, V>>)
-  private
-    function GetDynamicPropertyItem(const Key: String): V;
-
-    procedure SetDynamicPropertyItem(const Key: String; const Value: V);
+  TDynamicPair<T> = record
   public
-    function ContainsKey(const Key: String): Boolean;
-    function IndexOf(const Key: String): NativeInt;
+    Key: String;
+    Value: T;
 
-    procedure Add(const Key: String; const Value: V);
-
-    property DynamicProperty[const Key: String]: V read GetDynamicPropertyItem write SetDynamicPropertyItem; default;
+    constructor Create(const Key: String; const Value: T);
   end;
+
+  TDynamicProperty<T> = array of TDynamicPair<T>;
 
   TRttiTypeHelper = class helper for TRttiType
   public
@@ -751,53 +747,53 @@ end;
 
 { TDynamicProperty<V> }
 
-procedure TDynamicProperty<V>.Add(const Key: String; const Value: V);
-begin
-  inherited Add(TPair<String, V>.Create(Key, Value));
-end;
-
-function TDynamicProperty<V>.ContainsKey(const Key: String): Boolean;
-begin
-  Result := IndexOf(Key) > -1;
-end;
-
-function TDynamicProperty<V>.GetDynamicPropertyItem(const Key: String): V;
-var
-  ItemIndex: NativeInt;
-
-begin
-  ItemIndex := IndexOf(Key);
-
-  if ItemIndex > -1 then
-    Result := Items[ItemIndex].Value
-  else
-    Result := Default(V);
-end;
-
-function TDynamicProperty<V>.IndexOf(const Key: String): NativeInt;
-var
-  A: NativeInt;
-
-begin
-  for A := 0 to Pred(Count) do
-    if Items[A].Key = Key then
-      Exit(A);
-
-  Result := -1;
-end;
-
-procedure TDynamicProperty<V>.SetDynamicPropertyItem(const Key: String; const Value: V);
-var
-  ItemIndex: NativeInt;
-
-begin
-  ItemIndex := IndexOf(Key);
-
-  if ItemIndex > -1 then
-    Items[ItemIndex] := TPair<String, V>.Create(Key, Value)
-  else
-    Add(Key, Value);
-end;
+//procedure TDynamicProperty<V>.Add(const Key: String; const Value: V);
+//begin
+//  inherited Add(TPair<String, V>.Create(Key, Value));
+//end;
+//
+//function TDynamicProperty<V>.ContainsKey(const Key: String): Boolean;
+//begin
+//  Result := IndexOf(Key) > -1;
+//end;
+//
+//function TDynamicProperty<V>.GetDynamicPropertyItem(const Key: String): V;
+//var
+//  ItemIndex: NativeInt;
+//
+//begin
+//  ItemIndex := IndexOf(Key);
+//
+//  if ItemIndex > -1 then
+//    Result := Items[ItemIndex].Value
+//  else
+//    Result := Default(V);
+//end;
+//
+//function TDynamicProperty<V>.IndexOf(const Key: String): NativeInt;
+//var
+//  A: NativeInt;
+//
+//begin
+//  for A := 0 to Pred(Count) do
+//    if Items[A].Key = Key then
+//      Exit(A);
+//
+//  Result := -1;
+//end;
+//
+//procedure TDynamicProperty<V>.SetDynamicPropertyItem(const Key: String; const Value: V);
+//var
+//  ItemIndex: NativeInt;
+//
+//begin
+//  ItemIndex := IndexOf(Key);
+//
+//  if ItemIndex > -1 then
+//    Items[ItemIndex] := TPair<String, V>.Create(Key, Value)
+//  else
+//    Add(Key, Value);
+//end;
 
 { FlatAttribute }
 
@@ -895,6 +891,14 @@ end;
 constructor PathNameAttribute.Create;
 begin
   Create(EmptyStr);
+end;
+
+{ TDynamicPair<T> }
+
+constructor TDynamicPair<T>.Create(const Key: String; const Value: T);
+begin
+  Self.Key := Key;
+  Self.Value := Value;
 end;
 
 end.

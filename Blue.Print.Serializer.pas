@@ -35,6 +35,7 @@ type
     function CreateObject(const RttiType: TRttiInstanceType): TObject; virtual;
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function FindPropertyByName(const RttiType: TRttiType; const PropertyName: String): TRttiProperty;
+    function GetArrayElementType(const RttiType: TRttiType): TRttiType;
     function GetContentType: String;
     function GetEnumerationNames(const Enumeration: TRttiType): TArray<String>; overload;
     function GetEnumerationNames(const TypeInfo: PTypeInfo): TArray<String>; overload;
@@ -69,6 +70,7 @@ type
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
     function DeserializeArray(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
     function DeserializeClassReference(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
+    function DeserializeDynamicProperty(const Instance: TValue; const RttiType: TRttiType; const Pair: TJSONPair): TValue;
     function DeserializeFlatType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue;
     function DeserializeType(const RttiType: TRttiType; const JSONValue: TJSONValue): TValue; virtual;
     function Serialize(const Value: TValue): String;
@@ -76,10 +78,9 @@ type
     function SerializeFlatObject(const RttiType: TRttiType; const Instance: TValue): TJSONValue;
     function SerializeType(const RttiType: TRttiType; const Value: TValue): TJSONValue; virtual;
 
-    procedure DeserializeDynamicPropertyValue(const RttiType: TRttiInstanceType; const Instance: TObject; const PropertyName: String; const Value: TJSONValue);
     procedure DeserializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
     procedure DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
-    procedure SerializeDynamicProperty(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
+    procedure SerializeDynamicProperty(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
     procedure SerializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
     procedure SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
   end;
@@ -227,25 +228,35 @@ end;
 function TBluePrintSerializer.FindPropertyByName(const RttiType: TRttiType; const PropertyName: String): TRttiProperty;
 var
   PatternProperty: PatternPropertyAttribute;
-  &Property: TRttiProperty;
+  PropertyRtti: TRttiProperty;
 
 begin
   Result := nil;
 
-  for &Property in GetPublishedProperties(RttiType) do
+  for PropertyRtti in GetPublishedProperties(RttiType) do
   begin
-    PatternProperty := &Property.GetAttribute<PatternPropertyAttribute>;
+    PatternProperty := PropertyRtti.GetAttribute<PatternPropertyAttribute>;
 
     if Assigned(PatternProperty) then
     begin
       if CheckRegularExpression(PropertyName, PatternProperty.Regex) then
-        Exit(&Property);
+        Exit(PropertyRtti);
     end
-    else if &Property.PropertyType.IsDynamicProperty then
-      Result := &Property
-    else if AnsiSameText(GetFieldName(&Property), PropertyName) then
-      Exit(&Property);
+    else if PropertyRtti.PropertyType.IsDynamicProperty then
+      Result := PropertyRtti
+    else if AnsiSameText(GetFieldName(PropertyRtti), PropertyName) then
+      Exit(PropertyRtti);
   end;
+end;
+
+function TBluePrintSerializer.GetArrayElementType(const RttiType: TRttiType): TRttiType;
+begin
+{$IFDEF DCC}
+  if RttiType is TRttiArrayType then
+    Result := TRttiArrayType(RttiType).ElementType
+  else
+{$ENDIF}
+    Result := TRttiDynamicArrayType(RttiType).ElementType;
 end;
 
 function TBluePrintSerializer.GetContentType: String;
@@ -395,6 +406,28 @@ begin
   end;
 end;
 
+procedure TBluePrintJSONSerializer.SerializeDynamicProperty(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
+var
+  ArrayItem: Pointer;
+  Index: Integer;
+  KeyField: TRttiField;
+  ElementType: TRttiType;
+  ValueField: TRttiField;
+
+begin
+  ElementType := GetArrayElementType(RttiType);
+
+  KeyField := ElementType.GetField('Key');
+  ValueField := ElementType.GetField('Value');
+
+  for Index := 0 to Pred(Instance.GetArrayLength) do
+  begin
+    ArrayItem := Instance.GetReferenceToRawArrayElement(Index);
+
+    JSONObject.AddPair(KeyField.GetValue(ArrayItem).AsString, SerializeType(ValueField.FieldType, ValueField.GetValue(ArrayItem)));
+  end;
+end;
+
 procedure TBluePrintJSONSerializer.SerializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
 var
   Field: TRttiField;
@@ -417,41 +450,6 @@ begin
       Exit(SerializeType(&Property.PropertyType, &Property.GetValue(Instance.AsObject)));
 end;
 
-procedure TBluePrintJSONSerializer.SerializeDynamicProperty(const RttiType: TRttiInstanceType; const Instance: TObject; const JSONObject: TJSONObject);
-var
-  KeyField: TRttiField;
-  Index: Integer;
-  PairType: TRttiType;
-  PairValue: TValue;
-  PropertyValue: TValue;
-  ValueField: TRttiField;
-
-  function GetArrayType: TRttiType;
-  begin
-    Result := FContext.GetType(PropertyValue.TypeInfo);
-
-    if Result is TRttiArrayType then
-      Result := TRttiArrayType(Result).ElementType
-    else
-      Result := TRttiDynamicArrayType(Result).ElementType;
-  end;
-
-begin
-  PropertyValue := RttiType.GetMethod('ToArray').Invoke(Instance, []);
-
-  PairType := GetArrayType;
-
-  KeyField := PairType.GetField('Key');
-  ValueField := PairType.GetField('Value');
-
-  for Index := 0 to Pred(PropertyValue.GetArrayLength) do
-  begin
-    PairValue := PropertyValue.GetArrayElement(Index);
-
-    JSONObject.AddPair(KeyField.GetValue(PairValue.GetReferenceToRawData).AsString, SerializeType(ValueField.FieldType, ValueField.GetValue(PairValue.GetReferenceToRawData)));
-  end;
-end;
-
 procedure TBluePrintJSONSerializer.SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
 var
   PropertyRtti: TRttiProperty;
@@ -468,7 +466,7 @@ begin
       if PropertyRtti.HasAttribute<FlatAttribute> then
         SerializeProperties(PropertyType, PropertyValue.AsObject, JSONObject)
       else if PropertyType.IsDynamicProperty then
-        SerializeDynamicProperty(PropertyType.AsInstance, PropertyValue.AsObject, JSONObject)
+        SerializeDynamicProperty(PropertyType, PropertyValue, JSONObject)
       else
         JSONObject.AddPair(GetFieldName(PropertyRtti), SerializeType(PropertyType, PropertyValue));
     end;
@@ -554,46 +552,41 @@ end;
 
 procedure TBluePrintJSONSerializer.DeserializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
 var
-  DynamicPropertyInstance: TValue;
-  Key: JSONKeyType;
-  Prop: TRttiProperty;
+  Pair: TJSONPair;
+  PropertyRtti: TRttiProperty;
 
-  function GetKeyValue: String;
+  function GetKey: String;
   begin
-    Result := Key{$IFDEF DCC}.JsonString.Value{$ENDIF};
+    Result := Pair{$IFDEF DCC}.JsonString.Value{$ENDIF};
   end;
 
   function GetValue: TJSONValue;
   begin
-    Result := {$IFDEF PAS2JS}JSONObject[Key]{$ELSE}Key.JsonValue{$ENDIF};
+    Result := Pair.{$IFDEF PAS2JS}JSONObject[Key]{$ELSE}JsonValue{$ENDIF};
   end;
 
   function FindProperty: TRttiProperty;
   begin
-    Result := FindPropertyByName(RttiType, GetKeyValue);
+    Result := FindPropertyByName(RttiType, GetKey);
   end;
 
 begin
-  for Key in {$IFDEF PAS2JS}TJSObject.Keys{$ENDIF}(JSONObject) do
+  for Pair in {$IFDEF PAS2JS}TJSObject.Keys{$ENDIF}(JSONObject) do
   begin
-    Prop := FindProperty;
+    PropertyRtti := FindProperty;
 
-    if Assigned(Prop) then
+    if Assigned(PropertyRtti) then
     begin
-      if Prop.PropertyType.IsDynamicProperty then
-      begin
-        DynamicPropertyInstance := CheckPropertyInstance(TValue.From(Instance), Prop);
-
-        DeserializeDynamicPropertyValue(Prop.PropertyType.AsInstance, DynamicPropertyInstance.AsObject, GetKeyValue, GetValue);
-      end
+      if PropertyRtti.PropertyType.IsDynamicProperty then
+        PropertyRtti.SetValue(Instance, DeserializeDynamicProperty(PropertyRtti.GetValue(Instance), PropertyRtti.PropertyType, Pair))
       else if not IsNull(GetValue) then
-        Prop.SetValue(Instance, DeserializeType(Prop.PropertyType, GetValue))
+        PropertyRtti.SetValue(Instance, DeserializeType(PropertyRtti.PropertyType, GetValue))
     end
     else
-      for Prop in GetPublishedProperties(RttiType) do
-        if Prop.HasAttribute<FlatAttribute> then
+      for PropertyRtti in GetPublishedProperties(RttiType) do
+        if PropertyRtti.HasAttribute<FlatAttribute> then
         begin
-          Prop.SetValue(Instance, DeserializeType(Prop.PropertyType, JSONObject));
+          PropertyRtti.SetValue(Instance, DeserializeType(PropertyRtti.PropertyType, JSONObject));
 
           Exit;
         end;
@@ -795,16 +788,10 @@ begin
     ArrayItems := nil
   else
   begin
+    ArrayElementType := GetArrayElementType(RttiType);
     Count := JSONArray.{$IFDEF PAS2JS}Length{$ELSE}Count{$ENDIF};
 
     SetLength(ArrayItems, Count);
-
-{$IFDEF DCC}
-    if RttiType is TRttiArrayType then
-      ArrayElementType := TRttiArrayType(RttiType).ElementType
-    else
-{$ENDIF}
-      ArrayElementType := TRttiDynamicArrayType(RttiType).ElementType;
 
     for Index := 0 to Pred(Count) do
       ArrayItems[Index] := DeserializeType(ArrayElementType, JSONArray[Index]);
@@ -826,19 +813,28 @@ begin
     Result := TValue.Empty;
 end;
 
-procedure TBluePrintJSONSerializer.DeserializeDynamicPropertyValue(const RttiType: TRttiInstanceType; const Instance: TObject; const PropertyName: String; const Value: TJSONValue);
+function TBluePrintJSONSerializer.DeserializeDynamicProperty(const Instance: TValue; const RttiType: TRttiType; const Pair: TJSONPair): TValue;
 var
-  Parameters: TArray<TRttiParameter>;
-  WriteMethod: TRttiMethod;
+  ArrayItems: TArray<TValue>;
+  ElementeType: TRttiType;
+  KeyField: TRttiField;
+  ValueField: TRttiField;
 
 begin
-{$IFDEF DCC}
-  WriteMethod := RttiType.GetDeclaredIndexedProperties[0].WriteMethod;
+  ElementeType := GetArrayElementType(RttiType);
+  KeyField := ElementeType.GetField('Key');
+  ValueField := ElementeType.GetField('Value');
 
-  Parameters := WriteMethod.GetParameters;
+  SetLength(ArrayItems, Instance.GetArrayLength + 1);
 
-  WriteMethod.Invoke(Instance, [PropertyName, DeserializeType(Parameters[1].ParamType, Value)]);
-{$ENDIF}
+  TValue.Make(nil, ElementeType.Handle, Result);
+
+  KeyField.SetValue(Result.GetReferenceToRawData, Pair.JsonString.Value);
+  ValueField.SetValue(Result.GetReferenceToRawData, DeserializeType(ValueField.FieldType, Pair.JsonValue));
+
+  ArrayItems[High(ArrayItems)] := Result;
+
+  Result := TValue.FromArray(RttiType.Handle, ArrayItems);
 end;
 
 procedure TBluePrintJSONSerializer.DeserializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);
@@ -1013,14 +1009,7 @@ end;
 function TBluePrintXMLSerializer.DeserializeArray(const RttiType: TRttiType; const Node: IXMLNode): TValue;
 begin
 {$IFDEF DCC}
-  var ArrayElementType: TRttiType;
-
-  if RttiType is TRttiArrayType then
-    ArrayElementType := TRttiArrayType(RttiType).ElementType
-  else
-    ArrayElementType := TRttiDynamicArrayType(RttiType).ElementType;
-
-  Result := DeserializeType(ArrayElementType, Node);
+  Result := DeserializeType(GetArrayElementType(RttiType), Node);
 {$ENDIF}
 end;
 

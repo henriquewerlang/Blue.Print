@@ -83,12 +83,6 @@ type
     [Test]
     procedure WhenDeserializeAClassWithAnEnumeratorWithEnumValueAttributeMustLoadTheEnumaratorValueAsExpected;
     [Test]
-    procedure WhenDeserializeAPropertyTypeOfTDynamicPropertyMustLoadTheFieldNameFromJSONInTheKeyValueOfTheDynamicPropertyProperty;
-    [Test]
-    procedure WhenDeserializeAPropertyTypeOfTDynamicPropertyMustLoadValueOfTheJSONInTheDynamicPropertyValue;
-    [Test]
-    procedure WhenSerializeAPropertyTypeOfTDynamicPropertyMustLoadTheKeyValueFromTheDynamicPropertyInTheFieldValueOfTheJSONAndTheValueInTheValueOfTheField;
-    [Test]
     procedure WhenAPropertyHasTheFieldNameAttributeMustSerializeTheValueWithThisName;
     [Test]
     procedure WhenAPropertyHasTheFieldNameAttributeMustDeserializeTheValueAsExpected;
@@ -117,13 +111,9 @@ type
     [Test]
     procedure WhenTryToDeserializeAInvalidValueToADoublePropertyCannotRaiseAnyError;
     [Test]
-    procedure WhenAPropertyIsntFoundInTheClassMustLoadTheValueInTheDynamicProperty;
-    [Test]
     procedure WhenDeserializeAClassWithFlatEnumeratorPropertyMustUseThisInformationToLoadTheJSONValueInTheCorrectObject;
     [Test]
     procedure WhenDeserializeAFlatObjectWithEnumeratorAttributeCantRaiseAnyErrorIfTheJSONDontHaveTheFieldEnumeratorValue;
-    [Test]
-    procedure WhenTheDynamicPropertyHasThePatternPropertyAttributeAndTheFieldPassInTheRegexValidationMustLoadTheValueInThisProperty;
     [Test]
     procedure WhenAClassAsTheFlatAttributeMustLoadOnlyPublishedPropertiesAndCantRaiseAnyError;
     [Test]
@@ -181,7 +171,23 @@ type
     [Test]
     procedure WhenDeserializeANullValuePropertyJSONCantRaiseAnyError;
     [Test]
-    procedure TheValueOfTheDynamicPropertyMustBeSerializedHasExpected;
+    procedure WhenSerializeADynamicPropertyMustLoadTheJSONObjectWithTheKeyAndTheValueHasExpected;
+    [Test]
+    procedure WhenTheDynamicPropertyHasAnObjectOfTypeMustSerializeTheObjectHasExpected;
+    [Test]
+    procedure WhenDeserializeAnObjectWithADynamicPropertyMustLoadTheValueInTheProperty;
+    [Test]
+    procedure TheKeyValueMustBeLoadedInTheKeyValueOfTheDynamicProperty;
+    [Test]
+    procedure TheValueOfTheObjectMustBeLoadedInTheValueOfTheDynamicProperty;
+    [Test]
+    procedure WhenTheValueIsAnObjectMustLoadTheValueOfDynamicPropertyHasExpected;
+    [Test]
+    procedure AllFieldsOfTheJSONObjectMustBeLoadedInTheDynamicProperty;
+    [Test]
+    procedure WhenTheClassWithTheDynamicPropertyHasAnotherPropertiesMustLoadThisPropertyFirst;
+    [Test]
+    procedure WhenThePropertyHasThePatternPropertyMustLoadTheValueOnlyIfTheFieldNameMatchThePattern;
   end;
 
   [TestFixture]
@@ -639,52 +645,6 @@ type
     property MyProp: String read FMyProp write FMyProp;
   end;
 
-  TMyClassWithDynamicProperty = class
-  private
-    FDynamicProperty: TDynamicProperty<String>;
-    function GetDynamicProperty: TDynamicProperty<String>;
-  public
-    destructor Destroy; override;
-  published
-    property DynamicProperty: TDynamicProperty<String> read GetDynamicProperty write FDynamicProperty;
-  end;
-
-  TMyClassWithDynamicPropertyWithType = class
-  private
-    FDynamicProperty: TDynamicProperty<TObject>;
-  public
-    constructor Create;
-
-    destructor Destroy; override;
-  published
-    property DynamicProperty: TDynamicProperty<TObject> read FDynamicProperty write FDynamicProperty;
-  end;
-
-  TMyClassWithDynamicPropertyWithPattern = class
-  private
-    FDynamicProperty: TDynamicProperty<String>;
-    FMyProperty: String;
-  public
-    destructor Destroy; override;
-  published
-    [PatternProperty('^MyProp')]
-    property DynamicProperty: TDynamicProperty<String> read FDynamicProperty write FDynamicProperty;
-    property MyProperty: String read FMyProperty write FMyProperty;
-  end;
-
-  TMyClassWithDynamicPropertyAndProperties = class
-  private
-    FDynamicProperty: TDynamicProperty<String>;
-    FMyProp1: String;
-    FMyProp2: Integer;
-  public
-    destructor Destroy; override;
-  published
-    property DynamicProperty: TDynamicProperty<String> read FDynamicProperty write FDynamicProperty;
-    property MyProp1: String read FMyProp1 write FMyProp1;
-    property MyProp2: Integer read FMyProp2 write FMyProp2;
-  end;
-
   TClassWithConstructor = class
   private
     FConstrutctorCalled: Boolean;
@@ -926,6 +886,45 @@ type
     procedure MyHeader([SOAPHeader] const Header: String);
   end;
 
+  TMyClassWithDynamicPropertyWithBooleanType = class
+  private
+    FDynamicProperty: TDynamicProperty<Boolean>;
+  public
+    procedure AddValue(const Key: String; const Value: Boolean);
+  published
+    property DynamicProperty: TDynamicProperty<Boolean> read FDynamicProperty write FDynamicProperty;
+  end;
+
+  TMyClassWithDynamicPropertyWithClassBoolean = class
+  private
+    FDynamicProperty: TDynamicProperty<TMyBooleanClass>;
+  public
+    destructor Destroy; override;
+
+    procedure AddValue(const Key: String);
+  published
+    property DynamicProperty: TDynamicProperty<TMyBooleanClass> read FDynamicProperty write FDynamicProperty;
+  end;
+
+  TMyClassWithDynamicPropertyWithAnotherProperties = class
+  private
+    FDynamicProperty: TDynamicProperty<String>;
+    FMyField: String;
+    FValue: String;
+  published
+    property DynamicProperty: TDynamicProperty<String> read FDynamicProperty write FDynamicProperty;
+    property MyField: String read FMyField write FMyField;
+    property Value: String read FValue write FValue;
+  end;
+
+  TMyClassWithDynamicPropertyWithPatternAttribute = class
+  private
+    FPatternProperty: TDynamicProperty<String>;
+  published
+    [PatternProperty('^2\d{2}')]
+    property PatternProperty: TDynamicProperty<String> read FPatternProperty write FPatternProperty;
+  end;
+
 implementation
 
 uses System.SysUtils, System.DateUtils, REST.Types;
@@ -1032,6 +1031,15 @@ end;
 
 { TBluePrintJsonSerializerTest }
 
+procedure TBluePrintJsonSerializerTest.AllFieldsOfTheJSONObjectMustBeLoadedInTheDynamicProperty;
+begin
+  var Value := FSerializer.Deserialize('{"Field":true, "MyProp":true, "Another":true}', TypeInfo(TMyClassWithDynamicPropertyWithBooleanType)).AsType<TMyClassWithDynamicPropertyWithBooleanType>;
+
+  Assert.AreEqual(3, Length(Value.DynamicProperty));
+
+  Value.Free;
+end;
+
 procedure TBluePrintJsonSerializerTest.OnlyPublicFieldsCanBeSerializedInTheRecordType;
 begin
   var MyRecord: TMyPrivateRecord;
@@ -1062,22 +1070,22 @@ begin
   FSerializer := TBluePrintJsonSerializer.Create;
 end;
 
-procedure TBluePrintJsonSerializerTest.TheValueOfTheDynamicPropertyMustBeSerializedHasExpected;
+procedure TBluePrintJsonSerializerTest.TheKeyValueMustBeLoadedInTheKeyValueOfTheDynamicProperty;
 begin
-  var MyBoolean1 := TMyBooleanClass.Create;
-  var MyBoolean2 := TMyBooleanClass.Create;
-  var MyBoolean3 := TMyBooleanClass.Create;
-  var MyClass := TMyClassWithDynamicPropertyWithType.Create;
+  var Value := FSerializer.Deserialize('{"MyField":false}', TypeInfo(TMyClassWithDynamicPropertyWithBooleanType)).AsType<TMyClassWithDynamicPropertyWithBooleanType>;
 
-  MyClass.DynamicProperty.Add('Value1', MyBoolean1);
+  Assert.AreEqual('MyField', Value.DynamicProperty[0].Key);
 
-  MyClass.DynamicProperty.Add('Value2', MyBoolean1);
+  Value.Free;
+end;
 
-  MyClass.DynamicProperty.Add('Value3', MyBoolean1);
+procedure TBluePrintJsonSerializerTest.TheValueOfTheObjectMustBeLoadedInTheValueOfTheDynamicProperty;
+begin
+  var Value := FSerializer.Deserialize('{"Value":true}', TypeInfo(TMyClassWithDynamicPropertyWithBooleanType)).AsType<TMyClassWithDynamicPropertyWithBooleanType>;
 
-  Assert.AreEqual('{"Value1":{"MyProp":false},"Value2":{"MyProp":false},"Value3":{"MyProp":false}}', FSerializer.Serialize(TValue.From(MyClass)));
+  Assert.IsTrue(Value.DynamicProperty[0].Value);
 
-  MyClass.Free;
+  Value.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenAClassAsTheFlatAttributeMustLoadOnlyPublishedProperties;
@@ -1179,17 +1187,6 @@ begin
   Assert.AreEqual('{"MyField":123}', Value);
 
   MyClass.Free;
-end;
-
-procedure TBluePrintJsonSerializerTest.WhenAPropertyIsntFoundInTheClassMustLoadTheValueInTheDynamicProperty;
-begin
-  var Value := FSerializer.Deserialize('{"MyProp2":123456,"Another":"Value","Field2":"String"}', TypeInfo(TMyClassWithDynamicPropertyAndProperties)).AsType<TMyClassWithDynamicPropertyAndProperties>;
-
-  Assert.AreEqual(123456, Value.MyProp2);
-  Assert.IsTrue(Value.DynamicProperty.ContainsKey('Another'));
-  Assert.IsTrue(Value.DynamicProperty.ContainsKey('Field2'));
-
-  Value.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeABooleanPropertyMustLoadThePropetyAsExpected;
@@ -1473,6 +1470,15 @@ begin
   Value.Free;
 end;
 
+procedure TBluePrintJsonSerializerTest.WhenDeserializeAnObjectWithADynamicPropertyMustLoadTheValueInTheProperty;
+begin
+  var Value := FSerializer.Deserialize('{"Value":false}', TypeInfo(TMyClassWithDynamicPropertyWithBooleanType)).AsType<TMyClassWithDynamicPropertyWithBooleanType>;
+
+  Assert.AreEqual(1, Length(Value.DynamicProperty));
+
+  Value.Free;
+end;
+
 procedure TBluePrintJsonSerializerTest.WhenDeserializeANullValueArrayCantRaiseAnyError;
 begin
   Assert.WillNotRaise(
@@ -1491,28 +1497,6 @@ begin
 
       Value.Free;
     end);
-end;
-
-procedure TBluePrintJsonSerializerTest.WhenDeserializeAPropertyTypeOfTDynamicPropertyMustLoadTheFieldNameFromJSONInTheKeyValueOfTheDynamicPropertyProperty;
-begin
-  var Value := FSerializer.Deserialize('{"Field1":"Value1","Field2":"Value2","Field3":"Value3"}', TypeInfo(TMyClassWithDynamicProperty)).AsType<TMyClassWithDynamicProperty>;
-
-  Assert.IsTrue(Value.DynamicProperty.ContainsKey('Field1'));
-  Assert.IsTrue(Value.DynamicProperty.ContainsKey('Field2'));
-  Assert.IsTrue(Value.DynamicProperty.ContainsKey('Field3'));
-
-  Value.Free;
-end;
-
-procedure TBluePrintJsonSerializerTest.WhenDeserializeAPropertyTypeOfTDynamicPropertyMustLoadValueOfTheJSONInTheDynamicPropertyValue;
-begin
-  var Value := FSerializer.Deserialize('{"Field1":"Value1","Field2":"Value2","Field3":"Value3"}', TypeInfo(TMyClassWithDynamicProperty)).AsType<TMyClassWithDynamicProperty>;
-
-  Assert.AreEqual('Value1', Value.DynamicProperty['Field1']);
-  Assert.AreEqual('Value2', Value.DynamicProperty['Field2']);
-  Assert.AreEqual('Value3', Value.DynamicProperty['Field3']);
-
-  Value.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenDeserializeARecordMustLoadTheRecordsFieldsAsExpected;
@@ -1659,6 +1643,8 @@ begin
   Assert.AreEqual('{"MyProp1":"abc","MyProp2":123,"MyProp3":123.456,"MyProp4":"MyValue"}', FSerializer.Serialize(MyValue));
 
   MyValue.MyObject.Free;
+
+  MyValue.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenSerializeAComplexTypeMustReturnApplicationJSONInTheContentType;
@@ -1684,6 +1670,21 @@ begin
   Assert.AreEqual('{"MyDate":"2024-05-21T00:00:00.000Z","MyTime":"1899-12-30T01:02:03.000Z","MyDateTime":"2024-05-21T01:02:03.000Z"}', Value);
 
   MyObject.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenSerializeADynamicPropertyMustLoadTheJSONObjectWithTheKeyAndTheValueHasExpected;
+begin
+  var MyClass := TMyClassWithDynamicPropertyWithBooleanType.Create;
+
+  MyClass.AddValue('Value1', False);
+
+  MyClass.AddValue('Value2', True);
+
+  MyClass.AddValue('Value3', False);
+
+  Assert.AreEqual('{"Value1":false,"Value2":true,"Value3":false}', FSerializer.Serialize(MyClass));
+
+  MyClass.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenSerializeAnArrayMustGenerateTheJSONAsExpected;
@@ -1734,21 +1735,6 @@ begin
   MyClass.Free;
 end;
 
-procedure TBluePrintJsonSerializerTest.WhenSerializeAPropertyTypeOfTDynamicPropertyMustLoadTheKeyValueFromTheDynamicPropertyInTheFieldValueOfTheJSONAndTheValueInTheValueOfTheField;
-begin
-  var MyClass := TMyClassWithDynamicProperty.Create;
-
-  MyClass.DynamicProperty.Add('Field1', 'Value');
-
-  MyClass.DynamicProperty.Add('Field2', 'Value');
-
-  MyClass.DynamicProperty.Add('Field3', 'Value');
-
-  Assert.AreEqual('{"Field1":"Value","Field2":"Value","Field3":"Value"}', FSerializer.Serialize(TValue.From(MyClass)));
-
-  MyClass.Free;
-end;
-
 procedure TBluePrintJsonSerializerTest.WhenSerializeAPropertyWithStoredOnlyCanSerializeTheValueIfThePropetyIsStored;
 begin
   var MyObject := TMyClassWithStoredProperty.Create;
@@ -1778,15 +1764,32 @@ begin
   Assert.AreEqual('"abc"', Value);
 end;
 
-procedure TBluePrintJsonSerializerTest.WhenTheDynamicPropertyHasThePatternPropertyAttributeAndTheFieldPassInTheRegexValidationMustLoadTheValueInThisProperty;
+procedure TBluePrintJsonSerializerTest.WhenTheClassWithTheDynamicPropertyHasAnotherPropertiesMustLoadThisPropertyFirst;
 begin
-  var Value := FSerializer.Deserialize('{"MyProperty":"Value"}', TypeInfo(TMyClassWithDynamicPropertyWithPattern)).AsType<TMyClassWithDynamicPropertyWithPattern>;
+  var Value := FSerializer.Deserialize('{"MyField":"Field","Value":"123","Another":"Text"}', TypeInfo(TMyClassWithDynamicPropertyWithAnotherProperties)).AsType<TMyClassWithDynamicPropertyWithAnotherProperties>;
 
-  Assert.IsNotNil(Value.DynamicProperty);
+  Assert.AreEqual('Field', Value.MyField);
 
-  Assert.AreEqual(1, Value.DynamicProperty.Count);
+  Assert.AreEqual('123', Value.Value);
+
+  Assert.AreEqual('Text', Value.DynamicProperty[0].Value);
 
   Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenTheDynamicPropertyHasAnObjectOfTypeMustSerializeTheObjectHasExpected;
+begin
+  var MyClass := TMyClassWithDynamicPropertyWithClassBoolean.Create;
+
+  MyClass.AddValue('Value1');
+
+  MyClass.AddValue('Value2');
+
+  MyClass.AddValue('Value3');
+
+  Assert.AreEqual('{"Value1":{"MyProp":false},"Value2":{"MyProp":false},"Value3":{"MyProp":false}}', FSerializer.Serialize(MyClass));
+
+  MyClass.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenThePropertyHasTheFlatAttributeMustLoadAllPropertiesFromTheTypeInTheCurrentJSON;
@@ -1801,6 +1804,24 @@ begin
   MyClass.Flat.Free;
 
   MyClass.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenThePropertyHasThePatternPropertyMustLoadTheValueOnlyIfTheFieldNameMatchThePattern;
+begin
+  var Value := FSerializer.Deserialize('{"200":"Field","123":"123","234":"Text"}', TypeInfo(TMyClassWithDynamicPropertyWithPatternAttribute)).AsType<TMyClassWithDynamicPropertyWithPatternAttribute>;
+
+  Assert.AreEqual(2, Length(Value.PatternProperty));
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.WhenTheValueIsAnObjectMustLoadTheValueOfDynamicPropertyHasExpected;
+begin
+  var Value := FSerializer.Deserialize('{"Value":{"MyPropd":true}}', TypeInfo(TMyClassWithDynamicPropertyWithClassBoolean)).AsType<TMyClassWithDynamicPropertyWithClassBoolean>;
+
+  Assert.IsNotNil(Value.DynamicProperty[0].Value);
+
+  Value.Free;
 end;
 
 procedure TBluePrintJsonSerializerTest.WhenTheValueTypeIsATValueRecordMustSerializeThenInternalValueOfThisType;
@@ -2606,41 +2627,6 @@ begin
 
 end;
 
-{ TMyClassWithDynamicProperty }
-
-destructor TMyClassWithDynamicProperty.Destroy;
-begin
-  FDynamicProperty.Free;
-
-  inherited;
-end;
-
-function TMyClassWithDynamicProperty.GetDynamicProperty: TDynamicProperty<String>;
-begin
-  if not Assigned(FDynamicProperty) then
-    FDynamicProperty := TDynamicProperty<String>.Create;
-
-  Result := FDynamicProperty;
-end;
-
-{ TMyClassWithDynamicPropertyAndProperties }
-
-destructor TMyClassWithDynamicPropertyAndProperties.Destroy;
-begin
-  FDynamicProperty.Free;
-
-  inherited;
-end;
-
-{ TMyClassWithDynamicPropertyWithPattern }
-
-destructor TMyClassWithDynamicPropertyWithPattern.Destroy;
-begin
-  FDynamicProperty.Free;
-
-  inherited;
-end;
-
 { TMyRecordWithStore }
 
 function TMyRecordWithStore.GetMyFieldStored: Boolean;
@@ -2648,18 +2634,24 @@ begin
   Result := MyFieldStored;
 end;
 
-{ TMyClassWithDynamicPropertyWithType }
+{ TMyClassWithDynamicPropertyWithBooleanType }
 
-constructor TMyClassWithDynamicPropertyWithType.Create;
+procedure TMyClassWithDynamicPropertyWithBooleanType.AddValue(const Key: String; const Value: Boolean);
 begin
-  inherited Create;
-
-  FDynamicProperty := TDynamicProperty<TObject>.Create;
+  FDynamicProperty := FDynamicProperty + [TDynamicPair<Boolean>.Create(Key, Value)]
 end;
 
-destructor TMyClassWithDynamicPropertyWithType.Destroy;
+{ TMyClassWithDynamicPropertyWithClassBoolean }
+
+procedure TMyClassWithDynamicPropertyWithClassBoolean.AddValue(const Key: String);
 begin
-  FDynamicProperty.Free;
+  FDynamicProperty := FDynamicProperty + [TDynamicPair<TMyBooleanClass>.Create(Key, TMyBooleanClass.Create)]
+end;
+
+destructor TMyClassWithDynamicPropertyWithClassBoolean.Destroy;
+begin
+  for var Pair in FDynamicProperty do
+    Pair.Value.Free;
 
   inherited;
 end;

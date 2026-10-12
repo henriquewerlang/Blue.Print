@@ -1,0 +1,24 @@
+Criar o esquema de namespace para agrupar os tipos por arquivos ou subesquemas.
+* Tem que ver como vai funcionar um tipo dentro de um tipo.
+* Em teoria é possível localizar uma referência direto pelo namespace mais o nome do tipo?
+No esquema do JSON tem que organizar como montar os namespaces dele.
+O importador vai ser o centro e os tipos específicos vão importar os esquemas XSD ou JSON.
+* Tem que ver uma forma de um específico acionar o importador para importar o arquivo de dependência.
+Não permitir os importadores individuais importar as próprias dependências, tem que estar configurado antes de importar
+* Criar um esquema para importar outras configurações, caso as assinaturas do XML
+Os conversores tem que registrar os tipos "internos" que podem ser repetidos
+Mudar o esquema das propriedades dinâmicas, criar o um array com um tipo de pares para a propriedades
+* Isso por que o valor é requerido e tem que ser criado em caso de um objeto.
+  - Verificar se precisa disso mesmo
+* Sendo um array de pares o serializador funciona normalmente sem precisar de uma implementação específica para isso!
+* Na hora de gerar tem que adicionar uma função para adicionar a propriedade com o parâmetro do nome
+** Quando não for classe, tem que adicionar com os dois parâmetros
+Propriedade com anotação de pattern tem que respeitar o padrão para adicionar na propriedade
+
+Testes a fazer
+Respeitar o pattern quando tiver a anotação
+* Apenas para deserializar
+A prioridade da propriedade dinâmica tem que ser menor que a propriedade normal
+* Apenas para deserializar
+* Caso da declaração da propriedade estar antes da propriedade normal e o nome do campo fechar com um propriedade, não pode ser adicionado na propridade dinâmica
+Quando serializar o valor de um propriedade dinâmica, tem que gerar um JSON Object com o esquema chave e valor, aonde a chave é sempre string
