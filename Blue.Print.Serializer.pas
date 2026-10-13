@@ -815,26 +815,29 @@ end;
 
 function TBluePrintJSONSerializer.DeserializeDynamicProperty(const Instance: TValue; const RttiType: TRttiType; const Pair: TJSONPair): TValue;
 var
-  ArrayItems: TArray<TValue>;
+  ArrayItem: TValue;
   ElementeType: TRttiType;
+  ItemIndex: NativeInt;
   KeyField: TRttiField;
   ValueField: TRttiField;
 
 begin
   ElementeType := GetArrayElementType(RttiType);
   KeyField := ElementeType.GetField('Key');
+  Result := Instance;
   ValueField := ElementeType.GetField('Value');
 
-  SetLength(ArrayItems, Instance.GetArrayLength + 1);
+  ItemIndex := Result.GetArrayLength;
 
-  TValue.Make(nil, ElementeType.Handle, Result);
+  TValue.Make(nil, ElementeType.Handle, ArrayItem);
 
-  KeyField.SetValue(Result.GetReferenceToRawData, Pair.JsonString.Value);
-  ValueField.SetValue(Result.GetReferenceToRawData, DeserializeType(ValueField.FieldType, Pair.JsonValue));
+  KeyField.SetValue(ArrayItem.GetReferenceToRawData, Pair.JsonString.Value);
 
-  ArrayItems[High(ArrayItems)] := Result;
+  ValueField.SetValue(ArrayItem.GetReferenceToRawData, DeserializeType(ValueField.FieldType, Pair.JsonValue));
 
-  Result := TValue.FromArray(RttiType.Handle, ArrayItems);
+  Result.SetArrayLength(Succ(ItemIndex));
+
+  Result.SetArrayElement(ItemIndex, ArrayItem);
 end;
 
 procedure TBluePrintJSONSerializer.DeserializeFields(const RttiType: TRttiType; const Instance: TValue; const JSONObject: TJSONObject);

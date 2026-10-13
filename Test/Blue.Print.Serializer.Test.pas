@@ -188,6 +188,8 @@ type
     procedure WhenTheClassWithTheDynamicPropertyHasAnotherPropertiesMustLoadThisPropertyFirst;
     [Test]
     procedure WhenThePropertyHasThePatternPropertyMustLoadTheValueOnlyIfTheFieldNameMatchThePattern;
+    [Test]
+    procedure AllKeyFieldValuesMustBeLoadedInTheDynamicProperty;
   end;
 
   [TestFixture]
@@ -1036,6 +1038,19 @@ begin
   var Value := FSerializer.Deserialize('{"Field":true, "MyProp":true, "Another":true}', TypeInfo(TMyClassWithDynamicPropertyWithBooleanType)).AsType<TMyClassWithDynamicPropertyWithBooleanType>;
 
   Assert.AreEqual(3, Length(Value.DynamicProperty));
+
+  Value.Free;
+end;
+
+procedure TBluePrintJsonSerializerTest.AllKeyFieldValuesMustBeLoadedInTheDynamicProperty;
+begin
+  var Value := FSerializer.Deserialize('{"Value1":false,"Value2":false,"Value3":false}', TypeInfo(TMyClassWithDynamicPropertyWithBooleanType)).AsType<TMyClassWithDynamicPropertyWithBooleanType>;
+
+  Assert.AreEqual('Value1', Value.DynamicProperty[0].Key);
+
+  Assert.AreEqual('Value2', Value.DynamicProperty[1].Key);
+
+  Assert.AreEqual('Value3', Value.DynamicProperty[2].Key);
 
   Value.Free;
 end;

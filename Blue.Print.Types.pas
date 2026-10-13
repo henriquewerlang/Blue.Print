@@ -745,56 +745,6 @@ begin
   FName := Name;
 end;
 
-{ TDynamicProperty<V> }
-
-//procedure TDynamicProperty<V>.Add(const Key: String; const Value: V);
-//begin
-//  inherited Add(TPair<String, V>.Create(Key, Value));
-//end;
-//
-//function TDynamicProperty<V>.ContainsKey(const Key: String): Boolean;
-//begin
-//  Result := IndexOf(Key) > -1;
-//end;
-//
-//function TDynamicProperty<V>.GetDynamicPropertyItem(const Key: String): V;
-//var
-//  ItemIndex: NativeInt;
-//
-//begin
-//  ItemIndex := IndexOf(Key);
-//
-//  if ItemIndex > -1 then
-//    Result := Items[ItemIndex].Value
-//  else
-//    Result := Default(V);
-//end;
-//
-//function TDynamicProperty<V>.IndexOf(const Key: String): NativeInt;
-//var
-//  A: NativeInt;
-//
-//begin
-//  for A := 0 to Pred(Count) do
-//    if Items[A].Key = Key then
-//      Exit(A);
-//
-//  Result := -1;
-//end;
-//
-//procedure TDynamicProperty<V>.SetDynamicPropertyItem(const Key: String; const Value: V);
-//var
-//  ItemIndex: NativeInt;
-//
-//begin
-//  ItemIndex := IndexOf(Key);
-//
-//  if ItemIndex > -1 then
-//    Items[ItemIndex] := TPair<String, V>.Create(Key, Value)
-//  else
-//    Add(Key, Value);
-//end;
-
 { FlatAttribute }
 
 constructor FlatAttribute.Create(const EnumeratorPropertyName: String);
