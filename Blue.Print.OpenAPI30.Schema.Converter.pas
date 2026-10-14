@@ -2,52 +2,80 @@
 
 interface
 
-uses System.Rtti, Blue.Print.Schema.Importer;
+uses Blue.Print.Schema.Importer, Blue.Print.OpenAPI30.Schema;
 
 type
   TOpenAPI30SchemaConverter = class(TInterfacedObject, ISchemaConverter)
   private
+    function LoadDefinition(const Schema: TSchema): TOpenAPIDefinition.TOpenAPIDefinition;
+
     procedure Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
     procedure LoadSchema(const Schema: TSchema);
   end;
 
 implementation
 
-uses System.JSON;
+uses System.SysUtils, Blue.Print.Serializer, Blue.Print.Types;
 
 { TOpenAPI30SchemaConverter }
 
 procedure TOpenAPI30SchemaConverter.Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
 begin
-  var RequestBodies := TTypeClassDefinition.Create;
-  RequestBodies.Name := 'requestBodies';
+  var Definition := Schema.SchemaValue.AsType<TOpenAPIDefinition.TOpenAPIDefinition>;
 
-  Schema.AddClassDefinition(MainClass, Schema.Namespace, RequestBodies);
+  if Definition.components.IsRequestBodiesStored then
+  begin
+    var RequestBodies := TTypeClassDefinition.Create;
+    RequestBodies.Name := 'requestBodies';
 
-  var AClass := TTypeClassDefinition.Create;
-  Schema.AddClassDefinition(RequestBodies, Schema.Namespace, AClass);
+    Schema.AddClassDefinition(MainClass, Schema.Namespace, RequestBodies);
 
-  AClass := TTypeClassDefinition.Create;
-  Schema.AddClassDefinition(RequestBodies, Schema.Namespace, AClass);
+    for var RequestDefinition in Definition.components.requestBodies.PatternPropertyElement do
+    begin
+      var RequestBodyClass := TTypeClassDefinition.Create;
+      RequestBodyClass.Name := RequestDefinition.Key;
 
-  AClass := TTypeClassDefinition.Create;
-  Schema.AddClassDefinition(RequestBodies, Schema.Namespace, AClass);
+      Schema.AddClassDefinition(RequestBodies, Schema.Namespace, RequestBodyClass);
+    end;
+  end;
+
+  if Definition.components.IsSchemasStored then
+  begin
+    var Schemas := TTypeClassDefinition.Create;
+    Schemas.Name := 'schemas';
+
+    Schema.AddClassDefinition(MainClass, Schema.Namespace, Schemas);
+
+    for var SchemaDefinition in Definition.components.schemas.PatternPropertyElement do
+    begin
+      var SchemaClass := TTypeClassDefinition.Create;
+      SchemaClass.Name := SchemaDefinition.Key;
+
+      Schema.AddClassDefinition(Schemas, Schema.Namespace, SchemaClass);
+
+      for var PropertySchema in SchemaDefinition.Value.Schema.properties.additionalProperties do
+        SchemaClass.AddProperty(PropertySchema.Key, nil);
+    end;
+  end;
+end;
+
+function TOpenAPI30SchemaConverter.LoadDefinition(const Schema: TSchema): TOpenAPIDefinition.TOpenAPIDefinition;
+begin
+  var Serializer: IBluePrintSerializer := TBluePrintJSONSerializer.Create;
+
+  Result := Serializer.Deserialize(Schema.SchemaText, TypeInfo(TOpenAPIDefinition.TOpenAPIDefinition)).AsType<TOpenAPIDefinition.TOpenAPIDefinition>;
 end;
 
 procedure TOpenAPI30SchemaConverter.LoadSchema(const Schema: TSchema);
 begin
-  var JSON := TJSONObject.ParseJSONValue(Schema.SchemaText, False, True) as TJSONObject;
-  Schema.SchemaValue := JSON;
+  var Definition := LoadDefinition(Schema);
 
-  var IdField := JSON.Get('id');
-
-  if Assigned(IdField) then
-    Schema.Namespace := IdField.JsonValue.AsType<String>
-  else
-    Schema.Namespace := Schema.SchemaFile.FileName;
+  Schema.Namespace := Definition.info.title;
+  Schema.SchemaValue := Definition;
 end;
 
 initialization
   TSchemaImporter.Converters[TSchemaType.OpenAPI30] := TOpenAPI30SchemaConverter.Create;
 
 end.
+

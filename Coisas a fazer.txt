@@ -16,9 +16,3 @@ Mudar o esquema das propriedades dinâmicas, criar o um array com um tipo de par
 Propriedade com anotação de pattern tem que respeitar o padrão para adicionar na propriedade
 
 Testes a fazer
-Respeitar o pattern quando tiver a anotação
-* Apenas para deserializar
-A prioridade da propriedade dinâmica tem que ser menor que a propriedade normal
-* Apenas para deserializar
-* Caso da declaração da propriedade estar antes da propriedade normal e o nome do campo fechar com um propriedade, não pode ser adicionado na propridade dinâmica
-Quando serializar o valor de um propriedade dinâmica, tem que gerar um JSON Object com o esquema chave e valor, aonde a chave é sempre string
