@@ -67,7 +67,12 @@ type
     constructor Create(const Namespace: String);
   end;
 
-  TSchemaType = (Undefined, XSD, WSDL, OpenAPI20, OpenAPI30, OpenAPI31, OpenAPI32);
+  ETypeNotFound = class(Exception)
+  public
+    constructor Create(const TypeName: String);
+  end;
+
+  TSchemaType = (Undefined, XSD, WSDL, JSONDraft4, OpenAPI20, OpenAPI30, OpenAPI31, OpenAPI32);
 
   TTypeCommonDefinition = class
   private
@@ -208,11 +213,15 @@ type
     FSchemaValue: TValue;
     FTypes: TDictionary<String, TTypeDefinition>;
 
+    function GetSystemString: TTypeDefinition;
     function MakeTypeName(const Namespace, Name: String): String;
   public
     constructor Create(const Namespaces: TDictionary<String, String>; const Types: TDictionary<String, TTypeDefinition>);
 
+    destructor Destroy; override;
+
     function FindType(const Namespace, Name: String): TTypeDefinition;
+    function TryFindType(const Namespace, Name: String; var TypeDefinition: TTypeDefinition): Boolean;
 
     procedure AddClassDefinition(const ParentModule: TTypeModuleDefinition; const Namespace: String; const ClassDefinition: TTypeClassDefinition);
 
@@ -220,6 +229,7 @@ type
     property SchemaFile: TSchemaFileConfiguration read FSchemaFile write FSchemaFile;
     property SchemaText: String read FSchemaText write FSchemaText;
     property SchemaValue: TValue read FSchemaValue write FSchemaValue;
+    property SystemString: TTypeDefinition read GetSystemString;
   end;
 
   ISchemaConverter = interface
@@ -242,6 +252,9 @@ implementation
 uses System.IOUtils, System.Character;
 
 const
+  SYSTEM_NAMESPACE = 'Delphi/System';
+  SYSTEM_UNIT_NAME = 'System';
+  STRING_TYPE_NAME = 'String';
   TYPE_NAMESPACE_SEPARATOR = ':';
 
 { TSchemaImporter }
@@ -312,9 +325,9 @@ var
   function LoadMainClass(const UnitDefinition: TTypeUnitDefinition; const Schema: TSchema): TTypeClassDefinition;
   begin
     var MainModuleName := Schema.SchemaFile.MainModuleName;
-    var TypeFound := Schema.FindType(Schema.Namespace, MainModuleName);
+    var TypeFound: TTypeDefinition;
 
-    if Assigned(TypeFound) then
+    if Schema.TryFindType(Schema.Namespace, MainModuleName, TypeFound) then
       Result := TypeFound.AsClassDefinition
     else
       Result := CreateMainClass(UnitDefinition, Schema, MainModuleName);
@@ -331,6 +344,27 @@ var
   begin
     if Schema.Namespace.IsEmpty then
       raise ESchemaNamespaceNotLoaded.Create;
+  end;
+
+  procedure AddNamespace(const Name, Prefix: String);
+  begin
+    Namespaces.Add(Name, Prefix);
+  end;
+
+  procedure LoadSystemTypes;
+
+    procedure AddSystemType(const Name: String);
+    begin
+//      Types.Add()
+    end;
+
+  begin
+    AddNamespace(SYSTEM_UNIT_NAME, SYSTEM_UNIT_NAME);
+
+    var SystemUnit := TTypeUnitDefinition.Create;
+    SystemUnit.Name := SYSTEM_UNIT_NAME;
+
+    AddSystemType('String');
   end;
 
   procedure GenerateUnitDeclaration(const UnitDefinition: TTypeUnitDefinition);
@@ -764,11 +798,14 @@ begin
   CheckConfiguration;
 
   Namespaces := TDictionary<String, String>.Create;
+  var SystemUnits := TObjectDictionary<String, TTypeUnitDefinition>.Create([doOwnsValues]);
   Types := TDictionary<String, TTypeDefinition>.Create;
   Units := TObjectDictionary<String, TTypeUnitDefinition>.Create([doOwnsValues]);
 
+  LoadSystemTypes;
+
   for var Namespace in Configuration.Namespaces do
-    Namespaces.Add(Namespace.Namespace, Namespace.Prefix);
+    AddNamespace(Namespace.Namespace, Namespace.Prefix);
 
   try
     for var UnitConfiguration in Configuration.Units do
@@ -1043,10 +1080,24 @@ begin
   FTypes := Types;
 end;
 
+destructor TSchema.Destroy;
+begin
+  if SchemaValue.IsObjectInstance then
+    SchemaValue.AsObject.Free;
+
+  inherited;
+end;
+
 function TSchema.FindType(const Namespace, Name: String): TTypeDefinition;
 begin
-  if not FTypes.TryGetValue(MakeTypeName(Namespace, Name), Result) then
-    Result := nil;
+  if not TryFindType(Namespace, Name, Result) then
+    raise ETypeNotFound.Create(MakeTypeName(Namespace, Name));
+end;
+
+function TSchema.GetSystemString: TTypeDefinition;
+begin
+//  Result := FindType(SYSTEM_NAMESPACE, STRING_TYPE_NAME);
+  Result := nil;
 end;
 
 function TSchema.MakeTypeName(const Namespace, Name: String): String;
@@ -1055,6 +1106,18 @@ begin
     Result := Result + TYPE_NAMESPACE_SEPARATOR + Name
   else
     raise ESchemaNamespaceWithoutConfiguraton.Create(Namespace);
+end;
+
+function TSchema.TryFindType(const Namespace, Name: String; var TypeDefinition: TTypeDefinition): Boolean;
+begin
+  Result := FTypes.TryGetValue(MakeTypeName(Namespace, Name), TypeDefinition);
+end;
+
+{ ETypeNotFound }
+
+constructor ETypeNotFound.Create(const TypeName: String);
+begin
+  inherited CreateFmt('Type with the name "%s" not found!', [TypeName]);
 end;
 
 end.

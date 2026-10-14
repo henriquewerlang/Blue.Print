@@ -121,6 +121,8 @@ type
     procedure WhenTheArrayTypeIsAnObjectMustCreateTheAddFunctionForTheType;
     [Test]
     procedure WhenThePropertyIsOptionalMustCreateTheFieldForStoreTheIsStoredInfoAndCreateTheSetFunctionForTheProperty;
+    [Test]
+    procedure MustLoadTheSystemNamespaceWithThePrefixWithSystemNameToo;
   end;
 
   [TestFixture]
@@ -174,7 +176,15 @@ type
     [Test]
     procedure MustAppenTheClassInTheValueOsTheTypes;
     [Test]
+    procedure TheTryFindTypeMustReturnFalseIfDontFindTheType;
+    [Test]
+    procedure IfTheTryFindTypeFoundTheTypeMustReturnTrue;
+    [Test]
+    procedure WhenTheTypeIsFoundMustLoadTheTypeInTheParameterAsExpected;
+    [Test]
     procedure WhenFindTheAndTheTypeIsFoundedMustReturnTheTypeHasExpected;
+    [Test]
+    procedure IfTheTypeIsntFoundMustRaiseAnError;
     [Test]
     procedure WhenAddMoreThanOneClassMustAppendAllClassesInTheParentModule;
     [Test]
@@ -185,6 +195,10 @@ type
     procedure WhenAddAClassDefinitionMustLoadTheParentModuleHasExpected;
     [Test]
     procedure TheUnitNameCantBeAppendedToTheTypeNameInTheTypesList;
+    [Test]
+    procedure IfTheSchemaValueIsAnObjectMustDestroyTheValueWhenTheSchemaIsDestroyed;
+    [Test]
+    procedure IfTheSchemaValueIsntAnObjectCantBeDestroyedWhenTheSchemaIsDestroyed;
   end;
 
   TSchemaConverterMock = class(TInterfacedObject, ISchemaConverter)
@@ -206,6 +220,15 @@ type
     property Namespace: String read FNamespace write FNamespace;
     property SchemaText: String read FSchemaText write FSchemaText;
     property TimesCalled: Integer read FTimesCalled write FTimesCalled;
+  end;
+
+  TObjectSchema = class
+  public
+    constructor Create;
+
+    destructor Destroy; override;
+  public class var
+    DestroyCalled: Boolean;
   end;
 
 implementation
@@ -490,6 +513,21 @@ begin
     FConfiguration.Units[0]);
 
   SimpleType.Free;
+end;
+
+procedure TSchemaImporterTest.MustLoadTheSystemNamespaceWithThePrefixWithSystemNameToo;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      Schema.FindType('System', 'String');
+    end;
+
+  Assert.WillNotRaise(
+    procedure
+    begin
+      FImporter.Import(FConfiguration);
+    end);
 end;
 
 procedure TSchemaImporterTest.MustSaveAllUnitsInTheOutputFolderHasExpected;
@@ -1550,6 +1588,51 @@ begin
   ParentModule.Free;
 end;
 
+procedure TSchemaTest.IfTheSchemaValueIsAnObjectMustDestroyTheValueWhenTheSchemaIsDestroyed;
+begin
+  var Schema := TSchema.Create(nil, nil);
+  Schema.SchemaValue := TObjectSchema.Create;
+
+  Schema.Free;
+
+  Assert.IsTrue(TObjectSchema.DestroyCalled);
+end;
+
+procedure TSchemaTest.IfTheSchemaValueIsntAnObjectCantBeDestroyedWhenTheSchemaIsDestroyed;
+begin
+  var Schema := TSchema.Create(nil, nil);
+  Schema.SchemaValue := 'String';
+
+  Assert.WillNotRaise(
+    procedure
+    begin
+      Schema.Free;
+    end);
+end;
+
+procedure TSchemaTest.IfTheTryFindTypeFoundTheTypeMustReturnTrue;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  CurrentClassDefinition.Name := 'AClassName';
+  var ParentModule := TTypeUnitDefinition.Create;
+  var TypeDefinition: TTypeDefinition;
+
+  FSchema.AddClassDefinition(ParentModule, FNamespace, CurrentClassDefinition);
+
+  Assert.IsTrue(FSchema.TryFindType(FNamespace, 'AClassName', TypeDefinition));
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaTest.IfTheTypeIsntFoundMustRaiseAnError;
+begin
+  Assert.WillRaise(
+    procedure
+    begin
+      FSchema.FindType(FNamespace, 'AClassName');
+    end, ETypeNotFound);
+end;
+
 procedure TSchemaTest.MustAppenTheClassInTheValueOsTheTypes;
 begin
   var CurrentClassDefinition := TTypeClassDefinition.Create;
@@ -1594,6 +1677,13 @@ begin
   Assert.AreEqual('my:AClassName', FTypes.Keys.ToArray[0]);
 
   ParentModule.Free;
+end;
+
+procedure TSchemaTest.TheTryFindTypeMustReturnFalseIfDontFindTheType;
+begin
+  var TypeDefinition: TTypeDefinition;
+
+  Assert.IsFalse(FSchema.TryFindType(FNamespace, 'AClassName', TypeDefinition));
 end;
 
 procedure TSchemaTest.TheUnitNameCantBeAppendedToTheTypeNameInTheTypesList;
@@ -1724,6 +1814,22 @@ begin
   ParentModule.Free;
 end;
 
+procedure TSchemaTest.WhenTheTypeIsFoundMustLoadTheTypeInTheParameterAsExpected;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  CurrentClassDefinition.Name := 'AClassName';
+  var ParentModule := TTypeUnitDefinition.Create;
+  var TypeDefinition: TTypeDefinition;
+
+  FSchema.AddClassDefinition(ParentModule, FNamespace, CurrentClassDefinition);
+
+  FSchema.TryFindType(FNamespace, 'AClassName', TypeDefinition);
+
+  Assert.AreEqual(TypeDefinition, CurrentClassDefinition);
+
+  ParentModule.Free;
+end;
+
 procedure TSchemaTest.WhenTryToAddAClassDefinitionAndTheNamespaceDoesntExistsMustRaiseAnError;
 begin
   var CurrentClassDefinition := TTypeClassDefinition.Create;
@@ -1739,6 +1845,22 @@ begin
   CurrentClassDefinition.Free;
 
   ParentModule.Free;
+end;
+
+{ TObjectSchema }
+
+constructor TObjectSchema.Create;
+begin
+  inherited;
+
+  DestroyCalled := False;
+end;
+
+destructor TObjectSchema.Destroy;
+begin
+  DestroyCalled := True;
+
+  inherited;
 end;
 
 end.
