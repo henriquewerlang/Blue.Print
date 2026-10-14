@@ -240,6 +240,10 @@ type
   TConverters = array[TSchemaType] of ISchemaConverter;
 
   TSchemaImporter = class
+  private
+    class function MakeTypeName(const Namespaces: TDictionary<String, String>; const Namespace, Name: String): String;
+
+    class procedure AddType(const Types: TDictionary<String, TTypeDefinition>; const TypeDefinition: TTypeDefinition);
   public
     class var Converters: TConverters;
 
@@ -252,6 +256,8 @@ implementation
 uses System.IOUtils, System.Character;
 
 const
+  DOUBLE_TYPE_NAME = 'Double';
+  INTEGER_TYPE_NAME = 'Integer';
   SYSTEM_NAMESPACE = 'Delphi/System';
   SYSTEM_UNIT_NAME = 'System';
   STRING_TYPE_NAME = 'String';
@@ -351,20 +357,24 @@ var
     Namespaces.Add(Name, Prefix);
   end;
 
-  procedure LoadSystemTypes;
+  procedure LoadBuildInTypes;
 
-    procedure AddSystemType(const Name: String);
+    procedure AddBuildInType(const Namespace, Name: String);
     begin
-//      Types.Add()
+      var TypeDefinition := TTypeDefinition.Create;
+      TypeDefinition.Name := MakeTypeName(Namespaces, Namespace, Name);
+
+      AddType(Types, TypeDefinition);
     end;
 
   begin
-    AddNamespace(SYSTEM_UNIT_NAME, SYSTEM_UNIT_NAME);
+    AddNamespace(SYSTEM_NAMESPACE, SYSTEM_NAMESPACE);
 
-    var SystemUnit := TTypeUnitDefinition.Create;
-    SystemUnit.Name := SYSTEM_UNIT_NAME;
+    AddBuildInType(SYSTEM_NAMESPACE, STRING_TYPE_NAME);
 
-    AddSystemType('String');
+    AddBuildInType(SYSTEM_NAMESPACE, INTEGER_TYPE_NAME);
+
+    AddBuildInType(SYSTEM_NAMESPACE, DOUBLE_TYPE_NAME);
   end;
 
   procedure GenerateUnitDeclaration(const UnitDefinition: TTypeUnitDefinition);
@@ -798,11 +808,10 @@ begin
   CheckConfiguration;
 
   Namespaces := TDictionary<String, String>.Create;
-  var SystemUnits := TObjectDictionary<String, TTypeUnitDefinition>.Create([doOwnsValues]);
   Types := TDictionary<String, TTypeDefinition>.Create;
   Units := TObjectDictionary<String, TTypeUnitDefinition>.Create([doOwnsValues]);
 
-  LoadSystemTypes;
+  LoadBuildInTypes;
 
   for var Namespace in Configuration.Namespaces do
     AddNamespace(Namespace.Namespace, Namespace.Prefix);
@@ -840,9 +849,33 @@ begin
   end;
 end;
 
+class procedure TSchemaImporter.AddType(const Types: TDictionary<String, TTypeDefinition>; const TypeDefinition: TTypeDefinition);
+const
+  TYPE_SEPARATOR = '.';
+
+  function LoadTypeName(const TypeDefinition: TTypeDefinition): String;
+  begin
+    Result := TypeDefinition.Name;
+
+    if Assigned(TypeDefinition.ParentModule) and not TypeDefinition.ParentModule.IsUnitDefinition then
+      Result := LoadTypeName(TypeDefinition.ParentModule) + TYPE_SEPARATOR + Result;
+  end;
+
+begin
+  Types.Add(LoadTypeName(TypeDefinition), TypeDefinition);
+end;
+
 procedure TSchemaImporter.Import(const ConfigurationFileName: String);
 begin
 
+end;
+
+class function TSchemaImporter.MakeTypeName(const Namespaces: TDictionary<String, String>; const Namespace, Name: String): String;
+begin
+  if Namespaces.TryGetValue(Namespace, Result) then
+    Result := Result + TYPE_NAMESPACE_SEPARATOR + Name
+  else
+    raise ESchemaNamespaceWithoutConfiguraton.Create(Namespace);
 end;
 
 { ENeedConfiguration }
@@ -1053,23 +1086,12 @@ end;
 { TSchema }
 
 procedure TSchema.AddClassDefinition(const ParentModule: TTypeModuleDefinition; const Namespace: String; const ClassDefinition: TTypeClassDefinition);
-const
-  TYPE_SEPARATOR = '.';
-
-  function LoadTypeName(const TypeDefinition: TTypeDefinition): String;
-  begin
-    Result := TypeDefinition.Name;
-
-    if Assigned(TypeDefinition.ParentModule) and not TypeDefinition.ParentModule.IsUnitDefinition then
-      Result := LoadTypeName(TypeDefinition.ParentModule) + TYPE_SEPARATOR + Result;
-  end;
-
 begin
   ClassDefinition.Name := MakeTypeName(Namespace, ClassDefinition.Name);
   ClassDefinition.FParentModule := ParentModule;
   ParentModule.FClasses := ParentModule.FClasses + [ClassDefinition];
 
-  FTypes.Add(LoadTypeName(ClassDefinition), ClassDefinition);
+  TSchemaImporter.AddType(FTypes, ClassDefinition);
 end;
 
 constructor TSchema.Create(const Namespaces: TDictionary<String, String>; const Types: TDictionary<String, TTypeDefinition>);
@@ -1096,16 +1118,12 @@ end;
 
 function TSchema.GetSystemString: TTypeDefinition;
 begin
-//  Result := FindType(SYSTEM_NAMESPACE, STRING_TYPE_NAME);
-  Result := nil;
+  Result := FindType(SYSTEM_NAMESPACE, STRING_TYPE_NAME);
 end;
 
 function TSchema.MakeTypeName(const Namespace, Name: String): String;
 begin
-  if FNamespaces.TryGetValue(Namespace, Result) then
-    Result := Result + TYPE_NAMESPACE_SEPARATOR + Name
-  else
-    raise ESchemaNamespaceWithoutConfiguraton.Create(Namespace);
+  Result := TSchemaImporter.MakeTypeName(FNamespaces, Namespace, Name);
 end;
 
 function TSchema.TryFindType(const Namespace, Name: String; var TypeDefinition: TTypeDefinition): Boolean;
