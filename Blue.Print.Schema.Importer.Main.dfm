@@ -30,6 +30,7 @@ object Main: TMain
     Caption = 'Import'
     Default = True
     TabOrder = 2
+    OnClick = ImportSchemaClick
   end
   object ConfigurationFile: TEdit
     Left = 8
@@ -39,7 +40,6 @@ object Main: TMain
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 0
     TextHint = 'Configuration file name'
-    ExplicitWidth = 393
   end
   object SelectConfigurationFile: TButton
     Left = 492
@@ -50,7 +50,6 @@ object Main: TMain
     Caption = '...'
     TabOrder = 1
     OnClick = SelectConfigurationFileClick
-    ExplicitLeft = 407
   end
   object OpenConfigurationFile: TFileOpenDialog
     FavoriteLinks = <>

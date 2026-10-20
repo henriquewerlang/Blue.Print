@@ -212,6 +212,8 @@ type
     procedure WhenThePropertyHasAReferenceTypeMustFindTheReferenceAndLoadThePropertyValue;
     [Test]
     procedure ThePublicTypeSectionMustBeDeclaredBeforeThePrivateSection;
+    [Test]
+    procedure WhenImportTheSchemaWithAFileConfigurationMustLoadTheConfigurationAndImportTheSchemaHasExpected;
   end;
 
   [TestFixture]
@@ -289,7 +291,7 @@ type
 
 implementation
 
-uses System.IOUtils;
+uses System.IOUtils, Blue.Print.Serializer, Blue.Print.Types;
 
 const
   EMPTY_SCHEMA_FILE = 'Empty Schema.json';
@@ -1315,6 +1317,23 @@ begin
   TSchemaImporter.Converters[TSchemaType.OpenAPI20] := Converter;
 
   FImporter.Import(FConfiguration);
+
+  Assert.AreEqual(3, Converter.TimesCalled);
+end;
+
+procedure TSchemaImporterTest.WhenImportTheSchemaWithAFileConfigurationMustLoadTheConfigurationAndImportTheSchemaHasExpected;
+begin
+  var Converter := TSchemaConverterMock.Create;
+  var FileName := TPath.GetTempFileName;
+  TSchemaImporter.Converters[TSchemaType.OpenAPI30] := Converter;
+
+  FConfiguration.Units[0].SchemaFiles[0].SchemaType := TSchemaType.OpenAPI30;
+  FConfiguration.Units[1].SchemaFiles[0].SchemaType := TSchemaType.OpenAPI30;
+  FConfiguration.Units[1].SchemaFiles[1].SchemaType := TSchemaType.OpenAPI30;
+
+  TFile.WriteAllText(FileName, (TBluePrintJSONSerializer.Create as IBluePrintSerializer).Serialize(FConfiguration));
+
+  FImporter.Import(FileName);
 
   Assert.AreEqual(3, Converter.TimesCalled);
 end;

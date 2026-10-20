@@ -5,9 +5,9 @@ uses
   Vcl.Forms,
   Blue.Print.Schema.Importer.Main in 'Blue.Print.Schema.Importer.Main.pas' {Main},
   Blue.Print.Serializer in 'Blue.Print.Serializer.pas',
-  {$R}
-  Blue.Print.Types in 'Blue.Print.Types.pas' {$R *.res},
-  Blue.Print.Schema.Importer in 'Blue.Print.Schema.Importer.pas';
+  Blue.Print.Types in 'Blue.Print.Types.pas',
+  Blue.Print.Schema.Importer in 'Blue.Print.Schema.Importer.pas',
+  Blue.Print.JSON.Draft4.Schema.Converter in 'Blue.Print.JSON.Draft4.Schema.Converter.pas';
 
 {$R *.res}
 

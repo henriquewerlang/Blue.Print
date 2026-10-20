@@ -12,6 +12,7 @@ type
     SelectConfigurationFile: TButton;
     OpenConfigurationFile: TFileOpenDialog;
     procedure SelectConfigurationFileClick(Sender: TObject);
+    procedure ImportSchemaClick(Sender: TObject);
   end;
 
 var
@@ -21,9 +22,18 @@ implementation
 
 {$R *.dfm}
 
-uses System.SysUtils, System.Types;
+uses System.SysUtils, System.Types, Blue.Print.Schema.Importer;
 
 { TMain }
+
+procedure TMain.ImportSchemaClick(Sender: TObject);
+begin
+  var Import := TSchemaImporter.Create;
+
+  Import.Import(ConfigurationFile.Text);
+
+  Import.Free;
+end;
 
 procedure TMain.SelectConfigurationFileClick(Sender: TObject);
 begin
@@ -32,3 +42,4 @@ begin
 end;
 
 end.
+
