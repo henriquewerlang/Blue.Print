@@ -73,10 +73,6 @@ type
     [Test]
     procedure WhenTryToAddAClassDefinitionAndTheNamespaceDoesntExistsMustRaiseAnError;
     [Test]
-    procedure WhenAddTheClassDefinitionMustAppendTheClassInTheParentModuleClassList;
-    [Test]
-    procedure WhenAddTheClassDefinitionMustLoadTheValueInTheTypesList;
-    [Test]
     procedure TheKeyValueFromTypeMustBeTheNamespaceWithTheClassNameHasExpected;
     [Test]
     procedure MustAppenTheClassInTheValueOsTheTypes;
@@ -90,14 +86,6 @@ type
     procedure WhenFindTheAndTheTypeIsFoundedMustReturnTheTypeHasExpected;
     [Test]
     procedure IfTheTypeIsntFoundMustRaiseAnError;
-    [Test]
-    procedure WhenAddMoreThanOneClassMustAppendAllClassesInTheParentModule;
-    [Test]
-    procedure WhenAddASubclassInsideTheAnotherClassMustAppendTheParentNameinTheTypesList;
-    [Test]
-    procedure WhenAddASubclassInsideAnotherSubclassMustAppendAllParentsNamesinTheTypeList;
-    [Test]
-    procedure WhenAddAClassDefinitionMustLoadTheParentModuleHasExpected;
     [Test]
     procedure TheUnitNameCantBeAppendedToTheTypeNameInTheTypesList;
     [Test]
@@ -188,6 +176,34 @@ type
     procedure MustLoadTheParentModuleWithTheValueInTheParameter;
     [Test]
     procedure MustLoadTheArrayInTheTypeOfTheParentModule;
+    [Test]
+    procedure WhenCreateTheTypeReferenceMustReturnTheClassCreated;
+    [Test]
+    procedure MustLoadTheReferenceInfoWhenCreateTheReferenceClass;
+    [Test]
+    procedure MustLoadTheParentModuleWithTheMainClassVariable;
+    [Test]
+    procedure MustAppendTheClassInTheTypesArrayFromTheMainClass;
+    [Test]
+    procedure WhenCreateTheClassTypeMustReturnTheClassTypeCreated;
+    [Test]
+    procedure MustLoadTheClassNameWithTheValueInTheParameter;
+    [Test]
+    procedure MustLoadTheParentModulePropertyFromTheClassType;
+    [Test]
+    procedure MustAddTheClassTypeInTheTypesFromTheParentModule;
+    [Test]
+    procedure MustAddTheClassTypeInTheClassesListFromParentModule;
+    [Test]
+    procedure WhenCreateAnEnumeratorMustReturnTheCreatedClass;
+    [Test]
+    procedure MustLoadTheEnumeratorNameWithTheParameter;
+    [Test]
+    procedure MustLoadTheParentModuleOfTheEnumeratorWithTheParameter;
+    [Test]
+    procedure TheEnumeratorMustBeAppendedInTheTypesOfTheParentModule;
+    [Test]
+    procedure TheEnumeratorMustBeAppendedInTheEnumeratorListOfTheParentModule;
   end;
 
   [TestFixture]
@@ -388,12 +404,9 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      var Enumerator := TTypeEnumerationDefinition.Create;
-      Enumerator.Name := 'ens:MyEnum';
+      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'ens:MyEnum');
 
       Enumerator.AddEnumeration('if');
-
-      MainClass.AddEnumerationDefinition(Enumerator);
     end;
 
   FImporter.Import(FConfiguration);
@@ -432,14 +445,14 @@ end;
 
 procedure TSchemaImporterTest.IfTheTryFindTypeFoundTheTypeMustReturnTrue;
 begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  CurrentClassDefinition.Name := 'AClassName';
   var ParentModule := TTypeUnitDefinition.Create;
   var TypeDefinition: TTypeDefinition;
 
+  var CurrentClassDefinition := FImporter.CreateClassType(ParentModule, 'AClassName');
+
   FImporter.AddNamespace('My Namespace', 'my');
 
-  FImporter.AddClassDefinition(ParentModule, 'My Namespace', CurrentClassDefinition);
+  FImporter.AddType('My Namespace', CurrentClassDefinition);
 
   Assert.IsTrue(FImporter.TryFindType('My Namespace', 'AClassName', TypeDefinition));
 
@@ -517,6 +530,39 @@ begin
     end, ESchemaFileConfigurationWithoutSchemaType);
 end;
 
+procedure TSchemaImporterTest.MustAddTheClassTypeInTheClassesListFromParentModule;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FImporter.CreateClassType(ParentModule, 'MyClass');
+
+  Assert.AreEqual(1, Length(ParentModule.Classes));
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.MustAddTheClassTypeInTheTypesFromTheParentModule;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FImporter.CreateClassType(ParentModule, 'MyClass');
+
+  Assert.AreEqual(1, Length(ParentModule.Types));
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.MustAppendTheClassInTheTypesArrayFromTheMainClass;
+begin
+  var MainClass := TTypeClassDefinition.Create;
+
+  FImporter.CreateReferenceType(MainClass, 'myReference');
+
+  Assert.AreEqual(1, Length(MainClass.Types));
+
+  MainClass.Free;
+end;
+
 procedure TSchemaImporterTest.MustAppendTheUnitNameBeforeTheTypeNameToAvoidDuplicateNames;
 begin
   FConverter.WhenExecuteConvert :=
@@ -551,15 +597,15 @@ end;
 
 procedure TSchemaImporterTest.MustAppenTheClassInTheValueOsTheTypes;
 begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  CurrentClassDefinition.Name := 'AClassName';
   var ParentModule := TTypeUnitDefinition.Create;
+
+  var ClassDefinition := FImporter.CreateClassType(ParentModule, 'AClassName');
 
   FImporter.AddNamespace('My Namespace', 'my');
 
-  FImporter.AddClassDefinition(ParentModule, 'My Namespace', CurrentClassDefinition);
+  FImporter.AddType('My Namespace', ClassDefinition);
 
-  Assert.AreEqual(CurrentClassDefinition, FImporter.Types['my:AClassName']);
+  Assert.AreEqual(ClassDefinition, FImporter.Types['my:AClassName']);
 
   ParentModule.Free;
 end;
@@ -585,8 +631,7 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      var Enumerator := TTypeEnumerationDefinition.Create;
-      Enumerator.Name := 'MyEnumerator';
+      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnumerator');
 
       Enumerator.AddEnumeration('a');
 
@@ -594,19 +639,13 @@ begin
 
       Enumerator.AddEnumeration('c');
 
-      MainClass.AddEnumerationDefinition(Enumerator);
-
-      Enumerator := TTypeEnumerationDefinition.Create;
-
-      Enumerator.Name := 'MyEnumerator2';
+      Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnumerator2');
 
       Enumerator.AddEnumeration('a');
 
       Enumerator.AddEnumeration('b');
 
       Enumerator.AddEnumeration('c');
-
-      MainClass.AddEnumerationDefinition(Enumerator);
     end;
 
   FImporter.Import(FConfiguration);
@@ -697,6 +736,26 @@ begin
   MainClass.Free;
 end;
 
+procedure TSchemaImporterTest.MustLoadTheClassNameWithTheValueInTheParameter;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  var ClassDefinition := FImporter.CreateClassType(ParentModule, 'MyClass');
+
+  Assert.AreEqual('MyClass', ClassDefinition.Name);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.MustLoadTheEnumeratorNameWithTheParameter;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  var Enumerator := FImporter.CreateEnumeratorType(ParentModule, 'MyEnumerator');
+
+  Assert.AreEqual('MyEnumerator', Enumerator.Name);
+end;
+
 procedure TSchemaImporterTest.MustLoadTheImporterPropertyToAvoidError;
 begin
   Assert.WillNotRaise(
@@ -704,6 +763,36 @@ begin
     begin
       FImporter.Import(FConfiguration);
     end);
+end;
+
+procedure TSchemaImporterTest.MustLoadTheParentModuleOfTheEnumeratorWithTheParameter;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  var Enumerator := FImporter.CreateEnumeratorType(ParentModule, 'MyEnumerator');
+
+  Assert.AreEqual(ParentModule, Enumerator.ParentModule);
+end;
+
+procedure TSchemaImporterTest.MustLoadTheParentModulePropertyFromTheClassType;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  var ClassDefinition := FImporter.CreateClassType(ParentModule, 'MyClass');
+
+  Assert.AreEqual(ParentModule, ClassDefinition.ParentModule);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.MustLoadTheParentModuleWithTheMainClassVariable;
+begin
+  var MainClass := TTypeClassDefinition.Create;
+  var TypeReference := FImporter.CreateReferenceType(MainClass, 'myReference');
+
+  Assert.AreEqual(MainClass, TypeReference.ParentModule);
+
+  MainClass.Free;
 end;
 
 procedure TSchemaImporterTest.MustLoadTheParentModuleWithTheValueInTheParameter;
@@ -714,6 +803,16 @@ begin
   Assert.AreEqual(MainClass, FImporter.CreateArrayType(MainClass, ArrayType).ParentModule);
 
   ArrayType.Free;
+
+  MainClass.Free;
+end;
+
+procedure TSchemaImporterTest.MustLoadTheReferenceInfoWhenCreateTheReferenceClass;
+begin
+  var MainClass := TTypeClassDefinition.Create;
+  var TypeReference := FImporter.CreateReferenceType(MainClass, 'myReference');
+
+  Assert.AreEqual('myReference', TypeReference.Reference);
 
   MainClass.Free;
 end;
@@ -790,15 +889,33 @@ begin
   Assert.AreEqual('Blue.Print.Types', FImporter.BuildInTypes[TBuildInType.DynamicPropertyType].ParentModule.Name);
 end;
 
+procedure TSchemaImporterTest.TheEnumeratorMustBeAppendedInTheEnumeratorListOfTheParentModule;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FImporter.CreateEnumeratorType(ParentModule, 'MyEnumerator');
+
+  Assert.AreEqual(1, Length(ParentModule.Enumerations));
+end;
+
+procedure TSchemaImporterTest.TheEnumeratorMustBeAppendedInTheTypesOfTheParentModule;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FImporter.CreateEnumeratorType(ParentModule, 'MyEnumerator');
+
+  Assert.AreEqual(1, Length(ParentModule.Types));
+end;
+
 procedure TSchemaImporterTest.TheKeyValueFromTypeMustBeTheNamespaceWithTheClassNameHasExpected;
 begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  CurrentClassDefinition.Name := 'AClassName';
   var ParentModule := TTypeUnitDefinition.Create;
+
+  var CurrentClassDefinition := FImporter.CreateClassType(ParentModule, 'AClassName');
 
   FImporter.AddNamespace('My Namespace', 'my');
 
-  FImporter.AddClassDefinition(ParentModule, 'My Namespace', CurrentClassDefinition);
+  FImporter.AddType('My Namespace', CurrentClassDefinition);
 
   Assert.AreEqual('my:AClassName', FImporter.Types.Keys.ToArray[0]);
 
@@ -812,10 +929,7 @@ begin
 
       function AddClass(const Namespace, Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
       begin
-        Result := TTypeClassDefinition.Create;
-        Result.Name := Name;
-
-        FImporter.AddClassDefinition(Parent, Namespace, Result);
+        Result := FImporter.CreateClassType(Parent, Name);
       end;
 
     begin
@@ -917,14 +1031,14 @@ end;
 
 procedure TSchemaImporterTest.TheUnitNameCantBeAppendedToTheTypeNameInTheTypesList;
 begin
-  var ClassDefinition := TTypeClassDefinition.Create;
-  ClassDefinition.Name := 'MainClass';
   var ParentModule := TTypeUnitDefinition.Create;
   ParentModule.Name := 'MyUnit';
 
+  var ClassDefinition := FImporter.CreateClassType(ParentModule, 'MainClass');
+
   FImporter.AddNamespace('My Namespace', 'my');
 
-  FImporter.AddClassDefinition(ParentModule, 'My Namespace', ClassDefinition);
+  FImporter.AddType('My Namespace', ClassDefinition);
 
   Assert.AreEqual(1, FImporter.Types.Count);
 
@@ -940,10 +1054,7 @@ begin
 
       procedure AddClass(const Namespace, Name: String);
       begin
-        var MyClass := TTypeClassDefinition.Create;
-        MyClass.Name := Name;
-
-        FImporter.AddClassDefinition(MainClass, Namespace, MyClass);
+        FImporter.CreateClassType(MainClass, Name);
       end;
 
     begin
@@ -981,113 +1092,6 @@ begin
 
     ''',
     FConfiguration.Units[0]);
-end;
-
-procedure TSchemaImporterTest.WhenAddAClassDefinitionMustLoadTheParentModuleHasExpected;
-begin
-  var ClassDefinition := TTypeClassDefinition.Create;
-  ClassDefinition.Name := 'MainClass';
-  var ParentModule := TTypeUnitDefinition.Create;
-
-  FImporter.AddNamespace('My Namespace', 'my');
-
-  FImporter.AddClassDefinition(ParentModule, 'My Namespace', ClassDefinition);
-
-  Assert.AreEqual(ParentModule, ClassDefinition.ParentModule);
-
-  ParentModule.Free;
-end;
-
-procedure TSchemaImporterTest.WhenAddASubclassInsideAnotherSubclassMustAppendAllParentsNamesinTheTypeList;
-begin
-  var ClassDefinition := TTypeClassDefinition.Create;
-  ClassDefinition.Name := 'MainClass';
-  var ClassDefinition2 := TTypeClassDefinition.Create;
-  ClassDefinition2.Name := 'ChildClass';
-  var ClassDefinition3 := TTypeClassDefinition.Create;
-  ClassDefinition3.Name := 'AnotherClass';
-  var ParentModule := TTypeUnitDefinition.Create;
-
-  FImporter.AddNamespace('My Namespace', 'my');
-
-  FImporter.AddClassDefinition(ParentModule, 'My Namespace', ClassDefinition);
-
-  FImporter.AddClassDefinition(ClassDefinition, 'My Namespace', ClassDefinition2);
-
-  FImporter.AddClassDefinition(ClassDefinition2, 'My Namespace', ClassDefinition3);
-
-  Assert.IsTrue(FImporter.Types.ContainsKey('my:MainClass.ChildClass.AnotherClass'), 'Class name not found!');
-
-  ParentModule.Free;
-end;
-
-procedure TSchemaImporterTest.WhenAddASubclassInsideTheAnotherClassMustAppendTheParentNameinTheTypesList;
-begin
-  var ClassDefinition := TTypeClassDefinition.Create;
-  ClassDefinition.Name := 'MainClass';
-  var ClassDefinition2 := TTypeClassDefinition.Create;
-  ClassDefinition2.Name := 'ChildClass';
-  var ParentModule := TTypeUnitDefinition.Create;
-
-  FImporter.AddNamespace('My Namespace', 'my');
-
-  FImporter.AddClassDefinition(ParentModule, 'My Namespace', ClassDefinition);
-
-  FImporter.AddClassDefinition(ClassDefinition, 'My Namespace', ClassDefinition2);
-
-  Assert.IsTrue(FImporter.Types.ContainsKey('my:MainClass.ChildClass'), 'Class name not found!');
-
-  ParentModule.Free;
-end;
-
-procedure TSchemaImporterTest.WhenAddMoreThanOneClassMustAppendAllClassesInTheParentModule;
-begin
-  var ClassDefinition := TTypeClassDefinition.Create;
-  ClassDefinition.Name := 'AClassName';
-  var ClassDefinition2 := TTypeClassDefinition.Create;
-  ClassDefinition2.Name := 'AClassName2';
-  var ParentModule := TTypeUnitDefinition.Create;
-
-  FImporter.AddNamespace('My Namespace', 'my');
-
-  FImporter.AddClassDefinition(ParentModule, 'My Namespace', ClassDefinition);
-
-  FImporter.AddClassDefinition(ParentModule, 'My Namespace', ClassDefinition2);
-
-  Assert.AreEqual(2, Length(ParentModule.Classes));
-
-  ParentModule.Free;
-end;
-
-procedure TSchemaImporterTest.WhenAddTheClassDefinitionMustAppendTheClassInTheParentModuleClassList;
-begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  var ParentModule := TTypeUnitDefinition.Create;
-
-  FImporter.AddNamespace('My Namespace', 'my');
-
-  FImporter.AddClassDefinition(ParentModule, 'My Namespace', CurrentClassDefinition);
-
-  Assert.AreEqual(1, Length(ParentModule.Classes));
-
-  Assert.AreEqual(ParentModule.Classes[0], CurrentClassDefinition);
-
-  ParentModule.Free;
-end;
-
-procedure TSchemaImporterTest.WhenAddTheClassDefinitionMustLoadTheValueInTheTypesList;
-begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  CurrentClassDefinition.Name := 'AClassName';
-  var ParentModule := TTypeUnitDefinition.Create;
-
-  FImporter.AddNamespace('My Namespace', 'my');
-
-  FImporter.AddClassDefinition(ParentModule, 'My Namespace', CurrentClassDefinition);
-
-  Assert.AreEqual(1, FImporter.Types.Count);
-
-  ParentModule.Free;
 end;
 
 procedure TSchemaImporterTest.WhenAnUnitConfigurationHasTheSameNameFromAnotherConfigurationMustRaiseAnError;
@@ -1165,15 +1169,45 @@ begin
   MainClass.Free;
 end;
 
+procedure TSchemaImporterTest.WhenCreateAnEnumeratorMustReturnTheCreatedClass;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  var Enumerator := FImporter.CreateEnumeratorType(ParentModule, 'MyEnumerator');
+
+  Assert.IsNotNil(Enumerator);
+end;
+
+procedure TSchemaImporterTest.WhenCreateTheClassTypeMustReturnTheClassTypeCreated;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  var ClassDefinition := FImporter.CreateClassType(ParentModule, 'MyClass');
+
+  Assert.IsNotNil(ClassDefinition);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateTheTypeReferenceMustReturnTheClassCreated;
+begin
+  var MainClass := TTypeClassDefinition.Create;
+  var TypeReference := FImporter.CreateReferenceType(MainClass, 'myReference');
+
+  Assert.IsNotNil(TypeReference);
+
+  MainClass.Free;
+end;
+
 procedure TSchemaImporterTest.WhenFindTheAndTheTypeIsFoundedMustReturnTheTypeHasExpected;
 begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  CurrentClassDefinition.Name := 'AClassName';
   var ParentModule := TTypeUnitDefinition.Create;
+
+  var CurrentClassDefinition := FImporter.CreateClassType(ParentModule, 'AClassName');
 
   FImporter.AddNamespace('My Namespace', 'my');
 
-  FImporter.AddClassDefinition(ParentModule, 'My Namespace', CurrentClassDefinition);
+  FImporter.AddType('My Namespace', CurrentClassDefinition);
 
   var ReturningType := FImporter.FindType('My Namespace', 'AClassName');
 
@@ -1253,9 +1287,7 @@ procedure TSchemaImporterTest.WhenTheArrayTypeIsAnObjectMustCreateTheAddFunction
 begin
   var ParentModule := TTypeUnitDefinition.Create;
   ParentModule.Name := 'System';
-  var SimpleType := TTypeClassDefinition.Create;
-  SimpleType.Name := 'SimpleType';
-  SimpleType.ParentModule := ParentModule;
+  var SimpleType := FImporter.CreateClassType(ParentModule, 'SimpleType');
   var TheArrray := FImporter.CreateArrayType(ParentModule, SimpleType);
 
   FConverter.WhenExecuteConvert :=
@@ -1311,8 +1343,6 @@ begin
     FConfiguration.Units[0]);
 
   ParentModule.Free;
-
-  SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.WhenTheClassDefinitionHaveAPropertyMustDeclareThePropertyInTheUnit;
@@ -1352,16 +1382,13 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      var Enumerator := TTypeEnumerationDefinition.Create;
-      Enumerator.Name := 'MyEnumerator';
+      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnumerator');
 
       Enumerator.AddEnumeration('a');
 
       Enumerator.AddEnumeration('b');
 
       Enumerator.AddEnumeration('c');
-
-      MainClass.AddEnumerationDefinition(Enumerator);
     end;
 
   FImporter.Import(FConfiguration);
@@ -1391,10 +1418,7 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      var MyClass := TTypeClassDefinition.Create;
-      MyClass.Name := 'my.special-class;name';
-
-      FImporter.AddClassDefinition(MainClass, 'My Namespace', MyClass);
+      FImporter.CreateClassType(MainClass, 'my.special-class;name');
     end;
 
   FImporter.Import(FConfiguration);
@@ -1424,9 +1448,7 @@ procedure TSchemaImporterTest.WhenTheClassTypeIsAClassDefinitionMustDeclareTheGe
 begin
   var ParentModule := TTypeUnitDefinition.Create;
   ParentModule.Name := 'System';
-  var SimpleType := TTypeClassDefinition.Create;
-  SimpleType.Name := 'SimpleType';
-  SimpleType.ParentModule := ParentModule;
+  var SimpleType := FImporter.CreateClassType(ParentModule, 'SimpleType');
 
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
@@ -1469,8 +1491,6 @@ begin
     FConfiguration.Units[0]);
 
   ParentModule.Free;
-
-  SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.WhenTheConverterDoesntExistsMustRaiseAnError;
@@ -1489,16 +1509,13 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      var Enumerator := TTypeEnumerationDefinition.Create;
-      Enumerator.Name := 'ens:MyEnum';
+      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'ens:MyEnum');
 
       Enumerator.AddEnumeration('1');
 
       Enumerator.AddEnumeration('2');
 
       Enumerator.AddEnumeration('3');
-
-      MainClass.AddEnumerationDefinition(Enumerator);
     end;
 
   FImporter.Import(FConfiguration);
@@ -1529,10 +1546,7 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      var MyClass := TTypeClassDefinition.Create;
-      MyClass.Name := 'TMyClass';
-
-      FImporter.AddClassDefinition(MainClass, Schema.Namespace, MyClass);
+      FImporter.CreateClassType(MainClass, 'TMyClass');
     end;
 
   FImporter.Import(FConfiguration);
@@ -1743,9 +1757,7 @@ procedure TSchemaImporterTest.WhenThePropertyNeedTheGetFunctionMustDeclareAllFun
 begin
   var ParentModule := TTypeUnitDefinition.Create;
   ParentModule.Name := 'System';
-  var SimpleType := TTypeClassDefinition.Create;
-  SimpleType.Name := 'SimpleType';
-  SimpleType.ParentModule := ParentModule;
+  var SimpleType := FImporter.CreateClassType(ParentModule, 'SimpleType');
 
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
@@ -1801,8 +1813,6 @@ begin
     FConfiguration.Units[0]);
 
   ParentModule.Free;
-
-  SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyTypeIsAnArrayMustDeclareTheTypeWithTheTArraySystemType;
@@ -1859,17 +1869,11 @@ begin
     FConverter.WhenExecuteConvert :=
       procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
       begin
-        var Enumerator := TTypeEnumerationDefinition.Create;
-        Enumerator.Name := 'ens:' + ReservedName;
+        var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'ens:' + ReservedName);
 
         Enumerator.AddEnumeration('a');
 
-        MainClass.AddEnumerationDefinition(Enumerator);
-
-        var ClassDefinition := TTypeClassDefinition.Create;
-        ClassDefinition.Name := ReservedName;
-
-        Importer.AddClassDefinition(MainClass, 'My Namespace', ClassDefinition);
+        FImporter.CreateClassType(MainClass, ReservedName);
       end;
 
     Importer.Import(FConfiguration);
@@ -1902,14 +1906,14 @@ end;
 
 procedure TSchemaImporterTest.WhenTheTypeIsFoundMustLoadTheTypeInTheParameterAsExpected;
 begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  CurrentClassDefinition.Name := 'AClassName';
   var ParentModule := TTypeUnitDefinition.Create;
   var TypeDefinition: TTypeDefinition;
 
+  var CurrentClassDefinition := FImporter.CreateClassType(ParentModule, 'AClassName');
+
   FImporter.AddNamespace('My Namespace', 'my');
 
-  FImporter.AddClassDefinition(ParentModule, 'My Namespace', CurrentClassDefinition);
+  FImporter.AddType('My Namespace', CurrentClassDefinition);
 
   FImporter.TryFindType('My Namespace', 'AClassName', TypeDefinition);
 
@@ -1977,14 +1981,14 @@ end;
 
 procedure TSchemaImporterTest.WhenTryToAddAClassDefinitionAndTheNamespaceDoesntExistsMustRaiseAnError;
 begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  CurrentClassDefinition.Name := 'AClassName';
   var ParentModule := TTypeUnitDefinition.Create;
+
+  var CurrentClassDefinition := FImporter.CreateClassType(ParentModule, 'AClassName');
 
   Assert.WillRaise(
     procedure
     begin
-      FImporter.AddClassDefinition(ParentModule, 'Invalid Namespace', CurrentClassDefinition);
+      FImporter.AddType('Invalid Namespace', CurrentClassDefinition);
     end, ESchemaNamespaceWithoutConfiguraton);
 
   ParentModule.Free;

@@ -132,6 +132,13 @@ type
     property ArrayType: TTypeDefinition read FArrayType;
   end;
 
+  TTypeReferenceDefinition = class(TTypeDefinition)
+  private
+    FReference: String;
+  public
+    property Reference: String read FReference;
+  end;
+
   TTypeModuleDefinition = class(TTypeDefinition)
   private
     FClasses: TArray<TTypeClassDefinition>;
@@ -142,7 +149,6 @@ type
   public
     destructor Destroy; override;
 
-    procedure AddEnumerationDefinition(const EnumerationDefinition: TTypeEnumerationDefinition);
     procedure AddType(const TypeDefinition: TTypeDefinition);
 
     property Classes: TArray<TTypeClassDefinition> read FClasses;
@@ -257,6 +263,7 @@ type
 
     class function CreateStringListForItems: TStringList;
 
+    function CreateTypeDefinition<T: TTypeDefinition, constructor>(const ParentModule: TTypeModuleDefinition): T;
     function FormatTypeName(const Namespace, TypeName: String): String;
     function GetBuildInTypes(const BuildInType: TBuildInType): TTypeDefinition;
 
@@ -270,11 +277,13 @@ type
     destructor Destroy; override;
 
     function CreateArrayType(const ParentModule: TTypeModuleDefinition; const ArrayType: TTypeDefinition): TTypeArrayDefinition;
+    function CreateClassType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeClassDefinition;
+    function CreateEnumeratorType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeEnumerationDefinition;
+    function CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Reference: String): TTypeReferenceDefinition;
     function FindType(const Namespace, Name: String): TTypeDefinition;
     function GetPrefixName(const Namespace: String): String;
     function TryFindType(const Namespace, Name: String; var TypeDefinition: TTypeDefinition): Boolean;
 
-    procedure AddClassDefinition(const ParentModule: TTypeModuleDefinition; const Namespace: String; const ClassDefinition: TTypeClassDefinition);
     procedure AddNamespace(const Name, Prefix: String);
     procedure AddType(const Namespace: String; const TypeDefinition: TTypeDefinition);
     procedure Import(const Configuration: TConfiguration); overload;
@@ -296,14 +305,6 @@ const
   TYPE_NAMESPACE_SEPARATOR = ':';
 
 { TSchemaImporter }
-
-procedure TSchemaImporter.AddClassDefinition(const ParentModule: TTypeModuleDefinition; const Namespace: String; const ClassDefinition: TTypeClassDefinition);
-begin
-  ClassDefinition.FParentModule := ParentModule;
-  ParentModule.FClasses := ParentModule.FClasses + [ClassDefinition];
-
-  AddType(Namespace, ClassDefinition);
-end;
 
 procedure TSchemaImporter.AddNamespace(const Name, Prefix: String);
 begin
@@ -336,11 +337,30 @@ end;
 
 function TSchemaImporter.CreateArrayType(const ParentModule: TTypeModuleDefinition; const ArrayType: TTypeDefinition): TTypeArrayDefinition;
 begin
-  Result := TTypeArrayDefinition.Create;
+  Result := CreateTypeDefinition<TTypeArrayDefinition>(ParentModule);
   Result.FArrayType := ArrayType;
-  Result.FParentModule := ParentModule;
+end;
 
-  ParentModule.AddType(Result);
+function TSchemaImporter.CreateClassType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeClassDefinition;
+begin
+  Result := CreateTypeDefinition<TTypeClassDefinition>(ParentModule);
+  Result.FName := Name;
+
+  ParentModule.FClasses := ParentModule.FClasses + [Result];
+end;
+
+function TSchemaImporter.CreateEnumeratorType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeEnumerationDefinition;
+begin
+  Result := CreateTypeDefinition<TTypeEnumerationDefinition>(ParentModule);
+  Result.Name := Name;
+
+  ParentModule.FEnumerations := ParentModule.FEnumerations + [Result];
+end;
+
+function TSchemaImporter.CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Reference: String): TTypeReferenceDefinition;
+begin
+  Result := CreateTypeDefinition<TTypeReferenceDefinition>(ParentModule);
+  Result.FReference := Reference;
 end;
 
 class function TSchemaImporter.CreateStringListForItems: TStringList;
@@ -351,6 +371,14 @@ begin
   Result := TStringList.Create;
   Result.LineBreak := LIST_SEPARATOR;
   Result.TrailingLineBreak := False;
+end;
+
+function TSchemaImporter.CreateTypeDefinition<T>(const ParentModule: TTypeModuleDefinition): T;
+begin
+  Result := T.Create;
+  Result.FParentModule := ParentModule;
+
+  ParentModule.AddType(Result);
 end;
 
 destructor TSchemaImporter.Destroy;
@@ -426,7 +454,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
   function CreateUnitDefinition(const UnitConfiguration: TUnitConfiguration): TTypeUnitDefinition;
   begin
     Result := TTypeUnitDefinition.Create;
-    Result.Name := UnitConfiguration.Name;
+    Result.FName := UnitConfiguration.Name;
 
     Units.Add(UnitConfiguration.Name, Result);
   end;
@@ -441,10 +469,9 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
   function CreateMainClass(const UnitDefinition: TTypeUnitDefinition; const Schema: TSchema; const Name: String): TTypeClassDefinition;
   begin
-    Result := TTypeClassDefinition.Create;
-    Result.Name := Name;
+    Result := CreateClassType(UnitDefinition, Name);
 
-    AddClassDefinition(UnitDefinition, Schema.Namespace, Result);
+    AddType(Schema.Namespace, Result);
   end;
 
   function LoadMainClass(const UnitDefinition: TTypeUnitDefinition; const Schema: TSchema): TTypeClassDefinition;
@@ -1181,11 +1208,6 @@ end;
 
 { TTypeModuleDefinition }
 
-procedure TTypeModuleDefinition.AddEnumerationDefinition(const EnumerationDefinition: TTypeEnumerationDefinition);
-begin
-  FEnumerations := FEnumerations + [EnumerationDefinition];
-end;
-
 procedure TTypeModuleDefinition.AddType(const TypeDefinition: TTypeDefinition);
 begin
   FTypes := FTypes + [TypeDefinition];
@@ -1195,12 +1217,6 @@ destructor TTypeModuleDefinition.Destroy;
 begin
   for var TypeDefinition in Types do
     TypeDefinition.Free;
-
-  for var ClassDefinition in Classes do
-    ClassDefinition.Free;
-
-  for var EnumerationDefinition in Enumerations do
-    EnumerationDefinition.Free;
 
   inherited;
 end;

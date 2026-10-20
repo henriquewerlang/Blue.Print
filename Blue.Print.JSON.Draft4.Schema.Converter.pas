@@ -29,18 +29,19 @@ procedure TJSONDraft4SchemaConverter.Convert(const MainClass: TTypeClassDefiniti
 begin
   var JSONDefinition := Schema.SchemaValue.AsType<TJSONSchema.TJSONSchema>;
 
-  Schema.Importer.AddNamespace(JSONDefinition.id + '/definitions', Schema.Importer.GetPrefixName(JSONDefinition.id) + '/defs');
+  var DefinitionsNamespace := JSONDefinition.id + '/definitions';
+
+  Schema.Importer.AddNamespace(DefinitionsNamespace, Schema.Importer.GetPrefixName(JSONDefinition.id) + '/defs');
 
   for var SchemaDefinition in JSONDefinition.definitions.additionalProperties do
     if SchemaDefinition.Value.IsPropertiesStored then
     begin
-      var ClassDefinition := TTypeClassDefinition.Create;
-      ClassDefinition.Name := SchemaDefinition.Key;
+      var ClassDefinition := Schema.Importer.CreateClassType(MainClass, SchemaDefinition.Key);
 
       for var PropertyDefinition in SchemaDefinition.Value.properties.additionalProperties do
         ClassDefinition.AddProperty(PropertyDefinition.Key, LoadSchemaType(Schema, ClassDefinition, PropertyDefinition.Value));
 
-      Schema.Importer.AddClassDefinition(MainClass, Schema.Namespace, ClassDefinition);
+      Schema.Importer.AddType(DefinitionsNamespace, ClassDefinition);
     end;
 end;
 

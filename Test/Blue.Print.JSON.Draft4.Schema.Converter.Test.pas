@@ -62,6 +62,8 @@ type
     procedure MustLoadTheArrayTypeWithTheTypeDefinedInTheItemsSchema;
     [Test]
     procedure IsTheSchemaDoesntHaveTheRefOrTheSimpleTypeLoadedMustRaiseAnError;
+    [Test]
+    procedure TheClassDeclarationMustBeInsideTheDefsSchemaNamespace;
   end;
 
 implementation
@@ -235,6 +237,18 @@ begin
   FImporter.Free;
 
   FDefinition.Free;
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.TheClassDeclarationMustBeInsideTheDefsSchemaNamespace;
+begin
+  var ClassDefinition := CreateClassDefinition('MyClass');
+  var TypeDefinition: TTypeDefinition;
+
+  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.string);
+
+  ImportDefinition;
+
+  Assert.IsTrue(FImporter.TryFindType(FDefinition.id + '/definitions', 'MyClass', TypeDefinition));
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.TheClassMustBeAppendedInTheMainClassHasExpected;
