@@ -77,10 +77,10 @@ type
       [Flat]
       ItemsProperty = class
       private
-        FItemsProperty: TJSONSchema.TJSONSchema.ItemsProperty;
+        FItemsProperty: TJSONSchema.TJSONSchema;
         FSchemaArray: TJSONSchema.schemaArray;
 
-        function GetItemsProperty: TJSONSchema.TJSONSchema.ItemsProperty;
+        function GetItemsProperty: TJSONSchema.TJSONSchema;
         function GetItemsPropertyStored: Boolean;
         function GetSchemaArrayStored: Boolean;
       public
@@ -91,7 +91,7 @@ type
         property IsItemsPropertyStored: Boolean read GetItemsPropertyStored;
         property IsSchemaArrayStored: Boolean read GetSchemaArrayStored;
       published
-        property ItemsProperty: TJSONSchema.TJSONSchema.ItemsProperty read GetItemsProperty write FItemsProperty stored GetItemsPropertyStored;
+        property schema: TJSONSchema.TJSONSchema read GetItemsProperty write FItemsProperty stored GetItemsPropertyStored;
         property schemaArray: TJSONSchema.schemaArray read FSchemaArray write FSchemaArray stored GetSchemaArrayStored;
       end;
 
@@ -249,6 +249,7 @@ type
       FExclusiveMaximumIsStored: Boolean;
       FExclusiveMinimumIsStored: Boolean;
       FUniqueItemsIsStored: Boolean;
+        Fref: String;
 
       function GetMinLength: TJSONSchema.positiveIntegerDefault0;
       function GetAdditionalItems: TJSONSchema.TJSONSchema.AdditionalItemsProperty;
@@ -295,6 +296,7 @@ type
       procedure SetExclusiveMaximum(const Value: System.Boolean);
       procedure SetExclusiveMinimum(const Value: System.Boolean);
       procedure SetUniqueItems(const Value: System.Boolean);
+      function GetRefStored: Boolean;
     public
       destructor Destroy; override;
 
@@ -335,6 +337,8 @@ type
       property IsAnyOfStored: Boolean read GetAnyOfStored;
       property IsOneOfStored: Boolean read GetOneOfStored;
       property IsNotStored: Boolean read GetNotStored;
+
+      property IsRefStored: Boolean read GetRefStored;
     published
       property id: System.String read FId write FId stored GetIdStored;
       [FieldName('$TJSONSchema')]
@@ -372,6 +376,9 @@ type
       property oneOf: TJSONSchema.schemaArray read FOneOf write FOneOf stored GetOneOfStored;
       [FieldName('not')]
       property &not: TJSONSchema.TJSONSchema read GetNot write FNot stored GetNotStored;
+
+      [FieldName('$ref')]
+      property ref: String read Fref write Fref stored GetRefStored;
     end;
   end;
 
@@ -569,6 +576,11 @@ begin
   Result := Assigned(FMinProperties);
 end;
 
+function TJSONSchema.TJSONSchema.GetRefStored: Boolean;
+begin
+  Result := not Fref.IsEmpty;
+end;
+
 function TJSONSchema.TJSONSchema.GetRequiredStored: Boolean;
 begin
   Result := Assigned(FRequired);
@@ -751,10 +763,10 @@ begin
   inherited;
 end;
 
-function TJSONSchema.TJSONSchema.ItemsProperty.GetItemsProperty: Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema.ItemsProperty;
+function TJSONSchema.TJSONSchema.ItemsProperty.GetItemsProperty: Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema;
 begin
   if not Assigned(FItemsProperty) then
-    FItemsProperty := Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema.ItemsProperty.Create;
+    FItemsProperty := Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema.Create;
 
   Result := FItemsProperty;
 end;
@@ -815,7 +827,8 @@ end;
 
 destructor TJSONSchema.TJSONSchema.DefinitionsProperty.Destroy;
 begin
-//  FAdditionalProperties.Free;
+  for var Prop in FAdditionalProperties do
+    Prop.Value.Free;
 
   inherited;
 end;
@@ -836,7 +849,8 @@ end;
 
 destructor TJSONSchema.TJSONSchema.PropertiesProperty.Destroy;
 begin
-//  FAdditionalProperties.Free;
+  for var Prop in FAdditionalProperties do
+    Prop.Value.Free;
 
   inherited;
 end;

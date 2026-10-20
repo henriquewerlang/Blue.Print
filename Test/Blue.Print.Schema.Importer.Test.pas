@@ -22,6 +22,11 @@ type
     constructor Create;
   end;
 
+  EImporterNotLoaded = class(Exception)
+  public
+    constructor Create;
+  end;
+
   [TestFixture]
   TSchemaImporterTest = class
   private
@@ -66,6 +71,36 @@ type
     [Test]
     procedure WhenAnUnitConfigurationHasTheSameNameFromAnotherConfigurationMustRaiseAnError;
     [Test]
+    procedure WhenTryToAddAClassDefinitionAndTheNamespaceDoesntExistsMustRaiseAnError;
+    [Test]
+    procedure WhenAddTheClassDefinitionMustAppendTheClassInTheParentModuleClassList;
+    [Test]
+    procedure WhenAddTheClassDefinitionMustLoadTheValueInTheTypesList;
+    [Test]
+    procedure TheKeyValueFromTypeMustBeTheNamespaceWithTheClassNameHasExpected;
+    [Test]
+    procedure MustAppenTheClassInTheValueOsTheTypes;
+    [Test]
+    procedure TheTryFindTypeMustReturnFalseIfDontFindTheType;
+    [Test]
+    procedure IfTheTryFindTypeFoundTheTypeMustReturnTrue;
+    [Test]
+    procedure WhenTheTypeIsFoundMustLoadTheTypeInTheParameterAsExpected;
+    [Test]
+    procedure WhenFindTheAndTheTypeIsFoundedMustReturnTheTypeHasExpected;
+    [Test]
+    procedure IfTheTypeIsntFoundMustRaiseAnError;
+    [Test]
+    procedure WhenAddMoreThanOneClassMustAppendAllClassesInTheParentModule;
+    [Test]
+    procedure WhenAddASubclassInsideTheAnotherClassMustAppendTheParentNameinTheTypesList;
+    [Test]
+    procedure WhenAddASubclassInsideAnotherSubclassMustAppendAllParentsNamesinTheTypeList;
+    [Test]
+    procedure WhenAddAClassDefinitionMustLoadTheParentModuleHasExpected;
+    [Test]
+    procedure TheUnitNameCantBeAppendedToTheTypeNameInTheTypesList;
+    [Test]
     procedure MustCreateTheMainClassWithTheNameInTheSchemaFileConfiguration;
     [Test]
     procedure WhenTheNameOfMainClassIsTheSameInAnotherSchemaFileMustUseTheSameClassDeclaration;
@@ -75,8 +110,6 @@ type
     procedure WhenLoadTheConverterLoadTheSchemaAndDontLoadTheNamespaceInformationMustRaiseAnError;
     [Test]
     procedure WhenTheNamespaceDoesntHaveThePrefixNameConfigurationMustRaiseAnError;
-    [Test]
-    procedure WhenLoadTheMainClassMustLoadThePrefixNameInTheMainClassName;
     [Test]
     procedure IfTheOutputFolderDoesntExistsMustCreateTheFolder;
     [Test]
@@ -122,13 +155,39 @@ type
     [Test]
     procedure WhenThePropertyIsOptionalMustCreateTheFieldForStoreTheIsStoredInfoAndCreateTheSetFunctionForTheProperty;
     [Test]
-    procedure WhenImportMustRegisterTheBuildInTypeString;
+    procedure MustAppendTheUnitNameBeforeTheTypeNameToAvoidDuplicateNames;
     [Test]
-    procedure WhenImportMustRegisterTheBuildInTypeInteger;
+    procedure MustLoadTheImporterPropertyToAvoidError;
     [Test]
-    procedure WhenImportMustRegisterTheBuildInTypeDouble;
+    procedure WhenThePropertyHasntATypeLoadedMustRaiseAnError;
     [Test]
-    procedure MustLoadTheUnitNameBeforeTheTypeNameToAvoidNamingMissmatch;
+    procedure TheBuildInTypeMustBeLoadedWhenImportTheSchemaSpecification;
+    [Test]
+    procedure TheSystemTypesMustBeLoadedInTheTypeUnitDefinitionOfTheSystem;
+    [Test]
+    procedure TheTValueBuildInTypeMustBeLoadedInTheSystemRttiUnit;
+    [Test]
+    procedure TheDynamicPropertyMustBeLoadedInTheBluePrintTypesUnit;
+    [Test]
+    procedure TheBuildInTypesNamesMustBeHasExpected;
+    [Test]
+    procedure WhenAPropertyUseATypeOutSideOfTheUnitBeenDeclaretedMustLoadTheUsesSectionWithTheNameOfTheUnitOfTheTypeUsed;
+    [Test]
+    procedure WhenTheTypeOfAPropertyIsFromSystemCantAddTheSystemInTheUsesList;
+    [Test]
+    procedure TheSelfUnitCantBeLoadedInTheUsesList;
+    [Test]
+    procedure CantDuplicateTheUsesList;
+    [Test]
+    procedure IfTheTypeDoesntHaveTheParentModuleLoadedMustRaiseAnError;
+    [Test]
+    procedure WhenCreateAnArrayTypeMustReturnTheClassCreated;
+    [Test]
+    procedure MustLoadTheArrayTypeItemWithTheParameter;
+    [Test]
+    procedure MustLoadTheParentModuleWithTheValueInTheParameter;
+    [Test]
+    procedure MustLoadTheArrayInTheTypeOfTheParentModule;
   end;
 
   [TestFixture]
@@ -155,58 +214,23 @@ type
     procedure WhenCallTheLoadSchemaProcedureMustLoadTheNamespacePropertyOfTheSchema;
     [Test]
     procedure WhenLoadTheSchemaMustLoadTheNamespacePropertyInTheSchemaNamespace;
+    [Test]
+    procedure WhenTheImporterIsntLoadedMustRaiseAnError;
   end;
 
   [TestFixture]
   TSchemaTest = class
   private
-    FNamespace: String;
-    FNamespaces: TDictionary<String, String>;
     FSchema: TSchema;
-    FTypes: TDictionary<String, TTypeDefinition>;
   public
     [Setup]
     procedure Setup;
     [TearDown]
     procedure TearDown;
     [Test]
-    procedure WhenTryToAddAClassDefinitionAndTheNamespaceDoesntExistsMustRaiseAnError;
-    [Test]
-    procedure WhenAddTheClassDefinitionMustAppendTheClassInTheParentModuleClassList;
-    [Test]
-    procedure AfterAddTheClassDefinitionMustAppendThePrefixNamespaceInTheClassNameDefinition;
-    [Test]
-    procedure WhenAddTheClassDefinitionMustLoadTheValueInTheTypesList;
-    [Test]
-    procedure TheKeyValueFromTypeMustBeTheNamespaceWithTheClassNameHasExpected;
-    [Test]
-    procedure MustAppenTheClassInTheValueOsTheTypes;
-    [Test]
-    procedure TheTryFindTypeMustReturnFalseIfDontFindTheType;
-    [Test]
-    procedure IfTheTryFindTypeFoundTheTypeMustReturnTrue;
-    [Test]
-    procedure WhenTheTypeIsFoundMustLoadTheTypeInTheParameterAsExpected;
-    [Test]
-    procedure WhenFindTheAndTheTypeIsFoundedMustReturnTheTypeHasExpected;
-    [Test]
-    procedure IfTheTypeIsntFoundMustRaiseAnError;
-    [Test]
-    procedure WhenAddMoreThanOneClassMustAppendAllClassesInTheParentModule;
-    [Test]
-    procedure WhenAddASubclassInsideTheAnotherClassMustAppendTheParentNameinTheTypesList;
-    [Test]
-    procedure WhenAddASubclassInsideAnotherSubclassMustAppendAllParentsNamesinTheTypeList;
-    [Test]
-    procedure WhenAddAClassDefinitionMustLoadTheParentModuleHasExpected;
-    [Test]
-    procedure TheUnitNameCantBeAppendedToTheTypeNameInTheTypesList;
-    [Test]
     procedure IfTheSchemaValueIsAnObjectMustDestroyTheValueWhenTheSchemaIsDestroyed;
     [Test]
     procedure IfTheSchemaValueIsntAnObjectCantBeDestroyedWhenTheSchemaIsDestroyed;
-    [Test]
-    procedure WhenGetTheStringTypePropertyInTheSchemaMustReturnTheType;
   end;
 
   TSchemaConverterMock = class(TInterfacedObject, ISchemaConverter)
@@ -258,6 +282,48 @@ begin
 
       FImporter.Import(FConfiguration);
     end);
+end;
+
+procedure TSchemaImporterTest.CantDuplicateTheUsesList;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.ValueType]);
+
+      MainClass.AddProperty('MyProperty2', FImporter.BuildInTypes[TBuildInType.ValueType]);
+
+      MainClass.AddProperty('MyProperty3', FImporter.BuildInTypes[TBuildInType.ValueType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    uses System.Rtti;
+
+    type
+      MainModule = class
+      private
+        FMyProperty: System.Rtti.TValue;
+        FMyProperty2: System.Rtti.TValue;
+        FMyProperty3: System.Rtti.TValue;
+      published
+        property MyProperty: System.Rtti.TValue read FMyProperty write FMyProperty;
+        property MyProperty2: System.Rtti.TValue read FMyProperty2 write FMyProperty2;
+        property MyProperty3: System.Rtti.TValue read FMyProperty3 write FMyProperty3;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.CompareUnitDeclaration(const UnitDeclaration: String; const UnitConfiguration: TUnitConfiguration);
@@ -364,6 +430,46 @@ begin
     end);
 end;
 
+procedure TSchemaImporterTest.IfTheTryFindTypeFoundTheTypeMustReturnTrue;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  CurrentClassDefinition.Name := 'AClassName';
+  var ParentModule := TTypeUnitDefinition.Create;
+  var TypeDefinition: TTypeDefinition;
+
+  FImporter.AddNamespace('My Namespace', 'my');
+
+  FImporter.AddClassDefinition(ParentModule, 'My Namespace', CurrentClassDefinition);
+
+  Assert.IsTrue(FImporter.TryFindType('My Namespace', 'AClassName', TypeDefinition));
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.IfTheTypeDoesntHaveTheParentModuleLoadedMustRaiseAnError;
+begin
+  var SimpleType := TTypeDefinition.Create;
+
+  Assert.WillRaise(
+    procedure
+    begin
+      if SimpleType.ParentModule <> nil then;
+    end, ETypeWithoutParentModule);
+
+  SimpleType.Free;
+end;
+
+procedure TSchemaImporterTest.IfTheTypeIsntFoundMustRaiseAnError;
+begin
+  FImporter.AddNamespace('My Namespace', 'my');
+
+  Assert.WillRaise(
+    procedure
+    begin
+      FImporter.FindType('My Namespace', 'AClassName');
+    end, ETypeNotFound);
+end;
+
 procedure TSchemaImporterTest.IfTheUnitConfigurationDoesntHaveAConfiguredFiledMustRaiseAnError;
 begin
   for var SchemaFile in FConfiguration.Units[1].SchemaFiles do
@@ -411,6 +517,53 @@ begin
     end, ESchemaFileConfigurationWithoutSchemaType);
 end;
 
+procedure TSchemaImporterTest.MustAppendTheUnitNameBeforeTheTypeNameToAvoidDuplicateNames;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      private
+        FMyProperty: System.Integer;
+      published
+        property MyProperty: System.Integer read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.MustAppenTheClassInTheValueOsTheTypes;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  CurrentClassDefinition.Name := 'AClassName';
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FImporter.AddNamespace('My Namespace', 'my');
+
+  FImporter.AddClassDefinition(ParentModule, 'My Namespace', CurrentClassDefinition);
+
+  Assert.AreEqual(CurrentClassDefinition, FImporter.Types['my:AClassName']);
+
+  ParentModule.Free;
+end;
+
 procedure TSchemaImporterTest.MustCreateTheMainClassWithTheNameInTheSchemaFileConfiguration;
 begin
   var Converter := TSchemaConverterMock.Create;
@@ -421,7 +574,7 @@ begin
   Converter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      Assert.AreEqual('my:MyMainClassName', MainClass.Name);
+      Assert.AreEqual('MyMainClassName', MainClass.Name);
     end;
 
   FImporter.Import(FConfiguration);
@@ -482,56 +635,87 @@ end;
 
 procedure TSchemaImporterTest.MustDeclareAllPropertiesOfTheClassHasExpected;
 begin
-  var SimpleType := TTypeDefinition.Create;
-  SimpleType.Name := 'SimpleType';
-
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', SimpleType);
-      MainClass.AddProperty('MyProperty2', SimpleType);
-      MainClass.AddProperty('MyProperty3', SimpleType);
+      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      MainClass.AddProperty('MyProperty2', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      MainClass.AddProperty('MyProperty3', FImporter.BuildInTypes[TBuildInType.IntegerType]);
     end;
 
   FImporter.Import(FConfiguration);
 
-//  CompareUnitDeclaration(
-//    '''
-//    unit MyUnit;
-//
-//    interface
-//
-//    type
-//      MainModule = class
-//      private
-//        FMyProperty: SimpleType;
-//        FMyProperty2: SimpleType;
-//        FMyProperty3: SimpleType;
-//      published
-//        property MyProperty: SimpleType read FMyProperty write FMyProperty;
-//        property MyProperty2: SimpleType read FMyProperty2 write FMyProperty2;
-//        property MyProperty3: SimpleType read FMyProperty3 write FMyProperty3;
-//      end;
-//
-//    implementation
-//
-//    end.
-//
-//    ''',
-//    FConfiguration.Units[0]);
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
 
-  SimpleType.Free;
+    interface
+
+    type
+      MainModule = class
+      private
+        FMyProperty: System.Integer;
+        FMyProperty2: System.Integer;
+        FMyProperty3: System.Integer;
+      published
+        property MyProperty: System.Integer read FMyProperty write FMyProperty;
+        property MyProperty2: System.Integer read FMyProperty2 write FMyProperty2;
+        property MyProperty3: System.Integer read FMyProperty3 write FMyProperty3;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
-procedure TSchemaImporterTest.MustLoadTheUnitNameBeforeTheTypeNameToAvoidNamingMissmatch;
+procedure TSchemaImporterTest.MustLoadTheArrayInTheTypeOfTheParentModule;
 begin
-  FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
-    begin
-      MainClass.AddProperty('MyProperty', Schema.SystemString);
-    end;
+  var MainClass := TTypeClassDefinition.Create;
+  var ArrayType := TTypeDefinition.Create;
 
-  FImporter.Import(FConfiguration);
+  FImporter.CreateArrayType(MainClass, ArrayType);
+
+  Assert.AreEqual(1, Length(MainClass.Types));
+
+  ArrayType.Free;
+
+  MainClass.Free;
+end;
+
+procedure TSchemaImporterTest.MustLoadTheArrayTypeItemWithTheParameter;
+begin
+  var MainClass := TTypeClassDefinition.Create;
+  var ArrayType := TTypeDefinition.Create;
+
+  Assert.AreEqual(ArrayType, FImporter.CreateArrayType(MainClass, ArrayType).ArrayType);
+
+  ArrayType.Free;
+
+  MainClass.Free;
+end;
+
+procedure TSchemaImporterTest.MustLoadTheImporterPropertyToAvoidError;
+begin
+  Assert.WillNotRaise(
+    procedure
+    begin
+      FImporter.Import(FConfiguration);
+    end);
+end;
+
+procedure TSchemaImporterTest.MustLoadTheParentModuleWithTheValueInTheParameter;
+begin
+  var MainClass := TTypeClassDefinition.Create;
+  var ArrayType := TTypeDefinition.Create;
+
+  Assert.AreEqual(MainClass, FImporter.CreateArrayType(MainClass, ArrayType).ParentModule);
+
+  ArrayType.Free;
+
+  MainClass.Free;
 end;
 
 procedure TSchemaImporterTest.MustSaveAllUnitsInTheOutputFolderHasExpected;
@@ -580,6 +764,47 @@ begin
   inherited;
 end;
 
+procedure TSchemaImporterTest.TheBuildInTypeMustBeLoadedWhenImportTheSchemaSpecification;
+begin
+  FImporter.Import(FConfiguration);
+
+  for var BuildInType := Low(TBuildInType) to High(TBuildInType) do
+    Assert.IsNotNil(FImporter.BuildInTypes[BuildInType], 'Type not registered ' + TRttiEnumerationType.GetName(BuildInType));
+end;
+
+procedure TSchemaImporterTest.TheBuildInTypesNamesMustBeHasExpected;
+const
+  BUILD_IN_TYPE_NAMES: array[TBuildInType] of String = ('String', 'Integer', 'Double', 'TDate', 'TTime', 'TDateTime', 'Boolean', 'TArray<%s>', 'TValue', 'TDynamicProperty<%s>');
+
+begin
+  FImporter.Import(FConfiguration);
+
+  for var BuildInType := Low(TBuildInType) to High(TBuildInType) do
+    Assert.AreEqual(BUILD_IN_TYPE_NAMES[BuildInType], FImporter.BuildInTypes[BuildInType].Name);
+end;
+
+procedure TSchemaImporterTest.TheDynamicPropertyMustBeLoadedInTheBluePrintTypesUnit;
+begin
+  FImporter.Import(FConfiguration);
+
+  Assert.AreEqual('Blue.Print.Types', FImporter.BuildInTypes[TBuildInType.DynamicPropertyType].ParentModule.Name);
+end;
+
+procedure TSchemaImporterTest.TheKeyValueFromTypeMustBeTheNamespaceWithTheClassNameHasExpected;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  CurrentClassDefinition.Name := 'AClassName';
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FImporter.AddNamespace('My Namespace', 'my');
+
+  FImporter.AddClassDefinition(ParentModule, 'My Namespace', CurrentClassDefinition);
+
+  Assert.AreEqual('my:AClassName', FImporter.Types.Keys.ToArray[0]);
+
+  ParentModule.Free;
+end;
+
 procedure TSchemaImporterTest.ThePublicTypeDeclarationMustBeRecursive;
 begin
   FConverter.WhenExecuteConvert :=
@@ -590,7 +815,7 @@ begin
         Result := TTypeClassDefinition.Create;
         Result.Name := Name;
 
-        Schema.AddClassDefinition(Parent, Namespace, Result);
+        FImporter.AddClassDefinition(Parent, Namespace, Result);
       end;
 
     begin
@@ -626,6 +851,88 @@ begin
     FConfiguration.Units[0]);
 end;
 
+procedure TSchemaImporterTest.TheSelfUnitCantBeLoadedInTheUsesList;
+begin
+  var SimpleType := TTypeDefinition.Create;
+  SimpleType.Name := 'SimpleType';
+
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      if MainClass.ParentModule.Name = 'MyUnit' then
+        SimpleType.ParentModule := MainClass.ParentModule;
+
+      MainClass.AddProperty('MyProperty', SimpleType);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      private
+        FMyProperty: MyUnit.SimpleType;
+      published
+        property MyProperty: MyUnit.SimpleType read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+
+  SimpleType.Free;
+end;
+
+procedure TSchemaImporterTest.TheSystemTypesMustBeLoadedInTheTypeUnitDefinitionOfTheSystem;
+begin
+  FImporter.Import(FConfiguration);
+
+  for var BuildInType in [TBuildInType.StringType, TBuildInType.IntegerType, TBuildInType.DoubleType, TBuildInType.DateType, TBuildInType.TimeType, TBuildInType.DateTimeType] do
+    Assert.AreEqual('System', FImporter.BuildInTypes[BuildInType].ParentModule.Name);
+end;
+
+procedure TSchemaImporterTest.TheTryFindTypeMustReturnFalseIfDontFindTheType;
+begin
+  var TypeDefinition: TTypeDefinition;
+
+  FImporter.AddNamespace('My Namespace', 'my');
+
+  Assert.IsFalse(FImporter.TryFindType('My Namespace', 'AClassName', TypeDefinition));
+end;
+
+procedure TSchemaImporterTest.TheTValueBuildInTypeMustBeLoadedInTheSystemRttiUnit;
+begin
+  FImporter.Import(FConfiguration);
+
+  Assert.AreEqual('System.Rtti', FImporter.BuildInTypes[TBuildInType.ValueType].ParentModule.Name);
+end;
+
+procedure TSchemaImporterTest.TheUnitNameCantBeAppendedToTheTypeNameInTheTypesList;
+begin
+  var ClassDefinition := TTypeClassDefinition.Create;
+  ClassDefinition.Name := 'MainClass';
+  var ParentModule := TTypeUnitDefinition.Create;
+  ParentModule.Name := 'MyUnit';
+
+  FImporter.AddNamespace('My Namespace', 'my');
+
+  FImporter.AddClassDefinition(ParentModule, 'My Namespace', ClassDefinition);
+
+  Assert.AreEqual(1, FImporter.Types.Count);
+
+  Assert.AreEqual('my:MainClass', FImporter.Types.Keys.ToArray[0]);
+
+  ParentModule.Free;
+end;
+
 procedure TSchemaImporterTest.WhenAClassHasMoreThanOneClassMustLoadAllClassesInThePublicTypeDefinition;
 begin
   FConverter.WhenExecuteConvert :=
@@ -636,7 +943,7 @@ begin
         var MyClass := TTypeClassDefinition.Create;
         MyClass.Name := Name;
 
-        Schema.AddClassDefinition(MainClass, Namespace, MyClass);
+        FImporter.AddClassDefinition(MainClass, Namespace, MyClass);
       end;
 
     begin
@@ -676,6 +983,113 @@ begin
     FConfiguration.Units[0]);
 end;
 
+procedure TSchemaImporterTest.WhenAddAClassDefinitionMustLoadTheParentModuleHasExpected;
+begin
+  var ClassDefinition := TTypeClassDefinition.Create;
+  ClassDefinition.Name := 'MainClass';
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FImporter.AddNamespace('My Namespace', 'my');
+
+  FImporter.AddClassDefinition(ParentModule, 'My Namespace', ClassDefinition);
+
+  Assert.AreEqual(ParentModule, ClassDefinition.ParentModule);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.WhenAddASubclassInsideAnotherSubclassMustAppendAllParentsNamesinTheTypeList;
+begin
+  var ClassDefinition := TTypeClassDefinition.Create;
+  ClassDefinition.Name := 'MainClass';
+  var ClassDefinition2 := TTypeClassDefinition.Create;
+  ClassDefinition2.Name := 'ChildClass';
+  var ClassDefinition3 := TTypeClassDefinition.Create;
+  ClassDefinition3.Name := 'AnotherClass';
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FImporter.AddNamespace('My Namespace', 'my');
+
+  FImporter.AddClassDefinition(ParentModule, 'My Namespace', ClassDefinition);
+
+  FImporter.AddClassDefinition(ClassDefinition, 'My Namespace', ClassDefinition2);
+
+  FImporter.AddClassDefinition(ClassDefinition2, 'My Namespace', ClassDefinition3);
+
+  Assert.IsTrue(FImporter.Types.ContainsKey('my:MainClass.ChildClass.AnotherClass'), 'Class name not found!');
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.WhenAddASubclassInsideTheAnotherClassMustAppendTheParentNameinTheTypesList;
+begin
+  var ClassDefinition := TTypeClassDefinition.Create;
+  ClassDefinition.Name := 'MainClass';
+  var ClassDefinition2 := TTypeClassDefinition.Create;
+  ClassDefinition2.Name := 'ChildClass';
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FImporter.AddNamespace('My Namespace', 'my');
+
+  FImporter.AddClassDefinition(ParentModule, 'My Namespace', ClassDefinition);
+
+  FImporter.AddClassDefinition(ClassDefinition, 'My Namespace', ClassDefinition2);
+
+  Assert.IsTrue(FImporter.Types.ContainsKey('my:MainClass.ChildClass'), 'Class name not found!');
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.WhenAddMoreThanOneClassMustAppendAllClassesInTheParentModule;
+begin
+  var ClassDefinition := TTypeClassDefinition.Create;
+  ClassDefinition.Name := 'AClassName';
+  var ClassDefinition2 := TTypeClassDefinition.Create;
+  ClassDefinition2.Name := 'AClassName2';
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FImporter.AddNamespace('My Namespace', 'my');
+
+  FImporter.AddClassDefinition(ParentModule, 'My Namespace', ClassDefinition);
+
+  FImporter.AddClassDefinition(ParentModule, 'My Namespace', ClassDefinition2);
+
+  Assert.AreEqual(2, Length(ParentModule.Classes));
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.WhenAddTheClassDefinitionMustAppendTheClassInTheParentModuleClassList;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FImporter.AddNamespace('My Namespace', 'my');
+
+  FImporter.AddClassDefinition(ParentModule, 'My Namespace', CurrentClassDefinition);
+
+  Assert.AreEqual(1, Length(ParentModule.Classes));
+
+  Assert.AreEqual(ParentModule.Classes[0], CurrentClassDefinition);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.WhenAddTheClassDefinitionMustLoadTheValueInTheTypesList;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  CurrentClassDefinition.Name := 'AClassName';
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FImporter.AddNamespace('My Namespace', 'my');
+
+  FImporter.AddClassDefinition(ParentModule, 'My Namespace', CurrentClassDefinition);
+
+  Assert.AreEqual(1, FImporter.Types.Count);
+
+  ParentModule.Free;
+end;
+
 procedure TSchemaImporterTest.WhenAnUnitConfigurationHasTheSameNameFromAnotherConfigurationMustRaiseAnError;
 begin
   FConfiguration.Units[0].Name := 'Unit1';
@@ -686,6 +1100,40 @@ begin
     begin
       FImporter.Import(FConfiguration);
     end, EUnitConfigurationDuplicatedName);
+end;
+
+procedure TSchemaImporterTest.WhenAPropertyUseATypeOutSideOfTheUnitBeenDeclaretedMustLoadTheUsesSectionWithTheNameOfTheUnitOfTheTypeUsed;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.ValueType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    uses System.Rtti;
+
+    type
+      MainModule = class
+      private
+        FMyProperty: System.Rtti.TValue;
+      published
+        property MyProperty: System.Rtti.TValue read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenConvertingTheSchemaFileMustUseTheRightConverterForEveryFileHasExpected;
@@ -703,6 +1151,37 @@ begin
   Assert.AreEqual(1, Converter.TimesCalled);
 
   Assert.AreEqual(1, Converter2.TimesCalled);
+end;
+
+procedure TSchemaImporterTest.WhenCreateAnArrayTypeMustReturnTheClassCreated;
+begin
+  var MainClass := TTypeClassDefinition.Create;
+  var ArrayType := TTypeDefinition.Create;
+
+  Assert.IsNotNil(FImporter.CreateArrayType(MainClass, ArrayType));
+
+  ArrayType.Free;
+
+  MainClass.Free;
+end;
+
+procedure TSchemaImporterTest.WhenFindTheAndTheTypeIsFoundedMustReturnTheTypeHasExpected;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  CurrentClassDefinition.Name := 'AClassName';
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FImporter.AddNamespace('My Namespace', 'my');
+
+  FImporter.AddClassDefinition(ParentModule, 'My Namespace', CurrentClassDefinition);
+
+  var ReturningType := FImporter.FindType('My Namespace', 'AClassName');
+
+  Assert.IsNotNil(ReturningType);
+
+  Assert.AreEqual(CurrentClassDefinition, ReturningType);
+
+  ParentModule.Free;
 end;
 
 procedure TSchemaImporterTest.WhenGenerateTheUnitFileMustBeSavedInTheOutputFolderConfiguration;
@@ -743,51 +1222,6 @@ begin
   Assert.AreEqual(3, Converter.TimesCalled);
 end;
 
-procedure TSchemaImporterTest.WhenImportMustRegisterTheBuildInTypeDouble;
-begin
-  FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
-    begin
-      Schema.FindType('Delphi/System', 'Double');
-    end;
-
-  Assert.WillNotRaise(
-    procedure
-    begin
-      FImporter.Import(FConfiguration);
-    end);
-end;
-
-procedure TSchemaImporterTest.WhenImportMustRegisterTheBuildInTypeInteger;
-begin
-  FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
-    begin
-      Schema.FindType('Delphi/System', 'Integer');
-    end;
-
-  Assert.WillNotRaise(
-    procedure
-    begin
-      FImporter.Import(FConfiguration);
-    end);
-end;
-
-procedure TSchemaImporterTest.WhenImportMustRegisterTheBuildInTypeString;
-begin
-  FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
-    begin
-      Schema.FindType('Delphi/System', 'String');
-    end;
-
-  Assert.WillNotRaise(
-    procedure
-    begin
-      FImporter.Import(FConfiguration);
-    end);
-end;
-
 procedure TSchemaImporterTest.WhenLoadTheConverterLoadTheSchemaAndDontLoadTheNamespaceInformationMustRaiseAnError;
 begin
   var Converter := TSchemaConverterMock.Create;
@@ -799,24 +1233,6 @@ begin
     begin
       FImporter.Import(FConfiguration);
     end, ESchemaNamespaceNotLoaded);
-end;
-
-procedure TSchemaImporterTest.WhenLoadTheMainClassMustLoadThePrefixNameInTheMainClassName;
-begin
-  var Converter := TSchemaConverterMock.Create;
-  Converter.Namespace := 'Another Namespace';
-  FConfiguration.Namespaces := FConfiguration.Namespaces + [CreateNamespace(Converter.Namespace, 'Prefix')];
-  FConfiguration.Units[0].SchemaFiles[0].MainModuleName := 'MyMainClassName';
-  FConfiguration.Units[0].SchemaFiles[0].SchemaType := TSchemaType.OpenAPI30;
-  TSchemaImporter.Converters[TSchemaType.OpenAPI30] := Converter;
-
-  Converter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
-    begin
-      Assert.AreEqual('Prefix:MyMainClassName', MainClass.Name);
-    end;
-
-  FImporter.Import(FConfiguration);
 end;
 
 procedure TSchemaImporterTest.WhenLoadTheSchemaFileFromSistemaMustPassTheTextToTheLoadLoadSchemaFunction;
@@ -835,10 +1251,12 @@ end;
 
 procedure TSchemaImporterTest.WhenTheArrayTypeIsAnObjectMustCreateTheAddFunctionForTheType;
 begin
+  var ParentModule := TTypeUnitDefinition.Create;
+  ParentModule.Name := 'System';
   var SimpleType := TTypeClassDefinition.Create;
   SimpleType.Name := 'SimpleType';
-  var TheArrray := TTypeArrayDefinition.Create;
-  TheArrray.ArrayType := SimpleType;
+  SimpleType.ParentModule := ParentModule;
+  var TheArrray := FImporter.CreateArrayType(ParentModule, SimpleType);
 
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
@@ -859,30 +1277,30 @@ begin
     type
       MainModule = class
       private
-        FMyProperty: TArray<SimpleType>;
-        FMyProperty2: TArray<SimpleType>;
+        FMyProperty: System.TArray<SimpleType>;
+        FMyProperty2: System.TArray<SimpleType>;
       public
-        function AddMyProperty: SimpleType;
-        function AddMyProperty2: SimpleType;
+        function AddMyProperty: System.SimpleType;
+        function AddMyProperty2: System.SimpleType;
       published
-        property MyProperty: TArray<SimpleType> read FMyProperty write FMyProperty;
-        property MyProperty2: TArray<SimpleType> read FMyProperty2 write FMyProperty2;
+        property MyProperty: System.TArray<SimpleType> read FMyProperty write FMyProperty;
+        property MyProperty2: System.TArray<SimpleType> read FMyProperty2 write FMyProperty2;
       end;
 
     implementation
 
     { MainModule }
 
-    function MainModule.AddMyProperty: SimpleType;
+    function MainModule.AddMyProperty: System.SimpleType;
     begin
-      Result := SimpleType.Create;
+      Result := System.SimpleType.Create;
 
       FMyProperty := FMyProperty + [Result];
     end;
 
-    function MainModule.AddMyProperty2: SimpleType;
+    function MainModule.AddMyProperty2: System.SimpleType;
     begin
-      Result := SimpleType.Create;
+      Result := System.SimpleType.Create;
 
       FMyProperty2 := FMyProperty2 + [Result];
     end;
@@ -892,20 +1310,17 @@ begin
     ''',
     FConfiguration.Units[0]);
 
-  TheArrray.Free;
+  ParentModule.Free;
 
   SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.WhenTheClassDefinitionHaveAPropertyMustDeclareThePropertyInTheUnit;
 begin
-  var SimpleType := TTypeDefinition.Create;
-  SimpleType.Name := 'SimpleType';
-
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', SimpleType);
+      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]);
     end;
 
   FImporter.Import(FConfiguration);
@@ -919,9 +1334,9 @@ begin
     type
       MainModule = class
       private
-        FMyProperty: SimpleType;
+        FMyProperty: System.Integer;
       published
-        property MyProperty: SimpleType read FMyProperty write FMyProperty;
+        property MyProperty: System.Integer read FMyProperty write FMyProperty;
       end;
 
     implementation
@@ -930,8 +1345,6 @@ begin
 
     ''',
     FConfiguration.Units[0]);
-
-  SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.WhenTheClassHasEnumerationDeclaredMustLoadInThePublicTypeOfTheClassDeclaration;
@@ -981,7 +1394,7 @@ begin
       var MyClass := TTypeClassDefinition.Create;
       MyClass.Name := 'my.special-class;name';
 
-      Schema.AddClassDefinition(MainClass, 'My Namespace', MyClass);
+      FImporter.AddClassDefinition(MainClass, 'My Namespace', MyClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -1009,8 +1422,11 @@ end;
 
 procedure TSchemaImporterTest.WhenTheClassTypeIsAClassDefinitionMustDeclareTheGetFunctionAndCreateTheClassIfTheValueIsntLoaded;
 begin
+  var ParentModule := TTypeUnitDefinition.Create;
+  ParentModule.Name := 'System';
   var SimpleType := TTypeClassDefinition.Create;
   SimpleType.Name := 'SimpleType';
+  SimpleType.ParentModule := ParentModule;
 
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
@@ -1029,20 +1445,20 @@ begin
     type
       MainModule = class
       private
-        FMyProperty: SimpleType;
-        function GetMyProperty: SimpleType;
+        FMyProperty: System.SimpleType;
+        function GetMyProperty: System.SimpleType;
       published
-        property MyProperty: SimpleType read GetMyProperty write FMyProperty;
+        property MyProperty: System.SimpleType read GetMyProperty write FMyProperty;
       end;
 
     implementation
 
     { MainModule }
 
-    function MainModule.GetMyProperty: SimpleType;
+    function MainModule.GetMyProperty: System.SimpleType;
     begin
       if not Assigned(FMyProperty) then
-        FMyProperty := SimpleType.Create;
+        FMyProperty := System.SimpleType.Create;
 
       Result := FMyProperty;
     end;
@@ -1051,6 +1467,8 @@ begin
 
     ''',
     FConfiguration.Units[0]);
+
+  ParentModule.Free;
 
   SimpleType.Free;
 end;
@@ -1114,7 +1532,7 @@ begin
       var MyClass := TTypeClassDefinition.Create;
       MyClass.Name := 'TMyClass';
 
-      Schema.AddClassDefinition(MainClass, Schema.Namespace, MyClass);
+      FImporter.AddClassDefinition(MainClass, Schema.Namespace, MyClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -1209,13 +1627,10 @@ end;
 
 procedure TSchemaImporterTest.WhenThePropertyHasAnSpecialCharacterMustAppendTheAmpersandBeforeTheClassName;
 begin
-  var SimpleType := TTypeDefinition.Create;
-  SimpleType.Name := 'SimpleType';
-
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      MainClass.AddProperty('if', SimpleType);
+      MainClass.AddProperty('if', FImporter.BuildInTypes[TBuildInType.IntegerType]);
     end;
 
   FImporter.Import(FConfiguration);
@@ -1229,9 +1644,9 @@ begin
     type
       MainModule = class
       private
-        FIf: SimpleType;
+        FIf: System.Integer;
       published
-        property &if: SimpleType read FIf write FIf;
+        property &if: System.Integer read FIf write FIf;
       end;
 
     implementation
@@ -1240,14 +1655,30 @@ begin
 
     ''',
     FConfiguration.Units[0]);
+end;
 
-  SimpleType.Free;
+procedure TSchemaImporterTest.WhenThePropertyHasntATypeLoadedMustRaiseAnError;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', nil);
+    end;
+
+  Assert.WillRaise(
+    procedure
+    begin
+      FImporter.Import(FConfiguration);
+    end, EPropertyWithoutType);
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyIsOptionalMustCreateTheFieldForStoreTheIsStoredInfoAndCreateTheSetFunctionForTheProperty;
 begin
+  var ParentModule := TTypeUnitDefinition.Create;
+  ParentModule.Name := 'System';
   var SimpleType := TTypeDefinition.Create;
   SimpleType.Name := 'SimpleType';
+  SimpleType.ParentModule := ParentModule;
 
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
@@ -1268,31 +1699,31 @@ begin
     type
       MainModule = class
       private
-        FMyProperty: SimpleType;
+        FMyProperty: System.SimpleType;
         FMyPropertyStored: Boolean;
-        FMyProperty2: SimpleType;
+        FMyProperty2: System.SimpleType;
         FMyProperty2Stored: Boolean;
-        procedure SetMyProperty(const Value: SimpleType);
-        procedure SetMyProperty2(const Value: SimpleType);
+        procedure SetMyProperty(const Value: System.SimpleType);
+        procedure SetMyProperty2(const Value: System.SimpleType);
       public
         property IsMyPropertyStored: Boolean read FMyPropertyStored;
         property IsMyProperty2Stored: Boolean read FMyProperty2Stored;
       published
-        property MyProperty: SimpleType read FMyProperty write SetMyProperty stored FMyPropertyStored;
-        property MyProperty2: SimpleType read FMyProperty2 write SetMyProperty2 stored FMyProperty2Stored;
+        property MyProperty: System.SimpleType read FMyProperty write SetMyProperty stored FMyPropertyStored;
+        property MyProperty2: System.SimpleType read FMyProperty2 write SetMyProperty2 stored FMyProperty2Stored;
       end;
 
     implementation
 
     { MainModule }
 
-    procedure MainModule.SetMyProperty(const Value: SimpleType);
+    procedure MainModule.SetMyProperty(const Value: System.SimpleType);
     begin
       FMyProperty := Value;
       FMyPropertyStored := True;
     end;
 
-    procedure MainModule.SetMyProperty2(const Value: SimpleType);
+    procedure MainModule.SetMyProperty2(const Value: System.SimpleType);
     begin
       FMyProperty2 := Value;
       FMyProperty2Stored := True;
@@ -1303,13 +1734,18 @@ begin
     ''',
     FConfiguration.Units[0]);
 
+  ParentModule.Free;
+
   SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyNeedTheGetFunctionMustDeclareAllFunctionsHasExpected;
 begin
+  var ParentModule := TTypeUnitDefinition.Create;
+  ParentModule.Name := 'System';
   var SimpleType := TTypeClassDefinition.Create;
   SimpleType.Name := 'SimpleType';
+  SimpleType.ParentModule := ParentModule;
 
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
@@ -1330,31 +1766,31 @@ begin
     type
       MainModule = class
       private
-        FMyProperty: SimpleType;
-        FMyProperty2: SimpleType;
-        function GetMyProperty: SimpleType;
-        function GetMyProperty2: SimpleType;
+        FMyProperty: System.SimpleType;
+        FMyProperty2: System.SimpleType;
+        function GetMyProperty: System.SimpleType;
+        function GetMyProperty2: System.SimpleType;
       published
-        property MyProperty: SimpleType read GetMyProperty write FMyProperty;
-        property MyProperty2: SimpleType read GetMyProperty2 write FMyProperty2;
+        property MyProperty: System.SimpleType read GetMyProperty write FMyProperty;
+        property MyProperty2: System.SimpleType read GetMyProperty2 write FMyProperty2;
       end;
 
     implementation
 
     { MainModule }
 
-    function MainModule.GetMyProperty: SimpleType;
+    function MainModule.GetMyProperty: System.SimpleType;
     begin
       if not Assigned(FMyProperty) then
-        FMyProperty := SimpleType.Create;
+        FMyProperty := System.SimpleType.Create;
 
       Result := FMyProperty;
     end;
 
-    function MainModule.GetMyProperty2: SimpleType;
+    function MainModule.GetMyProperty2: System.SimpleType;
     begin
       if not Assigned(FMyProperty2) then
-        FMyProperty2 := SimpleType.Create;
+        FMyProperty2 := System.SimpleType.Create;
 
       Result := FMyProperty2;
     end;
@@ -1364,15 +1800,19 @@ begin
     ''',
     FConfiguration.Units[0]);
 
+  ParentModule.Free;
+
   SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyTypeIsAnArrayMustDeclareTheTypeWithTheTArraySystemType;
 begin
+  var ParentModule := TTypeUnitDefinition.Create;
+  ParentModule.Name := 'System';
   var SimpleType := TTypeDefinition.Create;
   SimpleType.Name := 'SimpleType';
-  var TheArrray := TTypeArrayDefinition.Create;
-  TheArrray.ArrayType := SimpleType;
+  SimpleType.ParentModule := ParentModule;
+  var TheArrray := FImporter.CreateArrayType(ParentModule, SimpleType);
 
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
@@ -1391,9 +1831,9 @@ begin
     type
       MainModule = class
       private
-        FMyProperty: TArray<SimpleType>;
+        FMyProperty: System.TArray<SimpleType>;
       published
-        property MyProperty: TArray<SimpleType> read FMyProperty write FMyProperty;
+        property MyProperty: System.TArray<SimpleType> read FMyProperty write FMyProperty;
       end;
 
     implementation
@@ -1403,7 +1843,7 @@ begin
     ''',
     FConfiguration.Units[0]);
 
-  TheArrray.Free;
+  ParentModule.Free;
 
   SimpleType.Free;
 end;
@@ -1414,6 +1854,8 @@ begin
 
   for var ReservedName in ReservedNames do
   begin
+    var Importer := TSchemaImporter.Create;
+
     FConverter.WhenExecuteConvert :=
       procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
       begin
@@ -1427,10 +1869,10 @@ begin
         var ClassDefinition := TTypeClassDefinition.Create;
         ClassDefinition.Name := ReservedName;
 
-        Schema.AddClassDefinition(MainClass, 'My Namespace', ClassDefinition);
+        Importer.AddClassDefinition(MainClass, 'My Namespace', ClassDefinition);
       end;
 
-    FImporter.Import(FConfiguration);
+    Importer.Import(FConfiguration);
 
     CompareUnitDeclaration(Format(
       '''
@@ -1453,7 +1895,59 @@ begin
 
       ''',
       [ReservedName]), FConfiguration.Units[0]);
+
+    Importer.Free;
   end;
+end;
+
+procedure TSchemaImporterTest.WhenTheTypeIsFoundMustLoadTheTypeInTheParameterAsExpected;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  CurrentClassDefinition.Name := 'AClassName';
+  var ParentModule := TTypeUnitDefinition.Create;
+  var TypeDefinition: TTypeDefinition;
+
+  FImporter.AddNamespace('My Namespace', 'my');
+
+  FImporter.AddClassDefinition(ParentModule, 'My Namespace', CurrentClassDefinition);
+
+  FImporter.TryFindType('My Namespace', 'AClassName', TypeDefinition);
+
+  Assert.AreEqual(TypeDefinition, CurrentClassDefinition);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.WhenTheTypeOfAPropertyIsFromSystemCantAddTheSystemInTheUsesList;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      private
+        FMyProperty: System.Integer;
+      published
+        property MyProperty: System.Integer read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenTheUnitHasMoreThanOneClassMustLoadAllClassesInTheUnit;
@@ -1481,6 +1975,21 @@ begin
     FConfiguration.Units[1]);
 end;
 
+procedure TSchemaImporterTest.WhenTryToAddAClassDefinitionAndTheNamespaceDoesntExistsMustRaiseAnError;
+begin
+  var CurrentClassDefinition := TTypeClassDefinition.Create;
+  CurrentClassDefinition.Name := 'AClassName';
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  Assert.WillRaise(
+    procedure
+    begin
+      FImporter.AddClassDefinition(ParentModule, 'Invalid Namespace', CurrentClassDefinition);
+    end, ESchemaNamespaceWithoutConfiguraton);
+
+  ParentModule.Free;
+end;
+
 procedure TSchemaImporterTest.WhenTryToImportWithoutAConfigurationLoadedMustRaiseError;
 begin
   Assert.WillRaise(
@@ -1505,7 +2014,8 @@ procedure TSchemaConverterMockTeste.Setup;
 begin
   FConverterClass := TSchemaConverterMock.Create;
   FMainClass := TTypeClassDefinition.Create;
-  FSchema := TSchema.Create(nil, nil);
+  FSchema := TSchema.Create;
+  FSchema.Importer := TSchemaImporter.Create;
   FSchema.SchemaFile := TSchemaFileConfiguration.Create;
 
   FConverter := FConverterClass;
@@ -1514,6 +2024,8 @@ end;
 procedure TSchemaConverterMockTeste.TearDown;
 begin
   FConverter := nil;
+
+  FSchema.Importer.Free;
 
   FSchema.SchemaFile.Free;
 
@@ -1552,6 +2064,17 @@ begin
   FConverter.LoadSchema(FSchema);
 
   Assert.AreEqual('My Namespace', FSchema.Namespace);
+end;
+
+procedure TSchemaConverterMockTeste.WhenTheImporterIsntLoadedMustRaiseAnError;
+begin
+  FSchema.Importer := nil;
+
+  Assert.WillRaise(
+    procedure
+    begin
+      FConverter.Convert(FMainClass, FSchema);
+    end, EImporterNotLoaded)
 end;
 
 procedure TSchemaConverterMockTeste.WhenTheSchemaDoesntHaveTheSchemaFileLoadedMustRaiseAnError;
@@ -1595,6 +2118,9 @@ begin
   if not Assigned(MainClass) then
     raise EMainClassMustBeLoaded.Create;
 
+  if not Assigned(Schema.Importer) then
+    raise EImporterNotLoaded.Create;
+
   SchemaText := Schema.SchemaText;
 
   Inc(FTimesCalled);
@@ -1624,22 +2150,9 @@ end;
 
 { TSchemaTest }
 
-procedure TSchemaTest.AfterAddTheClassDefinitionMustAppendThePrefixNamespaceInTheClassNameDefinition;
-begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  CurrentClassDefinition.Name := 'MyClass';
-  var ParentModule := TTypeClassDefinition.Create;
-
-  FSchema.AddClassDefinition(ParentModule, FNamespace, CurrentClassDefinition);
-
-  Assert.AreEqual('my:MyClass', CurrentClassDefinition.Name);
-
-  ParentModule.Free;
-end;
-
 procedure TSchemaTest.IfTheSchemaValueIsAnObjectMustDestroyTheValueWhenTheSchemaIsDestroyed;
 begin
-  var Schema := TSchema.Create(nil, nil);
+  var Schema := TSchema.Create;
   Schema.SchemaValue := TObjectSchema.Create;
 
   Schema.Free;
@@ -1649,7 +2162,7 @@ end;
 
 procedure TSchemaTest.IfTheSchemaValueIsntAnObjectCantBeDestroyedWhenTheSchemaIsDestroyed;
 begin
-  var Schema := TSchema.Create(nil, nil);
+  var Schema := TSchema.Create;
   Schema.SchemaValue := 'String';
 
   Assert.WillNotRaise(
@@ -1659,249 +2172,14 @@ begin
     end);
 end;
 
-procedure TSchemaTest.IfTheTryFindTypeFoundTheTypeMustReturnTrue;
-begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  CurrentClassDefinition.Name := 'AClassName';
-  var ParentModule := TTypeUnitDefinition.Create;
-  var TypeDefinition: TTypeDefinition;
-
-  FSchema.AddClassDefinition(ParentModule, FNamespace, CurrentClassDefinition);
-
-  Assert.IsTrue(FSchema.TryFindType(FNamespace, 'AClassName', TypeDefinition));
-
-  ParentModule.Free;
-end;
-
-procedure TSchemaTest.IfTheTypeIsntFoundMustRaiseAnError;
-begin
-  Assert.WillRaise(
-    procedure
-    begin
-      FSchema.FindType(FNamespace, 'AClassName');
-    end, ETypeNotFound);
-end;
-
-procedure TSchemaTest.MustAppenTheClassInTheValueOsTheTypes;
-begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  CurrentClassDefinition.Name := 'AClassName';
-  var ParentModule := TTypeUnitDefinition.Create;
-
-  FSchema.AddClassDefinition(ParentModule, FNamespace, CurrentClassDefinition);
-
-  Assert.AreEqual(CurrentClassDefinition, FTypes['my:AClassName']);
-
-  ParentModule.Free;
-end;
-
 procedure TSchemaTest.Setup;
 begin
-  FNamespace := 'My namespace';
-  FNamespaces := TDictionary<String, String>.Create;
-  FTypes := TDictionary<String, TTypeDefinition>.Create;
-
-  FSchema := TSchema.Create(FNamespaces, FTypes);
-
-  FNamespaces.Add(FNamespace, 'my');
-  FNamespaces.Add('Delphi/System', 'System');
+  FSchema := TSchema.Create;
 end;
 
 procedure TSchemaTest.TearDown;
 begin
-  FTypes.Free;
-
-  FNamespaces.Free;
-
   FSchema.Free;
-end;
-
-procedure TSchemaTest.TheKeyValueFromTypeMustBeTheNamespaceWithTheClassNameHasExpected;
-begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  CurrentClassDefinition.Name := 'AClassName';
-  var ParentModule := TTypeUnitDefinition.Create;
-
-  FSchema.AddClassDefinition(ParentModule, FNamespace, CurrentClassDefinition);
-
-  Assert.AreEqual('my:AClassName', FTypes.Keys.ToArray[0]);
-
-  ParentModule.Free;
-end;
-
-procedure TSchemaTest.TheTryFindTypeMustReturnFalseIfDontFindTheType;
-begin
-  var TypeDefinition: TTypeDefinition;
-
-  Assert.IsFalse(FSchema.TryFindType(FNamespace, 'AClassName', TypeDefinition));
-end;
-
-procedure TSchemaTest.TheUnitNameCantBeAppendedToTheTypeNameInTheTypesList;
-begin
-  var ClassDefinition := TTypeClassDefinition.Create;
-  ClassDefinition.Name := 'MainClass';
-  var ParentModule := TTypeUnitDefinition.Create;
-  ParentModule.Name := 'MyUnit';
-
-  FSchema.AddClassDefinition(ParentModule, FNamespace, ClassDefinition);
-
-  Assert.AreEqual(1, FTypes.Count);
-
-  Assert.AreEqual('my:MainClass', FTypes.Keys.ToArray[0]);
-
-  ParentModule.Free;
-end;
-
-procedure TSchemaTest.WhenAddAClassDefinitionMustLoadTheParentModuleHasExpected;
-begin
-  var ClassDefinition := TTypeClassDefinition.Create;
-  ClassDefinition.Name := 'MainClass';
-  var ParentModule := TTypeUnitDefinition.Create;
-
-  FSchema.AddClassDefinition(ParentModule, FNamespace, ClassDefinition);
-
-  Assert.AreEqual(ParentModule, ClassDefinition.ParentModule);
-
-  ParentModule.Free;
-end;
-
-procedure TSchemaTest.WhenAddASubclassInsideAnotherSubclassMustAppendAllParentsNamesinTheTypeList;
-begin
-  var ClassDefinition := TTypeClassDefinition.Create;
-  ClassDefinition.Name := 'MainClass';
-  var ClassDefinition2 := TTypeClassDefinition.Create;
-  ClassDefinition2.Name := 'ChildClass';
-  var ClassDefinition3 := TTypeClassDefinition.Create;
-  ClassDefinition3.Name := 'AnotherClass';
-  var ParentModule := TTypeUnitDefinition.Create;
-
-  FSchema.AddClassDefinition(ParentModule, FNamespace, ClassDefinition);
-
-  FSchema.AddClassDefinition(ClassDefinition, FNamespace, ClassDefinition2);
-
-  FSchema.AddClassDefinition(ClassDefinition2, FNamespace, ClassDefinition3);
-
-  Assert.IsTrue(FTypes.ContainsKey('my:MainClass.my:ChildClass.my:AnotherClass'), 'Class name not found!');
-
-  ParentModule.Free;
-end;
-
-procedure TSchemaTest.WhenAddASubclassInsideTheAnotherClassMustAppendTheParentNameinTheTypesList;
-begin
-  var ClassDefinition := TTypeClassDefinition.Create;
-  ClassDefinition.Name := 'MainClass';
-  var ClassDefinition2 := TTypeClassDefinition.Create;
-  ClassDefinition2.Name := 'ChildClass';
-  var ParentModule := TTypeUnitDefinition.Create;
-
-  FSchema.AddClassDefinition(ParentModule, FNamespace, ClassDefinition);
-
-  FSchema.AddClassDefinition(ClassDefinition, FNamespace, ClassDefinition2);
-
-  Assert.IsTrue(FTypes.ContainsKey('my:MainClass.my:ChildClass'), 'Class name not found!');
-
-  ParentModule.Free;
-end;
-
-procedure TSchemaTest.WhenAddMoreThanOneClassMustAppendAllClassesInTheParentModule;
-begin
-  var ClassDefinition := TTypeClassDefinition.Create;
-  ClassDefinition.Name := 'AClassName';
-  var ClassDefinition2 := TTypeClassDefinition.Create;
-  ClassDefinition2.Name := 'AClassName2';
-  var ParentModule := TTypeClassDefinition.Create;
-
-  FSchema.AddClassDefinition(ParentModule, FNamespace, ClassDefinition);
-
-  FSchema.AddClassDefinition(ParentModule, FNamespace, ClassDefinition2);
-
-  Assert.AreEqual(2, Length(ParentModule.Classes));
-
-  ParentModule.Free;
-end;
-
-procedure TSchemaTest.WhenAddTheClassDefinitionMustAppendTheClassInTheParentModuleClassList;
-begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  var ParentModule := TTypeClassDefinition.Create;
-
-  FSchema.AddClassDefinition(ParentModule, FNamespace, CurrentClassDefinition);
-
-  Assert.AreEqual(1, Length(ParentModule.Classes));
-
-  Assert.AreEqual(ParentModule.Classes[0], CurrentClassDefinition);
-
-  ParentModule.Free;
-end;
-
-procedure TSchemaTest.WhenAddTheClassDefinitionMustLoadTheValueInTheTypesList;
-begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  CurrentClassDefinition.Name := 'AClassName';
-  var ParentModule := TTypeClassDefinition.Create;
-
-  FSchema.AddClassDefinition(ParentModule, FNamespace, CurrentClassDefinition);
-
-  Assert.AreEqual(1, FTypes.Count);
-
-  ParentModule.Free;
-end;
-
-procedure TSchemaTest.WhenFindTheAndTheTypeIsFoundedMustReturnTheTypeHasExpected;
-begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  CurrentClassDefinition.Name := 'AClassName';
-  var ParentModule := TTypeUnitDefinition.Create;
-
-  FSchema.AddClassDefinition(ParentModule, FNamespace, CurrentClassDefinition);
-
-  var ReturningType := FSchema.FindType(FNamespace, 'AClassName');
-
-  Assert.IsNotNil(ReturningType);
-
-  Assert.AreEqual(CurrentClassDefinition, ReturningType);
-
-  ParentModule.Free;
-end;
-
-procedure TSchemaTest.WhenGetTheStringTypePropertyInTheSchemaMustReturnTheType;
-begin
-  Assert.IsNotNil(FSchema.SystemString);
-
-  Assert.AreEqual('System:String', FSchema.SystemString.Name);
-end;
-
-procedure TSchemaTest.WhenTheTypeIsFoundMustLoadTheTypeInTheParameterAsExpected;
-begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  CurrentClassDefinition.Name := 'AClassName';
-  var ParentModule := TTypeUnitDefinition.Create;
-  var TypeDefinition: TTypeDefinition;
-
-  FSchema.AddClassDefinition(ParentModule, FNamespace, CurrentClassDefinition);
-
-  FSchema.TryFindType(FNamespace, 'AClassName', TypeDefinition);
-
-  Assert.AreEqual(TypeDefinition, CurrentClassDefinition);
-
-  ParentModule.Free;
-end;
-
-procedure TSchemaTest.WhenTryToAddAClassDefinitionAndTheNamespaceDoesntExistsMustRaiseAnError;
-begin
-  var CurrentClassDefinition := TTypeClassDefinition.Create;
-  CurrentClassDefinition.Name := 'AClassName';
-  var ParentModule := TTypeUnitDefinition.Create;
-
-  Assert.WillRaise(
-    procedure
-    begin
-      FSchema.AddClassDefinition(ParentModule, 'Invalid Namespace', CurrentClassDefinition);
-    end, ESchemaNamespaceWithoutConfiguraton);
-
-  CurrentClassDefinition.Free;
-
-  ParentModule.Free;
 end;
 
 { TObjectSchema }
@@ -1918,6 +2196,13 @@ begin
   DestroyCalled := True;
 
   inherited;
+end;
+
+{ EImporterNotLoaded }
+
+constructor EImporterNotLoaded.Create;
+begin
+  inherited Create('The importer isn''t loaded!');
 end;
 
 end.
