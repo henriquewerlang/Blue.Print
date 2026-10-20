@@ -22,8 +22,7 @@ uses
   Blue.Print.OpenAPI31.Schema.Converter in '..\Blue.Print.OpenAPI31.Schema.Converter.pas',
   Blue.Print.OpenAPI32.Schema.Converter in '..\Blue.Print.OpenAPI32.Schema.Converter.pas',
   Blue.Print.XSD.Schema.Converter in '..\Blue.Print.XSD.Schema.Converter.pas',
-  Blue.Print.WSDL.Schema.Converter in '..\Blue.Print.WSDL.Schema.Converter.pas',
-  Blue.Print.Converter.Test in 'Blue.Print.Converter.Test.pas';
+  Blue.Print.WSDL.Schema.Converter in '..\Blue.Print.WSDL.Schema.Converter.pas';
 
 begin
   ReportMemoryLeaksOnShutdown := True;

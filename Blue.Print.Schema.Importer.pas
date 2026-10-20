@@ -7,9 +7,12 @@ interface
 uses System.Classes, System.SysUtils, System.Rtti, System.Generics.Collections;
 
 type
+  TSchemaImporter = class;
   TTypeArrayDefinition = class;
   TTypeClassDefinition = class;
+  TTypeDefinition = class;
   TTypeModuleDefinition = class;
+  TTypePropertyDefinition = class;
   TUnitConfiguration = class;
 
   ENeedConfiguration = class(Exception)
@@ -72,6 +75,17 @@ type
     constructor Create(const TypeName: String);
   end;
 
+  EPropertyWithoutType = class(Exception)
+  public
+    constructor Create(const PropertyDefinition: TTypePropertyDefinition);
+  end;
+
+  ETypeWithoutParentModule = class(Exception)
+  public
+    constructor Create(const TypeDefinition: TTypeDefinition);
+  end;
+
+  TBuildInType = (StringType, IntegerType, DoubleType, DateType, TimeType, DateTimeType, BooleanType, ArrayType, ValueType, DynamicPropertyType);
   TSchemaType = (Undefined, XSD, WSDL, JSONDraft4, OpenAPI20, OpenAPI30, OpenAPI31, OpenAPI32);
 
   TTypeCommonDefinition = class
@@ -87,6 +101,7 @@ type
     function GetIsClassDefinition: Boolean;
     function GetIsArrayDefinition: Boolean;
     function GetIsUnitDefinition: Boolean;
+    function GetParentModule: TTypeModuleDefinition;
   public
     function AsArrayDefinition: TTypeArrayDefinition;
     function AsClassDefinition: TTypeClassDefinition;
@@ -94,7 +109,7 @@ type
     property IsArrayDefinition: Boolean read GetIsArrayDefinition;
     property IsClassDefinition: Boolean read GetIsClassDefinition;
     property IsUnitDefinition: Boolean read GetIsUnitDefinition;
-    property ParentModule: TTypeModuleDefinition read FParentModule;
+    property ParentModule: TTypeModuleDefinition read GetParentModule write FParentModule;
   end;
 
   TTypeEnumerationDefinition = class(TTypeDefinition)
@@ -105,8 +120,6 @@ type
 
     destructor Destroy; override;
 
-    class function CreateEnumeratorList: TStringList;
-
     procedure AddEnumeration(const Value: String);
 
     property Values: TStringList read FValues;
@@ -116,37 +129,43 @@ type
   private
     FArrayType: TTypeDefinition;
   public
-    property ArrayType: TTypeDefinition read FArrayType write FArrayType;
+    property ArrayType: TTypeDefinition read FArrayType;
   end;
 
   TTypeModuleDefinition = class(TTypeDefinition)
   private
     FClasses: TArray<TTypeClassDefinition>;
     FEnumerations: TArray<TTypeEnumerationDefinition>;
+    FTypes: TArray<TTypeDefinition>;
 
     function GetHasTypes: Boolean;
   public
     destructor Destroy; override;
 
     procedure AddEnumerationDefinition(const EnumerationDefinition: TTypeEnumerationDefinition);
+    procedure AddType(const TypeDefinition: TTypeDefinition);
 
     property Classes: TArray<TTypeClassDefinition> read FClasses;
     property Enumerations: TArray<TTypeEnumerationDefinition> read FEnumerations;
     property HasTypes: Boolean read GetHasTypes;
+    property Types: TArray<TTypeDefinition> read FTypes write FTypes;
   end;
 
   TTypePropertyDefinition = class(TTypeCommonDefinition)
   private
     FPropertyType: TTypeDefinition;
     FOptional: Boolean;
+
+    function GetPropertyType: TTypeDefinition;
   public
     property Optional: Boolean read FOptional write FOptional;
-    property PropertyType: TTypeDefinition read FPropertyType write FPropertyType;
+    property PropertyType: TTypeDefinition read GetPropertyType write FPropertyType;
   end;
 
   TTypeClassDefinition = class(TTypeModuleDefinition)
   private
     FProperties: TArray<TTypePropertyDefinition>;
+
     function GetHasProperties: Boolean;
   public
     destructor Destroy; override;
@@ -206,30 +225,19 @@ type
 
   TSchema = class
   private
+    FImporter: TSchemaImporter;
     FNamespace: String;
-    FNamespaces: TDictionary<String, String>;
     FSchemaText: String;
     FSchemaFile: TSchemaFileConfiguration;
     FSchemaValue: TValue;
-    FTypes: TDictionary<String, TTypeDefinition>;
-
-    function GetSystemString: TTypeDefinition;
-    function MakeTypeName(const Namespace, Name: String): String;
   public
-    constructor Create(const Namespaces: TDictionary<String, String>; const Types: TDictionary<String, TTypeDefinition>);
-
     destructor Destroy; override;
 
-    function FindType(const Namespace, Name: String): TTypeDefinition;
-    function TryFindType(const Namespace, Name: String; var TypeDefinition: TTypeDefinition): Boolean;
-
-    procedure AddClassDefinition(const ParentModule: TTypeModuleDefinition; const Namespace: String; const ClassDefinition: TTypeClassDefinition);
-
+    property Importer: TSchemaImporter read FImporter write FImporter;
     property Namespace: String read FNamespace write FNamespace;
     property SchemaFile: TSchemaFileConfiguration read FSchemaFile write FSchemaFile;
     property SchemaText: String read FSchemaText write FSchemaText;
     property SchemaValue: TValue read FSchemaValue write FSchemaValue;
-    property SystemString: TTypeDefinition read GetSystemString;
   end;
 
   ISchemaConverter = interface
@@ -241,14 +249,41 @@ type
 
   TSchemaImporter = class
   private
-    class function MakeTypeName(const Namespaces: TDictionary<String, String>; const Namespace, Name: String): String;
+    FBuildInTypes: array[TBuildInType] of TTypeDefinition;
+    FBuildInUnits: TList<TTypeUnitDefinition>;
+    FNamespaces: TDictionary<String, String>;
+    FTypes: TDictionary<String, TTypeDefinition>;
+    FUnits: TDictionary<String, TTypeUnitDefinition>;
 
-    class procedure AddType(const Types: TDictionary<String, TTypeDefinition>; const TypeDefinition: TTypeDefinition);
+    class function CreateStringListForItems: TStringList;
+
+    function FormatTypeName(const Namespace, TypeName: String): String;
+    function GetBuildInTypes(const BuildInType: TBuildInType): TTypeDefinition;
+
+    procedure LoadBuildInTypes;
+    procedure SetBuildInTypes(const BuildInType: TBuildInType; const Value: TTypeDefinition);
   public
     class var Converters: TConverters;
+  public
+    constructor Create;
 
+    destructor Destroy; override;
+
+    function CreateArrayType(const ParentModule: TTypeModuleDefinition; const ArrayType: TTypeDefinition): TTypeArrayDefinition;
+    function FindType(const Namespace, Name: String): TTypeDefinition;
+    function GetPrefixName(const Namespace: String): String;
+    function TryFindType(const Namespace, Name: String; var TypeDefinition: TTypeDefinition): Boolean;
+
+    procedure AddClassDefinition(const ParentModule: TTypeModuleDefinition; const Namespace: String; const ClassDefinition: TTypeClassDefinition);
+    procedure AddNamespace(const Name, Prefix: String);
+    procedure AddType(const Namespace: String; const TypeDefinition: TTypeDefinition);
     procedure Import(const Configuration: TConfiguration); overload;
     procedure Import(const ConfigurationFileName: String); overload;
+
+    property BuildInTypes[const BuildInType: TBuildInType]: TTypeDefinition read GetBuildInTypes write SetBuildInTypes;
+    property Namespaces: TDictionary<String, String> read FNamespaces;
+    property Types: TDictionary<String, TTypeDefinition> read FTypes;
+    property Units: TDictionary<String, TTypeUnitDefinition> read FUnits;
   end;
 
 implementation
@@ -256,20 +291,104 @@ implementation
 uses System.IOUtils, System.Character;
 
 const
-  DOUBLE_TYPE_NAME = 'Double';
-  INTEGER_TYPE_NAME = 'Integer';
-  SYSTEM_NAMESPACE = 'Delphi/System';
   SYSTEM_UNIT_NAME = 'System';
-  STRING_TYPE_NAME = 'String';
+  TYPE_NAME_SEPARATOR = '.';
   TYPE_NAMESPACE_SEPARATOR = ':';
 
 { TSchemaImporter }
 
+procedure TSchemaImporter.AddClassDefinition(const ParentModule: TTypeModuleDefinition; const Namespace: String; const ClassDefinition: TTypeClassDefinition);
+begin
+  ClassDefinition.FParentModule := ParentModule;
+  ParentModule.FClasses := ParentModule.FClasses + [ClassDefinition];
+
+  AddType(Namespace, ClassDefinition);
+end;
+
+procedure TSchemaImporter.AddNamespace(const Name, Prefix: String);
+begin
+  Namespaces.Add(Name, Prefix);
+end;
+
+procedure TSchemaImporter.AddType(const Namespace: String; const TypeDefinition: TTypeDefinition);
+
+  function LoadTypeName(const TypeDefinition: TTypeDefinition): String;
+  begin
+    Result := TypeDefinition.Name;
+
+    if Assigned(TypeDefinition.ParentModule) and not TypeDefinition.ParentModule.IsUnitDefinition then
+      Result := LoadTypeName(TypeDefinition.ParentModule) + TYPE_NAME_SEPARATOR + Result;
+  end;
+
+begin
+  Types.Add(FormatTypeName(Namespace, LoadTypeName(TypeDefinition)), TypeDefinition);
+end;
+
+constructor TSchemaImporter.Create;
+begin
+  inherited;
+
+  FNamespaces := TDictionary<String, String>.Create;
+  FTypes := TDictionary<String, TTypeDefinition>.Create;
+  FUnits := TObjectDictionary<String, TTypeUnitDefinition>.Create([doOwnsValues]);
+  FBuildInUnits := TObjectList<TTypeUnitDefinition>.Create(True);
+end;
+
+function TSchemaImporter.CreateArrayType(const ParentModule: TTypeModuleDefinition; const ArrayType: TTypeDefinition): TTypeArrayDefinition;
+begin
+  Result := TTypeArrayDefinition.Create;
+  Result.FArrayType := ArrayType;
+  Result.FParentModule := ParentModule;
+
+  ParentModule.AddType(Result);
+end;
+
+class function TSchemaImporter.CreateStringListForItems: TStringList;
+const
+  LIST_SEPARATOR = ', ';
+
+begin
+  Result := TStringList.Create;
+  Result.LineBreak := LIST_SEPARATOR;
+  Result.TrailingLineBreak := False;
+end;
+
+destructor TSchemaImporter.Destroy;
+begin
+  FBuildInUnits.Free;
+
+  FNamespaces.Free;
+
+  FTypes.Free;
+
+  FUnits.Free;
+
+  inherited;
+end;
+
+function TSchemaImporter.FindType(const Namespace, Name: String): TTypeDefinition;
+begin
+  if not TryFindType(Namespace, Name, Result) then
+    raise ETypeNotFound.Create(Name);
+end;
+
+function TSchemaImporter.FormatTypeName(const Namespace, TypeName: String): String;
+begin
+  Result := Format('%s:%s', [GetPrefixName(Namespace), TypeName]);
+end;
+
+function TSchemaImporter.GetBuildInTypes(const BuildInType: TBuildInType): TTypeDefinition;
+begin
+  Result := FBuildInTypes[BuildInType];
+end;
+
+function TSchemaImporter.GetPrefixName(const Namespace: String): String;
+begin
+  if not Namespaces.TryGetValue(Namespace, Result) then
+    raise ESchemaNamespaceWithoutConfiguraton.Create(Namespace);
+end;
+
 procedure TSchemaImporter.Import(const Configuration: TConfiguration);
-var
-  Namespaces: TDictionary<String, String>;
-  Types: TDictionary<String, TTypeDefinition>;
-  Units: TDictionary<String, TTypeUnitDefinition>;
 
   procedure VerifyConfiguration(const Check: Boolean; const Exception: Exception);
   begin
@@ -325,7 +444,7 @@ var
     Result := TTypeClassDefinition.Create;
     Result.Name := Name;
 
-    Schema.AddClassDefinition(UnitDefinition, Schema.Namespace, Result);
+    AddClassDefinition(UnitDefinition, Schema.Namespace, Result);
   end;
 
   function LoadMainClass(const UnitDefinition: TTypeUnitDefinition; const Schema: TSchema): TTypeClassDefinition;
@@ -333,7 +452,7 @@ var
     var MainModuleName := Schema.SchemaFile.MainModuleName;
     var TypeFound: TTypeDefinition;
 
-    if Schema.TryFindType(Schema.Namespace, MainModuleName, TypeFound) then
+    if TryFindType(Schema.Namespace, MainModuleName, TypeFound) then
       Result := TypeFound.AsClassDefinition
     else
       Result := CreateMainClass(UnitDefinition, Schema, MainModuleName);
@@ -341,40 +460,16 @@ var
 
   function CreateSchema(const SchemaFile: TSchemaFileConfiguration): TSchema;
   begin
-    Result := TSchema.Create(Namespaces, Types);
-    Result.SchemaFile := SchemaFile;
-    Result.SchemaText := TFile.ReadAllText(SchemaFile.FileName);
+    Result := TSchema.Create;
+    Result.FImporter := Self;
+    Result.FSchemaFile := SchemaFile;
+    Result.FSchemaText := TFile.ReadAllText(SchemaFile.FileName);
   end;
 
   procedure CheckSchema(const Schema: TSchema);
   begin
     if Schema.Namespace.IsEmpty then
       raise ESchemaNamespaceNotLoaded.Create;
-  end;
-
-  procedure AddNamespace(const Name, Prefix: String);
-  begin
-    Namespaces.Add(Name, Prefix);
-  end;
-
-  procedure LoadBuildInTypes;
-
-    procedure AddBuildInType(const Namespace, Name: String);
-    begin
-      var TypeDefinition := TTypeDefinition.Create;
-      TypeDefinition.Name := MakeTypeName(Namespaces, Namespace, Name);
-
-      AddType(Types, TypeDefinition);
-    end;
-
-  begin
-    AddNamespace(SYSTEM_NAMESPACE, SYSTEM_NAMESPACE);
-
-    AddBuildInType(SYSTEM_NAMESPACE, STRING_TYPE_NAME);
-
-    AddBuildInType(SYSTEM_NAMESPACE, INTEGER_TYPE_NAME);
-
-    AddBuildInType(SYSTEM_NAMESPACE, DOUBLE_TYPE_NAME);
   end;
 
   procedure GenerateUnitDeclaration(const UnitDefinition: TTypeUnitDefinition);
@@ -441,6 +536,7 @@ var
         end;
 
       var FormatChar := UpperChar;
+      Result := EmptyStr;
 
       for var Character in Name do
         if Character.IsLetter or Character.IsNumber or (Character = SPECIAL_CHARACTER_SCAPE_CHAR) then
@@ -478,12 +574,26 @@ var
         Result := CheckSpecialCharacter(FormatName(TypeDefinition.Name));
     end;
 
+    function FormatFullTypeName(const TypeDefinition: TTypeDefinition; const GetSubtypeName: Boolean = False): String;
+
+      function GetParentModuleName(const TypeDefinition: TTypeDefinition): String;
+      begin
+        Result := EmptyStr;
+
+        if not TypeDefinition.IsUnitDefinition and Assigned(TypeDefinition.ParentModule) then
+          Result := GetParentModuleName(TypeDefinition.ParentModule) + TypeDefinition.ParentModule.Name + TYPE_NAME_SEPARATOR;
+      end;
+
+    begin
+      Result := GetParentModuleName(TypeDefinition) + FormatTypeName(TypeDefinition, GetSubtypeName);
+    end;
+
     procedure GenerateEnumerationsDeclaration(const IndentationLevel: Integer; const ModuleDefinition: TTypeModuleDefinition);
     begin
       if Assigned(ModuleDefinition.Enumerations) then
       begin
         var CurrentIndentation := Succ(IndentationLevel);
-        var EnumerationList := TTypeEnumerationDefinition.CreateEnumeratorList;
+        var EnumerationList := CreateStringListForItems;
         var ValueNameChanged := False;
 
         for var Enumerator in ModuleDefinition.Enumerations do
@@ -555,7 +665,7 @@ var
 
     function FormatPropertyTypeName(const PropertyDefinition: TTypePropertyDefinition; const GetSubtypeName: Boolean = False): String;
     begin
-      Result := FormatTypeName(PropertyDefinition.PropertyType, GetSubtypeName);
+      Result := FormatFullTypeName(PropertyDefinition.PropertyType, GetSubtypeName);
     end;
 
     function FormatSetFunctionHeader(const PropertyDefinition: TTypePropertyDefinition): String;
@@ -710,6 +820,44 @@ var
         Result := ClassNeedImplementationSection(ClassDefinition) or NeedImplementationSection(ClassDefinition);
     end;
 
+    procedure AddUsesList;
+    var
+      UsesList: TStringList;
+
+      procedure CheckUses(const Module: TTypeModuleDefinition);
+      begin
+        var ParentModule: TTypeModuleDefinition;
+
+        for var ClassDefinition in Module.Classes do
+          for var PropertyDefinition in ClassDefinition.Properties do
+          begin
+            ParentModule := PropertyDefinition.PropertyType.ParentModule;
+
+            if (SYSTEM_UNIT_NAME <> ParentModule.Name) and (ParentModule <> UnitDefinition) then
+              UsesList.Add(ParentModule.Name);
+          end;
+      end;
+
+    const
+      INDENTATION_LEVEL = 0;
+
+    begin
+      UsesList := CreateStringListForItems;
+      UsesList.Duplicates := dupIgnore;
+      UsesList.Sorted := True;
+
+      CheckUses(UnitDefinition);
+
+      if not UsesList.IsEmpty then
+      begin
+        AddLine(INDENTATION_LEVEL, 'uses %s;', [UsesList.Text]);
+
+        AddWhiteLine;
+      end;
+
+      UsesList.Free;
+    end;
+
   const
     INDENTATION_STARTING_LEVEL = 0;
 
@@ -727,6 +875,8 @@ var
     AddLine(IndentationLevel, 'interface');
 
     AddWhiteLine;
+
+    AddUsesList;
 
     AddLine(IndentationLevel, 'type');
 
@@ -807,62 +957,34 @@ var
 begin
   CheckConfiguration;
 
-  Namespaces := TDictionary<String, String>.Create;
-  Types := TDictionary<String, TTypeDefinition>.Create;
-  Units := TObjectDictionary<String, TTypeUnitDefinition>.Create([doOwnsValues]);
-
   LoadBuildInTypes;
 
   for var Namespace in Configuration.Namespaces do
     AddNamespace(Namespace.Namespace, Namespace.Prefix);
 
-  try
-    for var UnitConfiguration in Configuration.Units do
+  for var UnitConfiguration in Configuration.Units do
+  begin
+    var UnitDefinition := LoadUnitDefinition(UnitConfiguration);
+
+    for var SchemaFile in UnitConfiguration.SchemaFiles do
     begin
-      var UnitDefinition := LoadUnitDefinition(UnitConfiguration);
+      var Schema := CreateSchema(SchemaFile);
+      var SchemaConverter := Converters[SchemaFile.SchemaType];
 
-      for var SchemaFile in UnitConfiguration.SchemaFiles do
-      begin
-        var Schema := CreateSchema(SchemaFile);
-        var SchemaConverter := Converters[SchemaFile.SchemaType];
+      try
+        SchemaConverter.LoadSchema(Schema);
 
-        try
-          SchemaConverter.LoadSchema(Schema);
+        CheckSchema(Schema);
 
-          CheckSchema(Schema);
-
-          SchemaConverter.Convert(LoadMainClass(UnitDefinition, Schema), Schema);
-        finally
-          Schema.Free;
-        end;
+        SchemaConverter.Convert(LoadMainClass(UnitDefinition, Schema), Schema);
+      finally
+        Schema.Free;
       end;
     end;
-
-    for var UnitDefinition in Units.Values do
-      GenerateUnitDeclaration(UnitDefinition);
-  finally
-    Namespaces.Free;
-
-    Types.Free;
-
-    Units.Free;
-  end;
-end;
-
-class procedure TSchemaImporter.AddType(const Types: TDictionary<String, TTypeDefinition>; const TypeDefinition: TTypeDefinition);
-const
-  TYPE_SEPARATOR = '.';
-
-  function LoadTypeName(const TypeDefinition: TTypeDefinition): String;
-  begin
-    Result := TypeDefinition.Name;
-
-    if Assigned(TypeDefinition.ParentModule) and not TypeDefinition.ParentModule.IsUnitDefinition then
-      Result := LoadTypeName(TypeDefinition.ParentModule) + TYPE_SEPARATOR + Result;
   end;
 
-begin
-  Types.Add(LoadTypeName(TypeDefinition), TypeDefinition);
+  for var UnitDefinition in Units.Values do
+    GenerateUnitDeclaration(UnitDefinition);
 end;
 
 procedure TSchemaImporter.Import(const ConfigurationFileName: String);
@@ -870,12 +992,56 @@ begin
 
 end;
 
-class function TSchemaImporter.MakeTypeName(const Namespaces: TDictionary<String, String>; const Namespace, Name: String): String;
+procedure TSchemaImporter.LoadBuildInTypes;
+const
+  BUILD_IN_TYPE_NAMES: array[TBuildInType] of String = ('String', 'Integer', 'Double', 'TDate', 'TTime', 'TDateTime', 'Boolean', 'TArray<%s>', 'TValue', 'TDynamicProperty<%s>');
+  BUILD_IN_TYPE_NAMESPACE = 'Blue Print Buildin Types';
+  SYSTEM_BLUE_PRINT_TYPES_UNIT_NAME = 'Blue.Print.Types';
+  SYSTEM_RTTI_UNIT_NAME = 'System.Rtti';
+
+  procedure AddBuildInTypes(const UnitDefinition: TTypeUnitDefinition; const BuildInTypeList: TArray<TBuildInType>);
+  begin
+    for var BuildInType in BuildInTypeList do
+    begin
+      var TypeDefinition := TTypeDefinition.Create;
+      TypeDefinition.FParentModule := UnitDefinition;
+      TypeDefinition.Name := BUILD_IN_TYPE_NAMES[BuildInType];
+
+      BuildInTypes[BuildInType] := TypeDefinition;
+
+      UnitDefinition.AddType(TypeDefinition);
+
+      AddType(BUILD_IN_TYPE_NAMESPACE, TypeDefinition);
+    end;
+  end;
+
+  function CreateUnit(const Name: String): TTypeUnitDefinition;
+  begin
+    Result := TTypeUnitDefinition.Create;
+    Result.Name := Name;
+
+    FBuildInUnits.Add(Result);
+  end;
+
 begin
-  if Namespaces.TryGetValue(Namespace, Result) then
-    Result := Result + TYPE_NAMESPACE_SEPARATOR + Name
-  else
-    raise ESchemaNamespaceWithoutConfiguraton.Create(Namespace);
+  AddNamespace(BUILD_IN_TYPE_NAMESPACE, BUILD_IN_TYPE_NAMESPACE);
+
+  AddBuildInTypes(CreateUnit(SYSTEM_UNIT_NAME), [TBuildInType.StringType, TBuildInType.IntegerType, TBuildInType.DoubleType, TBuildInType.DateType, TBuildInType.TimeType, TBuildInType.DateTimeType, TBuildInType.BooleanType,
+    TBuildInType.ArrayType]);
+
+  AddBuildInTypes(CreateUnit(SYSTEM_RTTI_UNIT_NAME), [TBuildInType.ValueType]);
+
+  AddBuildInTypes(CreateUnit(SYSTEM_BLUE_PRINT_TYPES_UNIT_NAME), [TBuildInType.DynamicPropertyType]);
+end;
+
+procedure TSchemaImporter.SetBuildInTypes(const BuildInType: TBuildInType; const Value: TTypeDefinition);
+begin
+  FBuildInTypes[BuildInType] := Value;
+end;
+
+function TSchemaImporter.TryFindType(const Namespace, Name: String; var TypeDefinition: TTypeDefinition): Boolean;
+begin
+  Result := Types.TryGetValue(FormatTypeName(Namespace, Name), TypeDefinition);
 end;
 
 { ENeedConfiguration }
@@ -991,6 +1157,14 @@ begin
   Result := Self is TTypeUnitDefinition;
 end;
 
+function TTypeDefinition.GetParentModule: TTypeModuleDefinition;
+begin
+  if Assigned(FParentModule) then
+    Result := FParentModule
+  else
+    raise ETypeWithoutParentModule.Create(Self);
+end;
+
 { ESchemaNamespaceNotLoaded }
 
 constructor ESchemaNamespaceNotLoaded.Create;
@@ -1012,8 +1186,16 @@ begin
   FEnumerations := FEnumerations + [EnumerationDefinition];
 end;
 
+procedure TTypeModuleDefinition.AddType(const TypeDefinition: TTypeDefinition);
+begin
+  FTypes := FTypes + [TypeDefinition];
+end;
+
 destructor TTypeModuleDefinition.Destroy;
 begin
+  for var TypeDefinition in Types do
+    TypeDefinition.Free;
+
   for var ClassDefinition in Classes do
     ClassDefinition.Free;
 
@@ -1039,17 +1221,7 @@ constructor TTypeEnumerationDefinition.Create;
 begin
   inherited;
 
-  FValues := CreateEnumeratorList;
-end;
-
-class function TTypeEnumerationDefinition.CreateEnumeratorList: TStringList;
-const
-  ENUMERATION_SEPARATOR = ', ';
-
-begin
-  Result := TStringList.Create;
-  Result.LineBreak := ENUMERATION_SEPARATOR;
-  Result.TrailingLineBreak := False;
+  FValues := TSchemaImporter.CreateStringListForItems;
 end;
 
 destructor TTypeEnumerationDefinition.Destroy;
@@ -1085,23 +1257,6 @@ end;
 
 { TSchema }
 
-procedure TSchema.AddClassDefinition(const ParentModule: TTypeModuleDefinition; const Namespace: String; const ClassDefinition: TTypeClassDefinition);
-begin
-  ClassDefinition.Name := MakeTypeName(Namespace, ClassDefinition.Name);
-  ClassDefinition.FParentModule := ParentModule;
-  ParentModule.FClasses := ParentModule.FClasses + [ClassDefinition];
-
-  TSchemaImporter.AddType(FTypes, ClassDefinition);
-end;
-
-constructor TSchema.Create(const Namespaces: TDictionary<String, String>; const Types: TDictionary<String, TTypeDefinition>);
-begin
-  inherited  Create;
-
-  FNamespaces := Namespaces;
-  FTypes := Types;
-end;
-
 destructor TSchema.Destroy;
 begin
   if SchemaValue.IsObjectInstance then
@@ -1110,32 +1265,35 @@ begin
   inherited;
 end;
 
-function TSchema.FindType(const Namespace, Name: String): TTypeDefinition;
-begin
-  if not TryFindType(Namespace, Name, Result) then
-    raise ETypeNotFound.Create(MakeTypeName(Namespace, Name));
-end;
-
-function TSchema.GetSystemString: TTypeDefinition;
-begin
-  Result := FindType(SYSTEM_NAMESPACE, STRING_TYPE_NAME);
-end;
-
-function TSchema.MakeTypeName(const Namespace, Name: String): String;
-begin
-  Result := TSchemaImporter.MakeTypeName(FNamespaces, Namespace, Name);
-end;
-
-function TSchema.TryFindType(const Namespace, Name: String; var TypeDefinition: TTypeDefinition): Boolean;
-begin
-  Result := FTypes.TryGetValue(MakeTypeName(Namespace, Name), TypeDefinition);
-end;
-
 { ETypeNotFound }
 
 constructor ETypeNotFound.Create(const TypeName: String);
 begin
   inherited CreateFmt('Type with the name "%s" not found!', [TypeName]);
+end;
+
+{ EPropertyWithoutType }
+
+constructor EPropertyWithoutType.Create(const PropertyDefinition: TTypePropertyDefinition);
+begin
+  inherited CreateFmt('The property "%s" in the class "%s" hasn''t the type loaded!', [PropertyDefinition.Name, '']);
+end;
+
+{ TTypePropertyDefinition }
+
+function TTypePropertyDefinition.GetPropertyType: TTypeDefinition;
+begin
+  if Assigned(FPropertyType) then
+    Result := FPropertyType
+  else
+    raise EPropertyWithoutType.Create(Self);
+end;
+
+{ ETypeWithoutParentModule }
+
+constructor ETypeWithoutParentModule.Create(const TypeDefinition: TTypeDefinition);
+begin
+  inherited CreateFmt('The type "%s" doesn''t have the parent module loaded!', [TypeDefinition.Name]);
 end;
 
 end.
