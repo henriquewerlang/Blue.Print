@@ -12,9 +12,6 @@ type
 
   TJSONDraft4SchemaConverter = class(TInterfacedObject, ISchemaConverter)
   private
-    function GetSerializer: IBluePrintSerializer;
-    function LoadSchemaType(const Schema: TSchema; const ParentModule: TTypeModuleDefinition; const JSONSchema: TJSONSchema.TJSONSchema): TTypeDefinition;
-
     procedure Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
     procedure LoadSchema(const Schema: TSchema);
   end;
@@ -26,12 +23,37 @@ uses Blue.Print.Serializer;
 { TJSONDraft4SchemaConverter }
 
 procedure TJSONDraft4SchemaConverter.Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
+var
+  DefinitionsNamespace: String;
+  JSONDefinition: TJSONSchema.TJSONSchema;
+
+  function LoadSchemaType(const ParentModule: TTypeModuleDefinition; const JSONSchema: TJSONSchema.TJSONSchema): TTypeDefinition;
+  begin
+    Result := nil;
+
+    if JSONSchema.IsTypeStored then
+      case JSONSchema.&type.simpleTypes of
+        TJSONSchema.simpleTypes.array: Result := Schema.Importer.CreateArrayType(ParentModule, LoadSchemaType(ParentModule, JSONSchema.items.schema));
+        TJSONSchema.simpleTypes.boolean: Result := Schema.Importer.BuildInTypes[TBuildInType.BooleanType];
+        TJSONSchema.simpleTypes.integer: Result := Schema.Importer.BuildInTypes[TBuildInType.IntegerType];
+        TJSONSchema.simpleTypes.null: Result := nil;
+        TJSONSchema.simpleTypes.number: Result := Schema.Importer.BuildInTypes[TBuildInType.DoubleType];
+        TJSONSchema.simpleTypes.object: Result := nil;
+        TJSONSchema.simpleTypes.string: Result := Schema.Importer.BuildInTypes[TBuildInType.StringType];
+      end
+    else if JSONSchema.IsRefStored then
+      Result := Schema.Importer.CreateReferenceType(ParentModule, DefinitionsNamespace, JSONSchema.ref.Substring(Succ(JSONSchema.ref.LastDelimiter('/'))))
+    else
+      raise EJSONSchemaInvalid.Create;
+  end;
+
 begin
-  var JSONDefinition := Schema.SchemaValue.AsType<TJSONSchema.TJSONSchema>;
+  JSONDefinition := Schema.SchemaValue.AsType<TJSONSchema.TJSONSchema>;
 
-  var DefinitionsNamespace := JSONDefinition.id + '/definitions';
+  DefinitionsNamespace := JSONDefinition.id + '/definitions';
+  var DefinitionsNamespacePrefix := Schema.Importer.GetPrefixName(JSONDefinition.id) + '/defs';
 
-  Schema.Importer.AddNamespace(DefinitionsNamespace, Schema.Importer.GetPrefixName(JSONDefinition.id) + '/defs');
+  Schema.Importer.AddNamespace(DefinitionsNamespace, DefinitionsNamespacePrefix);
 
   for var SchemaDefinition in JSONDefinition.definitions.additionalProperties do
     if SchemaDefinition.Value.IsPropertiesStored then
@@ -39,41 +61,23 @@ begin
       var ClassDefinition := Schema.Importer.CreateClassType(MainClass, SchemaDefinition.Key);
 
       for var PropertyDefinition in SchemaDefinition.Value.properties.additionalProperties do
-        ClassDefinition.AddProperty(PropertyDefinition.Key, LoadSchemaType(Schema, ClassDefinition, PropertyDefinition.Value));
+        ClassDefinition.AddProperty(PropertyDefinition.Key, LoadSchemaType(ClassDefinition, PropertyDefinition.Value));
 
       Schema.Importer.AddType(DefinitionsNamespace, ClassDefinition);
     end;
 end;
 
-function TJSONDraft4SchemaConverter.GetSerializer: IBluePrintSerializer;
-begin
-  Result := TBluePrintJSONSerializer.Create;
-end;
-
 procedure TJSONDraft4SchemaConverter.LoadSchema(const Schema: TSchema);
+
+  function GetSerializer: IBluePrintSerializer;
+  begin
+    Result := TBluePrintJSONSerializer.Create;
+  end;
+
 begin
   var Definition := GetSerializer.Deserialize(Schema.SchemaText, TypeInfo(TJSONSchema.TJSONSchema)).AsType<TJSONSchema.TJSONSchema>;
   Schema.Namespace := Definition.id;
   Schema.SchemaValue := Definition;
-end;
-
-function TJSONDraft4SchemaConverter.LoadSchemaType(const Schema: TSchema; const ParentModule: TTypeModuleDefinition; const JSONSchema: TJSONSchema.TJSONSchema): TTypeDefinition;
-begin
-  Result := nil;
-
-  if JSONSchema.IsTypeStored then
-    case JSONSchema.&type.simpleTypes of
-      TJSONSchema.simpleTypes.array: Result := Schema.Importer.CreateArrayType(ParentModule, LoadSchemaType(Schema, ParentModule, JSONSchema.items.schema));
-      TJSONSchema.simpleTypes.boolean: Result := Schema.Importer.BuildInTypes[TBuildInType.BooleanType];
-      TJSONSchema.simpleTypes.integer: Result := Schema.Importer.BuildInTypes[TBuildInType.IntegerType];
-      TJSONSchema.simpleTypes.null: Result := nil;
-      TJSONSchema.simpleTypes.number: Result := Schema.Importer.BuildInTypes[TBuildInType.DoubleType];
-      TJSONSchema.simpleTypes.object: Result := nil;
-      TJSONSchema.simpleTypes.string: Result := Schema.Importer.BuildInTypes[TBuildInType.StringType];
-    end
-  else if JSONSchema.IsRefStored then
-  else
-    raise EJSONSchemaInvalid.Create;
 end;
 
 { EJSONSchemaInvalid }

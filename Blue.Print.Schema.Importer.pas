@@ -13,6 +13,7 @@ type
   TTypeDefinition = class;
   TTypeModuleDefinition = class;
   TTypePropertyDefinition = class;
+  TTypeReferenceDefinition = class;
   TUnitConfiguration = class;
 
   ENeedConfiguration = class(Exception)
@@ -98,16 +99,20 @@ type
   TTypeDefinition = class(TTypeCommonDefinition)
   private
     FParentModule: TTypeModuleDefinition;
-    function GetIsClassDefinition: Boolean;
+
     function GetIsArrayDefinition: Boolean;
+    function GetIsClassDefinition: Boolean;
+    function GetIsReferenceDefinition: Boolean;
     function GetIsUnitDefinition: Boolean;
     function GetParentModule: TTypeModuleDefinition;
   public
     function AsArrayDefinition: TTypeArrayDefinition;
     function AsClassDefinition: TTypeClassDefinition;
+    function AsReferenceDefinition: TTypeReferenceDefinition;
 
     property IsArrayDefinition: Boolean read GetIsArrayDefinition;
     property IsClassDefinition: Boolean read GetIsClassDefinition;
+    property IsReferenceDefinition: Boolean read GetIsReferenceDefinition;
     property IsUnitDefinition: Boolean read GetIsUnitDefinition;
     property ParentModule: TTypeModuleDefinition read GetParentModule write FParentModule;
   end;
@@ -135,7 +140,9 @@ type
   TTypeReferenceDefinition = class(TTypeDefinition)
   private
     FReference: String;
+    FNamespace: String;
   public
+    property Namespace: String read FNamespace;
     property Reference: String read FReference;
   end;
 
@@ -279,7 +286,7 @@ type
     function CreateArrayType(const ParentModule: TTypeModuleDefinition; const ArrayType: TTypeDefinition): TTypeArrayDefinition;
     function CreateClassType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeClassDefinition;
     function CreateEnumeratorType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeEnumerationDefinition;
-    function CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Reference: String): TTypeReferenceDefinition;
+    function CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Namespace, Reference: String): TTypeReferenceDefinition;
     function FindType(const Namespace, Name: String): TTypeDefinition;
     function GetPrefixName(const Namespace: String): String;
     function TryFindType(const Namespace, Name: String; var TypeDefinition: TTypeDefinition): Boolean;
@@ -312,27 +319,18 @@ begin
 end;
 
 procedure TSchemaImporter.AddType(const Namespace: String; const TypeDefinition: TTypeDefinition);
-
-  function LoadTypeName(const TypeDefinition: TTypeDefinition): String;
-  begin
-    Result := TypeDefinition.Name;
-
-    if Assigned(TypeDefinition.ParentModule) and not TypeDefinition.ParentModule.IsUnitDefinition then
-      Result := LoadTypeName(TypeDefinition.ParentModule) + TYPE_NAME_SEPARATOR + Result;
-  end;
-
 begin
-  Types.Add(FormatTypeName(Namespace, LoadTypeName(TypeDefinition)), TypeDefinition);
+  Types.Add(FormatTypeName(Namespace, TypeDefinition.Name), TypeDefinition);
 end;
 
 constructor TSchemaImporter.Create;
 begin
   inherited;
 
+  FBuildInUnits := TObjectList<TTypeUnitDefinition>.Create(True);
   FNamespaces := TDictionary<String, String>.Create;
   FTypes := TDictionary<String, TTypeDefinition>.Create;
   FUnits := TObjectDictionary<String, TTypeUnitDefinition>.Create([doOwnsValues]);
-  FBuildInUnits := TObjectList<TTypeUnitDefinition>.Create(True);
 end;
 
 function TSchemaImporter.CreateArrayType(const ParentModule: TTypeModuleDefinition; const ArrayType: TTypeDefinition): TTypeArrayDefinition;
@@ -357,9 +355,10 @@ begin
   ParentModule.FEnumerations := ParentModule.FEnumerations + [Result];
 end;
 
-function TSchemaImporter.CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Reference: String): TTypeReferenceDefinition;
+function TSchemaImporter.CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Namespace, Reference: String): TTypeReferenceDefinition;
 begin
   Result := CreateTypeDefinition<TTypeReferenceDefinition>(ParentModule);
+  Result.FNamespace := Namespace;
   Result.FReference := Reference;
 end;
 
@@ -591,8 +590,17 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         Result := FormatTypeName(TypeDefinition.AsArrayDefinition.ArrayType);
       end;
 
+      function GetReferenceType(const TypeDefinition: TTypeDefinition): TTypeDefinition;
+      begin
+        var ReferenceDefinition := TypeDefinition.AsReferenceDefinition;
+
+        Result := FindType(ReferenceDefinition.Namespace, ReferenceDefinition.Reference);
+      end;
+
     begin
-      if TypeDefinition.IsArrayDefinition then
+      if TypeDefinition.IsReferenceDefinition then
+        Result := FormatTypeName(GetReferenceType(TypeDefinition), GetSubtypeName)
+      else if TypeDefinition.IsArrayDefinition then
         if GetSubtypeName then
           Result := FormatArrayTypeName(TypeDefinition)
         else
@@ -807,10 +815,6 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
         AddLine(CurrentIndentation, '%s = class', [FormatTypeName(ClassDefinition)]);
 
-        GenerateFieldsDeclaration(CurrentIndentation, ClassDefinition);
-
-        GeneratePublicFunctions(CurrentIndentation, ClassDefinition);
-
         if ClassDefinition.HasTypes then
         begin
           AddLine(CurrentIndentation, 'public type');
@@ -821,6 +825,10 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
           RemoveLastLine;
         end;
+
+        GenerateFieldsDeclaration(CurrentIndentation, ClassDefinition);
+
+        GeneratePublicFunctions(CurrentIndentation, ClassDefinition);
 
         GeneratePropertiesDeclaration(CurrentIndentation, ClassDefinition);
 
@@ -860,7 +868,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
           begin
             ParentModule := PropertyDefinition.PropertyType.ParentModule;
 
-            if (SYSTEM_UNIT_NAME <> ParentModule.Name) and (ParentModule <> UnitDefinition) then
+            if ParentModule.IsUnitDefinition and (SYSTEM_UNIT_NAME <> ParentModule.Name) and (ParentModule <> UnitDefinition) then
               UsesList.Add(ParentModule.Name);
           end;
       end;
@@ -1169,6 +1177,11 @@ begin
   Result := Self as TTypeClassDefinition;
 end;
 
+function TTypeDefinition.AsReferenceDefinition: TTypeReferenceDefinition;
+begin
+  Result := Self as TTypeReferenceDefinition;
+end;
+
 function TTypeDefinition.GetIsArrayDefinition: Boolean;
 begin
   Result := Self is TTypeArrayDefinition;
@@ -1177,6 +1190,11 @@ end;
 function TTypeDefinition.GetIsClassDefinition: Boolean;
 begin
   Result := Self is TTypeClassDefinition;
+end;
+
+function TTypeDefinition.GetIsReferenceDefinition: Boolean;
+begin
+  Result := Self is TTypeReferenceDefinition;
 end;
 
 function TTypeDefinition.GetIsUnitDefinition: Boolean;

@@ -167,6 +167,8 @@ type
     [Test]
     procedure CantDuplicateTheUsesList;
     [Test]
+    procedure WhenThePropertyHasASubTypeCantLoadTheClassNameInTheUsesList;
+    [Test]
     procedure IfTheTypeDoesntHaveTheParentModuleLoadedMustRaiseAnError;
     [Test]
     procedure WhenCreateAnArrayTypeMustReturnTheClassCreated;
@@ -180,6 +182,8 @@ type
     procedure WhenCreateTheTypeReferenceMustReturnTheClassCreated;
     [Test]
     procedure MustLoadTheReferenceInfoWhenCreateTheReferenceClass;
+    [Test]
+    procedure MustLoadTheNamespaceInTheReferenceClassWithTheParameterValue;
     [Test]
     procedure MustLoadTheParentModuleWithTheMainClassVariable;
     [Test]
@@ -204,6 +208,10 @@ type
     procedure TheEnumeratorMustBeAppendedInTheTypesOfTheParentModule;
     [Test]
     procedure TheEnumeratorMustBeAppendedInTheEnumeratorListOfTheParentModule;
+    [Test]
+    procedure WhenThePropertyHasAReferenceTypeMustFindTheReferenceAndLoadThePropertyValue;
+    [Test]
+    procedure ThePublicTypeSectionMustBeDeclaredBeforeThePrivateSection;
   end;
 
   [TestFixture]
@@ -556,7 +564,7 @@ procedure TSchemaImporterTest.MustAppendTheClassInTheTypesArrayFromTheMainClass;
 begin
   var MainClass := TTypeClassDefinition.Create;
 
-  FImporter.CreateReferenceType(MainClass, 'myReference');
+  FImporter.CreateReferenceType(MainClass, 'My Namespace', 'myReference');
 
   Assert.AreEqual(1, Length(MainClass.Types));
 
@@ -765,6 +773,16 @@ begin
     end);
 end;
 
+procedure TSchemaImporterTest.MustLoadTheNamespaceInTheReferenceClassWithTheParameterValue;
+begin
+  var MainClass := TTypeClassDefinition.Create;
+  var TypeReference := FImporter.CreateReferenceType(MainClass, 'My Namespace', 'myReference');
+
+  Assert.AreEqual('My Namespace', TypeReference.Namespace);
+
+  MainClass.Free;
+end;
+
 procedure TSchemaImporterTest.MustLoadTheParentModuleOfTheEnumeratorWithTheParameter;
 begin
   var ParentModule := TTypeUnitDefinition.Create;
@@ -788,7 +806,7 @@ end;
 procedure TSchemaImporterTest.MustLoadTheParentModuleWithTheMainClassVariable;
 begin
   var MainClass := TTypeClassDefinition.Create;
-  var TypeReference := FImporter.CreateReferenceType(MainClass, 'myReference');
+  var TypeReference := FImporter.CreateReferenceType(MainClass, 'My Namespace', 'myReference');
 
   Assert.AreEqual(MainClass, TypeReference.ParentModule);
 
@@ -810,7 +828,7 @@ end;
 procedure TSchemaImporterTest.MustLoadTheReferenceInfoWhenCreateTheReferenceClass;
 begin
   var MainClass := TTypeClassDefinition.Create;
-  var TypeReference := FImporter.CreateReferenceType(MainClass, 'myReference');
+  var TypeReference := FImporter.CreateReferenceType(MainClass, 'My Namespace', 'myReference');
 
   Assert.AreEqual('myReference', TypeReference.Reference);
 
@@ -955,6 +973,51 @@ begin
             end;
           end;
         end;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.ThePublicTypeSectionMustBeDeclaredBeforeThePrivateSection;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      if MainClass.Name = 'MainModule' then
+      begin
+        var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnumerator');
+
+        Enumerator.AddEnumeration('Value');
+
+        FImporter.AddType('My Namespace', Enumerator);
+
+        var Reference := FImporter.CreateReferenceType(MainClass, 'My Namespace', 'MyEnumerator');
+
+        MainClass.AddProperty('MyProperty', Reference);
+      end;
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      public type
+        MyEnumerator = (Value);
+      private
+        FMyProperty: MyUnit.MainModule.MyEnumerator;
+      published
+        property MyProperty: MyUnit.MainModule.MyEnumerator read FMyProperty write FMyProperty;
       end;
 
     implementation
@@ -1192,7 +1255,7 @@ end;
 procedure TSchemaImporterTest.WhenCreateTheTypeReferenceMustReturnTheClassCreated;
 begin
   var MainClass := TTypeClassDefinition.Create;
-  var TypeReference := FImporter.CreateReferenceType(MainClass, 'myReference');
+  var TypeReference := FImporter.CreateReferenceType(MainClass, 'My Namespace', 'myReference');
 
   Assert.IsNotNil(TypeReference);
 
@@ -1671,6 +1734,99 @@ begin
     FConfiguration.Units[0]);
 end;
 
+procedure TSchemaImporterTest.WhenThePropertyHasAReferenceTypeMustFindTheReferenceAndLoadThePropertyValue;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      if MainClass.Name = 'MainModule' then
+      begin
+        var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnumerator');
+
+        Enumerator.AddEnumeration('Value');
+
+        FImporter.AddType('My Namespace', Enumerator);
+
+        var Reference := FImporter.CreateReferenceType(MainClass, 'My Namespace', 'MyEnumerator');
+
+        MainClass.AddProperty('MyProperty', Reference);
+      end;
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      public type
+        MyEnumerator = (Value);
+      private
+        FMyProperty: MyUnit.MainModule.MyEnumerator;
+      published
+        property MyProperty: MyUnit.MainModule.MyEnumerator read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenThePropertyHasASubTypeCantLoadTheClassNameInTheUsesList;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+
+      function AddClass(const Namespace, Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
+      begin
+        Result := FImporter.CreateClassType(Parent, Name);
+      end;
+
+    begin
+      var ClassDefinition := AddClass('My Namespace', 'TMyClass', MainClass);
+      var EnumeratorDefinition := FImporter.CreateEnumeratorType(ClassDefinition, 'MyEnumerator');
+
+      EnumeratorDefinition.AddEnumeration('Value');
+
+      MainClass.AddProperty('MyProperty', EnumeratorDefinition);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      public type
+        TMyClass = class
+        public type
+          MyEnumerator = (Value);
+        end;
+      private
+        FMyProperty: MyUnit.MainModule.TMyClass.MyEnumerator;
+      published
+        property MyProperty: MyUnit.MainModule.TMyClass.MyEnumerator read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
 procedure TSchemaImporterTest.WhenThePropertyHasntATypeLoadedMustRaiseAnError;
 begin
   FConverter.WhenExecuteConvert :=
@@ -2072,6 +2228,8 @@ end;
 
 procedure TSchemaConverterMockTeste.WhenTheImporterIsntLoadedMustRaiseAnError;
 begin
+  FSchema.Importer.Free;
+
   FSchema.Importer := nil;
 
   Assert.WillRaise(

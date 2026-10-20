@@ -64,6 +64,16 @@ type
     procedure IsTheSchemaDoesntHaveTheRefOrTheSimpleTypeLoadedMustRaiseAnError;
     [Test]
     procedure TheClassDeclarationMustBeInsideTheDefsSchemaNamespace;
+    [Test]
+    procedure WhenTheSchemaIsAReferenceMustCreateTheReferenceType;
+    [Test]
+    procedure MustLoadTheReferenceInformation;
+    [Test]
+    procedure MustFillTheReferencePropertyWithTheClassNameInTheJSONReference;
+    [Test]
+    procedure MustLoadTheReferenceNamespaceInformation;
+    [Test]
+    procedure TheNamespaceInTheReferenceMustBeTheIdOfTheJSONSchemaPlusTheDefinitionsName;
   end;
 
 implementation
@@ -163,6 +173,20 @@ begin
     end, EJSONSchemaInvalid);
 end;
 
+procedure TJSONDraft4SchemaConverterTeste.MustFillTheReferencePropertyWithTheClassNameInTheJSONReference;
+begin
+  var ClassDefinition: TTypeDefinition;
+  var ClassSchema := CreateClassDefinition('MyClass');
+  var PropertyDefintion := ClassSchema.properties.AddProperties('MyProp');
+  PropertyDefintion.ref := '#/definitions/MyClass';
+
+  ImportDefinition;
+
+  FImporter.TryFindType(FDefinition.id + '/definitions', 'MyClass', ClassDefinition);
+
+  Assert.AreEqual('MyClass', ClassDefinition.AsClassDefinition.Properties[0].PropertyType.AsReferenceDefinition.Reference);
+end;
+
 procedure TJSONDraft4SchemaConverterTeste.MustLoadTheArrayTypeWithTheTypeDefinedInTheItemsSchema;
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
@@ -172,6 +196,34 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.IntegerType], GetMainClass.Classes[0].Properties[0].PropertyType.AsArrayDefinition.ArrayType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.MustLoadTheReferenceInformation;
+begin
+  var ClassDefinition: TTypeDefinition;
+  var ClassSchema := CreateClassDefinition('MyClass');
+  var PropertyDefintion := ClassSchema.properties.AddProperties('MyProp');
+  PropertyDefintion.ref := '#/definitions/MyClass';
+
+  ImportDefinition;
+
+  FImporter.TryFindType(FDefinition.id + '/definitions', 'MyClass', ClassDefinition);
+
+  Assert.IsNotEmpty(ClassDefinition.AsClassDefinition.Properties[0].PropertyType.AsReferenceDefinition.Reference);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.MustLoadTheReferenceNamespaceInformation;
+begin
+  var ClassDefinition: TTypeDefinition;
+  var ClassSchema := CreateClassDefinition('MyClass');
+  var PropertyDefintion := ClassSchema.properties.AddProperties('MyProp');
+  PropertyDefintion.ref := '#/definitions/MyClass';
+
+  ImportDefinition;
+
+  FImporter.TryFindType(FDefinition.id + '/definitions', 'MyClass', ClassDefinition);
+
+  Assert.IsNotEmpty(ClassDefinition.AsClassDefinition.Properties[0].PropertyType.AsReferenceDefinition.Namespace);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.OnlyClassWithPropertiesCanBeAppendedToTheClassList;
@@ -278,6 +330,20 @@ begin
   Assert.IsNotNil(TSchemaImporter.Converters[TSchemaType.JSONDraft4]);
 end;
 
+procedure TJSONDraft4SchemaConverterTeste.TheNamespaceInTheReferenceMustBeTheIdOfTheJSONSchemaPlusTheDefinitionsName;
+begin
+  var ClassDefinition: TTypeDefinition;
+  var ClassSchema := CreateClassDefinition('MyClass');
+  var PropertyDefintion := ClassSchema.properties.AddProperties('MyProp');
+  PropertyDefintion.ref := '#/definitions/MyClass';
+
+  ImportDefinition;
+
+  FImporter.TryFindType(FDefinition.id + '/definitions', 'MyClass', ClassDefinition);
+
+  Assert.AreEqual(FDefinition.id + '/definitions', ClassDefinition.AsClassDefinition.Properties[0].PropertyType.AsReferenceDefinition.Namespace);
+end;
+
 procedure TJSONDraft4SchemaConverterTeste.ThePropertyNameMustBeLoadedInThePropertyDefinition;
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
@@ -382,6 +448,20 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.StringType], GetMainClass.Classes[0].Properties[0].PropertyType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaIsAReferenceMustCreateTheReferenceType;
+begin
+  var ClassDefinition: TTypeDefinition;
+  var ClassSchema := CreateClassDefinition('MyClass');
+  var PropertyDefintion := ClassSchema.properties.AddProperties('MyProp');
+  PropertyDefintion.ref := '#/definitions/MyClass';
+
+  ImportDefinition;
+
+  FImporter.TryFindType(FDefinition.id + '/definitions', 'MyClass', ClassDefinition);
+
+  Assert.AreEqual(TTypeReferenceDefinition, ClassDefinition.AsClassDefinition.Properties[0].PropertyType.ClassType);
 end;
 
 end.
