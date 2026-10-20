@@ -304,7 +304,7 @@ type
 
 implementation
 
-uses System.IOUtils, System.Character;
+uses System.IOUtils, System.Character, Blue.Print.Types, Blue.Print.Serializer;
 
 const
   SYSTEM_UNIT_NAME = 'System';
@@ -1023,8 +1023,18 @@ begin
 end;
 
 procedure TSchemaImporter.Import(const ConfigurationFileName: String);
-begin
 
+  function GetSerializer: IBluePrintSerializer;
+  begin
+    Result := TBluePrintJSONSerializer.Create;
+  end;
+
+begin
+  var Configuration := GetSerializer.Deserialize(TFile.ReadAllText(ConfigurationFileName), TypeInfo(TConfiguration)).AsType<TConfiguration>;
+
+  Import(Configuration);
+
+  Configuration.Free;
 end;
 
 procedure TSchemaImporter.LoadBuildInTypes;

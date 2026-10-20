@@ -136,6 +136,7 @@
             <Form>$R *.res</Form>
         </DCCReference>
         <DCCReference Include="Blue.Print.Schema.Importer.pas"/>
+        <DCCReference Include="Blue.Print.JSON.Draft4.Schema.Converter.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
