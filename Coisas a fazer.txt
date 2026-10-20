@@ -21,3 +21,7 @@ Tem que adicionar os uses do tipo quando não for da própria unit, como é o ca
 * Vale para os tipos de assinatura, ou do próprio Blue Print.
 
 A units com os tipos internos não podem ser geradas pelo gerador de units.
+
+Permitir na configuração adicionar propriedades a uma classe, é o caso do $ref do esquema do JSON que não tem na definição
+
+Tem que mudar a criação dos tipos e deixar tudo centralizado no importador, para obrigar a ter o "ParentModule", e o nome do tipo
