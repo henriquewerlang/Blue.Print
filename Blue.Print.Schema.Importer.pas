@@ -601,7 +601,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
           FormatChar := UpperChar;
     end;
 
-    function FormatTypeName(const TypeDefinition: TTypeDefinition; const GetSubtypeName: Boolean = False): String;
+    function FormatTypeName(const TypeDefinition: TTypeDefinition): String;
 
       function CheckSpecialCharacter(const Name: String): String;
       begin
@@ -609,11 +609,6 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
         if not SameText(Result, Name) then
           Result := 'T' + Result;
-      end;
-
-      function FormatArrayTypeName(const TypeDefinition: TTypeDefinition): String;
-      begin
-        Result := FormatTypeName(TypeDefinition.AsArrayDefinition.ArrayType);
       end;
 
       function GetReferenceType(const TypeDefinition: TTypeDefinition): TTypeDefinition;
@@ -625,17 +620,12 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     begin
       if TypeDefinition.IsReferenceDefinition then
-        Result := FormatTypeName(GetReferenceType(TypeDefinition), GetSubtypeName)
-      else if TypeDefinition.IsArrayDefinition then
-        if GetSubtypeName then
-          Result := FormatArrayTypeName(TypeDefinition)
-        else
-          Result := Format('TArray<%s>', [FormatArrayTypeName(TypeDefinition)])
+        Result := FormatTypeName(GetReferenceType(TypeDefinition))
       else
         Result := CheckSpecialCharacter(FormatName(TypeDefinition.Name));
     end;
 
-    function FormatFullTypeName(const TypeDefinition: TTypeDefinition; const GetSubtypeName: Boolean = False): String;
+    function FormatFullTypeName(TypeDefinition: TTypeDefinition): String;
 
       function GetParentModuleName(const TypeDefinition: TTypeDefinition): String;
       begin
@@ -646,7 +636,28 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       end;
 
     begin
-      Result := GetParentModuleName(TypeDefinition) + FormatTypeName(TypeDefinition, GetSubtypeName);
+      if TypeDefinition.IsArrayDefinition then
+      begin
+        Result := FormatFullTypeName(TypeDefinition.AsArrayDefinition.ArrayType);
+
+        TypeDefinition := BuildInTypes[TBuildInType.ArrayType];
+
+        Result := Format(TypeDefinition.Name, [Result])
+      end
+      else
+        Result := FormatTypeName(TypeDefinition);
+
+      Result := GetParentModuleName(TypeDefinition) + Result;
+    end;
+
+    function FormatReturnAddFunctionTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
+    begin
+      var TypeDefinition := PropertyDefinition.PropertyType;
+
+      if TypeDefinition.IsArrayDefinition then
+        TypeDefinition := TypeDefinition.AsArrayDefinition.ArrayType;
+
+      Result := FormatFullTypeName(TypeDefinition);
     end;
 
     function FormaClassName(const ClassDefinition: TTypeClassDefinition): String;
@@ -729,9 +740,9 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := 'Add' + FormatPropertyName(PropertyDefinition);
     end;
 
-    function FormatPropertyTypeName(const PropertyDefinition: TTypePropertyDefinition; const GetSubtypeName: Boolean = False): String;
+    function FormatPropertyTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
-      Result := FormatFullTypeName(PropertyDefinition.PropertyType, GetSubtypeName);
+      Result := FormatFullTypeName(PropertyDefinition.PropertyType);
     end;
 
     function FormatSetFunctionHeader(const PropertyDefinition: TTypePropertyDefinition): String;
@@ -816,7 +827,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         for var PropertyDefinition in ClassDefinition.Properties do
         begin
           if NeedAddFunction(PropertyDefinition) then
-            AddLine(CurrentIndentation, 'function %s: %s;', [FormatAddFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition, True)]);
+            AddLine(CurrentIndentation, 'function %s: %s;', [FormatAddFunctionName(PropertyDefinition), FormatReturnAddFunctionTypeName(PropertyDefinition)]);
 
           if PropertyDefinition.Optional then
             AddLine(CurrentIndentation, 'property Is%sStored: Boolean read %s;', [FormatPropertyName(PropertyDefinition), FormatStoredFieldName(PropertyDefinition)]);
@@ -845,7 +856,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         var CurrentIndentation := Succ(IndentationLevel);
 
         for var AliasType in ClassDefinition.Alias do
-          AddLine(CurrentIndentation, '%s = %s;', [AliasType.Name, FormatFullTypeName(AliasType.TypeAlias, False)]);
+          AddLine(CurrentIndentation, '%s = %s;', [AliasType.Name, FormatFullTypeName(AliasType.TypeAlias)]);
 
         AddWhiteLine;
       end;
@@ -1042,11 +1053,11 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
             if NeedAddFunction(PropertyDefinition) then
             begin
-              AddLine(IndentationLevel, 'function %s.%s: %s;', [FormatTypeName(ClassDefinition), FormatAddFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition, True)]);
+              AddLine(IndentationLevel, 'function %s.%s: %s;', [FormatTypeName(ClassDefinition), FormatAddFunctionName(PropertyDefinition), FormatReturnAddFunctionTypeName(PropertyDefinition)]);
 
               AddLine(IndentationLevel, 'begin');
 
-              AddLine(IndentationLevel, '  Result := %s.Create;', [FormatPropertyTypeName(PropertyDefinition, True)]);
+              AddLine(IndentationLevel, '  Result := %s.Create;', [FormatReturnAddFunctionTypeName(PropertyDefinition)]);
 
               AddWhiteLine;
 
