@@ -574,7 +574,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
           Result := SPECIAL_CHARACTER_SCAPE_CHAR + Result;
     end;
 
-    function RemoveSpecialCharacters(const Name: String): String;
+    function RemoveInvalidCharecters(const Name: String): String;
     begin
       var NormalChar :=
         function (const Char: Char): Char
@@ -603,9 +603,9 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function FormatTypeName(const TypeDefinition: TTypeDefinition): String;
 
-      function CheckSpecialCharacter(const Name: String): String;
+      function CheckInvalidCharecters(const Name: String): String;
       begin
-        Result := RemoveSpecialCharacters(Name);
+        Result := RemoveInvalidCharecters(Name);
 
         if not SameText(Result, Name) then
           Result := 'T' + Result;
@@ -622,7 +622,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       if TypeDefinition.IsReferenceDefinition then
         Result := FormatTypeName(GetReferenceType(TypeDefinition))
       else
-        Result := CheckSpecialCharacter(FormatName(TypeDefinition.Name));
+        Result := CheckInvalidCharecters(FormatName(TypeDefinition.Name));
     end;
 
     function FormatFullTypeName(TypeDefinition: TTypeDefinition): String;
@@ -660,7 +660,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := FormatFullTypeName(TypeDefinition);
     end;
 
-    function FormaClassName(const ClassDefinition: TTypeClassDefinition): String;
+    function FormatClassName(const ClassDefinition: TTypeClassDefinition): String;
     begin
       Result := FormatTypeName(ClassDefinition);
     end;
@@ -700,14 +700,14 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       end;
     end;
 
-    function FormatFieldName(const PropertyDefinition: TTypePropertyDefinition): String;
-    begin
-      Result := 'F' + RemoveSpecialCharacters(PropertyDefinition.Name);
-    end;
-
     function FormatPropertyName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
-      Result := FormatName(PropertyDefinition.Name);
+      Result := RemoveInvalidCharecters(FormatName(PropertyDefinition.Name));
+    end;
+
+    function FormatFieldName(const PropertyDefinition: TTypePropertyDefinition): String;
+    begin
+      Result := 'F' + RemoveInvalidCharecters(PropertyDefinition.Name);
     end;
 
     function NeedGetFunction(const PropertyDefinition: TTypePropertyDefinition): Boolean;
@@ -723,6 +723,20 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
     function NeedAddFunction(const PropertyDefinition: TTypePropertyDefinition): Boolean;
     begin
       Result := PropertyDefinition.PropertyType.IsArrayDefinition and PropertyDefinition.PropertyType.AsArrayDefinition.ArrayType.IsClassDefinition;
+    end;
+
+    function NeedFieldNameAttribute(const PropertyDefinition: TTypePropertyDefinition; var PropertyName: String): Boolean; overload;
+    begin
+      PropertyName := FormatPropertyName(PropertyDefinition);
+
+      Result := not SameText(PropertyName, PropertyDefinition.Name);
+    end;
+
+    function NeedFieldNameAttribute(const PropertyDefinition: TTypePropertyDefinition): Boolean; overload;
+    begin
+      var PropertyName: String;
+
+      Result := NeedFieldNameAttribute(PropertyDefinition, PropertyName);
     end;
 
     function FormatGetFunctionName(const PropertyDefinition: TTypePropertyDefinition): String;
@@ -844,8 +858,15 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         AddLine(IndentationLevel, 'published');
 
         for var PropertyDefinition in ClassDefinition.Properties do
-          AddLine(CurrentIndentation, 'property %s: %s read %s write %s%s;', [FormatPropertyName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition), FormatPropertyReaderName(PropertyDefinition),
+        begin
+          var PropertyName: String;
+
+          if NeedFieldNameAttribute(PropertyDefinition, PropertyName) then
+            AddLine(CurrentIndentation, '[FieldName(''%s'')]', [PropertyDefinition.Name]);
+
+          AddLine(CurrentIndentation, 'property %s: %s read %s write %s%s;', [PropertyName, FormatPropertyTypeName(PropertyDefinition), FormatPropertyReaderName(PropertyDefinition),
             FormatPropertyWriterName(PropertyDefinition), FormatPropertyStoredName(PropertyDefinition)]);
+        end;
       end;
     end;
 
@@ -869,7 +890,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         var CurrentIndentation := Succ(IndentationLevel);
 
         for var ClassDefinition in ModuleDefinition.Classes do
-          AddLine(CurrentIndentation, '%s = class;', [FormaClassName(ClassDefinition)]);
+          AddLine(CurrentIndentation, '%s = class;', [FormatClassName(ClassDefinition)]);
 
         AddWhiteLine;
       end;
@@ -881,7 +902,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
       for var ClassDefinition in ModuleDefinition.Classes do
       begin
-        AddLine(CurrentIndentation, '%s = class', [FormaClassName(ClassDefinition)]);
+        AddLine(CurrentIndentation, '%s = class', [FormatClassName(ClassDefinition)]);
 
         if ClassDefinition.HasTypes then
         begin
@@ -942,6 +963,9 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
             if ParentModule.IsUnitDefinition and (SYSTEM_UNIT_NAME <> ParentModule.Name) and (ParentModule <> UnitDefinition) then
               UsesList.Add(ParentModule.Name);
+
+            if NeedFieldNameAttribute(PropertyDefinition) then
+              UsesList.Add('Blue.Print.Types');
           end;
       end;
 
