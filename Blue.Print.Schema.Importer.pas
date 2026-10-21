@@ -896,7 +896,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         Result := ClassNeedImplementationSection(ClassDefinition) or NeedImplementationSection(ClassDefinition);
     end;
 
-    procedure AddUsesList;
+    procedure AddUsesList(const IndentationLevel: Integer);
     var
       UsesList: TStringList;
 
@@ -914,9 +914,6 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
           end;
       end;
 
-    const
-      INDENTATION_LEVEL = 0;
-
     begin
       UsesList := CreateStringListForItems;
       UsesList.Duplicates := dupIgnore;
@@ -927,13 +924,39 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
         if not UsesList.IsEmpty then
         begin
-          AddLine(INDENTATION_LEVEL, 'uses %s;', [UsesList.Text]);
+          AddLine(IndentationLevel, 'uses %s;', [UsesList.Text]);
 
           AddWhiteLine;
         end;
       finally
         UsesList.Free;
       end;
+    end;
+
+    procedure LoadCompilerDirectives(const IndentationLevel: Integer);
+
+      function CheckEnumerationDeclarations(const ParentModule: TTypeModuleDefinition): Boolean;
+      begin
+        Result := Assigned(ParentModule.Enumerations);
+
+        if not Result then
+          for var ClassDefinition in ParentModule.Classes do
+            if CheckEnumerationDeclarations(ClassDefinition) then
+              Exit(True);
+      end;
+
+      function HasEnumerationDeclarations: Boolean;
+      begin
+        Result := CheckEnumerationDeclarations(UnitDefinition);
+      end;
+
+    begin
+      AddLine(IndentationLevel, '{$M+}');
+
+      if HasEnumerationDeclarations then
+        AddLine(IndentationLevel, '{$SCOPEDENUMS ON}');
+
+      AddWhiteLine;
     end;
 
   const
@@ -955,7 +978,9 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
       AddWhiteLine;
 
-      AddUsesList;
+      LoadCompilerDirectives(IndentationLevel);
+
+      AddUsesList(IndentationLevel);
 
       AddLine(IndentationLevel, 'type');
 

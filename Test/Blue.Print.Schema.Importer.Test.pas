@@ -230,6 +230,8 @@ type
     procedure WhenTheClassHasAnAliasDeclaredMustBuildTheUnitWithTheDefinitionHasExpected;
     [Test]
     procedure TheAliasTypeMustBeDeclaredWithTheFullTypeName;
+    [Test]
+    procedure WhenTheSchemaHasEnumerationsMustLoadTheScopedEnumsCompilerDirective;
   end;
 
   [TestFixture]
@@ -346,6 +348,8 @@ begin
 
     interface
 
+    {$M+}
+
     uses System.Rtti;
 
     type
@@ -430,7 +434,7 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'ens:MyEnum');
+      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnum');
 
       Enumerator.AddEnumeration('if');
     end;
@@ -442,6 +446,9 @@ begin
     unit MyUnit;
 
     interface
+
+    {$M+}
+    {$SCOPEDENUMS ON}
 
     type
       MainModule = class
@@ -605,6 +612,8 @@ begin
 
     interface
 
+    {$M+}
+
     type
       MainModule = class
       private
@@ -682,6 +691,9 @@ begin
 
     interface
 
+    {$M+}
+    {$SCOPEDENUMS ON}
+
     type
       MainModule = class
       public type
@@ -715,6 +727,8 @@ begin
     unit MyUnit;
 
     interface
+
+    {$M+}
 
     type
       MainModule = class
@@ -921,6 +935,8 @@ begin
 
     interface
 
+    {$M+}
+
     type
       MainModule = class
       public type
@@ -1022,6 +1038,8 @@ begin
 
     interface
 
+    {$M+}
+
     type
       MainModule = class
       public type
@@ -1070,6 +1088,9 @@ begin
 
     interface
 
+    {$M+}
+    {$SCOPEDENUMS ON}
+
     type
       MainModule = class
       public type
@@ -1109,6 +1130,8 @@ begin
     unit MyUnit;
 
     interface
+
+    {$M+}
 
     type
       MainModule = class
@@ -1196,6 +1219,8 @@ begin
 
     interface
 
+    {$M+}
+
     type
       MainModule = class
       public type
@@ -1244,6 +1269,8 @@ begin
     unit MyUnit;
 
     interface
+
+    {$M+}
 
     uses System.Rtti;
 
@@ -1431,6 +1458,8 @@ begin
 
     interface
 
+    {$M+}
+
     type
       MainModule = class
       end;
@@ -1519,6 +1548,8 @@ begin
 
     interface
 
+    {$M+}
+
     type
       MainModule = class
       private
@@ -1574,6 +1605,8 @@ begin
 
     interface
 
+    {$M+}
+
     type
       MainModule = class
       private
@@ -1607,6 +1640,8 @@ begin
     unit MyUnit;
 
     interface
+
+    {$M+}
 
     type
       MainModule = class
@@ -1646,6 +1681,9 @@ begin
 
     interface
 
+    {$M+}
+    {$SCOPEDENUMS ON}
+
     type
       MainModule = class
       public type
@@ -1675,6 +1713,8 @@ begin
     unit MyUnit;
 
     interface
+
+    {$M+}
 
     type
       MainModule = class
@@ -1710,6 +1750,8 @@ begin
     unit MyUnit;
 
     interface
+
+    {$M+}
 
     type
       MainModule = class
@@ -1773,6 +1815,9 @@ begin
 
     interface
 
+    {$M+}
+    {$SCOPEDENUMS ON}
+
     type
       MainModule = class
       public type
@@ -1803,6 +1848,8 @@ begin
     unit MyUnit;
 
     interface
+
+    {$M+}
 
     type
       MainModule = class
@@ -1902,6 +1949,8 @@ begin
 
     interface
 
+    {$M+}
+
     type
       MainModule = class
       private
@@ -1944,6 +1993,9 @@ begin
     unit MyUnit;
 
     interface
+
+    {$M+}
+    {$SCOPEDENUMS ON}
 
     type
       MainModule = class
@@ -1989,6 +2041,9 @@ begin
     unit MyUnit;
 
     interface
+
+    {$M+}
+    {$SCOPEDENUMS ON}
 
     type
       MainModule = class
@@ -2049,6 +2104,8 @@ begin
     unit MyUnit;
 
     interface
+
+    {$M+}
 
     type
       MainModule = class
@@ -2115,6 +2172,8 @@ begin
 
     interface
 
+    {$M+}
+
     type
       MainModule = class
       private
@@ -2178,6 +2237,8 @@ begin
 
     interface
 
+    {$M+}
+
     type
       MainModule = class
       private
@@ -2198,6 +2259,40 @@ begin
   SimpleType.Free;
 end;
 
+procedure TSchemaImporterTest.WhenTheSchemaHasEnumerationsMustLoadTheScopedEnumsCompilerDirective;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnum');
+
+      Enumerator.AddEnumeration('Value');
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+    {$SCOPEDENUMS ON}
+
+    type
+      MainModule = class
+      public type
+        MyEnum = (Value);
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
 procedure TSchemaImporterTest.WhenTheTypeHasAReservedNameTheTypeMustUseTheAmpersandBeforeTheName;
 begin
   var ReservedNames := ['type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'string', 'const', 'not', 'in', 'file', 'is', 'end', 'label'];
@@ -2223,6 +2318,9 @@ begin
       unit MyUnit;
 
       interface
+
+      {$M+}
+      {$SCOPEDENUMS ON}
 
       type
         MainModule = class
@@ -2278,6 +2376,8 @@ begin
 
     interface
 
+    {$M+}
+
     type
       MainModule = class
       private
@@ -2303,6 +2403,8 @@ begin
     unit MyUnit2;
 
     interface
+
+    {$M+}
 
     type
       MainModule2 = class
