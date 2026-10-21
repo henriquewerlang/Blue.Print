@@ -244,6 +244,10 @@ type
     procedure WhenThePropertyHasInvalidCharacteresInTheNameMustFixTheNameAndApplyTheFieldNameAttribute;
     [Test]
     procedure WhenTheStringTypeIsDeclaredCantUseTheEscapeCharacterInTheName;
+    [Test]
+    procedure WhenTheTypeIsAnAliasToAnArrayTypeMustCreateTheAddFunctionWithTheInternalAliasType;
+    [Test]
+    procedure WhenTheArrayTypeIsAReferenceMustLoadTheReferenceAndLoadTheArrayHasExpected;
   end;
 
   [TestFixture]
@@ -1785,6 +1789,53 @@ begin
   ParentModule.Free;
 end;
 
+procedure TSchemaImporterTest.WhenTheArrayTypeIsAReferenceMustLoadTheReferenceAndLoadTheArrayHasExpected;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass, FImporter.CreateReferenceType(MainClass, 'My Namespace', MainClass.Name)));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProperty: System.TArray<MyUnit.MainModule.MainModule>;
+      public
+        function AddMyProperty: MyUnit.MainModule;
+      published
+        property MyProperty: System.TArray<MyUnit.MainModule.MainModule> read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    function MainModule.AddMyProperty: MyUnit.MainModule;
+    begin
+      Result := MyUnit.MainModule.Create;
+
+      FMyProperty := FMyProperty + [Result];
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
 procedure TSchemaImporterTest.WhenTheClassDefinitionHaveAPropertyMustDeclareThePropertyInTheUnit;
 begin
   FConverter.WhenExecuteConvert :=
@@ -2689,6 +2740,55 @@ begin
 
     Importer.Free;
   end;
+end;
+
+procedure TSchemaImporterTest.WhenTheTypeIsAnAliasToAnArrayTypeMustCreateTheAddFunctionWithTheInternalAliasType;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.CreateAliasType(MainClass, 'MyAlias', FImporter.CreateArrayType(MainClass, MainClass)));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        MyAlias = System.TArray<MyUnit.MainModule>;
+      private
+        FMyProperty: MyUnit.MainModule.MyAlias;
+      public
+        function AddMyProperty: MyUnit.MainModule;
+      published
+        property MyProperty: MyUnit.MainModule.MyAlias read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    function MainModule.AddMyProperty: MyUnit.MainModule;
+    begin
+      Result := MyUnit.MainModule.Create;
+
+      FMyProperty := FMyProperty + [Result];
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenTheTypeIsFoundMustLoadTheTypeInTheParameterAsExpected;
