@@ -8,6 +8,7 @@ uses System.Classes, System.SysUtils, System.Rtti, System.Generics.Collections;
 
 type
   TSchemaImporter = class;
+  TTypeAliasDefinition = class;
   TTypeArrayDefinition = class;
   TTypeClassDefinition = class;
   TTypeDefinition = class;
@@ -107,11 +108,14 @@ type
     function GetIsUnitDefinition: Boolean;
     function GetParentModule: TTypeModuleDefinition;
     function GetIsEnumeratorDefinition: Boolean;
+    function GetIsAliasDefinition: Boolean;
   public
+    function AsAliasDefinition: TTypeAliasDefinition;
     function AsArrayDefinition: TTypeArrayDefinition;
     function AsClassDefinition: TTypeClassDefinition;
     function AsReferenceDefinition: TTypeReferenceDefinition;
 
+    property IsAliasDefinition: Boolean read GetIsAliasDefinition;
     property IsArrayDefinition: Boolean read GetIsArrayDefinition;
     property IsClassDefinition: Boolean read GetIsClassDefinition;
     property IsEnumeratorDefinition: Boolean read GetIsEnumeratorDefinition;
@@ -609,7 +613,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := RemoveInvalidCharecters(Name);
 
       if not Result.IsEmpty and not SameText(Result, Name) then
-        Result := 'T' + Result[1].ToUpper + Result.Substring(1);
+        Result := RemoveInvalidCharecters('T.' + Result);
 
       Result := CheckInvalidNames(Result);
     end;
@@ -619,20 +623,21 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := CheckReservedWord(FormatTypeName(Name), ['string']);
     end;
 
-    function FormatTypeName(const TypeDefinition: TTypeDefinition): String; overload;
-
-      function GetReferenceType(const TypeDefinition: TTypeDefinition): TTypeDefinition;
+    function ResolveReferenceType(const TypeDefinition: TTypeDefinition): TTypeDefinition;
+    begin
+      if TypeDefinition.IsReferenceDefinition then
       begin
         var ReferenceDefinition := TypeDefinition.AsReferenceDefinition;
 
         Result := FindType(ReferenceDefinition.Namespace, ReferenceDefinition.Reference);
-      end;
-
-    begin
-      if TypeDefinition.IsReferenceDefinition then
-        Result := FormatTypeName(GetReferenceType(TypeDefinition))
+      end
       else
-        Result := FormatTypeName(TypeDefinition.Name);
+        Result := TypeDefinition;
+    end;
+
+    function FormatTypeName(const TypeDefinition: TTypeDefinition): String; overload;
+    begin
+      Result := FormatTypeName(ResolveReferenceType(TypeDefinition).Name);
     end;
 
     function FormatFullTypeName(TypeDefinition: TTypeDefinition): String;
@@ -660,14 +665,23 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := GetParentModuleName(TypeDefinition) + Result;
     end;
 
+    function GetArrayType(const TypeDefinition: TTypeDefinition; var ArrayTypeDefinition: TTypeDefinition): Boolean;
+    begin
+      Result := TypeDefinition.IsArrayDefinition;
+
+      if Result then
+        ArrayTypeDefinition := ResolveReferenceType(TypeDefinition.AsArrayDefinition.ArrayType)
+      else if TypeDefinition.IsAliasDefinition then
+        Result := GetArrayType(TypeDefinition.AsAliasDefinition.TypeAlias, ArrayTypeDefinition);
+    end;
+
     function FormatReturnAddFunctionTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
-      var TypeDefinition := PropertyDefinition.PropertyType;
+      var ArrayType: TTypeDefinition;
 
-      if TypeDefinition.IsArrayDefinition then
-        TypeDefinition := TypeDefinition.AsArrayDefinition.ArrayType;
+      GetArrayType(PropertyDefinition.PropertyType, ArrayType);
 
-      Result := FormatFullTypeName(TypeDefinition);
+      Result := FormatFullTypeName(ArrayType);
     end;
 
     function FormatClassName(const ClassDefinition: TTypeClassDefinition): String;
@@ -737,7 +751,9 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function NeedAddFunction(const PropertyDefinition: TTypePropertyDefinition): Boolean;
     begin
-      Result := PropertyDefinition.PropertyType.IsArrayDefinition and PropertyDefinition.PropertyType.AsArrayDefinition.ArrayType.IsClassDefinition;
+      var ArrayType: TTypeDefinition;
+
+      Result := GetArrayType(PropertyDefinition.PropertyType, ArrayType) and ArrayType.IsClassDefinition;
     end;
 
     function NeedFieldNameAttribute(const PropertyDefinition: TTypePropertyDefinition; var PropertyName: String): Boolean; overload;
@@ -1319,6 +1335,11 @@ end;
 
 { TTypeDefinition }
 
+function TTypeDefinition.AsAliasDefinition: TTypeAliasDefinition;
+begin
+  Result := Self as TTypeAliasDefinition;
+end;
+
 function TTypeDefinition.AsArrayDefinition: TTypeArrayDefinition;
 begin
   Result := Self as TTypeArrayDefinition;
@@ -1332,6 +1353,11 @@ end;
 function TTypeDefinition.AsReferenceDefinition: TTypeReferenceDefinition;
 begin
   Result := Self as TTypeReferenceDefinition;
+end;
+
+function TTypeDefinition.GetIsAliasDefinition: Boolean;
+begin
+  Result := Self is TTypeAliasDefinition;
 end;
 
 function TTypeDefinition.GetIsArrayDefinition: Boolean;
