@@ -232,6 +232,10 @@ type
     procedure TheAliasTypeMustBeDeclaredWithTheFullTypeName;
     [Test]
     procedure WhenTheSchemaHasEnumerationsMustLoadTheScopedEnumsCompilerDirective;
+    [Test]
+    procedure MustLoadTheForwardClassDeclarationInTheUnitDeclaration;
+    [Test]
+    procedure TheAliasDeclarationMustBeLoadedAfterTheForwardClassDeclaration;
   end;
 
   [TestFixture]
@@ -353,6 +357,8 @@ begin
     uses System.Rtti;
 
     type
+      MainModule = class;
+
       MainModule = class
       private
         FMyProperty: System.Rtti.TValue;
@@ -451,6 +457,8 @@ begin
     {$SCOPEDENUMS ON}
 
     type
+      MainModule = class;
+
       MainModule = class
       public type
         [EnumValue('if')]
@@ -615,6 +623,8 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       private
         FMyProperty: System.Integer;
@@ -695,6 +705,8 @@ begin
     {$SCOPEDENUMS ON}
 
     type
+      MainModule = class;
+
       MainModule = class
       public type
         MyEnumerator = (a, b, c);
@@ -731,6 +743,8 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       private
         FMyProperty: System.Integer;
@@ -796,6 +810,61 @@ begin
   Assert.AreEqual('MyEnumerator', Enumerator.Name);
 
   ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.MustLoadTheForwardClassDeclarationInTheUnitDeclaration;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+
+      procedure AddClass(const Namespace, Name: String);
+      begin
+        FImporter.CreateClassType(MainClass, Name);
+      end;
+
+    begin
+      AddClass('My Namespace', 'TMyClass');
+
+      AddClass('My Namespace', 'TMyClass2');
+
+      AddClass('My Namespace', 'TMyClass3');
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        TMyClass = class;
+        TMyClass2 = class;
+        TMyClass3 = class;
+
+        TMyClass = class
+        end;
+
+        TMyClass2 = class
+        end;
+
+        TMyClass3 = class
+        end;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.MustLoadTheImporterPropertyToAvoidError;
@@ -917,6 +986,63 @@ begin
   inherited;
 end;
 
+procedure TSchemaImporterTest.TheAliasDeclarationMustBeLoadedAfterTheForwardClassDeclaration;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+
+      function AddClass(const Namespace, Name: String): TTypeClassDefinition;
+      begin
+        Result := FImporter.CreateClassType(MainClass, Name);
+      end;
+
+    begin
+      AddClass('My Namespace', 'TMyClass');
+
+      FImporter.CreateAliasType(MainClass, 'MyAlias', AddClass('My Namespace', 'TMyClass2'));
+
+      AddClass('My Namespace', 'TMyClass3');
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        TMyClass = class;
+        TMyClass2 = class;
+        TMyClass3 = class;
+
+        MyAlias = MyUnit.MainModule.TMyClass2;
+
+        TMyClass = class
+        end;
+
+        TMyClass2 = class
+        end;
+
+        TMyClass3 = class
+        end;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
 procedure TSchemaImporterTest.TheAliasTypeMustBeDeclaredWithTheFullTypeName;
 begin
   FConverter.WhenExecuteConvert :=
@@ -938,6 +1064,8 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       public type
         Alias = System.Integer;
@@ -1041,12 +1169,20 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       public type
+        TMyClass = class;
+
         TMyClass = class
         public type
+          TMyClass2 = class;
+
           TMyClass2 = class
           public type
+            TMyClass3 = class;
+
             TMyClass3 = class
             end;
           end;
@@ -1092,6 +1228,8 @@ begin
     {$SCOPEDENUMS ON}
 
     type
+      MainModule = class;
+
       MainModule = class
       public type
         MyEnumerator = (Value);
@@ -1134,6 +1272,8 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       private
         FMyProperty: MyUnit.SimpleType;
@@ -1222,8 +1362,14 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       public type
+        TMyClass = class;
+        TMyClass2 = class;
+        TMyClass3 = class;
+
         TMyClass = class
         end;
 
@@ -1275,6 +1421,8 @@ begin
     uses System.Rtti;
 
     type
+      MainModule = class;
+
       MainModule = class
       private
         FMyProperty: System.Rtti.TValue;
@@ -1461,6 +1609,8 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       end;
 
@@ -1551,6 +1701,8 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       private
         FMyProperty: System.TArray<SimpleType>;
@@ -1608,6 +1760,8 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       private
         FMyProperty: System.Integer;
@@ -1644,6 +1798,8 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       public type
         Alias = System.Integer;
@@ -1685,6 +1841,8 @@ begin
     {$SCOPEDENUMS ON}
 
     type
+      MainModule = class;
+
       MainModule = class
       public type
         MyEnumerator = (a, b, c);
@@ -1717,8 +1875,12 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       public type
+        TMySpecialClassName = class;
+
         TMySpecialClassName = class
         end;
       end;
@@ -1754,6 +1916,8 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       private
         FMyProperty: System.SimpleType;
@@ -1819,6 +1983,8 @@ begin
     {$SCOPEDENUMS ON}
 
     type
+      MainModule = class;
+
       MainModule = class
       public type
         [EnumValue('1, 2, 3')]
@@ -1852,8 +2018,12 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       public type
+        TMyClass = class;
+
         TMyClass = class
         end;
       end;
@@ -1952,6 +2122,8 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       private
         FIf: System.Integer;
@@ -1998,6 +2170,8 @@ begin
     {$SCOPEDENUMS ON}
 
     type
+      MainModule = class;
+
       MainModule = class
       public type
         MyEnumerator = (Value);
@@ -2046,8 +2220,12 @@ begin
     {$SCOPEDENUMS ON}
 
     type
+      MainModule = class;
+
       MainModule = class
       public type
+        TMyClass = class;
+
         TMyClass = class
         public type
           MyEnumerator = (Value);
@@ -2108,6 +2286,8 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       private
         FMyProperty: System.SimpleType;
@@ -2175,6 +2355,8 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       private
         FMyProperty: System.SimpleType;
@@ -2240,6 +2422,8 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       private
         FMyProperty: System.TArray<SimpleType>;
@@ -2281,6 +2465,8 @@ begin
     {$SCOPEDENUMS ON}
 
     type
+      MainModule = class;
+
       MainModule = class
       public type
         MyEnum = (Value);
@@ -2323,9 +2509,13 @@ begin
       {$SCOPEDENUMS ON}
 
       type
+        MainModule = class;
+
         MainModule = class
         public type
           &%0:s = (a);
+
+          &%0:s = class;
 
           &%0:s = class
           end;
@@ -2379,6 +2569,8 @@ begin
     {$M+}
 
     type
+      MainModule = class;
+
       MainModule = class
       private
         FMyProperty: System.Integer;
@@ -2407,6 +2599,9 @@ begin
     {$M+}
 
     type
+      MainModule2 = class;
+      MainModule3 = class;
+
       MainModule2 = class
       end;
 

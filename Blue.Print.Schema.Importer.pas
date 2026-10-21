@@ -649,6 +649,11 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := GetParentModuleName(TypeDefinition) + FormatTypeName(TypeDefinition, GetSubtypeName);
     end;
 
+    function FormaClassName(const ClassDefinition: TTypeClassDefinition): String;
+    begin
+      Result := FormatTypeName(ClassDefinition);
+    end;
+
     procedure GenerateEnumerationsDeclaration(const IndentationLevel: Integer; const ModuleDefinition: TTypeModuleDefinition);
     begin
       if Assigned(ModuleDefinition.Enumerations) then
@@ -846,19 +851,34 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       end;
     end;
 
-    procedure GenerateModuleDeclaration(const IndentationLevel: Integer; const ModuleDefinition: TTypeModuleDefinition);
+    procedure GenerateForwardClassesDeclaration(const IndentationLevel: Integer; const ModuleDefinition: TTypeModuleDefinition);
     begin
-      for var ClassDefinition in ModuleDefinition.Classes do
+      if Assigned(ModuleDefinition.Classes) then
       begin
         var CurrentIndentation := Succ(IndentationLevel);
 
-        AddLine(CurrentIndentation, '%s = class', [FormatTypeName(ClassDefinition)]);
+        for var ClassDefinition in ModuleDefinition.Classes do
+          AddLine(CurrentIndentation, '%s = class;', [FormaClassName(ClassDefinition)]);
+
+        AddWhiteLine;
+      end;
+    end;
+
+    procedure GenerateModuleDeclaration(const IndentationLevel: Integer; const ModuleDefinition: TTypeModuleDefinition);
+    begin
+      var CurrentIndentation := Succ(IndentationLevel);
+
+      for var ClassDefinition in ModuleDefinition.Classes do
+      begin
+        AddLine(CurrentIndentation, '%s = class', [FormaClassName(ClassDefinition)]);
 
         if ClassDefinition.HasTypes then
         begin
           AddLine(CurrentIndentation, 'public type');
 
           GenerateEnumerationsDeclaration(CurrentIndentation, ClassDefinition);
+
+          GenerateForwardClassesDeclaration(CurrentIndentation, ClassDefinition);
 
           GenerateAliasDeclaration(CurrentIndentation, ClassDefinition);
 
@@ -983,6 +1003,8 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       AddUsesList(IndentationLevel);
 
       AddLine(IndentationLevel, 'type');
+
+      GenerateForwardClassesDeclaration(IndentationLevel, UnitDefinition);
 
       GenerateModuleDeclaration(IndentationLevel, UnitDefinition);
 
