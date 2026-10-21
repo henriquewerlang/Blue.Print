@@ -764,6 +764,8 @@ begin
   var Enumerator := FImporter.CreateEnumeratorType(ParentModule, 'MyEnumerator');
 
   Assert.AreEqual('MyEnumerator', Enumerator.Name);
+
+  ParentModule.Free;
 end;
 
 procedure TSchemaImporterTest.MustLoadTheImporterPropertyToAvoidError;
@@ -792,6 +794,8 @@ begin
   var Enumerator := FImporter.CreateEnumeratorType(ParentModule, 'MyEnumerator');
 
   Assert.AreEqual(ParentModule, Enumerator.ParentModule);
+
+  ParentModule.Free;
 end;
 
 procedure TSchemaImporterTest.MustLoadTheParentModulePropertyFromTheClassType;
@@ -916,6 +920,8 @@ begin
   FImporter.CreateEnumeratorType(ParentModule, 'MyEnumerator');
 
   Assert.AreEqual(1, Length(ParentModule.Enumerations));
+
+  ParentModule.Free;
 end;
 
 procedure TSchemaImporterTest.TheEnumeratorMustBeAppendedInTheTypesOfTheParentModule;
@@ -925,6 +931,8 @@ begin
   FImporter.CreateEnumeratorType(ParentModule, 'MyEnumerator');
 
   Assert.AreEqual(1, Length(ParentModule.Types));
+
+  ParentModule.Free;
 end;
 
 procedure TSchemaImporterTest.TheKeyValueFromTypeMustBeTheNamespaceWithTheClassNameHasExpected;
@@ -1241,6 +1249,8 @@ begin
   var Enumerator := FImporter.CreateEnumeratorType(ParentModule, 'MyEnumerator');
 
   Assert.IsNotNil(Enumerator);
+
+  ParentModule.Free;
 end;
 
 procedure TSchemaImporterTest.WhenCreateTheClassTypeMustReturnTheClassTypeCreated;

@@ -881,16 +881,18 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       UsesList.Duplicates := dupIgnore;
       UsesList.Sorted := True;
 
-      CheckUses(UnitDefinition);
+      try
+        CheckUses(UnitDefinition);
 
-      if not UsesList.IsEmpty then
-      begin
-        AddLine(INDENTATION_LEVEL, 'uses %s;', [UsesList.Text]);
+        if not UsesList.IsEmpty then
+        begin
+          AddLine(INDENTATION_LEVEL, 'uses %s;', [UsesList.Text]);
 
-        AddWhiteLine;
+          AddWhiteLine;
+        end;
+      finally
+        UsesList.Free;
       end;
-
-      UsesList.Free;
     end;
 
   const
@@ -901,92 +903,94 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
     var UnitFileName := IncludeTrailingPathDelimiter(Configuration.OutputFolder) + UnitDefinition.Name + '.pas';
     UnitFile := TStringList.Create;
 
-    ForceDirectories(ExtractFilePath(UnitFileName));
+    try
+      ForceDirectories(ExtractFilePath(UnitFileName));
 
-    AddLine(IndentationLevel, 'unit %s;', [UnitDefinition.Name]);
+      AddLine(IndentationLevel, 'unit %s;', [UnitDefinition.Name]);
 
-    AddWhiteLine;
+      AddWhiteLine;
 
-    AddLine(IndentationLevel, 'interface');
+      AddLine(IndentationLevel, 'interface');
 
-    AddWhiteLine;
+      AddWhiteLine;
 
-    AddUsesList;
+      AddUsesList;
 
-    AddLine(IndentationLevel, 'type');
+      AddLine(IndentationLevel, 'type');
 
-    GenerateModuleDeclaration(IndentationLevel, UnitDefinition);
+      GenerateModuleDeclaration(IndentationLevel, UnitDefinition);
 
-    AddLine(IndentationLevel, 'implementation');
+      AddLine(IndentationLevel, 'implementation');
 
-    AddWhiteLine;
+      AddWhiteLine;
 
-    if NeedImplementationSection(UnitDefinition) then
-      for var ClassDefinition in UnitDefinition.Classes do
-      begin
-        AddLine(IndentationLevel, '{ %s }', [FormatTypeName(ClassDefinition)]);
-
-        AddWhiteLine;
-
-        for var PropertyDefinition in ClassDefinition.Properties do
+      if NeedImplementationSection(UnitDefinition) then
+        for var ClassDefinition in UnitDefinition.Classes do
         begin
-          if NeedGetFunction(PropertyDefinition) then
+          AddLine(IndentationLevel, '{ %s }', [FormatTypeName(ClassDefinition)]);
+
+          AddWhiteLine;
+
+          for var PropertyDefinition in ClassDefinition.Properties do
           begin
-            AddLine(IndentationLevel, 'function %s.%s: %s;', [FormatTypeName(ClassDefinition), FormatGetFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
+            if NeedGetFunction(PropertyDefinition) then
+            begin
+              AddLine(IndentationLevel, 'function %s.%s: %s;', [FormatTypeName(ClassDefinition), FormatGetFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
 
-            AddLine(IndentationLevel, 'begin');
+              AddLine(IndentationLevel, 'begin');
 
-            AddLine(IndentationLevel, '  if not Assigned(%s) then', [FormatFieldName(PropertyDefinition)]);
+              AddLine(IndentationLevel, '  if not Assigned(%s) then', [FormatFieldName(PropertyDefinition)]);
 
-            AddLine(IndentationLevel, '    %s := %s.Create;', [FormatFieldName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
+              AddLine(IndentationLevel, '    %s := %s.Create;', [FormatFieldName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
 
-            AddWhiteLine;
+              AddWhiteLine;
 
-            AddLine(IndentationLevel, '  Result := %s;', [FormatFieldName(PropertyDefinition)]);
+              AddLine(IndentationLevel, '  Result := %s;', [FormatFieldName(PropertyDefinition)]);
 
-            AddLine(IndentationLevel, 'end;');
+              AddLine(IndentationLevel, 'end;');
 
-            AddWhiteLine;
-          end;
+              AddWhiteLine;
+            end;
 
-          if NeedAddFunction(PropertyDefinition) then
-          begin
-            AddLine(IndentationLevel, 'function %s.%s: %s;', [FormatTypeName(ClassDefinition), FormatAddFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition, True)]);
+            if NeedAddFunction(PropertyDefinition) then
+            begin
+              AddLine(IndentationLevel, 'function %s.%s: %s;', [FormatTypeName(ClassDefinition), FormatAddFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition, True)]);
 
-            AddLine(IndentationLevel, 'begin');
+              AddLine(IndentationLevel, 'begin');
 
-            AddLine(IndentationLevel, '  Result := %s.Create;', [FormatPropertyTypeName(PropertyDefinition, True)]);
+              AddLine(IndentationLevel, '  Result := %s.Create;', [FormatPropertyTypeName(PropertyDefinition, True)]);
 
-            AddWhiteLine;
+              AddWhiteLine;
 
-            AddLine(IndentationLevel, '  %0:s := %0:s + [Result];', [FormatFieldName(PropertyDefinition)]);
+              AddLine(IndentationLevel, '  %0:s := %0:s + [Result];', [FormatFieldName(PropertyDefinition)]);
 
-            AddLine(IndentationLevel, 'end;');
+              AddLine(IndentationLevel, 'end;');
 
-            AddWhiteLine;
-          end;
+              AddWhiteLine;
+            end;
 
-          if NeedSetFunction(PropertyDefinition) then
-          begin
-            AddLine(IndentationLevel, 'procedure %s.%s;', [FormatTypeName(ClassDefinition), FormatSetFunctionHeader(PropertyDefinition)]);
+            if NeedSetFunction(PropertyDefinition) then
+            begin
+              AddLine(IndentationLevel, 'procedure %s.%s;', [FormatTypeName(ClassDefinition), FormatSetFunctionHeader(PropertyDefinition)]);
 
-            AddLine(IndentationLevel, 'begin');
+              AddLine(IndentationLevel, 'begin');
 
-            AddLine(IndentationLevel, '  %s := Value;', [FormatFieldName(PropertyDefinition)]);
-            AddLine(IndentationLevel, '  %s := True;', [FormatStoredFieldName(PropertyDefinition)]);
+              AddLine(IndentationLevel, '  %s := Value;', [FormatFieldName(PropertyDefinition)]);
+              AddLine(IndentationLevel, '  %s := True;', [FormatStoredFieldName(PropertyDefinition)]);
 
-            AddLine(IndentationLevel, 'end;');
+              AddLine(IndentationLevel, 'end;');
 
-            AddWhiteLine;
+              AddWhiteLine;
+            end;
           end;
         end;
-      end;
 
-    AddLine(IndentationLevel, 'end.');
+      AddLine(IndentationLevel, 'end.');
 
-    UnitFile.SaveToFile(UnitFileName, TEncoding.UTF8);
-
-    UnitFile.Free;
+      UnitFile.SaveToFile(UnitFileName, TEncoding.UTF8);
+    finally
+      UnitFile.Free;
+    end;
   end;
 
 begin
