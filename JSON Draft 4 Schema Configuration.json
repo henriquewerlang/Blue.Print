@@ -13,7 +13,7 @@
             {
                "SchemaType": "JSONDraft4",
                "FileName": "..\\..\\JSON Schema.json",
-               "MainModuleName": "JSONSchema"
+               "MainModuleName": "TJSONSchema"
             }
          ]
       }
