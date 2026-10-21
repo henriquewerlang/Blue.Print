@@ -242,6 +242,8 @@ type
     procedure WhenThePropertyNameHasASpecialNameMustAppendTheFieldNameAttribute;
     [Test]
     procedure WhenThePropertyHasInvalidCharacteresInTheNameMustFixTheNameAndApplyTheFieldNameAttribute;
+    [Test]
+    procedure WhenTheStringTypeIsDeclaredCantUseTheEscapeCharacterInTheName;
   end;
 
   [TestFixture]
@@ -2004,7 +2006,7 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'ens:MyEnum');
+      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnum');
 
       Enumerator.AddEnumeration('1');
 
@@ -2602,6 +2604,40 @@ begin
     ''',
     FConfiguration.Units[0]);
 end;
+procedure TSchemaImporterTest.WhenTheStringTypeIsDeclaredCantUseTheEscapeCharacterInTheName;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      FImporter.CreateAliasType(MainClass, 'MyAlias', FImporter.BuildInTypes[TBuildInType.StringType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        MyAlias = System.String;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
 procedure TSchemaImporterTest.WhenTheTypeHasAReservedNameTheTypeMustUseTheAmpersandBeforeTheName;
 begin
   var ReservedNames := ['type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'string', 'const', 'not', 'in', 'file', 'is', 'end', 'label'];
@@ -2613,7 +2649,7 @@ begin
     FConverter.WhenExecuteConvert :=
       procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
       begin
-        var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'ens:' + ReservedName);
+        var Enumerator := FImporter.CreateEnumeratorType(MainClass, ReservedName);
 
         Enumerator.AddEnumeration('a');
 

@@ -5,15 +5,11 @@ interface
 {$M+}
 {$SCOPEDENUMS ON}
 
-// File generated from http://json-schema.org/draft-04/schema;
-
 uses Blue.Print.Types, System.Rtti;
 
 type
-  // Forward class declaration
   TJSONSchema = class;
 
-  // Types alias
   any = System.Rtti.TValue;
 
   TJSONSchema = class
@@ -21,14 +17,13 @@ type
     [EnumValue('array, boolean, integer, null, number, object, string')]
     simpleTypes = (&array, boolean, integer, null, number, &object, &string);
 
-    // Forward class declaration
     positiveIntegerDefault0 = class;
     TJSONSchema = class;
 
     // Types alias
     schemaArray = TArray<Blue.Print.JSON.Draft4.Schema.TJSONSchema>;
     positiveInteger = System.Integer;
-    stringArray = TArray<System.String>;
+    stringArray = System.TArray<System.String>;
 
     [Flat]
     positiveIntegerDefault0 = class

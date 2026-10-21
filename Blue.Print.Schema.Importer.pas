@@ -284,7 +284,7 @@ type
 
     function CreateTypeDefinition<T: TTypeDefinition, constructor>(const ParentModule: TTypeModuleDefinition): T;
     function CreateTypeDefinitionWithName<T: TTypeDefinition, constructor>(const ParentModule: TTypeModuleDefinition; const Name: String): T;
-    function FormatTypeName(const Namespace, TypeName: String): String;
+    function FormatTypeNamespace(const Namespace, TypeName: String): String;
     function GetBuildInTypes(const BuildInType: TBuildInType): TTypeDefinition;
 
     procedure LoadBuildInTypes;
@@ -323,7 +323,6 @@ uses System.IOUtils, System.Character, Blue.Print.Types, Blue.Print.Serializer;
 const
   SYSTEM_UNIT_NAME = 'System';
   TYPE_NAME_SEPARATOR = '.';
-  TYPE_NAMESPACE_SEPARATOR = ':';
 
 { TSchemaImporter }
 
@@ -334,7 +333,7 @@ end;
 
 procedure TSchemaImporter.AddType(const Namespace: String; const TypeDefinition: TTypeDefinition);
 begin
-  Types.Add(FormatTypeName(Namespace, TypeDefinition.Name), TypeDefinition);
+  Types.Add(FormatTypeNamespace(Namespace, TypeDefinition.Name), TypeDefinition);
 end;
 
 constructor TSchemaImporter.Create;
@@ -425,7 +424,7 @@ begin
     raise ETypeNotFound.Create(Name);
 end;
 
-function TSchemaImporter.FormatTypeName(const Namespace, TypeName: String): String;
+function TSchemaImporter.FormatTypeNamespace(const Namespace, TypeName: String): String;
 begin
   Result := Format('%s:%s', [GetPrefixName(Namespace), TypeName]);
 end;
@@ -525,9 +524,6 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
   end;
 
   procedure GenerateUnitDeclaration(const UnitDefinition: TTypeUnitDefinition);
-  const
-    SPECIAL_CHARACTER_SCAPE_CHAR = '&';
-
   var
     UnitFile: TStringList;
 
@@ -564,14 +560,21 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       UnitFile.Delete(Pred(UnitFile.Count));
     end;
 
-    function FormatName(const Name: String): String;
-    begin
-      var ReservedNames := ['type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'string', 'const', 'not', 'in', 'file', 'is', 'end', 'label'];
-      Result := Name.Substring(Succ(Name.IndexOf(TYPE_NAMESPACE_SEPARATOR)));
+    function CheckReservedWord(const Name: String; const ReservedNames: TArray<String>): String;
+    const
+      SPECIAL_CHARACTER_SCAPE_CHAR = '&';
 
+    begin
       for var ReservedName in ReservedNames do
-        if SameText(Result, ReservedName) then
-          Result := SPECIAL_CHARACTER_SCAPE_CHAR + Result;
+        if SameText(Name, ReservedName) then
+          Exit(SPECIAL_CHARACTER_SCAPE_CHAR + Name);
+
+      Result := Name;
+    end;
+
+    function CheckInvalidNames(const Name: String): String;
+    begin
+      Result := CheckReservedWord(Name, ['type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'const', 'not', 'in', 'file', 'is', 'end', 'label']);
     end;
 
     function RemoveInvalidCharecters(const Name: String): String;
@@ -587,11 +590,11 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
           Result := Char.ToUpper;
         end;
 
-      var FormatChar := UpperChar;
+      var FormatChar := NormalChar;
       Result := EmptyStr;
 
       for var Character in Name do
-        if Character.IsLetter or Character.IsNumber or (Character = SPECIAL_CHARACTER_SCAPE_CHAR) then
+        if Character.IsLetter or Character.IsNumber then
         begin
           Result := Result + FormatChar(Character);
 
@@ -601,15 +604,22 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
           FormatChar := UpperChar;
     end;
 
-    function FormatTypeName(const TypeDefinition: TTypeDefinition): String;
+    function FormatTypeName(const Name: String): String; overload;
+    begin
+      Result := RemoveInvalidCharecters(Name);
 
-      function CheckInvalidCharecters(const Name: String): String;
-      begin
-        Result := RemoveInvalidCharecters(Name);
+      if not Result.IsEmpty and not SameText(Result, Name) then
+        Result := 'T' + Result[1].ToUpper + Result.Substring(1);
 
-        if not SameText(Result, Name) then
-          Result := 'T' + Result;
-      end;
+      Result := CheckInvalidNames(Result);
+    end;
+
+    function FormatName(const Name: String): String;
+    begin
+      Result := CheckReservedWord(FormatTypeName(Name), ['string']);
+    end;
+
+    function FormatTypeName(const TypeDefinition: TTypeDefinition): String; overload;
 
       function GetReferenceType(const TypeDefinition: TTypeDefinition): TTypeDefinition;
       begin
@@ -622,7 +632,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       if TypeDefinition.IsReferenceDefinition then
         Result := FormatTypeName(GetReferenceType(TypeDefinition))
       else
-        Result := CheckInvalidCharecters(FormatName(TypeDefinition.Name));
+        Result := FormatTypeName(TypeDefinition.Name);
     end;
 
     function FormatFullTypeName(TypeDefinition: TTypeDefinition): String;
@@ -662,7 +672,12 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function FormatClassName(const ClassDefinition: TTypeClassDefinition): String;
     begin
-      Result := FormatTypeName(ClassDefinition);
+      Result := CheckInvalidNames(FormatName(ClassDefinition.Name));
+    end;
+
+    function FormatEnumerationName(const EnumerationDefinition: TTypeEnumerationDefinition): String;
+    begin
+      Result := CheckInvalidNames(FormatName(EnumerationDefinition.Name));
     end;
 
     procedure GenerateEnumerationsDeclaration(const IndentationLevel: Integer; const ModuleDefinition: TTypeModuleDefinition);
@@ -691,7 +706,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
           if ValueNameChanged then
             AddLine(CurrentIndentation, '[EnumValue(''%s'')]', [Enumerator.Values.Text]);
 
-          AddLine(CurrentIndentation, '%s = (%s);', [FormatTypeName(Enumerator), EnumerationList.Text]);
+          AddLine(CurrentIndentation, '%s = (%s);', [FormatEnumerationName(Enumerator), EnumerationList.Text]);
 
           AddWhiteLine;
         end;
@@ -702,12 +717,12 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function FormatPropertyName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
-      Result := RemoveInvalidCharecters(FormatName(PropertyDefinition.Name));
+      Result := FormatName(RemoveInvalidCharecters(PropertyDefinition.Name));
     end;
 
     function FormatFieldName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
-      Result := 'F' + RemoveInvalidCharecters(PropertyDefinition.Name);
+      Result := 'F' + RemoveInvalidCharecters(FormatPropertyName(PropertyDefinition));
     end;
 
     function NeedGetFunction(const PropertyDefinition: TTypePropertyDefinition): Boolean;
@@ -1213,7 +1228,7 @@ end;
 
 function TSchemaImporter.TryFindType(const Namespace, Name: String; var TypeDefinition: TTypeDefinition): Boolean;
 begin
-  Result := Types.TryGetValue(FormatTypeName(Namespace, Name), TypeDefinition);
+  Result := Types.TryGetValue(FormatTypeNamespace(Namespace, Name), TypeDefinition);
 end;
 
 { ENeedConfiguration }
