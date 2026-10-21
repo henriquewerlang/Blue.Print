@@ -61,8 +61,6 @@ type
     [Test]
     procedure MustLoadTheArrayTypeWithTheTypeDefinedInTheItemsSchema;
     [Test]
-    procedure IsTheSchemaDoesntHaveTheRefOrTheSimpleTypeLoadedMustRaiseAnError;
-    [Test]
     procedure TheClassDeclarationMustBeInsideTheDefsSchemaNamespace;
     [Test]
     procedure WhenTheSchemaIsAReferenceMustCreateTheReferenceType;
@@ -74,6 +72,10 @@ type
     procedure MustLoadTheReferenceNamespaceInformation;
     [Test]
     procedure TheNamespaceInTheReferenceMustBeTheIdOfTheJSONSchemaPlusTheDefinitionsName;
+    [Test]
+    procedure WhenTheMainSchemaHasPropertiesThisPropertiesMustBeLoadedInTheMainClass;
+    [Test]
+    procedure WhenTheSchemaDoesntHaveAnyDefinitionMustLoadThePropertyWithTheTValueType;
   end;
 
 implementation
@@ -160,17 +162,6 @@ begin
   TFile.WriteAllText(FConfiguration.Units[0].SchemaFiles[0].FileName, GetDefinitionJSON);
 
   FImporter.Import(FConfiguration);
-end;
-
-procedure TJSONDraft4SchemaConverterTeste.IsTheSchemaDoesntHaveTheRefOrTheSimpleTypeLoadedMustRaiseAnError;
-begin
-  FDefinition.definitions.AddDefinitions('InvalidType').properties.AddProperties('InvalidProperty');
-
-  Assert.WillRaise(
-    procedure
-    begin
-      ImportDefinition;
-    end, EJSONSchemaInvalid);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.MustFillTheReferencePropertyWithTheClassNameInTheJSONReference;
@@ -395,6 +386,15 @@ begin
   Assert.AreEqual(1, Length(GetMainClass.Classes[0].Properties));
 end;
 
+procedure TJSONDraft4SchemaConverterTeste.WhenTheMainSchemaHasPropertiesThisPropertiesMustBeLoadedInTheMainClass;
+begin
+  AddProperty(FDefinition, 'MyProp', TJSONSchema.simpleTypes.integer);
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetMainClass.Properties));
+end;
+
 procedure TJSONDraft4SchemaConverterTeste.WhenThePropertyIsAnArrayTypeMustLoadTheArrayTypeDefinition;
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
@@ -448,6 +448,15 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.StringType], GetMainClass.Classes[0].Properties[0].PropertyType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaDoesntHaveAnyDefinitionMustLoadThePropertyWithTheTValueType;
+begin
+  FDefinition.properties.AddProperties('MyProp');
+
+  ImportDefinition;
+
+  Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.ValueType], GetMainClass.Properties[0].PropertyType);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaIsAReferenceMustCreateTheReferenceType;
