@@ -341,41 +341,41 @@ type
       property IsRefStored: Boolean read GetRefStored;
     published
       property id: System.String read FId write FId stored GetIdStored;
-      [FieldName('$TJSONSchema')]
-      property TJSONSchema: System.String read FSchema write FSchema stored GetSchemaStored;
-      property title: System.String read FTitle write FTitle stored GetTitleStored;
-      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
-      property default: any read FDefault write FDefault stored GetDefaultStored;
-      property multipleOf: System.Double read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
-      property maximum: System.Double read FMaximum write FMaximum stored GetMaximumStored;
-      property exclusiveMaximum: System.Boolean read FExclusiveMaximum write SetExclusiveMaximum stored FExclusiveMaximumIsStored;
-      property minimum: System.Double read FMinimum write FMinimum stored GetMinimumStored;
-      property exclusiveMinimum: System.Boolean read FExclusiveMinimum write SetExclusiveMinimum stored FExclusiveMinimumIsStored;
-      property maxLength: TJSONSchema.positiveInteger read FMaxLength write FMaxLength stored GetMaxLengthStored;
-      property minLength: TJSONSchema.positiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
-      property pattern: System.String read FPattern write FPattern stored GetPatternStored;
-      property additionalItems: TJSONSchema.TJSONSchema.AdditionalItemsProperty read GetAdditionalItems write FAdditionalItems stored GetAdditionalItemsStored;
+//      [FieldName('$TJSONSchema')]
+//      property TJSONSchema: System.String read FSchema write FSchema stored GetSchemaStored;
+//      property title: System.String read FTitle write FTitle stored GetTitleStored;
+//      property description: System.String read FDescription write FDescription stored GetDescriptionStored;
+//      property default: any read FDefault write FDefault stored GetDefaultStored;
+//      property multipleOf: System.Double read FMultipleOf write FMultipleOf stored GetMultipleOfStored;
+//      property maximum: System.Double read FMaximum write FMaximum stored GetMaximumStored;
+//      property exclusiveMaximum: System.Boolean read FExclusiveMaximum write SetExclusiveMaximum stored FExclusiveMaximumIsStored;
+//      property minimum: System.Double read FMinimum write FMinimum stored GetMinimumStored;
+//      property exclusiveMinimum: System.Boolean read FExclusiveMinimum write SetExclusiveMinimum stored FExclusiveMinimumIsStored;
+//      property maxLength: TJSONSchema.positiveInteger read FMaxLength write FMaxLength stored GetMaxLengthStored;
+//      property minLength: TJSONSchema.positiveIntegerDefault0 read GetMinLength write FMinLength stored GetMinLengthStored;
+//      property pattern: System.String read FPattern write FPattern stored GetPatternStored;
+//      property additionalItems: TJSONSchema.TJSONSchema.AdditionalItemsProperty read GetAdditionalItems write FAdditionalItems stored GetAdditionalItemsStored;
       property items: TJSONSchema.TJSONSchema.ItemsProperty read GetItems write FItems stored GetItemsStored;
-      property maxItems: TJSONSchema.positiveInteger read FMaxItems write FMaxItems stored GetMaxItemsStored;
-      property minItems: TJSONSchema.positiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
-      property uniqueItems: System.Boolean read FUniqueItems write SetUniqueItems stored FUniqueItemsIsStored;
-      property maxProperties: TJSONSchema.positiveInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
-      property minProperties: TJSONSchema.positiveIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
-      property required: TJSONSchema.stringArray read FRequired write FRequired stored GetRequiredStored;
-      property additionalProperties: TJSONSchema.TJSONSchema.AdditionalPropertiesProperty read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+//      property maxItems: TJSONSchema.positiveInteger read FMaxItems write FMaxItems stored GetMaxItemsStored;
+//      property minItems: TJSONSchema.positiveIntegerDefault0 read GetMinItems write FMinItems stored GetMinItemsStored;
+//      property uniqueItems: System.Boolean read FUniqueItems write SetUniqueItems stored FUniqueItemsIsStored;
+//      property maxProperties: TJSONSchema.positiveInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
+//      property minProperties: TJSONSchema.positiveIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
+//      property required: TJSONSchema.stringArray read FRequired write FRequired stored GetRequiredStored;
+//      property additionalProperties: TJSONSchema.TJSONSchema.AdditionalPropertiesProperty read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       property definitions: TJSONSchema.TJSONSchema.DefinitionsProperty read GetDefinitions write FDefinitions stored GetDefinitionsStored;
       property properties: TJSONSchema.TJSONSchema.PropertiesProperty read GetProperties write FProperties stored GetPropertiesStored;
-      property patternProperties: TJSONSchema.TJSONSchema.PatternPropertiesProperty read GetPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
-      property dependencies: TJSONSchema.TJSONSchema.DependenciesProperty read GetDependencies write FDependencies stored GetDependenciesStored;
+//      property patternProperties: TJSONSchema.TJSONSchema.PatternPropertiesProperty read GetPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
+//      property dependencies: TJSONSchema.TJSONSchema.DependenciesProperty read GetDependencies write FDependencies stored GetDependenciesStored;
       property enum: TArray<String> read FEnum write FEnum stored GetEnumStored;
       [FieldName('type')]
       property &type: TJSONSchema.TJSONSchema.TypeProperty read GetType write FType stored GetTypeStored;
-      property format: System.String read FFormat write FFormat stored GetFormatStored;
-      property allOf: TJSONSchema.schemaArray read FAllOf write FAllOf stored GetAllOfStored;
-      property anyOf: TJSONSchema.schemaArray read FAnyOf write FAnyOf stored GetAnyOfStored;
-      property oneOf: TJSONSchema.schemaArray read FOneOf write FOneOf stored GetOneOfStored;
-      [FieldName('not')]
-      property &not: TJSONSchema.TJSONSchema read GetNot write FNot stored GetNotStored;
+//      property format: System.String read FFormat write FFormat stored GetFormatStored;
+//      property allOf: TJSONSchema.schemaArray read FAllOf write FAllOf stored GetAllOfStored;
+//      property anyOf: TJSONSchema.schemaArray read FAnyOf write FAnyOf stored GetAnyOfStored;
+//      property oneOf: TJSONSchema.schemaArray read FOneOf write FOneOf stored GetOneOfStored;
+//      [FieldName('not')]
+//      property &not: TJSONSchema.TJSONSchema read GetNot write FNot stored GetNotStored;
 
       [FieldName('$ref')]
       property ref: String read Fref write Fref stored GetRefStored;

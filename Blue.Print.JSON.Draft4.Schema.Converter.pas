@@ -5,11 +5,6 @@ interface
 uses System.SysUtils, Blue.Print.Schema.Importer, Blue.Print.Types, Blue.Print.JSON.Draft4.Schema;
 
 type
-  EJSONSchemaInvalid = class(Exception)
-  public
-    constructor Create;
-  end;
-
   TJSONDraft4SchemaConverter = class(TInterfacedObject, ISchemaConverter)
   private
     procedure Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
@@ -44,7 +39,13 @@ var
     else if JSONSchema.IsRefStored then
       Result := Schema.Importer.CreateReferenceType(ParentModule, DefinitionsNamespace, JSONSchema.ref.Substring(Succ(JSONSchema.ref.LastDelimiter('/'))))
     else
-      raise EJSONSchemaInvalid.Create;
+      Result := Schema.Importer.BuildInTypes[TBuildInType.ValueType];
+  end;
+
+  procedure DefineProperties(const ClassDefinition: TTypeClassDefinition; const JSONSchema: TJSONSchema.TJSONSchema);
+  begin
+    for var PropertyDefinition in JSONSchema.properties.additionalProperties do
+      ClassDefinition.AddProperty(PropertyDefinition.Key, LoadSchemaType(ClassDefinition, PropertyDefinition.Value));
   end;
 
 begin
@@ -60,11 +61,12 @@ begin
     begin
       var ClassDefinition := Schema.Importer.CreateClassType(MainClass, SchemaDefinition.Key);
 
-      for var PropertyDefinition in SchemaDefinition.Value.properties.additionalProperties do
-        ClassDefinition.AddProperty(PropertyDefinition.Key, LoadSchemaType(ClassDefinition, PropertyDefinition.Value));
+      DefineProperties(ClassDefinition, SchemaDefinition.Value);
 
       Schema.Importer.AddType(DefinitionsNamespace, ClassDefinition);
     end;
+
+  DefineProperties(MainClass, JSONDefinition);
 end;
 
 procedure TJSONDraft4SchemaConverter.LoadSchema(const Schema: TSchema);
@@ -78,13 +80,6 @@ begin
   var Definition := GetSerializer.Deserialize(Schema.SchemaText, TypeInfo(TJSONSchema.TJSONSchema)).AsType<TJSONSchema.TJSONSchema>;
   Schema.Namespace := Definition.id;
   Schema.SchemaValue := Definition;
-end;
-
-{ EJSONSchemaInvalid }
-
-constructor EJSONSchemaInvalid.Create;
-begin
-  inherited Create('The JSON schema is invalid!');
 end;
 
 initialization

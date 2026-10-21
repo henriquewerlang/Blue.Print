@@ -1,5 +1,24 @@
 {
    "OutputFolder": ".\\",
+   "Namespaces": [
+      {
+         "Namespace": "http://json-schema.org/draft-04/schema#",
+         "Prefix": "json"
+      }
+   ],
+   "Units": [
+      {
+         "Name": "Blue.Print.JSON.Draft4.Schema",
+         "SchemaFiles": [
+            {
+               "SchemaType": "JSONDraft4",
+               "FileName": "..\\..\\JSON Schema.json",
+               "MainModuleName": "JSONSchema"
+            }
+         ]
+      }
+   ],
+
    "SchemaFolder": ".\\Schemas",
    "UnitConfiguration": [
       {
