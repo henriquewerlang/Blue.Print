@@ -238,6 +238,10 @@ type
     procedure TheAliasDeclarationMustBeLoadedAfterTheForwardClassDeclaration;
     [Test]
     procedure WhenAnArrayIsDeclaredTheArrayTypeMustBeFromSystemAndTheArrayTypeItemMustHaveTheFullPathToTheTypeName;
+    [Test]
+    procedure WhenThePropertyNameHasASpecialNameMustAppendTheFieldNameAttribute;
+    [Test]
+    procedure WhenThePropertyHasInvalidCharacteresInTheNameMustFixTheNameAndApplyTheFieldNameAttribute;
   end;
 
   [TestFixture]
@@ -2159,6 +2163,8 @@ begin
 
     {$M+}
 
+    uses Blue.Print.Types;
+
     type
       MainModule = class;
 
@@ -2166,6 +2172,7 @@ begin
       private
         FIf: System.Integer;
       published
+        [FieldName('if')]
         property &if: System.Integer read FIf write FIf;
       end;
 
@@ -2282,6 +2289,45 @@ begin
     FConfiguration.Units[0]);
 end;
 
+procedure TSchemaImporterTest.WhenThePropertyHasInvalidCharacteresInTheNameMustFixTheNameAndApplyTheFieldNameAttribute;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('%invalid.name@for|property.', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    uses Blue.Print.Types;
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FInvalidNameForProperty: System.Integer;
+      published
+        [FieldName('%invalid.name@for|property.')]
+        property InvalidNameForProperty: System.Integer read FInvalidNameForProperty write FInvalidNameForProperty;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
 procedure TSchemaImporterTest.WhenThePropertyHasntATypeLoadedMustRaiseAnError;
 begin
   FConverter.WhenExecuteConvert :=
@@ -2366,6 +2412,45 @@ begin
   ParentModule.Free;
 
   SimpleType.Free;
+end;
+
+procedure TSchemaImporterTest.WhenThePropertyNameHasASpecialNameMustAppendTheFieldNameAttribute;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('if', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    uses Blue.Print.Types;
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FIf: System.Integer;
+      published
+        [FieldName('if')]
+        property &if: System.Integer read FIf write FIf;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyNeedTheGetFunctionMustDeclareAllFunctionsHasExpected;
