@@ -22,13 +22,13 @@ var
   DefinitionsNamespace: String;
   JSONDefinition: TJSONSchema.TJSONSchema;
 
-  function LoadSchemaType(const ParentModule: TTypeModuleDefinition; const JSONSchema: TJSONSchema.TJSONSchema): TTypeDefinition;
+  function LoadSchemaType(const ParentClassDefinition: TTypeClassDefinition; const JSONSchema: TJSONSchema.TJSONSchema): TTypeDefinition;
   begin
     Result := nil;
 
     if JSONSchema.IsTypeStored then
       case JSONSchema.&type.simpleTypes of
-        TJSONSchema.simpleTypes.array: Result := Schema.Importer.CreateArrayType(ParentModule, LoadSchemaType(ParentModule, JSONSchema.items.schema));
+        TJSONSchema.simpleTypes.array: Result := Schema.Importer.CreateArrayType(ParentClassDefinition, LoadSchemaType(ParentClassDefinition, JSONSchema.items.schema));
         TJSONSchema.simpleTypes.boolean: Result := Schema.Importer.BuildInTypes[TBuildInType.BooleanType];
         TJSONSchema.simpleTypes.integer: Result := Schema.Importer.BuildInTypes[TBuildInType.IntegerType];
         TJSONSchema.simpleTypes.null: Result := nil;
@@ -37,7 +37,10 @@ var
         TJSONSchema.simpleTypes.string: Result := Schema.Importer.BuildInTypes[TBuildInType.StringType];
       end
     else if JSONSchema.IsRefStored then
-      Result := Schema.Importer.CreateReferenceType(ParentModule, DefinitionsNamespace, JSONSchema.ref.Substring(Succ(JSONSchema.ref.LastDelimiter('/'))))
+      if JSONSchema.ref = '#' then
+        Result := Schema.Importer.CreateReferenceType(ParentClassDefinition, JSONDefinition.id, MainClass.Name)
+      else
+        Result := Schema.Importer.CreateReferenceType(ParentClassDefinition, DefinitionsNamespace, JSONSchema.ref.Substring(Succ(JSONSchema.ref.LastDelimiter('/'))))
     else
       Result := Schema.Importer.BuildInTypes[TBuildInType.ValueType];
   end;
