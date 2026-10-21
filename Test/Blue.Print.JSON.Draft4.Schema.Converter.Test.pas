@@ -80,6 +80,12 @@ type
     procedure WhenTheReferenceIsOnlyASharpCharacterCantRaiseAnyError;
     [Test]
     procedure WhenTheReferenceIsOnlyASharpCharacterMustLoadTheReferenceToTheMainClassOfTheSchema;
+    [Test]
+    procedure WhenThePropertyTypeIsObjectCantRaiseError;
+    [Test]
+    procedure WhenThePropertyTypeIsObjectMustCreateAClassDefinitionForThePropertyType;
+    [Test]
+    procedure WhenThePropertyTypeIsObjectTheClassDefinitionMustHaveThePropertyNamePlusTheTypeName;
   end;
 
 implementation
@@ -408,6 +414,37 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(TTypeArrayDefinition, GetMainClass.Classes[0].Properties[0].PropertyType.ClassType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenThePropertyTypeIsObjectCantRaiseError;
+begin
+  var ClassDefinition := CreateClassDefinition('MyClass');
+
+  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.object);
+
+  Assert.WillNotRaise(ImportDefinition);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenThePropertyTypeIsObjectMustCreateAClassDefinitionForThePropertyType;
+begin
+  var ClassDefinition := CreateClassDefinition('MyClass');
+
+  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.object);
+
+  ImportDefinition;
+
+  Assert.AreEqual(TTypeClassDefinition, GetMainClass.Classes[0].Properties[0].PropertyType.ClassType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenThePropertyTypeIsObjectTheClassDefinitionMustHaveThePropertyNamePlusTheTypeName;
+begin
+  var ClassDefinition := CreateClassDefinition('MyClass');
+
+  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.object);
+
+  ImportDefinition;
+
+  Assert.AreEqual('MyPropType', GetMainClass.Classes[0].Properties[0].PropertyType.Name);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenThePropertyTypeIsOfBooleanTypeMustLoadThePropertyWithTheBuildInTypeBoolean;

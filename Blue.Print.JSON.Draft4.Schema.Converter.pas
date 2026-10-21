@@ -33,7 +33,7 @@ var
         TJSONSchema.simpleTypes.integer: Result := Schema.Importer.BuildInTypes[TBuildInType.IntegerType];
         TJSONSchema.simpleTypes.null: Result := nil;
         TJSONSchema.simpleTypes.number: Result := Schema.Importer.BuildInTypes[TBuildInType.DoubleType];
-        TJSONSchema.simpleTypes.object: Result := nil;
+        TJSONSchema.simpleTypes.object: Result := Schema.Importer.CreateClassType(ParentClassDefinition, EmptyStr);
         TJSONSchema.simpleTypes.string: Result := Schema.Importer.BuildInTypes[TBuildInType.StringType];
       end
     else if JSONSchema.IsRefStored then
@@ -47,8 +47,15 @@ var
 
   procedure DefineProperties(const ClassDefinition: TTypeClassDefinition; const JSONSchema: TJSONSchema.TJSONSchema);
   begin
-    for var PropertyDefinition in JSONSchema.properties.additionalProperties do
-      ClassDefinition.AddProperty(PropertyDefinition.Key, LoadSchemaType(ClassDefinition, PropertyDefinition.Value));
+    for var PropertySchema in JSONSchema.properties.additionalProperties do
+    begin
+      var PropertyType := LoadSchemaType(ClassDefinition, PropertySchema.Value);
+
+      var PropertyDefinition := ClassDefinition.AddProperty(PropertySchema.Key, PropertyType);
+
+      if PropertyType.IsClassDefinition then
+        PropertyType.Name := PropertyDefinition.Name + 'Type';
+    end;
   end;
 
 begin
