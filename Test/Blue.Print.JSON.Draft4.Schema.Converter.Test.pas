@@ -76,6 +76,10 @@ type
     procedure WhenTheMainSchemaHasPropertiesThisPropertiesMustBeLoadedInTheMainClass;
     [Test]
     procedure WhenTheSchemaDoesntHaveAnyDefinitionMustLoadThePropertyWithTheTValueType;
+    [Test]
+    procedure WhenTheReferenceIsOnlyASharpCharacterCantRaiseAnyError;
+    [Test]
+    procedure WhenTheReferenceIsOnlyASharpCharacterMustLoadTheReferenceToTheMainClassOfTheSchema;
   end;
 
 implementation
@@ -448,6 +452,24 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.StringType], GetMainClass.Classes[0].Properties[0].PropertyType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheReferenceIsOnlyASharpCharacterCantRaiseAnyError;
+begin
+  var PropertyDefintion := FDefinition.properties.AddProperties('MyProp');
+  PropertyDefintion.ref := '#';
+
+  Assert.WillNotRaise(ImportDefinition);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheReferenceIsOnlyASharpCharacterMustLoadTheReferenceToTheMainClassOfTheSchema;
+begin
+  var PropertyDefintion := FDefinition.properties.AddProperties('MyProp');
+  PropertyDefintion.ref := '#';
+
+  ImportDefinition;
+
+  Assert.AreEqual(GetMainClass.Name, GetMainClass.Properties[0].PropertyType.AsReferenceDefinition.Reference);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaDoesntHaveAnyDefinitionMustLoadThePropertyWithTheTValueType;
