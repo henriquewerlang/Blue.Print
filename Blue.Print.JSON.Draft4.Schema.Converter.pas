@@ -41,6 +41,14 @@ var
         Result := Schema.Importer.CreateReferenceType(ParentClassDefinition, JSONDefinition.id, MainClass.Name)
       else
         Result := Schema.Importer.CreateReferenceType(ParentClassDefinition, DefinitionsNamespace, JSONSchema.ref.Substring(Succ(JSONSchema.ref.LastDelimiter('/'))))
+    else if JSONSchema.IsEnumStored then
+    begin
+      var EnumerationDefinition := Schema.Importer.CreateEnumeratorType(ParentClassDefinition, EmptyStr);
+
+      EnumerationDefinition.Values.AddStrings(JSONSchema.enum);
+
+      Result := EnumerationDefinition;
+    end
     else
       Result := Schema.Importer.BuildInTypes[TBuildInType.ValueType];
   end;
@@ -66,17 +74,32 @@ begin
 
   Schema.Importer.AddNamespace(DefinitionsNamespace, DefinitionsNamespacePrefix);
 
+  DefineProperties(MainClass, JSONDefinition);
+
   for var SchemaDefinition in JSONDefinition.definitions.additionalProperties do
+  begin
+    var TypeDefinition: TTypeDefinition;
+
     if SchemaDefinition.Value.IsPropertiesStored then
     begin
       var ClassDefinition := Schema.Importer.CreateClassType(MainClass, SchemaDefinition.Key);
+      TypeDefinition := ClassDefinition;
 
       DefineProperties(ClassDefinition, SchemaDefinition.Value);
+    end
+    else
+    begin
+      TypeDefinition := LoadSchemaType(MainClass, SchemaDefinition.Value);
 
-      Schema.Importer.AddType(DefinitionsNamespace, ClassDefinition);
+      if TypeDefinition.IsEnumeratorDefinition then
+        TypeDefinition.Name := SchemaDefinition.Key;
+
+      if not TypeDefinition.IsEnumeratorDefinition then
+        TypeDefinition := Schema.Importer.CreateAliasType(MainClass, SchemaDefinition.Key, TypeDefinition);
     end;
 
-  DefineProperties(MainClass, JSONDefinition);
+    Schema.Importer.AddType(DefinitionsNamespace, TypeDefinition);
+  end;
 end;
 
 procedure TJSONDraft4SchemaConverter.LoadSchema(const Schema: TSchema);

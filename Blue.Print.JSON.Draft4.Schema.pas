@@ -249,7 +249,7 @@ type
       FExclusiveMaximumIsStored: Boolean;
       FExclusiveMinimumIsStored: Boolean;
       FUniqueItemsIsStored: Boolean;
-        Fref: String;
+      Fref: String;
 
       function GetMinLength: TJSONSchema.positiveIntegerDefault0;
       function GetAdditionalItems: TJSONSchema.TJSONSchema.AdditionalItemsProperty;

@@ -11,6 +11,7 @@ type
   TTypeArrayDefinition = class;
   TTypeClassDefinition = class;
   TTypeDefinition = class;
+  TTypeEnumerationDefinition = class;
   TTypeModuleDefinition = class;
   TTypePropertyDefinition = class;
   TTypeReferenceDefinition = class;
@@ -105,6 +106,7 @@ type
     function GetIsReferenceDefinition: Boolean;
     function GetIsUnitDefinition: Boolean;
     function GetParentModule: TTypeModuleDefinition;
+    function GetIsEnumeratorDefinition: Boolean;
   public
     function AsArrayDefinition: TTypeArrayDefinition;
     function AsClassDefinition: TTypeClassDefinition;
@@ -112,6 +114,7 @@ type
 
     property IsArrayDefinition: Boolean read GetIsArrayDefinition;
     property IsClassDefinition: Boolean read GetIsClassDefinition;
+    property IsEnumeratorDefinition: Boolean read GetIsEnumeratorDefinition;
     property IsReferenceDefinition: Boolean read GetIsReferenceDefinition;
     property IsUnitDefinition: Boolean read GetIsUnitDefinition;
     property ParentModule: TTypeModuleDefinition read GetParentModule write FParentModule;
@@ -1242,6 +1245,11 @@ end;
 function TTypeDefinition.GetIsClassDefinition: Boolean;
 begin
   Result := Self is TTypeClassDefinition;
+end;
+
+function TTypeDefinition.GetIsEnumeratorDefinition: Boolean;
+begin
+  Result := Self is TTypeEnumerationDefinition;
 end;
 
 function TTypeDefinition.GetIsReferenceDefinition: Boolean;

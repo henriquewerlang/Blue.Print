@@ -14,6 +14,7 @@ type
 
     function AddProperty(const JSONSchema: TJSONSchema.TJSONSchema; const Name: String; const SimpleType: TJSONSchema.simpleTypes): TJSONSchema.TJSONSchema;
     function AddPropertyWithTypeArray(const JSONSchema: TJSONSchema.TJSONSchema; const Name: String; const ArrayType: TJSONSchema.TJSONSchema): TJSONSchema.TJSONSchema;
+    function CreateArrayDefinition(const Name: String; const Items: TJSONSchema.TJSONSchema): TJSONSchema.TJSONSchema;
     function CreateClassDefinition(const Name: String): TJSONSchema.TJSONSchema;
     function CreateEnumerationDefinition(const Name: String; const Values: TArray<String>): TJSONSchema.TJSONSchema;
     function CreateSchema(const SimpleType: TJSONSchema.simpleTypes): TJSONSchema.TJSONSchema;
@@ -40,8 +41,6 @@ type
     procedure TheClassMustBeAppendedInTheMainClassHasExpected;
     [Test]
     procedure OnlyObjectsMustBeAppendedInTheClassesList;
-    [Test]
-    procedure OnlyClassWithPropertiesCanBeAppendedToTheClassList;
     [Test]
     procedure WhenTheClassDefinitionHaveAPropertyMustLoadThePropertyInTheClass;
     [Test]
@@ -86,6 +85,22 @@ type
     procedure WhenThePropertyTypeIsObjectMustCreateAClassDefinitionForThePropertyType;
     [Test]
     procedure WhenThePropertyTypeIsObjectTheClassDefinitionMustHaveThePropertyNamePlusTheTypeName;
+    [Test]
+    procedure WhenTheSchemaInTheDefinitionsIsAnArrayTypeMustCreateAnAliasToTheTypeCreated;
+    [Test]
+    procedure TheAliasNameMustBeTheFieldNameOfTheDefinition;
+    [Test]
+    procedure WhenDeclareTheAliasTypeMustLoadTheSchemaTypeInTheDefinitionHasExpected;
+    [Test]
+    procedure TheTypeAliasMustBeAppendedToTheTypesListInsideTheDefinitionsSchema;
+    [Test]
+    procedure WhenTheDefinitionHasTheEnumPropertyLoadedMustCreateTheEnumeratorInTheMainClass;
+    [Test]
+    procedure TheNameOfTheEnumeratorMustBeTheFieldNameOfTheDefinition;
+    [Test]
+    procedure MustLoadTheEnumeratorNamesInTheClass;
+    [Test]
+    procedure TheEnumerationCantCreateAnAliasFromTheType;
   end;
 
 implementation
@@ -106,6 +121,13 @@ begin
   Result.items.schema := ArrayType;
 end;
 
+function TJSONDraft4SchemaConverterTeste.CreateArrayDefinition(const Name: String; const Items: TJSONSchema.TJSONSchema): TJSONSchema.TJSONSchema;
+begin
+  Result := FDefinition.definitions.AddDefinitions(Name);
+  Result.items.schema := Items;
+  Result.&type.simpleTypes := TJSONSchema.simpleTypes.&array;
+end;
+
 function TJSONDraft4SchemaConverterTeste.CreateClassDefinition(const Name: String): TJSONSchema.TJSONSchema;
 begin
   Result := FDefinition.definitions.AddDefinitions(Name);
@@ -115,7 +137,6 @@ end;
 function TJSONDraft4SchemaConverterTeste.CreateEnumerationDefinition(const Name: String; const Values: TArray<String>): TJSONSchema.TJSONSchema;
 begin
   Result := FDefinition.definitions.AddDefinitions(Name);
-  Result.&type.simpleTypes := TJSONSchema.simpleTypes.&array;
   Result.enum := Values;
 end;
 
@@ -199,6 +220,18 @@ begin
   Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.IntegerType], GetMainClass.Classes[0].Properties[0].PropertyType.AsArrayDefinition.ArrayType);
 end;
 
+procedure TJSONDraft4SchemaConverterTeste.MustLoadTheEnumeratorNamesInTheClass;
+begin
+  CreateEnumerationDefinition('MyEnum', ['Enum1', 'Enum2', 'Enum3']);
+
+  ImportDefinition;
+
+  Assert.AreEqual(3, GetMainClass.Enumerations[0].Values.Count);
+  Assert.AreEqual('Enum1', GetMainClass.Enumerations[0].Values[0]);
+  Assert.AreEqual('Enum2', GetMainClass.Enumerations[0].Values[1]);
+  Assert.AreEqual('Enum3', GetMainClass.Enumerations[0].Values[2]);
+end;
+
 procedure TJSONDraft4SchemaConverterTeste.MustLoadTheReferenceInformation;
 begin
   var ClassDefinition: TTypeDefinition;
@@ -225,15 +258,6 @@ begin
   FImporter.TryFindType(FDefinition.id + '/definitions', 'MyClass', ClassDefinition);
 
   Assert.IsNotEmpty(ClassDefinition.AsClassDefinition.Properties[0].PropertyType.AsReferenceDefinition.Namespace);
-end;
-
-procedure TJSONDraft4SchemaConverterTeste.OnlyClassWithPropertiesCanBeAppendedToTheClassList;
-begin
-  CreateClassDefinition('MyClass');
-
-  ImportDefinition;
-
-  Assert.AreEqual(0, Length(GetMainClass.Classes));
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.OnlyObjectsMustBeAppendedInTheClassesList;
@@ -292,6 +316,15 @@ begin
   FDefinition.Free;
 end;
 
+procedure TJSONDraft4SchemaConverterTeste.TheAliasNameMustBeTheFieldNameOfTheDefinition;
+begin
+  CreateArrayDefinition('MyArray', CreateSchema(TJSONSchema.simpleTypes.integer));
+
+  ImportDefinition;
+
+  Assert.AreEqual('MyArray', GetMainClass.Alias[0].Name);
+end;
+
 procedure TJSONDraft4SchemaConverterTeste.TheClassDeclarationMustBeInsideTheDefsSchemaNamespace;
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
@@ -326,9 +359,27 @@ begin
   Assert.AreEqual('my/defs', FImporter.GetPrefixName(FDefinition.id + '/definitions'));
 end;
 
+procedure TJSONDraft4SchemaConverterTeste.TheEnumerationCantCreateAnAliasFromTheType;
+begin
+  CreateEnumerationDefinition('MyEnum', ['Enum1', 'Enum2', 'Enum3']);
+
+  ImportDefinition;
+
+  Assert.AreEqual(0, Length(GetMainClass.Alias));
+end;
+
 procedure TJSONDraft4SchemaConverterTeste.TheInitializationSectionMustLoadTheConverterInTheSchemaConverterClassList;
 begin
   Assert.IsNotNil(TSchemaImporter.Converters[TSchemaType.JSONDraft4]);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.TheNameOfTheEnumeratorMustBeTheFieldNameOfTheDefinition;
+begin
+  CreateEnumerationDefinition('MyEnum', ['Enum']);
+
+  ImportDefinition;
+
+  Assert.AreEqual('MyEnum', GetMainClass.Enumerations[0].Name);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.TheNamespaceInTheReferenceMustBeTheIdOfTheJSONSchemaPlusTheDefinitionsName;
@@ -354,6 +405,26 @@ begin
   ImportDefinition;
 
   Assert.AreEqual('MyProp', GetMainClass.Classes[0].Properties[0].Name);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.TheTypeAliasMustBeAppendedToTheTypesListInsideTheDefinitionsSchema;
+begin
+  var TypeDefinition: TTypeDefinition;
+
+  CreateArrayDefinition('MyArray', CreateSchema(TJSONSchema.simpleTypes.integer));
+
+  ImportDefinition;
+
+  Assert.IsTrue(FImporter.TryFindType(FDefinition.id + '/definitions', 'MyArray', TypeDefinition));
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenDeclareTheAliasTypeMustLoadTheSchemaTypeInTheDefinitionHasExpected;
+begin
+  CreateArrayDefinition('MyArray', CreateSchema(TJSONSchema.simpleTypes.integer));
+
+  ImportDefinition;
+
+  Assert.IsTrue(GetMainClass.Alias[0].TypeAlias.IsArrayDefinition);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenLoadTheSchemaMustLoadTheIdFieldInTheNamespaceOfTheSchemaClass;
@@ -394,6 +465,15 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(1, Length(GetMainClass.Classes[0].Properties));
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheDefinitionHasTheEnumPropertyLoadedMustCreateTheEnumeratorInTheMainClass;
+begin
+  CreateEnumerationDefinition('MyEnum', ['Enum']);
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetMainClass.Enumerations));
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheMainSchemaHasPropertiesThisPropertiesMustBeLoadedInTheMainClass;
@@ -516,6 +596,15 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.ValueType], GetMainClass.Properties[0].PropertyType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaInTheDefinitionsIsAnArrayTypeMustCreateAnAliasToTheTypeCreated;
+begin
+  CreateArrayDefinition('MyArray', CreateSchema(TJSONSchema.simpleTypes.integer));
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetMainClass.Alias));
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaIsAReferenceMustCreateTheReferenceType;
