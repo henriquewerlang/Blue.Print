@@ -236,6 +236,8 @@ type
     procedure MustLoadTheForwardClassDeclarationInTheUnitDeclaration;
     [Test]
     procedure TheAliasDeclarationMustBeLoadedAfterTheForwardClassDeclaration;
+    [Test]
+    procedure WhenAnArrayIsDeclaredTheArrayTypeMustBeFromSystemAndTheArrayTypeItemMustHaveTheFullPathToTheTypeName;
   end;
 
   [TestFixture]
@@ -1388,6 +1390,42 @@ begin
     FConfiguration.Units[0]);
 end;
 
+procedure TSchemaImporterTest.WhenAnArrayIsDeclaredTheArrayTypeMustBeFromSystemAndTheArrayTypeItemMustHaveTheFullPathToTheTypeName;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      var ArrayType := FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]);
+
+      FImporter.CreateAliasType(MainClass, 'MyArray', ArrayType);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        MyArray = System.TArray<System.Integer>;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
 procedure TSchemaImporterTest.WhenAnUnitConfigurationHasTheSameNameFromAnotherConfigurationMustRaiseAnError;
 begin
   FConfiguration.Units[0].Name := 'Unit1';
@@ -1705,14 +1743,14 @@ begin
 
       MainModule = class
       private
-        FMyProperty: System.TArray<SimpleType>;
-        FMyProperty2: System.TArray<SimpleType>;
+        FMyProperty: System.TArray<System.SimpleType>;
+        FMyProperty2: System.TArray<System.SimpleType>;
       public
         function AddMyProperty: System.SimpleType;
         function AddMyProperty2: System.SimpleType;
       published
-        property MyProperty: System.TArray<SimpleType> read FMyProperty write FMyProperty;
-        property MyProperty2: System.TArray<SimpleType> read FMyProperty2 write FMyProperty2;
+        property MyProperty: System.TArray<System.SimpleType> read FMyProperty write FMyProperty;
+        property MyProperty2: System.TArray<System.SimpleType> read FMyProperty2 write FMyProperty2;
       end;
 
     implementation
@@ -2426,9 +2464,9 @@ begin
 
       MainModule = class
       private
-        FMyProperty: System.TArray<SimpleType>;
+        FMyProperty: System.TArray<System.SimpleType>;
       published
-        property MyProperty: System.TArray<SimpleType> read FMyProperty write FMyProperty;
+        property MyProperty: System.TArray<System.SimpleType> read FMyProperty write FMyProperty;
       end;
 
     implementation
