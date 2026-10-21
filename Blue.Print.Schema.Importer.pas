@@ -146,8 +146,16 @@ type
     property Reference: String read FReference;
   end;
 
+  TTypeAliasDefinition = class(TTypeDefinition)
+  private
+    FTypeAlias: TTypeDefinition;
+  public
+    property TypeAlias: TTypeDefinition read FTypeAlias;
+  end;
+
   TTypeModuleDefinition = class(TTypeDefinition)
   private
+    FAlias: TArray<TTypeAliasDefinition>;
     FClasses: TArray<TTypeClassDefinition>;
     FEnumerations: TArray<TTypeEnumerationDefinition>;
     FTypes: TArray<TTypeDefinition>;
@@ -158,6 +166,7 @@ type
 
     procedure AddType(const TypeDefinition: TTypeDefinition);
 
+    property Alias: TArray<TTypeAliasDefinition> read FAlias;
     property Classes: TArray<TTypeClassDefinition> read FClasses;
     property Enumerations: TArray<TTypeEnumerationDefinition> read FEnumerations;
     property HasTypes: Boolean read GetHasTypes;
@@ -271,6 +280,7 @@ type
     class function CreateStringListForItems: TStringList;
 
     function CreateTypeDefinition<T: TTypeDefinition, constructor>(const ParentModule: TTypeModuleDefinition): T;
+    function CreateTypeDefinitionWithName<T: TTypeDefinition, constructor>(const ParentModule: TTypeModuleDefinition; const Name: String): T;
     function FormatTypeName(const Namespace, TypeName: String): String;
     function GetBuildInTypes(const BuildInType: TBuildInType): TTypeDefinition;
 
@@ -283,6 +293,7 @@ type
 
     destructor Destroy; override;
 
+    function CreateAliasType(const ParentModule: TTypeModuleDefinition; const Name: String; const TypeAlias: TTypeDefinition): TTypeAliasDefinition;
     function CreateArrayType(const ParentModule: TTypeModuleDefinition; const ArrayType: TTypeDefinition): TTypeArrayDefinition;
     function CreateClassType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeClassDefinition;
     function CreateEnumeratorType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeEnumerationDefinition;
@@ -333,6 +344,14 @@ begin
   FUnits := TObjectDictionary<String, TTypeUnitDefinition>.Create([doOwnsValues]);
 end;
 
+function TSchemaImporter.CreateAliasType(const ParentModule: TTypeModuleDefinition; const Name: String; const TypeAlias: TTypeDefinition): TTypeAliasDefinition;
+begin
+  Result := CreateTypeDefinitionWithName<TTypeAliasDefinition>(ParentModule, Name);
+  Result.FTypeAlias := TypeAlias;
+
+  ParentModule.FAlias := ParentModule.FAlias + [Result];
+end;
+
 function TSchemaImporter.CreateArrayType(const ParentModule: TTypeModuleDefinition; const ArrayType: TTypeDefinition): TTypeArrayDefinition;
 begin
   Result := CreateTypeDefinition<TTypeArrayDefinition>(ParentModule);
@@ -341,16 +360,14 @@ end;
 
 function TSchemaImporter.CreateClassType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeClassDefinition;
 begin
-  Result := CreateTypeDefinition<TTypeClassDefinition>(ParentModule);
-  Result.FName := Name;
+  Result := CreateTypeDefinitionWithName<TTypeClassDefinition>(ParentModule, Name);
 
   ParentModule.FClasses := ParentModule.FClasses + [Result];
 end;
 
 function TSchemaImporter.CreateEnumeratorType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeEnumerationDefinition;
 begin
-  Result := CreateTypeDefinition<TTypeEnumerationDefinition>(ParentModule);
-  Result.Name := Name;
+  Result := CreateTypeDefinitionWithName<TTypeEnumerationDefinition>(ParentModule, Name);
 
   ParentModule.FEnumerations := ParentModule.FEnumerations + [Result];
 end;
@@ -378,6 +395,12 @@ begin
   Result.FParentModule := ParentModule;
 
   ParentModule.AddType(Result);
+end;
+
+function TSchemaImporter.CreateTypeDefinitionWithName<T>(const ParentModule: TTypeModuleDefinition; const Name: String): T;
+begin
+  Result := CreateTypeDefinition<T>(ParentModule);
+  Result.Name := Name;
 end;
 
 destructor TSchemaImporter.Destroy;
@@ -807,6 +830,19 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       end;
     end;
 
+    procedure GenerateAliasDeclaration(const IndentationLevel: Integer; const ClassDefinition: TTypeClassDefinition);
+    begin
+      if Assigned(ClassDefinition.Alias) then
+      begin
+        var CurrentIndentation := Succ(IndentationLevel);
+
+        for var AliasType in ClassDefinition.Alias do
+          AddLine(CurrentIndentation, '%s = %s;', [AliasType.Name, FormatFullTypeName(AliasType.TypeAlias, False)]);
+
+        AddWhiteLine;
+      end;
+    end;
+
     procedure GenerateModuleDeclaration(const IndentationLevel: Integer; const ModuleDefinition: TTypeModuleDefinition);
     begin
       for var ClassDefinition in ModuleDefinition.Classes do
@@ -820,6 +856,8 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
           AddLine(CurrentIndentation, 'public type');
 
           GenerateEnumerationsDeclaration(CurrentIndentation, ClassDefinition);
+
+          GenerateAliasDeclaration(CurrentIndentation, ClassDefinition);
 
           GenerateModuleDeclaration(CurrentIndentation, ClassDefinition);
 
@@ -1255,7 +1293,7 @@ end;
 
 function TTypeModuleDefinition.GetHasTypes: Boolean;
 begin
-  Result := Assigned(Classes) or Assigned(Enumerations);
+  Result := Assigned(Classes) or Assigned(Enumerations) or Assigned(Alias);
 end;
 
 { TTypeEnumerationDefinition }

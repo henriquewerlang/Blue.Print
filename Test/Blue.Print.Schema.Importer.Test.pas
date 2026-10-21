@@ -214,6 +214,22 @@ type
     procedure ThePublicTypeSectionMustBeDeclaredBeforeThePrivateSection;
     [Test]
     procedure WhenImportTheSchemaWithAFileConfigurationMustLoadTheConfigurationAndImportTheSchemaHasExpected;
+    [Test]
+    procedure WhenCreateTheTypeAliasMustReturnTheClassLoaded;
+    [Test]
+    procedure WhenCreateTheTypeAliasMustLoadTheNameInTheType;
+    [Test]
+    procedure WhenCreateTheTypeAliasMustLoadParentModule;
+    [Test]
+    procedure WhenCreateTheTypeAliasMustLoadTypeAlias;
+    [Test]
+    procedure WhenCreateTheTypeAliasMustAppendTheTypeInTheTypesListFromParentModule;
+    [Test]
+    procedure WhenCreateTheTypeAliasMustAppendTheAliasInTheAliasListFromParentModule;
+    [Test]
+    procedure WhenTheClassHasAnAliasDeclaredMustBuildTheUnitWithTheDefinitionHasExpected;
+    [Test]
+    procedure TheAliasTypeMustBeDeclaredWithTheFullTypeName;
   end;
 
   [TestFixture]
@@ -887,6 +903,40 @@ begin
   inherited;
 end;
 
+procedure TSchemaImporterTest.TheAliasTypeMustBeDeclaredWithTheFullTypeName;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      FImporter.CreateAliasType(MainClass, 'Alias', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      FImporter.CreateAliasType(MainClass, 'Alias2', FImporter.BuildInTypes[TBuildInType.ValueType]);
+      FImporter.CreateAliasType(MainClass, 'Alias3', MainClass);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      public type
+        Alias = System.Integer;
+        Alias2 = System.Rtti.TValue;
+        Alias3 = MyUnit.MainModule;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
 procedure TSchemaImporterTest.TheBuildInTypeMustBeLoadedWhenImportTheSchemaSpecification;
 begin
   FImporter.Import(FConfiguration);
@@ -1264,6 +1314,77 @@ begin
   ParentModule.Free;
 end;
 
+procedure TSchemaImporterTest.WhenCreateTheTypeAliasMustAppendTheAliasInTheAliasListFromParentModule;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FImporter.CreateAliasType(ParentModule, EmptyStr, nil);
+
+  FImporter.CreateAliasType(ParentModule, EmptyStr, nil);
+
+  FImporter.CreateAliasType(ParentModule, EmptyStr, nil);
+
+  Assert.AreEqual(3, Length(ParentModule.Alias));
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateTheTypeAliasMustAppendTheTypeInTheTypesListFromParentModule;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  FImporter.CreateAliasType(ParentModule, EmptyStr, nil);
+
+  Assert.AreEqual(1, Length(ParentModule.Types));
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateTheTypeAliasMustLoadParentModule;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  var Alias := FImporter.CreateAliasType(ParentModule, 'Alias', nil);
+
+  Assert.AreEqual(ParentModule, Alias.ParentModule);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateTheTypeAliasMustLoadTheNameInTheType;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  var Alias := FImporter.CreateAliasType(ParentModule, 'Alias', nil);
+
+  Assert.AreEqual('Alias', Alias.Name);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateTheTypeAliasMustLoadTypeAlias;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+  var AliasType := FImporter.CreateClassType(ParentModule, 'MyClass');
+
+  var Alias := FImporter.CreateAliasType(ParentModule, 'Alias', AliasType);
+
+  Assert.AreEqual(AliasType, Alias.TypeAlias);
+
+  ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateTheTypeAliasMustReturnTheClassLoaded;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  var Alias := FImporter.CreateAliasType(ParentModule, EmptyStr, nil);
+
+  Assert.IsNotNil(Alias);
+
+  ParentModule.Free;
+end;
+
 procedure TSchemaImporterTest.WhenCreateTheTypeReferenceMustReturnTheClassCreated;
 begin
   var MainClass := TTypeClassDefinition.Create;
@@ -1459,6 +1580,40 @@ begin
         FMyProperty: System.Integer;
       published
         property MyProperty: System.Integer read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenTheClassHasAnAliasDeclaredMustBuildTheUnitWithTheDefinitionHasExpected;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      FImporter.CreateAliasType(MainClass, 'Alias', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      FImporter.CreateAliasType(MainClass, 'Alias2', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      FImporter.CreateAliasType(MainClass, 'Alias3', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    type
+      MainModule = class
+      public type
+        Alias = System.Integer;
+        Alias2 = System.Integer;
+        Alias3 = System.Integer;
       end;
 
     implementation
