@@ -54,12 +54,25 @@ var
   end;
 
   procedure DefineProperties(const ClassDefinition: TTypeClassDefinition; const JSONSchema: TJSONSchema.TJSONSchema);
+  var
+    PropertyDefinition: TTypePropertyDefinition;
+
+    function IsRequired: Boolean;
+    begin
+      for var Required in JSONSchema.required do
+        if Required = PropertyDefinition.Name then
+          Exit(True);
+
+      Result := False;
+    end;
+
   begin
     for var PropertySchema in JSONSchema.properties.additionalProperties do
     begin
       var PropertyType := LoadSchemaType(ClassDefinition, PropertySchema.Value);
 
-      var PropertyDefinition := ClassDefinition.AddProperty(PropertySchema.Key, PropertyType);
+      PropertyDefinition := ClassDefinition.AddProperty(PropertySchema.Key, PropertyType);
+      PropertyDefinition.Optional := not IsRequired;
 
       if PropertyType.IsClassDefinition then
         PropertyType.Name := PropertyDefinition.Name + 'Type';
