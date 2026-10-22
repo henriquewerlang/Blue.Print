@@ -256,6 +256,8 @@ type
     procedure WhenDeclareThePropertySetFunctionMustFormatTheNameToFixTheLowerCaseFirstCharactere;
     [Test]
     procedure WhenDeclareThePropertyAddFunctionMustFormatTheNameToFixTheLowerCaseFirstCharactere;
+    [Test]
+    procedure WhenThePropertyTypeIsAReferenceToAnArrayWithAClassDefinitionTypeMustLoadTheAddFunctionHasExpected;
   end;
 
   [TestFixture]
@@ -2808,6 +2810,60 @@ begin
   ParentModule.Free;
 
   SimpleType.Free;
+end;
+
+procedure TSchemaImporterTest.WhenThePropertyTypeIsAReferenceToAnArrayWithAClassDefinitionTypeMustLoadTheAddFunctionHasExpected;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      if MainClass.Name = 'MainModule' then
+      begin
+        FImporter.AddType('My Namespace', FImporter.CreateAliasType(MainClass, 'MyArray', FImporter.CreateArrayType(MainClass, MainClass)));
+
+        MainClass.AddProperty('MyProperty', FImporter.CreateReferenceType(MainClass, 'My Namespace', 'MyArray'));
+      end;
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        MyArray = System.TArray<MyUnit.MainModule>;
+      private
+        FMyProperty: MyUnit.MainModule.MyArray;
+      public
+        function AddMyProperty: MyUnit.MainModule;
+      published
+        property MyProperty: MyUnit.MainModule.MyArray read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    function MainModule.AddMyProperty: MyUnit.MainModule;
+    begin
+      Result := MyUnit.MainModule.Create;
+
+      FMyProperty := FMyProperty + [Result];
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenTheSchemaHasEnumerationsMustLoadTheScopedEnumsCompilerDirective;
