@@ -193,6 +193,7 @@ type
   TTypeClassDefinition = class(TTypeModuleDefinition)
   private
     FProperties: TArray<TTypePropertyDefinition>;
+    FFlat: Boolean;
 
     function GetHasProperties: Boolean;
   public
@@ -200,6 +201,7 @@ type
 
     function AddProperty(const Name: String; const PropertyType: TTypeDefinition): TTypePropertyDefinition;
 
+    property Flat: Boolean read FFlat write FFlat;
     property HasProperties: Boolean read GetHasProperties;
     property Properties: TArray<TTypePropertyDefinition> read FProperties write FProperties;
   end;
@@ -1019,6 +1021,9 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
       for var ClassDefinition in ModuleDefinition.Classes do
       begin
+        if ClassDefinition.Flat then
+          AddLine(CurrentIndentation, '[Flat]');
+
         AddLine(CurrentIndentation, '%s = class', [FormatClassName(ClassDefinition)]);
 
         if ClassDefinition.HasTypes then
@@ -1526,7 +1531,7 @@ end;
 
 procedure TTypeEnumerationDefinition.AddEnumeration(const Value: String);
 begin
-  FValues.Add(Value);
+  Values.Add(Value);
 end;
 
 destructor TTypeEnumerationDefinition.Destroy;

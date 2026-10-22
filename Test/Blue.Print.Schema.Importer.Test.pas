@@ -263,6 +263,8 @@ type
     procedure WhenThePropertyHasAnArrayTypeOfAConcretTypeMustCreateTheAddProcedureWithAParameterOsTheArrayType;
     [Test]
     procedure NeedToGroupTheAddFunctionsAndTheIsStoredFunctions;
+    [Test]
+    procedure WhenAClassTypeDefinitionIsFlatMustAppendTheFlatAttributeInTheClassDeclaration;
   end;
 
   [TestFixture]
@@ -875,17 +877,17 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
 
-      procedure AddClass(const Namespace, Name: String);
+      procedure AddClass(const Name: String);
       begin
         FImporter.CreateClassType(MainClass, Name);
       end;
 
     begin
-      AddClass('My Namespace', 'TMyClass');
+      AddClass('TMyClass');
 
-      AddClass('My Namespace', 'TMyClass2');
+      AddClass('TMyClass2');
 
-      AddClass('My Namespace', 'TMyClass3');
+      AddClass('TMyClass3');
     end;
 
   FImporter.Import(FConfiguration);
@@ -1140,17 +1142,17 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
 
-      function AddClass(const Namespace, Name: String): TTypeClassDefinition;
+      function AddClass(const Name: String): TTypeClassDefinition;
       begin
         Result := FImporter.CreateClassType(MainClass, Name);
       end;
 
     begin
-      AddClass('My Namespace', 'TMyClass');
+      AddClass('TMyClass');
 
-      FImporter.CreateAliasType(MainClass, 'MyAlias', AddClass('My Namespace', 'TMyClass2'));
+      FImporter.CreateAliasType(MainClass, 'MyAlias', AddClass('TMyClass2'));
 
-      AddClass('My Namespace', 'TMyClass3');
+      AddClass('TMyClass3');
     end;
 
   FImporter.Import(FConfiguration);
@@ -1298,13 +1300,13 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
 
-      function AddClass(const Namespace, Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
+      function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
       begin
         Result := FImporter.CreateClassType(Parent, Name);
       end;
 
     begin
-      AddClass('My Namespace', 'TMyClass3', AddClass('My Namespace', 'TMyClass2', AddClass('My Namespace', 'TMyClass', MainClass)));
+      AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', MainClass)));
     end;
 
   FImporter.Import(FConfiguration);
@@ -1487,17 +1489,17 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
 
-      procedure AddClass(const Namespace, Name: String);
+      procedure AddClass(const Name: String);
       begin
         FImporter.CreateClassType(MainClass, Name);
       end;
 
     begin
-      AddClass('My Namespace', 'TMyClass');
+      AddClass('TMyClass');
 
-      AddClass('My Namespace', 'TMyClass2');
+      AddClass('TMyClass2');
 
-      AddClass('My Namespace', 'TMyClass3');
+      AddClass('TMyClass3');
     end;
 
   FImporter.Import(FConfiguration);
@@ -1533,6 +1535,35 @@ begin
 
     end.
 
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenAClassTypeDefinitionIsFlatMustAppendTheFlatAttributeInTheClassDeclaration;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      FImporter.CreateClassType(MainClass, 'MyClass').Flat := True;
+
+      FImporter.CreateClassType(MainClass, 'MyClass2');
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+      MainModule = class
+      public type
+        MyClass = class;
+        MyClass2 = class;
+
+        [Flat]
+        MyClass = class
+        end;
+
+        MyClass2 = class
+        end;
     ''',
     FConfiguration.Units[0]);
 end;

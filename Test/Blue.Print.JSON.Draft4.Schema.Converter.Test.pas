@@ -153,6 +153,12 @@ type
     procedure WhenTheSchemaOfOneOfIsntAReferenceMustLoadThePropertyNameStartingWithAnyOfName;
     [Test]
     procedure WhenTheOneOfReferenceIsTheSharpMustLoadTheMainClassNameInThePropertyName;
+    [Test]
+    procedure WhenCreateAnAllOfClassMustMarkTheClassHasFlat;
+    [Test]
+    procedure WhenCreateAnAnyOfClassMustMarkTheClassHasFlat;
+    [Test]
+    procedure WhenCreateAnOneOfClassMustMarkTheClassHasFlat;
   end;
 
 implementation
@@ -598,6 +604,39 @@ begin
   ImportDefinition;
 
   Assert.IsTrue(FImporter.TryFindType(FDefinition.id + '/definitions', 'MyArray', TypeDefinition));
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenCreateAnAllOfClassMustMarkTheClassHasFlat;
+begin
+  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+
+  PropertySchema.AddAllOf;
+
+  ImportDefinition;
+
+  Assert.IsTrue(GetMainClass.Properties[0].PropertyType.AsClassDefinition.Flat);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenCreateAnAnyOfClassMustMarkTheClassHasFlat;
+begin
+  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+
+  PropertySchema.AddAnyOf;
+
+  ImportDefinition;
+
+  Assert.IsTrue(GetMainClass.Properties[0].PropertyType.AsClassDefinition.Flat);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenCreateAnOneOfClassMustMarkTheClassHasFlat;
+begin
+  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+
+  PropertySchema.AddOneOf;
+
+  ImportDefinition;
+
+  Assert.IsTrue(GetMainClass.Properties[0].PropertyType.AsClassDefinition.Flat);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenDeclareAClassInTheSchemaTheClassNameMustBeLoadedWithTheNameInTheDefinitionsField;
