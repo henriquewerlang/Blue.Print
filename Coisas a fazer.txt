@@ -20,8 +20,6 @@ Quando adicionar um tipo do sistema, tem que declarar o tipo com o nome antes, p
 Tem que adicionar os uses do tipo quando não for da própria unit, como é o caso do TValue, que tem que adicionar a unit da RTTI.
 * Vale para os tipos de assinatura, ou do próprio Blue Print.
 
-A units com os tipos internos não podem ser geradas pelo gerador de units.
-
 Permitir na configuração adicionar propriedades a uma classe, é o caso do $ref do esquema do JSON que não tem na definição
 
-Tem que mudar a criação dos tipos e deixar tudo centralizado no importador, para obrigar a ter o "ParentModule", e o nome do tipo
+Tem que adicionar o FlatAttribute para as classes do JSON, do allOf, oneOf, anyOf

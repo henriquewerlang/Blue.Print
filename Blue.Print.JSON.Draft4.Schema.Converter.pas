@@ -52,7 +52,10 @@ var
 
     function GetReferenceSchemaName(JSONSchema: TJSONSchema.TJSONSchema): String;
     begin
-      Result := JSONSchema.ref.Substring(Succ(JSONSchema.ref.LastDelimiter('/')));
+      if JSONSchema.ref = '#' then
+        Result := MainClass.Name
+      else
+        Result := JSONSchema.ref.Substring(Succ(JSONSchema.ref.LastDelimiter('/')));
     end;
 
     procedure LoadSchemaArray(const SchemaArray: TJSONSchema.schemaArray; const PropertyNamePrefix: String);
@@ -86,6 +89,10 @@ var
 
     if JSONSchema.IsAllOfStored then
       LoadSchemaArray(JSONSchema.allOf, 'AllOf')
+    else if JSONSchema.IsAnyOfStored then
+      LoadSchemaArray(JSONSchema.anyOf, 'AnyOf')
+    else if JSONSchema.IsOneOfStored then
+      LoadSchemaArray(JSONSchema.oneOf, 'OneOf')
     else if JSONSchema.IsPropertiesStored then
     begin
       Result := ParentClassDefinition;
@@ -104,7 +111,7 @@ var
       end
     else if JSONSchema.IsRefStored then
       if JSONSchema.ref = '#' then
-        Result := Schema.Importer.CreateReferenceType(ParentClassDefinition, JSONDefinition.id, MainClass.Name)
+        Result := Schema.Importer.CreateReferenceType(ParentClassDefinition, JSONDefinition.id, GetReferenceSchemaName(JSONSchema))
       else
         Result := Schema.Importer.CreateReferenceType(ParentClassDefinition, DefinitionsNamespace, GetReferenceSchemaName(JSONSchema))
     else if JSONSchema.IsEnumStored then
