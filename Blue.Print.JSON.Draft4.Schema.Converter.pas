@@ -75,7 +75,7 @@ var
       PropertyDefinition.Optional := not IsRequired;
 
       if PropertyType.IsClassDefinition then
-        PropertyType.Name := PropertyDefinition.Name + 'Type';
+        PropertyType.Name := Format('.%sType', [PropertyDefinition.Name]);
     end;
   end;
 
