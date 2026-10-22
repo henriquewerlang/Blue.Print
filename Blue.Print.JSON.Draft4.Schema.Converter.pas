@@ -23,10 +23,76 @@ var
   JSONDefinition: TJSONSchema.TJSONSchema;
 
   function LoadSchemaType(const ParentClassDefinition: TTypeClassDefinition; const JSONSchema: TJSONSchema.TJSONSchema): TTypeDefinition;
+
+    procedure DefineProperties(const ClassDefinition: TTypeClassDefinition; const JSONSchema: TJSONSchema.TJSONSchema);
+    var
+      PropertyDefinition: TTypePropertyDefinition;
+
+      function IsRequired: Boolean;
+      begin
+        for var Required in JSONSchema.required do
+          if Required = PropertyDefinition.Name then
+            Exit(True);
+
+        Result := False;
+      end;
+
+    begin
+      for var PropertySchema in JSONSchema.properties.additionalProperties do
+      begin
+        var PropertyType := LoadSchemaType(ClassDefinition, PropertySchema.Value);
+
+        PropertyDefinition := ClassDefinition.AddProperty(PropertySchema.Key, PropertyType);
+        PropertyDefinition.Optional := not IsRequired;
+
+        if PropertyType.IsClassDefinition then
+          PropertyType.Name := Format('.%sType', [PropertyDefinition.Name]);
+      end;
+    end;
+
+    function GetReferenceSchemaName(JSONSchema: TJSONSchema.TJSONSchema): String;
+    begin
+      Result := JSONSchema.ref.Substring(Succ(JSONSchema.ref.LastDelimiter('/')));
+    end;
+
+    procedure LoadSchemaArray(const SchemaArray: TJSONSchema.schemaArray; const PropertyNamePrefix: String);
+    var
+      SchemaClassDefinition: TTypeClassDefinition;
+      SchemaItem: TJSONSchema.TJSONSchema;
+
+      function GetPropertyName: String;
+      begin
+        if SchemaItem.IsRefStored then
+          Result := GetReferenceSchemaName(SchemaItem)
+        else
+          Result := PropertyNamePrefix + Succ(Length(SchemaClassDefinition.Properties)).ToString;
+      end;
+
+    begin
+      if (Length(SchemaArray) = 1) and SchemaArray[0].IsRefStored then
+        Result := LoadSchemaType(ParentClassDefinition, SchemaArray[0])
+      else
+      begin
+        SchemaClassDefinition := Schema.Importer.CreateClassType(ParentClassDefinition, EmptyStr);
+        Result := SchemaClassDefinition;
+
+        for SchemaItem in SchemaArray do
+          SchemaClassDefinition.AddProperty(GetPropertyName, LoadSchemaType(SchemaClassDefinition, SchemaItem));
+      end
+    end;
+
   begin
     Result := nil;
 
-    if JSONSchema.IsTypeStored then
+    if JSONSchema.IsAllOfStored then
+      LoadSchemaArray(JSONSchema.allOf, 'AllOf')
+    else if JSONSchema.IsPropertiesStored then
+    begin
+      Result := ParentClassDefinition;
+
+      DefineProperties(ParentClassDefinition, JSONSchema);
+    end
+    else if JSONSchema.IsTypeStored then
       case JSONSchema.&type.simpleTypes of
         TJSONSchema.simpleTypes.array: Result := Schema.Importer.CreateArrayType(ParentClassDefinition, LoadSchemaType(ParentClassDefinition, JSONSchema.items.schema));
         TJSONSchema.simpleTypes.boolean: Result := Schema.Importer.BuildInTypes[TBuildInType.BooleanType];
@@ -40,7 +106,7 @@ var
       if JSONSchema.ref = '#' then
         Result := Schema.Importer.CreateReferenceType(ParentClassDefinition, JSONDefinition.id, MainClass.Name)
       else
-        Result := Schema.Importer.CreateReferenceType(ParentClassDefinition, DefinitionsNamespace, JSONSchema.ref.Substring(Succ(JSONSchema.ref.LastDelimiter('/'))))
+        Result := Schema.Importer.CreateReferenceType(ParentClassDefinition, DefinitionsNamespace, GetReferenceSchemaName(JSONSchema))
     else if JSONSchema.IsEnumStored then
     begin
       var EnumerationDefinition := Schema.Importer.CreateEnumeratorType(ParentClassDefinition, EmptyStr);
@@ -53,32 +119,6 @@ var
       Result := Schema.Importer.BuildInTypes[TBuildInType.ValueType];
   end;
 
-  procedure DefineProperties(const ClassDefinition: TTypeClassDefinition; const JSONSchema: TJSONSchema.TJSONSchema);
-  var
-    PropertyDefinition: TTypePropertyDefinition;
-
-    function IsRequired: Boolean;
-    begin
-      for var Required in JSONSchema.required do
-        if Required = PropertyDefinition.Name then
-          Exit(True);
-
-      Result := False;
-    end;
-
-  begin
-    for var PropertySchema in JSONSchema.properties.additionalProperties do
-    begin
-      var PropertyType := LoadSchemaType(ClassDefinition, PropertySchema.Value);
-
-      PropertyDefinition := ClassDefinition.AddProperty(PropertySchema.Key, PropertyType);
-      PropertyDefinition.Optional := not IsRequired;
-
-      if PropertyType.IsClassDefinition then
-        PropertyType.Name := Format('.%sType', [PropertyDefinition.Name]);
-    end;
-  end;
-
 begin
   JSONDefinition := Schema.SchemaValue.AsType<TJSONSchema.TJSONSchema>;
 
@@ -87,29 +127,21 @@ begin
 
   Schema.Importer.AddNamespace(DefinitionsNamespace, DefinitionsNamespacePrefix);
 
-  DefineProperties(MainClass, JSONDefinition);
+  LoadSchemaType(MainClass, JSONDefinition);
 
   for var SchemaDefinition in JSONDefinition.definitions.additionalProperties do
   begin
-    var TypeDefinition: TTypeDefinition;
+    var ParentClass := MainClass;
 
     if SchemaDefinition.Value.IsPropertiesStored then
-    begin
-      var ClassDefinition := Schema.Importer.CreateClassType(MainClass, SchemaDefinition.Key);
-      TypeDefinition := ClassDefinition;
+      ParentClass := Schema.Importer.CreateClassType(MainClass, EmptyStr);
 
-      DefineProperties(ClassDefinition, SchemaDefinition.Value);
-    end
+    var TypeDefinition := LoadSchemaType(ParentClass, SchemaDefinition.Value);
+
+    if TypeDefinition.IsEnumeratorDefinition or TypeDefinition.IsClassDefinition then
+      TypeDefinition.Name := SchemaDefinition.Key
     else
-    begin
-      TypeDefinition := LoadSchemaType(MainClass, SchemaDefinition.Value);
-
-      if TypeDefinition.IsEnumeratorDefinition then
-        TypeDefinition.Name := SchemaDefinition.Key;
-
-      if not TypeDefinition.IsEnumeratorDefinition then
-        TypeDefinition := Schema.Importer.CreateAliasType(MainClass, SchemaDefinition.Key, TypeDefinition);
-    end;
+      TypeDefinition := Schema.Importer.CreateAliasType(ParentClass, SchemaDefinition.Key, TypeDefinition);
 
     Schema.Importer.AddType(DefinitionsNamespace, TypeDefinition);
   end;

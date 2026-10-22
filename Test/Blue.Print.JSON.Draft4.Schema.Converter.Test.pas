@@ -107,6 +107,22 @@ type
     procedure AllPropertiesMustBeOptional;
     [Test]
     procedure IfThePropertyIsInTheRequiredListCantBeOptional;
+    [Test]
+    procedure WhenDeclareAClassInTheSchemaTheClassNameMustBeLoadedWithTheNameInTheDefinitionsField;
+    [Test]
+    procedure WhenTheSchemaCreateAClassDefinitionCantCreateAnAliasTypeFromTheClass;
+    [Test]
+    procedure WhenTheSchemaHaveTheAllOfPropertyLoadedMustCreateAClassDefinitionForTheProperty;
+    [Test]
+    procedure MustCreateAPropertyForEveryItemInTheAllOfSchema;
+    [Test]
+    procedure WhenTheAllOfSchemaIsAReferenceMustLoadAPropertyWithTheReferenceName;
+    [Test]
+    procedure WhenTheAllOfIsAReferenceMustLoadThePropertyTypeWithAReferenceTypeDefinition;
+    [Test]
+    procedure WhenTheAllOfHasOnlyOneSchemaAndIsAReferenceMustCreateOnlyTheReferenceToTheTypeInThePropertyType;
+    [Test]
+    procedure WhenTheAllOfSchemaHasASchemaDefinitionMustCreateThePropertyNameStartingWithAllOfName;
   end;
 
 implementation
@@ -246,6 +262,21 @@ begin
   ImportDefinition;
 
   Assert.AreEqual('.myPropType', GetMainClass.Classes[0].Properties[0].PropertyType.Name);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.MustCreateAPropertyForEveryItemInTheAllOfSchema;
+begin
+  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+
+  PropertySchema.AddAllOf;
+
+  PropertySchema.AddAllOf;
+
+  PropertySchema.AddAllOf;
+
+  ImportDefinition;
+
+  Assert.AreEqual(3, Length(GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties));
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.MustFillTheReferencePropertyWithTheClassNameInTheJSONReference;
@@ -471,6 +502,15 @@ begin
   Assert.IsTrue(FImporter.TryFindType(FDefinition.id + '/definitions', 'MyArray', TypeDefinition));
 end;
 
+procedure TJSONDraft4SchemaConverterTeste.WhenDeclareAClassInTheSchemaTheClassNameMustBeLoadedWithTheNameInTheDefinitionsField;
+begin
+  CreateClassDefinition('MyClass');
+
+  ImportDefinition;
+
+  Assert.AreEqual('MyClass', GetMainClass.Classes[0].Name);
+end;
+
 procedure TJSONDraft4SchemaConverterTeste.WhenDeclareTheAliasTypeMustLoadTheSchemaTypeInTheDefinitionHasExpected;
 begin
   CreateArrayDefinition('MyArray', CreateSchema(TJSONSchema.simpleTypes.integer));
@@ -507,6 +547,73 @@ begin
   Assert.AreEqual(TJSONSchema.TJSONSchema, Schema.SchemaValue.AsObject.ClassType);
 
   Schema.Free;
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfHasOnlyOneSchemaAndIsAReferenceMustCreateOnlyTheReferenceToTheTypeInThePropertyType;
+begin
+  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+
+  FDefinition.definitions.AddDefinitions('MyReference').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+
+  PropertySchema.AddAllOf.ref := '#/definitions/MyReference';
+
+  ImportDefinition;
+
+  Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Properties[0].PropertyType.ClassType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfIsAReferenceMustLoadThePropertyTypeWithAReferenceTypeDefinition;
+begin
+  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+
+  FDefinition.definitions.AddDefinitions('MyReference').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+
+  PropertySchema.AddAllOf.ref := '#/definitions/MyReference';
+
+  PropertySchema.AddAllOf.ref := '#/definitions/MyReference';
+
+  PropertySchema.AddAllOf.ref := '#/definitions/MyReference';
+
+  ImportDefinition;
+
+  Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].PropertyType.ClassType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfSchemaHasASchemaDefinitionMustCreateThePropertyNameStartingWithAllOfName;
+begin
+  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+
+  PropertySchema.AddAllOf.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+
+  PropertySchema.AddAllOf.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+
+  PropertySchema.AddAllOf.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual('AllOf1', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].Name);
+  Assert.AreEqual('AllOf2', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[1].Name);
+  Assert.AreEqual('AllOf3', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[2].Name);end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfSchemaIsAReferenceMustLoadAPropertyWithTheReferenceName;
+begin
+  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+
+  FDefinition.definitions.AddDefinitions('MyReference').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddDefinitions('MyReference2').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddDefinitions('MyReference3').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+
+  PropertySchema.AddAllOf.ref := '#/definitions/MyReference';
+
+  PropertySchema.AddAllOf.ref := '#/definitions/MyReference2';
+
+  PropertySchema.AddAllOf.ref := '#/definitions/MyReference3';
+
+  ImportDefinition;
+
+  Assert.AreEqual('MyReference', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].Name);
+  Assert.AreEqual('MyReference2', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[1].Name);
+  Assert.AreEqual('MyReference3', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[2].Name);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheClassDefinitionHaveAPropertyMustLoadThePropertyInTheClass;
@@ -642,6 +749,15 @@ begin
   Assert.AreEqual(GetMainClass.Name, GetMainClass.Properties[0].PropertyType.AsReferenceDefinition.Reference);
 end;
 
+procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaCreateAClassDefinitionCantCreateAnAliasTypeFromTheClass;
+begin
+  CreateClassDefinition('MyClass');
+
+  ImportDefinition;
+
+  Assert.AreEqual(0, Length(GetMainClass.Alias));
+end;
+
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaDoesntHaveAnyDefinitionMustLoadThePropertyWithTheTValueType;
 begin
   FDefinition.properties.AddProperties('MyProp');
@@ -649,6 +765,21 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.ValueType], GetMainClass.Properties[0].PropertyType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaHaveTheAllOfPropertyLoadedMustCreateAClassDefinitionForTheProperty;
+begin
+  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+
+  PropertySchema.AddAllOf;
+
+  PropertySchema.AddAllOf;
+
+  PropertySchema.AddAllOf;
+
+  ImportDefinition;
+
+  Assert.AreEqual(TTypeClassDefinition, GetMainClass.Properties[0].PropertyType.ClassType);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaInTheDefinitionsIsAnArrayTypeMustCreateAnAliasToTheTypeCreated;

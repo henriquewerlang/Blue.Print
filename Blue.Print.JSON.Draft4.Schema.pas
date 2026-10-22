@@ -21,7 +21,7 @@ type
     TJSONSchema = class;
 
     // Types alias
-    schemaArray = TArray<Blue.Print.JSON.Draft4.Schema.TJSONSchema>;
+    schemaArray = TArray<Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema>;
     positiveInteger = System.Integer;
     stringArray = System.TArray<System.String>;
 
@@ -81,7 +81,7 @@ type
       public
         destructor Destroy; override;
 
-        function AddSchemaArray: Blue.Print.JSON.Draft4.Schema.TJSONSchema;
+        function AddSchemaArray: Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema;
 
         property IsItemsPropertyStored: Boolean read GetItemsPropertyStored;
         property IsSchemaArrayStored: Boolean read GetSchemaArrayStored;
@@ -295,9 +295,9 @@ type
     public
       destructor Destroy; override;
 
-      function AddAllOf: Blue.Print.JSON.Draft4.Schema.TJSONSchema;
-      function AddAnyOf: Blue.Print.JSON.Draft4.Schema.TJSONSchema;
-      function AddOneOf: Blue.Print.JSON.Draft4.Schema.TJSONSchema;
+      function AddAllOf: Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema;
+      function AddAnyOf: Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema;
+      function AddOneOf: Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema;
 
       procedure AddRequired(const Value: String);
 
@@ -368,11 +368,11 @@ type
       [FieldName('type')]
       property &type: TJSONSchema.TJSONSchema.TypeProperty read GetType write FType stored GetTypeStored;
 //      property format: System.String read FFormat write FFormat stored GetFormatStored;
-//      property allOf: TJSONSchema.schemaArray read FAllOf write FAllOf stored GetAllOfStored;
-//      property anyOf: TJSONSchema.schemaArray read FAnyOf write FAnyOf stored GetAnyOfStored;
-//      property oneOf: TJSONSchema.schemaArray read FOneOf write FOneOf stored GetOneOfStored;
-//      [FieldName('not')]
-//      property &not: TJSONSchema.TJSONSchema read GetNot write FNot stored GetNotStored;
+      property allOf: TJSONSchema.schemaArray read FAllOf write FAllOf stored GetAllOfStored;
+      property anyOf: TJSONSchema.schemaArray read FAnyOf write FAnyOf stored GetAnyOfStored;
+      property oneOf: TJSONSchema.schemaArray read FOneOf write FOneOf stored GetOneOfStored;
+      [FieldName('not')]
+      property &not: TJSONSchema.TJSONSchema read GetNot write FNot stored GetNotStored;
 
       [FieldName('$ref')]
       property ref: String read Fref write Fref stored GetRefStored;
@@ -671,9 +671,9 @@ begin
   Result := not FFormat.IsEmpty;
 end;
 
-function TJSONSchema.TJSONSchema.AddAllOf: Blue.Print.JSON.Draft4.Schema.TJSONSchema;
+function TJSONSchema.TJSONSchema.AddAllOf: Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema;
 begin
-  Result := Blue.Print.JSON.Draft4.Schema.TJSONSchema.Create;
+  Result := Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema.Create;
 
   FAllOf := FAllOf + [Result];
 end;
@@ -683,9 +683,9 @@ begin
   Result := Assigned(FAllOf);
 end;
 
-function TJSONSchema.TJSONSchema.AddAnyOf: Blue.Print.JSON.Draft4.Schema.TJSONSchema;
+function TJSONSchema.TJSONSchema.AddAnyOf: Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema;
 begin
-  Result := Blue.Print.JSON.Draft4.Schema.TJSONSchema.Create;
+  Result := Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema.Create;
 
   FAnyOf := FAnyOf + [Result];
 end;
@@ -695,9 +695,9 @@ begin
   Result := Assigned(FAnyOf);
 end;
 
-function TJSONSchema.TJSONSchema.AddOneOf: Blue.Print.JSON.Draft4.Schema.TJSONSchema;
+function TJSONSchema.TJSONSchema.AddOneOf: Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema;
 begin
-  Result := Blue.Print.JSON.Draft4.Schema.TJSONSchema.Create;
+  Result := Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema.Create;
 
   FOneOf := FOneOf + [Result];
 end;
@@ -778,9 +778,9 @@ begin
   Result := Assigned(FItemsProperty);
 end;
 
-function TJSONSchema.TJSONSchema.ItemsProperty.AddSchemaArray: Blue.Print.JSON.Draft4.Schema.TJSONSchema;
+function TJSONSchema.TJSONSchema.ItemsProperty.AddSchemaArray: Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema;
 begin
-  Result := Blue.Print.JSON.Draft4.Schema.TJSONSchema.Create;
+  Result := Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema.Create;
 
   FSchemaArray := FSchemaArray + [Result];
 end;
