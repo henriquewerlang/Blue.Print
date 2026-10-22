@@ -37,6 +37,7 @@ type
     function CreateNamespace(const Namespace, Prefix: String): TNamespaceConfiguration;
 
     procedure CompareUnitDeclaration(const UnitDeclaration: String; const UnitConfiguration: TUnitConfiguration);
+    procedure LinesCompareUnitDeclaration(const LinesToCompare: String; const UnitConfiguration: TUnitConfiguration);
   public
     [Setup]
     procedure Setup;
@@ -258,6 +259,8 @@ type
     procedure WhenDeclareThePropertyAddFunctionMustFormatTheNameToFixTheLowerCaseFirstCharactere;
     [Test]
     procedure WhenThePropertyTypeIsAReferenceToAnArrayWithAClassDefinitionTypeMustLoadTheAddFunctionHasExpected;
+    [Test]
+    procedure WhenThePropertyHasAnArrayTypeOfAConcretTypeMustCreateTheAddProcedureWithAParameterOsTheArrayType;
   end;
 
   [TestFixture]
@@ -335,7 +338,7 @@ type
 
 implementation
 
-uses System.IOUtils, Blue.Print.Serializer, Blue.Print.Types;
+uses System.IOUtils, System.Classes, Blue.Print.Serializer, Blue.Print.Types;
 
 const
   EMPTY_SCHEMA_FILE = 'Empty Schema.json';
@@ -591,6 +594,37 @@ begin
     begin
       FImporter.Import(FConfiguration);
     end, ESchemaFileConfigurationWithoutSchemaType);
+end;
+
+procedure TSchemaImporterTest.LinesCompareUnitDeclaration(const LinesToCompare: String; const UnitConfiguration: TUnitConfiguration);
+
+  function FormatFileName(const UnitConfiguration: TUnitConfiguration): String;
+  begin
+    Result := Format('%s\%s.pas', [FConfiguration.OutputFolder, UnitConfiguration.Name]);
+  end;
+
+begin
+  var CurrentLine: NativeInt := 0;
+  var Lines := TStringList.Create;
+  var UnitFile := TStringList.Create;
+
+  Lines.Text := LinesToCompare;
+
+  UnitFile.LoadFromFile(FormatFileName(UnitConfiguration));
+
+  for var A := 0 to Pred(UnitFile.Count) do
+    if CurrentLine = Lines.Count then
+      Break
+    else if UnitFile[A] = Lines[CurrentLine] then
+      Inc(CurrentLine)
+    else
+      CurrentLine := 0;
+
+  Assert.IsTrue(CurrentLine = Lines.Count, LinesToCompare);
+
+  Lines.Free;
+
+  UnitFile.Free;
 end;
 
 procedure TSchemaImporterTest.MustAddTheClassTypeInTheClassesListFromParentModule;
@@ -2391,6 +2425,51 @@ begin
     end, ESchemaNamespaceWithoutConfiguraton);
 end;
 
+procedure TSchemaImporterTest.WhenThePropertyHasAnArrayTypeOfAConcretTypeMustCreateTheAddProcedureWithAParameterOsTheArrayType;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProp', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProp: System.TArray<System.Integer>;
+      public
+        procedure AddMyProp(const Value: System.Integer);
+      published
+        property MyProp: System.TArray<System.Integer> read FMyProp write FMyProp;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    procedure MainModule.AddMyProp(const Value: System.Integer);
+    begin
+      FMyProp := FMyProp + [Value];
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
 procedure TSchemaImporterTest.WhenThePropertyHasAnSpecialCharacterMustAppendTheAmpersandBeforeTheClassName;
 begin
   FConverter.WhenExecuteConvert :=
@@ -2782,28 +2861,13 @@ begin
 
   FImporter.Import(FConfiguration);
 
-  CompareUnitDeclaration(
+  LinesCompareUnitDeclaration(
     '''
-    unit MyUnit;
-
-    interface
-
-    {$M+}
-
-    type
-      MainModule = class;
-
-      MainModule = class
-      private
-        FMyProperty: System.TArray<System.SimpleType>;
       published
         property MyProperty: System.TArray<System.SimpleType> read FMyProperty write FMyProperty;
       end;
 
     implementation
-
-    end.
-
     ''',
     FConfiguration.Units[0]);
 
