@@ -676,7 +676,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         Result := GetArrayType(ArrayTypeDefinition.AsAliasDefinition.TypeAlias, ArrayTypeDefinition);
     end;
 
-    function FormatReturnAddFunctionTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
+    function FormatArrayItemTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
       var ArrayType: TTypeDefinition;
 
@@ -754,7 +754,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
     begin
       var ArrayType: TTypeDefinition;
 
-      Result := GetArrayType(PropertyDefinition.PropertyType, ArrayType) and ArrayType.IsClassDefinition;
+      Result := GetArrayType(PropertyDefinition.PropertyType, ArrayType);
     end;
 
     function NeedFieldNameAttribute(const PropertyDefinition: TTypePropertyDefinition; var PropertyName: String): Boolean; overload;
@@ -781,9 +781,61 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := RemoveInvalidCharecters('Set.' + FormatPropertyName(PropertyDefinition));
     end;
 
-    function FormatAddFunctionName(const PropertyDefinition: TTypePropertyDefinition): String;
+    function FunctionAddNeedReturnType(const PropertyDefinition: TTypePropertyDefinition): Boolean;
     begin
-      Result := RemoveInvalidCharecters('Add.' + FormatPropertyName(PropertyDefinition));
+      var ArrayType: TTypeDefinition;
+
+      GetArrayType(PropertyDefinition.PropertyType, ArrayType);
+
+      Result := ArrayType.IsClassDefinition;
+    end;
+
+    function FormatAddFunctionName(const PropertyDefinition: TTypePropertyDefinition; const ClassDefinitionType: TTypeClassDefinition): String;
+
+      function GenerateImplementation: String;
+      begin
+        if Assigned(ClassDefinitionType) then
+          Result := FormatTypeName(ClassDefinitionType) + '.'
+        else
+          Result := EmptyStr;
+      end;
+
+      function NeedReturnType: Boolean;
+      begin
+        Result := FunctionAddNeedReturnType(PropertyDefinition);
+      end;
+
+      function FormatReturnTypeName: String;
+      begin
+        Result := FormatArrayItemTypeName(PropertyDefinition);
+      end;
+
+      function FormatReturnInformation: String;
+      begin
+        if NeedReturnType then
+          Result := ': ' + FormatReturnTypeName
+        else
+          Result := EmptyStr;
+      end;
+
+      function GetMethodDefinition: String;
+      begin
+        if NeedReturnType then
+          Result := 'function'
+        else
+          Result := 'procedure';
+      end;
+
+      function FormatFunctionName: String;
+      begin
+        Result := RemoveInvalidCharecters('Add.' + FormatPropertyName(PropertyDefinition));
+
+        if not NeedReturnType then
+          Result := Result + Format('(const Value: %s)', [FormatReturnTypeName]);
+      end;
+
+    begin
+      Result := Format('%s %s%s%s;', [GetMethodDefinition, GenerateImplementation, FormatFunctionName, FormatReturnInformation]);
     end;
 
     function FormatPropertyTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
@@ -878,7 +930,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         for var PropertyDefinition in ClassDefinition.Properties do
         begin
           if NeedAddFunction(PropertyDefinition) then
-            AddLine(CurrentIndentation, 'function %s: %s;', [FormatAddFunctionName(PropertyDefinition), FormatReturnAddFunctionTypeName(PropertyDefinition)]);
+            AddLine(CurrentIndentation, FormatAddFunctionName(PropertyDefinition, nil));
 
           if PropertyDefinition.Optional then
             AddLine(CurrentIndentation, 'property %s: Boolean read %s;', [FormatIsStoredProperty(PropertyDefinition), FormatStoredFieldName(PropertyDefinition)]);
@@ -1114,15 +1166,24 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
             if NeedAddFunction(PropertyDefinition) then
             begin
-              AddLine(IndentationLevel, 'function %s.%s: %s;', [FormatTypeName(ClassDefinition), FormatAddFunctionName(PropertyDefinition), FormatReturnAddFunctionTypeName(PropertyDefinition)]);
+              var VariableName: String;
+
+              AddLine(IndentationLevel, FormatAddFunctionName(PropertyDefinition, ClassDefinition));
 
               AddLine(IndentationLevel, 'begin');
 
-              AddLine(IndentationLevel, '  Result := %s.Create;', [FormatReturnAddFunctionTypeName(PropertyDefinition)]);
+              if FunctionAddNeedReturnType(PropertyDefinition) then
+              begin
+                VariableName := 'Result';
 
-              AddWhiteLine;
+                AddLine(IndentationLevel, '  Result := %s.Create;', [FormatArrayItemTypeName(PropertyDefinition)]);
 
-              AddLine(IndentationLevel, '  %0:s := %0:s + [Result];', [FormatFieldName(PropertyDefinition)]);
+                AddWhiteLine;
+              end
+              else
+                VariableName := 'Value';
+
+              AddLine(IndentationLevel, '  %0:s := %0:s + [%1:s];', [FormatFieldName(PropertyDefinition), VariableName]);
 
               AddLine(IndentationLevel, 'end;');
 
