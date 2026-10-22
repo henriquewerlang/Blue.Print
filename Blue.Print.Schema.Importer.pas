@@ -920,6 +920,38 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         Result := False;
       end;
 
+      procedure GenerateAddFunctions(const CurrentIndentation: Integer);
+      begin
+        var NewLine := False;
+
+        for var PropertyDefinition in ClassDefinition.Properties do
+          if NeedAddFunction(PropertyDefinition) then
+          begin
+            AddLine(CurrentIndentation, FormatAddFunctionName(PropertyDefinition, nil));
+
+            NewLine := True;
+          end;
+
+        if NewLine then
+          AddWhiteLine;
+      end;
+
+      procedure GenerateStoredProperties(const CurrentIndentation: Integer);
+      begin
+        var NewLine := False;
+
+        for var PropertyDefinition in ClassDefinition.Properties do
+          if PropertyDefinition.Optional then
+          begin
+            AddLine(CurrentIndentation, 'property %s: Boolean read %s;', [FormatIsStoredProperty(PropertyDefinition), FormatStoredFieldName(PropertyDefinition)]);
+
+            NewLine := True;
+          end;
+
+        if NewLine then
+          AddWhiteLine;
+      end;
+
     begin
       var CurrentIndentation := Succ(IndentationLevel);
 
@@ -927,14 +959,11 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       begin
         AddLine(IndentationLevel, 'public');
 
-        for var PropertyDefinition in ClassDefinition.Properties do
-        begin
-          if NeedAddFunction(PropertyDefinition) then
-            AddLine(CurrentIndentation, FormatAddFunctionName(PropertyDefinition, nil));
+        GenerateAddFunctions(CurrentIndentation);
 
-          if PropertyDefinition.Optional then
-            AddLine(CurrentIndentation, 'property %s: Boolean read %s;', [FormatIsStoredProperty(PropertyDefinition), FormatStoredFieldName(PropertyDefinition)]);
-        end;
+        GenerateStoredProperties(CurrentIndentation);
+
+        RemoveLastLine;
       end;
     end;
 

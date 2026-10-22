@@ -261,6 +261,8 @@ type
     procedure WhenThePropertyTypeIsAReferenceToAnArrayWithAClassDefinitionTypeMustLoadTheAddFunctionHasExpected;
     [Test]
     procedure WhenThePropertyHasAnArrayTypeOfAConcretTypeMustCreateTheAddProcedureWithAParameterOsTheArrayType;
+    [Test]
+    procedure NeedToGroupTheAddFunctionsAndTheIsStoredFunctions;
   end;
 
   [TestFixture]
@@ -1002,6 +1004,97 @@ begin
 
   Assert.IsTrue(TFile.Exists(Format('%s\%s.pas', [FConfiguration.OutputFolder, FConfiguration.Units[0].Name])));
   Assert.IsTrue(TFile.Exists(Format('%s\%s.pas', [FConfiguration.OutputFolder, FConfiguration.Units[1].Name])));
+end;
+
+procedure TSchemaImporterTest.NeedToGroupTheAddFunctionsAndTheIsStoredFunctions;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProp', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType])).Optional := True;
+      MainClass.AddProperty('MyProp2', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType])).Optional := True;
+      MainClass.AddProperty('MyProp3', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType])).Optional := True;
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProp: System.TArray<System.Integer>;
+        FMyPropStored: Boolean;
+        FMyProp2: System.TArray<System.Integer>;
+        FMyProp2Stored: Boolean;
+        FMyProp3: System.TArray<System.Integer>;
+        FMyProp3Stored: Boolean;
+        procedure SetMyProp(const Value: System.TArray<System.Integer>);
+        procedure SetMyProp2(const Value: System.TArray<System.Integer>);
+        procedure SetMyProp3(const Value: System.TArray<System.Integer>);
+      public
+        procedure AddMyProp(const Value: System.Integer);
+        procedure AddMyProp2(const Value: System.Integer);
+        procedure AddMyProp3(const Value: System.Integer);
+
+        property IsMyPropStored: Boolean read FMyPropStored;
+        property IsMyProp2Stored: Boolean read FMyProp2Stored;
+        property IsMyProp3Stored: Boolean read FMyProp3Stored;
+      published
+        property MyProp: System.TArray<System.Integer> read FMyProp write SetMyProp stored FMyPropStored;
+        property MyProp2: System.TArray<System.Integer> read FMyProp2 write SetMyProp2 stored FMyProp2Stored;
+        property MyProp3: System.TArray<System.Integer> read FMyProp3 write SetMyProp3 stored FMyProp3Stored;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    procedure MainModule.AddMyProp(const Value: System.Integer);
+    begin
+      FMyProp := FMyProp + [Value];
+    end;
+
+    procedure MainModule.SetMyProp(const Value: System.TArray<System.Integer>);
+    begin
+      FMyProp := Value;
+      FMyPropStored := True;
+    end;
+
+    procedure MainModule.AddMyProp2(const Value: System.Integer);
+    begin
+      FMyProp2 := FMyProp2 + [Value];
+    end;
+
+    procedure MainModule.SetMyProp2(const Value: System.TArray<System.Integer>);
+    begin
+      FMyProp2 := Value;
+      FMyProp2Stored := True;
+    end;
+
+    procedure MainModule.AddMyProp3(const Value: System.Integer);
+    begin
+      FMyProp3 := FMyProp3 + [Value];
+    end;
+
+    procedure MainModule.SetMyProp3(const Value: System.TArray<System.Integer>);
+    begin
+      FMyProp3 := Value;
+      FMyProp3Stored := True;
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.Setup;
