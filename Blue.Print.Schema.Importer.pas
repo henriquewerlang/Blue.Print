@@ -127,14 +127,13 @@ type
   TTypeEnumerationDefinition = class(TTypeDefinition)
   private
     FValues: TStringList;
+    function GetValues: TStringList;
   public
-    constructor Create;
-
     destructor Destroy; override;
 
     procedure AddEnumeration(const Value: String);
 
-    property Values: TStringList read FValues;
+    property Values: TStringList read GetValues;
   end;
 
   TTypeArrayDefinition = class(TTypeDefinition)
@@ -406,7 +405,7 @@ end;
 function TSchemaImporter.CreateTypeDefinitionWithName<T>(const ParentModule: TTypeModuleDefinition; const Name: String): T;
 begin
   Result := CreateTypeDefinition<T>(ParentModule);
-  Result.Name := Name;
+  Result.FName := Name;
 end;
 
 destructor TSchemaImporter.Destroy;
@@ -1304,7 +1303,7 @@ const
     begin
       var TypeDefinition := TTypeDefinition.Create;
       TypeDefinition.FParentModule := UnitDefinition;
-      TypeDefinition.Name := BUILD_IN_TYPE_NAMES[BuildInType];
+      TypeDefinition.FName := BUILD_IN_TYPE_NAMES[BuildInType];
 
       BuildInTypes[BuildInType] := TypeDefinition;
 
@@ -1317,7 +1316,7 @@ const
   function CreateUnit(const Name: String): TTypeUnitDefinition;
   begin
     Result := TTypeUnitDefinition.Create;
-    Result.Name := Name;
+    Result.FName := Name;
 
     FBuildInUnits.Add(Result);
   end;
@@ -1530,18 +1529,19 @@ begin
   FValues.Add(Value);
 end;
 
-constructor TTypeEnumerationDefinition.Create;
-begin
-  inherited;
-
-  FValues := TSchemaImporter.CreateStringListForItems;
-end;
-
 destructor TTypeEnumerationDefinition.Destroy;
 begin
   FValues.Free;
 
   inherited;
+end;
+
+function TTypeEnumerationDefinition.GetValues: TStringList;
+begin
+  if not Assigned(FValues) then
+    FValues := TSchemaImporter.CreateStringListForItems;
+
+  Result := FValues;
 end;
 
 { TTypeClassDefinition }
