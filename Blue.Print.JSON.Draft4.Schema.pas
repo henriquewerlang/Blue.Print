@@ -299,6 +299,8 @@ type
       function AddAnyOf: Blue.Print.JSON.Draft4.Schema.TJSONSchema;
       function AddOneOf: Blue.Print.JSON.Draft4.Schema.TJSONSchema;
 
+      procedure AddRequired(const Value: String);
+
       property IsIdStored: Boolean read GetIdStored;
       property IsSchemaStored: Boolean read GetSchemaStored;
       property IsTitleStored: Boolean read GetTitleStored;
@@ -356,7 +358,7 @@ type
 //      property uniqueItems: System.Boolean read FUniqueItems write SetUniqueItems stored FUniqueItemsIsStored;
 //      property maxProperties: TJSONSchema.positiveInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
 //      property minProperties: TJSONSchema.positiveIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
-//      property required: TJSONSchema.stringArray read FRequired write FRequired stored GetRequiredStored;
+      property required: TJSONSchema.stringArray read FRequired write FRequired stored GetRequiredStored;
 //      property additionalProperties: TJSONSchema.TJSONSchema.AdditionalPropertiesProperty read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       property definitions: TJSONSchema.TJSONSchema.DefinitionsProperty read GetDefinitions write FDefinitions stored GetDefinitionsStored;
       property properties: TJSONSchema.TJSONSchema.PropertiesProperty read GetProperties write FProperties stored GetPropertiesStored;
@@ -698,6 +700,11 @@ begin
   Result := Blue.Print.JSON.Draft4.Schema.TJSONSchema.Create;
 
   FOneOf := FOneOf + [Result];
+end;
+
+procedure TJSONSchema.TJSONSchema.AddRequired(const Value: String);
+begin
+  FRequired := FRequired + [Value];
 end;
 
 function TJSONSchema.TJSONSchema.GetOneOfStored: Boolean;

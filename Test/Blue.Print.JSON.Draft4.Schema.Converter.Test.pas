@@ -101,6 +101,10 @@ type
     procedure MustLoadTheEnumeratorNamesInTheClass;
     [Test]
     procedure TheEnumerationCantCreateAnAliasFromTheType;
+    [Test]
+    procedure AllPropertiesMustBeOptional;
+    [Test]
+    procedure IfThePropertyIsInTheRequiredListCantBeOptional;
   end;
 
 implementation
@@ -119,6 +123,23 @@ function TJSONDraft4SchemaConverterTeste.AddPropertyWithTypeArray(const JSONSche
 begin
   Result := AddProperty(JSONSchema, name, TJSONSchema.simpleTypes.array);
   Result.items.schema := ArrayType;
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.AllPropertiesMustBeOptional;
+begin
+  var ClassDefinition := CreateClassDefinition('MyClass');
+
+  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.string);
+
+  AddProperty(ClassDefinition, 'MyProp2', TJSONSchema.simpleTypes.string);
+
+  AddProperty(ClassDefinition, 'MyProp3', TJSONSchema.simpleTypes.string);
+
+  ImportDefinition;
+
+  Assert.IsTrue(GetMainClass.Classes[0].Properties[0].Optional);
+  Assert.IsTrue(GetMainClass.Classes[0].Properties[1].Optional);
+  Assert.IsTrue(GetMainClass.Classes[0].Properties[2].Optional);
 end;
 
 function TJSONDraft4SchemaConverterTeste.CreateArrayDefinition(const Name: String; const Items: TJSONSchema.TJSONSchema): TJSONSchema.TJSONSchema;
@@ -171,6 +192,25 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(3, Length(GetMainClass.Classes[0].Properties));
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.IfThePropertyIsInTheRequiredListCantBeOptional;
+begin
+  var ClassDefinition := CreateClassDefinition('MyClass');
+
+  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.string);
+
+  AddProperty(ClassDefinition, 'MyProp2', TJSONSchema.simpleTypes.string);
+
+  AddProperty(ClassDefinition, 'MyProp3', TJSONSchema.simpleTypes.string);
+
+  ClassDefinition.AddRequired('MyProp2');
+
+  ImportDefinition;
+
+  Assert.IsTrue(GetMainClass.Classes[0].Properties[0].Optional);
+  Assert.IsFalse(GetMainClass.Classes[0].Properties[1].Optional);
+  Assert.IsTrue(GetMainClass.Classes[0].Properties[2].Optional);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.IfTheSchemaHasDefinitionsMustAppendTheSubschemaValue;
