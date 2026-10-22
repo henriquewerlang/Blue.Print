@@ -667,12 +667,13 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function GetArrayType(const TypeDefinition: TTypeDefinition; var ArrayTypeDefinition: TTypeDefinition): Boolean;
     begin
-      Result := TypeDefinition.IsArrayDefinition;
+      ArrayTypeDefinition := ResolveReferenceType(TypeDefinition);
+      Result := ArrayTypeDefinition.IsArrayDefinition;
 
       if Result then
-        ArrayTypeDefinition := ResolveReferenceType(TypeDefinition.AsArrayDefinition.ArrayType)
-      else if TypeDefinition.IsAliasDefinition then
-        Result := GetArrayType(TypeDefinition.AsAliasDefinition.TypeAlias, ArrayTypeDefinition);
+        ArrayTypeDefinition := ResolveReferenceType(ArrayTypeDefinition.AsArrayDefinition.ArrayType)
+      else if ArrayTypeDefinition.IsAliasDefinition then
+        Result := GetArrayType(ArrayTypeDefinition.AsAliasDefinition.TypeAlias, ArrayTypeDefinition);
     end;
 
     function FormatReturnAddFunctionTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
