@@ -86,6 +86,8 @@ type
     [Test]
     procedure WhenThePropertyTypeIsObjectTheClassDefinitionMustHaveThePropertyNamePlusTheTypeName;
     [Test]
+    procedure MustAppendADotInTheClassNameOfAPropertyToForceTheCorrectCaseInTheClassNameCreated;
+    [Test]
     procedure WhenTheSchemaInTheDefinitionsIsAnArrayTypeMustCreateAnAliasToTheTypeCreated;
     [Test]
     procedure TheAliasNameMustBeTheFieldNameOfTheDefinition;
@@ -233,6 +235,17 @@ begin
   TFile.WriteAllText(FConfiguration.Units[0].SchemaFiles[0].FileName, GetDefinitionJSON);
 
   FImporter.Import(FConfiguration);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.MustAppendADotInTheClassNameOfAPropertyToForceTheCorrectCaseInTheClassNameCreated;
+begin
+  var ClassDefinition := CreateClassDefinition('MyClass');
+
+  AddProperty(ClassDefinition, 'myProp', TJSONSchema.simpleTypes.object);
+
+  ImportDefinition;
+
+  Assert.AreEqual('.myPropType', GetMainClass.Classes[0].Properties[0].PropertyType.Name);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.MustFillTheReferencePropertyWithTheClassNameInTheJSONReference;
@@ -564,7 +577,7 @@ begin
 
   ImportDefinition;
 
-  Assert.AreEqual('MyPropType', GetMainClass.Classes[0].Properties[0].PropertyType.Name);
+  Assert.AreEqual('.MyPropType', GetMainClass.Classes[0].Properties[0].PropertyType.Name);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenThePropertyTypeIsOfBooleanTypeMustLoadThePropertyWithTheBuildInTypeBoolean;
