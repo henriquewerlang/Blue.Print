@@ -159,6 +159,8 @@ type
     procedure WhenCreateAnAnyOfClassMustMarkTheClassHasFlat;
     [Test]
     procedure WhenCreateAnOneOfClassMustMarkTheClassHasFlat;
+    [Test]
+    procedure WhenTheSchemaOfAllOfIsAnBuildInTypeMustCreateThePropertyWithTheNameOfEnumerator;
   end;
 
 implementation
@@ -733,11 +735,11 @@ procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfSchemaHasASchemaDefinition
 begin
   var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
 
-  PropertySchema.AddAllOf.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  PropertySchema.AddAllOf;
 
-  PropertySchema.AddAllOf.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  PropertySchema.AddAllOf;
 
-  PropertySchema.AddAllOf.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  PropertySchema.AddAllOf;
 
   ImportDefinition;
 
@@ -1078,6 +1080,35 @@ begin
   FImporter.TryFindType(FDefinition.id + '/definitions', 'MyClass', ClassDefinition);
 
   Assert.AreEqual(TTypeReferenceDefinition, ClassDefinition.AsClassDefinition.Properties[0].PropertyType.ClassType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaOfAllOfIsAnBuildInTypeMustCreateThePropertyWithTheNameOfEnumerator;
+begin
+  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+
+  var ArrayType := PropertySchema.AddAllOf;
+
+  ArrayType.&type.simpleTypes := TJSONSchema.simpleTypes.array;
+  ArrayType.items.schema.&type.simpleTypes := TJSONSchema.simpleTypes.string;
+
+  PropertySchema.AddAllOf.&type.simpleTypes := TJSONSchema.simpleTypes.boolean;
+  PropertySchema.AddAllOf.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  PropertySchema.AddAllOf.&type.simpleTypes := TJSONSchema.simpleTypes.number;
+  PropertySchema.AddAllOf.&type.simpleTypes := TJSONSchema.simpleTypes.object;
+  PropertySchema.AddAllOf.&type.simpleTypes := TJSONSchema.simpleTypes.string;
+
+  ImportDefinition;
+
+  var ClassDeclaration := GetMainClass.Classes[0];
+
+  Assert.IsNotNil(ClassDeclaration);
+
+  Assert.AreEqual('array', ClassDeclaration.Properties[0].Name);
+  Assert.AreEqual('boolean', ClassDeclaration.Properties[1].Name);
+  Assert.AreEqual('integer', ClassDeclaration.Properties[2].Name);
+  Assert.AreEqual('number', ClassDeclaration.Properties[3].Name);
+  Assert.AreEqual('object', ClassDeclaration.Properties[4].Name);
+  Assert.AreEqual('string', ClassDeclaration.Properties[5].Name);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaOfAnyOfIsntAReferenceMustLoadThePropertyNameStartingWithAnyOfName;
