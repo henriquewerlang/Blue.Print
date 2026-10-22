@@ -248,6 +248,14 @@ type
     procedure WhenTheTypeIsAnAliasToAnArrayTypeMustCreateTheAddFunctionWithTheInternalAliasType;
     [Test]
     procedure WhenTheArrayTypeIsAReferenceMustLoadTheReferenceAndLoadTheArrayHasExpected;
+    [Test]
+    procedure WhenDeclareThePropertyFieldMustFormatTheNameToFixTheLowerCaseFirstCharactere;
+    [Test]
+    procedure WhenDeclareThePropertyGetFunctionMustFormatTheNameToFixTheLowerCaseFirstCharactere;
+    [Test]
+    procedure WhenDeclareThePropertySetFunctionMustFormatTheNameToFixTheLowerCaseFirstCharactere;
+    [Test]
+    procedure WhenDeclareThePropertyAddFunctionMustFormatTheNameToFixTheLowerCaseFirstCharactere;
   end;
 
   [TestFixture]
@@ -1616,6 +1624,189 @@ begin
   Assert.IsNotNil(TypeReference);
 
   MainClass.Free;
+end;
+
+procedure TSchemaImporterTest.WhenDeclareThePropertyAddFunctionMustFormatTheNameToFixTheLowerCaseFirstCharactere;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('myProperty', FImporter.CreateArrayType(MainClass, MainClass));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProperty: System.TArray<MyUnit.MainModule>;
+      public
+        function AddMyProperty: MyUnit.MainModule;
+      published
+        property myProperty: System.TArray<MyUnit.MainModule> read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    function MainModule.AddMyProperty: MyUnit.MainModule;
+    begin
+      Result := MyUnit.MainModule.Create;
+
+      FMyProperty := FMyProperty + [Result];
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenDeclareThePropertyFieldMustFormatTheNameToFixTheLowerCaseFirstCharactere;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('lower', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FLower: System.Integer;
+      published
+        property lower: System.Integer read FLower write FLower;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenDeclareThePropertyGetFunctionMustFormatTheNameToFixTheLowerCaseFirstCharactere;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('myProperty', FImporter.CreateClassType(MainClass, 'MyClass'));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        MyClass = class;
+
+        MyClass = class
+        end;
+      private
+        FMyProperty: MyUnit.MainModule.MyClass;
+        function GetMyProperty: MyUnit.MainModule.MyClass;
+      published
+        property myProperty: MyUnit.MainModule.MyClass read GetMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    function MainModule.GetMyProperty: MyUnit.MainModule.MyClass;
+    begin
+      if not Assigned(FMyProperty) then
+        FMyProperty := MyUnit.MainModule.MyClass.Create;
+
+      Result := FMyProperty;
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenDeclareThePropertySetFunctionMustFormatTheNameToFixTheLowerCaseFirstCharactere;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('myProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]).Optional := True;
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProperty: System.Integer;
+        FMyPropertyStored: Boolean;
+        procedure SetMyProperty(const Value: System.Integer);
+      public
+        property IsMyPropertyStored: Boolean read FMyPropertyStored;
+      published
+        property myProperty: System.Integer read FMyProperty write SetMyProperty stored FMyPropertyStored;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    procedure MainModule.SetMyProperty(const Value: System.Integer);
+    begin
+      FMyProperty := Value;
+      FMyPropertyStored := True;
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenFindTheAndTheTypeIsFoundedMustReturnTheTypeHasExpected;
