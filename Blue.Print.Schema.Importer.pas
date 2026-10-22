@@ -736,7 +736,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function FormatFieldName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
-      Result := 'F' + RemoveInvalidCharecters(FormatPropertyName(PropertyDefinition));
+      Result := RemoveInvalidCharecters('F.' + FormatPropertyName(PropertyDefinition));
     end;
 
     function NeedGetFunction(const PropertyDefinition: TTypePropertyDefinition): Boolean;
@@ -772,17 +772,17 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function FormatGetFunctionName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
-      Result := 'Get' + FormatPropertyName(PropertyDefinition);
+      Result := RemoveInvalidCharecters('Get.' + FormatPropertyName(PropertyDefinition));
     end;
 
     function FormatSetFunctionName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
-      Result := 'Set' + FormatPropertyName(PropertyDefinition);
+      Result := RemoveInvalidCharecters('Set.' + FormatPropertyName(PropertyDefinition));
     end;
 
     function FormatAddFunctionName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
-      Result := 'Add' + FormatPropertyName(PropertyDefinition);
+      Result := RemoveInvalidCharecters('Add.' + FormatPropertyName(PropertyDefinition));
     end;
 
     function FormatPropertyTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
@@ -814,6 +814,11 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
     function FormatStoredFieldName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
       Result := Format('%sStored', [FormatFieldName(PropertyDefinition)]);
+    end;
+
+    function FormatIsStoredProperty(const PropertyDefinition: TTypePropertyDefinition): String;
+    begin
+      Result := RemoveInvalidCharecters(Format('Is.%sStored', [FormatPropertyName(PropertyDefinition)]));
     end;
 
     function FormatPropertyStoredName(const PropertyDefinition: TTypePropertyDefinition): String;
@@ -875,7 +880,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
             AddLine(CurrentIndentation, 'function %s: %s;', [FormatAddFunctionName(PropertyDefinition), FormatReturnAddFunctionTypeName(PropertyDefinition)]);
 
           if PropertyDefinition.Optional then
-            AddLine(CurrentIndentation, 'property Is%sStored: Boolean read %s;', [FormatPropertyName(PropertyDefinition), FormatStoredFieldName(PropertyDefinition)]);
+            AddLine(CurrentIndentation, 'property %s: Boolean read %s;', [FormatIsStoredProperty(PropertyDefinition), FormatStoredFieldName(PropertyDefinition)]);
         end;
       end;
     end;
