@@ -77,6 +77,8 @@ var
       else
       begin
         SchemaClassDefinition := Schema.Importer.CreateClassType(ParentClassDefinition, EmptyStr);
+        SchemaClassDefinition.Flat := True;
+
         Result := SchemaClassDefinition;
 
         for SchemaItem in SchemaArray do
