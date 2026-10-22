@@ -13,7 +13,7 @@ type
 
 implementation
 
-uses Blue.Print.Serializer;
+uses System.Rtti, Blue.Print.Serializer;
 
 { TJSONDraft4SchemaConverter }
 
@@ -67,6 +67,8 @@ var
       begin
         if SchemaItem.IsRefStored then
           Result := GetReferenceSchemaName(SchemaItem)
+        else if SchemaItem.IsTypeStored then
+          Result := TRttiEnumerationType.GetName(SchemaItem.&type.simpleTypes)
         else
           Result := PropertyNamePrefix + Succ(Length(SchemaClassDefinition.Properties)).ToString;
       end;
