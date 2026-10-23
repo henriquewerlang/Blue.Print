@@ -48,6 +48,9 @@ var
         if PropertyType.IsClassDefinition then
           PropertyType.Name := Format('.%sType', [PropertyDefinition.Name]);
       end;
+
+      if JSONSchema.IsAdditionalPropertiesStored then
+        ClassDefinition.AddProperty('additionalProperties', Schema.Importer.CreateDynamicPropertyType(Result.AsClassDefinition, LoadSchemaType(ClassDefinition, JSONSchema.additionalProperties.AdditionalPropertiesProperty)));
     end;
 
     function GetReferenceSchemaName(JSONSchema: TJSONSchema.TJSONSchema): String;
@@ -110,7 +113,12 @@ var
         TJSONSchema.simpleTypes.integer: Result := Schema.Importer.BuildInTypes[TBuildInType.IntegerType];
         TJSONSchema.simpleTypes.null: Result := nil;
         TJSONSchema.simpleTypes.number: Result := Schema.Importer.BuildInTypes[TBuildInType.DoubleType];
-        TJSONSchema.simpleTypes.object: Result := Schema.Importer.CreateClassType(ParentClassDefinition, EmptyStr);
+        TJSONSchema.simpleTypes.object:
+        begin
+          Result := Schema.Importer.CreateClassType(ParentClassDefinition, EmptyStr);
+
+          DefineProperties(Result.AsClassDefinition, JSONSchema);
+        end;
         TJSONSchema.simpleTypes.string: Result := Schema.Importer.BuildInTypes[TBuildInType.StringType];
       end
     else if JSONSchema.IsRefStored then
