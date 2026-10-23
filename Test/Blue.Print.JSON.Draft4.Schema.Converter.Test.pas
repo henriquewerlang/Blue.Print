@@ -161,6 +161,16 @@ type
     procedure WhenCreateAnOneOfClassMustMarkTheClassHasFlat;
     [Test]
     procedure WhenTheSchemaOfAllOfIsAnBuildInTypeMustCreateThePropertyWithTheNameOfEnumerator;
+    [Test]
+    procedure WhenTheSchemaIsAnObjectWithAdditionalPropertyMustCreateAProperty;
+    [Test]
+    procedure TheAdditionalPropertyMustHaveTheNameOfAddicionalProperties;
+    [Test]
+    procedure WhenTheSchemaIsAnObjectWithAdditionalPropertyMustAppendAPropertyWithTheDynamicPropertyType;
+    [Test]
+    procedure TheAdditionalPropertyMustHaveTheTypeDefinedByTheSchemaConfiguration;
+    [Test]
+    procedure TheAdditionalPropertyMustBeLoadedOnlyIfItIsDefinedInTheSchema;
   end;
 
 implementation
@@ -466,6 +476,38 @@ begin
   FImporter.Free;
 
   FDefinition.Free;
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.TheAdditionalPropertyMustBeLoadedOnlyIfItIsDefinedInTheSchema;
+begin
+  var PropertyDefinition := FDefinition.properties.AddProperties('MyProperty');
+  PropertyDefinition.&type.simpleTypes := TJSONSchema.simpleTypes.&object;
+
+  ImportDefinition;
+
+  Assert.AreEqual(0, Length(GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties));
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.TheAdditionalPropertyMustHaveTheNameOfAddicionalProperties;
+begin
+  var PropertyDefinition := FDefinition.properties.AddProperties('MyProperty');
+  PropertyDefinition.&type.simpleTypes := TJSONSchema.simpleTypes.&object;
+  PropertyDefinition.additionalProperties.AdditionalPropertiesProperty.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual('additionalProperties', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].Name);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.TheAdditionalPropertyMustHaveTheTypeDefinedByTheSchemaConfiguration;
+begin
+  var PropertyDefinition := FDefinition.properties.AddProperties('MyProperty');
+  PropertyDefinition.&type.simpleTypes := TJSONSchema.simpleTypes.&object;
+  PropertyDefinition.additionalProperties.AdditionalPropertiesProperty.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.IntegerType], GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].PropertyType.AsGenericDefinition.GenericType);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.TheAliasNameMustBeTheFieldNameOfTheDefinition;
@@ -1066,6 +1108,28 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(1, Length(GetMainClass.Alias));
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaIsAnObjectWithAdditionalPropertyMustAppendAPropertyWithTheDynamicPropertyType;
+begin
+  var PropertyDefinition := FDefinition.properties.AddProperties('MyProperty');
+  PropertyDefinition.&type.simpleTypes := TJSONSchema.simpleTypes.&object;
+  PropertyDefinition.additionalProperties.AdditionalPropertiesProperty.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual(TTypeDynamicPropertyDefinition, GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].PropertyType.ClassType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaIsAnObjectWithAdditionalPropertyMustCreateAProperty;
+begin
+  var PropertyDefinition := FDefinition.properties.AddProperties('MyProperty');
+  PropertyDefinition.&type.simpleTypes := TJSONSchema.simpleTypes.&object;
+  PropertyDefinition.additionalProperties.AdditionalPropertiesProperty.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties));
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaIsAReferenceMustCreateTheReferenceType;

@@ -94,10 +94,10 @@ type
       AdditionalPropertiesProperty = class
       private
         FBoolean: System.Boolean;
-        FAdditionalPropertiesProperty: TJSONSchema.TJSONSchema.AdditionalPropertiesProperty;
+        FAdditionalPropertiesProperty: TJSONSchema.TJSONSchema;
         FBooleanIsStored: Boolean;
 
-        function GetAdditionalPropertiesProperty: TJSONSchema.TJSONSchema.AdditionalPropertiesProperty;
+        function GetAdditionalPropertiesProperty: TJSONSchema.TJSONSchema;
         function GetAdditionalPropertiesPropertyStored: Boolean;
         procedure SetBoolean(const Value: System.Boolean);
       public
@@ -107,7 +107,7 @@ type
         property IsAdditionalPropertiesPropertyStored: Boolean read GetAdditionalPropertiesPropertyStored;
       published
         property boolean: System.Boolean read FBoolean write SetBoolean stored FBooleanIsStored;
-        property AdditionalPropertiesProperty: TJSONSchema.TJSONSchema.AdditionalPropertiesProperty read GetAdditionalPropertiesProperty write FAdditionalPropertiesProperty stored GetAdditionalPropertiesPropertyStored;
+        property AdditionalPropertiesProperty: TJSONSchema.TJSONSchema read GetAdditionalPropertiesProperty write FAdditionalPropertiesProperty stored GetAdditionalPropertiesPropertyStored;
       end;
 
       DefinitionsProperty = class
@@ -359,7 +359,7 @@ type
 //      property maxProperties: TJSONSchema.positiveInteger read FMaxProperties write FMaxProperties stored GetMaxPropertiesStored;
 //      property minProperties: TJSONSchema.positiveIntegerDefault0 read GetMinProperties write FMinProperties stored GetMinPropertiesStored;
       property required: TJSONSchema.stringArray read FRequired write FRequired stored GetRequiredStored;
-//      property additionalProperties: TJSONSchema.TJSONSchema.AdditionalPropertiesProperty read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
+      property additionalProperties: TJSONSchema.TJSONSchema.AdditionalPropertiesProperty read GetAdditionalProperties write FAdditionalProperties stored GetAdditionalPropertiesStored;
       property definitions: TJSONSchema.TJSONSchema.DefinitionsProperty read GetDefinitions write FDefinitions stored GetDefinitionsStored;
       property properties: TJSONSchema.TJSONSchema.PropertiesProperty read GetProperties write FProperties stored GetPropertiesStored;
 //      property patternProperties: TJSONSchema.TJSONSchema.PatternPropertiesProperty read GetPatternProperties write FPatternProperties stored GetPatternPropertiesStored;
@@ -805,10 +805,10 @@ begin
   FBooleanIsStored := True;
 end;
 
-function TJSONSchema.TJSONSchema.AdditionalPropertiesProperty.GetAdditionalPropertiesProperty: Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema.AdditionalPropertiesProperty;
+function TJSONSchema.TJSONSchema.AdditionalPropertiesProperty.GetAdditionalPropertiesProperty: Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema;
 begin
   if not Assigned(FAdditionalPropertiesProperty) then
-    FAdditionalPropertiesProperty := Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema.AdditionalPropertiesProperty.Create;
+    FAdditionalPropertiesProperty := Blue.Print.JSON.Draft4.Schema.TJSONSchema.TJSONSchema.Create;
 
   Result := FAdditionalPropertiesProperty;
 end;
