@@ -50,7 +50,14 @@ var
       end;
 
       if JSONSchema.IsAdditionalPropertiesStored then
-        ClassDefinition.AddProperty('additionalProperties', Schema.Importer.CreateDynamicPropertyType(Result.AsClassDefinition, LoadSchemaType(ClassDefinition, JSONSchema.additionalProperties.AdditionalPropertiesProperty)));
+      begin
+        var DynamicPropertyType := LoadSchemaType(ClassDefinition, JSONSchema.additionalProperties.AdditionalPropertiesProperty);
+
+        ClassDefinition.AddProperty('additionalProperties', Schema.Importer.CreateDynamicPropertyType(ClassDefinition, DynamicPropertyType));
+
+        if DynamicPropertyType.IsClassDefinition then
+          DynamicPropertyType.Name := 'TAdditionalPropertiesType';
+      end;
     end;
 
     function GetReferenceSchemaName(JSONSchema: TJSONSchema.TJSONSchema): String;
