@@ -285,6 +285,8 @@ type
     procedure WhenAClassHasSubClassesMustLoadTheImplementationsOfGetFunctionFromTheSubClassesToo;
     [Test]
     procedure WhenAClassHasSubClassesMustLoadTheImplementationsOfSetFunctionFromTheSubClassesToo;
+    [Test]
+    procedure WhenTheParentClassHasSpecialCharacteresMustFormatTheClassNameHasExpected;
   end;
 
   [TestFixture]
@@ -2845,6 +2847,76 @@ begin
     begin
       FImporter.Import(FConfiguration);
     end, ESchemaNamespaceWithoutConfiguraton);
+end;
+
+procedure TSchemaImporterTest.WhenTheParentClassHasSpecialCharacteresMustFormatTheClassNameHasExpected;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+
+      function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
+      begin
+        Result := FImporter.CreateClassType(Parent, Name);
+      end;
+
+    begin
+      var ClassDefinition := AddClass('TMyClass3', AddClass('my.special-class;name', AddClass('TMyClass', MainClass)));
+
+      ClassDefinition.AddProperty('MyProp', ClassDefinition);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        TMyClass = class;
+
+        TMyClass = class
+        public type
+          TMySpecialClassName = class;
+
+          TMySpecialClassName = class
+          public type
+            TMyClass3 = class;
+
+            TMyClass3 = class
+            private
+              FMyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3;
+              function GetMyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3;
+            published
+              property MyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3 read GetMyProp write FMyProp;
+            end;
+          end;
+        end;
+      end;
+
+    implementation
+
+    { MainModule.TMyClass.TMySpecialClassName.TMyClass3 }
+
+    function MainModule.TMyClass.TMySpecialClassName.TMyClass3.GetMyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3;
+    begin
+      if not Assigned(FMyProp) then
+        FMyProp := MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3.Create;
+
+      Result := FMyProp;
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyHasAnArrayTypeOfAConcretTypeMustCreateTheAddProcedureWithAParameterOsTheArrayType;

@@ -671,26 +671,34 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := FormatTypeName(ResolveReferenceType(TypeDefinition).Name);
     end;
 
+    function FormatModuleName(const ModuleTypeDefinition: TTypeModuleDefinition): String;
+    begin
+      Result := ModuleTypeDefinition.Name;
+
+      if not ModuleTypeDefinition.IsUnitDefinition then
+        Result := CheckInvalidNames(FormatName(Result));
+    end;
+
     function FormatParentModuleName(const TypeDefinition: TTypeDefinition; const AppendUnitName: Boolean): String;
 
-      function FormatModuleName(ParentModule: TTypeDefinition): String;
+      function FormatParentModule(ParentModule: TTypeModuleDefinition): String;
       begin
         Result := EmptyStr;
 
         if Assigned(ParentModule) then
         begin
           if not ParentModule.IsUnitDefinition then
-            Result := FormatModuleName(ParentModule.ParentModule)
+            Result := FormatParentModule(ParentModule.ParentModule)
           else if not AppendUnitName then
             Exit;
 
-          Result := Result + ParentModule.Name + TYPE_NAME_SEPARATOR;
+          Result := Result + FormatModuleName(ParentModule) + TYPE_NAME_SEPARATOR;
         end;
       end;
 
     begin
       if Assigned(TypeDefinition) then
-        Result := FormatModuleName(TypeDefinition.ParentModule)
+        Result := FormatParentModule(TypeDefinition.ParentModule)
       else
         Result := EmptyStr;
     end;
@@ -746,7 +754,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function FormatClassName(const ClassDefinition: TTypeClassDefinition): String;
     begin
-      Result := CheckInvalidNames(FormatName(ClassDefinition.Name));
+      Result := Format('%s = class', [FormatModuleName(ClassDefinition)]);
     end;
 
     function FormatEnumerationName(const EnumerationDefinition: TTypeEnumerationDefinition): String;
@@ -1074,7 +1082,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         var CurrentIndentation := Succ(IndentationLevel);
 
         for var ClassDefinition in ModuleDefinition.Classes do
-          AddLine(CurrentIndentation, '%s = class;', [FormatClassName(ClassDefinition)]);
+          AddLine(CurrentIndentation, '%s;', [FormatClassName(ClassDefinition)]);
 
         AddWhiteLine;
       end;
@@ -1089,7 +1097,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         if ClassDefinition.Flat then
           AddLine(CurrentIndentation, '[Flat]');
 
-        AddLine(CurrentIndentation, '%s = class', [FormatClassName(ClassDefinition)]);
+        AddLine(CurrentIndentation, '%s', [FormatClassName(ClassDefinition)]);
 
         if ClassDefinition.HasTypes then
         begin
