@@ -703,9 +703,9 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         Result := EmptyStr;
     end;
 
-    function FormatImplementation(const ClassDefinition: TTypeClassDefinition): String;
+    function FormatImplementation(const ModuleTypeDefinition: TTypeModuleDefinition): String;
     begin
-      Result := FormatParentModuleName(ClassDefinition, False) + ClassDefinition.Name;
+      Result := FormatParentModuleName(ModuleTypeDefinition, False) + ModuleTypeDefinition.Name;
     end;
 
     function FormatMethodImplementation(const ClassDefinition: TTypeClassDefinition): String;
@@ -1126,21 +1126,14 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       end;
     end;
 
-    function ClassNeedImplementationSection(const ClassDefinition: TTypeClassDefinition): Boolean;
+    function ClassNeedImplementationSection(const ModuleDefinition: TTypeModuleDefinition): Boolean;
     begin
-      for var PropertyDefinition in ClassDefinition.Properties do
-        if NeedGetFunction(PropertyDefinition) or NeedSetFunction(PropertyDefinition) or NeedAddFunction(PropertyDefinition) then
-          Exit(True);
+      if ModuleDefinition.IsClassDefinition then
+        for var PropertyDefinition in ModuleDefinition.AsClassDefinition.Properties do
+          if NeedGetFunction(PropertyDefinition) or NeedSetFunction(PropertyDefinition) or NeedAddFunction(PropertyDefinition) then
+            Exit(True);
 
       Result := False;
-    end;
-
-    function NeedImplementationSection(const ModuleDefinition: TTypeModuleDefinition): Boolean;
-    begin
-      Result := False;
-
-      for var ClassDefinition in ModuleDefinition.Classes do
-        Result := ClassNeedImplementationSection(ClassDefinition);
     end;
 
     procedure AddUsesList(const IndentationLevel: Integer);
@@ -1213,82 +1206,80 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
     begin
       var IndentationLevel := 0;
 
-      for var ClassDefinition in ModuleDefinition.Classes do
+      if ClassNeedImplementationSection(ModuleDefinition) then
       begin
-        if NeedImplementationSection(ModuleDefinition) then
+        AddLine(IndentationLevel, '{ %s }', [FormatImplementation(ModuleDefinition)]);
+
+        AddWhiteLine;
+
+        for var PropertyDefinition in ModuleDefinition.AsClassDefinition.Properties do
         begin
-          AddLine(IndentationLevel, '{ %s }', [FormatImplementation(ClassDefinition)]);
-
-          AddWhiteLine;
-
-          for var PropertyDefinition in ClassDefinition.Properties do
+          if NeedGetFunction(PropertyDefinition) then
           begin
-            if NeedGetFunction(PropertyDefinition) then
+            AddLine(IndentationLevel, FormatGetFunction(PropertyDefinition, ModuleDefinition.AsClassDefinition));
+
+            AddLine(IndentationLevel, 'begin');
+
+            AddLine(IndentationLevel, '  if not Assigned(%s) then', [FormatFieldName(PropertyDefinition)]);
+
+            AddLine(IndentationLevel, '    %s := %s.Create;', [FormatFieldName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
+
+            AddWhiteLine;
+
+            AddLine(IndentationLevel, '  Result := %s;', [FormatFieldName(PropertyDefinition)]);
+
+            AddLine(IndentationLevel, 'end;');
+
+            AddWhiteLine;
+          end;
+
+          if NeedAddFunction(PropertyDefinition) then
+          begin
+            var VariableName: String;
+
+            AddLine(IndentationLevel, FormatAddFunctionName(PropertyDefinition, ModuleDefinition.AsClassDefinition));
+
+            AddLine(IndentationLevel, 'begin');
+
+            if FunctionAddNeedReturnType(PropertyDefinition) then
             begin
-              AddLine(IndentationLevel, FormatGetFunction(PropertyDefinition, ClassDefinition));
+              VariableName := 'Result';
 
-              AddLine(IndentationLevel, 'begin');
-
-              AddLine(IndentationLevel, '  if not Assigned(%s) then', [FormatFieldName(PropertyDefinition)]);
-
-              AddLine(IndentationLevel, '    %s := %s.Create;', [FormatFieldName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
+              AddLine(IndentationLevel, '  Result := %s.Create;', [FormatGenericItemTypeName(PropertyDefinition)]);
 
               AddWhiteLine;
+            end
+            else
+              VariableName := 'Value';
 
-              AddLine(IndentationLevel, '  Result := %s;', [FormatFieldName(PropertyDefinition)]);
+            if PropertyDefinition.PropertyType.IsDynamicPropertyDefinition then
+              VariableName := Format('TDynamicPair<%s>.Create(Name, %s)', [FormatGenericItemTypeName(PropertyDefinition), VariableName]);
 
-              AddLine(IndentationLevel, 'end;');
+            AddLine(IndentationLevel, '  %0:s := %0:s + [%1:s];', [FormatFieldName(PropertyDefinition), VariableName]);
 
-              AddWhiteLine;
-            end;
+            AddLine(IndentationLevel, 'end;');
 
-            if NeedAddFunction(PropertyDefinition) then
-            begin
-              var VariableName: String;
+            AddWhiteLine;
+          end;
 
-              AddLine(IndentationLevel, FormatAddFunctionName(PropertyDefinition, ClassDefinition));
+          if NeedSetFunction(PropertyDefinition) then
+          begin
+            AddLine(IndentationLevel, FormatSetFunction(PropertyDefinition, ModuleDefinition.AsClassDefinition));
 
-              AddLine(IndentationLevel, 'begin');
+            AddLine(IndentationLevel, 'begin');
 
-              if FunctionAddNeedReturnType(PropertyDefinition) then
-              begin
-                VariableName := 'Result';
+            AddLine(IndentationLevel, '  %s := Value;', [FormatFieldName(PropertyDefinition)]);
+            AddLine(IndentationLevel, '  %s := True;', [FormatStoredFieldName(PropertyDefinition)]);
 
-                AddLine(IndentationLevel, '  Result := %s.Create;', [FormatGenericItemTypeName(PropertyDefinition)]);
+            AddLine(IndentationLevel, 'end;');
 
-                AddWhiteLine;
-              end
-              else
-                VariableName := 'Value';
-
-              if PropertyDefinition.PropertyType.IsDynamicPropertyDefinition then
-                VariableName := Format('TDynamicPair<%s>.Create(Name, %s)', [FormatGenericItemTypeName(PropertyDefinition), VariableName]);
-
-              AddLine(IndentationLevel, '  %0:s := %0:s + [%1:s];', [FormatFieldName(PropertyDefinition), VariableName]);
-
-              AddLine(IndentationLevel, 'end;');
-
-              AddWhiteLine;
-            end;
-
-            if NeedSetFunction(PropertyDefinition) then
-            begin
-              AddLine(IndentationLevel, FormatSetFunction(PropertyDefinition, ClassDefinition));
-
-              AddLine(IndentationLevel, 'begin');
-
-              AddLine(IndentationLevel, '  %s := Value;', [FormatFieldName(PropertyDefinition)]);
-              AddLine(IndentationLevel, '  %s := True;', [FormatStoredFieldName(PropertyDefinition)]);
-
-              AddLine(IndentationLevel, 'end;');
-
-              AddWhiteLine;
-            end;
+            AddWhiteLine;
           end;
         end;
-
-        GenerateImplementation(ClassDefinition);
       end;
+
+      for var ClassDefinition in ModuleDefinition.Classes do
+        GenerateImplementation(ClassDefinition);
     end;
 
   const
