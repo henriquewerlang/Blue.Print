@@ -287,6 +287,8 @@ type
     procedure WhenAClassHasSubClassesMustLoadTheImplementationsOfSetFunctionFromTheSubClassesToo;
     [Test]
     procedure WhenTheParentClassHasSpecialCharacteresMustFormatTheClassNameHasExpected;
+    [Test]
+    procedure WhenChekingThePropertiesToImplementTheFunctionsMustBeDoneCorrectly;
   end;
 
   [TestFixture]
@@ -1810,6 +1812,79 @@ begin
       end;
 
     implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenChekingThePropertiesToImplementTheFunctionsMustBeDoneCorrectly;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+
+      function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
+      begin
+        Result := FImporter.CreateClassType(Parent, Name);
+      end;
+
+    begin
+      if MainClass.Name = 'MainModule' then
+      begin
+        var ClassDefinition := AddClass('TMyClass', MainClass);
+
+        ClassDefinition.AddProperty('MyProp', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+
+        AddClass('TMyClass2', MainClass);
+
+        AddClass('TMyClass3', MainClass);
+      end;
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        TMyClass = class;
+        TMyClass2 = class;
+        TMyClass3 = class;
+
+        TMyClass = class
+        private
+          FMyProp: System.TArray<System.Integer>;
+        public
+          procedure AddMyProp(const Value: System.Integer);
+        published
+          property MyProp: System.TArray<System.Integer> read FMyProp write FMyProp;
+        end;
+
+        TMyClass2 = class
+        end;
+
+        TMyClass3 = class
+        end;
+      end;
+
+    implementation
+
+    { MainModule.TMyClass }
+
+    procedure MainModule.TMyClass.AddMyProp(const Value: System.Integer);
+    begin
+      FMyProp := FMyProp + [Value];
+    end;
 
     end.
 
