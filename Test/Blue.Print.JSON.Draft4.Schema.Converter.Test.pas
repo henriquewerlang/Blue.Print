@@ -171,6 +171,10 @@ type
     procedure TheAdditionalPropertyMustHaveTheTypeDefinedByTheSchemaConfiguration;
     [Test]
     procedure TheAdditionalPropertyMustBeLoadedOnlyIfItIsDefinedInTheSchema;
+    [Test]
+    procedure WhenTheDynamicPropertyTypeIsAnClassDefinitionMustLoadTheClassNameWithTheNameAdditionalPropertyType;
+    [Test]
+    procedure WhenTheDynamicPropertyTypeIsntAClassDefinitionCantChangeTheNameType;
   end;
 
 implementation
@@ -891,6 +895,28 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(1, Length(GetMainClass.Enumerations));
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheDynamicPropertyTypeIsAnClassDefinitionMustLoadTheClassNameWithTheNameAdditionalPropertyType;
+begin
+  var PropertyDefinition := FDefinition.properties.AddProperties('MyProperty');
+  PropertyDefinition.&type.simpleTypes := TJSONSchema.simpleTypes.&object;
+  PropertyDefinition.additionalProperties.AdditionalPropertiesProperty.&type.simpleTypes := TJSONSchema.simpleTypes.object;
+
+  ImportDefinition;
+
+  Assert.AreEqual('TAdditionalPropertiesType', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].PropertyType.AsGenericDefinition.GenericType.Name);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheDynamicPropertyTypeIsntAClassDefinitionCantChangeTheNameType;
+begin
+  var PropertyDefinition := FDefinition.properties.AddProperties('MyProperty');
+  PropertyDefinition.&type.simpleTypes := TJSONSchema.simpleTypes.&object;
+  PropertyDefinition.additionalProperties.AdditionalPropertiesProperty.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual('Integer', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].PropertyType.AsGenericDefinition.GenericType.Name);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheMainSchemaHasPropertiesThisPropertiesMustBeLoadedInTheMainClass;
