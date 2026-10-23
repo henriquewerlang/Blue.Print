@@ -142,8 +142,9 @@ type
 
   TTypeGenericDefinition = class(TTypeDefinition)
   private
-    FGenericType: TTypeDefinition;
     FBuildInType: TBuildInType;
+  protected
+    FGenericType: TTypeDefinition;
   public
     constructor Create(const BuildInType: TBuildInType);
 
@@ -670,18 +671,45 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := FormatTypeName(ResolveReferenceType(TypeDefinition).Name);
     end;
 
-    function FormatFullTypeName(TypeDefinition: TTypeDefinition): String;
+    function FormatParentModuleName(const TypeDefinition: TTypeDefinition; const AppendUnitName: Boolean): String;
 
-      function GetParentModuleName(TypeDefinition: TTypeDefinition): String;
+      function FormatModuleName(ParentModule: TTypeDefinition): String;
       begin
         Result := EmptyStr;
-        TypeDefinition := ResolveReferenceType(TypeDefinition);
 
-        if not TypeDefinition.IsUnitDefinition and Assigned(TypeDefinition.ParentModule) then
-          Result := GetParentModuleName(TypeDefinition.ParentModule) + TypeDefinition.ParentModule.Name + TYPE_NAME_SEPARATOR;
+        if Assigned(ParentModule) then
+        begin
+          if not ParentModule.IsUnitDefinition then
+            Result := FormatModuleName(ParentModule.ParentModule)
+          else if not AppendUnitName then
+            Exit;
+
+          Result := Result + ParentModule.Name + TYPE_NAME_SEPARATOR;
+        end;
       end;
 
     begin
+      if Assigned(TypeDefinition) then
+        Result := FormatModuleName(TypeDefinition.ParentModule)
+      else
+        Result := EmptyStr;
+    end;
+
+    function FormatImplementation(const ClassDefinition: TTypeClassDefinition): String;
+    begin
+      Result := FormatParentModuleName(ClassDefinition, False) + ClassDefinition.Name;
+    end;
+
+    function FormatMethodImplementation(const ClassDefinition: TTypeClassDefinition): String;
+    begin
+      if Assigned(ClassDefinition) then
+        Result := FormatImplementation(ClassDefinition) + TYPE_NAME_SEPARATOR;
+    end;
+
+    function FormatFullTypeName(TypeDefinition: TTypeDefinition): String;
+    begin
+      TypeDefinition := ResolveReferenceType(TypeDefinition);
+
       if TypeDefinition.IsGenericDefinition then
       begin
         var GenericDefinition := TypeDefinition.AsGenericDefinition;
@@ -693,7 +721,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       else
         Result := FormatTypeName(TypeDefinition);
 
-      Result := GetParentModuleName(TypeDefinition) + Result;
+      Result := FormatParentModuleName(TypeDefinition, True) + Result;
     end;
 
     function GetGenericType(const TypeDefinition: TTypeDefinition; var GenericTypeDefinition: TTypeDefinition): Boolean;
@@ -802,9 +830,19 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := NeedFieldNameAttribute(PropertyDefinition, PropertyName);
     end;
 
+    function FormatPropertyTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
+    begin
+      Result := FormatFullTypeName(PropertyDefinition.PropertyType);
+    end;
+
     function FormatGetFunctionName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
       Result := RemoveInvalidCharecters('Get.' + FormatPropertyName(PropertyDefinition));
+    end;
+
+    function FormatGetFunction(const PropertyDefinition: TTypePropertyDefinition; const ClassDefinitionType: TTypeClassDefinition): String;
+    begin
+      Result := Format('function %s%s: %s;', [FormatMethodImplementation(ClassDefinitionType), FormatGetFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
     end;
 
     function FormatSetFunctionName(const PropertyDefinition: TTypePropertyDefinition): String;
@@ -822,14 +860,6 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
     end;
 
     function FormatAddFunctionName(const PropertyDefinition: TTypePropertyDefinition; const ClassDefinitionType: TTypeClassDefinition): String;
-
-      function GenerateImplementation: String;
-      begin
-        if Assigned(ClassDefinitionType) then
-          Result := FormatTypeName(ClassDefinitionType) + '.'
-        else
-          Result := EmptyStr;
-      end;
 
       function NeedReturnType: Boolean;
       begin
@@ -876,17 +906,12 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       end;
 
     begin
-      Result := Format('%s %s%s%s;', [GetMethodDefinition, GenerateImplementation, FormatFunctionName, FormatReturnInformation]);
+      Result := Format('%s %s%s%s;', [GetMethodDefinition, FormatMethodImplementation(ClassDefinitionType), FormatFunctionName, FormatReturnInformation]);
     end;
 
-    function FormatPropertyTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
+    function FormatSetFunction(const PropertyDefinition: TTypePropertyDefinition; const ClassDefinitionType: TTypeClassDefinition): String;
     begin
-      Result := FormatFullTypeName(PropertyDefinition.PropertyType);
-    end;
-
-    function FormatSetFunctionHeader(const PropertyDefinition: TTypePropertyDefinition): String;
-    begin
-      Result := Format('%s(const Value: %s)', [FormatSetFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
+      Result := Format('procedure %s%s(const Value: %s);', [FormatMethodImplementation(ClassDefinitionType), FormatSetFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
     end;
 
     function FormatPropertyReaderName(const PropertyDefinition: TTypePropertyDefinition): String;
@@ -942,10 +967,10 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         for var PropertyDefinition in ClassDefinition.Properties do
         begin
           if NeedGetFunction(PropertyDefinition) then
-            AddLine(CurrentIndentation, 'function %s: %s;', [FormatGetFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
+            AddLine(CurrentIndentation, FormatGetFunction(PropertyDefinition, nil));
 
           if NeedSetFunction(PropertyDefinition) then
-            AddLine(CurrentIndentation, 'procedure %s;', [FormatSetFunctionHeader(PropertyDefinition)]);
+            AddLine(CurrentIndentation, FormatSetFunction(PropertyDefinition, nil));
         end;
       end;
     end;
@@ -1107,7 +1132,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := False;
 
       for var ClassDefinition in ModuleDefinition.Classes do
-        Result := ClassNeedImplementationSection(ClassDefinition) or NeedImplementationSection(ClassDefinition);
+        Result := ClassNeedImplementationSection(ClassDefinition);
     end;
 
     procedure AddUsesList(const IndentationLevel: Integer);
@@ -1176,43 +1201,15 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       AddWhiteLine;
     end;
 
-  const
-    INDENTATION_STARTING_LEVEL = 0;
+    procedure GenerateImplementation(const ModuleDefinition: TTypeModuleDefinition);
+    begin
+      var IndentationLevel := 0;
 
-  begin
-    var IndentationLevel := INDENTATION_STARTING_LEVEL;
-    var UnitFileName := IncludeTrailingPathDelimiter(Configuration.OutputFolder) + UnitDefinition.Name + '.pas';
-    UnitFile := TStringList.Create;
-
-    try
-      ForceDirectories(ExtractFilePath(UnitFileName));
-
-      AddLine(IndentationLevel, 'unit %s;', [UnitDefinition.Name]);
-
-      AddWhiteLine;
-
-      AddLine(IndentationLevel, 'interface');
-
-      AddWhiteLine;
-
-      LoadCompilerDirectives(IndentationLevel);
-
-      AddUsesList(IndentationLevel);
-
-      AddLine(IndentationLevel, 'type');
-
-      GenerateForwardClassesDeclaration(IndentationLevel, UnitDefinition);
-
-      GenerateModuleDeclaration(IndentationLevel, UnitDefinition);
-
-      AddLine(IndentationLevel, 'implementation');
-
-      AddWhiteLine;
-
-      if NeedImplementationSection(UnitDefinition) then
-        for var ClassDefinition in UnitDefinition.Classes do
+      for var ClassDefinition in ModuleDefinition.Classes do
+      begin
+        if NeedImplementationSection(ModuleDefinition) then
         begin
-          AddLine(IndentationLevel, '{ %s }', [FormatTypeName(ClassDefinition)]);
+          AddLine(IndentationLevel, '{ %s }', [FormatImplementation(ClassDefinition)]);
 
           AddWhiteLine;
 
@@ -1220,7 +1217,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
           begin
             if NeedGetFunction(PropertyDefinition) then
             begin
-              AddLine(IndentationLevel, 'function %s.%s: %s;', [FormatTypeName(ClassDefinition), FormatGetFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
+              AddLine(IndentationLevel, FormatGetFunction(PropertyDefinition, ClassDefinition));
 
               AddLine(IndentationLevel, 'begin');
 
@@ -1268,7 +1265,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
             if NeedSetFunction(PropertyDefinition) then
             begin
-              AddLine(IndentationLevel, 'procedure %s.%s;', [FormatTypeName(ClassDefinition), FormatSetFunctionHeader(PropertyDefinition)]);
+              AddLine(IndentationLevel, FormatSetFunction(PropertyDefinition, ClassDefinition));
 
               AddLine(IndentationLevel, 'begin');
 
@@ -1281,6 +1278,45 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
             end;
           end;
         end;
+
+        GenerateImplementation(ClassDefinition);
+      end;
+    end;
+
+  const
+    INDENTATION_STARTING_LEVEL = 0;
+
+  begin
+    var IndentationLevel := INDENTATION_STARTING_LEVEL;
+    var UnitFileName := IncludeTrailingPathDelimiter(Configuration.OutputFolder) + UnitDefinition.Name + '.pas';
+    UnitFile := TStringList.Create;
+
+    try
+      ForceDirectories(ExtractFilePath(UnitFileName));
+
+      AddLine(IndentationLevel, 'unit %s;', [UnitDefinition.Name]);
+
+      AddWhiteLine;
+
+      AddLine(IndentationLevel, 'interface');
+
+      AddWhiteLine;
+
+      LoadCompilerDirectives(IndentationLevel);
+
+      AddUsesList(IndentationLevel);
+
+      AddLine(IndentationLevel, 'type');
+
+      GenerateForwardClassesDeclaration(IndentationLevel, UnitDefinition);
+
+      GenerateModuleDeclaration(IndentationLevel, UnitDefinition);
+
+      AddLine(IndentationLevel, 'implementation');
+
+      AddWhiteLine;
+
+      GenerateImplementation(UnitDefinition);
 
       AddLine(IndentationLevel, 'end.');
 

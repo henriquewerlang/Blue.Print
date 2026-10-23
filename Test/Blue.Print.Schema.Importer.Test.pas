@@ -281,6 +281,10 @@ type
     procedure WhenTheTypeOfDynamicPropertyIsAnIntegralTypeMustCreateAProcedureToLoadTheDynamicPropertyValue;
     [Test]
     procedure WhenCreateAReferenceTypeInsideASubClassDeclarationMustLoadTheFullTypeNameUsingTheParentModuleFromTheReferenceNotTheTypeReferece;
+    [Test]
+    procedure WhenAClassHasSubClassesMustLoadTheImplementationsOfGetFunctionFromTheSubClassesToo;
+    [Test]
+    procedure WhenAClassHasSubClassesMustLoadTheImplementationsOfSetFunctionFromTheSubClassesToo;
   end;
 
   [TestFixture]
@@ -1548,6 +1552,147 @@ begin
       end;
 
     implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenAClassHasSubClassesMustLoadTheImplementationsOfGetFunctionFromTheSubClassesToo;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+
+      function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
+      begin
+        Result := FImporter.CreateClassType(Parent, Name);
+      end;
+
+    begin
+      var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', MainClass)));
+
+      ClassDefinition.AddProperty('MyProp', MainClass);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        TMyClass = class;
+
+        TMyClass = class
+        public type
+          TMyClass2 = class;
+
+          TMyClass2 = class
+          public type
+            TMyClass3 = class;
+
+            TMyClass3 = class
+            private
+              FMyProp: MyUnit.MainModule;
+              function GetMyProp: MyUnit.MainModule;
+            published
+              property MyProp: MyUnit.MainModule read GetMyProp write FMyProp;
+            end;
+          end;
+        end;
+      end;
+
+    implementation
+
+    { MainModule.TMyClass.TMyClass2.TMyClass3 }
+
+    function MainModule.TMyClass.TMyClass2.TMyClass3.GetMyProp: MyUnit.MainModule;
+    begin
+      if not Assigned(FMyProp) then
+        FMyProp := MyUnit.MainModule.Create;
+
+      Result := FMyProp;
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenAClassHasSubClassesMustLoadTheImplementationsOfSetFunctionFromTheSubClassesToo;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+
+      function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
+      begin
+        Result := FImporter.CreateClassType(Parent, Name);
+      end;
+
+    begin
+      var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', MainClass)));
+
+      ClassDefinition.AddProperty('MyProp', FImporter.BuildInTypes[TBuildInType.IntegerType]).Optional := True;
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        TMyClass = class;
+
+        TMyClass = class
+        public type
+          TMyClass2 = class;
+
+          TMyClass2 = class
+          public type
+            TMyClass3 = class;
+
+            TMyClass3 = class
+            private
+              FMyProp: System.Integer;
+              FMyPropStored: Boolean;
+              procedure SetMyProp(const Value: System.Integer);
+            public
+              property IsMyPropStored: Boolean read FMyPropStored;
+            published
+              property MyProp: System.Integer read FMyProp write SetMyProp stored FMyPropStored;
+            end;
+          end;
+        end;
+      end;
+
+    implementation
+
+    { MainModule.TMyClass.TMyClass2.TMyClass3 }
+
+    procedure MainModule.TMyClass.TMyClass2.TMyClass3.SetMyProp(const Value: System.Integer);
+    begin
+      FMyProp := Value;
+      FMyPropStored := True;
+    end;
 
     end.
 
