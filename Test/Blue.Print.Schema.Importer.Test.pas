@@ -279,6 +279,8 @@ type
     procedure WhenTheTypeOfDynamicPropertyIsAClassDefinitionMustCreateTheAddFunctionToAddThePropertyNameAndReturntTheClassDefinitionInTheReturnOfTheFunction;
     [Test]
     procedure WhenTheTypeOfDynamicPropertyIsAnIntegralTypeMustCreateAProcedureToLoadTheDynamicPropertyValue;
+    [Test]
+    procedure WhenCreateAReferenceTypeInsideASubClassDeclarationMustLoadTheFullTypeNameUsingTheParentModuleFromTheReferenceNotTheTypeReferece;
   end;
 
   [TestFixture]
@@ -1722,6 +1724,65 @@ begin
   ParentModule.Free;
 end;
 
+procedure TSchemaImporterTest.WhenCreateAReferenceTypeInsideASubClassDeclarationMustLoadTheFullTypeNameUsingTheParentModuleFromTheReferenceNotTheTypeReferece;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+
+      function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
+      begin
+        Result := FImporter.CreateClassType(Parent, Name);
+      end;
+
+    begin
+      var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', MainClass)));
+
+      ClassDefinition.AddProperty('MyProp', FImporter.CreateReferenceType(ClassDefinition, 'My Namespace', 'MainModule'));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        TMyClass = class;
+
+        TMyClass = class
+        public type
+          TMyClass2 = class;
+
+          TMyClass2 = class
+          public type
+            TMyClass3 = class;
+
+            TMyClass3 = class
+            private
+              FMyProp: MyUnit.MainModule;
+            published
+              property MyProp: MyUnit.MainModule read FMyProp write FMyProp;
+            end;
+          end;
+        end;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
 procedure TSchemaImporterTest.WhenCreateTheClassTypeMustReturnTheClassTypeCreated;
 begin
   var ParentModule := TTypeUnitDefinition.Create;
@@ -2255,11 +2316,11 @@ begin
 
       MainModule = class
       private
-        FMyProperty: System.TArray<MyUnit.MainModule.MainModule>;
+        FMyProperty: System.TArray<MyUnit.MainModule>;
       public
         function AddMyProperty: MyUnit.MainModule;
       published
-        property MyProperty: System.TArray<MyUnit.MainModule.MainModule> read FMyProperty write FMyProperty;
+        property MyProperty: System.TArray<MyUnit.MainModule> read FMyProperty write FMyProperty;
       end;
 
     implementation
