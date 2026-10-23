@@ -265,6 +265,20 @@ type
     procedure NeedToGroupTheAddFunctionsAndTheIsStoredFunctions;
     [Test]
     procedure WhenAClassTypeDefinitionIsFlatMustAppendTheFlatAttributeInTheClassDeclaration;
+    [Test]
+    procedure WhenCreateADynamicPropertyClassMustReturnTheClassAsExpected;
+    [Test]
+    procedure WhenCreateTheDynamicPropertyTypeMustLoadTheParentModuleInTheType;
+    [Test]
+    procedure WhenCreateTheDynamicPropertyTypeMustLoadTheTypeInTheTypesListFromParentModule;
+    [Test]
+    procedure WhenCreateTheDynamicPropertyTypeMustLoadTheDynamicPropertyOfTheParameter;
+    [Test]
+    procedure WhenDeclareADynamicTypeMustLoadThePropertyAsExpected;
+    [Test]
+    procedure WhenTheTypeOfDynamicPropertyIsAClassDefinitionMustCreateTheAddFunctionToAddThePropertyNameAndReturntTheClassDefinitionInTheReturnOfTheFunction;
+    [Test]
+    procedure WhenTheTypeOfDynamicPropertyIsAnIntegralTypeMustCreateAProcedureToLoadTheDynamicPropertyValue;
   end;
 
   [TestFixture]
@@ -1671,6 +1685,20 @@ begin
   Assert.AreEqual(1, Converter2.TimesCalled);
 end;
 
+procedure TSchemaImporterTest.WhenCreateADynamicPropertyClassMustReturnTheClassAsExpected;
+begin
+  var MainClass := TTypeClassDefinition.Create;
+  var DynamicType := TTypeDefinition.Create;
+
+  var DynamicPropertyType := FImporter.CreateDynamicPropertyType(MainClass, DynamicType);
+
+  Assert.IsNotNil(DynamicPropertyType);
+
+  DynamicType.Free;
+
+  MainClass.Free;
+end;
+
 procedure TSchemaImporterTest.WhenCreateAnArrayTypeMustReturnTheClassCreated;
 begin
   var MainClass := TTypeClassDefinition.Create;
@@ -1703,6 +1731,48 @@ begin
   Assert.IsNotNil(ClassDefinition);
 
   ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateTheDynamicPropertyTypeMustLoadTheDynamicPropertyOfTheParameter;
+begin
+  var MainClass := TTypeClassDefinition.Create;
+  var DynamicType := TTypeDefinition.Create;
+
+  var DynamicPropertyType := FImporter.CreateDynamicPropertyType(MainClass, DynamicType);
+
+  Assert.AreEqual(DynamicType, DynamicPropertyType.DynamicType);
+
+  DynamicType.Free;
+
+  MainClass.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateTheDynamicPropertyTypeMustLoadTheParentModuleInTheType;
+begin
+  var MainClass := TTypeClassDefinition.Create;
+  var DynamicType := TTypeDefinition.Create;
+
+  var DynamicPropertyType := FImporter.CreateDynamicPropertyType(MainClass, DynamicType);
+
+  Assert.AreEqual(MainClass, DynamicPropertyType.ParentModule);
+
+  DynamicType.Free;
+
+  MainClass.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateTheDynamicPropertyTypeMustLoadTheTypeInTheTypesListFromParentModule;
+begin
+  var MainClass := TTypeClassDefinition.Create;
+  var DynamicType := TTypeDefinition.Create;
+
+  var DynamicPropertyType := FImporter.CreateDynamicPropertyType(MainClass, DynamicType);
+
+  Assert.AreEqual(1, Length(DynamicPropertyType.ParentModule.Types));
+
+  DynamicType.Free;
+
+  MainClass.Free;
 end;
 
 procedure TSchemaImporterTest.WhenCreateTheTypeAliasMustAppendTheAliasInTheAliasListFromParentModule;
@@ -1784,6 +1854,28 @@ begin
   Assert.IsNotNil(TypeReference);
 
   MainClass.Free;
+end;
+
+procedure TSchemaImporterTest.WhenDeclareADynamicTypeMustLoadThePropertyAsExpected;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyDynamic', FImporter.CreateDynamicPropertyType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+      published
+        property MyDynamic: Blue.Print.Types.TDynamicProperty<System.Integer> read FMyDynamic write FMyDynamic;
+      end;
+
+    implementation
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenDeclareThePropertyAddFunctionMustFormatTheNameToFixTheLowerCaseFirstCharactere;
@@ -3273,6 +3365,98 @@ begin
       end;
 
     implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenTheTypeOfDynamicPropertyIsAClassDefinitionMustCreateTheAddFunctionToAddThePropertyNameAndReturntTheClassDefinitionInTheReturnOfTheFunction;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyDynamic', FImporter.CreateDynamicPropertyType(MainClass, MainClass));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyDynamic: Blue.Print.Types.TDynamicProperty<MyUnit.MainModule>;
+      public
+        function AddMyDynamic(const Name: String): MyUnit.MainModule;
+      published
+        property MyDynamic: Blue.Print.Types.TDynamicProperty<MyUnit.MainModule> read FMyDynamic write FMyDynamic;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    function MainModule.AddMyDynamic(const Name: String): MyUnit.MainModule;
+    begin
+      Result := MyUnit.MainModule.Create;
+
+      FMyDynamic := FMyDynamic + [TDynamicPair<MyUnit.MainModule>.Create(Name, Result)];
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenTheTypeOfDynamicPropertyIsAnIntegralTypeMustCreateAProcedureToLoadTheDynamicPropertyValue;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyDynamic', FImporter.CreateDynamicPropertyType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyDynamic: Blue.Print.Types.TDynamicProperty<System.Integer>;
+      public
+        procedure AddMyDynamic(const Name: String; const Value: System.Integer);
+      published
+        property MyDynamic: Blue.Print.Types.TDynamicProperty<System.Integer> read FMyDynamic write FMyDynamic;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    procedure MainModule.AddMyDynamic(const Name: String; const Value: System.Integer);
+    begin
+      FMyDynamic := FMyDynamic + [TDynamicPair<System.Integer>.Create(Name, Value)];
+    end;
 
     end.
 
