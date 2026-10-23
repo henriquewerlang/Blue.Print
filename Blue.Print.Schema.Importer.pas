@@ -705,7 +705,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function FormatImplementation(const ModuleTypeDefinition: TTypeModuleDefinition): String;
     begin
-      Result := FormatParentModuleName(ModuleTypeDefinition, False) + ModuleTypeDefinition.Name;
+      Result := FormatParentModuleName(ModuleTypeDefinition, False) + FormatModuleName(ModuleTypeDefinition);
     end;
 
     function FormatMethodImplementation(const ClassDefinition: TTypeClassDefinition): String;

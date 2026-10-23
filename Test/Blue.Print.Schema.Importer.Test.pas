@@ -289,6 +289,8 @@ type
     procedure WhenTheParentClassHasSpecialCharacteresMustFormatTheClassNameHasExpected;
     [Test]
     procedure WhenChekingThePropertiesToImplementTheFunctionsMustBeDoneCorrectly;
+    [Test]
+    procedure WhenTheLastLevelClassHasEspecialNameMustLoadTheFunctionsWithTheCorrectName;
   end;
 
   [TestFixture]
@@ -2813,6 +2815,67 @@ begin
       end;
 
     implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenTheLastLevelClassHasEspecialNameMustLoadTheFunctionsWithTheCorrectName;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+
+      function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
+      begin
+        Result := FImporter.CreateClassType(Parent, Name);
+      end;
+
+    begin
+      if MainClass.Name = 'MainModule' then
+      begin
+        var ClassDefinition := AddClass('.my.class', MainClass);
+
+        ClassDefinition.AddProperty('MyProp', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+      end;
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        TMyClass = class;
+
+        TMyClass = class
+        private
+          FMyProp: System.TArray<System.Integer>;
+        public
+          procedure AddMyProp(const Value: System.Integer);
+        published
+          property MyProp: System.TArray<System.Integer> read FMyProp write FMyProp;
+        end;
+      end;
+
+    implementation
+
+    { MainModule.TMyClass }
+
+    procedure MainModule.TMyClass.AddMyProp(const Value: System.Integer);
+    begin
+      FMyProp := FMyProp + [Value];
+    end;
 
     end.
 
