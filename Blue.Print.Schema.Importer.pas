@@ -672,9 +672,10 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function FormatFullTypeName(TypeDefinition: TTypeDefinition): String;
 
-      function GetParentModuleName(const TypeDefinition: TTypeDefinition): String;
+      function GetParentModuleName(TypeDefinition: TTypeDefinition): String;
       begin
         Result := EmptyStr;
+        TypeDefinition := ResolveReferenceType(TypeDefinition);
 
         if not TypeDefinition.IsUnitDefinition and Assigned(TypeDefinition.ParentModule) then
           Result := GetParentModuleName(TypeDefinition.ParentModule) + TypeDefinition.ParentModule.Name + TYPE_NAME_SEPARATOR;
