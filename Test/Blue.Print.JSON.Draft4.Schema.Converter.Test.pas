@@ -369,7 +369,7 @@ begin
 
   ImportDefinition;
 
-  Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.IntegerType], GetMainClass.Classes[0].Properties[0].PropertyType.AsArrayDefinition.ArrayType);
+  Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.IntegerType], GetMainClass.Classes[0].Properties[0].PropertyType.AsGenericDefinition.GenericType);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.MustLoadTheEnumeratorNamesInTheClass;

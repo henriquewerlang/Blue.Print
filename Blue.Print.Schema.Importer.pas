@@ -9,10 +9,10 @@ uses System.Classes, System.SysUtils, System.Rtti, System.Generics.Collections;
 type
   TSchemaImporter = class;
   TTypeAliasDefinition = class;
-  TTypeArrayDefinition = class;
   TTypeClassDefinition = class;
   TTypeDefinition = class;
   TTypeEnumerationDefinition = class;
+  TTypeGenericDefinition = class;
   TTypeModuleDefinition = class;
   TTypePropertyDefinition = class;
   TTypeReferenceDefinition = class;
@@ -102,23 +102,27 @@ type
   private
     FParentModule: TTypeModuleDefinition;
 
+    function GetIsAliasDefinition: Boolean;
     function GetIsArrayDefinition: Boolean;
     function GetIsClassDefinition: Boolean;
+    function GetIsDynamicPropertyDefinition: Boolean;
+    function GetIsEnumeratorDefinition: Boolean;
+    function GetIsGenericDefinition: Boolean;
     function GetIsReferenceDefinition: Boolean;
     function GetIsUnitDefinition: Boolean;
     function GetParentModule: TTypeModuleDefinition;
-    function GetIsEnumeratorDefinition: Boolean;
-    function GetIsAliasDefinition: Boolean;
   public
     function AsAliasDefinition: TTypeAliasDefinition;
-    function AsArrayDefinition: TTypeArrayDefinition;
     function AsClassDefinition: TTypeClassDefinition;
+    function AsGenericDefinition: TTypeGenericDefinition;
     function AsReferenceDefinition: TTypeReferenceDefinition;
 
     property IsAliasDefinition: Boolean read GetIsAliasDefinition;
     property IsArrayDefinition: Boolean read GetIsArrayDefinition;
     property IsClassDefinition: Boolean read GetIsClassDefinition;
+    property IsDynamicPropertyDefinition: Boolean read GetIsDynamicPropertyDefinition;
     property IsEnumeratorDefinition: Boolean read GetIsEnumeratorDefinition;
+    property IsGenericDefinition: Boolean read GetIsGenericDefinition;
     property IsReferenceDefinition: Boolean read GetIsReferenceDefinition;
     property IsUnitDefinition: Boolean read GetIsUnitDefinition;
     property ParentModule: TTypeModuleDefinition read GetParentModule write FParentModule;
@@ -136,11 +140,29 @@ type
     property Values: TStringList read GetValues;
   end;
 
-  TTypeArrayDefinition = class(TTypeDefinition)
+  TTypeGenericDefinition = class(TTypeDefinition)
   private
-    FArrayType: TTypeDefinition;
+    FGenericType: TTypeDefinition;
+    FBuildInType: TBuildInType;
   public
-    property ArrayType: TTypeDefinition read FArrayType;
+    constructor Create(const BuildInType: TBuildInType);
+
+    property BuildInType: TBuildInType read FBuildInType;
+    property GenericType: TTypeDefinition read FGenericType;
+  end;
+
+  TTypeArrayDefinition = class(TTypeGenericDefinition)
+  public
+    constructor Create;
+
+    property ArrayType: TTypeDefinition read FGenericType;
+  end;
+
+  TTypeDynamicPropertyDefinition = class(TTypeGenericDefinition)
+  public
+    constructor Create;
+
+    property DynamicType: TTypeDefinition read FGenericType;
   end;
 
   TTypeReferenceDefinition = class(TTypeDefinition)
@@ -304,6 +326,7 @@ type
     function CreateAliasType(const ParentModule: TTypeModuleDefinition; const Name: String; const TypeAlias: TTypeDefinition): TTypeAliasDefinition;
     function CreateArrayType(const ParentModule: TTypeModuleDefinition; const ArrayType: TTypeDefinition): TTypeArrayDefinition;
     function CreateClassType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeClassDefinition;
+    function CreateDynamicPropertyType(const ParentModule: TTypeModuleDefinition; const DynamicType: TTypeDefinition): TTypeDynamicPropertyDefinition;
     function CreateEnumeratorType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeEnumerationDefinition;
     function CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Namespace, Reference: String): TTypeReferenceDefinition;
     function FindType(const Namespace, Name: String): TTypeDefinition;
@@ -362,7 +385,7 @@ end;
 function TSchemaImporter.CreateArrayType(const ParentModule: TTypeModuleDefinition; const ArrayType: TTypeDefinition): TTypeArrayDefinition;
 begin
   Result := CreateTypeDefinition<TTypeArrayDefinition>(ParentModule);
-  Result.FArrayType := ArrayType;
+  Result.FGenericType := ArrayType;
 end;
 
 function TSchemaImporter.CreateClassType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeClassDefinition;
@@ -370,6 +393,12 @@ begin
   Result := CreateTypeDefinitionWithName<TTypeClassDefinition>(ParentModule, Name);
 
   ParentModule.FClasses := ParentModule.FClasses + [Result];
+end;
+
+function TSchemaImporter.CreateDynamicPropertyType(const ParentModule: TTypeModuleDefinition; const DynamicType: TTypeDefinition): TTypeDynamicPropertyDefinition;
+begin
+  Result := CreateTypeDefinition<TTypeDynamicPropertyDefinition>(ParentModule);
+  Result.FGenericType := DynamicType;
 end;
 
 function TSchemaImporter.CreateEnumeratorType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeEnumerationDefinition;
@@ -652,11 +681,11 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       end;
 
     begin
-      if TypeDefinition.IsArrayDefinition then
+      if TypeDefinition.IsGenericDefinition then
       begin
-        Result := FormatFullTypeName(TypeDefinition.AsArrayDefinition.ArrayType);
-
-        TypeDefinition := BuildInTypes[TBuildInType.ArrayType];
+        var GenericDefinition := TypeDefinition.AsGenericDefinition;
+        Result := FormatFullTypeName(GenericDefinition.GenericType);
+        TypeDefinition := BuildInTypes[GenericDefinition.BuildInType];
 
         Result := Format(TypeDefinition.Name, [Result])
       end
@@ -666,22 +695,22 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := GetParentModuleName(TypeDefinition) + Result;
     end;
 
-    function GetArrayType(const TypeDefinition: TTypeDefinition; var ArrayTypeDefinition: TTypeDefinition): Boolean;
+    function GetGenericType(const TypeDefinition: TTypeDefinition; var GenericTypeDefinition: TTypeDefinition): Boolean;
     begin
-      ArrayTypeDefinition := ResolveReferenceType(TypeDefinition);
-      Result := ArrayTypeDefinition.IsArrayDefinition;
+      GenericTypeDefinition := ResolveReferenceType(TypeDefinition);
+      Result := GenericTypeDefinition.IsGenericDefinition;
 
       if Result then
-        ArrayTypeDefinition := ResolveReferenceType(ArrayTypeDefinition.AsArrayDefinition.ArrayType)
-      else if ArrayTypeDefinition.IsAliasDefinition then
-        Result := GetArrayType(ArrayTypeDefinition.AsAliasDefinition.TypeAlias, ArrayTypeDefinition);
+        GenericTypeDefinition := ResolveReferenceType(GenericTypeDefinition.AsGenericDefinition.GenericType)
+      else if GenericTypeDefinition.IsAliasDefinition then
+        Result := GetGenericType(GenericTypeDefinition.AsAliasDefinition.TypeAlias, GenericTypeDefinition);
     end;
 
-    function FormatArrayItemTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
+    function FormatGenericItemTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
       var ArrayType: TTypeDefinition;
 
-      GetArrayType(PropertyDefinition.PropertyType, ArrayType);
+      GetGenericType(PropertyDefinition.PropertyType, ArrayType);
 
       Result := FormatFullTypeName(ArrayType);
     end;
@@ -753,9 +782,9 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function NeedAddFunction(const PropertyDefinition: TTypePropertyDefinition): Boolean;
     begin
-      var ArrayType: TTypeDefinition;
+      var GenericType: TTypeDefinition;
 
-      Result := GetArrayType(PropertyDefinition.PropertyType, ArrayType);
+      Result := GetGenericType(PropertyDefinition.PropertyType, GenericType);
     end;
 
     function NeedFieldNameAttribute(const PropertyDefinition: TTypePropertyDefinition; var PropertyName: String): Boolean; overload;
@@ -784,11 +813,11 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function FunctionAddNeedReturnType(const PropertyDefinition: TTypePropertyDefinition): Boolean;
     begin
-      var ArrayType: TTypeDefinition;
+      var GenericType: TTypeDefinition;
 
-      GetArrayType(PropertyDefinition.PropertyType, ArrayType);
+      GetGenericType(PropertyDefinition.PropertyType, GenericType);
 
-      Result := ArrayType.IsClassDefinition;
+      Result := GenericType.IsClassDefinition;
     end;
 
     function FormatAddFunctionName(const PropertyDefinition: TTypePropertyDefinition; const ClassDefinitionType: TTypeClassDefinition): String;
@@ -808,7 +837,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
       function FormatReturnTypeName: String;
       begin
-        Result := FormatArrayItemTypeName(PropertyDefinition);
+        Result := FormatGenericItemTypeName(PropertyDefinition);
       end;
 
       function FormatReturnInformation: String;
@@ -829,10 +858,20 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
       function FormatFunctionName: String;
       begin
+        var ParameterSeparator := EmptyStr;
         Result := RemoveInvalidCharecters('Add.' + FormatPropertyName(PropertyDefinition));
+        var ValueParameter := EmptyStr;
 
         if not NeedReturnType then
-          Result := Result + Format('(const Value: %s)', [FormatReturnTypeName]);
+        begin
+          ParameterSeparator := '; ';
+          ValueParameter := Format('const Value: %s', [FormatReturnTypeName]);
+        end;
+
+        if PropertyDefinition.PropertyType.IsDynamicPropertyDefinition then
+          Result := Result + Format('(const Name: String%s)', [ParameterSeparator + ValueParameter])
+        else if not NeedReturnType then
+          Result := Result + Format('(%s)', [ValueParameter]);
       end;
 
     begin
@@ -1209,12 +1248,15 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
               begin
                 VariableName := 'Result';
 
-                AddLine(IndentationLevel, '  Result := %s.Create;', [FormatArrayItemTypeName(PropertyDefinition)]);
+                AddLine(IndentationLevel, '  Result := %s.Create;', [FormatGenericItemTypeName(PropertyDefinition)]);
 
                 AddWhiteLine;
               end
               else
                 VariableName := 'Value';
+
+              if PropertyDefinition.PropertyType.IsDynamicPropertyDefinition then
+                VariableName := Format('TDynamicPair<%s>.Create(Name, %s)', [FormatGenericItemTypeName(PropertyDefinition), VariableName]);
 
               AddLine(IndentationLevel, '  %0:s := %0:s + [%1:s];', [FormatFieldName(PropertyDefinition), VariableName]);
 
@@ -1440,14 +1482,14 @@ begin
   Result := Self as TTypeAliasDefinition;
 end;
 
-function TTypeDefinition.AsArrayDefinition: TTypeArrayDefinition;
-begin
-  Result := Self as TTypeArrayDefinition;
-end;
-
 function TTypeDefinition.AsClassDefinition: TTypeClassDefinition;
 begin
   Result := Self as TTypeClassDefinition;
+end;
+
+function TTypeDefinition.AsGenericDefinition: TTypeGenericDefinition;
+begin
+  Result := Self as TTypeGenericDefinition;
 end;
 
 function TTypeDefinition.AsReferenceDefinition: TTypeReferenceDefinition;
@@ -1470,9 +1512,19 @@ begin
   Result := Self is TTypeClassDefinition;
 end;
 
+function TTypeDefinition.GetIsDynamicPropertyDefinition: Boolean;
+begin
+  Result := Self is TTypeDynamicPropertyDefinition;
+end;
+
 function TTypeDefinition.GetIsEnumeratorDefinition: Boolean;
 begin
   Result := Self is TTypeEnumerationDefinition;
+end;
+
+function TTypeDefinition.GetIsGenericDefinition: Boolean;
+begin
+  Result := Self is TTypeGenericDefinition;
 end;
 
 function TTypeDefinition.GetIsReferenceDefinition: Boolean;
@@ -1612,6 +1664,29 @@ end;
 constructor ETypeWithoutParentModule.Create(const TypeDefinition: TTypeDefinition);
 begin
   inherited CreateFmt('The type "%s" doesn''t have the parent module loaded!', [TypeDefinition.Name]);
+end;
+
+{ TTypeGenericDefinition }
+
+constructor TTypeGenericDefinition.Create(const BuildInType: TBuildInType);
+begin
+  inherited Create;
+
+  FBuildInType := BuildInType;
+end;
+
+{ TTypeArrayDefinition }
+
+constructor TTypeArrayDefinition.Create;
+begin
+  inherited Create(TBuildInType.ArrayType);
+end;
+
+{ TTypeDynamicPropertyDefinition }
+
+constructor TTypeDynamicPropertyDefinition.Create;
+begin
+  inherited Create(TBuildInType.DynamicPropertyType);
 end;
 
 end.
