@@ -154,9 +154,15 @@ type
     [Test]
     procedure TheSystemTypesMustBeLoadedInTheTypeUnitDefinitionOfTheSystem;
     [Test]
+    procedure TheSystemTypesMustBeLoadedInTheSystemPrefixName;
+    [Test]
     procedure TheTValueBuildInTypeMustBeLoadedInTheSystemRttiUnit;
     [Test]
+    procedure TheTValueBuildInTypeMustBeLoadedInTheSystemRttiPrefix;
+    [Test]
     procedure TheDynamicPropertyMustBeLoadedInTheBluePrintTypesUnit;
+    [Test]
+    procedure TheDynamicPropertyMustBeLoadedInBluePrintTypePrefix;
     [Test]
     procedure TheBuildInTypesNamesMustBeHasExpected;
     [Test]
@@ -293,6 +299,20 @@ type
     procedure WhenTheLastLevelClassHasEspecialNameMustLoadTheFunctionsWithTheCorrectName;
     [Test]
     procedure WhenTheTypeIsAClassDefinitionTypeMustCreateTheGetFunctionAndUseThePropertyToLoadTheValueToFillTheStoredFieldIfIsOptionalTheProperty;
+    [Test]
+    procedure CantAllowMoreThanOneNamespaceWithTheSameName;
+    [Test]
+    procedure CantAllowMoreThanOneNamespaceWithTheSamePrefix;
+    [Test]
+    procedure TheFunctionTryFindWithPrefixMustReturnFalseIfNotFountTheTypeName;
+    [Test]
+    procedure TheFunctionTryFindWithPrefixMustReturnTrueIfTheTypeIsFound;
+    [Test]
+    procedure TheFunctionTryFindWithPrefixMustLoadTheTypeDefinitonWithTheTypeFound;
+    [Test]
+    procedure TheFunctionFindTypeWithPrefixMustRaiseAnErrorIfNotFindTheTypeName;
+    [Test]
+    procedure TheFunctionFindTypeWithPrefixMustReturnTheTypeIfItIsFound;
   end;
 
   [TestFixture]
@@ -388,6 +408,28 @@ begin
 
       FImporter.Import(FConfiguration);
     end);
+end;
+
+procedure TSchemaImporterTest.CantAllowMoreThanOneNamespaceWithTheSameName;
+begin
+  FConfiguration.Namespaces := FConfiguration.Namespaces + [CreateNamespace('My Namespace2', 'MyPrefix'), CreateNamespace('My Namespace2', 'MyPrefix2')];
+
+  Assert.WillRaise(
+    procedure
+    begin
+      FImporter.Import(FConfiguration);
+    end, ESchemaNamespaceAlreadyExists);
+end;
+
+procedure TSchemaImporterTest.CantAllowMoreThanOneNamespaceWithTheSamePrefix;
+begin
+  FConfiguration.Namespaces := FConfiguration.Namespaces + [CreateNamespace('My Namespace2', 'MyPrefix'), CreateNamespace('My Namespace3', 'MyPrefix')];
+
+  Assert.WillRaise(
+    procedure
+    begin
+      FImporter.Import(FConfiguration);
+    end, ESchemaNamespaceWithSamePrefix);
 end;
 
 procedure TSchemaImporterTest.CantDuplicateTheUsesList;
@@ -1159,7 +1201,10 @@ end;
 
 procedure TSchemaImporterTest.TearDown;
 begin
-  TDirectory.Delete(TPath.GetTempPath + OUTPUT_FOLDER_TEST, True);
+  var OutputDirectory := TPath.GetTempPath + OUTPUT_FOLDER_TEST;
+
+  if TDirectory.Exists(OutputDirectory) then
+    TDirectory.Delete(OutputDirectory, True);
 
   FConfiguration.Free;
 
@@ -1282,6 +1327,15 @@ begin
     Assert.AreEqual(BUILD_IN_TYPE_NAMES[BuildInType], FImporter.BuildInTypes[BuildInType].Name);
 end;
 
+procedure TSchemaImporterTest.TheDynamicPropertyMustBeLoadedInBluePrintTypePrefix;
+begin
+  var TypeDefinition: TTypeDefinition;
+
+  FImporter.Import(FConfiguration);
+
+  Assert.IsTrue(FImporter.TryFindTypeWithPrefix('Blue.Print.Types:' + FImporter.BuildInTypes[TBuildInType.DynamicPropertyType].Name, TypeDefinition));
+end;
+
 procedure TSchemaImporterTest.TheDynamicPropertyMustBeLoadedInTheBluePrintTypesUnit;
 begin
   FImporter.Import(FConfiguration);
@@ -1309,6 +1363,62 @@ begin
   Assert.AreEqual(1, Length(ParentModule.Types));
 
   ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.TheFunctionFindTypeWithPrefixMustRaiseAnErrorIfNotFindTheTypeName;
+begin
+  Assert.WillRaise(
+    procedure
+    begin
+      FImporter.FindTypeWithPrefix('my:MyType');
+    end, ETypeNotFound);
+end;
+
+procedure TSchemaImporterTest.TheFunctionFindTypeWithPrefixMustReturnTheTypeIfItIsFound;
+begin
+  var TypeDefinition := TTypeDefinition.Create;
+  TypeDefinition.Name := 'MyType';
+
+  FImporter.Types.Add('my:MyType', TypeDefinition);
+
+  Assert.AreEqual(TypeDefinition, FImporter.FindTypeWithPrefix('my:MyType'));
+
+  TypeDefinition.Free;
+end;
+
+procedure TSchemaImporterTest.TheFunctionTryFindWithPrefixMustLoadTheTypeDefinitonWithTheTypeFound;
+begin
+  var TypeDefinition := TTypeDefinition.Create;
+  TypeDefinition.Name := 'MyType';
+
+  FImporter.Types.Add('my:MyType', TypeDefinition);
+
+  Assert.IsTrue(FImporter.TryFindTypeWithPrefix('my:MyType', TypeDefinition));
+
+  Assert.IsNotNil(TypeDefinition);
+
+  Assert.AreEqual('MyType', TypeDefinition.Name);
+
+  TypeDefinition.Free;
+end;
+
+procedure TSchemaImporterTest.TheFunctionTryFindWithPrefixMustReturnFalseIfNotFountTheTypeName;
+begin
+  var TypeDefinition: TTypeDefinition;
+
+  Assert.IsFalse(FImporter.TryFindTypeWithPrefix('Invalid:Name', TypeDefinition));
+end;
+
+procedure TSchemaImporterTest.TheFunctionTryFindWithPrefixMustReturnTrueIfTheTypeIsFound;
+begin
+  var TypeDefinition := TTypeDefinition.Create;
+  TypeDefinition.Name := 'MyType';
+
+  FImporter.Types.Add('my:MyType', TypeDefinition);
+
+  Assert.IsTrue(FImporter.TryFindTypeWithPrefix('my:MyType', TypeDefinition));
+
+  TypeDefinition.Free;
 end;
 
 procedure TSchemaImporterTest.TheKeyValueFromTypeMustBeTheNamespaceWithTheClassNameHasExpected;
@@ -1473,6 +1583,16 @@ begin
   SimpleType.Free;
 end;
 
+procedure TSchemaImporterTest.TheSystemTypesMustBeLoadedInTheSystemPrefixName;
+begin
+  var TypeDefinition: TTypeDefinition;
+
+  FImporter.Import(FConfiguration);
+
+  for var BuildInType in [TBuildInType.StringType, TBuildInType.IntegerType, TBuildInType.DoubleType, TBuildInType.DateType, TBuildInType.TimeType, TBuildInType.DateTimeType] do
+    Assert.IsTrue(FImporter.TryFindTypeWithPrefix('System:' + FImporter.BuildInTypes[BuildInType].Name, TypeDefinition));
+end;
+
 procedure TSchemaImporterTest.TheSystemTypesMustBeLoadedInTheTypeUnitDefinitionOfTheSystem;
 begin
   FImporter.Import(FConfiguration);
@@ -1488,6 +1608,15 @@ begin
   FImporter.AddNamespace('My Namespace', 'my');
 
   Assert.IsFalse(FImporter.TryFindType('My Namespace', 'AClassName', TypeDefinition));
+end;
+
+procedure TSchemaImporterTest.TheTValueBuildInTypeMustBeLoadedInTheSystemRttiPrefix;
+begin
+  var TypeDefinition: TTypeDefinition;
+
+  FImporter.Import(FConfiguration);
+
+  Assert.IsTrue(FImporter.TryFindTypeWithPrefix('System.Rtti:' + FImporter.BuildInTypes[TBuildInType.ValueType].Name, TypeDefinition));
 end;
 
 procedure TSchemaImporterTest.TheTValueBuildInTypeMustBeLoadedInTheSystemRttiUnit;

@@ -73,6 +73,16 @@ type
     constructor Create(const Namespace: String);
   end;
 
+  ESchemaNamespaceAlreadyExists = class(Exception)
+  public
+    constructor Create(const Namespace: String);
+  end;
+
+  ESchemaNamespaceWithSamePrefix = class(Exception)
+  public
+    constructor Create(const Namespace: String);
+  end;
+
   ETypeNotFound = class(Exception)
   public
     constructor Create(const TypeName: String);
@@ -305,6 +315,7 @@ type
     FBuildInTypes: array[TBuildInType] of TTypeDefinition;
     FBuildInUnits: TList<TTypeUnitDefinition>;
     FNamespaces: TDictionary<String, String>;
+    FNamespacesPrefix: TDictionary<String, String>;
     FTypes: TDictionary<String, TTypeDefinition>;
     FUnits: TDictionary<String, TTypeUnitDefinition>;
 
@@ -331,8 +342,10 @@ type
     function CreateEnumeratorType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeEnumerationDefinition;
     function CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Namespace, Reference: String): TTypeReferenceDefinition;
     function FindType(const Namespace, Name: String): TTypeDefinition;
+    function FindTypeWithPrefix(const Fullname: String): TTypeDefinition;
     function GetPrefixName(const Namespace: String): String;
     function TryFindType(const Namespace, Name: String; var TypeDefinition: TTypeDefinition): Boolean;
+    function TryFindTypeWithPrefix(const FullName: String; var TypeDefinition: TTypeDefinition): Boolean;
 
     procedure AddNamespace(const Name, Prefix: String);
     procedure AddType(const Namespace: String; const TypeDefinition: TTypeDefinition);
@@ -341,6 +354,7 @@ type
 
     property BuildInTypes[const BuildInType: TBuildInType]: TTypeDefinition read GetBuildInTypes write SetBuildInTypes;
     property Namespaces: TDictionary<String, String> read FNamespaces;
+    property NamespacesPrefix: TDictionary<String, String> read FNamespacesPrefix;
     property Types: TDictionary<String, TTypeDefinition> read FTypes;
     property Units: TDictionary<String, TTypeUnitDefinition> read FUnits;
   end;
@@ -357,7 +371,11 @@ const
 
 procedure TSchemaImporter.AddNamespace(const Name, Prefix: String);
 begin
-  Namespaces.Add(Name, Prefix);
+  if not Namespaces.TryAdd(Name, Prefix) then
+    raise ESchemaNamespaceAlreadyExists.Create(Name);
+
+  if not NamespacesPrefix.TryAdd(Prefix, Name) then
+    raise ESchemaNamespaceWithSamePrefix.Create(Name);
 end;
 
 procedure TSchemaImporter.AddType(const Namespace: String; const TypeDefinition: TTypeDefinition);
@@ -371,6 +389,7 @@ begin
 
   FBuildInUnits := TObjectList<TTypeUnitDefinition>.Create(True);
   FNamespaces := TDictionary<String, String>.Create;
+  FNamespacesPrefix := TDictionary<String, String>.Create;
   FTypes := TDictionary<String, TTypeDefinition>.Create;
   FUnits := TObjectDictionary<String, TTypeUnitDefinition>.Create([doOwnsValues]);
 end;
@@ -446,6 +465,8 @@ begin
 
   FNamespaces.Free;
 
+  FNamespacesPrefix.Free;
+
   FTypes.Free;
 
   FUnits.Free;
@@ -457,6 +478,12 @@ function TSchemaImporter.FindType(const Namespace, Name: String): TTypeDefinitio
 begin
   if not TryFindType(Namespace, Name, Result) then
     raise ETypeNotFound.Create(Name);
+end;
+
+function TSchemaImporter.FindTypeWithPrefix(const Fullname: String): TTypeDefinition;
+begin
+  if not TryFindTypeWithPrefix(Fullname, Result) then
+    raise ETypeNotFound.Create(Fullname);
 end;
 
 function TSchemaImporter.FormatTypeNamespace(const Namespace, TypeName: String): String;
@@ -1382,6 +1409,10 @@ const
 
   procedure AddBuildInTypes(const UnitDefinition: TTypeUnitDefinition; const BuildInTypeList: TArray<TBuildInType>);
   begin
+    var Namespace := BUILD_IN_TYPE_NAMESPACE + '/' + UnitDefinition.Name;
+
+    AddNamespace(Namespace, UnitDefinition.Name);
+
     for var BuildInType in BuildInTypeList do
     begin
       var TypeDefinition := TTypeDefinition.Create;
@@ -1392,7 +1423,7 @@ const
 
       UnitDefinition.AddType(TypeDefinition);
 
-      AddType(BUILD_IN_TYPE_NAMESPACE, TypeDefinition);
+      AddType(Namespace, TypeDefinition);
     end;
   end;
 
@@ -1405,8 +1436,6 @@ const
   end;
 
 begin
-  AddNamespace(BUILD_IN_TYPE_NAMESPACE, BUILD_IN_TYPE_NAMESPACE);
-
   AddBuildInTypes(CreateUnit(SYSTEM_UNIT_NAME), [TBuildInType.StringType, TBuildInType.IntegerType, TBuildInType.DoubleType, TBuildInType.DateType, TBuildInType.TimeType, TBuildInType.DateTimeType, TBuildInType.BooleanType,
     TBuildInType.ArrayType]);
 
@@ -1422,7 +1451,12 @@ end;
 
 function TSchemaImporter.TryFindType(const Namespace, Name: String; var TypeDefinition: TTypeDefinition): Boolean;
 begin
-  Result := Types.TryGetValue(FormatTypeNamespace(Namespace, Name), TypeDefinition);
+  Result := TryFindTypeWithPrefix(FormatTypeNamespace(Namespace, Name), TypeDefinition);
+end;
+
+function TSchemaImporter.TryFindTypeWithPrefix(const FullName: String; var TypeDefinition: TTypeDefinition): Boolean;
+begin
+  Result := Types.TryGetValue(FullName, TypeDefinition);
 end;
 
 { ENeedConfiguration }
@@ -1723,6 +1757,20 @@ end;
 constructor TTypeDynamicPropertyDefinition.Create;
 begin
   inherited Create(TBuildInType.DynamicPropertyType);
+end;
+
+{ ESchemaNamespaceWithSamePrefix }
+
+constructor ESchemaNamespaceWithSamePrefix.Create(const Namespace: String);
+begin
+  inherited CreateFmt('Namespace "%s" with the prefix duplicated!', [Namespace]);
+end;
+
+{ ESchemaNamespaceAlreadyExists }
+
+constructor ESchemaNamespaceAlreadyExists.Create(const Namespace: String);
+begin
+  inherited CreateFmt('Namespace "%s" already exists!', [Namespace]);
 end;
 
 end.
