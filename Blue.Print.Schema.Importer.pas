@@ -1426,6 +1426,9 @@ procedure TSchemaImporter.Import(const ConfigurationFileName: String);
 begin
   var Configuration := GetSerializer.Deserialize(TFile.ReadAllText(ConfigurationFileName), TypeInfo(TConfiguration)).AsType<TConfiguration>;
 
+  if TPath.IsRelativePath(Configuration.OutputFolder) then
+    Configuration.OutputFolder := TPath.GetFullPath(ExtractFilePath(ConfigurationFileName) + Configuration.OutputFolder);
+
   Import(Configuration);
 
   Configuration.Free;
