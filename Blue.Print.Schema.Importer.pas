@@ -1309,7 +1309,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
             if PropertyDefinition.PropertyType.IsDynamicPropertyDefinition then
               VariableName := Format('TDynamicPair<%s>.Create(Name, %s)', [FormatGenericItemTypeName(PropertyDefinition), VariableName]);
 
-            AddLine(IndentationLevel, '  %0:s := %0:s + [%1:s];', [FormatFieldName(PropertyDefinition), VariableName]);
+            AddLine(IndentationLevel, '  %0:s := %0:s + [%1:s];', [FormatPropertyName(PropertyDefinition), VariableName]);
 
             AddLine(IndentationLevel, 'end;');
 

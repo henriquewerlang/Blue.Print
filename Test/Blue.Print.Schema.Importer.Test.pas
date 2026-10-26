@@ -328,6 +328,8 @@ type
     procedure WhenAppendAPropertyWithOptionalFalseConfigurationThePropetyCantBeOptional;
     [Test]
     procedure MustAppendAllPropertiesInTheConfiguration;
+    [Test]
+    procedure WhenCreateTheAddFunctionForAnArrayMustUseThePropertyToLoadTheArrayValue;
   end;
 
   [TestFixture]
@@ -1227,7 +1229,7 @@ begin
 
     procedure MainModule.AddMyProp(const Value: System.Integer);
     begin
-      FMyProp := FMyProp + [Value];
+      MyProp := MyProp + [Value];
     end;
 
     procedure MainModule.SetMyProp(const Value: System.TArray<System.Integer>);
@@ -1238,7 +1240,7 @@ begin
 
     procedure MainModule.AddMyProp2(const Value: System.Integer);
     begin
-      FMyProp2 := FMyProp2 + [Value];
+      MyProp2 := MyProp2 + [Value];
     end;
 
     procedure MainModule.SetMyProp2(const Value: System.TArray<System.Integer>);
@@ -1249,7 +1251,7 @@ begin
 
     procedure MainModule.AddMyProp3(const Value: System.Integer);
     begin
-      FMyProp3 := FMyProp3 + [Value];
+      MyProp3 := MyProp3 + [Value];
     end;
 
     procedure MainModule.SetMyProp3(const Value: System.TArray<System.Integer>);
@@ -2159,7 +2161,7 @@ begin
 
     procedure MainModule.TMyClass.AddMyProp(const Value: System.Integer);
     begin
-      FMyProp := FMyProp + [Value];
+      MyProp := MyProp + [Value];
     end;
 
     end.
@@ -2289,6 +2291,51 @@ begin
       end;
 
     implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenCreateTheAddFunctionForAnArrayMustUseThePropertyToLoadTheArrayValue;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProperty: System.TArray<System.Integer>;
+      public
+        procedure AddMyProperty(const Value: System.Integer);
+      published
+        property MyProperty: System.TArray<System.Integer> read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    procedure MainModule.AddMyProperty(const Value: System.Integer);
+    begin
+      MyProperty := MyProperty + [Value];
+    end;
 
     end.
 
@@ -2490,7 +2537,7 @@ begin
     begin
       Result := MyUnit.MainModule.Create;
 
-      FMyProperty := FMyProperty + [Result];
+      myProperty := myProperty + [Result];
     end;
 
     end.
@@ -2788,14 +2835,14 @@ begin
     begin
       Result := System.SimpleType.Create;
 
-      FMyProperty := FMyProperty + [Result];
+      MyProperty := MyProperty + [Result];
     end;
 
     function MainModule.AddMyProperty2: System.SimpleType;
     begin
       Result := System.SimpleType.Create;
 
-      FMyProperty2 := FMyProperty2 + [Result];
+      MyProperty2 := MyProperty2 + [Result];
     end;
 
     end.
@@ -2844,7 +2891,7 @@ begin
     begin
       Result := MyUnit.MainModule.Create;
 
-      FMyProperty := FMyProperty + [Result];
+      MyProperty := MyProperty + [Result];
     end;
 
     end.
@@ -3163,7 +3210,7 @@ begin
 
     procedure MainModule.TMyClass.AddMyProp(const Value: System.Integer);
     begin
-      FMyProp := FMyProp + [Value];
+      MyProp := MyProp + [Value];
     end;
 
     end.
@@ -3382,7 +3429,7 @@ begin
 
     procedure MainModule.AddMyProp(const Value: System.Integer);
     begin
-      FMyProp := FMyProp + [Value];
+      MyProp := MyProp + [Value];
     end;
 
     end.
@@ -3842,7 +3889,7 @@ begin
     begin
       Result := MyUnit.MainModule.Create;
 
-      FMyProperty := FMyProperty + [Result];
+      MyProperty := MyProperty + [Result];
     end;
 
     end.
@@ -4067,7 +4114,7 @@ begin
     begin
       Result := MyUnit.MainModule.Create;
 
-      FMyProperty := FMyProperty + [Result];
+      MyProperty := MyProperty + [Result];
     end;
 
     end.
@@ -4168,7 +4215,7 @@ begin
     begin
       Result := MyUnit.MainModule.Create;
 
-      FMyDynamic := FMyDynamic + [TDynamicPair<MyUnit.MainModule>.Create(Name, Result)];
+      MyDynamic := MyDynamic + [TDynamicPair<MyUnit.MainModule>.Create(Name, Result)];
     end;
 
     end.
@@ -4213,7 +4260,7 @@ begin
 
     procedure MainModule.AddMyDynamic(const Name: String; const Value: System.Integer);
     begin
-      FMyDynamic := FMyDynamic + [TDynamicPair<System.Integer>.Create(Name, Value)];
+      MyDynamic := MyDynamic + [TDynamicPair<System.Integer>.Create(Name, Value)];
     end;
 
     end.
