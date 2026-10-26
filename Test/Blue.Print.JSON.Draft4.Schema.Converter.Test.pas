@@ -483,6 +483,11 @@ procedure TJSONDraft4SchemaConverterTeste.TearDown;
 begin
   inherited;
 
+  for var UnitConfiguration in FConfiguration.Units do
+    for var SchemaFile in UnitConfiguration.SchemaFiles do
+      if TFile.Exists(SchemaFile.FileName) then
+        TFile.Delete(SchemaFile.FileName);
+
   FConfiguration.Free;
 
   FImporter.Free;
