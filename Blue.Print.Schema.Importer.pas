@@ -273,14 +273,31 @@ type
     property Prefix: String read FPrefix write FPrefix;
   end;
 
+  TAppendProperty = class
+  private
+    FTypeName: String;
+    FName: String;
+    FPropertyType: String;
+    FOptional: Boolean;
+  public
+    constructor Create;
+  published
+    property TypeName: String read FTypeName write FTypeName;
+    property Name: String read FName write FName;
+    property PropertyType: String read FPropertyType write FPropertyType;
+    property Optional: Boolean read FOptional write FOptional;
+  end;
+
   TConfiguration = class
   private
+    FAppendProperties: TArray<TAppendProperty>;
     FNamespaces: TArray<TNamespaceConfiguration>;
     FUnits: TArray<TUnitConfiguration>;
     FOutputFolder: String;
   public
     destructor Destroy; override;
   published
+    property AppendProperties: TArray<TAppendProperty> read FAppendProperties write FAppendProperties;
     property Namespaces: TArray<TNamespaceConfiguration> read FNamespaces write FNamespaces;
     property OutputFolder: String read FOutputFolder write FOutputFolder;
     property Units: TArray<TUnitConfiguration> read FUnits write FUnits;
@@ -583,6 +600,16 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
   begin
     if Schema.Namespace.IsEmpty then
       raise ESchemaNamespaceNotLoaded.Create;
+  end;
+
+  procedure AppendProperties;
+  begin
+    for var AppendProperty in Configuration.AppendProperties do
+    begin
+      var ClassDefinition := FindTypeWithPrefix(AppendProperty.TypeName).AsClassDefinition;
+
+      ClassDefinition.AddProperty(AppendProperty.Name, FindTypeWithPrefix(AppendProperty.PropertyType)).Optional := AppendProperty.Optional;
+    end;
   end;
 
   procedure GenerateUnitDeclaration(const UnitDefinition: TTypeUnitDefinition);
@@ -1374,12 +1401,16 @@ begin
 
         CheckSchema(Schema);
 
-        SchemaConverter.Convert(LoadMainClass(UnitDefinition, Schema), Schema);
+        var MainClass := LoadMainClass(UnitDefinition, Schema);
+
+        SchemaConverter.Convert(MainClass, Schema);
       finally
         Schema.Free;
       end;
     end;
   end;
+
+  AppendProperties;
 
   for var UnitDefinition in Units.Values do
     GenerateUnitDeclaration(UnitDefinition);
@@ -1484,6 +1515,9 @@ end;
 
 destructor TConfiguration.Destroy;
 begin
+  for var AppendedProperty in AppendProperties do
+    AppendedProperty.Free;
+
   for var UnitConfiguration in Units do
     UnitConfiguration.Free;
 
@@ -1771,6 +1805,15 @@ end;
 constructor ESchemaNamespaceAlreadyExists.Create(const Namespace: String);
 begin
   inherited CreateFmt('Namespace "%s" already exists!', [Namespace]);
+end;
+
+{ TAppendProperty }
+
+constructor TAppendProperty.Create;
+begin
+  inherited;
+
+  FOptional := True;
 end;
 
 end.
