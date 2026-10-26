@@ -23,17 +23,17 @@ const
 
 var
   DefinitionsNamespace: String;
-  JSONDefinition: TJSONSchema.TJSONSchema;
+  JSONDefinition: JSONSchema;
 
-  function LoadSchemaType(const ParentClassDefinition: TTypeClassDefinition; const JSONSchema: TJSONSchema.TJSONSchema): TTypeDefinition;
+  function LoadSchemaType(const ParentClassDefinition: TTypeClassDefinition; const JSONSchemaType: JSONSchema): TTypeDefinition;
 
-    procedure DefineProperties(const ClassDefinition: TTypeClassDefinition; const JSONSchema: TJSONSchema.TJSONSchema);
+    procedure DefineProperties(const ClassDefinition: TTypeClassDefinition; const JSONSchemaType: JSONSchema);
     var
       PropertyDefinition: TTypePropertyDefinition;
 
       function IsRequired: Boolean;
       begin
-        for var Required in JSONSchema.required do
+        for var Required in JSONSchemaType.required do
           if Required = PropertyDefinition.Name then
             Exit(True);
 
@@ -41,7 +41,7 @@ var
       end;
 
     begin
-      for var PropertySchema in JSONSchema.properties.additionalProperties do
+      for var PropertySchema in JSONSchemaType.properties.additionalProperties do
       begin
         var PropertyType := LoadSchemaType(ClassDefinition, PropertySchema.Value);
 
@@ -52,9 +52,9 @@ var
           PropertyType.Name := Format('.%sType', [PropertyDefinition.Name]);
       end;
 
-      if JSONSchema.IsAdditionalPropertiesStored then
+      if JSONSchemaType.IsAdditionalPropertiesStored then
       begin
-        var DynamicPropertyType := LoadSchemaType(ClassDefinition, JSONSchema.additionalProperties.AdditionalPropertiesProperty);
+        var DynamicPropertyType := LoadSchemaType(ClassDefinition, JSONSchemaType.additionalProperties.JSONSchema);
 
         ClassDefinition.AddProperty('additionalProperties', Schema.Importer.CreateDynamicPropertyType(ClassDefinition, DynamicPropertyType));
 
@@ -63,18 +63,18 @@ var
       end;
     end;
 
-    function GetReferenceSchemaName(JSONSchema: TJSONSchema.TJSONSchema): String;
+    function GetReferenceSchemaName(JSONSchemaType: JSONSchema): String;
     begin
-      if JSONSchema.ref = '#' then
+      if JSONSchemaType.ref = '#' then
         Result := MainClass.Name
       else
-        Result := JSONSchema.ref.Substring(Succ(JSONSchema.ref.LastDelimiter('/')));
+        Result := JSONSchemaType.ref.Substring(Succ(JSONSchemaType.ref.LastDelimiter('/')));
     end;
 
-    procedure LoadSchemaArray(const SchemaArray: TJSONSchema.schemaArray; const PropertyNamePrefix: String);
+    procedure LoadSchemaArray(const SchemaArray: JSONSchema.schemaArray; const PropertyNamePrefix: String);
     var
       SchemaClassDefinition: TTypeClassDefinition;
-      SchemaItem: TJSONSchema.TJSONSchema;
+      SchemaItem: JSONSchema;
 
       function GetPropertyName: String;
       begin
@@ -104,43 +104,44 @@ var
   begin
     Result := nil;
 
-    if JSONSchema.IsAllOfStored then
-      LoadSchemaArray(JSONSchema.allOf, ALL_OF_PROPERTY)
-    else if JSONSchema.IsAnyOfStored then
-      LoadSchemaArray(JSONSchema.anyOf, 'AnyOf')
-    else if JSONSchema.IsOneOfStored then
-      LoadSchemaArray(JSONSchema.oneOf, 'OneOf')
-    else if JSONSchema.IsPropertiesStored then
+    if JSONSchemaType.IsAllOfStored then
+      LoadSchemaArray(JSONSchemaType.allOf, ALL_OF_PROPERTY)
+    else if JSONSchemaType.IsAnyOfStored then
+      LoadSchemaArray(JSONSchemaType.anyOf, 'AnyOf')
+    else if JSONSchemaType.IsOneOfStored then
+      LoadSchemaArray(JSONSchemaType.oneOf, 'OneOf')
+    else if JSONSchemaType.IsPropertiesStored then
     begin
       Result := ParentClassDefinition;
 
-      DefineProperties(ParentClassDefinition, JSONSchema);
+      DefineProperties(ParentClassDefinition, JSONSchemaType);
     end
-    else if JSONSchema.IsTypeStored then
-      case JSONSchema.&type.simpleTypes of
-        TJSONSchema.simpleTypes.array: Result := Schema.Importer.CreateArrayType(ParentClassDefinition, LoadSchemaType(ParentClassDefinition, JSONSchema.items.schema));
-        TJSONSchema.simpleTypes.boolean: Result := Schema.Importer.BuildInTypes[TBuildInType.BooleanType];
-        TJSONSchema.simpleTypes.integer: Result := Schema.Importer.BuildInTypes[TBuildInType.IntegerType];
-        TJSONSchema.simpleTypes.null: Result := nil;
-        TJSONSchema.simpleTypes.number: Result := Schema.Importer.BuildInTypes[TBuildInType.DoubleType];
-        TJSONSchema.simpleTypes.object:
+    else if JSONSchemaType.IsTypeStored then
+      case JSONSchemaType.&type.simpleTypes of
+        JSONSchema.simpleTypes.array: Result := Schema.Importer.CreateArrayType(ParentClassDefinition, LoadSchemaType(ParentClassDefinition, JSONSchemaType.items.JSONSchema));
+        JSONSchema.simpleTypes.boolean: Result := Schema.Importer.BuildInTypes[TBuildInType.BooleanType];
+        JSONSchema.simpleTypes.integer: Result := Schema.Importer.BuildInTypes[TBuildInType.IntegerType];
+        JSONSchema.simpleTypes.null: Result := nil;
+        JSONSchema.simpleTypes.number: Result := Schema.Importer.BuildInTypes[TBuildInType.DoubleType];
+        JSONSchema.simpleTypes.object:
         begin
           Result := Schema.Importer.CreateClassType(ParentClassDefinition, EmptyStr);
 
-          DefineProperties(Result.AsClassDefinition, JSONSchema);
+          DefineProperties(Result.AsClassDefinition, JSONSchemaType);
         end;
-        TJSONSchema.simpleTypes.string: Result := Schema.Importer.BuildInTypes[TBuildInType.StringType];
+        JSONSchema.simpleTypes.string: Result := Schema.Importer.BuildInTypes[TBuildInType.StringType];
       end
-    else if JSONSchema.IsRefStored then
-      if JSONSchema.ref = '#' then
-        Result := Schema.Importer.CreateReferenceType(ParentClassDefinition, JSONDefinition.id, GetReferenceSchemaName(JSONSchema))
+    else if JSONSchemaType.IsRefStored then
+      if JSONSchemaType.ref = '#' then
+        Result := Schema.Importer.CreateReferenceType(ParentClassDefinition, JSONDefinition.id, GetReferenceSchemaName(JSONSchemaType))
       else
-        Result := Schema.Importer.CreateReferenceType(ParentClassDefinition, DefinitionsNamespace, GetReferenceSchemaName(JSONSchema))
-    else if JSONSchema.IsEnumStored then
+        Result := Schema.Importer.CreateReferenceType(ParentClassDefinition, DefinitionsNamespace, GetReferenceSchemaName(JSONSchemaType))
+    else if JSONSchemaType.IsEnumStored then
     begin
       var EnumerationDefinition := Schema.Importer.CreateEnumeratorType(ParentClassDefinition, EmptyStr);
 
-      EnumerationDefinition.Values.AddStrings(JSONSchema.enum);
+      for var EnumValue in JSONSchemaType.enum do
+        EnumerationDefinition.Values.AddStrings(EnumValue.ToString);
 
       Result := EnumerationDefinition;
     end
@@ -149,7 +150,7 @@ var
   end;
 
 begin
-  JSONDefinition := Schema.SchemaValue.AsType<TJSONSchema.TJSONSchema>;
+  JSONDefinition := Schema.SchemaValue.AsType<JSONSchema>;
 
   DefinitionsNamespace := JSONDefinition.id + '/definitions';
   var DefinitionsNamespacePrefix := Schema.Importer.GetPrefixName(JSONDefinition.id) + '/defs';
@@ -184,7 +185,7 @@ procedure TJSONDraft4SchemaConverter.LoadSchema(const Schema: TSchema);
   end;
 
 begin
-  var Definition := GetSerializer.Deserialize(Schema.SchemaText, TypeInfo(TJSONSchema.TJSONSchema)).AsType<TJSONSchema.TJSONSchema>;
+  var Definition := GetSerializer.Deserialize(Schema.SchemaText, TypeInfo(JSONSchema)).AsType<JSONSchema>;
   Schema.Namespace := Definition.id;
   Schema.SchemaValue := Definition;
 end;

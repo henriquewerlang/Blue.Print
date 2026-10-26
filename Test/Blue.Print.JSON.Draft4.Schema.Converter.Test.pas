@@ -9,15 +9,15 @@ type
   TJSONDraft4SchemaConverterTeste = class
   private
     FConfiguration: TConfiguration;
-    FDefinition: TJSONSchema.TJSONSchema;
+    FDefinition: JSONSchema;
     FImporter: TSchemaImporter;
 
-    function AddProperty(const JSONSchema: TJSONSchema.TJSONSchema; const Name: String; const SimpleType: TJSONSchema.simpleTypes): TJSONSchema.TJSONSchema;
-    function AddPropertyWithTypeArray(const JSONSchema: TJSONSchema.TJSONSchema; const Name: String; const ArrayType: TJSONSchema.TJSONSchema): TJSONSchema.TJSONSchema;
-    function CreateArrayDefinition(const Name: String; const Items: TJSONSchema.TJSONSchema): TJSONSchema.TJSONSchema;
-    function CreateClassDefinition(const Name: String): TJSONSchema.TJSONSchema;
-    function CreateEnumerationDefinition(const Name: String; const Values: TArray<String>): TJSONSchema.TJSONSchema;
-    function CreateSchema(const SimpleType: TJSONSchema.simpleTypes): TJSONSchema.TJSONSchema;
+    function AddProperty(const JSONSchemaType: JSONSchema; const Name: String; const SimpleType: JSONSchema.simpleTypes): JSONSchema;
+    function AddPropertyWithTypeArray(const JSONSchemaType: JSONSchema; const Name: String; const ArrayType: JSONSchema): JSONSchema;
+    function CreateArrayDefinition(const Name: String; const Items: JSONSchema): JSONSchema;
+    function CreateClassDefinition(const Name: String): JSONSchema;
+    function CreateEnumerationDefinition(const Name: String; const Values: TArray<String>): JSONSchema;
+    function CreateSchema(const SimpleType: JSONSchema.simpleTypes): JSONSchema;
     function GetDefinitionJSON: String;
     function GetMainClass: TTypeClassDefinition;
 
@@ -189,27 +189,27 @@ uses System.IOUtils, System.Rtti, Blue.Print.JSON.Draft4.Schema.Converter, Blue.
 
 { TJSONDraft4SchemaConverterTeste }
 
-function TJSONDraft4SchemaConverterTeste.AddProperty(const JSONSchema: TJSONSchema.TJSONSchema; const Name: String; const SimpleType: TJSONSchema.simpleTypes): TJSONSchema.TJSONSchema;
+function TJSONDraft4SchemaConverterTeste.AddProperty(const JSONSchemaType: JSONSchema; const Name: String; const SimpleType: JSONSchema.simpleTypes): JSONSchema;
 begin
-  Result := JSONSchema.properties.AddProperties(Name);
+  Result := JSONSchemaType.properties.AddAdditionalProperties(Name);
   Result.&type.simpleTypes := SimpleType;
 end;
 
-function TJSONDraft4SchemaConverterTeste.AddPropertyWithTypeArray(const JSONSchema: TJSONSchema.TJSONSchema; const Name: String; const ArrayType: TJSONSchema.TJSONSchema): TJSONSchema.TJSONSchema;
+function TJSONDraft4SchemaConverterTeste.AddPropertyWithTypeArray(const JSONSchemaType: JSONSchema; const Name: String; const ArrayType: JSONSchema): JSONSchema;
 begin
-  Result := AddProperty(JSONSchema, name, TJSONSchema.simpleTypes.array);
-  Result.items.schema := ArrayType;
+  Result := AddProperty(JSONSchemaType, name, JSONSchema.simpleTypes.array);
+  Result.items.JSONSchema := ArrayType;
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.AllPropertiesMustBeOptional;
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.string);
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.string);
 
-  AddProperty(ClassDefinition, 'MyProp2', TJSONSchema.simpleTypes.string);
+  AddProperty(ClassDefinition, 'MyProp2', JSONSchema.simpleTypes.string);
 
-  AddProperty(ClassDefinition, 'MyProp3', TJSONSchema.simpleTypes.string);
+  AddProperty(ClassDefinition, 'MyProp3', JSONSchema.simpleTypes.string);
 
   ImportDefinition;
 
@@ -218,34 +218,36 @@ begin
   Assert.IsTrue(GetMainClass.Classes[0].Properties[2].Optional);
 end;
 
-function TJSONDraft4SchemaConverterTeste.CreateArrayDefinition(const Name: String; const Items: TJSONSchema.TJSONSchema): TJSONSchema.TJSONSchema;
+function TJSONDraft4SchemaConverterTeste.CreateArrayDefinition(const Name: String; const Items: JSONSchema): JSONSchema;
 begin
-  Result := FDefinition.definitions.AddDefinitions(Name);
-  Result.items.schema := Items;
-  Result.&type.simpleTypes := TJSONSchema.simpleTypes.&array;
+  Result := FDefinition.definitions.AddAdditionalProperties(Name);
+  Result.items.JSONSchema := Items;
+  Result.&type.simpleTypes := JSONSchema.simpleTypes.&array;
 end;
 
-function TJSONDraft4SchemaConverterTeste.CreateClassDefinition(const Name: String): TJSONSchema.TJSONSchema;
+function TJSONDraft4SchemaConverterTeste.CreateClassDefinition(const Name: String): JSONSchema;
 begin
-  Result := FDefinition.definitions.AddDefinitions(Name);
-  Result.&type.simpleTypes := TJSONSchema.simpleTypes.&object;
+  Result := FDefinition.definitions.AddAdditionalProperties(Name);
+  Result.&type.simpleTypes := JSONSchema.simpleTypes.&object;
 end;
 
-function TJSONDraft4SchemaConverterTeste.CreateEnumerationDefinition(const Name: String; const Values: TArray<String>): TJSONSchema.TJSONSchema;
+function TJSONDraft4SchemaConverterTeste.CreateEnumerationDefinition(const Name: String; const Values: TArray<String>): JSONSchema;
 begin
-  Result := FDefinition.definitions.AddDefinitions(Name);
-  Result.enum := Values;
+  Result := FDefinition.definitions.AddAdditionalProperties(Name);
+
+  for var EnumValue in Values do
+    Result.enum := Result.enum + [EnumValue];
 end;
 
-function TJSONDraft4SchemaConverterTeste.CreateSchema(const SimpleType: TJSONSchema.simpleTypes): TJSONSchema.TJSONSchema;
+function TJSONDraft4SchemaConverterTeste.CreateSchema(const SimpleType: JSONSchema.simpleTypes): JSONSchema;
 begin
-  Result := TJSONSchema.TJSONSchema.Create;
+  Result := JSONSchema.Create;
   Result.&type.simpleTypes := SimpleType;
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.ForEveryAnyOfSchemaMustAppendAPropertyInTheClassDefinition;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   PropertySchema.AddAnyOf;
 
@@ -260,7 +262,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.ForEveryOneOfSchemaMustAppendAPropertyInTheClassDefinition;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   PropertySchema.AddOneOf;
 
@@ -289,11 +291,11 @@ procedure TJSONDraft4SchemaConverterTeste.IfTheClassDefinitionHasMoreThanOneProp
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.string);
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.string);
 
-  AddProperty(ClassDefinition, 'MyProp2', TJSONSchema.simpleTypes.string);
+  AddProperty(ClassDefinition, 'MyProp2', JSONSchema.simpleTypes.string);
 
-  AddProperty(ClassDefinition, 'MyProp3', TJSONSchema.simpleTypes.string);
+  AddProperty(ClassDefinition, 'MyProp3', JSONSchema.simpleTypes.string);
 
   ImportDefinition;
 
@@ -304,11 +306,11 @@ procedure TJSONDraft4SchemaConverterTeste.IfThePropertyIsInTheRequiredListCantBe
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.string);
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.string);
 
-  AddProperty(ClassDefinition, 'MyProp2', TJSONSchema.simpleTypes.string);
+  AddProperty(ClassDefinition, 'MyProp2', JSONSchema.simpleTypes.string);
 
-  AddProperty(ClassDefinition, 'MyProp3', TJSONSchema.simpleTypes.string);
+  AddProperty(ClassDefinition, 'MyProp3', JSONSchema.simpleTypes.string);
 
   ClassDefinition.AddRequired('MyProp2');
 
@@ -323,7 +325,7 @@ procedure TJSONDraft4SchemaConverterTeste.IfTheSchemaHasDefinitionsMustAppendThe
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.string);
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.string);
 
   ImportDefinition;
 
@@ -345,7 +347,7 @@ procedure TJSONDraft4SchemaConverterTeste.MustAppendADotInTheClassNameOfAPropert
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddProperty(ClassDefinition, 'myProp', TJSONSchema.simpleTypes.object);
+  AddProperty(ClassDefinition, 'myProp', JSONSchema.simpleTypes.object);
 
   ImportDefinition;
 
@@ -354,7 +356,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.MustCreateAPropertyForEveryItemInTheAllOfSchema;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   PropertySchema.AddAllOf;
 
@@ -371,7 +373,7 @@ procedure TJSONDraft4SchemaConverterTeste.MustFillTheReferencePropertyWithTheCla
 begin
   var ClassDefinition: TTypeDefinition;
   var ClassSchema := CreateClassDefinition('MyClass');
-  var PropertyDefintion := ClassSchema.properties.AddProperties('MyProp');
+  var PropertyDefintion := ClassSchema.properties.AddAdditionalProperties('MyProp');
   PropertyDefintion.ref := '#/definitions/MyClass';
 
   ImportDefinition;
@@ -385,7 +387,7 @@ procedure TJSONDraft4SchemaConverterTeste.MustLoadTheArrayTypeWithTheTypeDefined
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddPropertyWithTypeArray(ClassDefinition, 'MyProp', CreateSchema(TJSONSchema.simpleTypes.integer));
+  AddPropertyWithTypeArray(ClassDefinition, 'MyProp', CreateSchema(JSONSchema.simpleTypes.integer));
 
   ImportDefinition;
 
@@ -408,7 +410,7 @@ procedure TJSONDraft4SchemaConverterTeste.MustLoadTheReferenceInformation;
 begin
   var ClassDefinition: TTypeDefinition;
   var ClassSchema := CreateClassDefinition('MyClass');
-  var PropertyDefintion := ClassSchema.properties.AddProperties('MyProp');
+  var PropertyDefintion := ClassSchema.properties.AddAdditionalProperties('MyProp');
   PropertyDefintion.ref := '#/definitions/MyClass';
 
   ImportDefinition;
@@ -422,7 +424,7 @@ procedure TJSONDraft4SchemaConverterTeste.MustLoadTheReferenceNamespaceInformati
 begin
   var ClassDefinition: TTypeDefinition;
   var ClassSchema := CreateClassDefinition('MyClass');
-  var PropertyDefintion := ClassSchema.properties.AddProperties('MyProp');
+  var PropertyDefintion := ClassSchema.properties.AddAdditionalProperties('MyProp');
   PropertyDefintion.ref := '#/definitions/MyClass';
 
   ImportDefinition;
@@ -469,7 +471,7 @@ begin
   inherited;
 
   FConfiguration := TConfiguration.Create;
-  FDefinition := TJSONSchema.TJSONSchema.Create;
+  FDefinition := JSONSchema.Create;
   FDefinition.id := 'My Namespace';
   FImporter := TSchemaImporter.Create;
 
@@ -490,8 +492,8 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.TheAdditionalPropertyMustBeLoadedOnlyIfItIsDefinedInTheSchema;
 begin
-  var PropertyDefinition := FDefinition.properties.AddProperties('MyProperty');
-  PropertyDefinition.&type.simpleTypes := TJSONSchema.simpleTypes.&object;
+  var PropertyDefinition := FDefinition.properties.AddAdditionalProperties('MyProperty');
+  PropertyDefinition.&type.simpleTypes := JSONSchema.simpleTypes.&object;
 
   ImportDefinition;
 
@@ -500,9 +502,9 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.TheAdditionalPropertyMustHaveTheNameOfAddicionalProperties;
 begin
-  var PropertyDefinition := FDefinition.properties.AddProperties('MyProperty');
-  PropertyDefinition.&type.simpleTypes := TJSONSchema.simpleTypes.&object;
-  PropertyDefinition.additionalProperties.AdditionalPropertiesProperty.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  var PropertyDefinition := FDefinition.properties.AddAdditionalProperties('MyProperty');
+  PropertyDefinition.&type.simpleTypes := JSONSchema.simpleTypes.&object;
+  PropertyDefinition.additionalProperties.JSONSchema.&type.simpleTypes := JSONSchema.simpleTypes.integer;
 
   ImportDefinition;
 
@@ -511,9 +513,9 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.TheAdditionalPropertyMustHaveTheTypeDefinedByTheSchemaConfiguration;
 begin
-  var PropertyDefinition := FDefinition.properties.AddProperties('MyProperty');
-  PropertyDefinition.&type.simpleTypes := TJSONSchema.simpleTypes.&object;
-  PropertyDefinition.additionalProperties.AdditionalPropertiesProperty.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  var PropertyDefinition := FDefinition.properties.AddAdditionalProperties('MyProperty');
+  PropertyDefinition.&type.simpleTypes := JSONSchema.simpleTypes.&object;
+  PropertyDefinition.additionalProperties.JSONSchema.&type.simpleTypes := JSONSchema.simpleTypes.integer;
 
   ImportDefinition;
 
@@ -522,7 +524,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.TheAliasNameMustBeTheFieldNameOfTheDefinition;
 begin
-  CreateArrayDefinition('MyArray', CreateSchema(TJSONSchema.simpleTypes.integer));
+  CreateArrayDefinition('MyArray', CreateSchema(JSONSchema.simpleTypes.integer));
 
   ImportDefinition;
 
@@ -534,7 +536,7 @@ begin
   var ClassDefinition := CreateClassDefinition('MyClass');
   var TypeDefinition: TTypeDefinition;
 
-  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.string);
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.string);
 
   ImportDefinition;
 
@@ -545,7 +547,7 @@ procedure TJSONDraft4SchemaConverterTeste.TheClassMustBeAppendedInTheMainClassHa
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.string);
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.string);
 
   ImportDefinition;
 
@@ -556,7 +558,7 @@ procedure TJSONDraft4SchemaConverterTeste.TheDefinitionsSubschemaMustAppendTheCu
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.string);
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.string);
 
   ImportDefinition;
 
@@ -590,7 +592,7 @@ procedure TJSONDraft4SchemaConverterTeste.TheNamespaceInTheReferenceMustBeTheIdO
 begin
   var ClassDefinition: TTypeDefinition;
   var ClassSchema := CreateClassDefinition('MyClass');
-  var PropertyDefintion := ClassSchema.properties.AddProperties('MyProp');
+  var PropertyDefintion := ClassSchema.properties.AddAdditionalProperties('MyProp');
   PropertyDefintion.ref := '#/definitions/MyClass';
 
   ImportDefinition;
@@ -604,7 +606,7 @@ procedure TJSONDraft4SchemaConverterTeste.ThePropertyNameMustBeLoadedInTheProper
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.string);
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.string);
 
   ImportDefinition;
 
@@ -613,11 +615,11 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.ThePropertyTypeOfAnyOfSchemaMustBeAReferenceIfTheSchemaIsAReference;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
-  FDefinition.definitions.AddDefinitions('MyReference').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
-  FDefinition.definitions.AddDefinitions('MyReference2').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
-  FDefinition.definitions.AddDefinitions('MyReference3').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference').&type.simpleTypes := JSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference2').&type.simpleTypes := JSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference3').&type.simpleTypes := JSONSchema.simpleTypes.integer;
 
   PropertySchema.AddAnyOf.ref := '#/definitions/MyReference';
   PropertySchema.AddAnyOf.ref := '#/definitions/MyReference2';
@@ -632,11 +634,11 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.ThePropertyTypeOfOneOfSchemaMustBeAReferenceIfTheSchemaIsAReference;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
-  FDefinition.definitions.AddDefinitions('MyReference').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
-  FDefinition.definitions.AddDefinitions('MyReference2').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
-  FDefinition.definitions.AddDefinitions('MyReference3').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference').&type.simpleTypes := JSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference2').&type.simpleTypes := JSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference3').&type.simpleTypes := JSONSchema.simpleTypes.integer;
 
   PropertySchema.AddOneOf.ref := '#/definitions/MyReference';
   PropertySchema.AddOneOf.ref := '#/definitions/MyReference2';
@@ -653,7 +655,7 @@ procedure TJSONDraft4SchemaConverterTeste.TheTypeAliasMustBeAppendedToTheTypesLi
 begin
   var TypeDefinition: TTypeDefinition;
 
-  CreateArrayDefinition('MyArray', CreateSchema(TJSONSchema.simpleTypes.integer));
+  CreateArrayDefinition('MyArray', CreateSchema(JSONSchema.simpleTypes.integer));
 
   ImportDefinition;
 
@@ -662,7 +664,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenCreateAnAllOfClassMustMarkTheClassHasFlat;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   PropertySchema.AddAllOf;
 
@@ -673,7 +675,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenCreateAnAnyOfClassMustMarkTheClassHasFlat;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   PropertySchema.AddAnyOf;
 
@@ -684,7 +686,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenCreateAnOneOfClassMustMarkTheClassHasFlat;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   PropertySchema.AddOneOf;
 
@@ -704,7 +706,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenDeclareTheAliasTypeMustLoadTheSchemaTypeInTheDefinitionHasExpected;
 begin
-  CreateArrayDefinition('MyArray', CreateSchema(TJSONSchema.simpleTypes.integer));
+  CreateArrayDefinition('MyArray', CreateSchema(JSONSchema.simpleTypes.integer));
 
   ImportDefinition;
 
@@ -735,16 +737,16 @@ begin
 
   Assert.IsNotNil(Schema.SchemaValue.AsObject);
 
-  Assert.AreEqual(TJSONSchema.TJSONSchema, Schema.SchemaValue.AsObject.ClassType);
+  Assert.AreEqual(JSONSchema, Schema.SchemaValue.AsObject.ClassType);
 
   Schema.Free;
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfHasOnlyOneSchemaAndIsAReferenceMustCreateOnlyTheReferenceToTheTypeInThePropertyType;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
-  FDefinition.definitions.AddDefinitions('MyReference').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference').&type.simpleTypes := JSONSchema.simpleTypes.integer;
 
   PropertySchema.AddAllOf.ref := '#/definitions/MyReference';
 
@@ -755,9 +757,9 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfIsAReferenceMustLoadThePropertyTypeWithAReferenceTypeDefinition;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
-  FDefinition.definitions.AddDefinitions('MyReference').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference').&type.simpleTypes := JSONSchema.simpleTypes.integer;
 
   PropertySchema.AddAllOf.ref := '#/definitions/MyReference';
 
@@ -772,7 +774,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfIsLoadedMustLoadAllPropertiesCantBeOptional;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   PropertySchema.AddAllOf;
 
@@ -783,7 +785,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfReferenceIsTheSharpMustLoadTheMainClassNameInThePropertyName;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   PropertySchema.AddAllOf.ref := '#';
   PropertySchema.AddAllOf.ref := '#';
@@ -796,7 +798,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfSchemaHasASchemaDefinitionMustCreateThePropertyNameStartingWithAllOfName;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   PropertySchema.AddAllOf;
 
@@ -813,11 +815,11 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfSchemaIsAReferenceMustLoadAPropertyWithTheReferenceName;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
-  FDefinition.definitions.AddDefinitions('MyReference').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
-  FDefinition.definitions.AddDefinitions('MyReference2').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
-  FDefinition.definitions.AddDefinitions('MyReference3').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference').&type.simpleTypes := JSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference2').&type.simpleTypes := JSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference3').&type.simpleTypes := JSONSchema.simpleTypes.integer;
 
   PropertySchema.AddAllOf.ref := '#/definitions/MyReference';
 
@@ -834,9 +836,9 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAnyOfHasMoreThanOneSchemaMustCreateAClassTypeDefinitionForTheProperty;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
-  FDefinition.definitions.AddDefinitions('MyReference').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference').&type.simpleTypes := JSONSchema.simpleTypes.integer;
 
   PropertySchema.AddAnyOf;
 
@@ -851,9 +853,9 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAnyOfIsLoadedAndHaveOnlyOneItemAndThisItemIsAReferecenceMustLoadThePropertyTypeWithAReferenceTypeDefinition;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
-  FDefinition.definitions.AddDefinitions('MyReference').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference').&type.simpleTypes := JSONSchema.simpleTypes.integer;
 
   PropertySchema.AddAnyOf.ref := '#/definitions/MyReference';
 
@@ -864,7 +866,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAnyOfIsLoadedMustLoadAllPropertiesHasOptional;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   PropertySchema.AddAnyOf;
 
@@ -875,7 +877,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAnyOfReferenceIsTheSharpMustLoadTheMainClassNameInThePropertyName;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   PropertySchema.AddAnyOf.ref := '#';
   PropertySchema.AddAnyOf.ref := '#';
@@ -888,11 +890,11 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAnyOfSchemaIsAReferenceMustAppendTheReferenceNameToThePropertyName;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
-  FDefinition.definitions.AddDefinitions('MyReference').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
-  FDefinition.definitions.AddDefinitions('MyReference2').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
-  FDefinition.definitions.AddDefinitions('MyReference3').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference').&type.simpleTypes := JSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference2').&type.simpleTypes := JSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference3').&type.simpleTypes := JSONSchema.simpleTypes.integer;
 
   PropertySchema.AddAnyOf.ref := '#/definitions/MyReference';
   PropertySchema.AddAnyOf.ref := '#/definitions/MyReference2';
@@ -909,7 +911,7 @@ procedure TJSONDraft4SchemaConverterTeste.WhenTheClassDefinitionHaveAPropertyMus
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.string);
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.string);
 
   ImportDefinition;
 
@@ -927,9 +929,9 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheDynamicPropertyTypeIsAnClassDefinitionMustLoadTheClassNameWithTheNameAdditionalPropertyType;
 begin
-  var PropertyDefinition := FDefinition.properties.AddProperties('MyProperty');
-  PropertyDefinition.&type.simpleTypes := TJSONSchema.simpleTypes.&object;
-  PropertyDefinition.additionalProperties.AdditionalPropertiesProperty.&type.simpleTypes := TJSONSchema.simpleTypes.object;
+  var PropertyDefinition := FDefinition.properties.AddAdditionalProperties('MyProperty');
+  PropertyDefinition.&type.simpleTypes := JSONSchema.simpleTypes.&object;
+  PropertyDefinition.additionalProperties.JSONSchema.&type.simpleTypes := JSONSchema.simpleTypes.object;
 
   ImportDefinition;
 
@@ -938,9 +940,9 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheDynamicPropertyTypeIsntAClassDefinitionCantChangeTheNameType;
 begin
-  var PropertyDefinition := FDefinition.properties.AddProperties('MyProperty');
-  PropertyDefinition.&type.simpleTypes := TJSONSchema.simpleTypes.&object;
-  PropertyDefinition.additionalProperties.AdditionalPropertiesProperty.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  var PropertyDefinition := FDefinition.properties.AddAdditionalProperties('MyProperty');
+  PropertyDefinition.&type.simpleTypes := JSONSchema.simpleTypes.&object;
+  PropertyDefinition.additionalProperties.JSONSchema.&type.simpleTypes := JSONSchema.simpleTypes.integer;
 
   ImportDefinition;
 
@@ -949,7 +951,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheMainSchemaHasPropertiesThisPropertiesMustBeLoadedInTheMainClass;
 begin
-  AddProperty(FDefinition, 'MyProp', TJSONSchema.simpleTypes.integer);
+  AddProperty(FDefinition, 'MyProp', JSONSchema.simpleTypes.integer);
 
   ImportDefinition;
 
@@ -958,9 +960,9 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheOneOfHasMoreThanOneSchemaMustCreateAClassTypeDefinitionForTheProperty;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
-  FDefinition.definitions.AddDefinitions('MyReference').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference').&type.simpleTypes := JSONSchema.simpleTypes.integer;
 
   PropertySchema.AddOneOf;
 
@@ -975,9 +977,9 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheOneOfIsLoadedAndHaveOnlyOneItemAndThisItemIsAReferecenceMustLoadThePropertyTypeWithAReferenceTypeDefinition;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
-  FDefinition.definitions.AddDefinitions('MyReference').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference').&type.simpleTypes := JSONSchema.simpleTypes.integer;
 
   PropertySchema.AddOneOf.ref := '#/definitions/MyReference';
 
@@ -988,7 +990,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheOneOfIsLoadedMustLoadAllPropertiesHasOptional;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   PropertySchema.AddOneOf;
 
@@ -999,7 +1001,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheOneOfReferenceIsTheSharpMustLoadTheMainClassNameInThePropertyName;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   PropertySchema.AddAnyOf.ref := '#';
   PropertySchema.AddAnyOf.ref := '#';
@@ -1012,11 +1014,11 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheOneOfSchemaIsAReferenceMustAppendTheReferenceNameToThePropertyName;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
-  FDefinition.definitions.AddDefinitions('MyReference').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
-  FDefinition.definitions.AddDefinitions('MyReference2').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
-  FDefinition.definitions.AddDefinitions('MyReference3').&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference').&type.simpleTypes := JSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference2').&type.simpleTypes := JSONSchema.simpleTypes.integer;
+  FDefinition.definitions.AddAdditionalProperties('MyReference3').&type.simpleTypes := JSONSchema.simpleTypes.integer;
 
   PropertySchema.AddOneOf.ref := '#/definitions/MyReference';
   PropertySchema.AddOneOf.ref := '#/definitions/MyReference2';
@@ -1033,7 +1035,7 @@ procedure TJSONDraft4SchemaConverterTeste.WhenThePropertyIsAnArrayTypeMustLoadTh
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddPropertyWithTypeArray(ClassDefinition, 'MyProp', CreateSchema(TJSONSchema.simpleTypes.integer));
+  AddPropertyWithTypeArray(ClassDefinition, 'MyProp', CreateSchema(JSONSchema.simpleTypes.integer));
 
   ImportDefinition;
 
@@ -1044,7 +1046,7 @@ procedure TJSONDraft4SchemaConverterTeste.WhenThePropertyTypeIsObjectCantRaiseEr
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.object);
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.object);
 
   Assert.WillNotRaise(ImportDefinition);
 end;
@@ -1053,7 +1055,7 @@ procedure TJSONDraft4SchemaConverterTeste.WhenThePropertyTypeIsObjectMustCreateA
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.object);
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.object);
 
   ImportDefinition;
 
@@ -1064,7 +1066,7 @@ procedure TJSONDraft4SchemaConverterTeste.WhenThePropertyTypeIsObjectTheClassDef
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.object);
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.object);
 
   ImportDefinition;
 
@@ -1075,7 +1077,7 @@ procedure TJSONDraft4SchemaConverterTeste.WhenThePropertyTypeIsOfBooleanTypeMust
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.boolean);
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.boolean);
 
   ImportDefinition;
 
@@ -1086,7 +1088,7 @@ procedure TJSONDraft4SchemaConverterTeste.WhenThePropertyTypeIsOfIntegerTypeMust
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.integer);
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.integer);
 
   ImportDefinition;
 
@@ -1097,7 +1099,7 @@ procedure TJSONDraft4SchemaConverterTeste.WhenThePropertyTypeIsOfNumberTypeMustL
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.number);
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.number);
 
   ImportDefinition;
 
@@ -1108,7 +1110,7 @@ procedure TJSONDraft4SchemaConverterTeste.WhenThePropertyTypeIsOfStringTypeMustL
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
 
-  AddProperty(ClassDefinition, 'MyProp', TJSONSchema.simpleTypes.string);
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.string);
 
   ImportDefinition;
 
@@ -1117,7 +1119,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheReferenceIsOnlyASharpCharacterCantRaiseAnyError;
 begin
-  var PropertyDefintion := FDefinition.properties.AddProperties('MyProp');
+  var PropertyDefintion := FDefinition.properties.AddAdditionalProperties('MyProp');
   PropertyDefintion.ref := '#';
 
   Assert.WillNotRaise(ImportDefinition);
@@ -1125,7 +1127,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheReferenceIsOnlyASharpCharacterMustLoadTheReferenceToTheMainClassOfTheSchema;
 begin
-  var PropertyDefintion := FDefinition.properties.AddProperties('MyProp');
+  var PropertyDefintion := FDefinition.properties.AddAdditionalProperties('MyProp');
   PropertyDefintion.ref := '#';
 
   ImportDefinition;
@@ -1144,7 +1146,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaDoesntHaveAnyDefinitionMustLoadThePropertyWithTheTValueType;
 begin
-  FDefinition.properties.AddProperties('MyProp');
+  FDefinition.properties.AddAdditionalProperties('MyProp');
 
   ImportDefinition;
 
@@ -1153,7 +1155,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaHaveTheAllOfPropertyLoadedMustCreateAClassDefinitionForTheProperty;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   PropertySchema.AddAllOf;
 
@@ -1168,7 +1170,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaInTheDefinitionsIsAnArrayTypeMustCreateAnAliasToTheTypeCreated;
 begin
-  CreateArrayDefinition('MyArray', CreateSchema(TJSONSchema.simpleTypes.integer));
+  CreateArrayDefinition('MyArray', CreateSchema(JSONSchema.simpleTypes.integer));
 
   ImportDefinition;
 
@@ -1177,9 +1179,9 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaIsAnObjectWithAdditionalPropertyMustAppendAPropertyWithTheDynamicPropertyType;
 begin
-  var PropertyDefinition := FDefinition.properties.AddProperties('MyProperty');
-  PropertyDefinition.&type.simpleTypes := TJSONSchema.simpleTypes.&object;
-  PropertyDefinition.additionalProperties.AdditionalPropertiesProperty.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  var PropertyDefinition := FDefinition.properties.AddAdditionalProperties('MyProperty');
+  PropertyDefinition.&type.simpleTypes := JSONSchema.simpleTypes.&object;
+  PropertyDefinition.additionalProperties.JSONSchema.&type.simpleTypes := JSONSchema.simpleTypes.integer;
 
   ImportDefinition;
 
@@ -1188,9 +1190,9 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaIsAnObjectWithAdditionalPropertyMustCreateAProperty;
 begin
-  var PropertyDefinition := FDefinition.properties.AddProperties('MyProperty');
-  PropertyDefinition.&type.simpleTypes := TJSONSchema.simpleTypes.&object;
-  PropertyDefinition.additionalProperties.AdditionalPropertiesProperty.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
+  var PropertyDefinition := FDefinition.properties.AddAdditionalProperties('MyProperty');
+  PropertyDefinition.&type.simpleTypes := JSONSchema.simpleTypes.&object;
+  PropertyDefinition.additionalProperties.JSONSchema.&type.simpleTypes := JSONSchema.simpleTypes.integer;
 
   ImportDefinition;
 
@@ -1201,7 +1203,7 @@ procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaIsAReferenceMustCreateThe
 begin
   var ClassDefinition: TTypeDefinition;
   var ClassSchema := CreateClassDefinition('MyClass');
-  var PropertyDefintion := ClassSchema.properties.AddProperties('MyProp');
+  var PropertyDefintion := ClassSchema.properties.AddAdditionalProperties('MyProp');
   PropertyDefintion.ref := '#/definitions/MyClass';
 
   ImportDefinition;
@@ -1213,18 +1215,18 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaOfAllOfIsAnBuildInTypeMustCreateThePropertyWithTheNameOfEnumerator;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   var ArrayType := PropertySchema.AddAllOf;
 
-  ArrayType.&type.simpleTypes := TJSONSchema.simpleTypes.array;
-  ArrayType.items.schema.&type.simpleTypes := TJSONSchema.simpleTypes.string;
+  ArrayType.&type.simpleTypes := JSONSchema.simpleTypes.array;
+  ArrayType.items.JSONSchema.&type.simpleTypes := JSONSchema.simpleTypes.string;
 
-  PropertySchema.AddAllOf.&type.simpleTypes := TJSONSchema.simpleTypes.boolean;
-  PropertySchema.AddAllOf.&type.simpleTypes := TJSONSchema.simpleTypes.integer;
-  PropertySchema.AddAllOf.&type.simpleTypes := TJSONSchema.simpleTypes.number;
-  PropertySchema.AddAllOf.&type.simpleTypes := TJSONSchema.simpleTypes.object;
-  PropertySchema.AddAllOf.&type.simpleTypes := TJSONSchema.simpleTypes.string;
+  PropertySchema.AddAllOf.&type.simpleTypes := JSONSchema.simpleTypes.boolean;
+  PropertySchema.AddAllOf.&type.simpleTypes := JSONSchema.simpleTypes.integer;
+  PropertySchema.AddAllOf.&type.simpleTypes := JSONSchema.simpleTypes.number;
+  PropertySchema.AddAllOf.&type.simpleTypes := JSONSchema.simpleTypes.object;
+  PropertySchema.AddAllOf.&type.simpleTypes := JSONSchema.simpleTypes.string;
 
   ImportDefinition;
 
@@ -1242,7 +1244,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaOfAnyOfIsntAReferenceMustLoadThePropertyNameStartingWithAnyOfName;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   PropertySchema.AddAnyOf;
 
@@ -1259,7 +1261,7 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaOfOneOfIsntAReferenceMustLoadThePropertyNameStartingWithAnyOfName;
 begin
-  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
 
   PropertySchema.AddOneOf;
 
