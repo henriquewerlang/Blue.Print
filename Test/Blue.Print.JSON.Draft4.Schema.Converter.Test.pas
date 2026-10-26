@@ -181,6 +181,8 @@ type
     procedure WhenTheOneOfIsLoadedMustLoadAllPropertiesHasOptional;
     [Test]
     procedure WhenTheAllOfIsLoadedMustLoadAllPropertiesCantBeOptional;
+    [Test]
+    procedure WhenTheSchemaHasPropertiesAndAllOfDefinitionMustLoadTheProperties;
   end;
 
 implementation
@@ -1156,6 +1158,25 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.ValueType], GetMainClass.Properties[0].PropertyType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaHasPropertiesAndAllOfDefinitionMustLoadTheProperties;
+begin
+  var ClassDefinition := CreateClassDefinition('MyClass');
+
+  AddProperty(ClassDefinition, 'MyProp', JSONSchema.simpleTypes.string);
+
+  AddProperty(ClassDefinition, 'MyProp2', JSONSchema.simpleTypes.string);
+
+  AddProperty(ClassDefinition, 'MyProp3', JSONSchema.simpleTypes.string);
+
+  ClassDefinition.AddAllOf;
+
+  ClassDefinition.AddAllOf;
+
+  ImportDefinition;
+
+  Assert.AreEqual(3, Length(GetMainClass.Classes[0].Properties));
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaHaveTheAllOfPropertyLoadedMustCreateAClassDefinitionForTheProperty;

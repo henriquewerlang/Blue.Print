@@ -104,18 +104,18 @@ var
   begin
     Result := nil;
 
-    if JSONSchemaType.IsAllOfStored then
-      LoadSchemaArray(JSONSchemaType.allOf, ALL_OF_PROPERTY)
-    else if JSONSchemaType.IsAnyOfStored then
-      LoadSchemaArray(JSONSchemaType.anyOf, 'AnyOf')
-    else if JSONSchemaType.IsOneOfStored then
-      LoadSchemaArray(JSONSchemaType.oneOf, 'OneOf')
-    else if JSONSchemaType.IsPropertiesStored then
+    if JSONSchemaType.IsPropertiesStored then
     begin
       Result := ParentClassDefinition;
 
       DefineProperties(ParentClassDefinition, JSONSchemaType);
     end
+    else if JSONSchemaType.IsAllOfStored then
+      LoadSchemaArray(JSONSchemaType.allOf, ALL_OF_PROPERTY)
+    else if JSONSchemaType.IsAnyOfStored then
+      LoadSchemaArray(JSONSchemaType.anyOf, 'AnyOf')
+    else if JSONSchemaType.IsOneOfStored then
+      LoadSchemaArray(JSONSchemaType.oneOf, 'OneOf')
     else if JSONSchemaType.IsTypeStored then
       case JSONSchemaType.&type.simpleTypes of
         JSONSchema.simpleTypes.array: Result := Schema.Importer.CreateArrayType(ParentClassDefinition, LoadSchemaType(ParentClassDefinition, JSONSchemaType.items.JSONSchema));
