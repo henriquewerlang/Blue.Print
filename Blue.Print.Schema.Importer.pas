@@ -863,7 +863,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function NeedGetFunction(const PropertyDefinition: TTypePropertyDefinition): Boolean;
     begin
-      Result := PropertyDefinition.PropertyType.IsClassDefinition;
+      Result := ResolveReferenceType(PropertyDefinition.PropertyType).IsClassDefinition;
     end;
 
     function NeedSetFunction(const PropertyDefinition: TTypePropertyDefinition): Boolean;

@@ -330,6 +330,8 @@ type
     procedure MustAppendAllPropertiesInTheConfiguration;
     [Test]
     procedure WhenCreateTheAddFunctionForAnArrayMustUseThePropertyToLoadTheArrayValue;
+    [Test]
+    procedure WhenThePropertyTypeIsAReferenceToAClassDefinitionTypeMustLoadTheGetFunctionForTheProperty;
   end;
 
   [TestFixture]
@@ -2257,7 +2259,7 @@ begin
 
   FImporter.Import(FConfiguration);
 
-  CompareUnitDeclaration(
+  LinesCompareUnitDeclaration(
     '''
     unit MyUnit;
 
@@ -2283,17 +2285,13 @@ begin
             TMyClass3 = class
             private
               FMyProp: MyUnit.MainModule;
+              function GetMyProp: MyUnit.MainModule;
             published
-              property MyProp: MyUnit.MainModule read FMyProp write FMyProp;
+              property MyProp: MyUnit.MainModule read GetMyProp write FMyProp;
             end;
           end;
         end;
       end;
-
-    implementation
-
-    end.
-
     ''',
     FConfiguration.Units[0]);
 end;
@@ -3842,6 +3840,53 @@ begin
   ParentModule.Free;
 
   SimpleType.Free;
+end;
+
+procedure TSchemaImporterTest.WhenThePropertyTypeIsAReferenceToAClassDefinitionTypeMustLoadTheGetFunctionForTheProperty;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.CreateReferenceType(MainClass, 'My Namespace', MainClass.Name));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProperty: MyUnit.MainModule;
+        function GetMyProperty: MyUnit.MainModule;
+      published
+        property MyProperty: MyUnit.MainModule read GetMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    function MainModule.GetMyProperty: MyUnit.MainModule;
+    begin
+      if not Assigned(FMyProperty) then
+        MyProperty := MyUnit.MainModule.Create;
+
+      Result := FMyProperty;
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyTypeIsAReferenceToAnArrayWithAClassDefinitionTypeMustLoadTheAddFunctionHasExpected;
