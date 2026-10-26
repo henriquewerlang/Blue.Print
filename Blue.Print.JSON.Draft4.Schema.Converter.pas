@@ -18,6 +18,9 @@ uses System.Rtti, Blue.Print.Serializer;
 { TJSONDraft4SchemaConverter }
 
 procedure TJSONDraft4SchemaConverter.Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
+const
+  ALL_OF_PROPERTY = 'AllOf';
+
 var
   DefinitionsNamespace: String;
   JSONDefinition: TJSONSchema.TJSONSchema;
@@ -94,7 +97,7 @@ var
         Result := SchemaClassDefinition;
 
         for SchemaItem in SchemaArray do
-          SchemaClassDefinition.AddProperty(GetPropertyName, LoadSchemaType(SchemaClassDefinition, SchemaItem));
+          SchemaClassDefinition.AddProperty(GetPropertyName, LoadSchemaType(SchemaClassDefinition, SchemaItem)).Optional := PropertyNamePrefix <> ALL_OF_PROPERTY;
       end
     end;
 
@@ -102,7 +105,7 @@ var
     Result := nil;
 
     if JSONSchema.IsAllOfStored then
-      LoadSchemaArray(JSONSchema.allOf, 'AllOf')
+      LoadSchemaArray(JSONSchema.allOf, ALL_OF_PROPERTY)
     else if JSONSchema.IsAnyOfStored then
       LoadSchemaArray(JSONSchema.anyOf, 'AnyOf')
     else if JSONSchema.IsOneOfStored then

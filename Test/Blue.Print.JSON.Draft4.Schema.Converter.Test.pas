@@ -175,6 +175,12 @@ type
     procedure WhenTheDynamicPropertyTypeIsAnClassDefinitionMustLoadTheClassNameWithTheNameAdditionalPropertyType;
     [Test]
     procedure WhenTheDynamicPropertyTypeIsntAClassDefinitionCantChangeTheNameType;
+    [Test]
+    procedure WhenTheAnyOfIsLoadedMustLoadAllPropertiesHasOptional;
+    [Test]
+    procedure WhenTheOneOfIsLoadedMustLoadAllPropertiesHasOptional;
+    [Test]
+    procedure WhenTheAllOfIsLoadedMustLoadAllPropertiesCantBeOptional;
   end;
 
 implementation
@@ -764,6 +770,17 @@ begin
   Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].PropertyType.ClassType);
 end;
 
+procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfIsLoadedMustLoadAllPropertiesCantBeOptional;
+begin
+  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+
+  PropertySchema.AddAllOf;
+
+  ImportDefinition;
+
+  Assert.IsFalse(GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].Optional);
+end;
+
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfReferenceIsTheSharpMustLoadTheMainClassNameInThePropertyName;
 begin
   var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
@@ -843,6 +860,17 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Properties[0].PropertyType.ClassType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheAnyOfIsLoadedMustLoadAllPropertiesHasOptional;
+begin
+  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+
+  PropertySchema.AddAnyOf;
+
+  ImportDefinition;
+
+  Assert.IsTrue(GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].Optional);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAnyOfReferenceIsTheSharpMustLoadTheMainClassNameInThePropertyName;
@@ -956,6 +984,17 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Properties[0].PropertyType.ClassType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheOneOfIsLoadedMustLoadAllPropertiesHasOptional;
+begin
+  var PropertySchema := FDefinition.properties.AddProperties('MyProperty');
+
+  PropertySchema.AddOneOf;
+
+  ImportDefinition;
+
+  Assert.IsTrue(GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].Optional);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheOneOfReferenceIsTheSharpMustLoadTheMainClassNameInThePropertyName;
