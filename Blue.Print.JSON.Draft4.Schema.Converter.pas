@@ -52,7 +52,7 @@ var
           PropertyType.Name := Format('.%sType', [PropertyDefinition.Name]);
       end;
 
-      if JSONSchemaType.IsAdditionalPropertiesStored then
+      if JSONSchemaType.IsAdditionalPropertiesStored and JSONSchemaType.additionalProperties.IsJSONSchemaStored then
       begin
         var DynamicPropertyType := LoadSchemaType(ClassDefinition, JSONSchemaType.additionalProperties.JSONSchema);
 

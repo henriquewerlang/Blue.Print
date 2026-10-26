@@ -183,6 +183,10 @@ type
     procedure WhenTheAllOfIsLoadedMustLoadAllPropertiesCantBeOptional;
     [Test]
     procedure WhenTheSchemaHasPropertiesAndAllOfDefinitionMustLoadTheProperties;
+    [Test]
+    procedure WhenTheClassDefinitionHasAdditionalPropertiesAndIsLoadedTheBooleanPropertyWithTheFalseValueCantLoadTheProperty;
+    [Test]
+    procedure MustLoadTheAdditionalOnlyIfTheSchemaIsLoaded;
   end;
 
 implementation
@@ -383,6 +387,17 @@ begin
   FImporter.TryFindType(FDefinition.id + '/definitions', 'MyClass', ClassDefinition);
 
   Assert.AreEqual('MyClass', ClassDefinition.AsClassDefinition.Properties[0].PropertyType.AsReferenceDefinition.Reference);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.MustLoadTheAdditionalOnlyIfTheSchemaIsLoaded;
+begin
+  var ClassDefinition := CreateClassDefinition('MyClass');
+
+  ClassDefinition.additionalProperties.boolean := True;
+
+  ImportDefinition;
+
+  Assert.AreEqual(0, Length(GetMainClass.Classes[0].Properties));
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.MustLoadTheArrayTypeWithTheTypeDefinedInTheItemsSchema;
@@ -912,6 +927,17 @@ begin
   Assert.AreEqual('MyReference', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].Name);
   Assert.AreEqual('MyReference2', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[1].Name);
   Assert.AreEqual('MyReference3', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[2].Name);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheClassDefinitionHasAdditionalPropertiesAndIsLoadedTheBooleanPropertyWithTheFalseValueCantLoadTheProperty;
+begin
+  var ClassDefinition := CreateClassDefinition('MyClass');
+
+  ClassDefinition.additionalProperties.boolean := False;
+
+  ImportDefinition;
+
+  Assert.AreEqual(0, Length(GetMainClass.Classes[0].Properties));
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheClassDefinitionHaveAPropertyMustLoadThePropertyInTheClass;
