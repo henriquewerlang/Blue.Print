@@ -27,6 +27,29 @@ var
 
   function LoadSchemaType(const ParentClassDefinition: TTypeClassDefinition; const JSONSchemaType: JSONSchema): TTypeDefinition;
 
+    function GetReferenceSchemaName(JSONSchemaType: JSONSchema): String;
+    begin
+      if JSONSchemaType.ref = '#' then
+        Result := MainClass.Name
+      else
+        Result := JSONSchemaType.ref.Substring(Succ(JSONSchemaType.ref.LastDelimiter('/')));
+    end;
+
+    function GetPropertyName(const SchemaItem: JSONSchema; const PropertyNamePrefix: String; const PropertyCount: NativeInt): String;
+    begin
+      if SchemaItem.IsRefStored then
+        Result := GetReferenceSchemaName(SchemaItem)
+      else if SchemaItem.IsTypeStored then
+        Result := TRttiEnumerationType.GetName(SchemaItem.&type.simpleTypes)
+      else
+      begin
+        Result := PropertyNamePrefix;
+
+        if PropertyCount > 0 then
+         Result := Result + Succ(PropertyCount).ToString;
+      end;
+    end;
+
     procedure DefineProperties(const ClassDefinition: TTypeClassDefinition; const JSONSchemaType: JSONSchema);
     var
       PropertyDefinition: TTypePropertyDefinition;
@@ -61,30 +84,20 @@ var
         if DynamicPropertyType.IsClassDefinition then
           DynamicPropertyType.Name := 'TAdditionalPropertiesType';
       end;
-    end;
 
-    function GetReferenceSchemaName(JSONSchemaType: JSONSchema): String;
-    begin
-      if JSONSchemaType.ref = '#' then
-        Result := MainClass.Name
-      else
-        Result := JSONSchemaType.ref.Substring(Succ(JSONSchemaType.ref.LastDelimiter('/')));
+      if JSONSchemaType.IsPatternPropertiesStored then
+        for var PatternProperty in JSONSchemaType.patternProperties.additionalProperties do
+        begin
+          PropertyDefinition := ClassDefinition.AddProperty(GetPropertyName(PatternProperty.Value, 'PatternProperty', Length(ClassDefinition.Properties)),
+            Schema.Importer.CreateDynamicPropertyType(ClassDefinition, LoadSchemaType(ClassDefinition, PatternProperty.Value)));
+          PropertyDefinition.PatternProperty := PatternProperty.Key;
+        end;
     end;
 
     procedure LoadSchemaArray(const SchemaArray: JSONSchema.schemaArray; const PropertyNamePrefix: String);
     var
       SchemaClassDefinition: TTypeClassDefinition;
       SchemaItem: JSONSchema;
-
-      function GetPropertyName: String;
-      begin
-        if SchemaItem.IsRefStored then
-          Result := GetReferenceSchemaName(SchemaItem)
-        else if SchemaItem.IsTypeStored then
-          Result := TRttiEnumerationType.GetName(SchemaItem.&type.simpleTypes)
-        else
-          Result := PropertyNamePrefix + Succ(Length(SchemaClassDefinition.Properties)).ToString;
-      end;
 
     begin
       if (Length(SchemaArray) = 1) and SchemaArray[0].IsRefStored then
@@ -97,14 +110,14 @@ var
         Result := SchemaClassDefinition;
 
         for SchemaItem in SchemaArray do
-          SchemaClassDefinition.AddProperty(GetPropertyName, LoadSchemaType(SchemaClassDefinition, SchemaItem)).Optional := PropertyNamePrefix <> ALL_OF_PROPERTY;
+          SchemaClassDefinition.AddProperty(GetPropertyName(SchemaItem, PropertyNamePrefix, Length(SchemaClassDefinition.Properties)), LoadSchemaType(SchemaClassDefinition, SchemaItem)).Optional := PropertyNamePrefix <> ALL_OF_PROPERTY;
       end
     end;
 
   begin
     Result := nil;
 
-    if JSONSchemaType.IsPropertiesStored then
+    if JSONSchemaType.IsPropertiesStored or JSONSchemaType.IsPatternPropertiesStored then
     begin
       Result := ParentClassDefinition;
 

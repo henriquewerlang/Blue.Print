@@ -187,6 +187,24 @@ type
     procedure WhenTheClassDefinitionHasAdditionalPropertiesAndIsLoadedTheBooleanPropertyWithTheFalseValueCantLoadTheProperty;
     [Test]
     procedure MustLoadTheAdditionalOnlyIfTheSchemaIsLoaded;
+    [Test]
+    procedure WhenThePatternPropertySchemaIsLoadedMustCreateAProperty;
+    [Test]
+    procedure ThePatternPropertyMustBeLoadedWihtTheNameOfPatternProperty;
+    [Test]
+    procedure ThePropertyTypeMustBeDynamicPropertyType;
+    [Test]
+    procedure ThePatternPropertyTypeMustBeTheTypeInsideTheSchemaDefinition;
+    [Test]
+    procedure ForEachPatternPropertyMustCreateAProperty;
+    [Test]
+    procedure WhenHaveMoreThanOnePatternPropertyMustAppendTheSequenceNumberInThePropertyName;
+    [Test]
+    procedure IfThePatternPropertyHasASimpleTypeThePropertyNameMustBeTheTypeName;
+    [Test]
+    procedure WhenThePatternPropertyIsAReferenceTypeMustLoadThePropertyWithTheNameOfTheReference;
+    [Test]
+    procedure MustLoadThePatternValueInThePatternPropertyValueHasExpected;
   end;
 
 implementation
@@ -251,6 +269,17 @@ begin
   Result.&type.simpleTypes := SimpleType;
 end;
 
+procedure TJSONDraft4SchemaConverterTeste.ForEachPatternPropertyMustCreateAProperty;
+begin
+  FDefinition.patternProperties.AddAdditionalProperties('aaa');
+  FDefinition.patternProperties.AddAdditionalProperties('bbb');
+  FDefinition.patternProperties.AddAdditionalProperties('ccc');
+
+  ImportDefinition;
+
+  Assert.AreEqual(3, Length(GetMainClass.Properties));
+end;
+
 procedure TJSONDraft4SchemaConverterTeste.ForEveryAnyOfSchemaMustAppendAPropertyInTheClassDefinition;
 begin
   var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
@@ -306,6 +335,15 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(3, Length(GetMainClass.Classes[0].Properties));
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.IfThePatternPropertyHasASimpleTypeThePropertyNameMustBeTheTypeName;
+begin
+  FDefinition.patternProperties.AddAdditionalProperties('aaa').&type.simpleTypes := JSONSchema.simpleTypes.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual('integer', GetMainClass.Properties[0].Name);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.IfThePropertyIsInTheRequiredListCantBeOptional;
@@ -421,6 +459,15 @@ begin
   Assert.AreEqual('Enum1', GetMainClass.Enumerations[0].Values[0]);
   Assert.AreEqual('Enum2', GetMainClass.Enumerations[0].Values[1]);
   Assert.AreEqual('Enum3', GetMainClass.Enumerations[0].Values[2]);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.MustLoadThePatternValueInThePatternPropertyValueHasExpected;
+begin
+  FDefinition.patternProperties.AddAdditionalProperties('xxxx');
+
+  ImportDefinition;
+
+  Assert.AreEqual('xxxx', GetMainClass.Properties[0].PatternProperty);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.MustLoadTheReferenceInformation;
@@ -624,6 +671,24 @@ begin
   Assert.AreEqual(FDefinition.id + '/definitions', ClassDefinition.AsClassDefinition.Properties[0].PropertyType.AsReferenceDefinition.Namespace);
 end;
 
+procedure TJSONDraft4SchemaConverterTeste.ThePatternPropertyMustBeLoadedWihtTheNameOfPatternProperty;
+begin
+  FDefinition.patternProperties.AddAdditionalProperties('xxx');
+
+  ImportDefinition;
+
+  Assert.StartWith('PatternProperty', GetMainClass.Properties[0].Name);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.ThePatternPropertyTypeMustBeTheTypeInsideTheSchemaDefinition;
+begin
+  FDefinition.patternProperties.AddAdditionalProperties('xxx').&type.simpleTypes := JSONSchema.simpleTypes.boolean;
+
+  ImportDefinition;
+
+  Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.BooleanType], GetMainClass.Properties[0].PropertyType.AsGenericDefinition.GenericType);
+end;
+
 procedure TJSONDraft4SchemaConverterTeste.ThePropertyNameMustBeLoadedInThePropertyDefinition;
 begin
   var ClassDefinition := CreateClassDefinition('MyClass');
@@ -633,6 +698,15 @@ begin
   ImportDefinition;
 
   Assert.AreEqual('MyProp', GetMainClass.Classes[0].Properties[0].Name);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.ThePropertyTypeMustBeDynamicPropertyType;
+begin
+  FDefinition.patternProperties.AddAdditionalProperties('xxx').&type.simpleTypes := JSONSchema.simpleTypes.integer;
+
+  ImportDefinition;
+
+  Assert.IsTrue(GetMainClass.Properties[0].PropertyType.IsDynamicPropertyDefinition);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.ThePropertyTypeOfAnyOfSchemaMustBeAReferenceIfTheSchemaIsAReference;
@@ -735,6 +809,19 @@ begin
   Assert.IsTrue(GetMainClass.Alias[0].TypeAlias.IsArrayDefinition);
 end;
 
+procedure TJSONDraft4SchemaConverterTeste.WhenHaveMoreThanOnePatternPropertyMustAppendTheSequenceNumberInThePropertyName;
+begin
+  FDefinition.patternProperties.AddAdditionalProperties('aaa');
+  FDefinition.patternProperties.AddAdditionalProperties('bbb');
+  FDefinition.patternProperties.AddAdditionalProperties('ccc');
+
+  ImportDefinition;
+
+  Assert.AreEqual('PatternProperty', GetMainClass.Properties[0].Name);
+  Assert.AreEqual('PatternProperty2', GetMainClass.Properties[1].Name);
+  Assert.AreEqual('PatternProperty3', GetMainClass.Properties[2].Name);
+end;
+
 procedure TJSONDraft4SchemaConverterTeste.WhenLoadTheSchemaMustLoadTheIdFieldInTheNamespaceOfTheSchemaClass;
 begin
   var Converter: ISchemaConverter := TJSONDraft4SchemaConverter.Create;
@@ -830,7 +917,7 @@ begin
 
   ImportDefinition;
 
-  Assert.AreEqual('AllOf1', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].Name);
+  Assert.AreEqual('AllOf', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].Name);
   Assert.AreEqual('AllOf2', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[1].Name);
   Assert.AreEqual('AllOf3', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[2].Name);
 end;
@@ -1062,6 +1149,26 @@ begin
   Assert.AreEqual('MyReference', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].Name);
   Assert.AreEqual('MyReference2', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[1].Name);
   Assert.AreEqual('MyReference3', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[2].Name);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenThePatternPropertyIsAReferenceTypeMustLoadThePropertyWithTheNameOfTheReference;
+begin
+  CreateClassDefinition('MyClass');
+
+  FDefinition.patternProperties.AddAdditionalProperties('aaa').Ref := '#/definitions/MyClass';
+
+  ImportDefinition;
+
+  Assert.AreEqual('MyClass', GetMainClass.Properties[0].Name);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenThePatternPropertySchemaIsLoadedMustCreateAProperty;
+begin
+  FDefinition.patternProperties.AddAdditionalProperties('xxx');
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetMainClass.Properties));
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenThePropertyIsAnArrayTypeMustLoadTheArrayTypeDefinition;
@@ -1306,7 +1413,7 @@ begin
 
   ImportDefinition;
 
-  Assert.AreEqual('AnyOf1', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].Name);
+  Assert.AreEqual('AnyOf', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].Name);
   Assert.AreEqual('AnyOf2', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[1].Name);
   Assert.AreEqual('AnyOf3', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[2].Name);
 end;
@@ -1323,7 +1430,7 @@ begin
 
   ImportDefinition;
 
-  Assert.AreEqual('OneOf1', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].Name);
+  Assert.AreEqual('OneOf', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].Name);
   Assert.AreEqual('OneOf2', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[1].Name);
   Assert.AreEqual('OneOf3', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[2].Name);
 end;

@@ -216,10 +216,12 @@ type
   private
     FPropertyType: TTypeDefinition;
     FOptional: Boolean;
+    FPatternProperty: String;
 
     function GetPropertyType: TTypeDefinition;
   public
     property Optional: Boolean read FOptional write FOptional;
+    property PatternProperty: String read FPatternProperty write FPatternProperty;
     property PropertyType: TTypeDefinition read GetPropertyType write FPropertyType;
   end;
 
@@ -1106,6 +1108,9 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         for var PropertyDefinition in ClassDefinition.Properties do
         begin
           var PropertyName: String;
+
+          if not PropertyDefinition.PatternProperty.IsEmpty then
+            AddLine(CurrentIndentation, '[PatternProperty(''%s'')]', [PropertyDefinition.PatternProperty]);
 
           if NeedFieldNameAttribute(PropertyDefinition, PropertyName) then
             AddLine(CurrentIndentation, '[FieldName(''%s'')]', [PropertyDefinition.Name]);

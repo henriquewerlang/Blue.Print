@@ -332,6 +332,8 @@ type
     procedure WhenCreateTheAddFunctionForAnArrayMustUseThePropertyToLoadTheArrayValue;
     [Test]
     procedure WhenThePropertyTypeIsAReferenceToAClassDefinitionTypeMustLoadTheGetFunctionForTheProperty;
+    [Test]
+    procedure WhenThePropertyHasThePatternPropertyValueLoadedMustCreateThePatternPropertyAttributeInTheClass;
   end;
 
   [TestFixture]
@@ -3632,6 +3634,28 @@ begin
     begin
       FImporter.Import(FConfiguration);
     end, EPropertyWithoutType);
+end;
+
+procedure TSchemaImporterTest.WhenThePropertyHasThePatternPropertyValueLoadedMustCreateThePatternPropertyAttributeInTheClass;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]).PatternProperty := 'xxxx';
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+      published
+        [PatternProperty('xxxx')]
+        property MyProperty: System.Integer read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyIsOptionalMustCreateTheFieldForStoreTheIsStoredInfoAndCreateTheSetFunctionForTheProperty;
