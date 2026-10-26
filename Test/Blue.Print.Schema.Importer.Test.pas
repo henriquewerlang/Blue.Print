@@ -291,6 +291,8 @@ type
     procedure WhenChekingThePropertiesToImplementTheFunctionsMustBeDoneCorrectly;
     [Test]
     procedure WhenTheLastLevelClassHasEspecialNameMustLoadTheFunctionsWithTheCorrectName;
+    [Test]
+    procedure WhenTheTypeIsAClassDefinitionTypeMustCreateTheGetFunctionAndUseThePropertyToLoadTheValueToFillTheStoredFieldIfIsOptionalTheProperty;
   end;
 
   [TestFixture]
@@ -1624,7 +1626,7 @@ begin
     function MainModule.TMyClass.TMyClass2.TMyClass3.GetMyProp: MyUnit.MainModule;
     begin
       if not Assigned(FMyProp) then
-        FMyProp := MyUnit.MainModule.Create;
+        MyProp := MyUnit.MainModule.Create;
 
       Result := FMyProp;
     end;
@@ -2287,7 +2289,7 @@ begin
     function MainModule.GetMyProperty: MyUnit.MainModule.MyClass;
     begin
       if not Assigned(FMyProperty) then
-        FMyProperty := MyUnit.MainModule.MyClass.Create;
+        myProperty := MyUnit.MainModule.MyClass.Create;
 
       Result := FMyProperty;
     end;
@@ -2756,7 +2758,7 @@ begin
     function MainModule.GetMyProperty: System.SimpleType;
     begin
       if not Assigned(FMyProperty) then
-        FMyProperty := System.SimpleType.Create;
+        MyProperty := System.SimpleType.Create;
 
       Result := FMyProperty;
     end;
@@ -3046,7 +3048,7 @@ begin
     function MainModule.TMyClass.TMySpecialClassName.TMyClass3.GetMyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3;
     begin
       if not Assigned(FMyProp) then
-        FMyProp := MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3.Create;
+        MyProp := MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3.Create;
 
       Result := FMyProp;
     end;
@@ -3455,7 +3457,7 @@ begin
     function MainModule.GetMyProperty: System.SimpleType;
     begin
       if not Assigned(FMyProperty) then
-        FMyProperty := System.SimpleType.Create;
+        MyProperty := System.SimpleType.Create;
 
       Result := FMyProperty;
     end;
@@ -3463,7 +3465,7 @@ begin
     function MainModule.GetMyProperty2: System.SimpleType;
     begin
       if not Assigned(FMyProperty2) then
-        FMyProperty2 := System.SimpleType.Create;
+        MyProperty2 := System.SimpleType.Create;
 
       Result := FMyProperty2;
     end;
@@ -3683,6 +3685,59 @@ begin
 
     Importer.Free;
   end;
+end;
+
+procedure TSchemaImporterTest.WhenTheTypeIsAClassDefinitionTypeMustCreateTheGetFunctionAndUseThePropertyToLoadTheValueToFillTheStoredFieldIfIsOptionalTheProperty;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+  ParentModule.Name := 'System';
+  var SimpleType := FImporter.CreateClassType(ParentModule, 'SimpleType');
+
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', SimpleType);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProperty: System.SimpleType;
+        function GetMyProperty: System.SimpleType;
+      published
+        property MyProperty: System.SimpleType read GetMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    function MainModule.GetMyProperty: System.SimpleType;
+    begin
+      if not Assigned(FMyProperty) then
+        MyProperty := System.SimpleType.Create;
+
+      Result := FMyProperty;
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+
+  ParentModule.Free;
 end;
 
 procedure TSchemaImporterTest.WhenTheTypeIsAnAliasToAnArrayTypeMustCreateTheAddFunctionWithTheInternalAliasType;

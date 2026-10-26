@@ -1222,7 +1222,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
             AddLine(IndentationLevel, '  if not Assigned(%s) then', [FormatFieldName(PropertyDefinition)]);
 
-            AddLine(IndentationLevel, '    %s := %s.Create;', [FormatFieldName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
+            AddLine(IndentationLevel, '    %s := %s.Create;', [FormatPropertyName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
 
             AddWhiteLine;
 
