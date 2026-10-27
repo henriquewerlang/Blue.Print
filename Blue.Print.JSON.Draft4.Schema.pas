@@ -40,6 +40,8 @@ type
       function GetJSONSchema: Blue.Print.JSON.Draft4.Schema.JSONSchema;
       procedure SetJSONSchema(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema);
     public
+      destructor Destroy; override;
+
       property IsBooleanStored: Boolean read FBooleanStored;
       property IsJSONSchemaStored: Boolean read FJSONSchemaStored;
     published
@@ -58,6 +60,8 @@ type
       procedure SetJSONSchema(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema);
       procedure SetSchemaArray(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.schemaArray);
     public
+      destructor Destroy; override;
+
       function AddSchemaArray: Blue.Print.JSON.Draft4.Schema.JSONSchema;
 
       property IsJSONSchemaStored: Boolean read FJSONSchemaStored;
@@ -78,6 +82,8 @@ type
       function GetJSONSchema: Blue.Print.JSON.Draft4.Schema.JSONSchema;
       procedure SetJSONSchema(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema);
     public
+      destructor Destroy; override;
+
       property IsBooleanStored: Boolean read FBooleanStored;
       property IsJSONSchemaStored: Boolean read FJSONSchemaStored;
     published
@@ -89,6 +95,8 @@ type
     private
       FAdditionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.JSON.Draft4.Schema.JSONSchema>;
     public
+      destructor Destroy; override;
+
       function AddAdditionalProperties(const Name: String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
     published
       property additionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.JSON.Draft4.Schema.JSONSchema> read FAdditionalProperties write FAdditionalProperties;
@@ -98,6 +106,8 @@ type
     private
       FAdditionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.JSON.Draft4.Schema.JSONSchema>;
     public
+      destructor Destroy; override;
+
       function AddAdditionalProperties(const Name: String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
     published
       property additionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.JSON.Draft4.Schema.JSONSchema> read FAdditionalProperties write FAdditionalProperties;
@@ -107,6 +117,8 @@ type
     private
       FAdditionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.JSON.Draft4.Schema.JSONSchema>;
     public
+      destructor Destroy; override;
+
       function AddAdditionalProperties(const Name: String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
     published
       property additionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.JSON.Draft4.Schema.JSONSchema> read FAdditionalProperties write FAdditionalProperties;
@@ -127,6 +139,8 @@ type
         procedure SetJSONSchema(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema);
         procedure SetStringArray(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.stringArray);
       public
+        destructor Destroy; override;
+
         procedure AddStringArray(const Value: System.String);
 
         property IsJSONSchemaStored: Boolean read FJSONSchemaStored;
@@ -138,6 +152,8 @@ type
     private
       FAdditionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType.TAdditionalPropertiesType>;
     public
+      destructor Destroy; override;
+
       function AddAdditionalProperties(const Name: String): Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType.TAdditionalPropertiesType;
     published
       property additionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType.TAdditionalPropertiesType> read FAdditionalProperties write FAdditionalProperties;
@@ -288,6 +304,8 @@ type
     procedure SetNot(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema);
     procedure SetRef(const Value: System.String);
   public
+    destructor Destroy; override;
+
     procedure AddRequired(const Value: System.String);
     procedure AddEnum(const Value: System.Rtti.TValue);
     function AddAllOf: Blue.Print.JSON.Draft4.Schema.JSONSchema;
@@ -372,6 +390,44 @@ type
 implementation
 
 { JSONSchema }
+
+destructor JSONSchema.Destroy;
+begin
+  FMinLength.Free;
+
+  FAdditionalItems.Free;
+
+  FItems.Free;
+
+  FMinItems.Free;
+
+  FMinProperties.Free;
+
+  FAdditionalProperties.Free;
+
+  FDefinitions.Free;
+
+  FProperties.Free;
+
+  FPatternProperties.Free;
+
+  FDependencies.Free;
+
+  FType.Free;
+
+  for var Item in FAllOf do
+    Item.Free;
+
+  for var Item in FAnyOf do
+    Item.Free;
+
+  for var Item in FOneOf do
+    Item.Free;
+
+  FNot.Free;
+
+  inherited;
+end;
 
 procedure JSONSchema.SetId(const Value: System.String);
 begin
@@ -706,6 +762,13 @@ end;
 
 { JSONSchema.TAdditionalItemsType }
 
+destructor JSONSchema.TAdditionalItemsType.Destroy;
+begin
+  FJSONSchema.Free;
+
+  inherited;
+end;
+
 procedure JSONSchema.TAdditionalItemsType.SetBoolean(const Value: System.Boolean);
 begin
   FBoolean := Value;
@@ -727,6 +790,16 @@ begin
 end;
 
 { JSONSchema.TItemsType }
+
+destructor JSONSchema.TItemsType.Destroy;
+begin
+  FJSONSchema.Free;
+
+  for var Item in FSchemaArray do
+    Item.Free;
+
+  inherited;
+end;
 
 function JSONSchema.TItemsType.GetJSONSchema: Blue.Print.JSON.Draft4.Schema.JSONSchema;
 begin
@@ -757,6 +830,13 @@ end;
 
 { JSONSchema.TAdditionalPropertiesType }
 
+destructor JSONSchema.TAdditionalPropertiesType.Destroy;
+begin
+  FJSONSchema.Free;
+
+  inherited;
+end;
+
 procedure JSONSchema.TAdditionalPropertiesType.SetBoolean(const Value: System.Boolean);
 begin
   FBoolean := Value;
@@ -779,6 +859,14 @@ end;
 
 { JSONSchema.TDefinitionsType }
 
+destructor JSONSchema.TDefinitionsType.Destroy;
+begin
+  for var Item in FAdditionalProperties do
+    Item.Value.Free;
+
+  inherited;
+end;
+
 function JSONSchema.TDefinitionsType.AddAdditionalProperties(const Name: String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
 begin
   Result := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
@@ -787,6 +875,14 @@ begin
 end;
 
 { JSONSchema.TPropertiesType }
+
+destructor JSONSchema.TPropertiesType.Destroy;
+begin
+  for var Item in FAdditionalProperties do
+    Item.Value.Free;
+
+  inherited;
+end;
 
 function JSONSchema.TPropertiesType.AddAdditionalProperties(const Name: String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
 begin
@@ -797,6 +893,14 @@ end;
 
 { JSONSchema.TPatternPropertiesType }
 
+destructor JSONSchema.TPatternPropertiesType.Destroy;
+begin
+  for var Item in FAdditionalProperties do
+    Item.Value.Free;
+
+  inherited;
+end;
+
 function JSONSchema.TPatternPropertiesType.AddAdditionalProperties(const Name: String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
 begin
   Result := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
@@ -806,6 +910,14 @@ end;
 
 { JSONSchema.TDependenciesType }
 
+destructor JSONSchema.TDependenciesType.Destroy;
+begin
+  for var Item in FAdditionalProperties do
+    Item.Value.Free;
+
+  inherited;
+end;
+
 function JSONSchema.TDependenciesType.AddAdditionalProperties(const Name: String): Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType.TAdditionalPropertiesType;
 begin
   Result := Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType.TAdditionalPropertiesType.Create;
@@ -814,6 +926,13 @@ begin
 end;
 
 { JSONSchema.TDependenciesType.TAdditionalPropertiesType }
+
+destructor JSONSchema.TDependenciesType.TAdditionalPropertiesType.Destroy;
+begin
+  FJSONSchema.Free;
+
+  inherited;
+end;
 
 function JSONSchema.TDependenciesType.TAdditionalPropertiesType.GetJSONSchema: Blue.Print.JSON.Draft4.Schema.JSONSchema;
 begin
