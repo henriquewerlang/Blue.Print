@@ -181,6 +181,8 @@ type
     [Test]
     procedure WhenThePropertyHasASubTypeCantLoadTheClassNameInTheUsesList;
     [Test]
+    procedure WhenASubclassHasAPropertyWithATypeFromAnotherUnitMustLoadTheUnitNameInTheUsesList;
+    [Test]
     procedure IfTheTypeDoesntHaveTheParentModuleLoadedMustRaiseAnError;
     [Test]
     procedure WhenCreateAnArrayTypeMustReturnTheClassCreated;
@@ -2473,6 +2475,39 @@ begin
 
     end.
 
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenASubclassHasAPropertyWithATypeFromAnotherUnitMustLoadTheUnitNameInTheUsesList;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+
+      function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
+      begin
+        Result := FImporter.CreateClassType(Parent, Name);
+      end;
+
+    begin
+      var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', MainClass)));
+
+      ClassDefinition.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.ValueType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    uses System.Rtti;
+
+    type
     ''',
     FConfiguration.Units[0]);
 end;

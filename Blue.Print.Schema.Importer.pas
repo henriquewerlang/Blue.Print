@@ -1227,20 +1227,33 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       UsesList: TStringList;
 
       procedure CheckUses(const Module: TTypeModuleDefinition);
+
+        function GetUnitDefinition(const Module: TTypeModuleDefinition): TTypeModuleDefinition;
+        begin
+          if Module.IsUnitDefinition then
+            Result := Module
+          else
+            Result := GetUnitDefinition(Module.ParentModule);
+        end;
+
       begin
         var ParentModule: TTypeModuleDefinition;
 
         for var ClassDefinition in Module.Classes do
+        begin
           for var PropertyDefinition in ClassDefinition.Properties do
           begin
-            ParentModule := PropertyDefinition.PropertyType.ParentModule;
+            ParentModule := GetUnitDefinition(PropertyDefinition.PropertyType.ParentModule);
 
-            if ParentModule.IsUnitDefinition and (SYSTEM_UNIT_NAME <> ParentModule.Name) and (ParentModule <> UnitDefinition) then
+            if (SYSTEM_UNIT_NAME <> ParentModule.Name) and (ParentModule <> UnitDefinition) then
               UsesList.Add(ParentModule.Name);
 
             if NeedFieldNameAttribute(PropertyDefinition) then
               UsesList.Add('Blue.Print.Types');
           end;
+
+          CheckUses(ClassDefinition);
+        end;
       end;
 
     begin

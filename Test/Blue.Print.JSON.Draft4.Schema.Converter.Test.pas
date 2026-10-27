@@ -901,7 +901,7 @@ begin
 
   ImportDefinition;
 
-//  Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Properties[0].PropertyType.ClassType);
+  Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Properties[0].PropertyType.ClassType);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfIsAReferenceMustLoadThePropertyTypeWithAReferenceTypeDefinition;
@@ -1010,7 +1010,7 @@ begin
 
   ImportDefinition;
 
-//  Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Properties[0].PropertyType.ClassType);
+  Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Properties[0].PropertyType.ClassType);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAnyOfIsLoadedMustLoadAllPropertiesHasOptional;
@@ -1145,7 +1145,7 @@ begin
 
   ImportDefinition;
 
-//  Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Properties[0].PropertyType.ClassType);
+  Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Properties[0].PropertyType.ClassType);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheOneOfIsLoadedMustLoadAllPropertiesHasOptional;
