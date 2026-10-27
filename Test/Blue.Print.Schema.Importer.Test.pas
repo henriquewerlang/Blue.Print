@@ -77,7 +77,9 @@ type
     [Test]
     procedure TheKeyValueFromTypeMustBeTheNamespaceWithTheClassNameHasExpected;
     [Test]
-    procedure MustAppenTheClassInTheValueOsTheTypes;
+    procedure MustAppenTheClassInTheValueOfTheTypes;
+    [Test]
+    procedure WhenAddDuplicateTypeInTheTypesListMustRaiseAnError;
     [Test]
     procedure TheTryFindTypeMustReturnFalseIfDontFindTheType;
     [Test]
@@ -1007,7 +1009,7 @@ begin
     FConfiguration.Units[0]);
 end;
 
-procedure TSchemaImporterTest.MustAppenTheClassInTheValueOsTheTypes;
+procedure TSchemaImporterTest.MustAppenTheClassInTheValueOfTheTypes;
 begin
   var ParentModule := TTypeUnitDefinition.Create;
 
@@ -2216,6 +2218,25 @@ begin
         end;
     ''',
     FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenAddDuplicateTypeInTheTypesListMustRaiseAnError;
+begin
+  var ParentModule := TTypeUnitDefinition.Create;
+
+  var ClassDefinition := FImporter.CreateClassType(ParentModule, 'MainClass');
+
+  FImporter.AddNamespace('My Namespace', 'my');
+
+  FImporter.AddType('My Namespace', ClassDefinition);
+
+  Assert.WillRaise(
+    procedure
+    begin
+      FImporter.AddType('My Namespace', ClassDefinition);
+    end, ETypeDuplicateNameInTheNamespace);
+
+  ParentModule.Free;
 end;
 
 procedure TSchemaImporterTest.WhenADynamicPropertyHasAClassDefinitionHasInternalTypeMustDeclareTheDestroyProcedure;

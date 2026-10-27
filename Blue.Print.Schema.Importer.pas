@@ -98,6 +98,11 @@ type
     constructor Create(const TypeDefinition: TTypeDefinition);
   end;
 
+  ETypeDuplicateNameInTheNamespace = class(Exception)
+  public
+    constructor Create(const Namespace: String; const TypeDefinition: TTypeDefinition);
+  end;
+
   TBuildInType = (StringType, IntegerType, DoubleType, DateType, TimeType, DateTimeType, BooleanType, ArrayType, ValueType, DynamicPropertyType);
   TSchemaType = (Undefined, XSD, WSDL, JSONDraft4, OpenAPI20, OpenAPI30, OpenAPI31, OpenAPI32);
 
@@ -400,7 +405,8 @@ end;
 
 procedure TSchemaImporter.AddType(const Namespace: String; const TypeDefinition: TTypeDefinition);
 begin
-  Types.Add(FormatTypeNamespace(Namespace, TypeDefinition.Name), TypeDefinition);
+  if not Types.TryAdd(FormatTypeNamespace(Namespace, TypeDefinition.Name), TypeDefinition) then
+    raise ETypeDuplicateNameInTheNamespace.Create(Namespace, TypeDefinition);
 end;
 
 constructor TSchemaImporter.Create;
@@ -1889,6 +1895,13 @@ begin
   inherited;
 
   FOptional := True;
+end;
+
+{ ETypeDuplicateNameInTheNamespace }
+
+constructor ETypeDuplicateNameInTheNamespace.Create(const Namespace: String; const TypeDefinition: TTypeDefinition);
+begin
+  inherited CreateFmt('Duplicate type name "%s" in the namespace "%s"!', [Namespace, TypeDefinition.Name]);
 end;
 
 end.
