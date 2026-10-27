@@ -48,9 +48,9 @@ begin
     var TypeDefinition := CreateSchemaType(MainClass, TypeName, SchemaDefinition.Value);
 
     if not TypeDefinition.IsEnumeratorDefinition and not TypeDefinition.IsClassDefinition then
-      TypeDefinition := Schema.Importer.CreateAliasType(MainClass, TypeName, TypeDefinition);
+      TypeDefinition := Importer.CreateAliasType(MainClass, TypeName, TypeDefinition);
 
-    Schema.Importer.AddType(DefinitionsNamespace, TypeDefinition);
+    Importer.AddType(DefinitionsNamespace, TypeDefinition);
   end;
 end;
 
@@ -58,15 +58,15 @@ function TJSONDraft4SchemaConverter.CreateSchemaType(const ParentClassDefinition
 begin
   Result := Importer.BuildInTypes[TBuildInType.ValueType];
 
-  if JSONSchemaType.IsAllOfStored or JSONSchemaType.IsAnyOfStored or JSONSchemaType.IsOneOfStored then
-    Result := Importer.CreateClassType(ParentClassDefinition, EmptyStr)
-  else if JSONSchemaType.IsRefStored then
+  if JSONSchemaType.IsRefStored then
     if JSONSchemaType.ref = '#' then
       Result := Importer.CreateReferenceType(ParentClassDefinition, JSONDefinition.id, GetReferenceSchemaName(JSONSchemaType))
     else
       Result := Importer.CreateReferenceType(ParentClassDefinition, DefinitionsNamespace, GetReferenceSchemaName(JSONSchemaType))
   else if JSONSchemaType.IsEnumStored then
     Result := Importer.CreateEnumeratorType(ParentClassDefinition, TypeName)
+  else if JSONSchemaType.IsPropertiesStored then
+    Result := Importer.CreateClassType(ParentClassDefinition, TypeName)
   else if JSONSchemaType.IsTypeStored then
     case JSONSchemaType.&type.simpleTypes of
       JSONSchema.simpleTypes.array: Result := Importer.CreateArrayType(ParentClassDefinition, CreateSchemaType(ParentClassDefinition, EmptyStr, JSONSchemaType.items.JSONSchema));
@@ -76,7 +76,9 @@ begin
       JSONSchema.simpleTypes.number: Result := Importer.BuildInTypes[TBuildInType.DoubleType];
       JSONSchema.simpleTypes.object: Result := Importer.CreateClassType(ParentClassDefinition, TypeName);
       JSONSchema.simpleTypes.string: Result := Importer.BuildInTypes[TBuildInType.StringType];
-    end;
+    end
+  else if JSONSchemaType.IsAllOfStored or JSONSchemaType.IsAnyOfStored or JSONSchemaType.IsOneOfStored then
+    Result := Importer.CreateClassType(ParentClassDefinition, EmptyStr);
 
   LoadSchemaType(Result, JSONSchemaType);
 end;
@@ -202,21 +204,6 @@ begin
     LoadSchemaArray(JSONSchemaType.anyOf, 'AnyOf')
   else if JSONSchemaType.IsOneOfStored then
     LoadSchemaArray(JSONSchemaType.oneOf, 'OneOf')
-  else if JSONSchemaType.IsTypeStored then
-//    case JSONSchemaType.&type.simpleTypes of
-//      JSONSchema.simpleTypes.array: Result := Schema.Importer.CreateArrayType(ParentClassDefinition, LoadSchemaType(ParentClassDefinition, JSONSchemaType.items.JSONSchema));
-//      JSONSchema.simpleTypes.boolean: Result := Schema.Importer.BuildInTypes[TBuildInType.BooleanType];
-//      JSONSchema.simpleTypes.integer: Result := Schema.Importer.BuildInTypes[TBuildInType.IntegerType];
-//      JSONSchema.simpleTypes.null: Result := nil;
-//      JSONSchema.simpleTypes.number: Result := Schema.Importer.BuildInTypes[TBuildInType.DoubleType];
-//      JSONSchema.simpleTypes.object:
-//      begin
-//        Result := Schema.Importer.CreateClassType(ParentClassDefinition, EmptyStr);
-//
-//        DefineProperties(Result.AsClassDefinition, JSONSchemaType);
-//      end;
-//      JSONSchema.simpleTypes.string: Result := Schema.Importer.BuildInTypes[TBuildInType.StringType];
-//    end
   else if JSONSchemaType.IsEnumStored then
   begin
     var EnumerationDefinition := TypeDefinition.AsEnumeratorDefinition;
