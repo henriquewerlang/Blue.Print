@@ -1901,7 +1901,7 @@ end;
 
 constructor ETypeDuplicateNameInTheNamespace.Create(const Namespace: String; const TypeDefinition: TTypeDefinition);
 begin
-  inherited CreateFmt('Duplicate type name "%s" in the namespace "%s"!', [Namespace, TypeDefinition.Name]);
+  inherited CreateFmt('Duplicate type name "%s" in the namespace "%s"!', [TypeDefinition.Name, Namespace]);
 end;
 
 end.
