@@ -215,6 +215,8 @@ type
     procedure WhenTheSchemaHasOnlyOneOfInformationMustCreateTheTypeWithTheDefinitionNameHasExpected;
     [Test]
     procedure WhenTheSchemaHasOnlyAnyOfInformationMustCreateTheTypeWithTheDefinitionNameHasExpected;
+    [Test]
+    procedure WhenAPropertyHasAnArrayTypeSchemaAndTheArrayItemIsASchemaDefinitionMustCreateTheClassOfArrayTypeWithThePropertyNamePlusArrayTypeInTheName;
   end;
 
 implementation
@@ -780,6 +782,20 @@ begin
   ImportDefinition;
 
   Assert.IsTrue(FImporter.TryFindType(FDefinition.id + '/definitions', 'MyClass', TypeDefinition));
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenAPropertyHasAnArrayTypeSchemaAndTheArrayItemIsASchemaDefinitionMustCreateTheClassOfArrayTypeWithThePropertyNamePlusArrayTypeInTheName;
+begin
+  var ArrayType := JSONSchema.Create;
+  var ClassDefinition := CreateClassDefinition('MyClass');
+
+  AddProperty(ArrayType, 'MyArrayProp', JSONSchema.simpleTypes.integer);
+
+  AddPropertyWithTypeArray(ClassDefinition, 'MyClassProp', ArrayType);
+
+  ImportDefinition;
+
+  Assert.AreEqual('.MyClassPropTypeArray', GetMainClass.Classes[0].Properties[0].PropertyType.AsGenericDefinition.GenericType.Name);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenCreateAnAllOfClassMustMarkTheClassHasFlat;

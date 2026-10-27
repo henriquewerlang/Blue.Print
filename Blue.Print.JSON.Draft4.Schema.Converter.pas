@@ -69,7 +69,7 @@ begin
     Result := Importer.CreateClassType(ParentClassDefinition, TypeName)
   else if JSONSchemaType.IsTypeStored then
     case JSONSchemaType.&type.simpleTypes of
-      JSONSchema.simpleTypes.array: Result := Importer.CreateArrayType(ParentClassDefinition, CreateSchemaType(ParentClassDefinition, EmptyStr, JSONSchemaType.items.JSONSchema));
+      JSONSchema.simpleTypes.array: Result := Importer.CreateArrayType(ParentClassDefinition, CreateSchemaType(ParentClassDefinition, TypeName + 'Array', JSONSchemaType.items.JSONSchema));
       JSONSchema.simpleTypes.boolean: Result := Importer.BuildInTypes[TBuildInType.BooleanType];
       JSONSchema.simpleTypes.integer: Result := Importer.BuildInTypes[TBuildInType.IntegerType];
       JSONSchema.simpleTypes.null: Result := nil;
