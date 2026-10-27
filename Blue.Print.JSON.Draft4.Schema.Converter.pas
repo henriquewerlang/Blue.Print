@@ -78,7 +78,7 @@ begin
       JSONSchema.simpleTypes.string: Result := Importer.BuildInTypes[TBuildInType.StringType];
     end
   else if JSONSchemaType.IsAllOfStored or JSONSchemaType.IsAnyOfStored or JSONSchemaType.IsOneOfStored then
-    Result := Importer.CreateClassType(ParentClassDefinition, EmptyStr);
+    Result := Importer.CreateClassType(ParentClassDefinition, TypeName);
 
   LoadSchemaType(Result, JSONSchemaType);
 end;

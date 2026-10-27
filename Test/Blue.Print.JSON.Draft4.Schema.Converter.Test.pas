@@ -209,6 +209,12 @@ type
     procedure WhenADefinitionHasPropertiesAndAllOfValueMustAppendTheTypeInTypesListWithTheDefinitionName;
     [Test]
     procedure WhenTheSchemaTypeOnlyHavePropertiesInTheDefinitionMustCreateAClassDefinitionTypeHasExpected;
+    [Test]
+    procedure WhenTheSchemaHasOnlyAllOfInformationMustCreateTheTypeWithTheDefinitionNameHasExpected;
+    [Test]
+    procedure WhenTheSchemaHasOnlyOneOfInformationMustCreateTheTypeWithTheDefinitionNameHasExpected;
+    [Test]
+    procedure WhenTheSchemaHasOnlyAnyOfInformationMustCreateTheTypeWithTheDefinitionNameHasExpected;
   end;
 
 implementation
@@ -1309,6 +1315,48 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.ValueType], GetMainClass.Properties[0].PropertyType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaHasOnlyAllOfInformationMustCreateTheTypeWithTheDefinitionNameHasExpected;
+begin
+  var SchemaDefinition := FDefinition.definitions.AddAdditionalProperties('AllOfClass');
+  var TypeDefinition: TTypeDefinition;
+
+  SchemaDefinition.AddAllOf;
+
+  ImportDefinition;
+
+  Assert.IsTrue(FImporter.TryFindType(FDefinition.id + '/definitions', 'AllOfClass', TypeDefinition));
+
+  Assert.AreEqual(TTypeClassDefinition, TypeDefinition.ClassType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaHasOnlyAnyOfInformationMustCreateTheTypeWithTheDefinitionNameHasExpected;
+begin
+  var SchemaDefinition := FDefinition.definitions.AddAdditionalProperties('AnyOfClass');
+  var TypeDefinition: TTypeDefinition;
+
+  SchemaDefinition.AddAnyOf;
+
+  ImportDefinition;
+
+  Assert.IsTrue(FImporter.TryFindType(FDefinition.id + '/definitions', 'AnyOfClass', TypeDefinition));
+
+  Assert.AreEqual(TTypeClassDefinition, TypeDefinition.ClassType);
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaHasOnlyOneOfInformationMustCreateTheTypeWithTheDefinitionNameHasExpected;
+begin
+  var SchemaDefinition := FDefinition.definitions.AddAdditionalProperties('OneOfClass');
+  var TypeDefinition: TTypeDefinition;
+
+  SchemaDefinition.AddOneOf;
+
+  ImportDefinition;
+
+  Assert.IsTrue(FImporter.TryFindType(FDefinition.id + '/definitions', 'OneOfClass', TypeDefinition));
+
+  Assert.AreEqual(TTypeClassDefinition, TypeDefinition.ClassType);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaHasPropertiesAndAllOfDefinitionMustLoadTheProperties;
