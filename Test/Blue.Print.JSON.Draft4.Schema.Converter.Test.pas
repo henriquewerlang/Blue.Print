@@ -1055,7 +1055,7 @@ begin
 
   ImportDefinition;
 
-  Assert.AreEqual('TAdditionalPropertiesType', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].PropertyType.AsGenericDefinition.GenericType.Name);
+  Assert.AreEqual('.additionalPropertiesType', GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].PropertyType.AsGenericDefinition.GenericType.Name);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheDynamicPropertyTypeIsntAClassDefinitionCantChangeTheNameType;

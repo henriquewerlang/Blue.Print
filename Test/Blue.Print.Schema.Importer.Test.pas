@@ -1718,22 +1718,23 @@ end;
 
 procedure TSchemaImporterTest.TheFunctionFindTypeWithPrefixMustReturnTheTypeIfItIsFound;
 begin
-  var TypeDefinition := TTypeDefinition.Create;
-  TypeDefinition.Name := 'MyType';
+  var ParentModule := TTypeUnitDefinition.Create;
+  var TypeDefinition := FImporter.CreateAliasType(ParentModule, 'MyType', nil);
 
   FImporter.Types.Add('my:MyType', TypeDefinition);
 
   Assert.AreEqual(TypeDefinition, FImporter.FindTypeWithPrefix('my:MyType'));
 
-  TypeDefinition.Free;
+  ParentModule.Free;
 end;
 
 procedure TSchemaImporterTest.TheFunctionTryFindWithPrefixMustLoadTheTypeDefinitonWithTheTypeFound;
 begin
-  var TypeDefinition := TTypeDefinition.Create;
-  TypeDefinition.Name := 'MyType';
+  var ParentModule := TTypeUnitDefinition.Create;
+  var TypeAlias := FImporter.CreateAliasType(ParentModule, 'MyType', nil);
+  var TypeDefinition: TTypeDefinition;
 
-  FImporter.Types.Add('my:MyType', TypeDefinition);
+  FImporter.Types.Add('my:MyType', TypeAlias);
 
   Assert.IsTrue(FImporter.TryFindTypeWithPrefix('my:MyType', TypeDefinition));
 
@@ -1741,7 +1742,7 @@ begin
 
   Assert.AreEqual('MyType', TypeDefinition.Name);
 
-  TypeDefinition.Free;
+  ParentModule.Free;
 end;
 
 procedure TSchemaImporterTest.TheFunctionTryFindWithPrefixMustReturnFalseIfNotFountTheTypeName;
@@ -1753,14 +1754,16 @@ end;
 
 procedure TSchemaImporterTest.TheFunctionTryFindWithPrefixMustReturnTrueIfTheTypeIsFound;
 begin
-  var TypeDefinition := TTypeDefinition.Create;
-  TypeDefinition.Name := 'MyType';
+  var ParentModule := TTypeUnitDefinition.Create;
+  var TypeDefinition: TTypeDefinition;
+
+  FImporter.CreateAliasType(ParentModule, 'MyType', nil);
 
   FImporter.Types.Add('my:MyType', TypeDefinition);
 
   Assert.IsTrue(FImporter.TryFindTypeWithPrefix('my:MyType', TypeDefinition));
 
-  TypeDefinition.Free;
+  ParentModule.Free;
 end;
 
 procedure TSchemaImporterTest.TheKeyValueFromTypeMustBeTheNamespaceWithTheClassNameHasExpected;
@@ -1883,16 +1886,11 @@ end;
 
 procedure TSchemaImporterTest.TheSelfUnitCantBeLoadedInTheUsesList;
 begin
-  var SimpleType := TTypeDefinition.Create;
-  SimpleType.Name := 'SimpleType';
-
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
       if MainClass.ParentModule.Name = 'MyUnit' then
-        SimpleType.ParentModule := MainClass.ParentModule;
-
-      MainClass.AddProperty('MyProperty', SimpleType);
+        MainClass.AddProperty('MyProperty', FImporter.CreateEnumeratorType(MainClass, 'SimpleType'));
     end;
 
   FImporter.Import(FConfiguration);
@@ -1904,15 +1902,18 @@ begin
     interface
 
     {$M+}
+    {$SCOPEDENUMS ON}
 
     type
       MainModule = class;
 
       MainModule = class
+      public type
+        SimpleType = ();
       private
-        FMyProperty: MyUnit.SimpleType;
+        FMyProperty: MyUnit.MainModule.SimpleType;
       published
-        property MyProperty: MyUnit.SimpleType read FMyProperty write FMyProperty;
+        property MyProperty: MyUnit.MainModule.SimpleType read FMyProperty write FMyProperty;
       end;
 
     implementation
@@ -1921,8 +1922,6 @@ begin
 
     ''',
     FConfiguration.Units[0]);
-
-  SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.TheSystemTypesMustBeLoadedInTheSystemPrefixName;
@@ -1971,7 +1970,6 @@ end;
 procedure TSchemaImporterTest.TheUnitNameCantBeAppendedToTheTypeNameInTheTypesList;
 begin
   var ParentModule := TTypeUnitDefinition.Create;
-  ParentModule.Name := 'MyUnit';
 
   var ClassDefinition := FImporter.CreateClassType(ParentModule, 'MainClass');
 
@@ -3211,17 +3209,12 @@ end;
 
 procedure TSchemaImporterTest.WhenTheArrayTypeIsAnObjectMustCreateTheAddFunctionForTheType;
 begin
-  var ParentModule := TTypeUnitDefinition.Create;
-  ParentModule.Name := 'System';
-  var SimpleType := FImporter.CreateClassType(ParentModule, 'SimpleType');
-  var TheArrray := FImporter.CreateArrayType(ParentModule, SimpleType);
-
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', TheArrray);
+      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass, MainClass));
 
-      MainClass.AddProperty('MyProperty2', TheArrray);
+      MainClass.AddProperty('MyProperty2', FImporter.CreateArrayType(MainClass, MainClass));
     end;
 
   FImporter.Import(FConfiguration);
@@ -3239,16 +3232,16 @@ begin
 
       MainModule = class
       private
-        FMyProperty: System.TArray<System.SimpleType>;
-        FMyProperty2: System.TArray<System.SimpleType>;
+        FMyProperty: System.TArray<MyUnit.MainModule>;
+        FMyProperty2: System.TArray<MyUnit.MainModule>;
       public
         destructor Destroy; override;
 
-        function AddMyProperty: System.SimpleType;
-        function AddMyProperty2: System.SimpleType;
+        function AddMyProperty: MyUnit.MainModule;
+        function AddMyProperty2: MyUnit.MainModule;
       published
-        property MyProperty: System.TArray<System.SimpleType> read FMyProperty write FMyProperty;
-        property MyProperty2: System.TArray<System.SimpleType> read FMyProperty2 write FMyProperty2;
+        property MyProperty: System.TArray<MyUnit.MainModule> read FMyProperty write FMyProperty;
+        property MyProperty2: System.TArray<MyUnit.MainModule> read FMyProperty2 write FMyProperty2;
       end;
 
     implementation
@@ -3266,16 +3259,16 @@ begin
       inherited;
     end;
 
-    function MainModule.AddMyProperty: System.SimpleType;
+    function MainModule.AddMyProperty: MyUnit.MainModule;
     begin
-      Result := System.SimpleType.Create;
+      Result := MyUnit.MainModule.Create;
 
       MyProperty := MyProperty + [Result];
     end;
 
-    function MainModule.AddMyProperty2: System.SimpleType;
+    function MainModule.AddMyProperty2: MyUnit.MainModule;
     begin
-      Result := System.SimpleType.Create;
+      Result := MyUnit.MainModule.Create;
 
       MyProperty2 := MyProperty2 + [Result];
     end;
@@ -3284,8 +3277,6 @@ begin
 
     ''',
     FConfiguration.Units[0]);
-
-  ParentModule.Free;
 end;
 
 procedure TSchemaImporterTest.WhenTheArrayTypeIsAReferenceMustLoadTheReferenceAndLoadTheArrayHasExpected;
@@ -3499,14 +3490,10 @@ end;
 
 procedure TSchemaImporterTest.WhenTheClassTypeIsAClassDefinitionMustDeclareTheGetFunctionAndCreateTheClassIfTheValueIsntLoaded;
 begin
-  var ParentModule := TTypeUnitDefinition.Create;
-  ParentModule.Name := 'System';
-  var SimpleType := FImporter.CreateClassType(ParentModule, 'SimpleType');
-
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', SimpleType);
+      MainClass.AddProperty('MyProperty', MainClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -3524,12 +3511,12 @@ begin
 
       MainModule = class
       private
-        FMyProperty: System.SimpleType;
-        function GetMyProperty: System.SimpleType;
+        FMyProperty: MyUnit.MainModule;
+        function GetMyProperty: MyUnit.MainModule;
       public
         destructor Destroy; override;
       published
-        property MyProperty: System.SimpleType read GetMyProperty write FMyProperty;
+        property MyProperty: MyUnit.MainModule read GetMyProperty write FMyProperty;
       end;
 
     implementation
@@ -3543,10 +3530,10 @@ begin
       inherited;
     end;
 
-    function MainModule.GetMyProperty: System.SimpleType;
+    function MainModule.GetMyProperty: MyUnit.MainModule;
     begin
       if not Assigned(FMyProperty) then
-        MyProperty := System.SimpleType.Create;
+        MyProperty := MyUnit.MainModule.Create;
 
       Result := FMyProperty;
     end;
@@ -3555,8 +3542,6 @@ begin
 
     ''',
     FConfiguration.Units[0]);
-
-  ParentModule.Free;
 end;
 
 procedure TSchemaImporterTest.WhenTheConverterDoesntExistsMustRaiseAnError;
@@ -4123,18 +4108,12 @@ end;
 
 procedure TSchemaImporterTest.WhenThePropertyIsOptionalMustCreateTheFieldForStoreTheIsStoredInfoAndCreateTheSetFunctionForTheProperty;
 begin
-  var ParentModule := TTypeUnitDefinition.Create;
-  ParentModule.Name := 'System';
-  var SimpleType := TTypeDefinition.Create;
-  SimpleType.Name := 'SimpleType';
-  SimpleType.ParentModule := ParentModule;
-
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', SimpleType).Optional := True;
+      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]).Optional := True;
 
-      MainClass.AddProperty('MyProperty2', SimpleType).Optional := True;
+      MainClass.AddProperty('MyProperty2', FImporter.BuildInTypes[TBuildInType.IntegerType]).Optional := True;
     end;
 
   FImporter.Import(FConfiguration);
@@ -4152,31 +4131,31 @@ begin
 
       MainModule = class
       private
-        FMyProperty: System.SimpleType;
+        FMyProperty: System.Integer;
         FMyPropertyStored: Boolean;
-        FMyProperty2: System.SimpleType;
+        FMyProperty2: System.Integer;
         FMyProperty2Stored: Boolean;
-        procedure SetMyProperty(const Value: System.SimpleType);
-        procedure SetMyProperty2(const Value: System.SimpleType);
+        procedure SetMyProperty(const Value: System.Integer);
+        procedure SetMyProperty2(const Value: System.Integer);
       public
         property IsMyPropertyStored: Boolean read FMyPropertyStored;
         property IsMyProperty2Stored: Boolean read FMyProperty2Stored;
       published
-        property MyProperty: System.SimpleType read FMyProperty write SetMyProperty stored FMyPropertyStored;
-        property MyProperty2: System.SimpleType read FMyProperty2 write SetMyProperty2 stored FMyProperty2Stored;
+        property MyProperty: System.Integer read FMyProperty write SetMyProperty stored FMyPropertyStored;
+        property MyProperty2: System.Integer read FMyProperty2 write SetMyProperty2 stored FMyProperty2Stored;
       end;
 
     implementation
 
     { MainModule }
 
-    procedure MainModule.SetMyProperty(const Value: System.SimpleType);
+    procedure MainModule.SetMyProperty(const Value: System.Integer);
     begin
       FMyProperty := Value;
       FMyPropertyStored := True;
     end;
 
-    procedure MainModule.SetMyProperty2(const Value: System.SimpleType);
+    procedure MainModule.SetMyProperty2(const Value: System.Integer);
     begin
       FMyProperty2 := Value;
       FMyProperty2Stored := True;
@@ -4186,10 +4165,6 @@ begin
 
     ''',
     FConfiguration.Units[0]);
-
-  ParentModule.Free;
-
-  SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyNameHasASpecialNameMustAppendTheFieldNameAttribute;
@@ -4233,16 +4208,12 @@ end;
 
 procedure TSchemaImporterTest.WhenThePropertyNeedTheGetFunctionMustDeclareAllFunctionsHasExpected;
 begin
-  var ParentModule := TTypeUnitDefinition.Create;
-  ParentModule.Name := 'System';
-  var SimpleType := FImporter.CreateClassType(ParentModule, 'SimpleType');
-
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', SimpleType);
+      MainClass.AddProperty('MyProperty', MainClass);
 
-      MainClass.AddProperty('MyProperty2', SimpleType);
+      MainClass.AddProperty('MyProperty2', MainClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -4260,15 +4231,15 @@ begin
 
       MainModule = class
       private
-        FMyProperty: System.SimpleType;
-        FMyProperty2: System.SimpleType;
-        function GetMyProperty: System.SimpleType;
-        function GetMyProperty2: System.SimpleType;
+        FMyProperty: MyUnit.MainModule;
+        FMyProperty2: MyUnit.MainModule;
+        function GetMyProperty: MyUnit.MainModule;
+        function GetMyProperty2: MyUnit.MainModule;
       public
         destructor Destroy; override;
       published
-        property MyProperty: System.SimpleType read GetMyProperty write FMyProperty;
-        property MyProperty2: System.SimpleType read GetMyProperty2 write FMyProperty2;
+        property MyProperty: MyUnit.MainModule read GetMyProperty write FMyProperty;
+        property MyProperty2: MyUnit.MainModule read GetMyProperty2 write FMyProperty2;
       end;
 
     implementation
@@ -4284,18 +4255,18 @@ begin
       inherited;
     end;
 
-    function MainModule.GetMyProperty: System.SimpleType;
+    function MainModule.GetMyProperty: MyUnit.MainModule;
     begin
       if not Assigned(FMyProperty) then
-        MyProperty := System.SimpleType.Create;
+        MyProperty := MyUnit.MainModule.Create;
 
       Result := FMyProperty;
     end;
 
-    function MainModule.GetMyProperty2: System.SimpleType;
+    function MainModule.GetMyProperty2: MyUnit.MainModule;
     begin
       if not Assigned(FMyProperty2) then
-        MyProperty2 := System.SimpleType.Create;
+        MyProperty2 := MyUnit.MainModule.Create;
 
       Result := FMyProperty2;
     end;
@@ -4304,8 +4275,6 @@ begin
 
     ''',
     FConfiguration.Units[0]);
-
-  ParentModule.Free;
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyTypeIsAClassDefinitionMustDeclareTheDestroyProcedureInThePublicSection;
@@ -4359,17 +4328,10 @@ end;
 
 procedure TSchemaImporterTest.WhenThePropertyTypeIsAnArrayMustDeclareTheTypeWithTheTArraySystemType;
 begin
-  var ParentModule := TTypeUnitDefinition.Create;
-  ParentModule.Name := 'System';
-  var SimpleType := TTypeDefinition.Create;
-  SimpleType.Name := 'SimpleType';
-  SimpleType.ParentModule := ParentModule;
-  var TheArrray := FImporter.CreateArrayType(ParentModule, SimpleType);
-
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', TheArrray);
+      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass, MainClass));
     end;
 
   FImporter.Import(FConfiguration);
@@ -4377,16 +4339,12 @@ begin
   LinesCompareUnitDeclaration(
     '''
       published
-        property MyProperty: System.TArray<System.SimpleType> read FMyProperty write FMyProperty;
+        property MyProperty: System.TArray<MyUnit.MainModule> read FMyProperty write FMyProperty;
       end;
 
     implementation
     ''',
     FConfiguration.Units[0]);
-
-  ParentModule.Free;
-
-  SimpleType.Free;
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyTypeIsAReferenceToAClassDefinitionTypeMustLoadTheGetFunctionForTheProperty;
@@ -4634,14 +4592,10 @@ end;
 
 procedure TSchemaImporterTest.WhenTheTypeIsAClassDefinitionTypeMustCreateTheGetFunctionAndUseThePropertyToLoadTheValueToFillTheStoredFieldIfIsOptionalTheProperty;
 begin
-  var ParentModule := TTypeUnitDefinition.Create;
-  ParentModule.Name := 'System';
-  var SimpleType := FImporter.CreateClassType(ParentModule, 'SimpleType');
-
   FConverter.WhenExecuteConvert :=
     procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', SimpleType);
+      MainClass.AddProperty('MyProperty', MainClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -4659,12 +4613,12 @@ begin
 
       MainModule = class
       private
-        FMyProperty: System.SimpleType;
-        function GetMyProperty: System.SimpleType;
+        FMyProperty: MyUnit.MainModule;
+        function GetMyProperty: MyUnit.MainModule;
       public
         destructor Destroy; override;
       published
-        property MyProperty: System.SimpleType read GetMyProperty write FMyProperty;
+        property MyProperty: MyUnit.MainModule read GetMyProperty write FMyProperty;
       end;
 
     implementation
@@ -4678,10 +4632,10 @@ begin
       inherited;
     end;
 
-    function MainModule.GetMyProperty: System.SimpleType;
+    function MainModule.GetMyProperty: MyUnit.MainModule;
     begin
       if not Assigned(FMyProperty) then
-        MyProperty := System.SimpleType.Create;
+        MyProperty := MyUnit.MainModule.Create;
 
       Result := FMyProperty;
     end;
@@ -4690,8 +4644,6 @@ begin
 
     ''',
     FConfiguration.Units[0]);
-
-  ParentModule.Free;
 end;
 
 procedure TSchemaImporterTest.WhenTheTypeIsAnAliasToAnArrayTypeMustCreateTheAddFunctionWithTheInternalAliasType;

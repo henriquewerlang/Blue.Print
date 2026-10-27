@@ -105,7 +105,7 @@ type
   private
     FName: String;
   public
-    property Name: String read FName write FName;
+    property Name: String read FName;
   end;
 
   TTypeDefinition = class(TTypeCommonDefinition)
@@ -124,6 +124,7 @@ type
   public
     function AsAliasDefinition: TTypeAliasDefinition;
     function AsClassDefinition: TTypeClassDefinition;
+    function AsEnumeratorDefinition: TTypeEnumerationDefinition;
     function AsGenericDefinition: TTypeGenericDefinition;
     function AsReferenceDefinition: TTypeReferenceDefinition;
 
@@ -1660,6 +1661,11 @@ begin
   Result := Self as TTypeClassDefinition;
 end;
 
+function TTypeDefinition.AsEnumeratorDefinition: TTypeEnumerationDefinition;
+begin
+  Result := Self as TTypeEnumerationDefinition;
+end;
+
 function TTypeDefinition.AsGenericDefinition: TTypeGenericDefinition;
 begin
   Result := Self as TTypeGenericDefinition;
@@ -1779,7 +1785,7 @@ end;
 function TTypeClassDefinition.AddProperty(const Name: String; const PropertyType: TTypeDefinition): TTypePropertyDefinition;
 begin
   Result := TTypePropertyDefinition.Create;
-  Result.Name := Name;
+  Result.FName := Name;
   Result.PropertyType := PropertyType;
 
   FProperties := FProperties + [Result];
@@ -1819,7 +1825,7 @@ end;
 
 constructor EPropertyWithoutType.Create(const PropertyDefinition: TTypePropertyDefinition);
 begin
-  inherited CreateFmt('The property "%s" in the class "%s" hasn''t the type loaded!', [PropertyDefinition.Name, '']);
+  inherited CreateFmt('The property "%s" hasn''t the type loaded!', [PropertyDefinition.Name]);
 end;
 
 { TTypePropertyDefinition }
