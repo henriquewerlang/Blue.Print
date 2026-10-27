@@ -334,6 +334,36 @@ type
     procedure WhenThePropertyTypeIsAReferenceToAClassDefinitionTypeMustLoadTheGetFunctionForTheProperty;
     [Test]
     procedure WhenThePropertyHasThePatternPropertyValueLoadedMustCreateThePatternPropertyAttributeInTheClass;
+    [Test]
+    procedure WhenThePropertyTypeIsAClassDefinitionMustDeclareTheDestroyProcedureInThePublicSection;
+    [Test]
+    procedure WhenThePropertyTypeIsAClassDefinitionTypeMustLoadTheDestructorToDestroyTheVariableReference;
+    [Test]
+    procedure AllPropertiesWithAClassDefinitionTypeMustCreateTheFreeImplementationInTheDestroyProcedure;
+    [Test]
+    procedure OnlyPropertiesWithAClassDefinitionMustHaveTheFreeImplementation;
+    [Test]
+    procedure WhenAnArrayHasAClassDefinitionWithInternalTypeMustDeclareTheDestroyProcedure;
+    [Test]
+    procedure WhenAnArrayHasAClassDefinitionHasInternalTypeMustDestroyTheArrayItemsInTheDestructorImplementation;
+    [Test]
+    procedure AllArrayPropertiesWithAClassDefinitionTypeMustDestroyTheItemsInTheDestroyImplementation;
+    [Test]
+    procedure OnlyArrayWithAClassDefinitionMustDeclareTheDestroyProcedureInPublicSection;
+    [Test]
+    procedure WhenDontHaveAnyArrayPropertyWithAClassDefinitionCantCreateTheDestroyProcedureImplementation;
+    [Test]
+    procedure WhenADynamicPropertyHasAClassDefinitionHasInternalTypeMustDeclareTheDestroyProcedure;
+    [Test]
+    procedure WhenADynamicPropertyHasAClassDefinitionHasInternalTypeMustDestroyItemValueInTheDestructorImplementation;
+    [Test]
+    procedure AllDynamicPropertiesWithAClassDefinitionTypeMustDestroyTheItemsInTheDestroyImplementation;
+    [Test]
+    procedure OnlyDynamicPropertiesWithAClassDefinitionMustCreateTheDestroyItemsSection;
+    [Test]
+    procedure OnlyDynamicPropertyWithAClassDefinitionMustDeclareTheDestroyProcedureInPublicSection;
+    [Test]
+    procedure WhenDontHaveAnyDynamicPropertyWithAClassDefinitionCantCreateTheDestroyProcedureImplementation;
   end;
 
   [TestFixture]
@@ -425,6 +455,112 @@ begin
   Result.Name := PropertyName;
   Result.PropertyType := PropertyType;
   Result.TypeName := TypeName;
+end;
+
+procedure TSchemaImporterTest.AllArrayPropertiesWithAClassDefinitionTypeMustDestroyTheItemsInTheDestroyImplementation;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass, MainClass));
+
+      MainClass.AddProperty('MyProperty2', FImporter.CreateArrayType(MainClass, MainClass));
+
+      MainClass.AddProperty('MyProperty3', FImporter.CreateArrayType(MainClass, MainClass));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    implementation
+
+    { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      for var Item in FMyProperty do
+        Item.Free;
+
+      for var Item in FMyProperty2 do
+        Item.Free;
+
+      for var Item in FMyProperty3 do
+        Item.Free;
+
+      inherited;
+    end;
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.AllDynamicPropertiesWithAClassDefinitionTypeMustDestroyTheItemsInTheDestroyImplementation;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(MainClass, MainClass));
+
+      MainClass.AddProperty('MyProperty2', FImporter.CreateDynamicPropertyType(MainClass, MainClass));
+
+      MainClass.AddProperty('MyProperty3', FImporter.CreateDynamicPropertyType(MainClass, MainClass));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    implementation
+
+    { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      for var Item in FMyProperty do
+        Item.Value.Free;
+
+      for var Item in FMyProperty2 do
+        Item.Value.Free;
+
+      for var Item in FMyProperty3 do
+        Item.Value.Free;
+
+      inherited;
+    end;
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.AllPropertiesWithAClassDefinitionTypeMustCreateTheFreeImplementationInTheDestroyProcedure;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', MainClass);
+      MainClass.AddProperty('MyProperty2', MainClass);
+      MainClass.AddProperty('MyProperty3', MainClass);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      FMyProperty.Free;
+
+      FMyProperty2.Free;
+
+      FMyProperty3.Free;
+
+      inherited;
+    end;
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.BeforeConvertingMustCallTheLoadSchemaFunctionFromTheConverter;
@@ -1270,6 +1406,112 @@ begin
     FConfiguration.Units[0]);
 end;
 
+procedure TSchemaImporterTest.OnlyArrayWithAClassDefinitionMustDeclareTheDestroyProcedureInPublicSection;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProperty: System.TArray<System.Integer>;
+      public
+        procedure AddMyProperty(const Value: System.Integer);
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.OnlyDynamicPropertiesWithAClassDefinitionMustCreateTheDestroyItemsSection;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+
+      MainClass.AddProperty('MyProperty2', FImporter.CreateDynamicPropertyType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+
+      MainClass.AddProperty('MyProperty3', FImporter.CreateDynamicPropertyType(MainClass, MainClass));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    implementation
+
+    { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      for var Item in FMyProperty3 do
+        Item.Value.Free;
+
+      inherited;
+    end;
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.OnlyDynamicPropertyWithAClassDefinitionMustDeclareTheDestroyProcedureInPublicSection;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProperty: Blue.Print.Types.TDynamicProperty<System.Integer>;
+      public
+        procedure AddMyProperty(const Name: String; const Value: System.Integer);
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.OnlyPropertiesWithAClassDefinitionMustHaveTheFreeImplementation;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      MainClass.AddProperty('MyProperty2', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      MainClass.AddProperty('MyProperty3', MainClass);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      FMyProperty3.Free;
+
+      inherited;
+    end;
+    ''',
+    FConfiguration.Units[0]);
+end;
+
 procedure TSchemaImporterTest.Setup;
 
   function CreateUnit(const Name: String; const SchemaFiles: TArray<TSchemaFileConfiguration>): TUnitConfiguration;
@@ -1844,6 +2086,8 @@ begin
             private
               FMyProp: MyUnit.MainModule;
               function GetMyProp: MyUnit.MainModule;
+            public
+              destructor Destroy; override;
             published
               property MyProp: MyUnit.MainModule read GetMyProp write FMyProp;
             end;
@@ -1854,6 +2098,13 @@ begin
     implementation
 
     { MainModule.TMyClass.TMyClass2.TMyClass3 }
+
+    destructor MainModule.TMyClass.TMyClass2.TMyClass3.Destroy;
+    begin
+      FMyProp.Free;
+
+      inherited;
+    end;
 
     function MainModule.TMyClass.TMyClass2.TMyClass3.GetMyProp: MyUnit.MainModule;
     begin
@@ -1965,6 +2216,112 @@ begin
 
         MyClass2 = class
         end;
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenADynamicPropertyHasAClassDefinitionHasInternalTypeMustDeclareTheDestroyProcedure;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(MainClass,MainClass));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProperty: Blue.Print.Types.TDynamicProperty<MyUnit.MainModule>;
+      public
+        destructor Destroy; override;
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenADynamicPropertyHasAClassDefinitionHasInternalTypeMustDestroyItemValueInTheDestructorImplementation;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(MainClass, MainClass));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    implementation
+
+    { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      for var Item in FMyProperty do
+        Item.Value.Free;
+
+      inherited;
+    end;
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenAnArrayHasAClassDefinitionHasInternalTypeMustDestroyTheArrayItemsInTheDestructorImplementation;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass, MainClass));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    implementation
+
+    { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      for var Item in FMyProperty do
+        Item.Free;
+
+      inherited;
+    end;
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenAnArrayHasAClassDefinitionWithInternalTypeMustDeclareTheDestroyProcedure;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass,MainClass));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProperty: System.TArray<MyUnit.MainModule>;
+      public
+        destructor Destroy; override;
+
     ''',
     FConfiguration.Units[0]);
 end;
@@ -2288,6 +2645,8 @@ begin
             private
               FMyProp: MyUnit.MainModule;
               function GetMyProp: MyUnit.MainModule;
+            public
+              destructor Destroy; override;
             published
               property MyProp: MyUnit.MainModule read GetMyProp write FMyProp;
             end;
@@ -2524,6 +2883,8 @@ begin
       private
         FMyProperty: System.TArray<MyUnit.MainModule>;
       public
+        destructor Destroy; override;
+
         function AddMyProperty: MyUnit.MainModule;
       published
         property myProperty: System.TArray<MyUnit.MainModule> read FMyProperty write FMyProperty;
@@ -2532,6 +2893,14 @@ begin
     implementation
 
     { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      for var Item in FMyProperty do
+        Item.Free;
+
+      inherited;
+    end;
 
     function MainModule.AddMyProperty: MyUnit.MainModule;
     begin
@@ -2612,6 +2981,8 @@ begin
       private
         FMyProperty: MyUnit.MainModule.MyClass;
         function GetMyProperty: MyUnit.MainModule.MyClass;
+      public
+        destructor Destroy; override;
       published
         property myProperty: MyUnit.MainModule.MyClass read GetMyProperty write FMyProperty;
       end;
@@ -2619,6 +2990,13 @@ begin
     implementation
 
     { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      FMyProperty.Free;
+
+      inherited;
+    end;
 
     function MainModule.GetMyProperty: MyUnit.MainModule.MyClass;
     begin
@@ -2678,6 +3056,50 @@ begin
 
     end.
 
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenDontHaveAnyArrayPropertyWithAClassDefinitionCantCreateTheDestroyProcedureImplementation;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    implementation
+
+    { MainModule }
+
+    procedure MainModule.AddMyProperty(const Value: System.Integer);
+    begin
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenDontHaveAnyDynamicPropertyWithAClassDefinitionCantCreateTheDestroyProcedureImplementation;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    implementation
+
+    { MainModule }
+
+    procedure MainModule.AddMyProperty(const Name: String; const Value: System.Integer);
+    begin
     ''',
     FConfiguration.Units[0]);
 end;
@@ -2820,6 +3242,8 @@ begin
         FMyProperty: System.TArray<System.SimpleType>;
         FMyProperty2: System.TArray<System.SimpleType>;
       public
+        destructor Destroy; override;
+
         function AddMyProperty: System.SimpleType;
         function AddMyProperty2: System.SimpleType;
       published
@@ -2830,6 +3254,17 @@ begin
     implementation
 
     { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      for var Item in FMyProperty do
+        Item.Free;
+
+      for var Item in FMyProperty2 do
+        Item.Free;
+
+      inherited;
+    end;
 
     function MainModule.AddMyProperty: System.SimpleType;
     begin
@@ -2878,6 +3313,8 @@ begin
       private
         FMyProperty: System.TArray<MyUnit.MainModule>;
       public
+        destructor Destroy; override;
+
         function AddMyProperty: MyUnit.MainModule;
       published
         property MyProperty: System.TArray<MyUnit.MainModule> read FMyProperty write FMyProperty;
@@ -2886,6 +3323,14 @@ begin
     implementation
 
     { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      for var Item in FMyProperty do
+        Item.Free;
+
+      inherited;
+    end;
 
     function MainModule.AddMyProperty: MyUnit.MainModule;
     begin
@@ -3066,7 +3511,7 @@ begin
 
   FImporter.Import(FConfiguration);
 
-  CompareUnitDeclaration(
+  LinesCompareUnitDeclaration(
     '''
     unit MyUnit;
 
@@ -3081,6 +3526,8 @@ begin
       private
         FMyProperty: System.SimpleType;
         function GetMyProperty: System.SimpleType;
+      public
+        destructor Destroy; override;
       published
         property MyProperty: System.SimpleType read GetMyProperty write FMyProperty;
       end;
@@ -3088,6 +3535,13 @@ begin
     implementation
 
     { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      FMyProperty.Free;
+
+      inherited;
+    end;
 
     function MainModule.GetMyProperty: System.SimpleType;
     begin
@@ -3368,6 +3822,8 @@ begin
             private
               FMyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3;
               function GetMyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3;
+            public
+              destructor Destroy; override;
             published
               property MyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3 read GetMyProp write FMyProp;
             end;
@@ -3378,6 +3834,13 @@ begin
     implementation
 
     { MainModule.TMyClass.TMySpecialClassName.TMyClass3 }
+
+    destructor MainModule.TMyClass.TMySpecialClassName.TMyClass3.Destroy;
+    begin
+      FMyProp.Free;
+
+      inherited;
+    end;
 
     function MainModule.TMyClass.TMySpecialClassName.TMyClass3.GetMyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3;
     begin
@@ -3801,6 +4264,8 @@ begin
         FMyProperty2: System.SimpleType;
         function GetMyProperty: System.SimpleType;
         function GetMyProperty2: System.SimpleType;
+      public
+        destructor Destroy; override;
       published
         property MyProperty: System.SimpleType read GetMyProperty write FMyProperty;
         property MyProperty2: System.SimpleType read GetMyProperty2 write FMyProperty2;
@@ -3809,6 +4274,15 @@ begin
     implementation
 
     { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      FMyProperty.Free;
+
+      FMyProperty2.Free;
+
+      inherited;
+    end;
 
     function MainModule.GetMyProperty: System.SimpleType;
     begin
@@ -3832,6 +4306,55 @@ begin
     FConfiguration.Units[0]);
 
   ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.WhenThePropertyTypeIsAClassDefinitionMustDeclareTheDestroyProcedureInThePublicSection;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', MainClass);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProperty: MyUnit.MainModule;
+        function GetMyProperty: MyUnit.MainModule;
+      public
+        destructor Destroy; override;
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenThePropertyTypeIsAClassDefinitionTypeMustLoadTheDestructorToDestroyTheVariableReference;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      MainClass.AddProperty('MyProperty', MainClass);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      FMyProperty.Free;
+
+      inherited;
+    end;
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyTypeIsAnArrayMustDeclareTheTypeWithTheTArraySystemType;
@@ -3891,6 +4414,8 @@ begin
       private
         FMyProperty: MyUnit.MainModule;
         function GetMyProperty: MyUnit.MainModule;
+      public
+        destructor Destroy; override;
       published
         property MyProperty: MyUnit.MainModule read GetMyProperty write FMyProperty;
       end;
@@ -3898,6 +4423,13 @@ begin
     implementation
 
     { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      FMyProperty.Free;
+
+      inherited;
+    end;
 
     function MainModule.GetMyProperty: MyUnit.MainModule;
     begin
@@ -3945,6 +4477,8 @@ begin
       private
         FMyProperty: MyUnit.MainModule.MyArray;
       public
+        destructor Destroy; override;
+
         function AddMyProperty: MyUnit.MainModule;
       published
         property MyProperty: MyUnit.MainModule.MyArray read FMyProperty write FMyProperty;
@@ -3953,6 +4487,14 @@ begin
     implementation
 
     { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      for var Item in FMyProperty do
+        Item.Free;
+
+      inherited;
+    end;
 
     function MainModule.AddMyProperty: MyUnit.MainModule;
     begin
@@ -4119,6 +4661,8 @@ begin
       private
         FMyProperty: System.SimpleType;
         function GetMyProperty: System.SimpleType;
+      public
+        destructor Destroy; override;
       published
         property MyProperty: System.SimpleType read GetMyProperty write FMyProperty;
       end;
@@ -4126,6 +4670,13 @@ begin
     implementation
 
     { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      FMyProperty.Free;
+
+      inherited;
+    end;
 
     function MainModule.GetMyProperty: System.SimpleType;
     begin
@@ -4170,6 +4721,8 @@ begin
       private
         FMyProperty: MyUnit.MainModule.MyAlias;
       public
+        destructor Destroy; override;
+
         function AddMyProperty: MyUnit.MainModule;
       published
         property MyProperty: MyUnit.MainModule.MyAlias read FMyProperty write FMyProperty;
@@ -4178,6 +4731,14 @@ begin
     implementation
 
     { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      for var Item in FMyProperty do
+        Item.Free;
+
+      inherited;
+    end;
 
     function MainModule.AddMyProperty: MyUnit.MainModule;
     begin
@@ -4271,6 +4832,8 @@ begin
       private
         FMyDynamic: Blue.Print.Types.TDynamicProperty<MyUnit.MainModule>;
       public
+        destructor Destroy; override;
+
         function AddMyDynamic(const Name: String): MyUnit.MainModule;
       published
         property MyDynamic: Blue.Print.Types.TDynamicProperty<MyUnit.MainModule> read FMyDynamic write FMyDynamic;
@@ -4279,6 +4842,14 @@ begin
     implementation
 
     { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      for var Item in FMyDynamic do
+        Item.Value.Free;
+
+      inherited;
+    end;
 
     function MainModule.AddMyDynamic(const Name: String): MyUnit.MainModule;
     begin

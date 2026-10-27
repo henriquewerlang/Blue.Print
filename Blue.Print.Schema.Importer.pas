@@ -880,6 +880,20 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := GetGenericType(PropertyDefinition.PropertyType, GenericType);
     end;
 
+    function FunctionAddNeedReturnType(const PropertyDefinition: TTypePropertyDefinition): Boolean;
+    begin
+      var GenericType: TTypeDefinition;
+
+      GetGenericType(PropertyDefinition.PropertyType, GenericType);
+
+      Result := GenericType.IsClassDefinition;
+    end;
+
+    function NeedDestructionProcedure(const PropertyDefinition: TTypePropertyDefinition): Boolean;
+    begin
+      Result := FunctionAddNeedReturnType(PropertyDefinition) or NeedGetFunction(PropertyDefinition);
+    end;
+
     function NeedFieldNameAttribute(const PropertyDefinition: TTypePropertyDefinition; var PropertyName: String): Boolean; overload;
     begin
       PropertyName := FormatPropertyName(PropertyDefinition);
@@ -912,15 +926,6 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
     function FormatSetFunctionName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
       Result := RemoveInvalidCharecters('Set.' + FormatPropertyName(PropertyDefinition));
-    end;
-
-    function FunctionAddNeedReturnType(const PropertyDefinition: TTypePropertyDefinition): Boolean;
-    begin
-      var GenericType: TTypeDefinition;
-
-      GetGenericType(PropertyDefinition.PropertyType, GenericType);
-
-      Result := GenericType.IsClassDefinition;
     end;
 
     function FormatAddFunctionName(const PropertyDefinition: TTypePropertyDefinition; const ClassDefinitionType: TTypeClassDefinition): String;
@@ -1044,7 +1049,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       function NeedPublicSection: Boolean;
       begin
         for var PropertyDefinition in ClassDefinition.Properties do
-          if PropertyDefinition.Optional or NeedAddFunction(PropertyDefinition) then
+          if PropertyDefinition.Optional or NeedAddFunction(PropertyDefinition) or NeedGetFunction(PropertyDefinition) then
             Exit(True);
 
         Result := False;
@@ -1082,12 +1087,27 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
           AddWhiteLine;
       end;
 
+      procedure GenerateDestroyProcedure(const CurrentIndentation: Integer);
+      begin
+        for var PropertyDefinition in ClassDefinition.Properties do
+          if NeedDestructionProcedure(PropertyDefinition) then
+          begin
+            AddLine(CurrentIndentation, 'destructor Destroy; override;');
+
+            AddWhiteLine;
+
+            Exit;
+          end;
+      end;
+
     begin
       var CurrentIndentation := Succ(IndentationLevel);
 
       if NeedPublicSection then
       begin
         AddLine(IndentationLevel, 'public');
+
+        GenerateDestroyProcedure(CurrentIndentation);
 
         GenerateAddFunctions(CurrentIndentation);
 
@@ -1185,7 +1205,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       end;
     end;
 
-    function ClassNeedImplementationSection(const ModuleDefinition: TTypeModuleDefinition): Boolean;
+    function NeedImplementationSection(const ModuleDefinition: TTypeModuleDefinition): Boolean;
     begin
       if ModuleDefinition.IsClassDefinition then
         for var PropertyDefinition in ModuleDefinition.AsClassDefinition.Properties do
@@ -1265,11 +1285,52 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
     begin
       var IndentationLevel := 0;
 
-      if ClassNeedImplementationSection(ModuleDefinition) then
+      if NeedImplementationSection(ModuleDefinition) then
       begin
         AddLine(IndentationLevel, '{ %s }', [FormatImplementation(ModuleDefinition)]);
 
         AddWhiteLine;
+
+        for var PropertyDefinition in ModuleDefinition.AsClassDefinition.Properties do
+          if NeedDestructionProcedure(PropertyDefinition) then
+          begin
+            var CurrentIndentationLevel := Succ(IndentationLevel);
+
+            AddLine(IndentationLevel, 'destructor %sDestroy;', [FormatMethodImplementation(ModuleDefinition.AsClassDefinition)]);
+
+            AddLine(IndentationLevel, 'begin');
+
+            for var FieldDefinition in ModuleDefinition.AsClassDefinition.Properties do
+            begin
+              if NeedGetFunction(FieldDefinition) then
+              begin
+                AddLine(CurrentIndentationLevel, '%s.Free;', [FormatFieldName(FieldDefinition)]);
+
+                AddWhiteLine;
+              end
+              else if FunctionAddNeedReturnType(FieldDefinition) then
+              begin
+                var ObjectToDestroy := 'Item';
+
+                if FieldDefinition.PropertyType.IsDynamicPropertyDefinition then
+                  ObjectToDestroy := ObjectToDestroy + '.Value';
+
+                AddLine(CurrentIndentationLevel, 'for var Item in %s do', [FormatFieldName(FieldDefinition)]);
+
+                AddLine(CurrentIndentationLevel, '  %s.Free;', [ObjectToDestroy]);
+
+                AddWhiteLine;
+              end;
+            end;
+
+            AddLine(CurrentIndentationLevel, 'inherited;');
+
+            AddLine(IndentationLevel, 'end;');
+
+            AddWhiteLine;
+
+            Break;
+          end;
 
         for var PropertyDefinition in ModuleDefinition.AsClassDefinition.Properties do
         begin
