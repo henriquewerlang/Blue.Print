@@ -1530,6 +1530,11 @@ begin
   if TPath.IsRelativePath(Configuration.OutputFolder) then
     Configuration.OutputFolder := TPath.GetFullPath(ExtractFilePath(ConfigurationFileName) + Configuration.OutputFolder);
 
+  for var UnitDefinition in Configuration.Units do
+    for var SchemaFile in UnitDefinition.SchemaFiles do
+      if TPath.IsRelativePath(SchemaFile.FileName) then
+        SchemaFile.FileName := TPath.GetFullPath(ExtractFilePath(ConfigurationFileName) + SchemaFile.FileName);
+
   Import(Configuration);
 
   Configuration.Free;

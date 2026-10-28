@@ -370,6 +370,8 @@ type
     procedure WhenDontHaveAnyDynamicPropertyWithAClassDefinitionCantCreateTheDestroyProcedureImplementation;
     [Test]
     procedure WhenConfigureATypeConfigurationToChangeTheNameOfOneTypeMustChangeTheDeclarationInTheUnitGenereted;
+    [Test]
+    procedure IfTheSchemaFileIsARelativePathMustLoadTheFullPathFromFolderInTheConfigurationFileName;
   end;
 
   [TestFixture]
@@ -771,6 +773,35 @@ begin
   FImporter.Import(FileName);
 
   Assert.IsTrue(TFile.Exists(OutputPath + 'MyUnit.pas'));
+end;
+
+procedure TSchemaImporterTest.IfTheSchemaFileIsARelativePathMustLoadTheFullPathFromFolderInTheConfigurationFileName;
+begin
+  var ConfigFileFolder := TPath.GetTempPath + OUTPUT_FOLDER_TEST;
+  var Converter := TSchemaConverterMock.Create;
+  var SchemaFileName := '.\RelativePath\SchemaFile.txt';
+  TSchemaImporter.Converters[TSchemaType.OpenAPI20] := Converter;
+
+  var ConfigFileName := ConfigFileFolder + 'MyConfiguration.json';
+
+  Converter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      if MainClass.Name = 'MainModule' then
+        Assert.AreEqual('My schema', Schema.SchemaText);
+    end;
+
+  ForceDirectories(ConfigFileFolder);
+
+  FConfiguration.Units[0].SchemaFiles[0].FileName := SchemaFileName;
+
+  ForceDirectories(ExtractFilePath(ConfigFileFolder + SchemaFileName));
+
+  TFile.WriteAllText(ConfigFileFolder + SchemaFileName, 'My schema');
+
+  TFile.WriteAllText(ConfigFileName, (TBluePrintJSONSerializer.Create as IBluePrintSerializer).Serialize(FConfiguration));
+
+  FImporter.Import(ConfigFileName);
 end;
 
 procedure TSchemaImporterTest.IfTheTryFindTypeFoundTheTypeMustReturnTrue;
