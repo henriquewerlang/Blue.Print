@@ -368,6 +368,8 @@ type
     procedure OnlyDynamicPropertyWithAClassDefinitionMustDeclareTheDestroyProcedureInPublicSection;
     [Test]
     procedure WhenDontHaveAnyDynamicPropertyWithAClassDefinitionCantCreateTheDestroyProcedureImplementation;
+    [Test]
+    procedure WhenConfigureATypeConfigurationToChangeTheNameOfOneTypeMustChangeTheDeclarationInTheUnitGenereted;
   end;
 
   [TestFixture]
@@ -2578,6 +2580,50 @@ begin
     begin
       MyProp := MyProp + [Value];
     end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenConfigureATypeConfigurationToChangeTheNameOfOneTypeMustChangeTheDeclarationInTheUnitGenereted;
+begin
+  var TypeConfiguration := TTypeConfiguration.Create;
+  TypeConfiguration.Name := 'my:MyClass';
+  TypeConfiguration.ChangeName := 'TAnotherName';
+
+  FConfiguration.TypeConfiguration := [TypeConfiguration];
+
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      if MainClass.Name = 'MainModule' then
+        FImporter.AddType('My Namespace', FImporter.CreateClassType(MainClass, 'MyClass'));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        TAnotherName = class;
+
+        TAnotherName = class
+        end;
+      end;
+
+    implementation
 
     end.
 

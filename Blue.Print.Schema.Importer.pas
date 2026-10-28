@@ -296,18 +296,29 @@ type
     property Optional: Boolean read FOptional write FOptional;
   end;
 
+  TTypeConfiguration = class
+  private
+    FChangeName: String;
+    FName: String;
+  published
+    property ChangeName: String read FChangeName write FChangeName;
+    property Name: String read FName write FName;
+  end;
+
   TConfiguration = class
   private
     FAppendProperties: TArray<TAppendProperty>;
     FNamespaces: TArray<TNamespaceConfiguration>;
     FUnits: TArray<TUnitConfiguration>;
     FOutputFolder: String;
+    FTypeConfiguration: TArray<TTypeConfiguration>;
   public
     destructor Destroy; override;
   published
     property AppendProperties: TArray<TAppendProperty> read FAppendProperties write FAppendProperties;
     property Namespaces: TArray<TNamespaceConfiguration> read FNamespaces write FNamespaces;
     property OutputFolder: String read FOutputFolder write FOutputFolder;
+    property TypeConfiguration: TArray<TTypeConfiguration> read FTypeConfiguration write FTypeConfiguration;
     property Units: TArray<TUnitConfiguration> read FUnits write FUnits;
   end;
 
@@ -704,6 +715,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function FormatTypeName(const Name: String): String; overload;
     begin
+
       Result := RemoveInvalidCharecters(Name);
 
       if not Result.IsEmpty and not SameText(Result, Name) then
@@ -1498,6 +1510,9 @@ begin
 
   AppendProperties;
 
+  for var TypeConfiguration in Configuration.TypeConfiguration do
+    FindTypeWithPrefix(TypeConfiguration.Name).FName := TypeConfiguration.ChangeName;
+
   for var UnitDefinition in Units.Values do
     GenerateUnitDeclaration(UnitDefinition);
 end;
@@ -1612,6 +1627,9 @@ begin
 
   for var Namespace in Namespaces do
     Namespace.Free;
+
+  for var Configuration in TypeConfiguration do
+    Configuration.Free;
 
   inherited;
 end;
