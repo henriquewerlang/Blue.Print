@@ -7,7 +7,7 @@ uses Blue.Print.Schema.Importer, Blue.Print.OpenAPI30.Schema;
 type
   TOpenAPI30SchemaConverter = class(TInterfacedObject, ISchemaConverter)
   private
-    function LoadDefinition(const Schema: TSchema): TOpenAPIDefinition.TOpenAPIDefinition;
+    function LoadDefinition(const Schema: TSchema): OpenAPIDefinition;
 
     procedure Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
     procedure LoadSchema(const Schema: TSchema);
@@ -20,50 +20,59 @@ uses System.SysUtils, Blue.Print.Serializer, Blue.Print.Types;
 { TOpenAPI30SchemaConverter }
 
 procedure TOpenAPI30SchemaConverter.Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
+var
+  Definition: OpenAPIDefinition;
+
+  function GetSchemaNamespace: String;
+  begin
+    Result := Definition.info.title + '/schema';
+  end;
+
+  function CreateSchemaType(const ParentModule: TTypeClassDefinition; const TypeName: String; const SchemaType: OpenAPIDefinition.Schema): TTypeDefinition;
+  begin
+    Result := Schema.Importer.BuildInTypes[TBuildInType.ValueType];
+
+    if SchemaType.IsPropertiesStored then
+    begin
+      var ClassDefinition := Schema.Importer.CreateClassType(MainClass, TypeName);
+
+      for var PropertySchema in SchemaType.properties.additionalProperties do
+        ClassDefinition.AddProperty(PropertySchema.Key, CreateSchemaType(ClassDefinition, Format('.%sType', [PropertySchema.Key]), PropertySchema.Value.Schema));
+
+      Result := ClassDefinition;
+    end
+    else if SchemaType.IsTypeStored then
+      case SchemaType.&type of
+        OpenAPIDefinition.Schema.TTypeType.array: ;
+        OpenAPIDefinition.Schema.TTypeType.boolean: Result := Schema.Importer.BuildInTypes[TBuildInType.BooleanType];
+        OpenAPIDefinition.Schema.TTypeType.integer: Result := Schema.Importer.BuildInTypes[TBuildInType.IntegerType];
+        OpenAPIDefinition.Schema.TTypeType.number: Result := Schema.Importer.BuildInTypes[TBuildInType.DoubleType];
+        OpenAPIDefinition.Schema.TTypeType.object: Result := Schema.Importer.CreateClassType(ParentModule, TypeName);
+        OpenAPIDefinition.Schema.TTypeType.string: Result := Schema.Importer.BuildInTypes[TBuildInType.StringType];
+      end;
+  end;
+
+  function CreateComponentSchemaType(const ParentModule: TTypeClassDefinition; const TypeName: String; const SchemaType: OpenAPIDefinition.ComponentsType.TSchemasType.TPatternPropertyType): TTypeDefinition;
+  begin
+    Result := CreateSchemaType(ParentModule, TypeName, SchemaType.Schema);
+  end;
+
 begin
-  var Definition := Schema.SchemaValue.AsType<TOpenAPIDefinition.TOpenAPIDefinition>;
+  Definition := Schema.SchemaValue.AsType<OpenAPIDefinition>;
 
-  if Definition.components.IsRequestBodiesStored then
-  begin
-    var RequestBodies := TTypeClassDefinition.Create;
-    RequestBodies.Name := 'requestBodies';
-
-    Schema.AddClassDefinition(MainClass, Schema.Namespace, RequestBodies);
-
-    for var RequestDefinition in Definition.components.requestBodies.PatternPropertyElement do
-    begin
-      var RequestBodyClass := TTypeClassDefinition.Create;
-      RequestBodyClass.Name := RequestDefinition.Key;
-
-      Schema.AddClassDefinition(RequestBodies, Schema.Namespace, RequestBodyClass);
-    end;
-  end;
-
-  if Definition.components.IsSchemasStored then
-  begin
-    var Schemas := TTypeClassDefinition.Create;
-    Schemas.Name := 'schemas';
-
-    Schema.AddClassDefinition(MainClass, Schema.Namespace, Schemas);
-
-    for var SchemaDefinition in Definition.components.schemas.PatternPropertyElement do
-    begin
-      var SchemaClass := TTypeClassDefinition.Create;
-      SchemaClass.Name := SchemaDefinition.Key;
-
-      Schema.AddClassDefinition(Schemas, Schema.Namespace, SchemaClass);
-
-      for var PropertySchema in SchemaDefinition.Value.Schema.properties.additionalProperties do
-        SchemaClass.AddProperty(PropertySchema.Key, nil);
-    end;
-  end;
+  for var SchemaDefinition in Definition.components.schemas.PatternProperty do
+    Schema.Importer.AddType(GetSchemaNamespace, CreateComponentSchemaType(MainClass, SchemaDefinition.Key, SchemaDefinition.Value));
 end;
 
-function TOpenAPI30SchemaConverter.LoadDefinition(const Schema: TSchema): TOpenAPIDefinition.TOpenAPIDefinition;
-begin
-  var Serializer: IBluePrintSerializer := TBluePrintJSONSerializer.Create;
+function TOpenAPI30SchemaConverter.LoadDefinition(const Schema: TSchema): OpenAPIDefinition;
 
-  Result := Serializer.Deserialize(Schema.SchemaText, TypeInfo(TOpenAPIDefinition.TOpenAPIDefinition)).AsType<TOpenAPIDefinition.TOpenAPIDefinition>;
+  function GetSerializer: IBluePrintSerializer;
+  begin
+    Result := TBluePrintJSONSerializer.Create;
+  end;
+
+begin
+  Result := GetSerializer.Deserialize(Schema.SchemaText, TypeInfo(OpenAPIDefinition)).AsType<OpenAPIDefinition>;
 end;
 
 procedure TOpenAPI30SchemaConverter.LoadSchema(const Schema: TSchema);

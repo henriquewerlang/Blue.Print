@@ -1,9 +1,28 @@
 {
-   "MaxColumnSize": 240,
    "OutputFolder": ".\\",
-   "SchemaFolder": ".\\Schemas",
-   "Imports": [
-      "JSON Draft 4 Schema Configuration.json"
+   "Namespaces": [
+      {
+         "Namespace": "https://spec.openapis.org/oas/3.0/schema/2024-10-18",
+         "Prefix": "OpenAPI30"
+      },
+      {
+         "Namespace": "https://spec.openapis.org/oas/3.0/schema/2024-10-18/definitions",
+         "Prefix": "OpenAPI30/defs"
+      }
+   ],
+   "TypeConfiguration": [
+      {
+         "Name": "OpenAPI30/defs:Components",
+         "ChangeName": "ComponentsType"
+      },
+      {
+         "Name": "OpenAPI30/defs:Info",
+         "ChangeName": "InfoType"
+      },
+      {
+         "Name": "OpenAPI30/defs:Paths",
+         "ChangeName": "PathsType"
+      }
    ],
    "PropertyConfiguration": [
       {
@@ -27,15 +46,14 @@
          "FlatEnumerator": "in"
       }
    ],
-   "UnitConfiguration": [
+   "Units": [
       {
-         "Name": "Blue.Print.Open.API.Schema.v30",
-         "Files": [
+         "Name": "Blue.Print.OpenAPI30.Schema",
+         "SchemaFiles": [
             {
-               "FileType": "JSON",
-               "FileName": "https://spec.openapis.org/oas/3.0/schema/2024-10-18",
-               "Reference": "https://spec.openapis.org/oas/3.0/schema/2024-10-18",
-               "UnitClassName": "TOpenAPIDefinition"
+               "SchemaType": "JSONDraft4",
+               "FileName": "..\\..\\Open API 3.0 Schema.json",
+               "MainModuleName": "OpenAPIDefinition"
             }
          ]
       }

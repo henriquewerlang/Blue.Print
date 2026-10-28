@@ -8,231 +8,283 @@ type
   [TestFixture]
   TOpenAPI30SchemaConverterTest = class
   private
-    FConverter: ISchemaConverter;
-    FDefinition: TOpenAPIDefinition.TOpenAPIDefinition;
-    FMainClass: TTypeClassDefinition;
-    FNamespaces: TDictionary<String, String>;
-    FSchema: TSchema;
-    FSerializer: IBluePrintSerializer;
-    FTypes: TDictionary<String, TTypeDefinition>;
+    FConfiguration: TConfiguration;
+    FDefinition: OpenAPIDefinition;
+    FImporter: TSchemaImporter;
 
-    procedure ConvertSchema;
-    procedure LoadSchemaText;
+    function GetDefinitionJSON: String;
+    function GetMainClass: TTypeClassDefinition;
+
+    procedure ImportDefinition;
   public
     [Setup]
     procedure Setup;
     [TearDown]
     procedure TearDown;
     [Test]
-    procedure IfTheJSONIsInvalidMustRaiseAnError;
+    procedure MustLoadTheOpenAPIConverterInTheConverterListOfTheSchemaImporterInTheInitialization;
     [Test]
-    procedure WhenLoadTheSchemaMustLoadTheInfoTitleInTheNamespacePropertyOfTheSchema;
+    procedure WhenLoadTheSchemaMustLoadTheTitleOfInfoPropertyInTheSchemaNamespace;
     [Test]
-    procedure WhenLoadTheSchemaMustLoadTheSchemaValue;
+    procedure WhenLoadTheSchemaMustLoadTheDefinitionInTheSchemaValueHasExpected;
     [Test]
-    procedure WhenLoadTheSchemaMustLoadTheSchemaValueWithTheOpenAPIClassEspecification;
+    procedure WhenHasASchemaObjectDeclaredInTheComponentsMustAppendTheClassInTheTypesListInTheSchemaNamespace;
     [Test]
-    procedure IfTheRequestBodyIsStoredMustLoadAClassWithTheNameRequestBodyInTheMainClassSchema;
+    procedure WhenHasASchemaObjectDeclaredInTheComponentsMustAppendTheClassInMainClassList;
     [Test]
-    procedure IfTheRequestBodyIsntLoadedCantLoadTheRequestBodyClassInTheMainClass;
+    procedure AllObjectsDeclaredInTheSchemaComponentsMustBeLoadedInTheTypesList;
     [Test]
-    procedure AllClassesInsideTheRequestBodiesMustBeLoadedInTheRequestBodiesClassHasExpected;
+    procedure WhenTheSchemaTypeHasPropertiesMustLoadThePropertyInTheClassDefinitionHasExcepted;
     [Test]
-    procedure IfTheSchemaPropertyFromComponentsIsLoadedMustDeclareAClassWithTheSchemaNameInTheMainClass;
+    procedure TheSchemaTypeMustLoadThePropertyNameHasExpected;
     [Test]
-    procedure IfTheSchemaPropertyFromComponentsIsntLoadedCanCreateTheSchemaClass;
+    procedure WhenThePropertyTypeIsABuildInTypeMustLoadThePropertyTypeWithTypeExpected;
     [Test]
-    procedure TheClassesInsideTheSchemasPropertyMustBeAppendedInTheSchemaClassInTheMainClassHasExpected;
+    procedure WhenTheSchemaTypeHasPropertiesMustLoadAnClassDefinitionInTheClassesListOfTheMainClassHasExpected;
     [Test]
-    procedure WhenTheSchemaHasPropertiesMustLoadAllInTheClassCreated;
+    procedure IfThePropertyTypeSchemaHasntAnyInformationMustReturnATValueTypeForPropertyType;
+    [Test]
+    procedure WhenThePropertyTypeIsAnObjectMustCreateAClassDefinitionForThePropertyType;
+    [Test]
+    procedure WhenThePropertySchemaHasAnObjectDefinitionMustLoadTheClassInsideTheClassOfTheProperty;
+    [Test]
+    procedure TheSubclassNameMustBeThePropertyPlusTheTypeName;
   end;
 
 implementation
 
-uses System.JSON, System.SysUtils, Blue.Print.Serializer;
+uses System.JSON, System.SysUtils, System.IOUtils, System.Rtti, Blue.Print.Serializer;
 
 { TOpenAPI30SchemaConverterTest }
 
-procedure TOpenAPI30SchemaConverterTest.AllClassesInsideTheRequestBodiesMustBeLoadedInTheRequestBodiesClassHasExpected;
+procedure TOpenAPI30SchemaConverterTest.AllObjectsDeclaredInTheSchemaComponentsMustBeLoadedInTheTypesList;
 begin
-  FDefinition.components.requestBodies.AddPatternProperty('MyClass');
+  FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+  FDefinition.components.schemas.AddPatternProperty('MyClass2').Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+  FDefinition.components.schemas.AddPatternProperty('MyClass3').Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
 
-  FDefinition.components.requestBodies.AddPatternProperty('MyClass2');
+  ImportDefinition;
 
-  FDefinition.components.requestBodies.AddPatternProperty('MyClass3');
+  Assert.IsTrue(FImporter.Types.ContainsKey('my/schema:MyClass'));
 
-  ConvertSchema;
+  Assert.IsTrue(FImporter.Types.ContainsKey('my/schema:MyClass2'));
 
-  Assert.AreEqual(3, Length(FMainClass.Classes[0].Classes));
-
-  Assert.AreEqual('md:MyClass', FMainClass.Classes[0].Classes[0].Name);
-  Assert.AreEqual('md:MyClass2', FMainClass.Classes[0].Classes[1].Name);
-  Assert.AreEqual('md:MyClass3', FMainClass.Classes[0].Classes[2].Name);
+  Assert.IsTrue(FImporter.Types.ContainsKey('my/schema:MyClass3'));
 end;
 
-procedure TOpenAPI30SchemaConverterTest.ConvertSchema;
+function TOpenAPI30SchemaConverterTest.GetDefinitionJSON: String;
 begin
-  LoadSchemaText;
+  var Serializer: IBluePrintSerializer := TBluePrintJSONSerializer.Create;
 
-  FConverter.LoadSchema(FSchema);
-
-  FConverter.Convert(FMainClass, FSchema);
+  Result := Serializer.Serialize(FDefinition);
 end;
 
-procedure TOpenAPI30SchemaConverterTest.IfTheJSONIsInvalidMustRaiseAnError;
+function TOpenAPI30SchemaConverterTest.GetMainClass: TTypeClassDefinition;
 begin
-  FSchema.SchemaText :=
-    '''
-    {
-    }
-    }
-    ''';
-
-  Assert.WillRaise(
-    procedure
-    begin
-      FConverter.LoadSchema(FSchema);
-    end, Exception);
+  Result := FImporter.FindTypeWithPrefix('my:MainClass').AsClassDefinition;
 end;
 
-procedure TOpenAPI30SchemaConverterTest.IfTheRequestBodyIsntLoadedCantLoadTheRequestBodyClassInTheMainClass;
+procedure TOpenAPI30SchemaConverterTest.IfThePropertyTypeSchemaHasntAnyInformationMustReturnATValueTypeForPropertyType;
 begin
-  ConvertSchema;
+  var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
 
-  Assert.AreEqual(0, Length(FMainClass.Classes));
+  ClassSchema.properties.AddAdditionalProperties('MyProp').Schema;
+
+  ImportDefinition;
+
+  Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.ValueType], GetMainClass.Classes[0].Properties[0].PropertyType);
 end;
 
-procedure TOpenAPI30SchemaConverterTest.IfTheRequestBodyIsStoredMustLoadAClassWithTheNameRequestBodyInTheMainClassSchema;
+procedure TOpenAPI30SchemaConverterTest.ImportDefinition;
 begin
-  FDefinition.components.requestBodies;
+  TFile.WriteAllText(FConfiguration.Units[0].SchemaFiles[0].FileName, GetDefinitionJSON);
 
-  ConvertSchema;
-
-  Assert.AreEqual(1, Length(FMainClass.Classes));
-
-  Assert.AreEqual('md:requestBodies', FMainClass.Classes[0].Name);
+  FImporter.Import(FConfiguration);
 end;
 
-procedure TOpenAPI30SchemaConverterTest.IfTheSchemaPropertyFromComponentsIsLoadedMustDeclareAClassWithTheSchemaNameInTheMainClass;
+procedure TOpenAPI30SchemaConverterTest.MustLoadTheOpenAPIConverterInTheConverterListOfTheSchemaImporterInTheInitialization;
 begin
-  FDefinition.components.schemas;
-
-  ConvertSchema;
-
-  Assert.AreEqual(1, Length(FMainClass.Classes));
-
-  Assert.AreEqual('md:schemas', FMainClass.Classes[0].Name);
-end;
-
-procedure TOpenAPI30SchemaConverterTest.IfTheSchemaPropertyFromComponentsIsntLoadedCanCreateTheSchemaClass;
-begin
-  ConvertSchema;
-
-  Assert.AreEqual(0, Length(FMainClass.Classes));
-end;
-
-procedure TOpenAPI30SchemaConverterTest.LoadSchemaText;
-begin
-  FSchema.SchemaText := FSerializer.Serialize(FDefinition);
+  Assert.IsNotNil(TSchemaImporter.Converters[TSchemaType.OpenAPI30]);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.Setup;
+
+  function CreateNamespaceConfiguration(const Namespace, Prefix: String): TNamespaceConfiguration;
+  begin
+    Result := TNamespaceConfiguration.Create;
+    Result.Namespace := Namespace;
+    Result.Prefix := Prefix;
+  end;
+
+  function CreateSchemaFile: TSchemaFileConfiguration;
+  begin
+    Result := TSchemaFileConfiguration.Create;
+    Result.FileName := TPath.GetTempFileName;
+    Result.MainModuleName := 'MainClass';
+    Result.SchemaType := TSchemaType.OpenAPI30;
+  end;
+
+  function CreateUnitConfiguration: TUnitConfiguration;
+  begin
+    Result := TUnitConfiguration.Create;
+    Result.Name := 'JSON';
+    Result.SchemaFiles := [CreateSchemaFile];
+  end;
+
 begin
-  FConverter := TOpenAPI30SchemaConverter.Create;
-  FDefinition := TOpenAPIDefinition.TOpenAPIDefinition.Create;
-  FDefinition.info.title := 'My Definition';
-  FMainClass := TTypeClassDefinition.Create;
-  FNamespaces := TDictionary<String, String>.Create;
-  FSerializer := TBluePrintJSONSerializer.Create;
-  FTypes := TDictionary<String, TTypeDefinition>.Create;
+  inherited;
 
-  FSchema := TSchema.Create(FNamespaces, FTypes);
-  FSchema.SchemaFile := TSchemaFileConfiguration.Create;
+  FConfiguration := TConfiguration.Create;
+  FDefinition := OpenAPIDefinition.Create;
+  FDefinition.info.title := 'Open API 3.0';
+  FImporter := TSchemaImporter.Create;
 
-  FNamespaces.Add(FDefinition.info.title, 'md');
+  FConfiguration.Namespaces := [CreateNamespaceConfiguration(FDefinition.info.title, 'my'), CreateNamespaceConfiguration(FDefinition.info.title + '/schema', 'my/schema')];
+  FConfiguration.Units := [CreateUnitConfiguration];
 end;
 
 procedure TOpenAPI30SchemaConverterTest.TearDown;
 begin
-  FConverter := nil;
-  FSerializer := nil;
+  FConfiguration.Free;
 
   FDefinition.Free;
 
-  FTypes.Free;
-
-  FNamespaces.Free;
-
-  FMainClass.Free;
-
-  FSchema.SchemaFile.Free;
-
-  FSchema.Free;
+  FImporter.Free;
 end;
 
-procedure TOpenAPI30SchemaConverterTest.TheClassesInsideTheSchemasPropertyMustBeAppendedInTheSchemaClassInTheMainClassHasExpected;
+procedure TOpenAPI30SchemaConverterTest.TheSchemaTypeMustLoadThePropertyNameHasExpected;
 begin
-//  FDefinition.components.schemas.AddPatternProperty('MyClass').Reference.&string.Add('abc', '');
-//
-//  FDefinition.components.schemas.AddPatternProperty('MyClass2').Reference.&string.Add('abc', '');
-//
-//  FDefinition.components.schemas.AddPatternProperty('MyClass3').Reference.&string.Add('abc', '');
+  var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
+  ClassSchema.&type := OpenAPIDefinition.Schema.TTypeType.object;
 
-  ConvertSchema;
+  ClassSchema.properties.AddAdditionalProperties('MyProp').Schema;
 
-  Assert.AreEqual(3, Length(FMainClass.Classes[0].Classes));
+  ImportDefinition;
 
-  Assert.AreEqual('md:MyClass', FMainClass.Classes[0].Classes[0].Name);
-  Assert.AreEqual('md:MyClass2', FMainClass.Classes[0].Classes[1].Name);
-  Assert.AreEqual('md:MyClass3', FMainClass.Classes[0].Classes[2].Name);
+  Assert.AreEqual('MyProp', GetMainClass.Classes[0].Properties[0].Name);
 end;
 
-procedure TOpenAPI30SchemaConverterTest.WhenLoadTheSchemaMustLoadTheInfoTitleInTheNamespacePropertyOfTheSchema;
+procedure TOpenAPI30SchemaConverterTest.TheSubclassNameMustBeThePropertyPlusTheTypeName;
 begin
-  LoadSchemaText;
+  var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
 
-  FConverter.LoadSchema(FSchema);
+  ClassSchema.properties.AddAdditionalProperties('MyProp').Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
 
-  Assert.AreEqual(FDefinition.info.title, FSchema.Namespace);
+  ImportDefinition;
+
+  Assert.AreEqual('.MyPropType', GetMainClass.Classes[0].Classes[0].Name);
 end;
 
-procedure TOpenAPI30SchemaConverterTest.WhenLoadTheSchemaMustLoadTheSchemaValue;
+procedure TOpenAPI30SchemaConverterTest.WhenHasASchemaObjectDeclaredInTheComponentsMustAppendTheClassInMainClassList;
 begin
-  LoadSchemaText;
+  FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
 
-  FConverter.LoadSchema(FSchema);
+  ImportDefinition;
 
-  Assert.IsFalse(FSchema.SchemaValue.IsEmpty);
+  Assert.AreEqual(1, Length(GetMainClass.Classes));
 end;
 
-procedure TOpenAPI30SchemaConverterTest.WhenLoadTheSchemaMustLoadTheSchemaValueWithTheOpenAPIClassEspecification;
+procedure TOpenAPI30SchemaConverterTest.WhenHasASchemaObjectDeclaredInTheComponentsMustAppendTheClassInTheTypesListInTheSchemaNamespace;
 begin
-  LoadSchemaText;
+  FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
 
-  FConverter.LoadSchema(FSchema);
+  ImportDefinition;
 
-  Assert.AreEqual(TOpenAPIDefinition.TOpenAPIDefinition, FSchema.SchemaValue.AsObject.ClassType);
+  Assert.IsTrue(FImporter.Types.ContainsKey('my/schema:MyClass'));
 end;
 
-procedure TOpenAPI30SchemaConverterTest.WhenTheSchemaHasPropertiesMustLoadAllInTheClassCreated;
+procedure TOpenAPI30SchemaConverterTest.WhenLoadTheSchemaMustLoadTheDefinitionInTheSchemaValueHasExpected;
 begin
-  var IntegerSchema := TOpenAPIDefinition.Schema.Create;
-  IntegerSchema.&type := TOpenAPIDefinition.Schema.TypeProperty.integer;
-  var PropertyType := TOpenAPIDefinition.Schema.PropertiesProperty.additionalPropertiesType.Create;
-  PropertyType.Schema := IntegerSchema;
-  var SchemaClass := FDefinition.components.schemas.AddPatternProperty('MyClass');
+  var Converter: ISchemaConverter := TOpenAPI30SchemaConverter.Create;
+  var Schema := TSchema.Create;
+  Schema.SchemaText := GetDefinitionJSON;
 
-//  SchemaClass.Schema.properties.additionalProperties.Add('Prop1', PropertyType);
-//  SchemaClass.Schema.properties.additionalProperties.Add('Prop2', PropertyType);
-//  SchemaClass.Schema.properties.additionalProperties.Add('Prop3', PropertyType);
-//
-  ConvertSchema;
+  Converter.LoadSchema(Schema);
 
-  Assert.AreEqual(3, Length(FMainClass.Classes[0].Classes[0].Properties));
+  Assert.IsNotNil(Schema.SchemaValue.AsObject);
 
-  Assert.AreEqual('Prop1', FMainClass.Classes[0].Classes[0].Properties[0].Name);
-  Assert.AreEqual('Prop2', FMainClass.Classes[0].Classes[0].Properties[1].Name);
-  Assert.AreEqual('Prop3', FMainClass.Classes[0].Classes[0].Properties[2].Name);
+  Assert.AreEqual(OpenAPIDefinition, Schema.SchemaValue.AsObject.ClassType);
+
+  Schema.Free;
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenLoadTheSchemaMustLoadTheTitleOfInfoPropertyInTheSchemaNamespace;
+begin
+  var Converter: ISchemaConverter := TOpenAPI30SchemaConverter.Create;
+  FDefinition.info.title := 'My Test Schema';
+  var Schema := TSchema.Create;
+  Schema.SchemaText := GetDefinitionJSON;
+
+  Converter.LoadSchema(Schema);
+
+  Assert.AreEqual(FDefinition.info.title, Schema.Namespace);
+
+  Schema.Free;
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenThePropertySchemaHasAnObjectDefinitionMustLoadTheClassInsideTheClassOfTheProperty;
+begin
+  var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
+
+  ClassSchema.properties.AddAdditionalProperties('MyProp').Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetMainClass.Classes[0].Classes));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenThePropertyTypeIsABuildInTypeMustLoadThePropertyTypeWithTypeExpected;
+begin
+  var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
+  ClassSchema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+
+  for var TypeName in [OpenAPIDefinition.Schema.TTypeType.boolean, OpenAPIDefinition.Schema.TTypeType.integer, OpenAPIDefinition.Schema.TTypeType.number, OpenAPIDefinition.Schema.TTypeType.string] do
+    ClassSchema.properties.AddAdditionalProperties(TRttiEnumerationType.GetName(TypeName)).Schema.&type := TypeName;
+
+  ImportDefinition;
+
+  Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.BooleanType].Name, GetMainClass.Classes[0].Properties[0].PropertyType.Name);
+  Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.IntegerType].Name, GetMainClass.Classes[0].Properties[1].PropertyType.Name);
+  Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.DoubleType].Name, GetMainClass.Classes[0].Properties[2].PropertyType.Name);
+  Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.StringType].Name, GetMainClass.Classes[0].Properties[3].PropertyType.Name);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenThePropertyTypeIsAnObjectMustCreateAClassDefinitionForThePropertyType;
+begin
+  var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
+
+  ClassSchema.properties.AddAdditionalProperties('MyProp').Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+
+  ImportDefinition;
+
+  Assert.AreEqual(TTypeClassDefinition, GetMainClass.Classes[0].Properties[0].PropertyType.ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheSchemaTypeHasPropertiesMustLoadAnClassDefinitionInTheClassesListOfTheMainClassHasExpected;
+begin
+  var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
+
+  ClassSchema.properties.AddAdditionalProperties('MyProp').Schema;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetMainClass.Classes));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheSchemaTypeHasPropertiesMustLoadThePropertyInTheClassDefinitionHasExcepted;
+begin
+  var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
+  ClassSchema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+
+  ClassSchema.properties.AddAdditionalProperties('MyProp').Schema;
+
+  ClassSchema.properties.AddAdditionalProperties('MyProp2').Schema;
+
+  ClassSchema.properties.AddAdditionalProperties('MyProp3').Schema;
+
+  ImportDefinition;
+
+  Assert.AreEqual(3, Length(GetMainClass.Classes[0].Properties));
 end;
 
 end.

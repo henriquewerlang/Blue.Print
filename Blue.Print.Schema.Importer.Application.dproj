@@ -137,6 +137,8 @@
         </DCCReference>
         <DCCReference Include="Blue.Print.Schema.Importer.pas"/>
         <DCCReference Include="Blue.Print.JSON.Draft4.Schema.Converter.pas"/>
+        <DCCReference Include="Blue.Print.OpenAPI30.Schema.Converter.pas"/>
+        <DCCReference Include="Blue.Print.OpenAPI30.Schema.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

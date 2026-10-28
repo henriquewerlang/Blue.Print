@@ -130,6 +130,9 @@
         <DCCReference Include="..\Blue.Print.OpenAPI32.Schema.Converter.pas"/>
         <DCCReference Include="..\Blue.Print.XSD.Schema.Converter.pas"/>
         <DCCReference Include="..\Blue.Print.WSDL.Schema.Converter.pas"/>
+        <DCCReference Include="Blue.Print.OpenAPI30.Schema.Converter.Test.pas"/>
+        <DCCReference Include="..\Blue.Print.OpenAPI30.Schema.Converter.pas"/>
+        <DCCReference Include="..\Blue.Print.OpenAPI30.Schema.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

@@ -7,7 +7,9 @@ uses
   Blue.Print.Serializer in 'Blue.Print.Serializer.pas',
   Blue.Print.Types in 'Blue.Print.Types.pas',
   Blue.Print.Schema.Importer in 'Blue.Print.Schema.Importer.pas',
-  Blue.Print.JSON.Draft4.Schema.Converter in 'Blue.Print.JSON.Draft4.Schema.Converter.pas';
+  Blue.Print.JSON.Draft4.Schema.Converter in 'Blue.Print.JSON.Draft4.Schema.Converter.pas',
+  Blue.Print.OpenAPI30.Schema.Converter in 'Blue.Print.OpenAPI30.Schema.Converter.pas',
+  Blue.Print.OpenAPI30.Schema in 'Blue.Print.OpenAPI30.Schema.pas';
 
 {$R *.res}
 
