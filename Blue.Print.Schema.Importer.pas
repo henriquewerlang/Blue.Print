@@ -703,7 +703,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := EmptyStr;
 
       for var Character in Name do
-        if Character.IsLetter or Character.IsNumber then
+        if Character.IsLetter or Character.IsNumber or (Character = '_') then
         begin
           Result := Result + FormatChar(Character);
 

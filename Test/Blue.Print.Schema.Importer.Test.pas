@@ -372,6 +372,10 @@ type
     procedure WhenConfigureATypeConfigurationToChangeTheNameOfOneTypeMustChangeTheDeclarationInTheUnitGenereted;
     [Test]
     procedure IfTheSchemaFileIsARelativePathMustLoadTheFullPathFromFolderInTheConfigurationFileName;
+    [Test]
+    procedure TheUnderlineMustBeConsideredAValidCharactereNameForAClassName;
+    [Test]
+    procedure TheUnderlineMustBeConsideredAValidCharactereNameForAPropertyName;
   end;
 
   [TestFixture]
@@ -2002,6 +2006,62 @@ begin
   FImporter.Import(FConfiguration);
 
   Assert.AreEqual('System.Rtti', FImporter.BuildInTypes[TBuildInType.ValueType].ParentModule.Name);
+end;
+
+procedure TSchemaImporterTest.TheUnderlineMustBeConsideredAValidCharactereNameForAClassName;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      FImporter.CreateClassType(MainClass, '_valid_Class_Name_');
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        _valid_Class_Name_ = class;
+
+        _valid_Class_Name_ = class
+        end;
+      end;
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.TheUnderlineMustBeConsideredAValidCharactereNameForAPropertyName;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      FImporter.CreateClassType(MainClass, 'MyClass').AddProperty('_valid_property_name_', FImporter.BuildInTypes[TBuildInType.StringType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        MyClass = class;
+
+        MyClass = class
+        private
+          F_valid_property_name_: System.String;
+        published
+          property _valid_property_name_: System.String read F_valid_property_name_ write F_valid_property_name_;
+        end;
+      end;
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.TheUnitNameCantBeAppendedToTheTypeNameInTheTypesList;
