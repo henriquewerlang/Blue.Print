@@ -521,11 +521,11 @@ end;
 
 procedure TJSONDraft4SchemaConverterTeste.Setup;
 
-  function CreateNamespaceConfiguration: TNamespaceConfiguration;
+  function CreateNamespaceConfiguration(const Namespace, Prefix: String): TNamespaceConfiguration;
   begin
     Result := TNamespaceConfiguration.Create;
-    Result.Namespace := FDefinition.id;
-    Result.Prefix := 'my';
+    Result.Namespace := Namespace;
+    Result.Prefix := Prefix;
   end;
 
   function CreateSchemaFile: TSchemaFileConfiguration;
@@ -551,7 +551,7 @@ begin
   FDefinition.id := 'My Namespace';
   FImporter := TSchemaImporter.Create;
 
-  FConfiguration.Namespaces := [CreateNamespaceConfiguration];
+  FConfiguration.Namespaces := [CreateNamespaceConfiguration(FDefinition.id, 'my'), CreateNamespaceConfiguration(FDefinition.id + '/definitions', 'my/defs')];
   FConfiguration.Units := [CreateUnitConfiguration];
 end;
 

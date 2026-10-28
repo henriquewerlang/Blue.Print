@@ -37,8 +37,6 @@ begin
   FJSONDefinition := Schema.SchemaValue.AsType<JSONSchema>;
   FMainClass := MainClass;
 
-  Schema.Importer.AddNamespace(DefinitionsNamespace, Schema.Importer.GetPrefixName(JSONDefinition.id) + '/defs');
-
   LoadSchemaType(MainClass, JSONDefinition);
 
   for var SchemaDefinition in JSONDefinition.definitions.additionalProperties do

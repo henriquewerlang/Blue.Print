@@ -4,6 +4,10 @@
       {
          "Namespace": "http://json-schema.org/draft-04/schema#",
          "Prefix": "json"
+      },
+      {
+         "Namespace": "http://json-schema.org/draft-04/schema#/definitions",
+         "Prefix": "json/defs"
       }
    ],
    "AppendProperties": [
@@ -20,7 +24,7 @@
          "SchemaFiles": [
             {
                "SchemaType": "JSONDraft4",
-               "FileName": "..\\..\\JSON Schema.json",
+               "FileName": "..\\..\\JSON Schema Draft 4.json",
                "MainModuleName": "JSONSchema"
             }
          ]
