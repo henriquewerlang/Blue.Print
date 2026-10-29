@@ -378,6 +378,10 @@ type
     procedure TheUnderlineMustBeConsideredAValidCharactereNameForAPropertyName;
     [Test]
     procedure WhenAnAliasHasSpecialCharacteresInTheNameMustFormatTheNameToRemoveTheInvalidCharacteres;
+    [Test]
+    procedure WhenTheEnumeratorValueIsEmptyCantRaiseErrorWhenConvertingTheSchema;
+    [Test]
+    procedure WhenTheEnumeratorValueIsEmptyMustTheLoadEmptyNameEnumeratorValue;
   end;
 
   [TestFixture]
@@ -3816,6 +3820,65 @@ begin
       public type
         [EnumValue('1, 2, 3')]
         MyEnum = (t1, t2, t3);
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenTheEnumeratorValueIsEmptyCantRaiseErrorWhenConvertingTheSchema;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnum');
+
+      Enumerator.AddEnumeration(EmptyStr);
+
+      Enumerator.AddEnumeration('Value');
+    end;
+
+  Assert.WillNotRaise(
+    procedure
+    begin
+      FImporter.Import(FConfiguration);
+    end);
+end;
+
+procedure TSchemaImporterTest.WhenTheEnumeratorValueIsEmptyMustTheLoadEmptyNameEnumeratorValue;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnum');
+
+      Enumerator.AddEnumeration(EmptyStr);
+
+      Enumerator.AddEnumeration('Value');
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+    {$SCOPEDENUMS ON}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        [EnumValue(', Value')]
+        MyEnum = (tEmpty, Value);
       end;
 
     implementation

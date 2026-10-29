@@ -837,30 +837,31 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := CheckInvalidNames(FormatName(EnumerationDefinition.Name));
     end;
 
+    function FormatEnumerationValueName(const Value: String): String;
+    begin
+      Result := FormatName(Value);
+
+      if Result.IsEmpty then
+        Result := 'tEmpty'
+      else if Result[1].IsNumber then
+        Result := 't' + Result;
+    end;
+
     procedure GenerateEnumerationsDeclaration(const IndentationLevel: Integer; const ModuleDefinition: TTypeModuleDefinition);
     begin
       if Assigned(ModuleDefinition.Enumerations) then
       begin
         var CurrentIndentation := Succ(IndentationLevel);
         var EnumerationList := CreateStringListForItems;
-        var ValueNameChanged := False;
 
         for var Enumerator in ModuleDefinition.Enumerations do
         begin
           EnumerationList.Clear;
 
           for var Value in Enumerator.Values do
-          begin
-            var FormattedValue := FormatName(Value);
+            EnumerationList.Add(FormatEnumerationValueName(Value));
 
-            if FormattedValue[1].IsNumber then
-              FormattedValue := 't' + FormattedValue;
-
-            ValueNameChanged := ValueNameChanged or not SameText(FormattedValue, Value);
-            EnumerationList.Add(FormattedValue);
-          end;
-
-          if ValueNameChanged then
+          if not SameText(Enumerator.Values.Text, EnumerationList.Text) then
             AddLine(CurrentIndentation, '[EnumValue(''%s'')]', [Enumerator.Values.Text]);
 
           AddLine(CurrentIndentation, '%s = (%s);', [FormatEnumerationName(Enumerator), EnumerationList.Text]);
