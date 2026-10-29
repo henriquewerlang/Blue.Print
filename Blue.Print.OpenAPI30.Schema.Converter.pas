@@ -77,6 +77,15 @@ var
 
       Result := ClassDefinition;
     end
+    else if SchemaType.IsEnumStored then
+    begin
+      var EnumeratorDefinition := Schema.Importer.CreateEnumeratorType(ParentModule, TypeName);
+
+      for var EnumeratorValue in SchemaType.enum do
+        EnumeratorDefinition.AddEnumeration(EnumeratorValue.ToString);
+
+      Result := EnumeratorDefinition;
+    end
     else if SchemaType.IsTypeStored then
       case SchemaType.&type of
         OpenAPIDefinition.Schema.TTypeType.array: ;
@@ -112,7 +121,7 @@ begin
   begin
     var TypeDefinition := CreateComponentSchemaType(MainClass, SchemaDefinition.Key, SchemaDefinition.Value);
 
-    if not TypeDefinition.IsClassDefinition then
+    if not TypeDefinition.IsClassDefinition and not TypeDefinition.IsEnumeratorDefinition then
       TypeDefinition := Schema.Importer.CreateAliasType(MainClass, SchemaDefinition.Key, TypeDefinition);
 
     Schema.Importer.AddType(GetComponentesSchemasNamespace, TypeDefinition);

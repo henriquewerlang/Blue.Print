@@ -75,6 +75,18 @@ type
     procedure TheAliasTypeFromAReferenceMustBeTheReferenceClass;
     [Test]
     procedure TheReferenceComponentMustLoadTheReferenceInfoWithTheValuesOfTheSchemaAsExpected;
+    [Test]
+    procedure WhenTheComponentSchemaHasTheEnumPropertyLoadedMustAppendTheTypeInTheEnumeratorsList;
+    [Test]
+    procedure TheComponentSchemaEnumeratorMustBeLoadedInTheTypesList;
+    [Test]
+    procedure WhenAPropertyHasTheEnumPropertyLoadedMustCreateTheEnumeratorTypeInTheParentClassHasExpected;
+    [Test]
+    procedure TheEnumeratorFromComponentsSchemaMustLoadTheNameOfThePropertyHasExpected;
+    [Test]
+    procedure MustLoadTheEnumeratorsValuesFromTheSchemaHasExpected;
+    [Test]
+    procedure MustLoadTheEnumeratorsValuesNamesHasExpected;
   end;
 
 implementation
@@ -154,6 +166,38 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(3, Length(GetMainClass.Classes[0].Properties[0].PropertyType.AsClassDefinition.Properties));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.MustLoadTheEnumeratorsValuesFromTheSchemaHasExpected;
+begin
+  var EnumeratorSchema := FDefinition.components.schemas.AddPatternProperty('MyEnum').Schema;
+
+  EnumeratorSchema.AddEnum('Value');
+
+  EnumeratorSchema.AddEnum('Value2');
+
+  EnumeratorSchema.AddEnum('Value3');
+
+  ImportDefinition;
+
+  Assert.AreEqual(3, GetMainClass.Enumerations[0].Values.Count);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.MustLoadTheEnumeratorsValuesNamesHasExpected;
+begin
+  var EnumeratorSchema := FDefinition.components.schemas.AddPatternProperty('MyEnum').Schema;
+
+  EnumeratorSchema.AddEnum('Value');
+
+  EnumeratorSchema.AddEnum('Value2');
+
+  EnumeratorSchema.AddEnum('Value3');
+
+  ImportDefinition;
+
+  Assert.AreEqual('Value', GetMainClass.Enumerations[0].Values[0]);
+  Assert.AreEqual('Value2', GetMainClass.Enumerations[0].Values[1]);
+  Assert.AreEqual('Value3', GetMainClass.Enumerations[0].Values[2]);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.MustLoadTheOpenAPIConverterInTheConverterListOfTheSchemaImporterInTheInitialization;
@@ -248,6 +292,24 @@ begin
   Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.IntegerType], GetMainClass.Classes[0].Properties[0].PropertyType.AsClassDefinition.Properties[0].PropertyType);
 end;
 
+procedure TOpenAPI30SchemaConverterTest.TheComponentSchemaEnumeratorMustBeLoadedInTheTypesList;
+begin
+  FDefinition.components.schemas.AddPatternProperty('MyEnumerator').Schema.AddEnum('Value');
+
+  ImportDefinition;
+
+  Assert.IsTrue(FImporter.Types.ContainsKey('my/schema:MyEnumerator'));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.TheEnumeratorFromComponentsSchemaMustLoadTheNameOfThePropertyHasExpected;
+begin
+  FDefinition.components.schemas.AddPatternProperty('MyEnum').Schema.AddEnum('Value');
+
+  ImportDefinition;
+
+  Assert.AreEqual('MyEnum', GetMainClass.Enumerations[0].Name);
+end;
+
 procedure TOpenAPI30SchemaConverterTest.ThePropertyNameOfAllOfSchemaMustBeAllOf;
 begin
   var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
@@ -303,6 +365,15 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(1, Length(GetMainClass.Alias));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenAPropertyHasTheEnumPropertyLoadedMustCreateTheEnumeratorTypeInTheParentClassHasExpected;
+begin
+  FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Schema.AddEnum('Value');
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetMainClass.Classes[0].Enumerations));
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenCreateAClassInTheComponentSchemaCantCreateAnAliasFromTheType;
@@ -378,6 +449,15 @@ begin
   Assert.AreEqual(FDefinition.info.title, Schema.Namespace);
 
   Schema.Free;
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheComponentSchemaHasTheEnumPropertyLoadedMustAppendTheTypeInTheEnumeratorsList;
+begin
+  FDefinition.components.schemas.AddPatternProperty('MyEnumerator').Schema.AddEnum('Value');
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetMainClass.Enumerations));
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenThePropertySchemaHasAnObjectDefinitionMustLoadTheClassInsideTheClassOfTheProperty;
