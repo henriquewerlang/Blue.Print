@@ -376,6 +376,8 @@ type
     procedure TheUnderlineMustBeConsideredAValidCharactereNameForAClassName;
     [Test]
     procedure TheUnderlineMustBeConsideredAValidCharactereNameForAPropertyName;
+    [Test]
+    procedure WhenAnAliasHasSpecialCharacteresInTheNameMustFormatTheNameToRemoveTheInvalidCharacteres;
   end;
 
   [TestFixture]
@@ -2382,6 +2384,40 @@ begin
 
       inherited;
     end;
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenAnAliasHasSpecialCharacteresInTheNameMustFormatTheNameToRemoveTheInvalidCharacteres;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    begin
+      FImporter.CreateAliasType(MainClass, 'my.special-alias;name', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        TMySpecialAliasName = System.Integer;
+      end;
+
+    implementation
+
+    end.
 
     ''',
     FConfiguration.Units[0]);

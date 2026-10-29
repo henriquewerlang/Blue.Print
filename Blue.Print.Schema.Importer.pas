@@ -1167,7 +1167,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         var CurrentIndentation := Succ(IndentationLevel);
 
         for var AliasType in ClassDefinition.Alias do
-          AddLine(CurrentIndentation, '%s = %s;', [AliasType.Name, FormatFullTypeName(AliasType.TypeAlias)]);
+          AddLine(CurrentIndentation, '%s = %s;', [FormatTypeName(AliasType), FormatFullTypeName(AliasType.TypeAlias)]);
 
         AddWhiteLine;
       end;
