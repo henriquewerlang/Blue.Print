@@ -67,6 +67,14 @@ type
     procedure TheAllOfPropertyMustLoadThePropertyTypeUsingTheSchemaInfoOfAllOfSchema;
     [Test]
     procedure IfTheAllOfDefinitionIsForANewTypeSchemaThisTypeMustHaveTheNameAllOfType;
+    [Test]
+    procedure WhenCreateAClassInTheComponentSchemaCantCreateAnAliasFromTheType;
+    [Test]
+    procedure WhenAComponentSchemaIsAReferenceToAnotherTypeMustCreateAnAliasType;
+    [Test]
+    procedure TheAliasTypeFromAReferenceMustBeTheReferenceClass;
+    [Test]
+    procedure TheReferenceComponentMustLoadTheReferenceInfoWithTheValuesOfTheSchemaAsExpected;
   end;
 
 implementation
@@ -218,6 +226,17 @@ begin
   FImporter.Free;
 end;
 
+procedure TOpenAPI30SchemaConverterTest.TheAliasTypeFromAReferenceMustBeTheReferenceClass;
+begin
+  FDefinition.components.schemas.AddPatternProperty('MyRef').Reference.AddString('$ref', '#/components/schemas/MyClass');
+
+  FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Alias[0].TypeAlias.ClassType);
+end;
+
 procedure TOpenAPI30SchemaConverterTest.TheAllOfPropertyMustLoadThePropertyTypeUsingTheSchemaInfoOfAllOfSchema;
 begin
   var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
@@ -238,6 +257,18 @@ begin
   ImportDefinition;
 
   Assert.AreEqual('AllOf', GetMainClass.Classes[0].Properties[0].PropertyType.AsClassDefinition.Properties[0].Name);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.TheReferenceComponentMustLoadTheReferenceInfoWithTheValuesOfTheSchemaAsExpected;
+begin
+  FDefinition.components.schemas.AddPatternProperty('MyRef').Reference.AddString('$ref', '#/components/schemas/MyClass');
+
+  FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual('Open API 3.0/components/schemas', GetMainClass.Alias[0].TypeAlias.AsReferenceDefinition.Namespace);
+  Assert.AreEqual('MyClass', GetMainClass.Alias[0].TypeAlias.AsReferenceDefinition.Reference);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.TheSchemaTypeMustLoadThePropertyNameHasExpected;
@@ -261,6 +292,26 @@ begin
   ImportDefinition;
 
   Assert.AreEqual('.MyPropType', GetMainClass.Classes[0].Classes[0].Name);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenAComponentSchemaIsAReferenceToAnotherTypeMustCreateAnAliasType;
+begin
+  FDefinition.components.schemas.AddPatternProperty('MyRef').Reference.AddString('$ref', '#/components/schemas/MyClass');
+
+  FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetMainClass.Alias));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenCreateAClassInTheComponentSchemaCantCreateAnAliasFromTheType;
+begin
+  FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual(0, Length(GetMainClass.Alias));
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenHasASchemaObjectDeclaredInTheComponentsMustAppendTheClassInMainClassList;

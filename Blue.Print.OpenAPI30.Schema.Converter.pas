@@ -99,14 +99,24 @@ var
 
   function CreateComponentSchemaType(const ParentModule: TTypeClassDefinition; const TypeName: String; const SchemaType: OpenAPIDefinition.ComponentsType.TSchemasType.TPatternPropertyType): TTypeDefinition;
   begin
-    Result := CreateSchemaType(ParentModule, TypeName, SchemaType.Schema);
+    if SchemaType.IsReferenceStored then
+      Result := CreateReferenceType(ParentModule, SchemaType.Reference)
+    else
+      Result := CreateSchemaType(ParentModule, TypeName, SchemaType.Schema);
   end;
 
 begin
   Definition := Schema.SchemaValue.AsType<OpenAPIDefinition>;
 
   for var SchemaDefinition in Definition.components.schemas.PatternProperty do
-    Schema.Importer.AddType(GetComponentesSchemasNamespace, CreateComponentSchemaType(MainClass, SchemaDefinition.Key, SchemaDefinition.Value));
+  begin
+    var TypeDefinition := CreateComponentSchemaType(MainClass, SchemaDefinition.Key, SchemaDefinition.Value);
+
+    if not TypeDefinition.IsClassDefinition then
+      TypeDefinition := Schema.Importer.CreateAliasType(MainClass, SchemaDefinition.Key, TypeDefinition);
+
+    Schema.Importer.AddType(GetComponentesSchemasNamespace, TypeDefinition);
+  end;
 end;
 
 function TOpenAPI30SchemaConverter.LoadDefinition(const Schema: TSchema): OpenAPIDefinition;
