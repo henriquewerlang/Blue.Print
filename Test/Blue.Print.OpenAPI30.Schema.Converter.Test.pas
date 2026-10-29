@@ -49,6 +49,24 @@ type
     procedure WhenThePropertySchemaHasAnObjectDefinitionMustLoadTheClassInsideTheClassOfTheProperty;
     [Test]
     procedure TheSubclassNameMustBeThePropertyPlusTheTypeName;
+    [Test]
+    procedure WhenThePropertyTypeIsAnReferenceMustLoadAReferenceType;
+    [Test]
+    procedure MustLoadTheReferenceNamespaceWithTheValueInTheReferenceSchemaChangingTheSharpByTheMainNamespace;
+    [Test]
+    procedure MustLoadTheReferenceNameWithTheLastNameInTheReferenceHasExpected;
+    [Test]
+    procedure WhenTheSchemaHasTheAllOfDefinitionMustLoadAClassTypeDefinitionForThePropertyType;
+    [Test]
+    procedure MustCreateAPropertyForEveryAllOfSchemaInTheSchema;
+    [Test]
+    procedure ThePropertyNameOfAllOfSchemaMustBeAllOf;
+    [Test]
+    procedure WhenHasMoreThanOneAllOfDefinitionMustCreateThePropertiesNamesUsingASequenceValueHasExpected;
+    [Test]
+    procedure TheAllOfPropertyMustLoadThePropertyTypeUsingTheSchemaInfoOfAllOfSchema;
+    [Test]
+    procedure IfTheAllOfDefinitionIsForANewTypeSchemaThisTypeMustHaveTheNameAllOfType;
   end;
 
 implementation
@@ -84,6 +102,17 @@ begin
   Result := FImporter.FindTypeWithPrefix('my:MainClass').AsClassDefinition;
 end;
 
+procedure TOpenAPI30SchemaConverterTest.IfTheAllOfDefinitionIsForANewTypeSchemaThisTypeMustHaveTheNameAllOfType;
+begin
+  var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
+
+  ClassSchema.properties.AddAdditionalProperties('MyProp').Schema.AddAllOf.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+
+  ImportDefinition;
+
+  Assert.AreEqual('.AllOfType', GetMainClass.Classes[0].Properties[0].PropertyType.AsClassDefinition.Properties[0].PropertyType.Name);
+end;
+
 procedure TOpenAPI30SchemaConverterTest.IfThePropertyTypeSchemaHasntAnyInformationMustReturnATValueTypeForPropertyType;
 begin
   var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
@@ -102,9 +131,46 @@ begin
   FImporter.Import(FConfiguration);
 end;
 
+procedure TOpenAPI30SchemaConverterTest.MustCreateAPropertyForEveryAllOfSchemaInTheSchema;
+begin
+  var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
+
+  var PropertyDefinition := ClassSchema.properties.AddAdditionalProperties('MyProp').Schema;
+
+  PropertyDefinition.AddAllOf.Schema;
+
+  PropertyDefinition.AddAllOf.Schema;
+
+  PropertyDefinition.AddAllOf.Schema;
+
+  ImportDefinition;
+
+  Assert.AreEqual(3, Length(GetMainClass.Classes[0].Properties[0].PropertyType.AsClassDefinition.Properties));
+end;
+
 procedure TOpenAPI30SchemaConverterTest.MustLoadTheOpenAPIConverterInTheConverterListOfTheSchemaImporterInTheInitialization;
 begin
   Assert.IsNotNil(TSchemaImporter.Converters[TSchemaType.OpenAPI30]);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.MustLoadTheReferenceNamespaceWithTheValueInTheReferenceSchemaChangingTheSharpByTheMainNamespace;
+begin
+  FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Reference.AddString('$ref', '#/components/schemas/MyClass');
+
+  ImportDefinition;
+
+  Assert.AreEqual('Open API 3.0/components/schemas', GetMainClass.Classes[0].Properties[0].PropertyType.AsReferenceDefinition.Namespace);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.MustLoadTheReferenceNameWithTheLastNameInTheReferenceHasExpected;
+begin
+  FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Reference.AddString('$ref', '#/components/schemas/MyClass2');
+
+  FDefinition.components.schemas.AddPatternProperty('MyClass2').Schema.properties.AddAdditionalProperties('MyProp').Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual('MyClass2', GetMainClass.Classes[0].Properties[0].PropertyType.AsReferenceDefinition.Reference);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.Setup;
@@ -139,7 +205,7 @@ begin
   FDefinition.info.title := 'Open API 3.0';
   FImporter := TSchemaImporter.Create;
 
-  FConfiguration.Namespaces := [CreateNamespaceConfiguration(FDefinition.info.title, 'my'), CreateNamespaceConfiguration(FDefinition.info.title + '/schema', 'my/schema')];
+  FConfiguration.Namespaces := [CreateNamespaceConfiguration(FDefinition.info.title, 'my'), CreateNamespaceConfiguration(FDefinition.info.title + '/components/schemas', 'my/schema')];
   FConfiguration.Units := [CreateUnitConfiguration];
 end;
 
@@ -150,6 +216,28 @@ begin
   FDefinition.Free;
 
   FImporter.Free;
+end;
+
+procedure TOpenAPI30SchemaConverterTest.TheAllOfPropertyMustLoadThePropertyTypeUsingTheSchemaInfoOfAllOfSchema;
+begin
+  var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
+
+  ClassSchema.properties.AddAdditionalProperties('MyProp').Schema.AddAllOf.Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.IntegerType], GetMainClass.Classes[0].Properties[0].PropertyType.AsClassDefinition.Properties[0].PropertyType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.ThePropertyNameOfAllOfSchemaMustBeAllOf;
+begin
+  var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
+
+  ClassSchema.properties.AddAdditionalProperties('MyProp').Schema.AddAllOf.Schema;
+
+  ImportDefinition;
+
+  Assert.AreEqual('AllOf', GetMainClass.Classes[0].Properties[0].PropertyType.AsClassDefinition.Properties[0].Name);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.TheSchemaTypeMustLoadThePropertyNameHasExpected;
@@ -191,6 +279,25 @@ begin
   ImportDefinition;
 
   Assert.IsTrue(FImporter.Types.ContainsKey('my/schema:MyClass'));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenHasMoreThanOneAllOfDefinitionMustCreateThePropertiesNamesUsingASequenceValueHasExpected;
+begin
+  var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
+
+  var PropertyDefinition := ClassSchema.properties.AddAdditionalProperties('MyProp').Schema;
+
+  PropertyDefinition.AddAllOf.Schema;
+
+  PropertyDefinition.AddAllOf.Schema;
+
+  PropertyDefinition.AddAllOf.Schema;
+
+  ImportDefinition;
+
+  Assert.AreEqual('AllOf', GetMainClass.Classes[0].Properties[0].PropertyType.AsClassDefinition.Properties[0].Name);
+  Assert.AreEqual('AllOf2', GetMainClass.Classes[0].Properties[0].PropertyType.AsClassDefinition.Properties[1].Name);
+  Assert.AreEqual('AllOf3', GetMainClass.Classes[0].Properties[0].PropertyType.AsClassDefinition.Properties[2].Name);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenLoadTheSchemaMustLoadTheDefinitionInTheSchemaValueHasExpected;
@@ -254,6 +361,26 @@ begin
   var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
 
   ClassSchema.properties.AddAdditionalProperties('MyProp').Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+
+  ImportDefinition;
+
+  Assert.AreEqual(TTypeClassDefinition, GetMainClass.Classes[0].Properties[0].PropertyType.ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenThePropertyTypeIsAnReferenceMustLoadAReferenceType;
+begin
+  FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Reference.AddString('$ref', '#/components/schemas/MyClass');
+
+  ImportDefinition;
+
+  Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Classes[0].Properties[0].PropertyType.ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheSchemaHasTheAllOfDefinitionMustLoadAClassTypeDefinitionForThePropertyType;
+begin
+  var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
+
+  ClassSchema.properties.AddAdditionalProperties('MyProp').Schema.AddAllOf.Schema;
 
   ImportDefinition;
 

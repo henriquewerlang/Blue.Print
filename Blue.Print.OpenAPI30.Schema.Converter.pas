@@ -23,21 +23,57 @@ procedure TOpenAPI30SchemaConverter.Convert(const MainClass: TTypeClassDefinitio
 var
   Definition: OpenAPIDefinition;
 
-  function GetSchemaNamespace: String;
+  function GetNamespace: String;
   begin
-    Result := Definition.info.title + '/schema';
+    Result := Definition.info.title;
+  end;
+
+  function GetComponentsNamespace: String;
+  begin
+    Result := GetNamespace + '/components';
+  end;
+
+  function GetComponentesSchemasNamespace: String;
+  begin
+    Result := GetComponentsNamespace + '/schemas';
+  end;
+
+  function GeneratePropertyName(const ClassDefinition: TTypeClassDefinition): String;
+  begin
+    Result := 'AllOf';
+
+    if ClassDefinition.HasProperties then
+      Result := Result + Succ(Length(ClassDefinition.Properties)).ToString;
+  end;
+
+  function CreateReferenceType(const ParentModule: TTypeClassDefinition; const Reference: OpenAPIDefinition.Reference): TTypeReferenceDefinition;
+  begin
+    var ReferenceValue := Reference.&string[0].Value.Replace('#', GetNamespace);
+
+    var Namespace := ReferenceValue.Substring(0, ReferenceValue.LastDelimiter('/'));
+
+    Result := Schema.Importer.CreateReferenceType(ParentModule, Namespace, ReferenceValue.Substring(Succ(Namespace.Length)));
   end;
 
   function CreateSchemaType(const ParentModule: TTypeClassDefinition; const TypeName: String; const SchemaType: OpenAPIDefinition.Schema): TTypeDefinition;
+
+    function CreatePropertyType(const ClassDefinition: TTypeClassDefinition; const PropertyName: String; const PropertySchema: OpenAPIDefinition.Schema.TPropertiesType.TAdditionalPropertiesType): TTypeDefinition;
+    begin
+      if PropertySchema.IsReferenceStored then
+        Result := CreateReferenceType(ClassDefinition, PropertySchema.Reference)
+      else
+        Result := CreateSchemaType(ClassDefinition, Format('.%sType', [PropertyName]), PropertySchema.Schema);
+    end;
+
   begin
     Result := Schema.Importer.BuildInTypes[TBuildInType.ValueType];
 
     if SchemaType.IsPropertiesStored then
     begin
-      var ClassDefinition := Schema.Importer.CreateClassType(MainClass, TypeName);
+      var ClassDefinition := Schema.Importer.CreateClassType(ParentModule, TypeName);
 
       for var PropertySchema in SchemaType.properties.additionalProperties do
-        ClassDefinition.AddProperty(PropertySchema.Key, CreateSchemaType(ClassDefinition, Format('.%sType', [PropertySchema.Key]), PropertySchema.Value.Schema));
+        ClassDefinition.AddProperty(PropertySchema.Key, CreatePropertyType(ClassDefinition, PropertySchema.Key, PropertySchema.Value));
 
       Result := ClassDefinition;
     end
@@ -49,7 +85,16 @@ var
         OpenAPIDefinition.Schema.TTypeType.number: Result := Schema.Importer.BuildInTypes[TBuildInType.DoubleType];
         OpenAPIDefinition.Schema.TTypeType.object: Result := Schema.Importer.CreateClassType(ParentModule, TypeName);
         OpenAPIDefinition.Schema.TTypeType.string: Result := Schema.Importer.BuildInTypes[TBuildInType.StringType];
-      end;
+      end
+    else if SchemaType.IsAllOfStored then
+    begin
+      var ClassDefinition := Schema.Importer.CreateClassType(ParentModule, TypeName);
+
+      for var AllOf in SchemaType.allOf do
+        ClassDefinition.AddProperty(GeneratePropertyName(ClassDefinition), CreateSchemaType(ClassDefinition, '.AllOfType', AllOf.Schema));
+
+      Result := ClassDefinition;
+    end;
   end;
 
   function CreateComponentSchemaType(const ParentModule: TTypeClassDefinition; const TypeName: String; const SchemaType: OpenAPIDefinition.ComponentsType.TSchemasType.TPatternPropertyType): TTypeDefinition;
@@ -61,7 +106,7 @@ begin
   Definition := Schema.SchemaValue.AsType<OpenAPIDefinition>;
 
   for var SchemaDefinition in Definition.components.schemas.PatternProperty do
-    Schema.Importer.AddType(GetSchemaNamespace, CreateComponentSchemaType(MainClass, SchemaDefinition.Key, SchemaDefinition.Value));
+    Schema.Importer.AddType(GetComponentesSchemasNamespace, CreateComponentSchemaType(MainClass, SchemaDefinition.Key, SchemaDefinition.Value));
 end;
 
 function TOpenAPI30SchemaConverter.LoadDefinition(const Schema: TSchema): OpenAPIDefinition;
