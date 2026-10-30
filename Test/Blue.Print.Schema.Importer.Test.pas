@@ -399,15 +399,23 @@ type
     [Test]
     procedure WhenCreateAnInterfaceTypeDefinitionMustAppendTheTypeInTheTypesListFromTheParentModule;
     [Test]
-    procedure WhenTheServiceInterfacaNameConfigurationIsLoadedMustCreateTheTypeAndLoadInTheSchemaClass;
+    procedure WhenTheServiceInterfaceNameConfigurationIsLoadedMustCreateTheTypeAndLoadInTheSchemaClass;
     [Test]
-    procedure WhenTheServiceInterfacaNameConfigurationIsntLoadedCantCreateTheInterfaceService;
+    procedure WhenTheServiceInterfaceNameConfigurationIsntLoadedCantCreateTheInterfaceService;
     [Test]
-    procedure WhenTheServiceInterfacaNameConfigurationIsLoadedMustCreateTheInterfaceWithTheNameInTheConfiguration;
+    procedure WhenTheServiceInterfaceNameConfigurationIsLoadedMustCreateTheInterfaceWithTheNameInTheConfiguration;
     [Test]
     procedure WhenCreateTheServiceInterfaceMustLoadTheTypeInTheMainNamespaceOfTheSchema;
     [Test]
     procedure WhenTheServiceInterfaceIsTheSameInTwoSchemaFilesMustLoadTheSameVariable;
+    [Test]
+    procedure WhenTheServiceInterfaceIsCreatedMustLoadTheInterfaceTypeInTheUnitGenerated;
+    [Test]
+    procedure MustLoadAHashValueForTheInterfaceNameAndLoadTheGUIDIdentificationWithTheHashValue;
+    [Test]
+    procedure WhenExistsMoreThanOneInterfaceDeclaredMustLoadAllInTheUnitGenerated;
+    [Test]
+    procedure WhenConvertTheSchemaMustLoadTheCurrentUnitPropertyOfTheSchema;
   end;
 
   [TestFixture]
@@ -1206,6 +1214,21 @@ begin
 
     end.
 
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.MustLoadAHashValueForTheInterfaceNameAndLoadTheGUIDIdentificationWithTheHashValue;
+begin
+  FConfiguration.Units[0].SchemaFiles[0].ServiceInterfaceName := 'MainInterface';
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+      MainInterface = interface
+        ['{100D96E2-C832-EAE7-CD9F-433D0A835F8B}']
+      end;
     ''',
     FConfiguration.Units[0]);
 end;
@@ -2797,7 +2820,6 @@ begin
         TAnotherName = class
         end;
       end;
-
     implementation
 
     end.
@@ -2821,6 +2843,17 @@ begin
   Assert.AreEqual(1, Converter.TimesCalled);
 
   Assert.AreEqual(1, Converter2.TimesCalled);
+end;
+
+procedure TSchemaImporterTest.WhenConvertTheSchemaMustLoadTheCurrentUnitPropertyOfTheSchema;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      Assert.IsNotNil(Schema.CurrentUnit);
+    end;
+
+  FImporter.Import(FConfiguration);
 end;
 
 procedure TSchemaImporterTest.WhenCreateADynamicPropertyClassMustReturnTheClassAsExpected;
@@ -3426,6 +3459,54 @@ begin
 
     procedure MainModule.AddMyProperty(const Name: String; const Value: System.Integer);
     begin
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenExistsMoreThanOneInterfaceDeclaredMustLoadAllInTheUnitGenerated;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
+
+      FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface2');
+
+      FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface3');
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      end;
+
+      MainInterface = interface
+        ['{100D96E2-C832-EAE7-CD9F-433D0A835F8B}']
+      end;
+
+      MainInterface2 = interface
+        ['{A1DB2506-417D-1BB5-B38C-5A3EE0C023EC}']
+      end;
+
+      MainInterface3 = interface
+        ['{25E62A5E-4114-FF0B-2E25-9DF1B5603F2C}']
+      end;
+
+    implementation
+
+    end.
+
     ''',
     FConfiguration.Units[0]);
 end;
@@ -4891,7 +4972,7 @@ begin
     FConfiguration.Units[0]);
 end;
 
-procedure TSchemaImporterTest.WhenTheServiceInterfacaNameConfigurationIsLoadedMustCreateTheInterfaceWithTheNameInTheConfiguration;
+procedure TSchemaImporterTest.WhenTheServiceInterfaceNameConfigurationIsLoadedMustCreateTheInterfaceWithTheNameInTheConfiguration;
 begin
   FConfiguration.Units[0].SchemaFiles[0].ServiceInterfaceName := 'MyInterface';
 
@@ -4905,7 +4986,7 @@ begin
   FImporter.Import(FConfiguration);
 end;
 
-procedure TSchemaImporterTest.WhenTheServiceInterfacaNameConfigurationIsLoadedMustCreateTheTypeAndLoadInTheSchemaClass;
+procedure TSchemaImporterTest.WhenTheServiceInterfaceNameConfigurationIsLoadedMustCreateTheTypeAndLoadInTheSchemaClass;
 begin
   FConfiguration.Units[0].SchemaFiles[0].ServiceInterfaceName := 'MyService';
 
@@ -4919,7 +5000,7 @@ begin
   FImporter.Import(FConfiguration);
 end;
 
-procedure TSchemaImporterTest.WhenTheServiceInterfacaNameConfigurationIsntLoadedCantCreateTheInterfaceService;
+procedure TSchemaImporterTest.WhenTheServiceInterfaceNameConfigurationIsntLoadedCantCreateTheInterfaceService;
 begin
   FConfiguration.Units[0].SchemaFiles[0].ServiceInterfaceName := EmptyStr;
 
@@ -4931,6 +5012,31 @@ begin
     end;
 
   FImporter.Import(FConfiguration);
+end;
+
+procedure TSchemaImporterTest.WhenTheServiceInterfaceIsCreatedMustLoadTheInterfaceTypeInTheUnitGenerated;
+begin
+  FConfiguration.Units[0].SchemaFiles[0].ServiceInterfaceName := 'MainInterface';
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      end;
+
+      MainInterface = interface
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenTheServiceInterfaceIsTheSameInTwoSchemaFilesMustLoadTheSameVariable;

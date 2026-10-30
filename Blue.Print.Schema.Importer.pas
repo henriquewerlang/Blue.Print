@@ -269,13 +269,18 @@ type
   private
     FMethods: TArray<TTypeMethodDefinition>;
   public
+    procedure AddMethod(const Method: TTypeMethodDefinition);
+
     property Methods: TArray<TTypeMethodDefinition> read FMethods write FMethods;
   end;
 
   TTypeUnitDefinition = class(TTypeModuleDefinition)
   private
     FInterfaces: TArray<TTypeInterfaceDefinition>;
+    function GetHasInterfaces: Boolean;
   public
+    property HasInterfaces: Boolean read GetHasInterfaces;
+
     property Interfaces: TArray<TTypeInterfaceDefinition> read FInterfaces write FInterfaces;
   end;
 
@@ -355,6 +360,7 @@ type
 
   TSchema = class
   private
+    FCurrentUnit: TTypeUnitDefinition;
     FImporter: TSchemaImporter;
     FNamespace: String;
     FSchemaText: String;
@@ -365,6 +371,7 @@ type
   public
     destructor Destroy; override;
 
+    property CurrentUnit: TTypeUnitDefinition read FCurrentUnit;
     property Importer: TSchemaImporter read FImporter;
     property MainClass: TTypeClassDefinition read FMainClass;
     property Namespace: String read FNamespace write FNamespace;
@@ -433,7 +440,7 @@ type
 
 implementation
 
-uses System.IOUtils, System.Character, Blue.Print.Types, Blue.Print.Serializer;
+uses System.IOUtils, System.Character, System.Hash, Blue.Print.Types, Blue.Print.Serializer;
 
 const
   SYSTEM_UNIT_NAME = 'System';
@@ -1498,6 +1505,30 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         GenerateImplementation(ClassDefinition);
     end;
 
+    procedure GenerateInterfacesDeclaration(const IndentationLevel: Integer);
+
+      procedure GenerateInterfaceDeclaration(const IndentationLevel: Integer; const InterfaceDefinition: TTypeInterfaceDefinition);
+      begin
+        var CurrentIndentationLevel := Succ(IndentationLevel);
+        var GUIDValue := THashSHA2.GetHashString(InterfaceDefinition.Name);
+        GUIDValue := Format('[''{%s-%s-%s-%s-%s}'']', [GUIDValue.Substring(0, 8), GUIDValue.Substring(8, 4), GUIDValue.Substring(12, 4), GUIDValue.Substring(16, 4), GUIDValue.Substring(20, 12)]).ToUpper;
+
+        AddLine(IndentationLevel, '%s = interface', [InterfaceDefinition.Name]);
+
+        AddLine(CurrentIndentationLevel, GUIDValue);
+
+        AddLine(IndentationLevel, 'end;');
+
+        AddWhiteLine;
+      end;
+
+    begin
+      var CurrentIndentationLevel := Succ(IndentationLevel);
+
+      for var InterfaceDefinition in UnitDefinition.Interfaces do
+        GenerateInterfaceDeclaration(CurrentIndentationLevel, InterfaceDefinition);
+    end;
+
   const
     INDENTATION_STARTING_LEVEL = 0;
 
@@ -1526,6 +1557,8 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       GenerateForwardClassesDeclaration(IndentationLevel, UnitDefinition);
 
       GenerateModuleDeclaration(IndentationLevel, UnitDefinition);
+
+      GenerateInterfacesDeclaration(IndentationLevel);
 
       AddLine(IndentationLevel, 'implementation');
 
@@ -1563,6 +1596,7 @@ begin
 
         CheckSchema(Schema);
 
+        Schema.FCurrentUnit := UnitDefinition;
         Schema.FMainClass := LoadMainClass(UnitDefinition, Schema);
         Schema.FServiceInterface := LoadServiceInterface(UnitDefinition, Schema);
 
@@ -2008,6 +2042,20 @@ end;
 constructor ETypeDuplicateNameInTheNamespace.Create(const Namespace: String; const TypeDefinition: TTypeDefinition);
 begin
   inherited CreateFmt('Duplicate type name "%s" in the namespace "%s"!', [TypeDefinition.Name, Namespace]);
+end;
+
+{ TTypeInterfaceDefinition }
+
+procedure TTypeInterfaceDefinition.AddMethod(const Method: TTypeMethodDefinition);
+begin
+  FMethods := FMethods + [Method];
+end;
+
+{ TTypeUnitDefinition }
+
+function TTypeUnitDefinition.GetHasInterfaces: Boolean;
+begin
+  Result := Assigned(Interfaces);
 end;
 
 end.
