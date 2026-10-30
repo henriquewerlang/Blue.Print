@@ -32,18 +32,26 @@ type
   private
     FConverter: TSchemaConverterMock;
     FConfiguration: TConfiguration;
+    FCurrentTestFolder: String;
     FImporter: TSchemaImporter;
 
     function AddAppendProperty(const TypeName, PropertyName, PropertyType: String): TAppendProperty;
     function CreateNamespace(const Namespace, Prefix: String): TNamespaceConfiguration;
+    function GenerateTempFileName: String;
 
     procedure CompareUnitDeclaration(const UnitDeclaration: String; const UnitConfiguration: TUnitConfiguration);
     procedure LinesCompareUnitDeclaration(const LinesToCompare: String; const UnitConfiguration: TUnitConfiguration);
+
+    property CurrentTestFolder: String read FCurrentTestFolder write FCurrentTestFolder;
   public
     [Setup]
     procedure Setup;
+    [SetupFixture]
+    procedure SetupFixture;
     [TearDown]
     procedure TearDown;
+    [TearDownFixture]
+    procedure TearDownFixture;
     [Test]
     procedure WhenTryToImportWithoutAConfigurationLoadedMustRaiseError;
     [Test]
@@ -463,7 +471,6 @@ uses System.IOUtils, System.Classes, Blue.Print.Serializer, Blue.Print.Types;
 
 const
   EMPTY_SCHEMA_FILE = 'Empty Schema.json';
-  OUTPUT_FOLDER_TEST = 'Blue Print Output Test\';
 
 { TSchemaImporterTest }
 
@@ -693,6 +700,11 @@ begin
   Assert.AreEqual(3, Converter.TimesCalled);
 end;
 
+function TSchemaImporterTest.GenerateTempFileName: String;
+begin
+  Result := CurrentTestFolder + TGUID.NewGuid.ToString + '.tmp';
+end;
+
 procedure TSchemaImporterTest.IfAnUnitDontHaveTheNameLoadedMustRaiseError;
 begin
   FConfiguration.Units[1].Name := EmptyStr;
@@ -771,7 +783,7 @@ procedure TSchemaImporterTest.IfTheOutputFolderIsARelativePathMustLoadTheRealPat
 begin
   var Converter := TSchemaConverterMock.Create;
   FConfiguration.OutputFolder := '.\';
-  var OutputPath := TPath.GetTempPath + OUTPUT_FOLDER_TEST + 'RelativePath\';
+  var OutputPath := CurrentTestFolder + 'RelativePath\';
   TSchemaImporter.Converters[TSchemaType.OpenAPI30] := Converter;
 
   var FileName := OutputPath + 'MyConfiguration.json';
@@ -787,7 +799,7 @@ end;
 
 procedure TSchemaImporterTest.IfTheSchemaFileIsARelativePathMustLoadTheFullPathFromFolderInTheConfigurationFileName;
 begin
-  var ConfigFileFolder := TPath.GetTempPath + OUTPUT_FOLDER_TEST;
+  var ConfigFileFolder := CurrentTestFolder;
   var Converter := TSchemaConverterMock.Create;
   var SchemaFileName := '.\RelativePath\SchemaFile.txt';
   TSchemaImporter.Converters[TSchemaType.OpenAPI20] := Converter;
@@ -1571,9 +1583,11 @@ procedure TSchemaImporterTest.Setup;
   function CreateSchemaFile(const MainModuleName: String): TSchemaFileConfiguration;
   begin
     Result := TSchemaFileConfiguration.Create;
-    Result.FileName := TPath.GetTempFileName;
+    Result.FileName := GenerateTempFileName;
     Result.MainModuleName := MainModuleName;
     Result.SchemaType := TSchemaType.OpenAPI20;
+
+    TFile.WriteAllText(Result.FileName, EmptyStr);
   end;
 
 begin
@@ -1581,25 +1595,35 @@ begin
 
   FConfiguration := TConfiguration.Create;
   FConfiguration.Namespaces := [CreateNamespace('My Namespace', 'my')];
-  FConfiguration.OutputFolder := TPath.GetTempPath + OUTPUT_FOLDER_TEST + ChangeFileExt(ExtractFileName(TPath.GetTempFileName), EmptyStr);
+  FConfiguration.OutputFolder := CurrentTestFolder;
   FConfiguration.Units := [CreateUnit('MyUnit', [CreateSchemaFile('MainModule')]), CreateUnit('MyUnit2', [CreateSchemaFile('MainModule2'), CreateSchemaFile('MainModule3')])];
   FConverter := TSchemaConverterMock.Create;
   FImporter := TSchemaImporter.Create;
   TSchemaImporter.Converters[TSchemaType.OpenAPI20] := FConverter;
 end;
 
+procedure TSchemaImporterTest.SetupFixture;
+begin
+  CurrentTestFolder := Format('%sBlue Print Output Test\%s\', [TPath.GetTempPath, TGUID.NewGuid.ToString]);
+
+  ForceDirectories(CurrentTestFolder);
+end;
+
 procedure TSchemaImporterTest.TearDown;
 begin
-  var OutputDirectory := TPath.GetTempPath + OUTPUT_FOLDER_TEST;
-
-  if TDirectory.Exists(OutputDirectory) then
-    TDirectory.Delete(OutputDirectory, True);
-
   FConfiguration.Free;
 
   FImporter.Free;
 
   inherited;
+end;
+
+procedure TSchemaImporterTest.TearDownFixture;
+begin
+  var RemoveDirectory := CurrentTestFolder + '..\';
+
+  if TDirectory.Exists(RemoveDirectory) then
+    TDirectory.Delete(RemoveDirectory, True);
 end;
 
 procedure TSchemaImporterTest.TheAliasDeclarationMustBeLoadedAfterTheForwardClassDeclaration;
@@ -3399,7 +3423,7 @@ end;
 procedure TSchemaImporterTest.WhenImportTheSchemaWithAFileConfigurationMustLoadTheConfigurationAndImportTheSchemaHasExpected;
 begin
   var Converter := TSchemaConverterMock.Create;
-  var FileName := TPath.GetTempFileName;
+  var FileName := GenerateTempFileName;
   TSchemaImporter.Converters[TSchemaType.OpenAPI30] := Converter;
 
   FConfiguration.Units[0].SchemaFiles[0].SchemaType := TSchemaType.OpenAPI30;
