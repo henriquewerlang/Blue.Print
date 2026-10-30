@@ -9,7 +9,7 @@ type
   private
     function LoadDefinition(const Schema: TSchema): OpenAPIDefinition;
 
-    procedure Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
+    procedure Convert(const Schema: TSchema);
     procedure LoadSchema(const Schema: TSchema);
   end;
 
@@ -19,7 +19,7 @@ uses System.SysUtils, Blue.Print.Serializer, Blue.Print.Types;
 
 { TOpenAPI30SchemaConverter }
 
-procedure TOpenAPI30SchemaConverter.Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
+procedure TOpenAPI30SchemaConverter.Convert(const Schema: TSchema);
 var
   Definition: OpenAPIDefinition;
 
@@ -119,10 +119,10 @@ begin
 
   for var SchemaDefinition in Definition.components.schemas.PatternProperty do
   begin
-    var TypeDefinition := CreateComponentSchemaType(MainClass, SchemaDefinition.Key, SchemaDefinition.Value);
+    var TypeDefinition := CreateComponentSchemaType(Schema.MainClass, SchemaDefinition.Key, SchemaDefinition.Value);
 
     if not TypeDefinition.IsClassDefinition and not TypeDefinition.IsEnumeratorDefinition then
-      TypeDefinition := Schema.Importer.CreateAliasType(MainClass, SchemaDefinition.Key, TypeDefinition);
+      TypeDefinition := Schema.Importer.CreateAliasType(Schema.MainClass, SchemaDefinition.Key, TypeDefinition);
 
     Schema.Importer.AddType(GetComponentesSchemasNamespace, TypeDefinition);
   end;

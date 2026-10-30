@@ -407,17 +407,11 @@ type
     [Test]
     procedure BeforeCallConvertProcedureMustRaiseAnErrorIfNotLoadedTheSchemaBefore;
     [Test]
-    procedure WhenCallTheLoadSchemaMustLoadThePayloadInThePropertyHasExpected;
-    [Test]
     procedure WhenCallTheConvertFunctionWithoutAMainsClassLoadedMustRaiseAnError;
-    [Test]
-    procedure WhenTheSchemaDoesntHaveTheSchemaFileLoadedMustRaiseAnError;
     [Test]
     procedure WhenCallTheLoadSchemaProcedureMustLoadTheNamespacePropertyOfTheSchema;
     [Test]
     procedure WhenLoadTheSchemaMustLoadTheNamespacePropertyInTheSchemaNamespace;
-    [Test]
-    procedure WhenTheImporterIsntLoadedMustRaiseAnError;
   end;
 
   [TestFixture]
@@ -440,15 +434,15 @@ type
     FTimesCalled: Integer;
     FSchemaText: String;
     FNamespace: String;
-    FWhenExecuteConvert: TProc<TTypeClassDefinition, TSchema>;
+    FWhenExecuteConvert: TProc<TSchema>;
     FWhenExecuteLoadSchema: TProc<TSchema>;
 
-    procedure Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
+    procedure Convert(const Schema: TSchema);
     procedure LoadSchema(const Schema: TSchema);
   public
     constructor Create;
 
-    property WhenExecuteConvert: TProc<TTypeClassDefinition, TSchema> read FWhenExecuteConvert write FWhenExecuteConvert;
+    property WhenExecuteConvert: TProc<TSchema> read FWhenExecuteConvert write FWhenExecuteConvert;
     property WhenExecuteLoadSchema: TProc<TSchema> read FWhenExecuteLoadSchema write FWhenExecuteLoadSchema;
 
     property Namespace: String read FNamespace write FNamespace;
@@ -485,8 +479,10 @@ end;
 procedure TSchemaImporterTest.AllArrayPropertiesWithAClassDefinitionTypeMustDestroyTheItemsInTheDestroyImplementation;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
+      var MainClass := Schema.MainClass;
+
       MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass, MainClass));
 
       MainClass.AddProperty('MyProperty2', FImporter.CreateArrayType(MainClass, MainClass));
@@ -523,8 +519,10 @@ end;
 procedure TSchemaImporterTest.AllDynamicPropertiesWithAClassDefinitionTypeMustDestroyTheItemsInTheDestroyImplementation;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
+      var MainClass := Schema.MainClass;
+
       MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(MainClass, MainClass));
 
       MainClass.AddProperty('MyProperty2', FImporter.CreateDynamicPropertyType(MainClass, MainClass));
@@ -561,8 +559,10 @@ end;
 procedure TSchemaImporterTest.AllPropertiesWithAClassDefinitionTypeMustCreateTheFreeImplementationInTheDestroyProcedure;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
+      var MainClass := Schema.MainClass;
+
       MainClass.AddProperty('MyProperty', MainClass);
       MainClass.AddProperty('MyProperty2', MainClass);
       MainClass.AddProperty('MyProperty3', MainClass);
@@ -625,8 +625,10 @@ end;
 procedure TSchemaImporterTest.CantDuplicateTheUsesList;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
+      var MainClass := Schema.MainClass;
+
       MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.ValueType]);
 
       MainClass.AddProperty('MyProperty2', FImporter.BuildInTypes[TBuildInType.ValueType]);
@@ -733,9 +735,9 @@ end;
 procedure TSchemaImporterTest.IfTheEnumeratorValueHasAReservedNameMustAppendTheAmpersandBeforeTheName;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnum');
+      var Enumerator := FImporter.CreateEnumeratorType(Schema.MainClass, 'MyEnum');
 
       Enumerator.AddEnumeration('if');
     end;
@@ -807,9 +809,9 @@ begin
   var ConfigFileName := ConfigFileFolder + 'MyConfiguration.json';
 
   Converter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      if MainClass.Name = 'MainModule' then
+      if Schema.MainClass.Name = 'MainModule' then
         Assert.AreEqual('My schema', Schema.SchemaText);
     end;
 
@@ -1003,10 +1005,10 @@ begin
   FConfiguration.AppendProperties := [AddAppendProperty('my:TMyClass', 'NewProperty', 'System:Integer')];
 
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      if MainClass.Name = 'MainModule' then
-        FImporter.AddType('My Namespace', FImporter.CreateClassType(MainClass, 'TMyClass'));
+      if Schema.MainClass.Name = 'MainModule' then
+        FImporter.AddType('My Namespace', FImporter.CreateClassType(Schema.MainClass, 'TMyClass'));
     end;
 
   FImporter.Import(FConfiguration);
@@ -1033,9 +1035,9 @@ end;
 procedure TSchemaImporterTest.MustAppendTheUnitNameBeforeTheTypeNameToAvoidDuplicateNames;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      Schema.MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]);
     end;
 
   FImporter.Import(FConfiguration);
@@ -1089,9 +1091,9 @@ begin
   TSchemaImporter.Converters[TSchemaType.OpenAPI30] := Converter;
 
   Converter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      Assert.AreEqual('MyMainClassName', MainClass.Name);
+      Assert.AreEqual('MyMainClassName', Schema.MainClass.Name);
     end;
 
   FImporter.Import(FConfiguration);
@@ -1100,9 +1102,9 @@ end;
 procedure TSchemaImporterTest.MustDeclareAllEnumerationsInTheClassDefinition;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnumerator');
+      var Enumerator := FImporter.CreateEnumeratorType(Schema.MainClass, 'MyEnumerator');
 
       Enumerator.AddEnumeration('a');
 
@@ -1110,7 +1112,7 @@ begin
 
       Enumerator.AddEnumeration('c');
 
-      Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnumerator2');
+      Enumerator := FImporter.CreateEnumeratorType(Schema.MainClass, 'MyEnumerator2');
 
       Enumerator.AddEnumeration('a');
 
@@ -1151,11 +1153,11 @@ end;
 procedure TSchemaImporterTest.MustDeclareAllPropertiesOfTheClassHasExpected;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]);
-      MainClass.AddProperty('MyProperty2', FImporter.BuildInTypes[TBuildInType.IntegerType]);
-      MainClass.AddProperty('MyProperty3', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      Schema.MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      Schema.MainClass.AddProperty('MyProperty2', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      Schema.MainClass.AddProperty('MyProperty3', FImporter.BuildInTypes[TBuildInType.IntegerType]);
     end;
 
   FImporter.Import(FConfiguration);
@@ -1241,11 +1243,11 @@ end;
 procedure TSchemaImporterTest.MustLoadTheForwardClassDeclarationInTheUnitDeclaration;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
 
       procedure AddClass(const Name: String);
       begin
-        FImporter.CreateClassType(MainClass, Name);
+        FImporter.CreateClassType(Schema.MainClass, Name);
       end;
 
     begin
@@ -1377,11 +1379,11 @@ end;
 procedure TSchemaImporterTest.NeedToGroupTheAddFunctionsAndTheIsStoredFunctions;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProp', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType])).Optional := True;
-      MainClass.AddProperty('MyProp2', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType])).Optional := True;
-      MainClass.AddProperty('MyProp3', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType])).Optional := True;
+      Schema.MainClass.AddProperty('MyProp', FImporter.CreateArrayType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType])).Optional := True;
+      Schema.MainClass.AddProperty('MyProp2', FImporter.CreateArrayType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType])).Optional := True;
+      Schema.MainClass.AddProperty('MyProp3', FImporter.CreateArrayType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType])).Optional := True;
     end;
 
   FImporter.Import(FConfiguration);
@@ -1468,9 +1470,9 @@ end;
 procedure TSchemaImporterTest.OnlyArrayWithAClassDefinitionMustDeclareTheDestroyProcedureInPublicSection;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
     end;
 
   FImporter.Import(FConfiguration);
@@ -1492,13 +1494,13 @@ end;
 procedure TSchemaImporterTest.OnlyDynamicPropertiesWithAClassDefinitionMustCreateTheDestroyItemsSection;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
 
-      MainClass.AddProperty('MyProperty2', FImporter.CreateDynamicPropertyType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+      Schema.MainClass.AddProperty('MyProperty2', FImporter.CreateDynamicPropertyType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
 
-      MainClass.AddProperty('MyProperty3', FImporter.CreateDynamicPropertyType(MainClass, MainClass));
+      Schema.MainClass.AddProperty('MyProperty3', FImporter.CreateDynamicPropertyType(Schema.MainClass, Schema.MainClass));
     end;
 
   FImporter.Import(FConfiguration);
@@ -1524,9 +1526,9 @@ end;
 procedure TSchemaImporterTest.OnlyDynamicPropertyWithAClassDefinitionMustDeclareTheDestroyProcedureInPublicSection;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
     end;
 
   FImporter.Import(FConfiguration);
@@ -1548,11 +1550,11 @@ end;
 procedure TSchemaImporterTest.OnlyPropertiesWithAClassDefinitionMustHaveTheFreeImplementation;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]);
-      MainClass.AddProperty('MyProperty2', FImporter.BuildInTypes[TBuildInType.IntegerType]);
-      MainClass.AddProperty('MyProperty3', MainClass);
+      Schema.MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      Schema.MainClass.AddProperty('MyProperty2', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      Schema.MainClass.AddProperty('MyProperty3', Schema.MainClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -1629,17 +1631,17 @@ end;
 procedure TSchemaImporterTest.TheAliasDeclarationMustBeLoadedAfterTheForwardClassDeclaration;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
 
       function AddClass(const Name: String): TTypeClassDefinition;
       begin
-        Result := FImporter.CreateClassType(MainClass, Name);
+        Result := FImporter.CreateClassType(Schema.MainClass, Name);
       end;
 
     begin
       AddClass('TMyClass');
 
-      FImporter.CreateAliasType(MainClass, 'MyAlias', AddClass('TMyClass2'));
+      FImporter.CreateAliasType(Schema.MainClass, 'MyAlias', AddClass('TMyClass2'));
 
       AddClass('TMyClass3');
     end;
@@ -1686,11 +1688,11 @@ end;
 procedure TSchemaImporterTest.TheAliasTypeMustBeDeclaredWithTheFullTypeName;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      FImporter.CreateAliasType(MainClass, 'Alias', FImporter.BuildInTypes[TBuildInType.IntegerType]);
-      FImporter.CreateAliasType(MainClass, 'Alias2', FImporter.BuildInTypes[TBuildInType.ValueType]);
-      FImporter.CreateAliasType(MainClass, 'Alias3', MainClass);
+      FImporter.CreateAliasType(Schema.MainClass, 'Alias', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      FImporter.CreateAliasType(Schema.MainClass, 'Alias2', FImporter.BuildInTypes[TBuildInType.ValueType]);
+      FImporter.CreateAliasType(Schema.MainClass, 'Alias3', Schema.MainClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -1855,7 +1857,7 @@ end;
 procedure TSchemaImporterTest.ThePublicTypeDeclarationMustBeRecursive;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
 
       function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
       begin
@@ -1863,7 +1865,7 @@ begin
       end;
 
     begin
-      AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', MainClass)));
+      AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', Schema.MainClass)));
     end;
 
   FImporter.Import(FConfiguration);
@@ -1908,19 +1910,19 @@ end;
 procedure TSchemaImporterTest.ThePublicTypeSectionMustBeDeclaredBeforeThePrivateSection;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      if MainClass.Name = 'MainModule' then
+      if Schema.MainClass.Name = 'MainModule' then
       begin
-        var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnumerator');
+        var Enumerator := FImporter.CreateEnumeratorType(Schema.MainClass, 'MyEnumerator');
 
         Enumerator.AddEnumeration('Value');
 
         FImporter.AddType('My Namespace', Enumerator);
 
-        var Reference := FImporter.CreateReferenceType(MainClass, 'My Namespace', 'MyEnumerator');
+        var Reference := FImporter.CreateReferenceType(Schema.MainClass, 'My Namespace', 'MyEnumerator');
 
-        MainClass.AddProperty('MyProperty', Reference);
+        Schema.MainClass.AddProperty('MyProperty', Reference);
       end;
     end;
 
@@ -1958,10 +1960,10 @@ end;
 procedure TSchemaImporterTest.TheSelfUnitCantBeLoadedInTheUsesList;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      if MainClass.ParentModule.Name = 'MyUnit' then
-        MainClass.AddProperty('MyProperty', FImporter.CreateEnumeratorType(MainClass, 'SimpleType'));
+      if Schema.MainClass.ParentModule.Name = 'MyUnit' then
+        Schema.MainClass.AddProperty('MyProperty', FImporter.CreateEnumeratorType(Schema.MainClass, 'SimpleType'));
     end;
 
   FImporter.Import(FConfiguration);
@@ -2041,9 +2043,9 @@ end;
 procedure TSchemaImporterTest.TheUnderlineMustBeConsideredAValidCharactereNameForAClassName;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      FImporter.CreateClassType(MainClass, '_valid_Class_Name_');
+      FImporter.CreateClassType(Schema.MainClass, '_valid_Class_Name_');
     end;
 
   FImporter.Import(FConfiguration);
@@ -2067,9 +2069,9 @@ end;
 procedure TSchemaImporterTest.TheUnderlineMustBeConsideredAValidCharactereNameForAPropertyName;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      FImporter.CreateClassType(MainClass, 'MyClass').AddProperty('_valid_property_name_', FImporter.BuildInTypes[TBuildInType.StringType]);
+      FImporter.CreateClassType(Schema.MainClass, 'MyClass').AddProperty('_valid_property_name_', FImporter.BuildInTypes[TBuildInType.StringType]);
     end;
 
   FImporter.Import(FConfiguration);
@@ -2098,7 +2100,7 @@ procedure TSchemaImporterTest.TheUnitNameCantBeAppendedToTheTypeNameInTheTypesLi
 begin
   var ParentModule := TTypeUnitDefinition.Create;
 
-  var ClassDefinition := FImporter.CreateClassType(ParentModule, 'MainClass');
+  var ClassDefinition := FImporter.CreateClassType(ParentModule, 'Schema.MainClass');
 
   FImporter.AddNamespace('My Namespace', 'my');
 
@@ -2106,7 +2108,7 @@ begin
 
   Assert.AreEqual(1, FImporter.Types.Count);
 
-  Assert.AreEqual('my:MainClass', FImporter.Types.Keys.ToArray[0]);
+  Assert.AreEqual('my:Schema.MainClass', FImporter.Types.Keys.ToArray[0]);
 
   ParentModule.Free;
 end;
@@ -2114,11 +2116,11 @@ end;
 procedure TSchemaImporterTest.WhenAClassHasMoreThanOneClassMustLoadAllClassesInThePublicTypeDefinition;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
 
       procedure AddClass(const Name: String);
       begin
-        FImporter.CreateClassType(MainClass, Name);
+        FImporter.CreateClassType(Schema.MainClass, Name);
       end;
 
     begin
@@ -2169,7 +2171,7 @@ end;
 procedure TSchemaImporterTest.WhenAClassHasSubClassesMustLoadTheImplementationsOfGetFunctionFromTheSubClassesToo;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
 
       function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
       begin
@@ -2177,9 +2179,9 @@ begin
       end;
 
     begin
-      var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', MainClass)));
+      var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', Schema.MainClass)));
 
-      ClassDefinition.AddProperty('MyProp', MainClass);
+      ClassDefinition.AddProperty('MyProp', Schema.MainClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -2248,7 +2250,7 @@ end;
 procedure TSchemaImporterTest.WhenAClassHasSubClassesMustLoadTheImplementationsOfSetFunctionFromTheSubClassesToo;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
 
       function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
       begin
@@ -2256,7 +2258,7 @@ begin
       end;
 
     begin
-      var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', MainClass)));
+      var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', Schema.MainClass)));
 
       ClassDefinition.AddProperty('MyProp', FImporter.BuildInTypes[TBuildInType.IntegerType]).Optional := True;
     end;
@@ -2319,11 +2321,11 @@ end;
 procedure TSchemaImporterTest.WhenAClassTypeDefinitionIsFlatMustAppendTheFlatAttributeInTheClassDeclaration;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      FImporter.CreateClassType(MainClass, 'MyClass').Flat := True;
+      FImporter.CreateClassType(Schema.MainClass, 'MyClass').Flat := True;
 
-      FImporter.CreateClassType(MainClass, 'MyClass2');
+      FImporter.CreateClassType(Schema.MainClass, 'MyClass2');
     end;
 
   FImporter.Import(FConfiguration);
@@ -2349,7 +2351,7 @@ procedure TSchemaImporterTest.WhenAddDuplicateTypeInTheTypesListMustRaiseAnError
 begin
   var ParentModule := TTypeUnitDefinition.Create;
 
-  var ClassDefinition := FImporter.CreateClassType(ParentModule, 'MainClass');
+  var ClassDefinition := FImporter.CreateClassType(ParentModule, 'Schema.MainClass');
 
   FImporter.AddNamespace('My Namespace', 'my');
 
@@ -2367,9 +2369,9 @@ end;
 procedure TSchemaImporterTest.WhenADynamicPropertyHasAClassDefinitionHasInternalTypeMustDeclareTheDestroyProcedure;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(MainClass,MainClass));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(Schema.MainClass,Schema.MainClass));
     end;
 
   FImporter.Import(FConfiguration);
@@ -2392,9 +2394,9 @@ end;
 procedure TSchemaImporterTest.WhenADynamicPropertyHasAClassDefinitionHasInternalTypeMustDestroyItemValueInTheDestructorImplementation;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(MainClass, MainClass));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(Schema.MainClass, Schema.MainClass));
     end;
 
   FImporter.Import(FConfiguration);
@@ -2420,9 +2422,9 @@ end;
 procedure TSchemaImporterTest.WhenAnAliasHasSpecialCharacteresInTheNameMustFormatTheNameToRemoveTheInvalidCharacteres;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      FImporter.CreateAliasType(MainClass, 'my.special-alias;name', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      FImporter.CreateAliasType(Schema.MainClass, 'my.special-alias;name', FImporter.BuildInTypes[TBuildInType.IntegerType]);
     end;
 
   FImporter.Import(FConfiguration);
@@ -2454,9 +2456,9 @@ end;
 procedure TSchemaImporterTest.WhenAnArrayHasAClassDefinitionHasInternalTypeMustDestroyTheArrayItemsInTheDestructorImplementation;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass, MainClass));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(Schema.MainClass, Schema.MainClass));
     end;
 
   FImporter.Import(FConfiguration);
@@ -2482,9 +2484,9 @@ end;
 procedure TSchemaImporterTest.WhenAnArrayHasAClassDefinitionWithInternalTypeMustDeclareTheDestroyProcedure;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass,MainClass));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(Schema.MainClass,Schema.MainClass));
     end;
 
   FImporter.Import(FConfiguration);
@@ -2507,11 +2509,11 @@ end;
 procedure TSchemaImporterTest.WhenAnArrayIsDeclaredTheArrayTypeMustBeFromSystemAndTheArrayTypeItemMustHaveTheFullPathToTheTypeName;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      var ArrayType := FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      var ArrayType := FImporter.CreateArrayType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]);
 
-      FImporter.CreateAliasType(MainClass, 'MyArray', ArrayType);
+      FImporter.CreateAliasType(Schema.MainClass, 'MyArray', ArrayType);
     end;
 
   FImporter.Import(FConfiguration);
@@ -2601,9 +2603,9 @@ end;
 procedure TSchemaImporterTest.WhenAPropertyUseATypeOutSideOfTheUnitBeenDeclaretedMustLoadTheUsesSectionWithTheNameOfTheUnitOfTheTypeUsed;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.ValueType]);
+      Schema.MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.ValueType]);
     end;
 
   FImporter.Import(FConfiguration);
@@ -2639,7 +2641,7 @@ end;
 procedure TSchemaImporterTest.WhenASubclassHasAPropertyWithATypeFromAnotherUnitMustLoadTheUnitNameInTheUsesList;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
 
       function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
       begin
@@ -2647,7 +2649,7 @@ begin
       end;
 
     begin
-      var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', MainClass)));
+      var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', Schema.MainClass)));
 
       ClassDefinition.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.ValueType]);
     end;
@@ -2672,7 +2674,7 @@ end;
 procedure TSchemaImporterTest.WhenChekingThePropertiesToImplementTheFunctionsMustBeDoneCorrectly;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
 
       function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
       begin
@@ -2680,15 +2682,15 @@ begin
       end;
 
     begin
-      if MainClass.Name = 'MainModule' then
+      if Schema.MainClass.Name = 'MainModule' then
       begin
-        var ClassDefinition := AddClass('TMyClass', MainClass);
+        var ClassDefinition := AddClass('TMyClass', Schema.MainClass);
 
-        ClassDefinition.AddProperty('MyProp', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+        ClassDefinition.AddProperty('MyProp', FImporter.CreateArrayType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
 
-        AddClass('TMyClass2', MainClass);
+        AddClass('TMyClass2', Schema.MainClass);
 
-        AddClass('TMyClass3', MainClass);
+        AddClass('TMyClass3', Schema.MainClass);
       end;
     end;
 
@@ -2751,10 +2753,10 @@ begin
   FConfiguration.TypeConfiguration := [TypeConfiguration];
 
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      if MainClass.Name = 'MainModule' then
-        FImporter.AddType('My Namespace', FImporter.CreateClassType(MainClass, 'MyClass'));
+      if Schema.MainClass.Name = 'MainModule' then
+        FImporter.AddType('My Namespace', FImporter.CreateClassType(Schema.MainClass, 'MyClass'));
     end;
 
   FImporter.Import(FConfiguration);
@@ -2858,7 +2860,7 @@ end;
 procedure TSchemaImporterTest.WhenCreateAReferenceTypeInsideASubClassDeclarationMustLoadTheFullTypeNameUsingTheParentModuleFromTheReferenceNotTheTypeReferece;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
 
       function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
       begin
@@ -2866,7 +2868,7 @@ begin
       end;
 
     begin
-      var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', MainClass)));
+      var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', Schema.MainClass)));
 
       ClassDefinition.AddProperty('MyProp', FImporter.CreateReferenceType(ClassDefinition, 'My Namespace', 'MainModule'));
     end;
@@ -2915,9 +2917,9 @@ end;
 procedure TSchemaImporterTest.WhenCreateTheAddFunctionForAnArrayMustUseThePropertyToLoadTheArrayValue;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
     end;
 
   FImporter.Import(FConfiguration);
@@ -3094,9 +3096,9 @@ end;
 procedure TSchemaImporterTest.WhenDeclareADynamicTypeMustLoadThePropertyAsExpected;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyDynamic', FImporter.CreateDynamicPropertyType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+      Schema.MainClass.AddProperty('MyDynamic', FImporter.CreateDynamicPropertyType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
     end;
 
   FImporter.Import(FConfiguration);
@@ -3116,9 +3118,9 @@ end;
 procedure TSchemaImporterTest.WhenDeclareThePropertyAddFunctionMustFormatTheNameToFixTheLowerCaseFirstCharactere;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('myProperty', FImporter.CreateArrayType(MainClass, MainClass));
+      Schema.MainClass.AddProperty('myProperty', FImporter.CreateArrayType(Schema.MainClass, Schema.MainClass));
     end;
 
   FImporter.Import(FConfiguration);
@@ -3173,9 +3175,9 @@ end;
 procedure TSchemaImporterTest.WhenDeclareThePropertyFieldMustFormatTheNameToFixTheLowerCaseFirstCharactere;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('lower', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      Schema.MainClass.AddProperty('lower', FImporter.BuildInTypes[TBuildInType.IntegerType]);
     end;
 
   FImporter.Import(FConfiguration);
@@ -3209,9 +3211,9 @@ end;
 procedure TSchemaImporterTest.WhenDeclareThePropertyGetFunctionMustFormatTheNameToFixTheLowerCaseFirstCharactere;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('myProperty', FImporter.CreateClassType(MainClass, 'MyClass'));
+      Schema.MainClass.AddProperty('myProperty', FImporter.CreateClassType(Schema.MainClass, 'MyClass'));
     end;
 
   FImporter.Import(FConfiguration);
@@ -3270,9 +3272,9 @@ end;
 procedure TSchemaImporterTest.WhenDeclareThePropertySetFunctionMustFormatTheNameToFixTheLowerCaseFirstCharactere;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('myProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]).Optional := True;
+      Schema.MainClass.AddProperty('myProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]).Optional := True;
     end;
 
   FImporter.Import(FConfiguration);
@@ -3318,9 +3320,9 @@ end;
 procedure TSchemaImporterTest.WhenDontHaveAnyArrayPropertyWithAClassDefinitionCantCreateTheDestroyProcedureImplementation;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
     end;
 
   FImporter.Import(FConfiguration);
@@ -3340,9 +3342,9 @@ end;
 procedure TSchemaImporterTest.WhenDontHaveAnyDynamicPropertyWithAClassDefinitionCantCreateTheDestroyProcedureImplementation;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateDynamicPropertyType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
     end;
 
   FImporter.Import(FConfiguration);
@@ -3467,11 +3469,11 @@ end;
 procedure TSchemaImporterTest.WhenTheArrayTypeIsAnObjectMustCreateTheAddFunctionForTheType;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass, MainClass));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(Schema.MainClass, Schema.MainClass));
 
-      MainClass.AddProperty('MyProperty2', FImporter.CreateArrayType(MainClass, MainClass));
+      Schema.MainClass.AddProperty('MyProperty2', FImporter.CreateArrayType(Schema.MainClass, Schema.MainClass));
     end;
 
   FImporter.Import(FConfiguration);
@@ -3539,9 +3541,9 @@ end;
 procedure TSchemaImporterTest.WhenTheArrayTypeIsAReferenceMustLoadTheReferenceAndLoadTheArrayHasExpected;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass, FImporter.CreateReferenceType(MainClass, 'My Namespace', MainClass.Name)));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(Schema.MainClass, FImporter.CreateReferenceType(Schema.MainClass, 'My Namespace', Schema.MainClass.Name)));
     end;
 
   FImporter.Import(FConfiguration);
@@ -3596,9 +3598,9 @@ end;
 procedure TSchemaImporterTest.WhenTheClassDefinitionHaveAPropertyMustDeclareThePropertyInTheUnit;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      Schema.MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]);
     end;
 
   FImporter.Import(FConfiguration);
@@ -3632,11 +3634,11 @@ end;
 procedure TSchemaImporterTest.WhenTheClassHasAnAliasDeclaredMustBuildTheUnitWithTheDefinitionHasExpected;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      FImporter.CreateAliasType(MainClass, 'Alias', FImporter.BuildInTypes[TBuildInType.IntegerType]);
-      FImporter.CreateAliasType(MainClass, 'Alias2', FImporter.BuildInTypes[TBuildInType.IntegerType]);
-      FImporter.CreateAliasType(MainClass, 'Alias3', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      FImporter.CreateAliasType(Schema.MainClass, 'Alias', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      FImporter.CreateAliasType(Schema.MainClass, 'Alias2', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      FImporter.CreateAliasType(Schema.MainClass, 'Alias3', FImporter.BuildInTypes[TBuildInType.IntegerType]);
     end;
 
   FImporter.Import(FConfiguration);
@@ -3670,9 +3672,9 @@ end;
 procedure TSchemaImporterTest.WhenTheClassHasEnumerationDeclaredMustLoadInThePublicTypeOfTheClassDeclaration;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnumerator');
+      var Enumerator := FImporter.CreateEnumeratorType(Schema.MainClass, 'MyEnumerator');
 
       Enumerator.AddEnumeration('a');
 
@@ -3711,9 +3713,9 @@ end;
 procedure TSchemaImporterTest.WhenTheClassNameHasAnySpecialCharacterMustFormatTheNameToRemoveThisCharatersAndFixTheNameToCompileTheUnitCorrectly;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      FImporter.CreateClassType(MainClass, 'my.special-class;name');
+      FImporter.CreateClassType(Schema.MainClass, 'my.special-class;name');
     end;
 
   FImporter.Import(FConfiguration);
@@ -3748,9 +3750,9 @@ end;
 procedure TSchemaImporterTest.WhenTheClassTypeIsAClassDefinitionMustDeclareTheGetFunctionAndCreateTheClassIfTheValueIsntLoaded;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', MainClass);
+      Schema.MainClass.AddProperty('MyProperty', Schema.MainClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -3815,9 +3817,9 @@ end;
 procedure TSchemaImporterTest.WhenTheEnumeratorValueHaveOnlyNumberMustInsertALetterBeforeTheNumberAndAppendTheEnumValueAttribute;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnum');
+      var Enumerator := FImporter.CreateEnumeratorType(Schema.MainClass, 'MyEnum');
 
       Enumerator.AddEnumeration('1');
 
@@ -3857,9 +3859,9 @@ end;
 procedure TSchemaImporterTest.WhenTheEnumeratorValueIsEmptyCantRaiseErrorWhenConvertingTheSchema;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnum');
+      var Enumerator := FImporter.CreateEnumeratorType(Schema.MainClass, 'MyEnum');
 
       Enumerator.AddEnumeration(EmptyStr);
 
@@ -3876,9 +3878,9 @@ end;
 procedure TSchemaImporterTest.WhenTheEnumeratorValueIsEmptyMustTheLoadEmptyNameEnumeratorValue;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnum');
+      var Enumerator := FImporter.CreateEnumeratorType(Schema.MainClass, 'MyEnum');
 
       Enumerator.AddEnumeration(EmptyStr);
 
@@ -3916,7 +3918,7 @@ end;
 procedure TSchemaImporterTest.WhenTheLastLevelClassHasEspecialNameMustLoadTheFunctionsWithTheCorrectName;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
 
       function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
       begin
@@ -3924,11 +3926,11 @@ begin
       end;
 
     begin
-      if MainClass.Name = 'MainModule' then
+      if Schema.MainClass.Name = 'MainModule' then
       begin
-        var ClassDefinition := AddClass('.my.class', MainClass);
+        var ClassDefinition := AddClass('.my.class', Schema.MainClass);
 
-        ClassDefinition.AddProperty('MyProp', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+        ClassDefinition.AddProperty('MyProp', FImporter.CreateArrayType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
       end;
     end;
 
@@ -3977,9 +3979,9 @@ end;
 procedure TSchemaImporterTest.WhenTheMainClassHasAnotherClassAppendedMustLoadThisClassInPublicTypeSectionFromTheMainClass;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      FImporter.CreateClassType(MainClass, 'TMyClass');
+      FImporter.CreateClassType(Schema.MainClass, 'TMyClass');
     end;
 
   FImporter.Import(FConfiguration);
@@ -4024,15 +4026,15 @@ begin
   TSchemaImporter.Converters[TSchemaType.OpenAPI30] := Converter2;
 
   Converter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClassAssert := MainClass;
+      MainClassAssert := Schema.MainClass;
     end;
 
   Converter2.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      Assert.IsFalse(MainClassAssert = MainClass);
+      Assert.IsFalse(MainClassAssert = Schema.MainClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -4051,15 +4053,15 @@ begin
   TSchemaImporter.Converters[TSchemaType.OpenAPI31] := Converter2;
 
   Converter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClassAssert := MainClass;
+      MainClassAssert := Schema.MainClass;
     end;
 
   Converter2.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      Assert.AreEqual(MainClassAssert, MainClass);
+      Assert.AreEqual(MainClassAssert, Schema.MainClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -4081,7 +4083,7 @@ end;
 procedure TSchemaImporterTest.WhenTheParentClassHasSpecialCharacteresMustFormatTheClassNameHasExpected;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
 
       function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
       begin
@@ -4089,7 +4091,7 @@ begin
       end;
 
     begin
-      var ClassDefinition := AddClass('TMyClass3', AddClass('my.special-class;name', AddClass('TMyClass', MainClass)));
+      var ClassDefinition := AddClass('TMyClass3', AddClass('my.special-class;name', AddClass('TMyClass', Schema.MainClass)));
 
       ClassDefinition.AddProperty('MyProp', ClassDefinition);
     end;
@@ -4160,9 +4162,9 @@ end;
 procedure TSchemaImporterTest.WhenThePropertyHasAnArrayTypeOfAConcretTypeMustCreateTheAddProcedureWithAParameterOsTheArrayType;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProp', FImporter.CreateArrayType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+      Schema.MainClass.AddProperty('MyProp', FImporter.CreateArrayType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
     end;
 
   FImporter.Import(FConfiguration);
@@ -4205,9 +4207,9 @@ end;
 procedure TSchemaImporterTest.WhenThePropertyHasAnSpecialCharacterMustAppendTheAmpersandBeforeTheClassName;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('if', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      Schema.MainClass.AddProperty('if', FImporter.BuildInTypes[TBuildInType.IntegerType]);
     end;
 
   FImporter.Import(FConfiguration);
@@ -4244,19 +4246,19 @@ end;
 procedure TSchemaImporterTest.WhenThePropertyHasAReferenceTypeMustFindTheReferenceAndLoadThePropertyValue;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      if MainClass.Name = 'MainModule' then
+      if Schema.MainClass.Name = 'MainModule' then
       begin
-        var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnumerator');
+        var Enumerator := FImporter.CreateEnumeratorType(Schema.MainClass, 'MyEnumerator');
 
         Enumerator.AddEnumeration('Value');
 
         FImporter.AddType('My Namespace', Enumerator);
 
-        var Reference := FImporter.CreateReferenceType(MainClass, 'My Namespace', 'MyEnumerator');
+        var Reference := FImporter.CreateReferenceType(Schema.MainClass, 'My Namespace', 'MyEnumerator');
 
-        MainClass.AddProperty('MyProperty', Reference);
+        Schema.MainClass.AddProperty('MyProperty', Reference);
       end;
     end;
 
@@ -4294,7 +4296,7 @@ end;
 procedure TSchemaImporterTest.WhenThePropertyHasASubTypeCantLoadTheClassNameInTheUsesList;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
 
       function AddClass(const Namespace, Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
       begin
@@ -4302,12 +4304,12 @@ begin
       end;
 
     begin
-      var ClassDefinition := AddClass('My Namespace', 'TMyClass', MainClass);
+      var ClassDefinition := AddClass('My Namespace', 'TMyClass', Schema.MainClass);
       var EnumeratorDefinition := FImporter.CreateEnumeratorType(ClassDefinition, 'MyEnumerator');
 
       EnumeratorDefinition.AddEnumeration('Value');
 
-      MainClass.AddProperty('MyProperty', EnumeratorDefinition);
+      Schema.MainClass.AddProperty('MyProperty', EnumeratorDefinition);
     end;
 
   FImporter.Import(FConfiguration);
@@ -4349,9 +4351,9 @@ end;
 procedure TSchemaImporterTest.WhenThePropertyHasInvalidCharacteresInTheNameMustFixTheNameAndApplyTheFieldNameAttribute;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('%invalid.name@for|property.', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      Schema.MainClass.AddProperty('%invalid.name@for|property.', FImporter.BuildInTypes[TBuildInType.IntegerType]);
     end;
 
   FImporter.Import(FConfiguration);
@@ -4388,9 +4390,9 @@ end;
 procedure TSchemaImporterTest.WhenThePropertyHasntATypeLoadedMustRaiseAnError;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', nil);
+      Schema.MainClass.AddProperty('MyProperty', nil);
     end;
 
   Assert.WillRaise(
@@ -4403,9 +4405,9 @@ end;
 procedure TSchemaImporterTest.WhenThePropertyHasThePatternPropertyValueLoadedMustCreateThePatternPropertyAttributeInTheClass;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]).PatternProperty := 'xxxx';
+      Schema.MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]).PatternProperty := 'xxxx';
     end;
 
   FImporter.Import(FConfiguration);
@@ -4425,11 +4427,11 @@ end;
 procedure TSchemaImporterTest.WhenThePropertyIsOptionalMustCreateTheFieldForStoreTheIsStoredInfoAndCreateTheSetFunctionForTheProperty;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]).Optional := True;
+      Schema.MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]).Optional := True;
 
-      MainClass.AddProperty('MyProperty2', FImporter.BuildInTypes[TBuildInType.IntegerType]).Optional := True;
+      Schema.MainClass.AddProperty('MyProperty2', FImporter.BuildInTypes[TBuildInType.IntegerType]).Optional := True;
     end;
 
   FImporter.Import(FConfiguration);
@@ -4486,9 +4488,9 @@ end;
 procedure TSchemaImporterTest.WhenThePropertyNameHasASpecialNameMustAppendTheFieldNameAttribute;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('if', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      Schema.MainClass.AddProperty('if', FImporter.BuildInTypes[TBuildInType.IntegerType]);
     end;
 
   FImporter.Import(FConfiguration);
@@ -4525,11 +4527,11 @@ end;
 procedure TSchemaImporterTest.WhenThePropertyNeedTheGetFunctionMustDeclareAllFunctionsHasExpected;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', MainClass);
+      Schema.MainClass.AddProperty('MyProperty', Schema.MainClass);
 
-      MainClass.AddProperty('MyProperty2', MainClass);
+      Schema.MainClass.AddProperty('MyProperty2', Schema.MainClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -4596,9 +4598,9 @@ end;
 procedure TSchemaImporterTest.WhenThePropertyTypeIsAClassDefinitionMustDeclareTheDestroyProcedureInThePublicSection;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', MainClass);
+      Schema.MainClass.AddProperty('MyProperty', Schema.MainClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -4621,9 +4623,9 @@ end;
 procedure TSchemaImporterTest.WhenThePropertyTypeIsAClassDefinitionTypeMustLoadTheDestructorToDestroyTheVariableReference;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', MainClass);
+      Schema.MainClass.AddProperty('MyProperty', Schema.MainClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -4645,9 +4647,9 @@ end;
 procedure TSchemaImporterTest.WhenThePropertyTypeIsAnArrayMustDeclareTheTypeWithTheTArraySystemType;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(MainClass, MainClass));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(Schema.MainClass, Schema.MainClass));
     end;
 
   FImporter.Import(FConfiguration);
@@ -4666,9 +4668,9 @@ end;
 procedure TSchemaImporterTest.WhenThePropertyTypeIsAReferenceToAClassDefinitionTypeMustLoadTheGetFunctionForTheProperty;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.CreateReferenceType(MainClass, 'My Namespace', MainClass.Name));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateReferenceType(Schema.MainClass, 'My Namespace', Schema.MainClass.Name));
     end;
 
   FImporter.Import(FConfiguration);
@@ -4722,13 +4724,13 @@ end;
 procedure TSchemaImporterTest.WhenThePropertyTypeIsAReferenceToAnArrayWithAClassDefinitionTypeMustLoadTheAddFunctionHasExpected;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      if MainClass.Name = 'MainModule' then
+      if Schema.MainClass.Name = 'MainModule' then
       begin
-        FImporter.AddType('My Namespace', FImporter.CreateAliasType(MainClass, 'MyArray', FImporter.CreateArrayType(MainClass, MainClass)));
+        FImporter.AddType('My Namespace', FImporter.CreateAliasType(Schema.MainClass, 'MyArray', FImporter.CreateArrayType(Schema.MainClass, Schema.MainClass)));
 
-        MainClass.AddProperty('MyProperty', FImporter.CreateReferenceType(MainClass, 'My Namespace', 'MyArray'));
+        Schema.MainClass.AddProperty('MyProperty', FImporter.CreateReferenceType(Schema.MainClass, 'My Namespace', 'MyArray'));
       end;
     end;
 
@@ -4786,9 +4788,9 @@ end;
 procedure TSchemaImporterTest.WhenTheSchemaHasEnumerationsMustLoadTheScopedEnumsCompilerDirective;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      var Enumerator := FImporter.CreateEnumeratorType(MainClass, 'MyEnum');
+      var Enumerator := FImporter.CreateEnumeratorType(Schema.MainClass, 'MyEnum');
 
       Enumerator.AddEnumeration('Value');
     end;
@@ -4822,9 +4824,9 @@ end;
 procedure TSchemaImporterTest.WhenTheStringTypeIsDeclaredCantUseTheEscapeCharacterInTheName;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      FImporter.CreateAliasType(MainClass, 'MyAlias', FImporter.BuildInTypes[TBuildInType.StringType]);
+      FImporter.CreateAliasType(Schema.MainClass, 'MyAlias', FImporter.BuildInTypes[TBuildInType.StringType]);
     end;
 
   FImporter.Import(FConfiguration);
@@ -4862,13 +4864,13 @@ begin
     var Importer := TSchemaImporter.Create;
 
     FConverter.WhenExecuteConvert :=
-      procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+      procedure (Schema: TSchema)
       begin
-        var Enumerator := FImporter.CreateEnumeratorType(MainClass, ReservedName);
+        var Enumerator := FImporter.CreateEnumeratorType(Schema.MainClass, ReservedName);
 
         Enumerator.AddEnumeration('a');
 
-        FImporter.CreateClassType(MainClass, ReservedName);
+        FImporter.CreateClassType(Schema.MainClass, ReservedName);
       end;
 
     Importer.Import(FConfiguration);
@@ -4909,9 +4911,9 @@ end;
 procedure TSchemaImporterTest.WhenTheTypeIsAClassDefinitionTypeMustCreateTheGetFunctionAndUseThePropertyToLoadTheValueToFillTheStoredFieldIfIsOptionalTheProperty;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', MainClass);
+      Schema.MainClass.AddProperty('MyProperty', Schema.MainClass);
     end;
 
   FImporter.Import(FConfiguration);
@@ -4965,9 +4967,9 @@ end;
 procedure TSchemaImporterTest.WhenTheTypeIsAnAliasToAnArrayTypeMustCreateTheAddFunctionWithTheInternalAliasType;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.CreateAliasType(MainClass, 'MyAlias', FImporter.CreateArrayType(MainClass, MainClass)));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateAliasType(Schema.MainClass, 'MyAlias', FImporter.CreateArrayType(Schema.MainClass, Schema.MainClass)));
     end;
 
   FImporter.Import(FConfiguration);
@@ -5042,9 +5044,9 @@ end;
 procedure TSchemaImporterTest.WhenTheTypeOfAPropertyIsFromSystemCantAddTheSystemInTheUsesList;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      Schema.MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]);
     end;
 
   FImporter.Import(FConfiguration);
@@ -5078,9 +5080,9 @@ end;
 procedure TSchemaImporterTest.WhenTheTypeOfDynamicPropertyIsAClassDefinitionMustCreateTheAddFunctionToAddThePropertyNameAndReturntTheClassDefinitionInTheReturnOfTheFunction;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyDynamic', FImporter.CreateDynamicPropertyType(MainClass, MainClass));
+      Schema.MainClass.AddProperty('MyDynamic', FImporter.CreateDynamicPropertyType(Schema.MainClass, Schema.MainClass));
     end;
 
   FImporter.Import(FConfiguration);
@@ -5135,9 +5137,9 @@ end;
 procedure TSchemaImporterTest.WhenTheTypeOfDynamicPropertyIsAnIntegralTypeMustCreateAProcedureToLoadTheDynamicPropertyValue;
 begin
   FConverter.WhenExecuteConvert :=
-    procedure (MainClass: TTypeClassDefinition; Schema: TSchema)
+    procedure (Schema: TSchema)
     begin
-      MainClass.AddProperty('MyDynamic', FImporter.CreateDynamicPropertyType(MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+      Schema.MainClass.AddProperty('MyDynamic', FImporter.CreateDynamicPropertyType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
     end;
 
   FImporter.Import(FConfiguration);
@@ -5238,7 +5240,7 @@ begin
   Assert.WillRaise(
     procedure
     begin
-      FConverter.Convert(FMainClass, nil);
+      FConverter.Convert(nil);
     end, ESchemaNotLoaded);
 end;
 
@@ -5247,8 +5249,6 @@ begin
   FConverterClass := TSchemaConverterMock.Create;
   FMainClass := TTypeClassDefinition.Create;
   FSchema := TSchema.Create;
-  FSchema.Importer := TSchemaImporter.Create;
-  FSchema.SchemaFile := TSchemaFileConfiguration.Create;
 
   FConverter := FConverterClass;
 end;
@@ -5271,17 +5271,8 @@ begin
   Assert.WillRaise(
     procedure
     begin
-      FConverter.Convert(nil, FSchema);
+      FConverter.Convert(FSchema);
     end, EMainClassMustBeLoaded);
-end;
-
-procedure TSchemaConverterMockTeste.WhenCallTheLoadSchemaMustLoadThePayloadInThePropertyHasExpected;
-begin
-  FSchema.SchemaText := 'My schema payload!';
-
-  FConverter.Convert(FMainClass, FSchema);
-
-  Assert.AreEqual('My schema payload!', FConverterClass.SchemaText);
 end;
 
 procedure TSchemaConverterMockTeste.WhenCallTheLoadSchemaProcedureMustLoadTheNamespacePropertyOfTheSchema;
@@ -5296,30 +5287,6 @@ begin
   FConverter.LoadSchema(FSchema);
 
   Assert.AreEqual('My Namespace', FSchema.Namespace);
-end;
-
-procedure TSchemaConverterMockTeste.WhenTheImporterIsntLoadedMustRaiseAnError;
-begin
-  FSchema.Importer.Free;
-
-  FSchema.Importer := nil;
-
-  Assert.WillRaise(
-    procedure
-    begin
-      FConverter.Convert(FMainClass, FSchema);
-    end, EImporterNotLoaded)
-end;
-
-procedure TSchemaConverterMockTeste.WhenTheSchemaDoesntHaveTheSchemaFileLoadedMustRaiseAnError;
-begin
-  FreeAndNil(FSchema.SchemaFile);
-
-  Assert.WillRaise(
-    procedure
-    begin
-      FConverter.Convert(FMainClass, FSchema);
-    end, ESchemaFileConfigurationMustBeLoaded);
 end;
 
 { ESchemaNotLoaded }
@@ -5338,24 +5305,24 @@ end;
 
 { TSchemaConverterMock }
 
-procedure TSchemaConverterMock.Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
+procedure TSchemaConverterMock.Convert(const Schema: TSchema);
 begin
-  if Assigned(WhenExecuteConvert) then
-    WhenExecuteConvert(MainClass, Schema);
-
   if not Assigned(Schema) then
     raise ESchemaNotLoaded.Create;
 
+  if not Assigned(Schema.MainClass) then
+    raise EMainClassMustBeLoaded.Create;
+
   if not Assigned(Schema.SchemaFile) then
     raise ESchemaFileConfigurationMustBeLoaded.Create;
-
-  if not Assigned(MainClass) then
-    raise EMainClassMustBeLoaded.Create;
 
   if not Assigned(Schema.Importer) then
     raise EImporterNotLoaded.Create;
 
   SchemaText := Schema.SchemaText;
+
+  if Assigned(WhenExecuteConvert) then
+    WhenExecuteConvert(Schema);
 
   Inc(FTimesCalled);
 end;

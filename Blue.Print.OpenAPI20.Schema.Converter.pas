@@ -7,7 +7,7 @@ uses System.Rtti, Blue.Print.Schema.Importer;
 type
   TOpenAPI20SchemaConverter = class(TInterfacedObject, ISchemaConverter)
   private
-    procedure Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
+    procedure Convert(const Schema: TSchema);
     procedure LoadSchema(const Schema: TSchema);
   end;
 
@@ -15,7 +15,7 @@ implementation
 
 { TOpenAPI20SchemaConverter }
 
-procedure TOpenAPI20SchemaConverter.Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
+procedure TOpenAPI20SchemaConverter.Convert(const Schema: TSchema);
 begin
 
 end;

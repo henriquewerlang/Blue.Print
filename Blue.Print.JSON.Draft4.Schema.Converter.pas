@@ -15,7 +15,7 @@ type
     function GetDefinitionsNamespace: String;
     function GetReferenceSchemaName(JSONSchemaType: JSONSchema): String;
 
-    procedure Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
+    procedure Convert(const Schema: TSchema);
     procedure LoadSchema(const Schema: TSchema);
     procedure LoadSchemaType(const TypeDefinition: TTypeDefinition; const JSONSchemaType: JSONSchema);
 
@@ -31,11 +31,11 @@ uses System.Rtti, Blue.Print.Serializer;
 
 { TJSONDraft4SchemaConverter }
 
-procedure TJSONDraft4SchemaConverter.Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
+procedure TJSONDraft4SchemaConverter.Convert(const Schema: TSchema);
 begin
   FImporter := Schema.Importer;
   FJSONDefinition := Schema.SchemaValue.AsType<JSONSchema>;
-  FMainClass := MainClass;
+  FMainClass := Schema.MainClass;
 
   LoadSchemaType(MainClass, JSONDefinition);
 

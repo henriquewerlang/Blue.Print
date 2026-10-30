@@ -329,18 +329,20 @@ type
     FSchemaText: String;
     FSchemaFile: TSchemaFileConfiguration;
     FSchemaValue: TValue;
+    FMainClass: TTypeClassDefinition;
   public
     destructor Destroy; override;
 
-    property Importer: TSchemaImporter read FImporter write FImporter;
+    property Importer: TSchemaImporter read FImporter;
+    property MainClass: TTypeClassDefinition read FMainClass;
     property Namespace: String read FNamespace write FNamespace;
-    property SchemaFile: TSchemaFileConfiguration read FSchemaFile write FSchemaFile;
+    property SchemaFile: TSchemaFileConfiguration read FSchemaFile;
     property SchemaText: String read FSchemaText write FSchemaText;
     property SchemaValue: TValue read FSchemaValue write FSchemaValue;
   end;
 
   ISchemaConverter = interface
-    procedure Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
+    procedure Convert(const Schema: TSchema);
     procedure LoadSchema(const Schema: TSchema);
   end;
 
@@ -1500,9 +1502,9 @@ begin
 
         CheckSchema(Schema);
 
-        var MainClass := LoadMainClass(UnitDefinition, Schema);
+        Schema.FMainClass := LoadMainClass(UnitDefinition, Schema);
 
-        SchemaConverter.Convert(MainClass, Schema);
+        SchemaConverter.Convert(Schema);
       finally
         Schema.Free;
       end;

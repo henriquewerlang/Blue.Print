@@ -7,7 +7,7 @@ uses System.Rtti, Blue.Print.Schema.Importer;
 type
   TXSDSchemaConverter = class(TInterfacedObject, ISchemaConverter)
   private
-    procedure Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
+    procedure Convert(const Schema: TSchema);
     procedure LoadSchema(const Schema: TSchema);
   end;
 
@@ -15,7 +15,7 @@ implementation
 
 { TXSDSchemaConverter }
 
-procedure TXSDSchemaConverter.Convert(const MainClass: TTypeClassDefinition; const Schema: TSchema);
+procedure TXSDSchemaConverter.Convert(const Schema: TSchema);
 begin
 
 end;
