@@ -13,6 +13,7 @@ type
   TTypeDefinition = class;
   TTypeEnumerationDefinition = class;
   TTypeGenericDefinition = class;
+  TTypeInterfaceDefinition = class;
   TTypeModuleDefinition = class;
   TTypePropertyDefinition = class;
   TTypeReferenceDefinition = class;
@@ -131,6 +132,7 @@ type
     function AsClassDefinition: TTypeClassDefinition;
     function AsEnumeratorDefinition: TTypeEnumerationDefinition;
     function AsGenericDefinition: TTypeGenericDefinition;
+    function AsInterfaceDefinition: TTypeInterfaceDefinition;
     function AsReferenceDefinition: TTypeReferenceDefinition;
 
     property IsAliasDefinition: Boolean read GetIsAliasDefinition;
@@ -215,7 +217,7 @@ type
     property Classes: TArray<TTypeClassDefinition> read FClasses;
     property Enumerations: TArray<TTypeEnumerationDefinition> read FEnumerations;
     property HasTypes: Boolean read GetHasTypes;
-    property Types: TArray<TTypeDefinition> read FTypes write FTypes;
+    property Types: TArray<TTypeDefinition> read FTypes;
   end;
 
   TTypePropertyDefinition = class(TTypeCommonDefinition)
@@ -247,7 +249,34 @@ type
     property Properties: TArray<TTypePropertyDefinition> read FProperties write FProperties;
   end;
 
+  TTypeParameterDefinition = class(TTypeCommonDefinition)
+  private
+    FParameterType: TTypeDefinition;
+  public
+    property ParameterType: TTypeDefinition read FParameterType write FParameterType;
+  end;
+
+  TTypeMethodDefinition = class(TTypeCommonDefinition)
+  private
+    FParameters: TArray<TTypeParameterDefinition>;
+    FReturnValue: TTypeDefinition;
+  public
+    property Parameters: TArray<TTypeParameterDefinition> read FParameters write FParameters;
+    property ReturnValue: TTypeDefinition read FReturnValue write FReturnValue;
+  end;
+
+  TTypeInterfaceDefinition = class(TTypeDefinition)
+  private
+    FMethods: TArray<TTypeMethodDefinition>;
+  public
+    property Methods: TArray<TTypeMethodDefinition> read FMethods write FMethods;
+  end;
+
   TTypeUnitDefinition = class(TTypeModuleDefinition)
+  private
+    FInterfaces: TArray<TTypeInterfaceDefinition>;
+  public
+    property Interfaces: TArray<TTypeInterfaceDefinition> read FInterfaces write FInterfaces;
   end;
 
   TSchemaFileConfiguration = class
@@ -255,10 +284,12 @@ type
     FSchemaType: TSchemaType;
     FFileName: String;
     FMainModuleName: String;
+    FServiceInterfaceName: String;
   published
     property SchemaType: TSchemaType read FSchemaType write FSchemaType;
     property FileName: String read FFileName write FFileName;
     property MainModuleName: String read FMainModuleName write FMainModuleName;
+    property ServiceInterfaceName: String read FServiceInterfaceName write FServiceInterfaceName;
   end;
 
   TUnitConfiguration = class
@@ -330,6 +361,7 @@ type
     FSchemaFile: TSchemaFileConfiguration;
     FSchemaValue: TValue;
     FMainClass: TTypeClassDefinition;
+    FServiceInterface: TTypeInterfaceDefinition;
   public
     destructor Destroy; override;
 
@@ -339,6 +371,7 @@ type
     property SchemaFile: TSchemaFileConfiguration read FSchemaFile;
     property SchemaText: String read FSchemaText write FSchemaText;
     property SchemaValue: TValue read FSchemaValue write FSchemaValue;
+    property ServiceInterface: TTypeInterfaceDefinition read FServiceInterface;
   end;
 
   ISchemaConverter = interface
@@ -378,6 +411,7 @@ type
     function CreateClassType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeClassDefinition;
     function CreateDynamicPropertyType(const ParentModule: TTypeModuleDefinition; const DynamicType: TTypeDefinition): TTypeDynamicPropertyDefinition;
     function CreateEnumeratorType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeEnumerationDefinition;
+    function CreateInterfaceType(const ParentModule: TTypeUnitDefinition; const Name: String): TTypeInterfaceDefinition;
     function CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Namespace, Reference: String): TTypeReferenceDefinition;
     function FindType(const Namespace, Name: String): TTypeDefinition;
     function FindTypeWithPrefix(const Fullname: String): TTypeDefinition;
@@ -465,6 +499,13 @@ begin
   Result := CreateTypeDefinitionWithName<TTypeEnumerationDefinition>(ParentModule, Name);
 
   ParentModule.FEnumerations := ParentModule.FEnumerations + [Result];
+end;
+
+function TSchemaImporter.CreateInterfaceType(const ParentModule: TTypeUnitDefinition; const Name: String): TTypeInterfaceDefinition;
+begin
+  Result := CreateTypeDefinitionWithName<TTypeInterfaceDefinition>(ParentModule, Name);
+
+  ParentModule.Interfaces := ParentModule.Interfaces + [Result];
 end;
 
 function TSchemaImporter.CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Namespace, Reference: String): TTypeReferenceDefinition;
@@ -592,9 +633,9 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := CreateUnitDefinition(UnitConfiguration);
   end;
 
-  function CreateMainClass(const UnitDefinition: TTypeUnitDefinition; const Schema: TSchema; const Name: String): TTypeClassDefinition;
+  function CreateMainClass(const UnitDefinition: TTypeUnitDefinition; const Schema: TSchema): TTypeClassDefinition;
   begin
-    Result := CreateClassType(UnitDefinition, Name);
+    Result := CreateClassType(UnitDefinition, Schema.SchemaFile.MainModuleName);
 
     AddType(Schema.Namespace, Result);
   end;
@@ -607,7 +648,27 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
     if TryFindType(Schema.Namespace, MainModuleName, TypeFound) then
       Result := TypeFound.AsClassDefinition
     else
-      Result := CreateMainClass(UnitDefinition, Schema, MainModuleName);
+      Result := CreateMainClass(UnitDefinition, Schema);
+  end;
+
+  function CreateServiceInterface(const UnitDefinition: TTypeUnitDefinition; const Schema: TSchema): TTypeInterfaceDefinition;
+  begin
+    Result := CreateInterfaceType(UnitDefinition, Schema.SchemaFile.ServiceInterfaceName);
+
+    AddType(Schema.Namespace, Result);
+  end;
+
+  function LoadServiceInterface(const UnitDefinition: TTypeUnitDefinition; const Schema: TSchema): TTypeInterfaceDefinition;
+  begin
+    var ServiceInterfaceName := Schema.SchemaFile.ServiceInterfaceName;
+    var TypeFound: TTypeDefinition;
+
+    if ServiceInterfaceName.IsEmpty then
+      Result := nil
+    else if TryFindType(Schema.Namespace, ServiceInterfaceName, TypeFound) then
+      Result := TypeFound.AsInterfaceDefinition
+    else
+      Result := CreateServiceInterface(UnitDefinition, Schema);
   end;
 
   function CreateSchema(const SchemaFile: TSchemaFileConfiguration): TSchema;
@@ -1503,6 +1564,7 @@ begin
         CheckSchema(Schema);
 
         Schema.FMainClass := LoadMainClass(UnitDefinition, Schema);
+        Schema.FServiceInterface := LoadServiceInterface(UnitDefinition, Schema);
 
         SchemaConverter.Convert(Schema);
       finally
@@ -1714,6 +1776,11 @@ end;
 function TTypeDefinition.AsGenericDefinition: TTypeGenericDefinition;
 begin
   Result := Self as TTypeGenericDefinition;
+end;
+
+function TTypeDefinition.AsInterfaceDefinition: TTypeInterfaceDefinition;
+begin
+  Result := Self as TTypeInterfaceDefinition;
 end;
 
 function TTypeDefinition.AsReferenceDefinition: TTypeReferenceDefinition;

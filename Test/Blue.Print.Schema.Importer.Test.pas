@@ -390,6 +390,24 @@ type
     procedure WhenTheEnumeratorValueIsEmptyCantRaiseErrorWhenConvertingTheSchema;
     [Test]
     procedure WhenTheEnumeratorValueIsEmptyMustTheLoadEmptyNameEnumeratorValue;
+    [Test]
+    procedure WhenCreateAnInterfaceTypeDefinitionMustReturnTheClassLoaded;
+    [Test]
+    procedure WhenCreateAnInterfaceTypeDefinitionMustAppendTheInterfaceInTheParentUnitInterfacesList;
+    [Test]
+    procedure WhenCreateAnInterfaceTypeDefinitionMustReturnTheNameLoadedHasExpected;
+    [Test]
+    procedure WhenCreateAnInterfaceTypeDefinitionMustAppendTheTypeInTheTypesListFromTheParentModule;
+    [Test]
+    procedure WhenTheServiceInterfacaNameConfigurationIsLoadedMustCreateTheTypeAndLoadInTheSchemaClass;
+    [Test]
+    procedure WhenTheServiceInterfacaNameConfigurationIsntLoadedCantCreateTheInterfaceService;
+    [Test]
+    procedure WhenTheServiceInterfacaNameConfigurationIsLoadedMustCreateTheInterfaceWithTheNameInTheConfiguration;
+    [Test]
+    procedure WhenCreateTheServiceInterfaceMustLoadTheTypeInTheMainNamespaceOfTheSchema;
+    [Test]
+    procedure WhenTheServiceInterfaceIsTheSameInTwoSchemaFilesMustLoadTheSameVariable;
   end;
 
   [TestFixture]
@@ -2857,6 +2875,48 @@ begin
   ParentModule.Free;
 end;
 
+procedure TSchemaImporterTest.WhenCreateAnInterfaceTypeDefinitionMustAppendTheInterfaceInTheParentUnitInterfacesList;
+begin
+  var ParentUnit := TTypeUnitDefinition.Create;
+
+  FImporter.CreateInterfaceType(ParentUnit, 'MyInterface');
+
+  Assert.AreEqual(1, Length(ParentUnit.Interfaces));
+
+  ParentUnit.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateAnInterfaceTypeDefinitionMustAppendTheTypeInTheTypesListFromTheParentModule;
+begin
+  var ParentUnit := TTypeUnitDefinition.Create;
+
+  FImporter.CreateInterfaceType(ParentUnit, 'MyInterface');
+
+  Assert.AreEqual(1, Length(ParentUnit.Types));
+
+  ParentUnit.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateAnInterfaceTypeDefinitionMustReturnTheClassLoaded;
+begin
+  var ParentUnit := TTypeUnitDefinition.Create;
+
+  Assert.IsNotNil(FImporter.CreateInterfaceType(ParentUnit, 'MyInterface'));
+
+  ParentUnit.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateAnInterfaceTypeDefinitionMustReturnTheNameLoadedHasExpected;
+begin
+  var ParentUnit := TTypeUnitDefinition.Create;
+
+  var InterfaceType := FImporter.CreateInterfaceType(ParentUnit, 'MyInterface');
+
+  Assert.AreEqual('MyInterface', InterfaceType.Name);
+
+  ParentUnit.Free;
+end;
+
 procedure TSchemaImporterTest.WhenCreateAReferenceTypeInsideASubClassDeclarationMustLoadTheFullTypeNameUsingTheParentModuleFromTheReferenceNotTheTypeReferece;
 begin
   FConverter.WhenExecuteConvert :=
@@ -3010,6 +3070,15 @@ begin
   DynamicType.Free;
 
   MainClass.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateTheServiceInterfaceMustLoadTheTypeInTheMainNamespaceOfTheSchema;
+begin
+  FConfiguration.Units[0].SchemaFiles[0].ServiceInterfaceName := 'MyInterface';
+
+  FImporter.Import(FConfiguration);
+
+  Assert.IsTrue(FImporter.Types.ContainsKey('my:MyInterface'));
 end;
 
 procedure TSchemaImporterTest.WhenCreateTheTypeAliasMustAppendTheAliasInTheAliasListFromParentModule;
@@ -4821,6 +4890,67 @@ begin
     ''',
     FConfiguration.Units[0]);
 end;
+
+procedure TSchemaImporterTest.WhenTheServiceInterfacaNameConfigurationIsLoadedMustCreateTheInterfaceWithTheNameInTheConfiguration;
+begin
+  FConfiguration.Units[0].SchemaFiles[0].ServiceInterfaceName := 'MyInterface';
+
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      if Schema.MainClass.Name = 'MainModule' then
+        Assert.AreEqual('MyInterface', Schema.ServiceInterface.Name);
+    end;
+
+  FImporter.Import(FConfiguration);
+end;
+
+procedure TSchemaImporterTest.WhenTheServiceInterfacaNameConfigurationIsLoadedMustCreateTheTypeAndLoadInTheSchemaClass;
+begin
+  FConfiguration.Units[0].SchemaFiles[0].ServiceInterfaceName := 'MyService';
+
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      if Schema.MainClass.Name = 'MainModule' then
+        Assert.IsNotNil(Schema.ServiceInterface);
+    end;
+
+  FImporter.Import(FConfiguration);
+end;
+
+procedure TSchemaImporterTest.WhenTheServiceInterfacaNameConfigurationIsntLoadedCantCreateTheInterfaceService;
+begin
+  FConfiguration.Units[0].SchemaFiles[0].ServiceInterfaceName := EmptyStr;
+
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      if Schema.MainClass.Name = 'MainModule' then
+        Assert.IsNil(Schema.ServiceInterface);
+    end;
+
+  FImporter.Import(FConfiguration);
+end;
+
+procedure TSchemaImporterTest.WhenTheServiceInterfaceIsTheSameInTwoSchemaFilesMustLoadTheSameVariable;
+begin
+  FConfiguration.Units[1].SchemaFiles[0].ServiceInterfaceName := 'MyInterface';
+  FConfiguration.Units[1].SchemaFiles[1].ServiceInterfaceName := 'MyInterface';
+  var MyInterface: TTypeInterfaceDefinition := nil;
+
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      if Assigned(MyInterface) then
+        Assert.AreEqual(MyInterface, Schema.ServiceInterface)
+      else
+        MyInterface := Schema.ServiceInterface;
+    end;
+
+  FImporter.Import(FConfiguration);
+end;
+
 procedure TSchemaImporterTest.WhenTheStringTypeIsDeclaredCantUseTheEscapeCharacterInTheName;
 begin
   FConverter.WhenExecuteConvert :=
