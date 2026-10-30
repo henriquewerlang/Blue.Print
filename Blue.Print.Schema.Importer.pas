@@ -253,7 +253,7 @@ type
   private
     FParameterType: TTypeDefinition;
   public
-    property ParameterType: TTypeDefinition read FParameterType write FParameterType;
+    property ParameterType: TTypeDefinition read FParameterType;
   end;
 
   TTypeMethodDefinition = class(TTypeCommonDefinition)
@@ -261,17 +261,23 @@ type
     FParameters: TArray<TTypeParameterDefinition>;
     FReturnValue: TTypeDefinition;
   public
-    property Parameters: TArray<TTypeParameterDefinition> read FParameters write FParameters;
-    property ReturnValue: TTypeDefinition read FReturnValue write FReturnValue;
+    destructor Destroy; override;
+
+    procedure AddParameter(const Parameter: TTypeParameterDefinition);
+
+    property Parameters: TArray<TTypeParameterDefinition> read FParameters;
+    property ReturnValue: TTypeDefinition read FReturnValue;
   end;
 
   TTypeInterfaceDefinition = class(TTypeDefinition)
   private
     FMethods: TArray<TTypeMethodDefinition>;
   public
+    destructor Destroy; override;
+
     procedure AddMethod(const Method: TTypeMethodDefinition);
 
-    property Methods: TArray<TTypeMethodDefinition> read FMethods write FMethods;
+    property Methods: TArray<TTypeMethodDefinition> read FMethods;
   end;
 
   TTypeUnitDefinition = class(TTypeModuleDefinition)
@@ -419,6 +425,8 @@ type
     function CreateDynamicPropertyType(const ParentModule: TTypeModuleDefinition; const DynamicType: TTypeDefinition): TTypeDynamicPropertyDefinition;
     function CreateEnumeratorType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeEnumerationDefinition;
     function CreateInterfaceType(const ParentModule: TTypeUnitDefinition; const Name: String): TTypeInterfaceDefinition;
+    function CreateMethod(const InterfaceDefinition: TTypeInterfaceDefinition; const Name: String; const ReturnType: TTypeDefinition): TTypeMethodDefinition;
+    function CreateParameter(const MethodDefinition: TTypeMethodDefinition; const Name: String; const ParameterType: TTypeDefinition): TTypeParameterDefinition;
     function CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Namespace, Reference: String): TTypeReferenceDefinition;
     function FindType(const Namespace, Name: String): TTypeDefinition;
     function FindTypeWithPrefix(const Fullname: String): TTypeDefinition;
@@ -513,6 +521,24 @@ begin
   Result := CreateTypeDefinitionWithName<TTypeInterfaceDefinition>(ParentModule, Name);
 
   ParentModule.Interfaces := ParentModule.Interfaces + [Result];
+end;
+
+function TSchemaImporter.CreateMethod(const InterfaceDefinition: TTypeInterfaceDefinition; const Name: String; const ReturnType: TTypeDefinition): TTypeMethodDefinition;
+begin
+  Result := TTypeMethodDefinition.Create;
+  Result.FName := Name;
+  Result.FReturnValue := ReturnType;
+
+  InterfaceDefinition.AddMethod(Result);
+end;
+
+function TSchemaImporter.CreateParameter(const MethodDefinition: TTypeMethodDefinition; const Name: String; const ParameterType: TTypeDefinition): TTypeParameterDefinition;
+begin
+  Result := TTypeParameterDefinition.Create;
+  Result.FName := Name;
+  Result.FParameterType := ParameterType;
+
+  MethodDefinition.AddParameter(Result);
 end;
 
 function TSchemaImporter.CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Namespace, Reference: String): TTypeReferenceDefinition;
@@ -785,7 +811,6 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function FormatTypeName(const Name: String): String; overload;
     begin
-
       Result := RemoveInvalidCharecters(Name);
 
       if not Result.IsEmpty and not SameText(Result, Name) then
@@ -951,6 +976,16 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
     function FormatFieldName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
       Result := RemoveInvalidCharecters('F.' + FormatPropertyName(PropertyDefinition));
+    end;
+
+    function FormatMethodName(const Method: TTypeMethodDefinition): String;
+    begin
+      Result := FormatName(RemoveInvalidCharecters(Method.Name));
+    end;
+
+    function FormatParameterName(const Parameter: TTypeParameterDefinition): String;
+    begin
+      Result := FormatName(RemoveInvalidCharecters(Parameter.Name));
     end;
 
     function NeedGetFunction(const PropertyDefinition: TTypePropertyDefinition): Boolean;
@@ -1505,6 +1540,73 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         GenerateImplementation(ClassDefinition);
     end;
 
+    function FormatMethod(const Method: TTypeMethodDefinition): String;
+
+      function FormatParameters: String;
+      var
+        ParameterType: TTypeDefinition;
+
+        function GetParameterTypeName: String;
+        begin
+          Result := ': ' + FormatFullTypeName(ParameterType);
+        end;
+
+      begin
+        if Assigned(Method.Parameters) then
+        begin
+          var ParameterPrefix: String;
+          var ParameterSeparator: String;
+          ParameterType := nil;
+          Result := EmptyStr;
+
+          for var Parameter in Method.Parameters do
+          begin
+            if ParameterType = Parameter.ParameterType then
+            begin
+              ParameterPrefix := EmptyStr;
+              ParameterSeparator := ',';
+            end
+            else
+            begin
+              ParameterPrefix := 'const ';
+              ParameterSeparator := ';';
+
+              if not Result.IsEmpty then
+                Result := Result + GetParameterTypeName;
+
+              ParameterType := Parameter.ParameterType;
+            end;
+
+            if not Result.IsEmpty then
+              Result := Result + ParameterSeparator + ' ';
+
+            Result := Result + ParameterPrefix + FormatParameterName(Parameter);
+          end;
+
+          Result := Format('(%s%s)', [Result, GetParameterTypeName])
+        end
+        else
+          Result := EmptyStr;
+      end;
+
+    begin
+      var MethodType: String;
+      var ReturnValue: String;
+
+      if Assigned(Method.ReturnValue) then
+      begin
+        MethodType := 'function';
+        ReturnValue := ': ' + FormatFullTypeName(Method.ReturnValue);
+      end
+      else
+      begin
+        MethodType := 'procedure';
+        ReturnValue := EmptyStr;
+      end;
+
+      Result := Format('%s %s%s%s;', [MethodType, FormatMethodName(Method), FormatParameters, ReturnValue]);
+    end;
+
     procedure GenerateInterfacesDeclaration(const IndentationLevel: Integer);
 
       procedure GenerateInterfaceDeclaration(const IndentationLevel: Integer; const InterfaceDefinition: TTypeInterfaceDefinition);
@@ -1516,6 +1618,9 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         AddLine(IndentationLevel, '%s = interface', [InterfaceDefinition.Name]);
 
         AddLine(CurrentIndentationLevel, GUIDValue);
+
+        for var Method in InterfaceDefinition.Methods do
+          AddLine(CurrentIndentationLevel, FormatMethod(Method));
 
         AddLine(IndentationLevel, 'end;');
 
@@ -2051,11 +2156,34 @@ begin
   FMethods := FMethods + [Method];
 end;
 
+destructor TTypeInterfaceDefinition.Destroy;
+begin
+  for var Method in Methods do
+    Method.Free;
+
+  inherited;
+end;
+
 { TTypeUnitDefinition }
 
 function TTypeUnitDefinition.GetHasInterfaces: Boolean;
 begin
   Result := Assigned(Interfaces);
+end;
+
+{ TTypeMethodDefinition }
+
+procedure TTypeMethodDefinition.AddParameter(const Parameter: TTypeParameterDefinition);
+begin
+  FParameters := FParameters + [Parameter];
+end;
+
+destructor TTypeMethodDefinition.Destroy;
+begin
+  for var Parameter in Parameters do
+    Parameter.Free;
+
+  inherited;
 end;
 
 end.
