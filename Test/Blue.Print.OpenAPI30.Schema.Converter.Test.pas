@@ -92,6 +92,8 @@ type
     procedure WhenTheDefinitionHasPathsMustLoadTheMethodInTheInterfaceList;
     [Test]
     procedure ThePathStringMustBeTheMethodName;
+    [Test]
+    procedure WhenThePathHasMoreThanOneSlashMustReplaceByAnUnderline;
   end;
 
 implementation
@@ -491,6 +493,15 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(3, Length(GetInterfaceService.Methods));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenThePathHasMoreThanOneSlashMustReplaceByAnUnderline;
+begin
+  FDefinition.paths.AddPathItem('/MyProc/MyPath/MyMethod');
+
+  ImportDefinition;
+
+  Assert.AreEqual('MyProc_MyPath_MyMethod', GetInterfaceService.Methods[0].Name);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenThePropertySchemaHasAnObjectDefinitionMustLoadTheClassInsideTheClassOfTheProperty;

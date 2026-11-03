@@ -128,7 +128,7 @@ begin
   end;
 
   for var PathItem in Definition.paths.PathItem do
-    Schema.Importer.CreateMethod(Schema.ServiceInterface, PathItem.Key.Substring(1), nil);
+    Schema.Importer.CreateMethod(Schema.ServiceInterface, PathItem.Key.Substring(1).Replace('/', '_'), nil);
 end;
 
 function TOpenAPI30SchemaConverter.LoadDefinition(const Schema: TSchema): OpenAPIDefinition;
