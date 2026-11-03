@@ -159,6 +159,8 @@ type
   public
     destructor Destroy; override;
 
+    function HasAttributes: Boolean;
+
     procedure AddAttribute(const Value: TTypeAttributeDefinition);
 
     property Attributes: TArray<TTypeAttributeDefinition> read FAttributes;
@@ -1135,18 +1137,12 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := FunctionAddNeedReturnType(PropertyDefinition) or NeedGetFunction(PropertyDefinition);
     end;
 
-    function NeedFieldNameAttribute(const PropertyDefinition: TTypePropertyDefinition; var PropertyName: String): Boolean; overload;
+    procedure CheckFieldNameAttribute(const PropertyDefinition: TTypePropertyDefinition);
     begin
-      PropertyName := FormatPropertyName(PropertyDefinition);
+      var PropertyName := PropertyDefinition.Name;
 
-      Result := not SameText(PropertyName, PropertyDefinition.Name);
-    end;
-
-    function NeedFieldNameAttribute(const PropertyDefinition: TTypePropertyDefinition): Boolean; overload;
-    begin
-      var PropertyName: String;
-
-      Result := NeedFieldNameAttribute(PropertyDefinition, PropertyName);
+      if not SameText(FormatPropertyName(PropertyDefinition), PropertyName) then
+        CreateFieldNameType(PropertyDefinition, PropertyName);
     end;
 
     function FormatPropertyTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
@@ -1272,7 +1268,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       TArray.Sort<TTypeMethodDefinition>(Result, TTypeCommonComparer<TTypeMethodDefinition>.Comparer);
     end;
 
-    procedure GenerateAttributes(const IndentationLevel: Integer; const CommonDefinition: TTypeCommonDefinition);
+    procedure GenerateAttributesDeclaration(const IndentationLevel: Integer; const CommonDefinition: TTypeCommonDefinition);
     begin
       var Attributes := CreateStringListForItems;
 
@@ -1395,15 +1391,12 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
         for var PropertyDefinition in ClassDefinition.Properties do
         begin
-          var PropertyName: String;
-
           if not PropertyDefinition.PatternProperty.IsEmpty then
             AddLine(CurrentIndentation, '[PatternProperty(''%s'')]', [PropertyDefinition.PatternProperty]);
 
-          if NeedFieldNameAttribute(PropertyDefinition, PropertyName) then
-            AddLine(CurrentIndentation, '[FieldName(''%s'')]', [PropertyDefinition.Name]);
+          GenerateAttributesDeclaration(CurrentIndentation, PropertyDefinition);
 
-          AddLine(CurrentIndentation, 'property %s: %s read %s write %s%s;', [PropertyName, FormatPropertyTypeName(PropertyDefinition), FormatPropertyReaderName(PropertyDefinition),
+          AddLine(CurrentIndentation, 'property %s: %s read %s write %s%s;', [FormatPropertyName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition), FormatPropertyReaderName(PropertyDefinition),
             FormatPropertyWriterName(PropertyDefinition), FormatPropertyStoredName(PropertyDefinition)]);
         end;
       end;
@@ -1506,10 +1499,12 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
           begin
             ParentModule := GetUnitDefinition(PropertyDefinition.PropertyType.ParentModule);
 
+            CheckFieldNameAttribute(PropertyDefinition);
+
             if (SYSTEM_UNIT_NAME <> ParentModule.Name) and (ParentModule <> UnitDefinition) then
               UsesList.Add(ParentModule.Name);
 
-            if NeedFieldNameAttribute(PropertyDefinition) then
+            if PropertyDefinition.HasAttributes then
               UsesList.Add(SYSTEM_BLUE_PRINT_TYPES_UNIT_NAME);
           end;
 
@@ -1764,7 +1759,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
         for var Method in SortMethods(InterfaceDefinition) do
         begin
-          GenerateAttributes(CurrentIndentationLevel, Method);
+          GenerateAttributesDeclaration(CurrentIndentationLevel, Method);
 
           AddLine(CurrentIndentationLevel, FormatMethod(Method));
         end;
@@ -2367,6 +2362,11 @@ begin
   inherited;
 end;
 
+function TTypeCommonDefinition.HasAttributes: Boolean;
+begin
+  Result := Assigned(FAttributes);
+end;
+
 { TTypeAttributeDefinition }
 
 constructor TTypeAttributeDefinition.Create(const Declaration: String);
@@ -2422,7 +2422,7 @@ end;
 
 constructor TTypeFieldNameAttribute.Create(const FieldName: String);
 begin
-  inherited Create(Format('FieldName[''%s'']', [FieldName]));
+  inherited Create(Format('FieldName(''%s'')', [FieldName]));
 end;
 
 end.
