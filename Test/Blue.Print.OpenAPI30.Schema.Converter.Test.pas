@@ -14,6 +14,7 @@ type
 
     function GetDefinitionJSON: String;
     function GetMainClass: TTypeClassDefinition;
+    function GetInterfaceService: TTypeInterfaceDefinition;
 
     procedure ImportDefinition;
   public
@@ -87,6 +88,10 @@ type
     procedure MustLoadTheEnumeratorsValuesFromTheSchemaHasExpected;
     [Test]
     procedure MustLoadTheEnumeratorsValuesNamesHasExpected;
+    [Test]
+    procedure WhenTheDefinitionHasPathsMustLoadTheMethodInTheInterfaceList;
+    [Test]
+    procedure ThePathStringMustBeTheMethodName;
   end;
 
 implementation
@@ -115,6 +120,11 @@ begin
   var Serializer: IBluePrintSerializer := TBluePrintJSONSerializer.Create;
 
   Result := Serializer.Serialize(FDefinition);
+end;
+
+function TOpenAPI30SchemaConverterTest.GetInterfaceService: TTypeInterfaceDefinition;
+begin
+  Result := FImporter.FindTypeWithPrefix('my:ServiceInterface').AsInterfaceDefinition;
 end;
 
 function TOpenAPI30SchemaConverterTest.GetMainClass: TTypeClassDefinition;
@@ -240,6 +250,7 @@ procedure TOpenAPI30SchemaConverterTest.Setup;
     Result.FileName := TPath.GetTempFileName;
     Result.MainModuleName := 'MainClass';
     Result.SchemaType := TSchemaType.OpenAPI30;
+    Result.ServiceInterfaceName := 'ServiceInterface';
   end;
 
   function CreateUnitConfiguration: TUnitConfiguration;
@@ -308,6 +319,15 @@ begin
   ImportDefinition;
 
   Assert.AreEqual('MyEnum', GetMainClass.Enumerations[0].Name);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.ThePathStringMustBeTheMethodName;
+begin
+  FDefinition.paths.AddPathItem('/MyProc');
+
+  ImportDefinition;
+
+  Assert.AreEqual('MyProc', GetInterfaceService.Methods[0].Name);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.ThePropertyNameOfAllOfSchemaMustBeAllOf;
@@ -458,6 +478,19 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(1, Length(GetMainClass.Enumerations));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheDefinitionHasPathsMustLoadTheMethodInTheInterfaceList;
+begin
+  FDefinition.paths.AddPathItem('/MyPath');
+
+  FDefinition.paths.AddPathItem('/MyPath2');
+
+  FDefinition.paths.AddPathItem('/MyPath3');
+
+  ImportDefinition;
+
+  Assert.AreEqual(3, Length(GetInterfaceService.Methods));
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenThePropertySchemaHasAnObjectDefinitionMustLoadTheClassInsideTheClassOfTheProperty;
