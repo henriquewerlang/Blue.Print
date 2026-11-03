@@ -9,6 +9,7 @@ uses System.Classes, System.SysUtils, System.Rtti, System.Generics.Collections;
 type
   TSchemaImporter = class;
   TTypeAliasDefinition = class;
+  TTypeAttributeDefinition = class;
   TTypeClassDefinition = class;
   TTypeDefinition = class;
   TTypeEnumerationDefinition = class;
@@ -107,10 +108,60 @@ type
   TBuildInType = (StringType, IntegerType, DoubleType, DateType, TimeType, DateTimeType, BooleanType, ArrayType, ValueType, DynamicPropertyType);
   TSchemaType = (Undefined, XSD, WSDL, JSONDraft4, OpenAPI20, OpenAPI30, OpenAPI31, OpenAPI32);
 
+  TTypeAttributeDefinition = class
+  private
+    FDeclaration: String;
+  public
+    constructor Create(const Declaration: String);
+
+    property Declaration: String read FDeclaration;
+  end;
+
+  TTypePatchAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create;
+  end;
+
+  TTypeDeleteAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create;
+  end;
+
+  TTypeGetAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create;
+  end;
+
+  TTypePostAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create;
+  end;
+
+  TTypePutAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create;
+  end;
+
+  TTypeOptionsAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create;
+  end;
+
+  TTypeFieldNameAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create(const FieldName: String);
+  end;
+
   TTypeCommonDefinition = class
   private
+    FAttributes: TArray<TTypeAttributeDefinition>;
     FName: String;
   public
+    destructor Destroy; override;
+
+    procedure AddAttribute(const Value: TTypeAttributeDefinition);
+
+    property Attributes: TArray<TTypeAttributeDefinition> read FAttributes;
     property Name: String read FName;
   end;
 
@@ -405,6 +456,7 @@ type
 
     class function CreateStringListForItems: TStringList;
 
+    function CreateTypeAttribute<T: TTypeAttributeDefinition, constructor>(const TypeDefinition: TTypeCommonDefinition): T;
     function CreateTypeDefinition<T: TTypeDefinition, constructor>(const ParentModule: TTypeModuleDefinition): T;
     function CreateTypeDefinitionWithName<T: TTypeDefinition, constructor>(const ParentModule: TTypeModuleDefinition; const Name: String): T;
     function FormatTypeNamespace(const Namespace, TypeName: String): String;
@@ -422,11 +474,18 @@ type
     function CreateAliasType(const ParentModule: TTypeModuleDefinition; const Name: String; const TypeAlias: TTypeDefinition): TTypeAliasDefinition;
     function CreateArrayType(const ParentModule: TTypeModuleDefinition; const ArrayType: TTypeDefinition): TTypeArrayDefinition;
     function CreateClassType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeClassDefinition;
+    function CreateDeleteAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeDeleteAttribute;
     function CreateDynamicPropertyType(const ParentModule: TTypeModuleDefinition; const DynamicType: TTypeDefinition): TTypeDynamicPropertyDefinition;
     function CreateEnumeratorType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeEnumerationDefinition;
+    function CreateFieldNameType(const PropertyDefinition: TTypePropertyDefinition; const FieldName: String): TTypeFieldNameAttribute;
+    function CreateGetAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeGetAttribute;
     function CreateInterfaceType(const ParentModule: TTypeUnitDefinition; const Name: String): TTypeInterfaceDefinition;
     function CreateMethod(const InterfaceDefinition: TTypeInterfaceDefinition; const Name: String; const ReturnType: TTypeDefinition): TTypeMethodDefinition;
+    function CreateOptionsAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeOptionsAttribute;
     function CreateParameter(const MethodDefinition: TTypeMethodDefinition; const Name: String; const ParameterType: TTypeDefinition): TTypeParameterDefinition;
+    function CreatePatchAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePatchAttribute;
+    function CreatePostAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePostAttribute;
+    function CreatePutAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePutAttribute;
     function CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Namespace, Reference: String): TTypeReferenceDefinition;
     function FindType(const Namespace, Name: String): TTypeDefinition;
     function FindTypeWithPrefix(const Fullname: String): TTypeDefinition;
@@ -451,6 +510,7 @@ implementation
 uses System.IOUtils, System.Character, System.Hash, Blue.Print.Types, Blue.Print.Serializer, System.Generics.Defaults;
 
 const
+  SYSTEM_BLUE_PRINT_TYPES_UNIT_NAME = 'Blue.Print.Types';
   SYSTEM_UNIT_NAME = 'System';
   TYPE_NAME_SEPARATOR = '.';
 
@@ -515,6 +575,11 @@ begin
   ParentModule.FClasses := ParentModule.FClasses + [Result];
 end;
 
+function TSchemaImporter.CreateDeleteAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeDeleteAttribute;
+begin
+  Result := CreateTypeAttribute<TTypeDeleteAttribute>(MethodDefinition);
+end;
+
 function TSchemaImporter.CreateDynamicPropertyType(const ParentModule: TTypeModuleDefinition; const DynamicType: TTypeDefinition): TTypeDynamicPropertyDefinition;
 begin
   Result := CreateTypeDefinition<TTypeDynamicPropertyDefinition>(ParentModule);
@@ -526,6 +591,18 @@ begin
   Result := CreateTypeDefinitionWithName<TTypeEnumerationDefinition>(ParentModule, Name);
 
   ParentModule.FEnumerations := ParentModule.FEnumerations + [Result];
+end;
+
+function TSchemaImporter.CreateFieldNameType(const PropertyDefinition: TTypePropertyDefinition; const FieldName: String): TTypeFieldNameAttribute;
+begin
+  Result := TTypeFieldNameAttribute.Create(FieldName);
+
+  PropertyDefinition.AddAttribute(Result);
+end;
+
+function TSchemaImporter.CreateGetAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeGetAttribute;
+begin
+  Result := CreateTypeAttribute<TTypeGetAttribute>(MethodDefinition);
 end;
 
 function TSchemaImporter.CreateInterfaceType(const ParentModule: TTypeUnitDefinition; const Name: String): TTypeInterfaceDefinition;
@@ -544,6 +621,11 @@ begin
   InterfaceDefinition.AddMethod(Result);
 end;
 
+function TSchemaImporter.CreateOptionsAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeOptionsAttribute;
+begin
+  Result := CreateTypeAttribute<TTypeOptionsAttribute>(MethodDefinition);
+end;
+
 function TSchemaImporter.CreateParameter(const MethodDefinition: TTypeMethodDefinition; const Name: String; const ParameterType: TTypeDefinition): TTypeParameterDefinition;
 begin
   Result := TTypeParameterDefinition.Create;
@@ -551,6 +633,21 @@ begin
   Result.FParameterType := ParameterType;
 
   MethodDefinition.AddParameter(Result);
+end;
+
+function TSchemaImporter.CreatePatchAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePatchAttribute;
+begin
+  Result := CreateTypeAttribute<TTypePatchAttribute>(MethodDefinition);
+end;
+
+function TSchemaImporter.CreatePostAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePostAttribute;
+begin
+  Result := CreateTypeAttribute<TTypePostAttribute>(MethodDefinition);
+end;
+
+function TSchemaImporter.CreatePutAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePutAttribute;
+begin
+  Result := CreateTypeAttribute<TTypePutAttribute>(MethodDefinition);
 end;
 
 function TSchemaImporter.CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Namespace, Reference: String): TTypeReferenceDefinition;
@@ -568,6 +665,13 @@ begin
   Result := TStringList.Create;
   Result.LineBreak := LIST_SEPARATOR;
   Result.TrailingLineBreak := False;
+end;
+
+function TSchemaImporter.CreateTypeAttribute<T>(const TypeDefinition: TTypeCommonDefinition): T;
+begin
+  Result := T.Create;
+
+  TypeDefinition.AddAttribute(Result);
 end;
 
 function TSchemaImporter.CreateTypeDefinition<T>(const ParentModule: TTypeModuleDefinition): T;
@@ -1168,6 +1272,19 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       TArray.Sort<TTypeMethodDefinition>(Result, TTypeCommonComparer<TTypeMethodDefinition>.Comparer);
     end;
 
+    procedure GenerateAttributes(const IndentationLevel: Integer; const CommonDefinition: TTypeCommonDefinition);
+    begin
+      var Attributes := CreateStringListForItems;
+
+      for var Attribute in CommonDefinition.Attributes do
+        Attributes.Add(Attribute.Declaration);
+
+      if not Attributes.IsEmpty then
+        AddLine(IndentationLevel, '[%s]', [Attributes.Text]);
+
+      Attributes.Free;
+    end;
+
     procedure GenerateFieldsDeclaration(const IndentationLevel: Integer; const ClassDefinition: TTypeClassDefinition);
     begin
       if ClassDefinition.HasProperties then
@@ -1393,7 +1510,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
               UsesList.Add(ParentModule.Name);
 
             if NeedFieldNameAttribute(PropertyDefinition) then
-              UsesList.Add('Blue.Print.Types');
+              UsesList.Add(SYSTEM_BLUE_PRINT_TYPES_UNIT_NAME);
           end;
 
           CheckUses(ClassDefinition);
@@ -1646,7 +1763,11 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         AddLine(CurrentIndentationLevel, GUIDValue);
 
         for var Method in SortMethods(InterfaceDefinition) do
+        begin
+          GenerateAttributes(CurrentIndentationLevel, Method);
+
           AddLine(CurrentIndentationLevel, FormatMethod(Method));
+        end;
 
         AddLine(IndentationLevel, 'end;');
 
@@ -1774,7 +1895,6 @@ procedure TSchemaImporter.LoadBuildInTypes;
 const
   BUILD_IN_TYPE_NAMES: array[TBuildInType] of String = ('String', 'Integer', 'Double', 'TDate', 'TTime', 'TDateTime', 'Boolean', 'TArray<%s>', 'TValue', 'TDynamicProperty<%s>');
   BUILD_IN_TYPE_NAMESPACE = 'Blue Print Buildin Types';
-  SYSTEM_BLUE_PRINT_TYPES_UNIT_NAME = 'Blue.Print.Types';
   SYSTEM_RTTI_UNIT_NAME = 'System.Rtti';
 
   procedure AddBuildInTypes(const UnitDefinition: TTypeUnitDefinition; const BuildInTypeList: TArray<TBuildInType>);
@@ -2230,6 +2350,79 @@ end;
 class destructor TTypeCommonComparer<T>.Destroy;
 begin
   FreeAndNil(FComparer);
+end;
+
+{ TTypeCommonDefinition }
+
+procedure TTypeCommonDefinition.AddAttribute(const Value: TTypeAttributeDefinition);
+begin
+  FAttributes := FAttributes + [Value];
+end;
+
+destructor TTypeCommonDefinition.Destroy;
+begin
+  for var Attribute in FAttributes do
+    Attribute.Free;
+
+  inherited;
+end;
+
+{ TTypeAttributeDefinition }
+
+constructor TTypeAttributeDefinition.Create(const Declaration: String);
+begin
+  inherited Create;
+
+  FDeclaration := Declaration;
+end;
+
+{ TTypePatchAttribute }
+
+constructor TTypePatchAttribute.Create;
+begin
+  inherited Create('Patch');
+end;
+
+{ TTypeDeleteAttribute }
+
+constructor TTypeDeleteAttribute.Create;
+begin
+  inherited Create('Delete');
+end;
+
+{ TTypeGetAttribute }
+
+constructor TTypeGetAttribute.Create;
+begin
+  inherited Create('Get');
+end;
+
+{ TTypePostAttribute }
+
+constructor TTypePostAttribute.Create;
+begin
+  inherited Create('Post');
+end;
+
+{ TTypePutAttribute }
+
+constructor TTypePutAttribute.Create;
+begin
+  inherited Create('Put');
+end;
+
+{ TTypeOptionsAttribute }
+
+constructor TTypeOptionsAttribute.Create;
+begin
+  inherited Create('Options');
+end;
+
+{ TTypeFieldNameAttribute }
+
+constructor TTypeFieldNameAttribute.Create(const FieldName: String);
+begin
+  inherited Create(Format('FieldName[''%s'']', [FieldName]));
 end;
 
 end.
