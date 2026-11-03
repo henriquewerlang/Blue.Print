@@ -152,6 +152,11 @@ type
     constructor Create(const FieldName: String);
   end;
 
+  TTypePatternPropertyAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create(const Pattern: String);
+  end;
+
   TTypeCommonDefinition = class
   private
     FAttributes: TArray<TTypeAttributeDefinition>;
@@ -277,12 +282,10 @@ type
   private
     FPropertyType: TTypeDefinition;
     FOptional: Boolean;
-    FPatternProperty: String;
 
     function GetPropertyType: TTypeDefinition;
   public
     property Optional: Boolean read FOptional write FOptional;
-    property PatternProperty: String read FPatternProperty write FPatternProperty;
     property PropertyType: TTypeDefinition read GetPropertyType write FPropertyType;
   end;
 
@@ -486,6 +489,7 @@ type
     function CreateOptionsAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeOptionsAttribute;
     function CreateParameter(const MethodDefinition: TTypeMethodDefinition; const Name: String; const ParameterType: TTypeDefinition): TTypeParameterDefinition;
     function CreatePatchAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePatchAttribute;
+    function CreatePatternPropertyAttribute(const PropertyDefinition: TTypePropertyDefinition; const Pattern: String): TTypePatternPropertyAttribute;
     function CreatePostAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePostAttribute;
     function CreatePutAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePutAttribute;
     function CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Namespace, Reference: String): TTypeReferenceDefinition;
@@ -640,6 +644,13 @@ end;
 function TSchemaImporter.CreatePatchAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePatchAttribute;
 begin
   Result := CreateTypeAttribute<TTypePatchAttribute>(MethodDefinition);
+end;
+
+function TSchemaImporter.CreatePatternPropertyAttribute(const PropertyDefinition: TTypePropertyDefinition; const Pattern: String): TTypePatternPropertyAttribute;
+begin
+  Result := TTypePatternPropertyAttribute.Create(Pattern);
+
+  PropertyDefinition.AddAttribute(Result);
 end;
 
 function TSchemaImporter.CreatePostAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePostAttribute;
@@ -1391,9 +1402,6 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
         for var PropertyDefinition in ClassDefinition.Properties do
         begin
-          if not PropertyDefinition.PatternProperty.IsEmpty then
-            AddLine(CurrentIndentation, '[PatternProperty(''%s'')]', [PropertyDefinition.PatternProperty]);
-
           GenerateAttributesDeclaration(CurrentIndentation, PropertyDefinition);
 
           AddLine(CurrentIndentation, 'property %s: %s read %s write %s%s;', [FormatPropertyName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition), FormatPropertyReaderName(PropertyDefinition),
@@ -2423,6 +2431,13 @@ end;
 constructor TTypeFieldNameAttribute.Create(const FieldName: String);
 begin
   inherited Create(Format('FieldName(''%s'')', [FieldName]));
+end;
+
+{ TTypePatternPropertyAttribute }
+
+constructor TTypePatternPropertyAttribute.Create(const Pattern: String);
+begin
+  inherited Create(Format('PatternProperty(''%s'')', [Pattern]));
 end;
 
 end.

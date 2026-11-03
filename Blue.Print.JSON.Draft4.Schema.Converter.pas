@@ -175,7 +175,8 @@ const
         var PropertyName := GetPropertyName(PatternProperty.Value, 'PatternProperty', Length(ClassDefinition.Properties));
 
         var PropertyDefinition := CreateProperty(ClassDefinition, PropertyName, CreateDynamicPropertyType(ClassDefinition, PropertyName, PatternProperty.Value), False);
-        PropertyDefinition.PatternProperty := PatternProperty.Key;
+
+        Importer.CreatePatternPropertyAttribute(PropertyDefinition, PatternProperty.Key);
       end;
   end;
 

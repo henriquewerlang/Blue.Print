@@ -204,8 +204,6 @@ type
     [Test]
     procedure WhenThePatternPropertyIsAReferenceTypeMustLoadThePropertyWithTheNameOfTheReference;
     [Test]
-    procedure MustLoadThePatternValueInThePatternPropertyValueHasExpected;
-    [Test]
     procedure WhenADefinitionHasPropertiesAndAllOfValueMustAppendTheTypeInTypesListWithTheDefinitionName;
     [Test]
     procedure WhenTheSchemaTypeOnlyHavePropertiesInTheDefinitionMustCreateAClassDefinitionTypeHasExpected;
@@ -471,15 +469,6 @@ begin
   Assert.AreEqual('Enum1', GetMainClass.Enumerations[0].Values[0]);
   Assert.AreEqual('Enum2', GetMainClass.Enumerations[0].Values[1]);
   Assert.AreEqual('Enum3', GetMainClass.Enumerations[0].Values[2]);
-end;
-
-procedure TJSONDraft4SchemaConverterTeste.MustLoadThePatternValueInThePatternPropertyValueHasExpected;
-begin
-  FDefinition.patternProperties.AddAdditionalProperties('xxxx');
-
-  ImportDefinition;
-
-  Assert.AreEqual('xxxx', GetMainClass.Properties[0].PatternProperty);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.MustLoadTheReferenceInformation;

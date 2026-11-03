@@ -502,6 +502,10 @@ type
     procedure TheFieldNameAttributeMustBeAppendedInThePropertyAttributesList;
     [Test]
     procedure TheFieldNameAttributeMustLoadTheFieldNameInTheAttributeDeclaration;
+    [Test]
+    procedure WhenCreateThePatternPropertyMustReturnTheClassCreateWithThePatternValueLoaded;
+    [Test]
+    procedure WhenCreateThePatternPropertyMustLoadTheAttributeInTheProperty;
   end;
 
   [TestFixture]
@@ -3792,6 +3796,32 @@ begin
   PropertyDefinition.Free;
 end;
 
+procedure TSchemaImporterTest.WhenCreateThePatternPropertyMustLoadTheAttributeInTheProperty;
+begin
+  var PropertyDefinition := TTypePropertyDefinition.Create;
+
+  var Attribute := FImporter.CreatePatternPropertyAttribute(PropertyDefinition, 'Value');
+
+  Assert.AreEqual(1, Length(PropertyDefinition.Attributes));
+
+  Assert.AreEqual(Attribute, PropertyDefinition.Attributes[0]);
+
+  PropertyDefinition.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateThePatternPropertyMustReturnTheClassCreateWithThePatternValueLoaded;
+begin
+  var PropertyDefinition := TTypePropertyDefinition.Create;
+
+  var Attribute := FImporter.CreatePatternPropertyAttribute(PropertyDefinition, 'My*Pattern');
+
+  Assert.IsNotNil(Attribute);
+
+  Assert.AreEqual('PatternProperty(''My*Pattern'')', Attribute.Declaration);
+
+  PropertyDefinition.Free;
+end;
+
 procedure TSchemaImporterTest.WhenCreateTheServiceInterfaceMustLoadTheTypeInTheMainNamespaceOfTheSchema;
 begin
   FConfiguration.Units[0].SchemaFiles[0].ServiceInterfaceName := 'MyInterface';
@@ -5340,7 +5370,7 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (Schema: TSchema)
     begin
-      Schema.MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]).PatternProperty := 'xxxx';
+      FImporter.CreatePatternPropertyAttribute(Schema.MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]), 'xxxx');
     end;
 
   FImporter.Import(FConfiguration);
