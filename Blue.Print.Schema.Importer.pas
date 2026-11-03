@@ -448,11 +448,26 @@ type
 
 implementation
 
-uses System.IOUtils, System.Character, System.Hash, Blue.Print.Types, Blue.Print.Serializer;
+uses System.IOUtils, System.Character, System.Hash, Blue.Print.Types, Blue.Print.Serializer, System.Generics.Defaults;
 
 const
   SYSTEM_UNIT_NAME = 'System';
   TYPE_NAME_SEPARATOR = '.';
+
+type
+  TTypeCommonComparer<T: TTypeCommonDefinition> = class(TNoRefCountObject, IComparer<T>)
+  private
+    function Compare(const Left, Right: T): Integer;
+  end;
+
+  TTypePropertyComparer = class(TTypeCommonComparer<TTypePropertyDefinition>)
+  private class var
+    FComparer: TTypePropertyComparer;
+  public
+    class destructor Destroy;
+
+    class function Comparer: TTypePropertyComparer;
+  end;
 
 { TSchemaImporter }
 
@@ -1142,6 +1157,13 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         Result := EmptyStr;
     end;
 
+    function SortProperties(const ClassDefinition: TTypeClassDefinition): TArray<TTypePropertyDefinition>;
+    begin
+      Result := Copy(ClassDefinition.Properties);
+
+      TArray.Sort<TTypePropertyDefinition>(Result, TTypePropertyComparer.Comparer);
+    end;
+
     procedure GenerateFieldsDeclaration(const IndentationLevel: Integer; const ClassDefinition: TTypeClassDefinition);
     begin
       if ClassDefinition.HasProperties then
@@ -1150,7 +1172,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
         AddLine(IndentationLevel, 'private');
 
-        for var PropertyDefinition in ClassDefinition.Properties do
+        for var PropertyDefinition in SortProperties(ClassDefinition) do
         begin
           AddLine(CurrentIndentation, '%s: %s;', [FormatFieldName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
 
@@ -2184,6 +2206,28 @@ begin
     Parameter.Free;
 
   inherited;
+end;
+
+{ TTypeCommonComparer<T> }
+
+function TTypeCommonComparer<T>.Compare(const Left, Right: T): Integer;
+begin
+  Result := CompareText(Left.Name, Right.Name);
+end;
+
+{ TTypePropertyComparer }
+
+class function TTypePropertyComparer.Comparer: TTypePropertyComparer;
+begin
+  if not Assigned(FComparer) then
+    FComparer := TTypePropertyComparer.Create;
+
+  Result := FComparer;
+end;
+
+class destructor TTypePropertyComparer.Destroy;
+begin
+  FreeAndNil(FComparer);
 end;
 
 end.
