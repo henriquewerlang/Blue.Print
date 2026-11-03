@@ -128,7 +128,23 @@ begin
   end;
 
   for var PathItem in Definition.paths.PathItem do
-    Schema.Importer.CreateMethod(Schema.ServiceInterface, PathItem.Key.Substring(1).Replace('/', '_'), nil);
+  begin
+    var Method := Schema.Importer.CreateMethod(Schema.ServiceInterface, PathItem.Key.Substring(1).Replace('/', '_'), nil);
+    var MethodSchema := PathItem.Value;
+
+    if MethodSchema.IsPatchStored then
+      Schema.Importer.CreatePatchAttribute(Method)
+    else if MethodSchema.IsGetStored then
+      Schema.Importer.CreateGetAttribute(Method)
+    else if MethodSchema.IsPostStored then
+      Schema.Importer.CreatePostAttribute(Method)
+    else if MethodSchema.IsDeleteStored then
+      Schema.Importer.CreateDeleteAttribute(Method)
+    else if MethodSchema.IsOptionsStored then
+      Schema.Importer.CreateOptionsAttribute(Method)
+    else if MethodSchema.IsPutStored then
+      Schema.Importer.CreatePutAttribute(Method)
+  end;
 end;
 
 function TOpenAPI30SchemaConverter.LoadDefinition(const Schema: TSchema): OpenAPIDefinition;

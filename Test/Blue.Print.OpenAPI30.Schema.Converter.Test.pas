@@ -94,6 +94,20 @@ type
     procedure ThePathStringMustBeTheMethodName;
     [Test]
     procedure WhenThePathHasMoreThanOneSlashMustReplaceByAnUnderline;
+    [Test]
+    procedure WhenThePatchSchemaIsLoadedMustAppendThePatchAttributeInTheMethod;
+    [Test]
+    procedure WhenTheGetSchemaIsLoadedMustAppendTheGetAttributeInTheMethod;
+    [Test]
+    procedure WhenThePostSchemaIsLoadedMustAppendThePostAttributeInTheMethod;
+    [Test]
+    procedure WhenTheDeleteSchemaIsLoadedMustAppendTheDeleteAttributeInTheMethod;
+    [Test]
+    procedure WhenTheOptionsSchemaIsLoadedMustAppendTheOptionsAttributeInTheMethod;
+    [Test]
+    procedure WhenThePutSchemaIsLoadedMustAppendThePutAttributeInTheMethod;
+    [Test]
+    procedure WhenTheMethodHasntAnyVerbSchemaLoadedCantLoadAnyAttributeInTheMethod;
   end;
 
 implementation
@@ -495,6 +509,59 @@ begin
   Assert.AreEqual(3, Length(GetInterfaceService.Methods));
 end;
 
+procedure TOpenAPI30SchemaConverterTest.WhenTheDeleteSchemaIsLoadedMustAppendTheDeleteAttributeInTheMethod;
+begin
+  FDefinition.paths.AddPathItem('/MyProc').Delete;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetInterfaceService.Methods[0].Attributes));
+
+  Assert.AreEqual(TTypeDeleteAttribute, GetInterfaceService.Methods[0].Attributes[0].ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheGetSchemaIsLoadedMustAppendTheGetAttributeInTheMethod;
+begin
+  FDefinition.paths.AddPathItem('/MyProc').get;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetInterfaceService.Methods[0].Attributes));
+
+  Assert.AreEqual(TTypeGetAttribute, GetInterfaceService.Methods[0].Attributes[0].ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheMethodHasntAnyVerbSchemaLoadedCantLoadAnyAttributeInTheMethod;
+begin
+  FDefinition.paths.AddPathItem('/MyProc');
+
+  ImportDefinition;
+
+  Assert.AreEqual(0, Length(GetInterfaceService.Methods[0].Attributes));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheOptionsSchemaIsLoadedMustAppendTheOptionsAttributeInTheMethod;
+begin
+  FDefinition.paths.AddPathItem('/MyProc').Options;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetInterfaceService.Methods[0].Attributes));
+
+  Assert.AreEqual(TTypeOptionsAttribute, GetInterfaceService.Methods[0].Attributes[0].ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenThePatchSchemaIsLoadedMustAppendThePatchAttributeInTheMethod;
+begin
+  FDefinition.paths.AddPathItem('/MyProc').patch;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetInterfaceService.Methods[0].Attributes));
+
+  Assert.AreEqual(TTypePatchAttribute, GetInterfaceService.Methods[0].Attributes[0].ClassType);
+end;
+
 procedure TOpenAPI30SchemaConverterTest.WhenThePathHasMoreThanOneSlashMustReplaceByAnUnderline;
 begin
   FDefinition.paths.AddPathItem('/MyProc/MyPath/MyMethod');
@@ -502,6 +569,17 @@ begin
   ImportDefinition;
 
   Assert.AreEqual('MyProc_MyPath_MyMethod', GetInterfaceService.Methods[0].Name);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenThePostSchemaIsLoadedMustAppendThePostAttributeInTheMethod;
+begin
+  FDefinition.paths.AddPathItem('/MyProc').post;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetInterfaceService.Methods[0].Attributes));
+
+  Assert.AreEqual(TTypePostAttribute, GetInterfaceService.Methods[0].Attributes[0].ClassType);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenThePropertySchemaHasAnObjectDefinitionMustLoadTheClassInsideTheClassOfTheProperty;
@@ -549,6 +627,17 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Classes[0].Properties[0].PropertyType.ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenThePutSchemaIsLoadedMustAppendThePutAttributeInTheMethod;
+begin
+  FDefinition.paths.AddPathItem('/MyProc').Put;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetInterfaceService.Methods[0].Attributes));
+
+  Assert.AreEqual(TTypePutAttribute, GetInterfaceService.Methods[0].Attributes[0].ClassType);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheSchemaHasTheAllOfDefinitionMustLoadAClassTypeDefinitionForThePropertyType;
