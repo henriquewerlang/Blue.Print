@@ -62,24 +62,23 @@ type
     public
       procedure AddString(const Name: String; const Value: System.String);
     published
-      [PatternProperty('^\$ref$')]
-      [FieldName('string')]
+      [PatternProperty('^\$ref$'), FieldName('string')]
       property &string: Blue.Print.Types.TDynamicProperty<System.String> read FString write FString;
     end;
 
     InfoType = class
     private
-      FTitle: System.String;
-      FDescription: System.String;
-      FDescriptionStored: Boolean;
-      FTermsOfService: System.String;
-      FTermsOfServiceStored: Boolean;
       FContact: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Contact;
       FContactStored: Boolean;
+      FDescription: System.String;
+      FDescriptionStored: Boolean;
       FLicense: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.License;
       FLicenseStored: Boolean;
-      FVersion: System.String;
       FPatternProperty7: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FTermsOfService: System.String;
+      FTermsOfServiceStored: Boolean;
+      FTitle: System.String;
+      FVersion: System.String;
       procedure SetDescription(const Value: System.String);
       procedure SetTermsOfService(const Value: System.String);
       function GetContact: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Contact;
@@ -108,13 +107,13 @@ type
 
     Contact = class
     private
-      FName: System.String;
-      FNameStored: Boolean;
-      FUrl: System.String;
-      FUrlStored: Boolean;
       FEmail: System.String;
       FEmailStored: Boolean;
+      FName: System.String;
+      FNameStored: Boolean;
       FPatternProperty4: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FUrl: System.String;
+      FUrlStored: Boolean;
       procedure SetName(const Value: System.String);
       procedure SetUrl(const Value: System.String);
       procedure SetEmail(const Value: System.String);
@@ -135,9 +134,9 @@ type
     License = class
     private
       FName: System.String;
+      FPatternProperty3: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       FUrl: System.String;
       FUrlStored: Boolean;
-      FPatternProperty3: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       procedure SetUrl(const Value: System.String);
     public
       procedure AddPatternProperty3(const Name: String; const Value: System.Rtti.TValue);
@@ -165,12 +164,12 @@ type
         property additionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ServerVariable> read FAdditionalProperties write FAdditionalProperties;
       end;
     private
-      FUrl: System.String;
       FDescription: System.String;
       FDescriptionStored: Boolean;
+      FPatternProperty4: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FUrl: System.String;
       FVariables: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Server.TVariablesType;
       FVariablesStored: Boolean;
-      FPatternProperty4: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       procedure SetDescription(const Value: System.String);
       function GetVariables: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Server.TVariablesType;
       procedure SetVariables(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Server.TVariablesType);
@@ -191,11 +190,11 @@ type
 
     ServerVariable = class
     private
-      FEnum: System.TArray<System.String>;
-      FEnumStored: Boolean;
       FDefault: System.String;
       FDescription: System.String;
       FDescriptionStored: Boolean;
+      FEnum: System.TArray<System.String>;
+      FEnumStored: Boolean;
       FPatternProperty4: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       procedure SetEnum(const Value: System.TArray<System.String>);
       procedure SetDescription(const Value: System.String);
@@ -232,10 +231,10 @@ type
         [Flat]
         TPatternPropertyType = class
         private
-          FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
-          FSchemaStored: Boolean;
           FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
           FReferenceStored: Boolean;
+          FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
+          FSchemaStored: Boolean;
           function GetSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
           procedure SetSchema(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema);
           function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
@@ -302,10 +301,10 @@ type
         [Flat]
         TPatternPropertyType = class
         private
-          FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
-          FReferenceStored: Boolean;
           FParameter: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Parameter;
           FParameterStored: Boolean;
+          FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
+          FReferenceStored: Boolean;
           function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
           procedure SetReference(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference);
           function GetParameter: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Parameter;
@@ -337,10 +336,10 @@ type
         [Flat]
         TPatternPropertyType = class
         private
-          FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
-          FReferenceStored: Boolean;
           FExample: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Example;
           FExampleStored: Boolean;
+          FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
+          FReferenceStored: Boolean;
           function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
           procedure SetReference(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference);
           function GetExample: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Example;
@@ -407,10 +406,10 @@ type
         [Flat]
         TPatternPropertyType = class
         private
-          FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
-          FReferenceStored: Boolean;
           FHeader: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Header;
           FHeaderStored: Boolean;
+          FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
+          FReferenceStored: Boolean;
           function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
           procedure SetReference(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference);
           function GetHeader: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Header;
@@ -477,10 +476,10 @@ type
         [Flat]
         TPatternPropertyType = class
         private
-          FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
-          FReferenceStored: Boolean;
           FLink: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Link;
           FLinkStored: Boolean;
+          FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
+          FReferenceStored: Boolean;
           function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
           procedure SetReference(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference);
           function GetLink: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Link;
@@ -512,10 +511,10 @@ type
         [Flat]
         TPatternPropertyType = class
         private
-          FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
-          FReferenceStored: Boolean;
           FCallback: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Callback;
           FCallbackStored: Boolean;
+          FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
+          FReferenceStored: Boolean;
           function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
           procedure SetReference(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference);
           function GetCallback: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Callback;
@@ -540,25 +539,25 @@ type
         property PatternProperty: Blue.Print.Types.TDynamicProperty<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TCallbacksType.TPatternPropertyType> read FPatternProperty write FPatternProperty;
       end;
     private
-      FSchemas: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TSchemasType;
-      FSchemasStored: Boolean;
-      FResponses: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TResponsesType;
-      FResponsesStored: Boolean;
-      FParameters: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TParametersType;
-      FParametersStored: Boolean;
-      FExamples: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TExamplesType;
-      FExamplesStored: Boolean;
-      FRequestBodies: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TRequestBodiesType;
-      FRequestBodiesStored: Boolean;
-      FHeaders: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.THeadersType;
-      FHeadersStored: Boolean;
-      FSecuritySchemes: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TSecuritySchemesType;
-      FSecuritySchemesStored: Boolean;
-      FLinks: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TLinksType;
-      FLinksStored: Boolean;
       FCallbacks: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TCallbacksType;
       FCallbacksStored: Boolean;
+      FExamples: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TExamplesType;
+      FExamplesStored: Boolean;
+      FHeaders: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.THeadersType;
+      FHeadersStored: Boolean;
+      FLinks: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TLinksType;
+      FLinksStored: Boolean;
+      FParameters: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TParametersType;
+      FParametersStored: Boolean;
       FPatternProperty10: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FRequestBodies: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TRequestBodiesType;
+      FRequestBodiesStored: Boolean;
+      FResponses: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TResponsesType;
+      FResponsesStored: Boolean;
+      FSchemas: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TSchemasType;
+      FSchemasStored: Boolean;
+      FSecuritySchemes: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TSecuritySchemesType;
+      FSecuritySchemesStored: Boolean;
       function GetSchemas: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TSchemasType;
       procedure SetSchemas(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TSchemasType);
       function GetResponses: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType.TResponsesType;
@@ -621,10 +620,10 @@ type
       [Flat]
       TNotType = class
       private
-        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
-        FSchemaStored: Boolean;
         FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
         FReferenceStored: Boolean;
+        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
+        FSchemaStored: Boolean;
         function GetSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
         procedure SetSchema(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema);
         function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
@@ -642,10 +641,10 @@ type
       [Flat]
       TAllOfTypeArray = class
       private
-        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
-        FSchemaStored: Boolean;
         FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
         FReferenceStored: Boolean;
+        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
+        FSchemaStored: Boolean;
         function GetSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
         procedure SetSchema(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema);
         function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
@@ -663,10 +662,10 @@ type
       [Flat]
       TOneOfTypeArray = class
       private
-        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
-        FSchemaStored: Boolean;
         FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
         FReferenceStored: Boolean;
+        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
+        FSchemaStored: Boolean;
         function GetSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
         procedure SetSchema(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema);
         function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
@@ -684,10 +683,10 @@ type
       [Flat]
       TAnyOfTypeArray = class
       private
-        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
-        FSchemaStored: Boolean;
         FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
         FReferenceStored: Boolean;
+        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
+        FSchemaStored: Boolean;
         function GetSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
         procedure SetSchema(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema);
         function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
@@ -705,10 +704,10 @@ type
       [Flat]
       TItemsType = class
       private
-        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
-        FSchemaStored: Boolean;
         FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
         FReferenceStored: Boolean;
+        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
+        FSchemaStored: Boolean;
         function GetSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
         procedure SetSchema(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema);
         function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
@@ -730,10 +729,10 @@ type
         [Flat]
         TAdditionalPropertiesType = class
         private
-          FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
-          FSchemaStored: Boolean;
           FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
           FReferenceStored: Boolean;
+          FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
+          FSchemaStored: Boolean;
           function GetSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
           procedure SetSchema(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema);
           function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
@@ -760,12 +759,12 @@ type
       [Flat]
       TAdditionalPropertiesType = class
       private
-        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
-        FSchemaStored: Boolean;
-        FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
-        FReferenceStored: Boolean;
         FBoolean: System.Boolean;
         FBooleanStored: Boolean;
+        FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
+        FReferenceStored: Boolean;
+        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
+        FSchemaStored: Boolean;
         function GetSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
         procedure SetSchema(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema);
         function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
@@ -783,77 +782,77 @@ type
         property boolean: System.Boolean read FBoolean write SetBoolean stored FBooleanStored;
       end;
     private
-      FTitle: System.String;
-      FTitleStored: Boolean;
-      FMultipleOf: System.Double;
-      FMultipleOfStored: Boolean;
-      FMaximum: System.Double;
-      FMaximumStored: Boolean;
-      FExclusiveMaximum: System.Boolean;
-      FExclusiveMaximumStored: Boolean;
-      FMinimum: System.Double;
-      FMinimumStored: Boolean;
-      FExclusiveMinimum: System.Boolean;
-      FExclusiveMinimumStored: Boolean;
-      FMaxLength: System.Integer;
-      FMaxLengthStored: Boolean;
-      FMinLength: System.Integer;
-      FMinLengthStored: Boolean;
-      FPattern: System.String;
-      FPatternStored: Boolean;
-      FMaxItems: System.Integer;
-      FMaxItemsStored: Boolean;
-      FMinItems: System.Integer;
-      FMinItemsStored: Boolean;
-      FUniqueItems: System.Boolean;
-      FUniqueItemsStored: Boolean;
-      FMaxProperties: System.Integer;
-      FMaxPropertiesStored: Boolean;
-      FMinProperties: System.Integer;
-      FMinPropertiesStored: Boolean;
-      FRequired: System.TArray<System.String>;
-      FRequiredStored: Boolean;
-      FEnum: System.TArray<System.Rtti.TValue>;
-      FEnumStored: Boolean;
-      FType: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema.TTypeType;
-      FTypeStored: Boolean;
-      FNot: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema.TNotType;
-      FNotStored: Boolean;
-      FAllOf: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema.TAllOfTypeArray>;
-      FAllOfStored: Boolean;
-      FOneOf: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema.TOneOfTypeArray>;
-      FOneOfStored: Boolean;
-      FAnyOf: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema.TAnyOfTypeArray>;
-      FAnyOfStored: Boolean;
-      FItems: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema.TItemsType;
-      FItemsStored: Boolean;
-      FProperties: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema.TPropertiesType;
-      FPropertiesStored: Boolean;
       FAdditionalProperties: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema.TAdditionalPropertiesType;
       FAdditionalPropertiesStored: Boolean;
-      FDescription: System.String;
-      FDescriptionStored: Boolean;
-      FFormat: System.String;
-      FFormatStored: Boolean;
+      FAllOf: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema.TAllOfTypeArray>;
+      FAllOfStored: Boolean;
+      FAnyOf: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema.TAnyOfTypeArray>;
+      FAnyOfStored: Boolean;
       FDefault: System.Rtti.TValue;
       FDefaultStored: Boolean;
-      FNullable: System.Boolean;
-      FNullableStored: Boolean;
-      FDiscriminator: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Discriminator;
-      FDiscriminatorStored: Boolean;
-      FReadOnly: System.Boolean;
-      FReadOnlyStored: Boolean;
-      FWriteOnly: System.Boolean;
-      FWriteOnlyStored: Boolean;
-      FExample: System.Rtti.TValue;
-      FExampleStored: Boolean;
-      FExternalDocs: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ExternalDocumentation;
-      FExternalDocsStored: Boolean;
       FDeprecated: System.Boolean;
       FDeprecatedStored: Boolean;
+      FDescription: System.String;
+      FDescriptionStored: Boolean;
+      FDiscriminator: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Discriminator;
+      FDiscriminatorStored: Boolean;
+      FEnum: System.TArray<System.Rtti.TValue>;
+      FEnumStored: Boolean;
+      FExample: System.Rtti.TValue;
+      FExampleStored: Boolean;
+      FExclusiveMaximum: System.Boolean;
+      FExclusiveMaximumStored: Boolean;
+      FExclusiveMinimum: System.Boolean;
+      FExclusiveMinimumStored: Boolean;
+      FExternalDocs: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ExternalDocumentation;
+      FExternalDocsStored: Boolean;
+      FFormat: System.String;
+      FFormatStored: Boolean;
+      FItems: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema.TItemsType;
+      FItemsStored: Boolean;
+      FMaximum: System.Double;
+      FMaximumStored: Boolean;
+      FMaxItems: System.Integer;
+      FMaxItemsStored: Boolean;
+      FMaxLength: System.Integer;
+      FMaxLengthStored: Boolean;
+      FMaxProperties: System.Integer;
+      FMaxPropertiesStored: Boolean;
+      FMinimum: System.Double;
+      FMinimumStored: Boolean;
+      FMinItems: System.Integer;
+      FMinItemsStored: Boolean;
+      FMinLength: System.Integer;
+      FMinLengthStored: Boolean;
+      FMinProperties: System.Integer;
+      FMinPropertiesStored: Boolean;
+      FMultipleOf: System.Double;
+      FMultipleOfStored: Boolean;
+      FNot: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema.TNotType;
+      FNotStored: Boolean;
+      FNullable: System.Boolean;
+      FNullableStored: Boolean;
+      FOneOf: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema.TOneOfTypeArray>;
+      FOneOfStored: Boolean;
+      FPattern: System.String;
+      FPatternStored: Boolean;
+      FPatternProperty36: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FProperties: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema.TPropertiesType;
+      FPropertiesStored: Boolean;
+      FReadOnly: System.Boolean;
+      FReadOnlyStored: Boolean;
+      FRequired: System.TArray<System.String>;
+      FRequiredStored: Boolean;
+      FTitle: System.String;
+      FTitleStored: Boolean;
+      FType: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema.TTypeType;
+      FTypeStored: Boolean;
+      FUniqueItems: System.Boolean;
+      FUniqueItemsStored: Boolean;
+      FWriteOnly: System.Boolean;
+      FWriteOnlyStored: Boolean;
       FXml: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.XML;
       FXmlStored: Boolean;
-      FPatternProperty36: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       procedure SetTitle(const Value: System.String);
       procedure SetMultipleOf(const Value: System.Double);
       procedure SetMaximum(const Value: System.Double);
@@ -996,9 +995,9 @@ type
         property additionalProperties: Blue.Print.Types.TDynamicProperty<System.String> read FAdditionalProperties write FAdditionalProperties;
       end;
     private
-      FPropertyName: System.String;
       FMapping: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Discriminator.TMappingType;
       FMappingStored: Boolean;
+      FPropertyName: System.String;
       function GetMapping: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Discriminator.TMappingType;
       procedure SetMapping(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Discriminator.TMappingType);
     public
@@ -1012,17 +1011,17 @@ type
 
     XML = class
     private
+      FAttribute: System.Boolean;
+      FAttributeStored: Boolean;
       FName: System.String;
       FNameStored: Boolean;
       FNamespace: System.String;
       FNamespaceStored: Boolean;
+      FPatternProperty6: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       FPrefix: System.String;
       FPrefixStored: Boolean;
-      FAttribute: System.Boolean;
-      FAttributeStored: Boolean;
       FWrapped: System.Boolean;
       FWrappedStored: Boolean;
-      FPatternProperty6: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       procedure SetName(const Value: System.String);
       procedure SetNamespace(const Value: System.String);
       procedure SetPrefix(const Value: System.String);
@@ -1131,11 +1130,11 @@ type
         property additionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Response.TLinksType.TAdditionalPropertiesType> read FAdditionalProperties write FAdditionalProperties;
       end;
     private
+      FContent: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Response.TContentType;
+      FContentStored: Boolean;
       FDescription: System.String;
       FHeaders: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Response.THeadersType;
       FHeadersStored: Boolean;
-      FContent: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Response.TContentType;
-      FContentStored: Boolean;
       FLinks: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Response.TLinksType;
       FLinksStored: Boolean;
       FPatternProperty5: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
@@ -1171,10 +1170,10 @@ type
       [Flat]
       TSchemaType = class
       private
-        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
-        FSchemaStored: Boolean;
         FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
         FReferenceStored: Boolean;
+        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
+        FSchemaStored: Boolean;
         function GetSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
         procedure SetSchema(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema);
         function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
@@ -1234,15 +1233,15 @@ type
         property additionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Encoding> read FAdditionalProperties write FAdditionalProperties;
       end;
     private
-      FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.MediaType.TSchemaType;
-      FSchemaStored: Boolean;
+      FEncoding: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.MediaType.TEncodingType;
+      FEncodingStored: Boolean;
       FExample: System.Rtti.TValue;
       FExampleStored: Boolean;
       FExamples: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.MediaType.TExamplesType;
       FExamplesStored: Boolean;
-      FEncoding: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.MediaType.TEncodingType;
-      FEncodingStored: Boolean;
       FPatternProperty5: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.MediaType.TSchemaType;
+      FSchemaStored: Boolean;
       function GetSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.MediaType.TSchemaType;
       procedure SetSchema(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.MediaType.TSchemaType);
       procedure SetExample(const Value: System.Rtti.TValue);
@@ -1270,15 +1269,15 @@ type
 
     Example = class
     private
-      FSummary: System.String;
-      FSummaryStored: Boolean;
       FDescription: System.String;
       FDescriptionStored: Boolean;
-      FValue: System.Rtti.TValue;
-      FValueStored: Boolean;
       FExternalValue: System.String;
       FExternalValueStored: Boolean;
       FPatternProperty5: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FSummary: System.String;
+      FSummaryStored: Boolean;
+      FValue: System.Rtti.TValue;
+      FValueStored: Boolean;
       procedure SetSummary(const Value: System.String);
       procedure SetDescription(const Value: System.String);
       procedure SetValue(const Value: System.Rtti.TValue);
@@ -1310,10 +1309,10 @@ type
       [Flat]
       TSchemaType = class
       private
-        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
-        FSchemaStored: Boolean;
         FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
         FReferenceStored: Boolean;
+        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
+        FSchemaStored: Boolean;
         function GetSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
         procedure SetSchema(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema);
         function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
@@ -1373,29 +1372,29 @@ type
         property additionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Header.TExamplesType.TAdditionalPropertiesType> read FAdditionalProperties write FAdditionalProperties;
       end;
     private
-      FDescription: System.String;
-      FDescriptionStored: Boolean;
-      FRequired: System.Boolean;
-      FRequiredStored: Boolean;
-      FDeprecated: System.Boolean;
-      FDeprecatedStored: Boolean;
       FAllowEmptyValue: System.Boolean;
       FAllowEmptyValueStored: Boolean;
-      FStyle: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Header.TStyleType;
-      FStyleStored: Boolean;
-      FExplode: System.Boolean;
-      FExplodeStored: Boolean;
       FAllowReserved: System.Boolean;
       FAllowReservedStored: Boolean;
-      FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Header.TSchemaType;
-      FSchemaStored: Boolean;
       FContent: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Header.TContentType;
       FContentStored: Boolean;
+      FDeprecated: System.Boolean;
+      FDeprecatedStored: Boolean;
+      FDescription: System.String;
+      FDescriptionStored: Boolean;
       FExample: System.Rtti.TValue;
       FExampleStored: Boolean;
       FExamples: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Header.TExamplesType;
       FExamplesStored: Boolean;
+      FExplode: System.Boolean;
+      FExplodeStored: Boolean;
       FPatternProperty12: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FRequired: System.Boolean;
+      FRequiredStored: Boolean;
+      FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Header.TSchemaType;
+      FSchemaStored: Boolean;
+      FStyle: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Header.TStyleType;
+      FStyleStored: Boolean;
       procedure SetDescription(const Value: System.String);
       procedure SetRequired(const Value: System.Boolean);
       procedure SetDeprecated(const Value: System.Boolean);
@@ -1485,31 +1484,31 @@ type
     private
       FRef: System.String;
       FRefStored: Boolean;
-      FSummary: System.String;
-      FSummaryStored: Boolean;
+      FDelete: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation;
+      FDeleteStored: Boolean;
       FDescription: System.String;
       FDescriptionStored: Boolean;
       FGet: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation;
       FGetStored: Boolean;
-      FPut: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation;
-      FPutStored: Boolean;
-      FPost: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation;
-      FPostStored: Boolean;
-      FDelete: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation;
-      FDeleteStored: Boolean;
-      FOptions: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation;
-      FOptionsStored: Boolean;
       FHead: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation;
       FHeadStored: Boolean;
-      FPatch: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation;
-      FPatchStored: Boolean;
-      FTrace: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation;
-      FTraceStored: Boolean;
-      FServers: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Server>;
-      FServersStored: Boolean;
+      FOptions: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation;
+      FOptionsStored: Boolean;
       FParameters: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.PathItem.TParametersTypeArray>;
       FParametersStored: Boolean;
+      FPatch: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation;
+      FPatchStored: Boolean;
       FPatternProperty14: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FPost: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation;
+      FPostStored: Boolean;
+      FPut: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation;
+      FPutStored: Boolean;
+      FServers: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Server>;
+      FServersStored: Boolean;
+      FSummary: System.String;
+      FSummaryStored: Boolean;
+      FTrace: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation;
+      FTraceStored: Boolean;
       procedure SetRef(const Value: System.String);
       procedure SetSummary(const Value: System.String);
       procedure SetDescription(const Value: System.String);
@@ -1600,10 +1599,10 @@ type
       [Flat]
       TRequestBodyType = class
       private
-        FRequestBody: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.RequestBody;
-        FRequestBodyStored: Boolean;
         FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
         FReferenceStored: Boolean;
+        FRequestBody: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.RequestBody;
+        FRequestBodyStored: Boolean;
         function GetRequestBody: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.RequestBody;
         procedure SetRequestBody(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.RequestBody);
         function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
@@ -1652,10 +1651,10 @@ type
         property additionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation.TCallbacksType.TAdditionalPropertiesType> read FAdditionalProperties write FAdditionalProperties;
       end;
     private
-      FTags: System.TArray<System.String>;
-      FTagsStored: Boolean;
-      FSummary: System.String;
-      FSummaryStored: Boolean;
+      FCallbacks: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation.TCallbacksType;
+      FCallbacksStored: Boolean;
+      FDeprecated: System.Boolean;
+      FDeprecatedStored: Boolean;
       FDescription: System.String;
       FDescriptionStored: Boolean;
       FExternalDocs: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ExternalDocumentation;
@@ -1664,18 +1663,18 @@ type
       FOperationIdStored: Boolean;
       FParameters: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation.TParametersTypeArray>;
       FParametersStored: Boolean;
+      FPatternProperty13: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       FRequestBody: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation.TRequestBodyType;
       FRequestBodyStored: Boolean;
       FResponses: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses;
-      FCallbacks: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Operation.TCallbacksType;
-      FCallbacksStored: Boolean;
-      FDeprecated: System.Boolean;
-      FDeprecatedStored: Boolean;
       FSecurity: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.SecurityRequirement>;
       FSecurityStored: Boolean;
       FServers: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Server>;
       FServersStored: Boolean;
-      FPatternProperty13: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FSummary: System.String;
+      FSummaryStored: Boolean;
+      FTags: System.TArray<System.String>;
+      FTagsStored: Boolean;
       procedure SetTags(const Value: System.TArray<System.String>);
       procedure SetSummary(const Value: System.String);
       procedure SetDescription(const Value: System.String);
@@ -1736,10 +1735,10 @@ type
       [Flat]
       TDefaultType = class
       private
-        FResponse: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Response;
-        FResponseStored: Boolean;
         FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
         FReferenceStored: Boolean;
+        FResponse: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Response;
+        FResponseStored: Boolean;
         function GetResponse: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Response;
         procedure SetResponse(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Response);
         function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
@@ -1757,10 +1756,10 @@ type
       [Flat]
       TPatternProperty2Type = class
       private
-        FResponse: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Response;
-        FResponseStored: Boolean;
         FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
         FReferenceStored: Boolean;
+        FResponse: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Response;
+        FResponseStored: Boolean;
         function GetResponse: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Response;
         procedure SetResponse(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Response);
         function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
@@ -1807,11 +1806,11 @@ type
 
     Tag = class
     private
-      FName: System.String;
       FDescription: System.String;
       FDescriptionStored: Boolean;
       FExternalDocs: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ExternalDocumentation;
       FExternalDocsStored: Boolean;
+      FName: System.String;
       FPatternProperty4: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       procedure SetDescription(const Value: System.String);
       function GetExternalDocs: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ExternalDocumentation;
@@ -1835,8 +1834,8 @@ type
     private
       FDescription: System.String;
       FDescriptionStored: Boolean;
-      FUrl: System.String;
       FPatternProperty3: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FUrl: System.String;
       procedure SetDescription(const Value: System.String);
     public
       procedure AddPatternProperty3(const Name: String; const Value: System.Rtti.TValue);
@@ -1896,10 +1895,10 @@ type
       [Flat]
       TSchemaType = class
       private
-        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
-        FSchemaStored: Boolean;
         FReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
         FReferenceStored: Boolean;
+        FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
+        FSchemaStored: Boolean;
         function GetSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema;
         procedure SetSchema(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Schema);
         function GetReference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference;
@@ -1959,31 +1958,31 @@ type
         property additionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Parameter.TExamplesType.TAdditionalPropertiesType> read FAdditionalProperties write FAdditionalProperties;
       end;
     private
-      FName: System.String;
-      FIn: System.String;
-      FDescription: System.String;
-      FDescriptionStored: Boolean;
-      FRequired: System.Boolean;
-      FRequiredStored: Boolean;
-      FDeprecated: System.Boolean;
-      FDeprecatedStored: Boolean;
       FAllowEmptyValue: System.Boolean;
       FAllowEmptyValueStored: Boolean;
-      FStyle: System.String;
-      FStyleStored: Boolean;
-      FExplode: System.Boolean;
-      FExplodeStored: Boolean;
       FAllowReserved: System.Boolean;
       FAllowReservedStored: Boolean;
-      FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Parameter.TSchemaType;
-      FSchemaStored: Boolean;
       FContent: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Parameter.TContentType;
       FContentStored: Boolean;
+      FDeprecated: System.Boolean;
+      FDeprecatedStored: Boolean;
+      FDescription: System.String;
+      FDescriptionStored: Boolean;
       FExample: System.Rtti.TValue;
       FExampleStored: Boolean;
       FExamples: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Parameter.TExamplesType;
       FExamplesStored: Boolean;
+      FExplode: System.Boolean;
+      FExplodeStored: Boolean;
+      FIn: System.String;
+      FName: System.String;
       FPatternProperty14: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FRequired: System.Boolean;
+      FRequiredStored: Boolean;
+      FSchema: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Parameter.TSchemaType;
+      FSchemaStored: Boolean;
+      FStyle: System.String;
+      FStyleStored: Boolean;
       procedure SetDescription(const Value: System.String);
       procedure SetRequired(const Value: System.Boolean);
       procedure SetDeprecated(const Value: System.Boolean);
@@ -2040,14 +2039,13 @@ type
       [EnumValue('matrix, label, simple')]
       TStyleType = (matrix, &label, simple);
 
-      [EnumValue('True')]
       TRequiredType = (True);
     private
       FIn: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.PathParameter.TInType;
       FInStored: Boolean;
+      FRequired: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.PathParameter.TRequiredType;
       FStyle: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.PathParameter.TStyleType;
       FStyleStored: Boolean;
-      FRequired: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.PathParameter.TRequiredType;
       procedure SetIn(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.PathParameter.TInType);
       procedure SetStyle(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.PathParameter.TStyleType);
     public
@@ -2138,12 +2136,12 @@ type
         property additionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.MediaType> read FAdditionalProperties write FAdditionalProperties;
       end;
     private
+      FContent: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.RequestBody.TContentType;
       FDescription: System.String;
       FDescriptionStored: Boolean;
-      FContent: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.RequestBody.TContentType;
+      FPatternProperty4: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       FRequired: System.Boolean;
       FRequiredStored: Boolean;
-      FPatternProperty4: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       procedure SetDescription(const Value: System.String);
       function GetContent: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.RequestBody.TContentType;
       procedure SetRequired(const Value: System.Boolean);
@@ -2201,12 +2199,12 @@ type
 
       TInType = (header, query, cookie);
     private
-      FType: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.APIKeySecurityScheme.TTypeType;
-      FName: System.String;
-      FIn: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.APIKeySecurityScheme.TInType;
       FDescription: System.String;
       FDescriptionStored: Boolean;
+      FIn: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.APIKeySecurityScheme.TInType;
+      FName: System.String;
       FPatternProperty5: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FType: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.APIKeySecurityScheme.TTypeType;
       procedure SetDescription(const Value: System.String);
     public
       procedure AddPatternProperty5(const Name: String; const Value: System.Rtti.TValue);
@@ -2227,13 +2225,13 @@ type
     public type
       TTypeType = (http);
     private
-      FScheme: System.String;
       FBearerFormat: System.String;
       FBearerFormatStored: Boolean;
       FDescription: System.String;
       FDescriptionStored: Boolean;
-      FType: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.HTTPSecurityScheme.TTypeType;
       FPatternProperty5: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FScheme: System.String;
+      FType: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.HTTPSecurityScheme.TTypeType;
       procedure SetBearerFormat(const Value: System.String);
       procedure SetDescription(const Value: System.String);
     public
@@ -2255,11 +2253,11 @@ type
     public type
       TTypeType = (oauth2);
     private
-      FType: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.OAuth2SecurityScheme.TTypeType;
-      FFlows: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.OAuthFlows;
       FDescription: System.String;
       FDescriptionStored: Boolean;
+      FFlows: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.OAuthFlows;
       FPatternProperty4: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FType: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.OAuth2SecurityScheme.TTypeType;
       function GetFlows: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.OAuthFlows;
       procedure SetDescription(const Value: System.String);
     public
@@ -2281,11 +2279,11 @@ type
     public type
       TTypeType = (openIdConnect);
     private
-      FType: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.OpenIdConnectSecurityScheme.TTypeType;
-      FOpenIdConnectUrl: System.String;
       FDescription: System.String;
       FDescriptionStored: Boolean;
+      FOpenIdConnectUrl: System.String;
       FPatternProperty4: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FType: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.OpenIdConnectSecurityScheme.TTypeType;
       procedure SetDescription(const Value: System.String);
     public
       procedure AddPatternProperty4(const Name: String; const Value: System.Rtti.TValue);
@@ -2302,14 +2300,14 @@ type
 
     OAuthFlows = class
     private
+      FAuthorizationCode: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.AuthorizationCodeOAuthFlow;
+      FAuthorizationCodeStored: Boolean;
+      FClientCredentials: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ClientCredentialsFlow;
+      FClientCredentialsStored: Boolean;
       FImplicit: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ImplicitOAuthFlow;
       FImplicitStored: Boolean;
       FPassword: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.PasswordOAuthFlow;
       FPasswordStored: Boolean;
-      FClientCredentials: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ClientCredentialsFlow;
-      FClientCredentialsStored: Boolean;
-      FAuthorizationCode: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.AuthorizationCodeOAuthFlow;
-      FAuthorizationCodeStored: Boolean;
       FPatternProperty5: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       function GetImplicit: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ImplicitOAuthFlow;
       procedure SetImplicit(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ImplicitOAuthFlow);
@@ -2351,10 +2349,10 @@ type
       end;
     private
       FAuthorizationUrl: System.String;
+      FPatternProperty4: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       FRefreshUrl: System.String;
       FRefreshUrlStored: Boolean;
       FScopes: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ImplicitOAuthFlow.TScopesType;
-      FPatternProperty4: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       procedure SetRefreshUrl(const Value: System.String);
       function GetScopes: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ImplicitOAuthFlow.TScopesType;
     public
@@ -2384,11 +2382,11 @@ type
         property additionalProperties: Blue.Print.Types.TDynamicProperty<System.String> read FAdditionalProperties write FAdditionalProperties;
       end;
     private
-      FTokenUrl: System.String;
+      FPatternProperty4: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       FRefreshUrl: System.String;
       FRefreshUrlStored: Boolean;
       FScopes: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.PasswordOAuthFlow.TScopesType;
-      FPatternProperty4: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FTokenUrl: System.String;
       procedure SetRefreshUrl(const Value: System.String);
       function GetScopes: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.PasswordOAuthFlow.TScopesType;
     public
@@ -2418,11 +2416,11 @@ type
         property additionalProperties: Blue.Print.Types.TDynamicProperty<System.String> read FAdditionalProperties write FAdditionalProperties;
       end;
     private
-      FTokenUrl: System.String;
+      FPatternProperty4: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       FRefreshUrl: System.String;
       FRefreshUrlStored: Boolean;
       FScopes: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ClientCredentialsFlow.TScopesType;
-      FPatternProperty4: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FTokenUrl: System.String;
       procedure SetRefreshUrl(const Value: System.String);
       function GetScopes: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ClientCredentialsFlow.TScopesType;
     public
@@ -2453,11 +2451,11 @@ type
       end;
     private
       FAuthorizationUrl: System.String;
-      FTokenUrl: System.String;
+      FPatternProperty5: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       FRefreshUrl: System.String;
       FRefreshUrlStored: Boolean;
       FScopes: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.AuthorizationCodeOAuthFlow.TScopesType;
-      FPatternProperty5: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FTokenUrl: System.String;
       procedure SetRefreshUrl(const Value: System.String);
       function GetScopes: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.AuthorizationCodeOAuthFlow.TScopesType;
     public
@@ -2488,19 +2486,19 @@ type
         property additionalProperties: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue> read FAdditionalProperties write FAdditionalProperties;
       end;
     private
+      FDescription: System.String;
+      FDescriptionStored: Boolean;
       FOperationId: System.String;
       FOperationIdStored: Boolean;
       FOperationRef: System.String;
       FOperationRefStored: Boolean;
       FParameters: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Link.TParametersType;
       FParametersStored: Boolean;
+      FPatternProperty7: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       FRequestBody: System.Rtti.TValue;
       FRequestBodyStored: Boolean;
-      FDescription: System.String;
-      FDescriptionStored: Boolean;
       FServer: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Server;
       FServerStored: Boolean;
-      FPatternProperty7: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       procedure SetOperationId(const Value: System.String);
       procedure SetOperationRef(const Value: System.String);
       function GetParameters: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Link.TParametersType;
@@ -2586,17 +2584,17 @@ type
         property additionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Encoding.THeadersType.TAdditionalPropertiesType> read FAdditionalProperties write FAdditionalProperties;
       end;
     private
-      FContentType: System.String;
-      FContentTypeStored: Boolean;
-      FHeaders: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Encoding.THeadersType;
-      FHeadersStored: Boolean;
-      FStyle: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Encoding.TStyleType;
-      FStyleStored: Boolean;
-      FExplode: System.Boolean;
-      FExplodeStored: Boolean;
       FAllowReserved: System.Boolean;
       FAllowReservedStored: Boolean;
+      FContentType: System.String;
+      FContentTypeStored: Boolean;
+      FExplode: System.Boolean;
+      FExplodeStored: Boolean;
+      FHeaders: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Encoding.THeadersType;
+      FHeadersStored: Boolean;
       FPatternProperty6: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FStyle: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Encoding.TStyleType;
+      FStyleStored: Boolean;
       procedure SetContentType(const Value: System.String);
       function GetHeaders: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Encoding.THeadersType;
       procedure SetHeaders(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Encoding.THeadersType);
@@ -2623,20 +2621,20 @@ type
       property PatternProperty6: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue> read FPatternProperty6 write FPatternProperty6;
     end;
   private
-    FOpenapi: System.String;
-    FInfo: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.InfoType;
-    FExternalDocs: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ExternalDocumentation;
-    FExternalDocsStored: Boolean;
-    FServers: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Server>;
-    FServersStored: Boolean;
-    FSecurity: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.SecurityRequirement>;
-    FSecurityStored: Boolean;
-    FTags: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Tag>;
-    FTagsStored: Boolean;
-    FPaths: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.PathsType;
     FComponents: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ComponentsType;
     FComponentsStored: Boolean;
+    FExternalDocs: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ExternalDocumentation;
+    FExternalDocsStored: Boolean;
+    FInfo: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.InfoType;
+    FOpenapi: System.String;
+    FPaths: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.PathsType;
     FPatternProperty9: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+    FSecurity: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.SecurityRequirement>;
+    FSecurityStored: Boolean;
+    FServers: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Server>;
+    FServersStored: Boolean;
+    FTags: System.TArray<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Tag>;
+    FTagsStored: Boolean;
     function GetInfo: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.InfoType;
     function GetExternalDocs: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ExternalDocumentation;
     procedure SetExternalDocs(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.ExternalDocumentation);

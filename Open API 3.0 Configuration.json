@@ -52,7 +52,7 @@
          "SchemaFiles": [
             {
                "SchemaType": "JSONDraft4",
-               "FileName": "..\\..\\Open API 3.0 Schema.json",
+               "FileName": "Open API 3.0 Schema.json",
                "MainModuleName": "OpenAPIDefinition"
             }
          ]
