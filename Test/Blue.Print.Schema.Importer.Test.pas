@@ -454,6 +454,8 @@ type
     procedure IfAllParametersAreTheSameTypeMustGroupAllThenTogether;
     [Test]
     procedure MustLoadTheFieldsDefinitionInAlphabeticalOrder;
+    [Test]
+    procedure TheMethodsDeclarationMustBeInAlphabeticalOrder;
   end;
 
   [TestFixture]
@@ -2138,6 +2140,32 @@ begin
   Assert.AreEqual('my:AClassName', FImporter.Types.Keys.ToArray[0]);
 
   ParentModule.Free;
+end;
+
+procedure TSchemaImporterTest.TheMethodsDeclarationMustBeInAlphabeticalOrder;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
+
+      FImporter.CreateMethod(InterfaceType, 'JJJ', nil);
+      FImporter.CreateMethod(InterfaceType, 'ZZZ', nil);
+      FImporter.CreateMethod(InterfaceType, 'AAA', nil);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+      MainInterface = interface
+        ['{100D96E2-C832-EAE7-CD9F-433D0A835F8B}']
+        procedure AAA;
+        procedure JJJ;
+        procedure ZZZ;
+      end;
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.TheParameterTypeMustFormatTheFullTypeName;

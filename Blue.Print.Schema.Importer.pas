@@ -456,17 +456,14 @@ const
 
 type
   TTypeCommonComparer<T: TTypeCommonDefinition> = class(TNoRefCountObject, IComparer<T>)
-  private
-    function Compare(const Left, Right: T): Integer;
-  end;
-
-  TTypePropertyComparer = class(TTypeCommonComparer<TTypePropertyDefinition>)
   private class var
-    FComparer: TTypePropertyComparer;
-  public
+    FComparer: TTypeCommonComparer<T>;
+  private
     class destructor Destroy;
 
-    class function Comparer: TTypePropertyComparer;
+    class function Comparer: TTypeCommonComparer<T>;
+
+    function Compare(const Left, Right: T): Integer;
   end;
 
 { TSchemaImporter }
@@ -1161,7 +1158,14 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
     begin
       Result := Copy(ClassDefinition.Properties);
 
-      TArray.Sort<TTypePropertyDefinition>(Result, TTypePropertyComparer.Comparer);
+      TArray.Sort<TTypePropertyDefinition>(Result, TTypeCommonComparer<TTypePropertyDefinition>.Comparer);
+    end;
+
+    function SortMethods(const InterfaceDefinition: TTypeInterfaceDefinition): TArray<TTypeMethodDefinition>;
+    begin
+      Result := Copy(InterfaceDefinition.Methods);
+
+      TArray.Sort<TTypeMethodDefinition>(Result, TTypeCommonComparer<TTypeMethodDefinition>.Comparer);
     end;
 
     procedure GenerateFieldsDeclaration(const IndentationLevel: Integer; const ClassDefinition: TTypeClassDefinition);
@@ -1641,7 +1645,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
         AddLine(CurrentIndentationLevel, GUIDValue);
 
-        for var Method in InterfaceDefinition.Methods do
+        for var Method in SortMethods(InterfaceDefinition) do
           AddLine(CurrentIndentationLevel, FormatMethod(Method));
 
         AddLine(IndentationLevel, 'end;');
@@ -2215,17 +2219,15 @@ begin
   Result := CompareText(Left.Name, Right.Name);
 end;
 
-{ TTypePropertyComparer }
-
-class function TTypePropertyComparer.Comparer: TTypePropertyComparer;
+class function TTypeCommonComparer<T>.Comparer: TTypeCommonComparer<T>;
 begin
   if not Assigned(FComparer) then
-    FComparer := TTypePropertyComparer.Create;
+    FComparer := TTypeCommonComparer<T>.Create;
 
   Result := FComparer;
 end;
 
-class destructor TTypePropertyComparer.Destroy;
+class destructor TTypeCommonComparer<T>.Destroy;
 begin
   FreeAndNil(FComparer);
 end;
