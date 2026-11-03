@@ -120,13 +120,9 @@ type
     [Test]
     procedure WhenTheAllOfIsAReferenceMustLoadThePropertyTypeWithAReferenceTypeDefinition;
     [Test]
-    procedure WhenTheAllOfHasOnlyOneSchemaAndIsAReferenceMustCreateOnlyTheReferenceToTheTypeInThePropertyType;
-    [Test]
     procedure WhenTheAllOfSchemaHasASchemaDefinitionMustCreateThePropertyNameStartingWithAllOfName;
     [Test]
     procedure WhenTheAllOfReferenceIsTheSharpMustLoadTheMainClassNameInThePropertyName;
-    [Test]
-    procedure WhenTheAnyOfIsLoadedAndHaveOnlyOneItemAndThisItemIsAReferecenceMustLoadThePropertyTypeWithAReferenceTypeDefinition;
     [Test]
     procedure WhenTheAnyOfHasMoreThanOneSchemaMustCreateAClassTypeDefinitionForTheProperty;
     [Test]
@@ -139,8 +135,6 @@ type
     procedure WhenTheSchemaOfAnyOfIsntAReferenceMustLoadThePropertyNameStartingWithAnyOfName;
     [Test]
     procedure WhenTheAnyOfReferenceIsTheSharpMustLoadTheMainClassNameInThePropertyName;
-    [Test]
-    procedure WhenTheOneOfIsLoadedAndHaveOnlyOneItemAndThisItemIsAReferecenceMustLoadThePropertyTypeWithAReferenceTypeDefinition;
     [Test]
     procedure WhenTheOneOfHasMoreThanOneSchemaMustCreateAClassTypeDefinitionForTheProperty;
     [Test]
@@ -880,19 +874,6 @@ begin
   Schema.Free;
 end;
 
-procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfHasOnlyOneSchemaAndIsAReferenceMustCreateOnlyTheReferenceToTheTypeInThePropertyType;
-begin
-  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
-
-  FDefinition.definitions.AddAdditionalProperties('MyReference').&type.simpleTypes := JSONSchema.simpleTypes.integer;
-
-  PropertySchema.AddAllOf.ref := '#/definitions/MyReference';
-
-  ImportDefinition;
-
-  Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Properties[0].PropertyType.ClassType);
-end;
-
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfIsAReferenceMustLoadThePropertyTypeWithAReferenceTypeDefinition;
 begin
   var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
@@ -987,19 +968,6 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(TTypeClassDefinition, GetMainClass.Properties[0].PropertyType.ClassType);
-end;
-
-procedure TJSONDraft4SchemaConverterTeste.WhenTheAnyOfIsLoadedAndHaveOnlyOneItemAndThisItemIsAReferecenceMustLoadThePropertyTypeWithAReferenceTypeDefinition;
-begin
-  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
-
-  FDefinition.definitions.AddAdditionalProperties('MyReference').&type.simpleTypes := JSONSchema.simpleTypes.integer;
-
-  PropertySchema.AddAnyOf.ref := '#/definitions/MyReference';
-
-  ImportDefinition;
-
-  Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Properties[0].PropertyType.ClassType);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAnyOfIsLoadedMustLoadAllPropertiesHasOptional;
@@ -1122,19 +1090,6 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(TTypeClassDefinition, GetMainClass.Properties[0].PropertyType.ClassType);
-end;
-
-procedure TJSONDraft4SchemaConverterTeste.WhenTheOneOfIsLoadedAndHaveOnlyOneItemAndThisItemIsAReferecenceMustLoadThePropertyTypeWithAReferenceTypeDefinition;
-begin
-  var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
-
-  FDefinition.definitions.AddAdditionalProperties('MyReference').&type.simpleTypes := JSONSchema.simpleTypes.integer;
-
-  PropertySchema.AddOneOf.ref := '#/definitions/MyReference';
-
-  ImportDefinition;
-
-  Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Properties[0].PropertyType.ClassType);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheOneOfIsLoadedMustLoadAllPropertiesHasOptional;

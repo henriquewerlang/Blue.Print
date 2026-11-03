@@ -182,16 +182,11 @@ const
 
   procedure LoadSchemaArray(const SchemaArray: JSONSchema.schemaArray; const PropertyNamePrefix: String);
   begin
-    if (Length(SchemaArray) = 1) and SchemaArray[0].IsRefStored then
-      LoadSchemaType(TypeDefinition.AsClassDefinition, SchemaArray[0])
-    else
-    begin
-      var ClassTypeDefinition := TypeDefinition.AsClassDefinition;
-      ClassTypeDefinition.Flat := True;
+    var ClassTypeDefinition := TypeDefinition.AsClassDefinition;
+    ClassTypeDefinition.Flat := True;
 
-      for var SchemaItem in SchemaArray do
-        CreatePropertyFromSchema(ClassTypeDefinition, GetPropertyName(SchemaItem, PropertyNamePrefix, Length(ClassTypeDefinition.Properties)), SchemaItem).Optional := PropertyNamePrefix <> ALL_OF_PROPERTY;
-    end;
+    for var SchemaItem in SchemaArray do
+      CreatePropertyFromSchema(ClassTypeDefinition, GetPropertyName(SchemaItem, PropertyNamePrefix, Length(ClassTypeDefinition.Properties)), SchemaItem).Optional := PropertyNamePrefix <> ALL_OF_PROPERTY;
   end;
 
 begin
