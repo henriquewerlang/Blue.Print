@@ -231,6 +231,8 @@ type
     [Test]
     procedure TheEnumeratorMustBeAppendedInTheEnumeratorListOfTheParentModule;
     [Test]
+    procedure WhenTheEnumeratorValueHasAnInvalidCharactererMustLoadTheFormatTheNameToRemoveTheInvalidCharacteres;
+    [Test]
     procedure WhenThePropertyHasAReferenceTypeMustFindTheReferenceAndLoadThePropertyValue;
     [Test]
     procedure ThePublicTypeSectionMustBeDeclaredBeforeThePrivateSection;
@@ -4707,6 +4709,44 @@ begin
     begin
       FImporter.Import(FConfiguration);
     end, ESchemaConverterNotRegistered);
+end;
+
+procedure TSchemaImporterTest.WhenTheEnumeratorValueHasAnInvalidCharactererMustLoadTheFormatTheNameToRemoveTheInvalidCharacteres;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      var Enumerator := FImporter.CreateEnumeratorType(Schema.MainClass, 'MyEnum');
+
+      Enumerator.AddEnumeration('%invalid.name@for|enumerator$value.');
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+    {$SCOPEDENUMS ON}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        [EnumValue('%invalid.name@for|enumerator$value.')]
+        MyEnum = (InvalidNameForEnumeratorValue);
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenTheEnumeratorValueHaveOnlyNumberMustInsertALetterBeforeTheNumberAndAppendTheEnumValueAttribute;

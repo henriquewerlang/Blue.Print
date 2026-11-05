@@ -906,7 +906,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := Name;
     end;
 
-    function CheckInvalidNames(const Name: String): String;
+    function CheckReservedNames(const Name: String): String;
     begin
       Result := CheckReservedWord(Name, ['type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'const', 'not', 'in', 'file', 'is', 'end', 'label']);
     end;
@@ -945,12 +945,17 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       if not Result.IsEmpty and not SameText(Result, Name) then
         Result := RemoveInvalidCharecters('T.' + Result);
 
-      Result := CheckInvalidNames(Result);
+      Result := CheckReservedNames(Result);
+    end;
+
+    function CheckStringName(const Name: String): String;
+    begin
+      Result := CheckReservedWord(Name, ['string']);
     end;
 
     function FormatName(const Name: String): String;
     begin
-      Result := CheckReservedWord(FormatTypeName(Name), ['string']);
+      Result := CheckStringName(FormatTypeName(Name));
     end;
 
     function ResolveReferenceType(const TypeDefinition: TTypeDefinition): TTypeDefinition;
@@ -975,7 +980,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := ModuleTypeDefinition.Name;
 
       if not ModuleTypeDefinition.IsUnitDefinition then
-        Result := CheckInvalidNames(FormatName(Result));
+        Result := CheckReservedNames(FormatName(Result));
     end;
 
     function FormatParentModuleName(const TypeDefinition: TTypeDefinition; const AppendUnitName: Boolean): String;
@@ -1058,17 +1063,19 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function FormatEnumerationName(const EnumerationDefinition: TTypeEnumerationDefinition): String;
     begin
-      Result := CheckInvalidNames(FormatName(EnumerationDefinition.Name));
+      Result := CheckReservedNames(FormatName(EnumerationDefinition.Name));
     end;
 
     function FormatEnumerationValueName(const Value: String): String;
     begin
-      Result := FormatName(Value);
+      Result := CheckStringName(RemoveInvalidCharecters(Value));
 
       if Result.IsEmpty then
         Result := 'tEmpty'
       else if Result[1].IsNumber then
         Result := 't' + Result;
+
+      Result := CheckReservedNames(Result);
     end;
 
     procedure GenerateEnumerationsDeclaration(const IndentationLevel: Integer; const ModuleDefinition: TTypeModuleDefinition);
