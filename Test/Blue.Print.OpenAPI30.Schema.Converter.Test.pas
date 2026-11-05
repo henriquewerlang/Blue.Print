@@ -107,7 +107,29 @@ type
     [Test]
     procedure WhenThePutSchemaIsLoadedMustAppendThePutAttributeInTheMethod;
     [Test]
-    procedure WhenTheMethodHasntAnyVerbSchemaLoadedCantLoadAnyAttributeInTheMethod;
+    procedure WhenThePathWithPostHasParametersMustLoadAllInTheMethod;
+    [Test]
+    procedure WhenThePathWithPatchHasParametersMustLoadAllInTheMethod;
+    [Test]
+    procedure WhenThePathWithGetHasParametersMustLoadAllInTheMethod;
+    [Test]
+    procedure WhenThePathWithDeleteHasParametersMustLoadAllInTheMethod;
+    [Test]
+    procedure WhenThePathWithOptionsHasParametersMustLoadAllInTheMethod;
+    [Test]
+    procedure WhenThePutWithOptionsHasParametersMustLoadAllInTheMethod;
+    [Test]
+    procedure WhenThePathItemDoesntHaveAnOperationMustRaiseAnError;
+    [Test]
+    procedure WhenTheOperationHasParametersMustLoadTheNameHasExpected;
+    [Test]
+    procedure MustLoadTheParameterTypeUsingTheSchemaInformationHasExpected;
+    [Test]
+    procedure WhenTheParameterSchemaGenerateATypeMustLoadTheTypeNameWithTheParameterNamePlusTypeInTheName;
+    [Test]
+    procedure WhenTheParameterIsAReferenceMustLoadAReferenceTypeInTheParameterType;
+    [Test]
+    procedure WhenTheServiceInterfaceNameIsEmptyMustRaiseAnErrorWhenTryLoadTheMethods;
   end;
 
 implementation
@@ -231,6 +253,18 @@ begin
   Assert.IsNotNil(TSchemaImporter.Converters[TSchemaType.OpenAPI30]);
 end;
 
+procedure TOpenAPI30SchemaConverterTest.MustLoadTheParameterTypeUsingTheSchemaInformationHasExpected;
+begin
+  var Parameter := FDefinition.paths.AddPathItem('/MyProc').put.AddParameters.Parameter;
+
+  Parameter.name := 'MyParameter';
+  Parameter.schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.number;
+
+  ImportDefinition;
+
+  Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.DoubleType], GetInterfaceService.Methods[0].Parameters[0].ParameterType);
+end;
+
 procedure TOpenAPI30SchemaConverterTest.MustLoadTheReferenceNamespaceWithTheValueInTheReferenceSchemaChangingTheSharpByTheMainNamespace;
 begin
   FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Reference.AddString('$ref', '#/components/schemas/MyClass');
@@ -339,7 +373,7 @@ end;
 
 procedure TOpenAPI30SchemaConverterTest.ThePathStringMustBeTheMethodName;
 begin
-  FDefinition.paths.AddPathItem('/MyProc');
+  FDefinition.paths.AddPathItem('/MyProc').post;
 
   ImportDefinition;
 
@@ -498,11 +532,11 @@ end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheDefinitionHasPathsMustLoadTheMethodInTheInterfaceList;
 begin
-  FDefinition.paths.AddPathItem('/MyPath');
+  FDefinition.paths.AddPathItem('/MyPath').post;
 
-  FDefinition.paths.AddPathItem('/MyPath2');
+  FDefinition.paths.AddPathItem('/MyPath2').post;
 
-  FDefinition.paths.AddPathItem('/MyPath3');
+  FDefinition.paths.AddPathItem('/MyPath3').post;
 
   ImportDefinition;
 
@@ -531,13 +565,14 @@ begin
   Assert.AreEqual(TTypeGetAttribute, GetInterfaceService.Methods[0].Attributes[0].ClassType);
 end;
 
-procedure TOpenAPI30SchemaConverterTest.WhenTheMethodHasntAnyVerbSchemaLoadedCantLoadAnyAttributeInTheMethod;
+procedure TOpenAPI30SchemaConverterTest.WhenTheOperationHasParametersMustLoadTheNameHasExpected;
 begin
-  FDefinition.paths.AddPathItem('/MyProc');
+  var Operation := FDefinition.paths.AddPathItem('/MyProc').put;
+  Operation.AddParameters.Parameter.name := 'MyParameter';
 
   ImportDefinition;
 
-  Assert.AreEqual(0, Length(GetInterfaceService.Methods[0].Attributes));
+  Assert.AreEqual('MyParameter', GetInterfaceService.Methods[0].Parameters[0].Name);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheOptionsSchemaIsLoadedMustAppendTheOptionsAttributeInTheMethod;
@@ -549,6 +584,31 @@ begin
   Assert.AreEqual(1, Length(GetInterfaceService.Methods[0].Attributes));
 
   Assert.AreEqual(TTypeOptionsAttribute, GetInterfaceService.Methods[0].Attributes[0].ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheParameterIsAReferenceMustLoadAReferenceTypeInTheParameterType;
+begin
+  var Parameter := FDefinition.paths.AddPathItem('/MyProc').put.AddParameters.Parameter;
+  Parameter.name := 'MyParameter';
+  Parameter.schema.Reference.AddString('$ref', '#/components/schemas/MyClass');
+
+  FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Reference.AddString('$ref', '#/components/schemas/MyClass');
+
+  ImportDefinition;
+
+  Assert.AreEqual(TTypeReferenceDefinition, GetInterfaceService.Methods[0].Parameters[0].ParameterType.ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheParameterSchemaGenerateATypeMustLoadTheTypeNameWithTheParameterNamePlusTypeInTheName;
+begin
+  var Parameter := FDefinition.paths.AddPathItem('/MyProc').put.AddParameters.Parameter;
+
+  Parameter.name := 'MyParameter';
+  Parameter.schema.Schema.AddEnum('MyValue');
+
+  ImportDefinition;
+
+  Assert.AreEqual('.MyParameterType', GetInterfaceService.Methods[0].Parameters[0].ParameterType.Name);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenThePatchSchemaIsLoadedMustAppendThePatchAttributeInTheMethod;
@@ -564,11 +624,82 @@ end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenThePathHasMoreThanOneSlashMustReplaceByAnUnderline;
 begin
-  FDefinition.paths.AddPathItem('/MyProc/MyPath/MyMethod');
+  FDefinition.paths.AddPathItem('/MyProc/MyPath/MyMethod').post;
 
   ImportDefinition;
 
   Assert.AreEqual('MyProc_MyPath_MyMethod', GetInterfaceService.Methods[0].Name);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenThePathItemDoesntHaveAnOperationMustRaiseAnError;
+begin
+  FDefinition.paths.AddPathItem('/MyProc');
+
+  Assert.WillRaise(
+    procedure
+    begin
+      ImportDefinition;
+    end, EPathItemWithoutOperation);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenThePathWithDeleteHasParametersMustLoadAllInTheMethod;
+begin
+  var Operation := FDefinition.paths.AddPathItem('/MyProc').delete;
+  Operation.AddParameters.Parameter.name := 'Parameter';
+  Operation.AddParameters.Parameter.name := 'Parameter2';
+  Operation.AddParameters.Parameter.name := 'Parameter3';
+
+  ImportDefinition;
+
+  Assert.AreEqual(3, Length(GetInterfaceService.Methods[0].Parameters));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenThePathWithGetHasParametersMustLoadAllInTheMethod;
+begin
+  var Operation := FDefinition.paths.AddPathItem('/MyProc').get;
+  Operation.AddParameters.Parameter.name := 'Parameter';
+  Operation.AddParameters.Parameter.name := 'Parameter2';
+  Operation.AddParameters.Parameter.name := 'Parameter3';
+
+  ImportDefinition;
+
+  Assert.AreEqual(3, Length(GetInterfaceService.Methods[0].Parameters));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenThePathWithOptionsHasParametersMustLoadAllInTheMethod;
+begin
+  var Operation := FDefinition.paths.AddPathItem('/MyProc').options;
+  Operation.AddParameters.Parameter.name := 'Parameter';
+  Operation.AddParameters.Parameter.name := 'Parameter2';
+  Operation.AddParameters.Parameter.name := 'Parameter3';
+
+  ImportDefinition;
+
+  Assert.AreEqual(3, Length(GetInterfaceService.Methods[0].Parameters));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenThePathWithPatchHasParametersMustLoadAllInTheMethod;
+begin
+  var Operation := FDefinition.paths.AddPathItem('/MyProc').patch;
+  Operation.AddParameters.Parameter.name := 'Parameter';
+  Operation.AddParameters.Parameter.name := 'Parameter2';
+  Operation.AddParameters.Parameter.name := 'Parameter3';
+
+  ImportDefinition;
+
+  Assert.AreEqual(3, Length(GetInterfaceService.Methods[0].Parameters));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenThePathWithPostHasParametersMustLoadAllInTheMethod;
+begin
+  var Operation := FDefinition.paths.AddPathItem('/MyProc').post;
+  Operation.AddParameters.Parameter.name := 'Parameter';
+  Operation.AddParameters.Parameter.name := 'Parameter2';
+  Operation.AddParameters.Parameter.name := 'Parameter3';
+
+  ImportDefinition;
+
+  Assert.AreEqual(3, Length(GetInterfaceService.Methods[0].Parameters));
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenThePostSchemaIsLoadedMustAppendThePostAttributeInTheMethod;
@@ -640,6 +771,18 @@ begin
   Assert.AreEqual(TTypePutAttribute, GetInterfaceService.Methods[0].Attributes[0].ClassType);
 end;
 
+procedure TOpenAPI30SchemaConverterTest.WhenThePutWithOptionsHasParametersMustLoadAllInTheMethod;
+begin
+  var Operation := FDefinition.paths.AddPathItem('/MyProc').put;
+  Operation.AddParameters.Parameter.name := 'Parameter';
+  Operation.AddParameters.Parameter.name := 'Parameter2';
+  Operation.AddParameters.Parameter.name := 'Parameter3';
+
+  ImportDefinition;
+
+  Assert.AreEqual(3, Length(GetInterfaceService.Methods[0].Parameters));
+end;
+
 procedure TOpenAPI30SchemaConverterTest.WhenTheSchemaHasTheAllOfDefinitionMustLoadAClassTypeDefinitionForThePropertyType;
 begin
   var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
@@ -676,6 +819,13 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(3, Length(GetMainClass.Classes[0].Properties));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheServiceInterfaceNameIsEmptyMustRaiseAnErrorWhenTryLoadTheMethods;
+begin
+  FConfiguration.Units[0].SchemaFiles[0].ServiceInterfaceName := EmptyStr;
+
+  Assert.WillRaise(ImportDefinition, EServiceInterfaceNameEmpty)
 end;
 
 end.

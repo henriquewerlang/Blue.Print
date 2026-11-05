@@ -2,9 +2,19 @@
 
 interface
 
-uses Blue.Print.Schema.Importer, Blue.Print.OpenAPI30.Schema;
+uses System.SysUtils, Blue.Print.Schema.Importer, Blue.Print.OpenAPI30.Schema;
 
 type
+  EPathItemWithoutOperation = class(Exception)
+  public
+    constructor Create(const Path: String);
+  end;
+
+  EServiceInterfaceNameEmpty = class(Exception)
+  public
+    constructor Create;
+  end;
+
   TOpenAPI30SchemaConverter = class(TInterfacedObject, ISchemaConverter)
   private
     function LoadDefinition(const Schema: TSchema): OpenAPIDefinition;
@@ -15,13 +25,14 @@ type
 
 implementation
 
-uses System.SysUtils, Blue.Print.Serializer, Blue.Print.Types;
+uses Blue.Print.Serializer, Blue.Print.Types;
 
 { TOpenAPI30SchemaConverter }
 
 procedure TOpenAPI30SchemaConverter.Convert(const Schema: TSchema);
 var
   Definition: OpenAPIDefinition;
+  Importer: TSchemaImporter;
 
   function GetNamespace: String;
   begin
@@ -52,7 +63,7 @@ var
 
     var Namespace := ReferenceValue.Substring(0, ReferenceValue.LastDelimiter('/'));
 
-    Result := Schema.Importer.CreateReferenceType(ParentModule, Namespace, ReferenceValue.Substring(Succ(Namespace.Length)));
+    Result := Importer.CreateReferenceType(ParentModule, Namespace, ReferenceValue.Substring(Succ(Namespace.Length)));
   end;
 
   function CreateSchemaType(const ParentModule: TTypeClassDefinition; const TypeName: String; const SchemaType: OpenAPIDefinition.Schema): TTypeDefinition;
@@ -66,11 +77,11 @@ var
     end;
 
   begin
-    Result := Schema.Importer.BuildInTypes[TBuildInType.ValueType];
+    Result := Importer.BuildInTypes[TBuildInType.ValueType];
 
     if SchemaType.IsPropertiesStored then
     begin
-      var ClassDefinition := Schema.Importer.CreateClassType(ParentModule, TypeName);
+      var ClassDefinition := Importer.CreateClassType(ParentModule, TypeName);
 
       for var PropertySchema in SchemaType.properties.additionalProperties do
         ClassDefinition.AddProperty(PropertySchema.Key, CreatePropertyType(ClassDefinition, PropertySchema.Key, PropertySchema.Value));
@@ -79,7 +90,7 @@ var
     end
     else if SchemaType.IsEnumStored then
     begin
-      var EnumeratorDefinition := Schema.Importer.CreateEnumeratorType(ParentModule, TypeName);
+      var EnumeratorDefinition := Importer.CreateEnumeratorType(ParentModule, TypeName);
 
       for var EnumeratorValue in SchemaType.enum do
         EnumeratorDefinition.AddEnumeration(EnumeratorValue.ToString);
@@ -89,15 +100,15 @@ var
     else if SchemaType.IsTypeStored then
       case SchemaType.&type of
         OpenAPIDefinition.Schema.TTypeType.array: ;
-        OpenAPIDefinition.Schema.TTypeType.boolean: Result := Schema.Importer.BuildInTypes[TBuildInType.BooleanType];
-        OpenAPIDefinition.Schema.TTypeType.integer: Result := Schema.Importer.BuildInTypes[TBuildInType.IntegerType];
-        OpenAPIDefinition.Schema.TTypeType.number: Result := Schema.Importer.BuildInTypes[TBuildInType.DoubleType];
-        OpenAPIDefinition.Schema.TTypeType.object: Result := Schema.Importer.CreateClassType(ParentModule, TypeName);
-        OpenAPIDefinition.Schema.TTypeType.string: Result := Schema.Importer.BuildInTypes[TBuildInType.StringType];
+        OpenAPIDefinition.Schema.TTypeType.boolean: Result := Importer.BuildInTypes[TBuildInType.BooleanType];
+        OpenAPIDefinition.Schema.TTypeType.integer: Result := Importer.BuildInTypes[TBuildInType.IntegerType];
+        OpenAPIDefinition.Schema.TTypeType.number: Result := Importer.BuildInTypes[TBuildInType.DoubleType];
+        OpenAPIDefinition.Schema.TTypeType.object: Result := Importer.CreateClassType(ParentModule, TypeName);
+        OpenAPIDefinition.Schema.TTypeType.string: Result := Importer.BuildInTypes[TBuildInType.StringType];
       end
     else if SchemaType.IsAllOfStored then
     begin
-      var ClassDefinition := Schema.Importer.CreateClassType(ParentModule, TypeName);
+      var ClassDefinition := Importer.CreateClassType(ParentModule, TypeName);
 
       for var AllOf in SchemaType.allOf do
         ClassDefinition.AddProperty(GeneratePropertyName(ClassDefinition), CreateSchemaType(ClassDefinition, '.AllOfType', AllOf.Schema));
@@ -114,36 +125,84 @@ var
       Result := CreateSchemaType(ParentModule, TypeName, SchemaType.Schema);
   end;
 
+  procedure LoadOperation(const MethodDefinition: TTypeMethodDefinition; const Operation: OpenAPIDefinition.Operation);
+
+    function CreateParameterType(const ParameterSchema: OpenAPIDefinition.Parameter): TTypeDefinition;
+    begin
+      if ParameterSchema.schema.IsReferenceStored then
+        Result := CreateReferenceType(Schema.MainClass, ParameterSchema.schema.Reference)
+      else
+        Result := CreateSchemaType(Schema.MainClass, Format('.%sType', [ParameterSchema.name]), ParameterSchema.schema.Schema);
+    end;
+
+  begin
+    for var Parameter in Operation.parameters do
+      Importer.CreateParameter(MethodDefinition, Parameter.Parameter.name, CreateParameterType(Parameter.Parameter));
+  end;
+
 begin
   Definition := Schema.SchemaValue.AsType<OpenAPIDefinition>;
+  Importer := Schema.Importer;
+
+  if not Assigned(Schema.ServiceInterface) then
+    raise EServiceInterfaceNameEmpty.Create;
 
   for var SchemaDefinition in Definition.components.schemas.PatternProperty do
   begin
     var TypeDefinition := CreateComponentSchemaType(Schema.MainClass, SchemaDefinition.Key, SchemaDefinition.Value);
 
     if not TypeDefinition.IsClassDefinition and not TypeDefinition.IsEnumeratorDefinition then
-      TypeDefinition := Schema.Importer.CreateAliasType(Schema.MainClass, SchemaDefinition.Key, TypeDefinition);
+      TypeDefinition := Importer.CreateAliasType(Schema.MainClass, SchemaDefinition.Key, TypeDefinition);
 
-    Schema.Importer.AddType(GetComponentesSchemasNamespace, TypeDefinition);
+    Importer.AddType(GetComponentesSchemasNamespace, TypeDefinition);
   end;
 
   for var PathItem in Definition.paths.PathItem do
   begin
-    var Method := Schema.Importer.CreateMethod(Schema.ServiceInterface, PathItem.Key.Substring(1).Replace('/', '_'), nil);
+    var Method := Importer.CreateMethod(Schema.ServiceInterface, PathItem.Key.Substring(1).Replace('/', '_'), nil);
     var MethodSchema := PathItem.Value;
+    var Operation: OpenAPIDefinition.Operation;
 
     if MethodSchema.IsPatchStored then
-      Schema.Importer.CreatePatchAttribute(Method)
+    begin
+      Operation := MethodSchema.patch;
+
+      Importer.CreatePatchAttribute(Method);
+    end
     else if MethodSchema.IsGetStored then
-      Schema.Importer.CreateGetAttribute(Method)
+    begin
+      Operation := MethodSchema.get;
+
+      Importer.CreateGetAttribute(Method);
+    end
     else if MethodSchema.IsPostStored then
-      Schema.Importer.CreatePostAttribute(Method)
+    begin
+      Operation := MethodSchema.post;
+
+      Importer.CreatePostAttribute(Method);
+    end
     else if MethodSchema.IsDeleteStored then
-      Schema.Importer.CreateDeleteAttribute(Method)
+    begin
+      Operation := MethodSchema.delete;
+
+      Importer.CreateDeleteAttribute(Method);
+    end
     else if MethodSchema.IsOptionsStored then
-      Schema.Importer.CreateOptionsAttribute(Method)
+    begin
+      Operation := MethodSchema.options;
+
+      Importer.CreateOptionsAttribute(Method);
+    end
     else if MethodSchema.IsPutStored then
-      Schema.Importer.CreatePutAttribute(Method)
+    begin
+      Operation := MethodSchema.put;
+
+      Importer.CreatePutAttribute(Method);
+    end
+    else
+      raise EPathItemWithoutOperation.Create(PathItem.Key);
+
+    LoadOperation(Method, Operation);
   end;
 end;
 
@@ -164,6 +223,20 @@ begin
 
   Schema.Namespace := Definition.info.title;
   Schema.SchemaValue := Definition;
+end;
+
+{ EPathItemWithoutOperation }
+
+constructor EPathItemWithoutOperation.Create(const Path: String);
+begin
+  inherited CreateFmt('The path item "%s" doesn''t have a operation loaded!', [Path]);
+end;
+
+{ EServiceInterfaceNameEmpty }
+
+constructor EServiceInterfaceNameEmpty.Create;
+begin
+  inherited Create('Must configure the "ServiceInterfaceName" in the schema file!');
 end;
 
 initialization
