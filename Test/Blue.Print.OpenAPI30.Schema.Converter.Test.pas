@@ -125,7 +125,7 @@ type
     [Test]
     procedure MustLoadTheParameterTypeUsingTheSchemaInformationHasExpected;
     [Test]
-    procedure WhenTheParameterSchemaGenerateATypeMustLoadTheTypeNameWithTheParameterNamePlusTypeInTheName;
+    procedure WhenTheParameterSchemaGenerateATypeMustLoadTheTypeNameWithTheMethodNameAndParameterNamePlusTypeInTheName;
     [Test]
     procedure WhenTheParameterIsAReferenceMustLoadAReferenceTypeInTheParameterType;
     [Test]
@@ -599,7 +599,7 @@ begin
   Assert.AreEqual(TTypeReferenceDefinition, GetInterfaceService.Methods[0].Parameters[0].ParameterType.ClassType);
 end;
 
-procedure TOpenAPI30SchemaConverterTest.WhenTheParameterSchemaGenerateATypeMustLoadTheTypeNameWithTheParameterNamePlusTypeInTheName;
+procedure TOpenAPI30SchemaConverterTest.WhenTheParameterSchemaGenerateATypeMustLoadTheTypeNameWithTheMethodNameAndParameterNamePlusTypeInTheName;
 begin
   var Parameter := FDefinition.paths.AddPathItem('/MyProc').put.AddParameters.Parameter;
 
@@ -608,7 +608,7 @@ begin
 
   ImportDefinition;
 
-  Assert.AreEqual('.MyParameterType', GetInterfaceService.Methods[0].Parameters[0].ParameterType.Name);
+  Assert.AreEqual('.MyProc_MyParameterType', GetInterfaceService.Methods[0].Parameters[0].ParameterType.Name);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenThePatchSchemaIsLoadedMustAppendThePatchAttributeInTheMethod;

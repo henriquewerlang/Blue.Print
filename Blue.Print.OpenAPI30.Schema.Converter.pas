@@ -132,7 +132,7 @@ var
       if ParameterSchema.schema.IsReferenceStored then
         Result := CreateReferenceType(Schema.MainClass, ParameterSchema.schema.Reference)
       else
-        Result := CreateSchemaType(Schema.MainClass, Format('.%sType', [ParameterSchema.name]), ParameterSchema.schema.Schema);
+        Result := CreateSchemaType(Schema.MainClass, Format('.%s_%sType', [MethodDefinition.Name, ParameterSchema.name]), ParameterSchema.schema.Schema);
     end;
 
   begin
