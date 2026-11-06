@@ -58,9 +58,9 @@ begin
 
   if JSONSchemaType.IsRefStored then
     if JSONSchemaType.ref = '#' then
-      Result := Importer.CreateReferenceType(ParentClassDefinition, JSONDefinition.id, GetReferenceSchemaName(JSONSchemaType))
+      Result := Importer.CreateReferenceType(ParentClassDefinition, 'Reference', JSONDefinition.id, GetReferenceSchemaName(JSONSchemaType))
     else
-      Result := Importer.CreateReferenceType(ParentClassDefinition, DefinitionsNamespace, GetReferenceSchemaName(JSONSchemaType))
+      Result := Importer.CreateReferenceType(ParentClassDefinition, 'Reference', DefinitionsNamespace, GetReferenceSchemaName(JSONSchemaType))
   else if JSONSchemaType.IsEnumStored then
     Result := Importer.CreateEnumeratorType(ParentClassDefinition, TypeName)
   else if JSONSchemaType.IsPropertiesStored then

@@ -492,7 +492,7 @@ type
     function CreatePatternPropertyAttribute(const PropertyDefinition: TTypePropertyDefinition; const Pattern: String): TTypePatternPropertyAttribute;
     function CreatePostAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePostAttribute;
     function CreatePutAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePutAttribute;
-    function CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Namespace, Reference: String): TTypeReferenceDefinition;
+    function CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Name, Namespace, Reference: String): TTypeReferenceDefinition;
     function FindType(const Namespace, Name: String): TTypeDefinition;
     function FindTypeWithPrefix(const Fullname: String): TTypeDefinition;
     function GetPrefixName(const Namespace: String): String;
@@ -663,9 +663,9 @@ begin
   Result := CreateTypeAttribute<TTypePutAttribute>(MethodDefinition);
 end;
 
-function TSchemaImporter.CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Namespace, Reference: String): TTypeReferenceDefinition;
+function TSchemaImporter.CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Name, Namespace, Reference: String): TTypeReferenceDefinition;
 begin
-  Result := CreateTypeDefinition<TTypeReferenceDefinition>(ParentModule);
+  Result := CreateTypeDefinitionWithName<TTypeReferenceDefinition>(ParentModule, Name);
   Result.FNamespace := Namespace;
   Result.FReference := Reference;
 end;

@@ -211,6 +211,8 @@ type
     [Test]
     procedure MustAppendTheClassInTheTypesArrayFromTheMainClass;
     [Test]
+    procedure MustLoadTheReferenceNameInTheTypeNameWhenCreateTheReference;
+    [Test]
     procedure WhenCreateTheClassTypeMustReturnTheClassTypeCreated;
     [Test]
     procedure MustLoadTheClassNameWithTheValueInTheParameter;
@@ -1207,7 +1209,7 @@ procedure TSchemaImporterTest.MustAppendTheClassInTheTypesArrayFromTheMainClass;
 begin
   var MainClass := TTypeClassDefinition.Create;
 
-  FImporter.CreateReferenceType(MainClass, 'My Namespace', 'myReference');
+  FImporter.CreateReferenceType(MainClass, 'My Reference', 'My Namespace', 'myReference');
 
   Assert.AreEqual(1, Length(MainClass.Types));
 
@@ -1720,7 +1722,7 @@ end;
 procedure TSchemaImporterTest.MustLoadTheNamespaceInTheReferenceClassWithTheParameterValue;
 begin
   var MainClass := TTypeClassDefinition.Create;
-  var TypeReference := FImporter.CreateReferenceType(MainClass, 'My Namespace', 'myReference');
+  var TypeReference := FImporter.CreateReferenceType(MainClass, 'My Reference', 'My Namespace', 'myReference');
 
   Assert.AreEqual('My Namespace', TypeReference.Namespace);
 
@@ -1777,7 +1779,7 @@ end;
 procedure TSchemaImporterTest.MustLoadTheParentModuleWithTheMainClassVariable;
 begin
   var MainClass := TTypeClassDefinition.Create;
-  var TypeReference := FImporter.CreateReferenceType(MainClass, 'My Namespace', 'myReference');
+  var TypeReference := FImporter.CreateReferenceType(MainClass, 'My Reference', 'My Namespace', 'myReference');
 
   Assert.AreEqual(MainClass, TypeReference.ParentModule);
 
@@ -1799,9 +1801,19 @@ end;
 procedure TSchemaImporterTest.MustLoadTheReferenceInfoWhenCreateTheReferenceClass;
 begin
   var MainClass := TTypeClassDefinition.Create;
-  var TypeReference := FImporter.CreateReferenceType(MainClass, 'My Namespace', 'myReference');
+  var TypeReference := FImporter.CreateReferenceType(MainClass, 'My Reference', 'My Namespace', 'myReference');
 
   Assert.AreEqual('myReference', TypeReference.Reference);
+
+  MainClass.Free;
+end;
+
+procedure TSchemaImporterTest.MustLoadTheReferenceNameInTheTypeNameWhenCreateTheReference;
+begin
+  var MainClass := TTypeClassDefinition.Create;
+  var TypeReference := FImporter.CreateReferenceType(MainClass, 'My Reference', 'My Namespace', 'myReference');
+
+  Assert.AreEqual('My Reference', TypeReference.Name);
 
   MainClass.Free;
 end;
@@ -2497,7 +2509,7 @@ begin
 
         FImporter.AddType('My Namespace', Enumerator);
 
-        var Reference := FImporter.CreateReferenceType(Schema.MainClass, 'My Namespace', 'MyEnumerator');
+        var Reference := FImporter.CreateReferenceType(Schema.MainClass, 'My Reference', 'My Namespace', 'MyEnumerator');
 
         Schema.MainClass.AddProperty('MyProperty', Reference);
       end;
@@ -3645,7 +3657,7 @@ begin
     begin
       var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', Schema.MainClass)));
 
-      ClassDefinition.AddProperty('MyProp', FImporter.CreateReferenceType(ClassDefinition, 'My Namespace', 'MainModule'));
+      ClassDefinition.AddProperty('MyProp', FImporter.CreateReferenceType(ClassDefinition, 'My Reference', 'My Namespace', 'MainModule'));
     end;
 
   FImporter.Import(FConfiguration);
@@ -3907,7 +3919,7 @@ end;
 procedure TSchemaImporterTest.WhenCreateTheTypeReferenceMustReturnTheClassCreated;
 begin
   var MainClass := TTypeClassDefinition.Create;
-  var TypeReference := FImporter.CreateReferenceType(MainClass, 'My Namespace', 'myReference');
+  var TypeReference := FImporter.CreateReferenceType(MainClass, 'My Reference', 'My Namespace', 'myReference');
 
   Assert.IsNotNil(TypeReference);
 
@@ -4440,7 +4452,7 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (Schema: TSchema)
     begin
-      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(Schema.MainClass, FImporter.CreateReferenceType(Schema.MainClass, 'My Namespace', Schema.MainClass.Name)));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(Schema.MainClass, FImporter.CreateReferenceType(Schema.MainClass, 'My Reference', 'My Namespace', Schema.MainClass.Name)));
     end;
 
   FImporter.Import(FConfiguration);
@@ -5259,7 +5271,7 @@ begin
 
         FImporter.AddType('My Namespace', Enumerator);
 
-        var Reference := FImporter.CreateReferenceType(Schema.MainClass, 'My Namespace', 'MyEnumerator');
+        var Reference := FImporter.CreateReferenceType(Schema.MainClass, 'My Reference', 'My Namespace', 'MyEnumerator');
 
         Schema.MainClass.AddProperty('MyProperty', Reference);
       end;
@@ -5673,7 +5685,7 @@ begin
   FConverter.WhenExecuteConvert :=
     procedure (Schema: TSchema)
     begin
-      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateReferenceType(Schema.MainClass, 'My Namespace', Schema.MainClass.Name));
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateReferenceType(Schema.MainClass, 'My Reference', 'My Namespace', Schema.MainClass.Name));
     end;
 
   FImporter.Import(FConfiguration);
@@ -5733,7 +5745,7 @@ begin
       begin
         FImporter.AddType('My Namespace', FImporter.CreateAliasType(Schema.MainClass, 'MyArray', FImporter.CreateArrayType(Schema.MainClass, Schema.MainClass)));
 
-        Schema.MainClass.AddProperty('MyProperty', FImporter.CreateReferenceType(Schema.MainClass, 'My Namespace', 'MyArray'));
+        Schema.MainClass.AddProperty('MyProperty', FImporter.CreateReferenceType(Schema.MainClass, 'My Reference', 'My Namespace', 'MyArray'));
       end;
     end;
 

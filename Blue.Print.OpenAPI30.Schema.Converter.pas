@@ -71,13 +71,13 @@ var
       Result := Result + Succ(Length(ClassDefinition.Properties)).ToString;
   end;
 
-  function CreateReferenceType(const ParentModule: TTypeClassDefinition; const Reference: OpenAPIDefinition.Reference): TTypeReferenceDefinition;
+  function CreateReferenceType(const ParentModule: TTypeClassDefinition; const TypenName: String; const Reference: OpenAPIDefinition.Reference): TTypeReferenceDefinition;
   begin
     var ReferenceValue := Reference.&string[0].Value.Replace('#', GetNamespace);
 
     var Namespace := ReferenceValue.Substring(0, ReferenceValue.LastDelimiter('/'));
 
-    Result := Importer.CreateReferenceType(ParentModule, Namespace, ReferenceValue.Substring(Succ(Namespace.Length)));
+    Result := Importer.CreateReferenceType(ParentModule, TypenName, Namespace, ReferenceValue.Substring(Succ(Namespace.Length)));
   end;
 
   function CreateSchemaType(const ParentModule: TTypeClassDefinition; const TypeName: String; const SchemaType: OpenAPIDefinition.Schema): TTypeDefinition;
@@ -85,7 +85,7 @@ var
     function CreatePropertyType(const ClassDefinition: TTypeClassDefinition; const PropertyName: String; const PropertySchema: OpenAPIDefinition.Schema.TPropertiesType.TAdditionalPropertiesType): TTypeDefinition;
     begin
       if PropertySchema.IsReferenceStored then
-        Result := CreateReferenceType(ClassDefinition, PropertySchema.Reference)
+        Result := CreateReferenceType(ClassDefinition, PropertyName, PropertySchema.Reference)
       else
         Result := CreateSchemaType(ClassDefinition, Format('.%sType', [PropertyName]), PropertySchema.Schema);
     end;
@@ -134,7 +134,7 @@ var
   function CreateComponentSchemaType(const ParentModule: TTypeClassDefinition; const TypeName: String; const SchemaType: OpenAPIDefinition.ComponentsType.TSchemasType.TPatternPropertyType): TTypeDefinition;
   begin
     if SchemaType.IsReferenceStored then
-      Result := CreateReferenceType(ParentModule, SchemaType.Reference)
+      Result := CreateReferenceType(ParentModule, TypeName, SchemaType.Reference)
     else
       Result := CreateSchemaType(ParentModule, TypeName, SchemaType.Schema);
   end;
@@ -142,7 +142,7 @@ var
   function CreateMediaSchemaType(const ParentModule: TTypeClassDefinition; const TypeName: String; const SchemaType: OpenAPIDefinition.MediaType): TTypeDefinition;
   begin
     if SchemaType.schema.IsReferenceStored then
-      Result := CreateReferenceType(ParentModule, SchemaType.schema.Reference)
+      Result := CreateReferenceType(ParentModule, TypeName, SchemaType.schema.Reference)
     else
       Result := CreateSchemaType(Schema.MainClass, TypeName, SchemaType.schema.Schema);
   end;
@@ -165,18 +165,22 @@ var
 
     function CreateParameterType(const ParameterSchema: OpenAPIDefinition.Parameter): TTypeDefinition;
     begin
+      var TypeName := FormatTypeName(ParameterSchema.name);
+
       if ParameterSchema.schema.IsReferenceStored then
-        Result := CreateReferenceType(Schema.MainClass, ParameterSchema.schema.Reference)
+        Result := CreateReferenceType(Schema.MainClass, TypeName, ParameterSchema.schema.Reference)
       else
-        Result := CreateSchemaType(Schema.MainClass, FormatTypeName(ParameterSchema.name), ParameterSchema.schema.Schema);
+        Result := CreateSchemaType(Schema.MainClass, TypeName, ParameterSchema.schema.Schema);
     end;
 
     function LoadBodyType: TTypeDefinition;
     begin
+      var TypeName := FormatTypeName(BODY_PARAMETER_NAME);
+
       if Operation.requestBody.IsReferenceStored then
-        Result := CreateReferenceType(Schema.MainClass, Operation.requestBody.Reference)
+        Result := CreateReferenceType(Schema.MainClass, TypeName, Operation.requestBody.Reference)
       else
-        Result := CreateRequestBodySchemaType(Schema.MainClass, FormatTypeName(BODY_PARAMETER_NAME), Operation.requestBody.RequestBody);
+        Result := CreateRequestBodySchemaType(Schema.MainClass, TypeName, Operation.requestBody.RequestBody);
     end;
 
   begin
@@ -208,8 +212,7 @@ begin
   begin
     var TypeDefinition := CreateRequestBodySchemaType(Schema.MainClass, RequestBodyDefinition.Key, RequestBodyDefinition.Value.RequestBody);
 
-    if not TypeDefinition.IsReferenceDefinition then
-      Importer.AddType(GetComponentsRequestBodiesNamespace, TypeDefinition);
+    Importer.AddType(GetComponentsRequestBodiesNamespace, TypeDefinition);
   end;
 
   for PathItem in Definition.paths.PathItem do

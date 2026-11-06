@@ -155,7 +155,9 @@ type
     [Test]
     procedure WhenTheRequestBodiesIsAMultipartFormDataCantRaiseAnyError;
     [Test]
-    procedure WhenTheContentOfARequestBodiesIsAReferenceCantAppendThisTypeToTheTypesList;
+    procedure WhenCreateAReferenceMustLoadTheReferenceTypeNameWithTheRequestBodiesName;
+    [Test]
+    procedure WhenTheContentOfARequestBodiesIsAReferenceMustAppendTheReferenceToTheTypesListWithTheNameOfRequestBodies;
   end;
 
 implementation
@@ -527,6 +529,17 @@ begin
   Assert.AreEqual(0, Length(GetMainClass.Alias));
 end;
 
+procedure TOpenAPI30SchemaConverterTest.WhenCreateAReferenceMustLoadTheReferenceTypeNameWithTheRequestBodiesName;
+begin
+  FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Reference.AddString('$ref', '#/components/schemas/MyClass');
+
+  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Reference.AddString('$ref', '#/components/schemas/MyClass');
+
+  ImportDefinition;
+
+  Assert.AreEqual('MyBody', GetMainClass.Types[1].Name);
+end;
+
 procedure TOpenAPI30SchemaConverterTest.WhenHasASchemaObjectDeclaredInTheComponentsMustAppendTheClassInMainClassList;
 begin
   FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
@@ -602,7 +615,7 @@ begin
   Assert.AreEqual(1, Length(GetMainClass.Enumerations));
 end;
 
-procedure TOpenAPI30SchemaConverterTest.WhenTheContentOfARequestBodiesIsAReferenceCantAppendThisTypeToTheTypesList;
+procedure TOpenAPI30SchemaConverterTest.WhenTheContentOfARequestBodiesIsAReferenceMustAppendTheReferenceToTheTypesListWithTheNameOfRequestBodies;
 begin
   FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Reference.AddString('$ref', '#/components/schemas/MyClass');
 
@@ -610,7 +623,7 @@ begin
 
   ImportDefinition;
 
-  Assert.IsFalse(FImporter.Types.ContainsKey('my/bodies:'));
+  Assert.IsTrue(FImporter.Types.ContainsKey('my/bodies:MyBody'));
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheContentTypeHasATypeDefinitionMustCreateTheTypeWithTheMethodNameAndParameterNamePlusTypeInTheName;
