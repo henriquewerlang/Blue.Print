@@ -1083,24 +1083,37 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       if Assigned(ModuleDefinition.Enumerations) then
       begin
         var CurrentIndentation := Succ(IndentationLevel);
-        var EnumerationList := CreateStringListForItems;
+        var EnumerationValues := CreateStringListForItems;
+        var EnumerationValuesFormated := CreateStringListForItems;
 
         for var Enumerator in ModuleDefinition.Enumerations do
         begin
-          EnumerationList.Clear;
+          EnumerationValues.Clear;
+
+          EnumerationValuesFormated.Clear;
 
           for var Value in Enumerator.Values do
-            EnumerationList.Add(FormatEnumerationValueName(Value));
+          begin
+            var EnumeratorValue := FormatEnumerationValueName(Value);
 
-          if not SameText(Enumerator.Values.Text, EnumerationList.Text) then
-            AddLine(CurrentIndentation, '[EnumValue(''%s'')]', [Enumerator.Values.Text]);
+            if not EnumerationValuesFormated.Contains(EnumeratorValue) then
+              EnumerationValuesFormated.Add(EnumeratorValue);
 
-          AddLine(CurrentIndentation, '%s = (%s);', [FormatEnumerationName(Enumerator), EnumerationList.Text]);
+            if not EnumerationValues.Contains(Value) then
+              EnumerationValues.Add(Value);
+          end;
+
+          if not SameText(EnumerationValues.Text, EnumerationValuesFormated.Text) then
+            AddLine(CurrentIndentation, '[EnumValue(''%s'')]', [EnumerationValues.Text]);
+
+          AddLine(CurrentIndentation, '%s = (%s);', [FormatEnumerationName(Enumerator), EnumerationValuesFormated.Text]);
 
           AddWhiteLine;
         end;
 
-        EnumerationList.Free;
+        EnumerationValues.Free;
+
+        EnumerationValuesFormated.Free;
       end;
     end;
 
