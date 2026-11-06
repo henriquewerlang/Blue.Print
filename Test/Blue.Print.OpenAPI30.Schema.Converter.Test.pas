@@ -152,11 +152,13 @@ type
     procedure MustAppendTheTypeCreatedInTheComponentsRequestBodiesInTheNamespaceHasExpected;
     [Test]
     procedure WhenAParameterInAnOperationHasAReferenteToARequestBodiesMustLoadTheReferenceToTheTypeHasExpected;
+    [Test]
+    procedure WhenTheRequestBodiesIsAMultipartFormDataCantRaiseAnyError;
   end;
 
 implementation
 
-uses System.JSON, System.SysUtils, System.IOUtils, System.Rtti, Blue.Print.Serializer;
+uses System.JSON, System.SysUtils, System.IOUtils, System.Rtti, Rest.Types, Blue.Print.Serializer;
 
 { TOpenAPI30SchemaConverterTest }
 
@@ -230,7 +232,7 @@ end;
 
 procedure TOpenAPI30SchemaConverterTest.MustAppendTheTypeCreatedInTheComponentsRequestBodiesInTheNamespaceHasExpected;
 begin
-  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties('application/json').schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
 
   ImportDefinition;
 
@@ -256,7 +258,7 @@ end;
 
 procedure TOpenAPI30SchemaConverterTest.MustLoadTheClassNameInTheRequestBodiesWithThePatternName;
 begin
-  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties('application/json').schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
 
   ImportDefinition;
 
@@ -411,7 +413,7 @@ end;
 
 procedure TOpenAPI30SchemaConverterTest.TheContentTypeParameterMustHaveTheNameCalledBody;
 begin
-  FDefinition.paths.AddPathItem('/MyProc').post.requestBody.RequestBody.content.AddAdditionalProperties('application/json').schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
+  FDefinition.paths.AddPathItem('/MyProc').post.requestBody.RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
 
   ImportDefinition;
 
@@ -498,7 +500,7 @@ begin
   var Operation := FDefinition.paths.AddPathItem('/MyProc').put;
   Operation.requestBody.Reference.AddString('$ref', '#/components/requestBodies/MyBody');
 
-  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties('application/json').schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
 
   ImportDefinition;
 
@@ -600,7 +602,7 @@ end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheContentTypeHasATypeDefinitionMustCreateTheTypeWithTheMethodNameAndParameterNamePlusTypeInTheName;
 begin
-  var Schema := FDefinition.paths.AddPathItem('/MyProc').post.requestBody.RequestBody.content.AddAdditionalProperties('application/json').schema.Schema;
+  var Schema := FDefinition.paths.AddPathItem('/MyProc').post.requestBody.RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema;
 
   Schema.AddEnum('MyValue');
 
@@ -613,7 +615,7 @@ procedure TOpenAPI30SchemaConverterTest.WhenTheContentTypeIsAReferenceMustLoadTh
 begin
   FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Reference.AddString('$ref', '#/components/schemas/MyClass');
 
-  FDefinition.paths.AddPathItem('/MyProc').post.requestBody.RequestBody.content.AddAdditionalProperties('application/json').schema.Reference.AddString('$ref', '#/components/schemas/MyClass');
+  FDefinition.paths.AddPathItem('/MyProc').post.requestBody.RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Reference.AddString('$ref', '#/components/schemas/MyClass');
 
   ImportDefinition;
 
@@ -734,7 +736,7 @@ end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenThePathItemHasTheRequestBodyLoadedAndTheContentTypeIsApplicationJSONMustAppendAParameterInTheMethod;
 begin
-  FDefinition.paths.AddPathItem('/MyProc').post.requestBody.RequestBody.content.AddAdditionalProperties('application/json').schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
+  FDefinition.paths.AddPathItem('/MyProc').post.requestBody.RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
 
   ImportDefinition;
 
@@ -884,11 +886,11 @@ end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheRequestBodiesHasAContentTypeOfApplicationJSONMustLoadTheAllTypesInTheMainClassTypes;
 begin
-  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties('application/json').schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
 
-  FDefinition.components.requestBodies.AddPatternProperty('MyBody2').RequestBody.content.AddAdditionalProperties('application/json').schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+  FDefinition.components.requestBodies.AddPatternProperty('MyBody2').RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
 
-  FDefinition.components.requestBodies.AddPatternProperty('MyBody3').RequestBody.content.AddAdditionalProperties('application/json').schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+  FDefinition.components.requestBodies.AddPatternProperty('MyBody3').RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
 
   ImportDefinition;
 
@@ -897,11 +899,18 @@ end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheRequestBodiesHasAContentTypeOfApplicationJSONMustLoadTheTypeInTheMainClassTypes;
 begin
-  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties('application/json').schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
 
   ImportDefinition;
 
   Assert.AreEqual(1, Length(GetMainClass.Classes));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheRequestBodiesIsAMultipartFormDataCantRaiseAnyError;
+begin
+  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties(CONTENTTYPE_MULTIPART_FORM_DATA).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+
+  Assert.WillNotRaise(ImportDefinition);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheRequestBodyDontHaveAValidContentTypeMustRaiseAnError;

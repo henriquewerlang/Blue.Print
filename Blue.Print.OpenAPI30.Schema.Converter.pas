@@ -150,7 +150,7 @@ var
   function CreateRequestBodySchemaType(const ParentModule: TTypeClassDefinition; const TypeName: String; const RequestBodySchema: OpenAPIDefinition.RequestBody): TTypeDefinition;
   begin
     for var ContentType in RequestBodySchema.content.additionalProperties do
-      if ContentType.Key = CONTENTTYPE_APPLICATION_JSON then
+      if (ContentType.Key = CONTENTTYPE_APPLICATION_JSON) or (ContentType.Key = CONTENTTYPE_MULTIPART_FORM_DATA) then
         Exit(CreateMediaSchemaType(Schema.MainClass, TypeName, ContentType.Value));
 
     raise EInvalidContentType.Create(TypeName);
