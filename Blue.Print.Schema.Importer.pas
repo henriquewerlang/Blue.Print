@@ -314,6 +314,7 @@ type
 
   TTypeMethodDefinition = class(TTypeCommonDefinition)
   private
+    FIsOverloaded: Boolean;
     FParameters: TArray<TTypeParameterDefinition>;
     FReturnValue: TTypeDefinition;
   public
@@ -321,6 +322,7 @@ type
 
     procedure AddParameter(const Parameter: TTypeParameterDefinition);
 
+    property IsOverloaded: Boolean read FIsOverloaded write FIsOverloaded;
     property Parameters: TArray<TTypeParameterDefinition> read FParameters;
     property ReturnValue: TTypeDefinition read FReturnValue;
   end;
@@ -1755,6 +1757,14 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
           Result := EmptyStr;
       end;
 
+      function GetMethodInstructions: String;
+      begin
+        if Method.IsOverloaded then
+          Result := ' overload;'
+        else
+          Result := EmptyStr;
+      end;
+
     begin
       var MethodType: String;
       var ReturnValue: String;
@@ -1770,7 +1780,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         ReturnValue := EmptyStr;
       end;
 
-      Result := Format('%s %s%s%s;', [MethodType, FormatMethodName(Method), FormatParameters, ReturnValue]);
+      Result := Format('%s %s%s%s;%s', [MethodType, FormatMethodName(Method), FormatParameters, ReturnValue, GetMethodInstructions]);
     end;
 
     procedure GenerateInterfacesDeclaration(const IndentationLevel: Integer);
