@@ -908,7 +908,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function CheckReservedNames(const Name: String): String;
     begin
-      Result := CheckReservedWord(Name, ['type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'const', 'not', 'in', 'file', 'is', 'end', 'label']);
+      Result := CheckReservedWord(Name, ['type', 'mod', 'to', 'if', 'then', 'else', 'type', 'class', 'array', 'object', 'const', 'not', 'in', 'file', 'is', 'end', 'label', 'function', 'procedure']);
     end;
 
     function RemoveInvalidCharecters(const Name: String): String;
