@@ -15,6 +15,11 @@ type
     constructor Create;
   end;
 
+  EInvalidContentType = class(Exception)
+  public
+    constructor Create(const Path: String);
+  end;
+
   TOpenAPI30SchemaConverter = class(TInterfacedObject, ISchemaConverter)
   private
     function LoadDefinition(const Schema: TSchema): OpenAPIDefinition;
@@ -25,14 +30,18 @@ type
 
 implementation
 
-uses Blue.Print.Serializer, Blue.Print.Types;
+uses REST.Types, Blue.Print.Serializer, Blue.Print.Types;
 
 { TOpenAPI30SchemaConverter }
 
 procedure TOpenAPI30SchemaConverter.Convert(const Schema: TSchema);
+const
+  BODY_PARAMETER_NAME = 'Body';
+
 var
   Definition: OpenAPIDefinition;
   Importer: TSchemaImporter;
+  PathItem: TDynamicPair<OpenAPIDefinition.PathItem>;
 
   function GetNamespace: String;
   begin
@@ -44,9 +53,14 @@ var
     Result := GetNamespace + '/components';
   end;
 
-  function GetComponentesSchemasNamespace: String;
+  function GetComponentsSchemasNamespace: String;
   begin
     Result := GetComponentsNamespace + '/schemas';
+  end;
+
+  function GetComponentsRequestBodiesNamespace: String;
+  begin
+    Result := GetComponentsNamespace + '/requestBodies';
   end;
 
   function GeneratePropertyName(const ClassDefinition: TTypeClassDefinition): String;
@@ -125,19 +139,52 @@ var
       Result := CreateSchemaType(ParentModule, TypeName, SchemaType.Schema);
   end;
 
-  procedure LoadOperation(const MethodDefinition: TTypeMethodDefinition; const Operation: OpenAPIDefinition.Operation);
+  function CreateMediaSchemaType(const ParentModule: TTypeClassDefinition; const TypeName: String; const SchemaType: OpenAPIDefinition.MediaType): TTypeDefinition;
+  begin
+    if SchemaType.schema.IsReferenceStored then
+      Result := CreateReferenceType(ParentModule, SchemaType.schema.Reference)
+    else
+      Result := CreateSchemaType(Schema.MainClass, TypeName, SchemaType.schema.Schema);
+  end;
+
+  function CreateRequestBodySchemaType(const ParentModule: TTypeClassDefinition; const TypeName: String; const RequestBodySchema: OpenAPIDefinition.RequestBody): TTypeDefinition;
+  begin
+    for var ContentType in RequestBodySchema.content.additionalProperties do
+      if ContentType.Key = CONTENTTYPE_APPLICATION_JSON then
+        Exit(CreateMediaSchemaType(Schema.MainClass, TypeName, ContentType.Value));
+
+    raise EInvalidContentType.Create(TypeName);
+  end;
+
+  procedure LoadOperationParameters(const MethodDefinition: TTypeMethodDefinition; const Operation: OpenAPIDefinition.Operation);
+
+    function FormatTypeName(const ParameterName: String): String;
+    begin
+      Result := Format('.%s_%sType', [MethodDefinition.Name, ParameterName]);
+    end;
 
     function CreateParameterType(const ParameterSchema: OpenAPIDefinition.Parameter): TTypeDefinition;
     begin
       if ParameterSchema.schema.IsReferenceStored then
         Result := CreateReferenceType(Schema.MainClass, ParameterSchema.schema.Reference)
       else
-        Result := CreateSchemaType(Schema.MainClass, Format('.%s_%sType', [MethodDefinition.Name, ParameterSchema.name]), ParameterSchema.schema.Schema);
+        Result := CreateSchemaType(Schema.MainClass, FormatTypeName(ParameterSchema.name), ParameterSchema.schema.Schema);
+    end;
+
+    function LoadBodyType: TTypeDefinition;
+    begin
+      if Operation.requestBody.IsReferenceStored then
+        Result := CreateReferenceType(Schema.MainClass, Operation.requestBody.Reference)
+      else
+        Result := CreateRequestBodySchemaType(Schema.MainClass, FormatTypeName(BODY_PARAMETER_NAME), Operation.requestBody.RequestBody);
     end;
 
   begin
     for var Parameter in Operation.parameters do
       Importer.CreateParameter(MethodDefinition, Parameter.Parameter.name, CreateParameterType(Parameter.Parameter));
+
+    if Operation.IsRequestBodyStored then
+      Importer.CreateParameter(MethodDefinition, BODY_PARAMETER_NAME, LoadBodyType);
   end;
 
 begin
@@ -154,12 +201,19 @@ begin
     if not TypeDefinition.IsClassDefinition and not TypeDefinition.IsEnumeratorDefinition then
       TypeDefinition := Importer.CreateAliasType(Schema.MainClass, SchemaDefinition.Key, TypeDefinition);
 
-    Importer.AddType(GetComponentesSchemasNamespace, TypeDefinition);
+    Importer.AddType(GetComponentsSchemasNamespace, TypeDefinition);
   end;
 
-  for var PathItem in Definition.paths.PathItem do
+  for var RequestBodyDefinition in Definition.components.requestBodies.PatternProperty do
   begin
-    var Method := Importer.CreateMethod(Schema.ServiceInterface, PathItem.Key.Substring(1).Replace('/', '_'), nil);
+    var TypeDefinition := CreateRequestBodySchemaType(Schema.MainClass, RequestBodyDefinition.Key, RequestBodyDefinition.Value.RequestBody);
+
+    Importer.AddType(GetComponentsRequestBodiesNamespace, TypeDefinition);
+  end;
+
+  for PathItem in Definition.paths.PathItem do
+  begin
+    var MethodDefinition := Importer.CreateMethod(Schema.ServiceInterface, PathItem.Key.Substring(1).Replace('/', '_'), nil);
     var MethodSchema := PathItem.Value;
     var Operation: OpenAPIDefinition.Operation;
 
@@ -167,42 +221,42 @@ begin
     begin
       Operation := MethodSchema.patch;
 
-      Importer.CreatePatchAttribute(Method);
+      Importer.CreatePatchAttribute(MethodDefinition);
     end
     else if MethodSchema.IsGetStored then
     begin
       Operation := MethodSchema.get;
 
-      Importer.CreateGetAttribute(Method);
+      Importer.CreateGetAttribute(MethodDefinition);
     end
     else if MethodSchema.IsPostStored then
     begin
       Operation := MethodSchema.post;
 
-      Importer.CreatePostAttribute(Method);
+      Importer.CreatePostAttribute(MethodDefinition);
     end
     else if MethodSchema.IsDeleteStored then
     begin
       Operation := MethodSchema.delete;
 
-      Importer.CreateDeleteAttribute(Method);
+      Importer.CreateDeleteAttribute(MethodDefinition);
     end
     else if MethodSchema.IsOptionsStored then
     begin
       Operation := MethodSchema.options;
 
-      Importer.CreateOptionsAttribute(Method);
+      Importer.CreateOptionsAttribute(MethodDefinition);
     end
     else if MethodSchema.IsPutStored then
     begin
       Operation := MethodSchema.put;
 
-      Importer.CreatePutAttribute(Method);
+      Importer.CreatePutAttribute(MethodDefinition);
     end
     else
       raise EPathItemWithoutOperation.Create(PathItem.Key);
 
-    LoadOperation(Method, Operation);
+    LoadOperationParameters(MethodDefinition, Operation);
   end;
 end;
 
@@ -237,6 +291,13 @@ end;
 constructor EServiceInterfaceNameEmpty.Create;
 begin
   inherited Create('Must configure the "ServiceInterfaceName" in the schema file!');
+end;
+
+{ EInvalidContentType }
+
+constructor EInvalidContentType.Create(const Path: String);
+begin
+  inherited CreateFmt('The path item "%s" doesn''t have a valid content type!', [Path]);
 end;
 
 initialization
