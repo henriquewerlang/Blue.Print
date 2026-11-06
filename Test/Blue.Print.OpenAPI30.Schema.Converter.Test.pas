@@ -154,6 +154,8 @@ type
     procedure WhenAParameterInAnOperationHasAReferenteToARequestBodiesMustLoadTheReferenceToTheTypeHasExpected;
     [Test]
     procedure WhenTheRequestBodiesIsAMultipartFormDataCantRaiseAnyError;
+    [Test]
+    procedure WhenTheContentOfARequestBodiesIsAReferenceCantAppendThisTypeToTheTypesList;
   end;
 
 implementation
@@ -598,6 +600,17 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(1, Length(GetMainClass.Enumerations));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheContentOfARequestBodiesIsAReferenceCantAppendThisTypeToTheTypesList;
+begin
+  FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Reference.AddString('$ref', '#/components/schemas/MyClass');
+
+  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Reference.AddString('$ref', '#/components/schemas/MyClass');
+
+  ImportDefinition;
+
+  Assert.IsFalse(FImporter.Types.ContainsKey('my/bodies:'));
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheContentTypeHasATypeDefinitionMustCreateTheTypeWithTheMethodNameAndParameterNamePlusTypeInTheName;

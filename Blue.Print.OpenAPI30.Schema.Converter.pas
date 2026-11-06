@@ -208,7 +208,8 @@ begin
   begin
     var TypeDefinition := CreateRequestBodySchemaType(Schema.MainClass, RequestBodyDefinition.Key, RequestBodyDefinition.Value.RequestBody);
 
-    Importer.AddType(GetComponentsRequestBodiesNamespace, TypeDefinition);
+    if not TypeDefinition.IsReferenceDefinition then
+      Importer.AddType(GetComponentsRequestBodiesNamespace, TypeDefinition);
   end;
 
   for PathItem in Definition.paths.PathItem do
