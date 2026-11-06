@@ -1,25 +1,12 @@
-Criar o esquema de namespace para agrupar os tipos por arquivos ou subesquemas.
-* Tem que ver como vai funcionar um tipo dentro de um tipo.
-* Em teoria é possível localizar uma referência direto pelo namespace mais o nome do tipo?
 O importador vai ser o centro e os tipos específicos vão importar os esquemas XSD ou JSON.
 * Tem que ver uma forma de um específico acionar o importador para importar o arquivo de dependência.
 
-Não permitir os importadores individuais importar as próprias dependências, tem que estar configurado antes de importar
-* Criar um esquema para importar outras configurações, caso as assinaturas do XML
+Tratamento de parâmetros não requeridos para adicionar vários procedimentos sem os parâmetros como foi implementado anteriormente
 
-Os conversores tem que registrar os tipos "internos" que podem ser repetidos
-* A princípios vou fazer apenas uma equivalência com os tipos internos do Delphi
+Tem que colocar o esquema de overload nos métodos
 
-Mudar o esquema das propriedades dinâmicas, criar o um array com um tipo de pares para a propriedades
-* Na hora de gerar tem que adicionar uma função para adicionar a propriedade com o parâmetro do nome
-** Quando não for classe, tem que adicionar com os dois parâmetros
+Deixar em ordem alfabética os procedimentos e funções geradas automaticamente pelo esquema
 
-Quando adicionar um tipo do sistema, tem que declarar o tipo com o nome antes, por exemplo, System.String
-* Isso vale para qualquer tipo do sistema
+As propriedades IsStored em ordem alfabética também
 
-Tem que adicionar os uses do tipo quando não for da própria unit, como é o caso do TValue, que tem que adicionar a unit da RTTI.
-* Vale para os tipos de assinatura, ou do próprio Blue Print.
-
-Permitir na configuração adicionar propriedades a uma classe, é o caso do $ref do esquema do JSON que não tem na definição
-
-Tem que adicionar o FlatAttribute para as classes do JSON, do allOf, oneOf, anyOf
+Verificar no Open API 3.0 os parâmetros não requeridos
