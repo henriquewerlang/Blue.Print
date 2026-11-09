@@ -144,6 +144,11 @@ type
     constructor Create;
   end;
 
+  TTypeBodyAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create;
+  end;
+
   TTypeOptionsAttribute = class(TTypeAttributeDefinition)
   public
     constructor Create;
@@ -498,6 +503,7 @@ type
 
     function CreateAliasType(const ParentModule: TTypeModuleDefinition; const Name: String; const TypeAlias: TTypeDefinition): TTypeAliasDefinition;
     function CreateArrayType(const ParentModule: TTypeModuleDefinition; const ArrayType: TTypeDefinition): TTypeArrayDefinition;
+    function CreateBodyAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypeBodyAttribute;
     function CreateClassType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeClassDefinition;
     function CreateDeleteAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeDeleteAttribute;
     function CreateDynamicPropertyType(const ParentModule: TTypeModuleDefinition; const DynamicType: TTypeDefinition): TTypeDynamicPropertyDefinition;
@@ -597,6 +603,11 @@ function TSchemaImporter.CreateArrayType(const ParentModule: TTypeModuleDefiniti
 begin
   Result := CreateTypeDefinition<TTypeArrayDefinition>(ParentModule);
   Result.FGenericType := ArrayType;
+end;
+
+function TSchemaImporter.CreateBodyAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypeBodyAttribute;
+begin
+  Result := CreateTypeAttribute<TTypeBodyAttribute>(ParameterDefinition);
 end;
 
 function TSchemaImporter.CreateClassType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeClassDefinition;
@@ -1271,17 +1282,25 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       TArray.Sort<TTypePropertyDefinition>(Result, TTypeCommonComparer<TTypePropertyDefinition>.Comparer);
     end;
 
-    procedure GenerateAttributesDeclaration(const IndentationLevel: Integer; const CommonDefinition: TTypeCommonDefinition);
+    function FormatAttributes(const CommonDefinition: TTypeCommonDefinition): String;
     begin
-      var Attributes := CreateStringListForItems;
+      var AttributesList := CreateStringListForItems;
 
       for var Attribute in CommonDefinition.Attributes do
-        Attributes.Add(Attribute.Declaration);
+        AttributesList.Add(Attribute.Declaration);
+
+      if not AttributesList.IsEmpty then
+        Result := Format('[%s]', [AttributesList.Text]);
+
+      AttributesList.Free;
+    end;
+
+    procedure GenerateAttributesDeclaration(const IndentationLevel: Integer; const CommonDefinition: TTypeCommonDefinition);
+    begin
+      var Attributes := FormatAttributes(CommonDefinition);
 
       if not Attributes.IsEmpty then
-        AddLine(IndentationLevel, '[%s]', [Attributes.Text]);
-
-      Attributes.Free;
+        AddLine(IndentationLevel, Attributes);
     end;
 
     function SortMethods(const Methods: TArray<TTypeMethodDefinition>): TArray<TTypeMethodDefinition>;
@@ -1306,6 +1325,14 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       function FormatParameters: String;
       var
         ParameterType: TTypeDefinition;
+
+        function GetAttributes(const Parameter: TTypeParameterDefinition): String;
+        begin
+          Result := FormatAttributes(Parameter);
+
+          if not Result.IsEmpty then
+            Result := Result + ' ';
+        end;
 
       begin
         if Assigned(Method.Parameters) then
@@ -1336,7 +1363,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
             if not Result.IsEmpty then
               Result := Result + ParameterSeparator + ' ';
 
-            Result := Result + ParameterPrefix + FormatParameterName(Parameter);
+            Result := Result + ParameterPrefix + GetAttributes(Parameter) + FormatParameterName(Parameter);
           end;
 
           Result := Format('(%s%s)', [Result, GetParameterTypeName(ParameterType)])
@@ -2455,6 +2482,13 @@ begin
 
   if Result = 0 then
     Result := inherited Compare(Left, Right);
+end;
+
+{ TTypeBodyAttribute }
+
+constructor TTypeBodyAttribute.Create;
+begin
+  inherited Create('Body');
 end;
 
 end.
