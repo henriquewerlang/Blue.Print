@@ -188,7 +188,11 @@ var
       Importer.CreateParameter(MethodDefinition, Parameter.Parameter.name, CreateParameterType(Parameter.Parameter));
 
     if Operation.IsRequestBodyStored then
-      Importer.CreateParameter(MethodDefinition, BODY_PARAMETER_NAME, LoadBodyType);
+    begin
+      var Parameter := Importer.CreateParameter(MethodDefinition, BODY_PARAMETER_NAME, LoadBodyType);
+
+      Importer.CreateBodyAttribute(Parameter);
+    end;
   end;
 
 begin

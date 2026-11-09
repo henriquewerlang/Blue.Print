@@ -2618,42 +2618,42 @@ end;
 
 procedure TSchemaImporterTest.TheSelfUnitCantBeLoadedInTheUsesList;
 begin
-//  FConverter.WhenExecuteConvert :=
-//    procedure (Schema: TSchema)
-//    begin
-//      if Schema.MainClass.ParentModule.Name = 'MyUnit' then
-//        Schema.MainClass.AddProperty('MyProperty', FImporter.CreateEnumeratorType(Schema.MainClass, 'SimpleType'));
-//    end;
-//
-//  FImporter.Import(FConfiguration);
-//
-//  CompareUnitDeclaration(
-//    '''
-//    unit MyUnit;
-//
-//    interface
-//
-//    {$M+}
-//    {$SCOPEDENUMS ON}
-//
-//    type
-//      MainModule = class;
-//
-//      MainModule = class
-//      public type
-//        SimpleType = ();
-//      private
-//        FMyProperty: MyUnit.MainModule.SimpleType;
-//      published
-//        property MyProperty: MyUnit.MainModule.SimpleType read FMyProperty write FMyProperty;
-//      end;
-//
-//    implementation
-//
-//    end.
-//
-//    ''',
-//    FConfiguration.Units[0]);
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      if Schema.MainClass.ParentModule.Name = 'MyUnit' then
+        Schema.MainClass.AddProperty('MyProperty', FImporter.CreateEnumeratorType(Schema.MainClass, 'SimpleType'));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+    {$SCOPEDENUMS ON}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        SimpleType = ();
+      private
+        FMyProperty: MyUnit.MainModule.SimpleType;
+      published
+        property MyProperty: MyUnit.MainModule.SimpleType read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.TheSystemTypesMustBeLoadedInTheSystemPrefixName;
@@ -3307,17 +3307,17 @@ end;
 
 procedure TSchemaImporterTest.WhenAppendAPropertyMustLoadThePropertyNameFromTheConfiguration;
 begin
-//  FConfiguration.AppendProperties := [AddAppendProperty('my:MainModule', 'NewProperty', 'System:Integer')];
-//
-//  FImporter.Import(FConfiguration);
-//
-//  LinesCompareUnitDeclaration(
-//    '''
-//      published
-//        property NewProperty: System.Integer read FNewProperty write SetNewProperty stored FNewPropertyStored;
-//      end;
-//    ''',
-//    FConfiguration.Units[0]);
+  FConfiguration.AppendProperties := [AddAppendProperty('my:MainModule', 'NewProperty', 'System:Integer')];
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+      published
+        property NewProperty: System.Integer read FNewProperty write SetNewProperty stored FNewPropertyStored;
+      end;
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenAppendAPropertyMustLoadTheTypeInTheConfigurationHasExpected;
@@ -4542,73 +4542,73 @@ end;
 
 procedure TSchemaImporterTest.WhenTheArrayTypeIsAnObjectMustCreateTheAddFunctionForTheType;
 begin
-//  FConverter.WhenExecuteConvert :=
-//    procedure (Schema: TSchema)
-//    begin
-//      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(Schema.MainClass, Schema.MainClass));
-//
-//      Schema.MainClass.AddProperty('MyProperty2', FImporter.CreateArrayType(Schema.MainClass, Schema.MainClass));
-//    end;
-//
-//  FImporter.Import(FConfiguration);
-//
-//  CompareUnitDeclaration(
-//    '''
-//    unit MyUnit;
-//
-//    interface
-//
-//    {$M+}
-//
-//    type
-//      MainModule = class;
-//
-//      MainModule = class
-//      private
-//        FMyProperty: System.TArray<MyUnit.MainModule>;
-//        FMyProperty2: System.TArray<MyUnit.MainModule>;
-//      public
-//        destructor Destroy; override;
-//        function AddMyProperty: MyUnit.MainModule;
-//        function AddMyProperty2: MyUnit.MainModule;
-//      published
-//        property MyProperty: System.TArray<MyUnit.MainModule> read FMyProperty write FMyProperty;
-//        property MyProperty2: System.TArray<MyUnit.MainModule> read FMyProperty2 write FMyProperty2;
-//      end;
-//
-//    implementation
-//
-//    { MainModule }
-//
-//    destructor MainModule.Destroy;
-//    begin
-//      for var Item in FMyProperty do
-//        Item.Free;
-//
-//      for var Item in FMyProperty2 do
-//        Item.Free;
-//
-//      inherited;
-//    end;
-//
-//    function MainModule.AddMyProperty: MyUnit.MainModule;
-//    begin
-//      Result := MyUnit.MainModule.Create;
-//
-//      MyProperty := MyProperty + [Result];
-//    end;
-//
-//    function MainModule.AddMyProperty2: MyUnit.MainModule;
-//    begin
-//      Result := MyUnit.MainModule.Create;
-//
-//      MyProperty2 := MyProperty2 + [Result];
-//    end;
-//
-//    end.
-//
-//    ''',
-//    FConfiguration.Units[0]);
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(Schema.MainClass, Schema.MainClass));
+
+      Schema.MainClass.AddProperty('MyProperty2', FImporter.CreateArrayType(Schema.MainClass, Schema.MainClass));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProperty: System.TArray<MyUnit.MainModule>;
+        FMyProperty2: System.TArray<MyUnit.MainModule>;
+      public
+        destructor Destroy; override;
+        function AddMyProperty: MyUnit.MainModule;
+        function AddMyProperty2: MyUnit.MainModule;
+      published
+        property MyProperty: System.TArray<MyUnit.MainModule> read FMyProperty write FMyProperty;
+        property MyProperty2: System.TArray<MyUnit.MainModule> read FMyProperty2 write FMyProperty2;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      for var Item in FMyProperty do
+        Item.Free;
+
+      for var Item in FMyProperty2 do
+        Item.Free;
+
+      inherited;
+    end;
+
+    function MainModule.AddMyProperty: MyUnit.MainModule;
+    begin
+      Result := MyUnit.MainModule.Create;
+
+      MyProperty := MyProperty + [Result];
+    end;
+
+    function MainModule.AddMyProperty2: MyUnit.MainModule;
+    begin
+      Result := MyUnit.MainModule.Create;
+
+      MyProperty2 := MyProperty2 + [Result];
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenTheArrayTypeIsAReferenceMustLoadTheReferenceAndLoadTheArrayHasExpected;
@@ -5848,79 +5848,79 @@ end;
 
 procedure TSchemaImporterTest.WhenThePropertyTypeIsAnArrayMustDeclareTheTypeWithTheTArraySystemType;
 begin
-//  FConverter.WhenExecuteConvert :=
-//    procedure (Schema: TSchema)
-//    begin
-//      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(Schema.MainClass, Schema.MainClass));
-//    end;
-//
-//  FImporter.Import(FConfiguration);
-//
-//  LinesCompareUnitDeclaration(
-//    '''
-//      published
-//        property MyProperty: System.TArray<MyUnit.MainModule> read FMyProperty write FMyProperty;
-//      end;
-//
-//    implementation
-//    ''',
-//    FConfiguration.Units[0]);
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateArrayType(Schema.MainClass, Schema.MainClass));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+      published
+        property MyProperty: System.TArray<MyUnit.MainModule> read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyTypeIsAReferenceToAClassDefinitionTypeMustLoadTheGetFunctionForTheProperty;
 begin
-//  FConverter.WhenExecuteConvert :=
-//    procedure (Schema: TSchema)
-//    begin
-//      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateReferenceType(Schema.MainClass, 'My Reference', 'My Namespace', Schema.MainClass.Name));
-//    end;
-//
-//  FImporter.Import(FConfiguration);
-//
-//  CompareUnitDeclaration(
-//    '''
-//    unit MyUnit;
-//
-//    interface
-//
-//    {$M+}
-//
-//    type
-//      MainModule = class;
-//
-//      MainModule = class
-//      private
-//        FMyProperty: MyUnit.MainModule;
-//        function GetMyProperty: MyUnit.MainModule;
-//      public
-//        destructor Destroy; override;
-//      published
-//        property MyProperty: MyUnit.MainModule read GetMyProperty write FMyProperty;
-//      end;
-//
-//    implementation
-//
-//    { MainModule }
-//
-//    destructor MainModule.Destroy;
-//    begin
-//      FMyProperty.Free;
-//
-//      inherited;
-//    end;
-//
-//    function MainModule.GetMyProperty: MyUnit.MainModule;
-//    begin
-//      if not Assigned(FMyProperty) then
-//        MyProperty := MyUnit.MainModule.Create;
-//
-//      Result := FMyProperty;
-//    end;
-//
-//    end.
-//
-//    ''',
-//    FConfiguration.Units[0]);
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      Schema.MainClass.AddProperty('MyProperty', FImporter.CreateReferenceType(Schema.MainClass, 'My Reference', 'My Namespace', Schema.MainClass.Name));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProperty: MyUnit.MainModule;
+        function GetMyProperty: MyUnit.MainModule;
+      public
+        destructor Destroy; override;
+      published
+        property MyProperty: MyUnit.MainModule read GetMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      FMyProperty.Free;
+
+      inherited;
+    end;
+
+    function MainModule.GetMyProperty: MyUnit.MainModule;
+    begin
+      if not Assigned(FMyProperty) then
+        MyProperty := MyUnit.MainModule.Create;
+
+      Result := FMyProperty;
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyTypeIsAReferenceToAnArrayWithAClassDefinitionTypeMustLoadTheAddFunctionHasExpected;

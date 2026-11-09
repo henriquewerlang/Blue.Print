@@ -158,6 +158,8 @@ type
     procedure WhenCreateAReferenceMustLoadTheReferenceTypeNameWithTheRequestBodiesName;
     [Test]
     procedure WhenTheContentOfARequestBodiesIsAReferenceMustAppendTheReferenceToTheTypesListWithTheNameOfRequestBodies;
+    [Test]
+    procedure WhenTheParameterIsABodyParameterMustLoadTheBodyAttributeInTheParameter;
   end;
 
 implementation
@@ -702,6 +704,17 @@ begin
   Assert.AreEqual(1, Length(GetInterfaceService.Methods[0].Attributes));
 
   Assert.AreEqual(TTypeOptionsAttribute, GetInterfaceService.Methods[0].Attributes[0].ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheParameterIsABodyParameterMustLoadTheBodyAttributeInTheParameter;
+begin
+  FDefinition.paths.AddPathItem('/MyProc').post.requestBody.RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetInterfaceService.Methods[0].Parameters[0].Attributes));
+
+  Assert.AreEqual(TTypeBodyAttribute, GetInterfaceService.Methods[0].Parameters[0].Attributes[0].ClassType);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheParameterIsAReferenceMustLoadAReferenceTypeInTheParameterType;
