@@ -217,7 +217,7 @@ begin
 
   for PathItem in Definition.paths.PathItem do
   begin
-    var MethodDefinition := Importer.CreateMethod(Schema.ServiceInterface, PathItem.Key.Substring(1).Replace('/', '_'), nil);
+    var MethodDefinition := Importer.CreateServiceMethod(Schema.ServiceInterface, PathItem.Key.Substring(1).Replace('/', '_'), nil);
     var MethodSchema := PathItem.Value;
     var Operation: OpenAPIDefinition.Operation;
 

@@ -3,10 +3,10 @@ O importador vai ser o centro e os tipos específicos vão importar os esquemas 
 
 Tratamento de parâmetros não requeridos para adicionar vários procedimentos sem os parâmetros como foi implementado anteriormente
 
-Tem que colocar o esquema de overload nos métodos
-
 Deixar em ordem alfabética os procedimentos e funções geradas automaticamente pelo esquema
 
 As propriedades IsStored em ordem alfabética também
 
 Verificar no Open API 3.0 os parâmetros não requeridos
+
+Tem que colocar os attributos de Body e de FormData para o novo tipo de content que tem na API da MoniSat

@@ -840,7 +840,7 @@ begin
     begin
       var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
 
-      var MyMethod := FImporter.CreateMethod(InterfaceType, 'MyMethod', nil);
+      var MyMethod := FImporter.CreateServiceMethod(InterfaceType, 'MyMethod', nil);
 
       FImporter.CreateParameter(MyMethod, 'Parameter1', FImporter.BuildInTypes[TBuildInType.IntegerType]);
       FImporter.CreateParameter(MyMethod, 'Parameter2', FImporter.BuildInTypes[TBuildInType.IntegerType]);
@@ -929,7 +929,7 @@ begin
     begin
       var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
 
-      FImporter.CreateMethod(InterfaceType, '%invalid.name@for|method.', nil);
+      FImporter.CreateServiceMethod(InterfaceType, '%invalid.name@for|method.', nil);
     end;
 
   FImporter.Import(FConfiguration);
@@ -951,7 +951,7 @@ begin
     begin
       var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
 
-      var MyMethod := FImporter.CreateMethod(InterfaceType, 'MyMethod', nil);
+      var MyMethod := FImporter.CreateServiceMethod(InterfaceType, 'MyMethod', nil);
 
       FImporter.CreateParameter(MyMethod, 'MyParameter', FImporter.BuildInTypes[TBuildInType.IntegerType]);
     end;
@@ -1004,7 +1004,7 @@ begin
     begin
       var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
 
-      var MyMethod := FImporter.CreateMethod(InterfaceType, 'MyMethod', nil);
+      var MyMethod := FImporter.CreateServiceMethod(InterfaceType, 'MyMethod', nil);
 
       FImporter.CreateParameter(MyMethod, '%invalid.name@for|parameter.', InterfaceType);
     end;
@@ -1252,7 +1252,7 @@ procedure TSchemaImporterTest.MustAppendTheMethodInTheMethodListOfTheInterfaceTy
 begin
   var InterfaceType := TTypeInterfaceDefinition.Create;
 
-  FImporter.CreateMethod(InterfaceType, 'MyMethod', nil);
+  FImporter.CreateServiceMethod(InterfaceType, 'MyMethod', nil);
 
   Assert.AreEqual(1, Length(InterfaceType.Methods));
 
@@ -1538,7 +1538,7 @@ begin
     begin
       var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
 
-      var MyMethod := FImporter.CreateMethod(InterfaceType, 'MyMethod', nil);
+      var MyMethod := FImporter.CreateServiceMethod(InterfaceType, 'MyMethod', nil);
 
       FImporter.CreateDeleteAttribute(MyMethod);
       FImporter.CreateGetAttribute(MyMethod);
@@ -1718,7 +1718,7 @@ end;
 procedure TSchemaImporterTest.MustLoadTheNameInTheMethodCreated;
 begin
   var InterfaceType := TTypeInterfaceDefinition.Create;
-  var MyMethod := FImporter.CreateMethod(InterfaceType, 'MyMethod', nil);
+  var MyMethod := FImporter.CreateServiceMethod(InterfaceType, 'MyMethod', nil);
 
   Assert.AreEqual('MyMethod', MyMethod.Name);
 
@@ -1827,7 +1827,7 @@ end;
 procedure TSchemaImporterTest.MustLoadTheReturnTypeFromTheMethod;
 begin
   var InterfaceType := TTypeInterfaceDefinition.Create;
-  var MyMethod := FImporter.CreateMethod(InterfaceType, 'MyMethod', InterfaceType);
+  var MyMethod := FImporter.CreateServiceMethod(InterfaceType, 'MyMethod', InterfaceType);
 
   Assert.AreEqual(InterfaceType, MyMethod.ReturnValue);
 
@@ -1880,7 +1880,6 @@ begin
         procedure AddMyProp(const Value: System.Integer);
         procedure AddMyProp2(const Value: System.Integer);
         procedure AddMyProp3(const Value: System.Integer);
-
         property IsMyPropStored: Boolean read FMyPropStored;
         property IsMyProp2Stored: Boolean read FMyProp2Stored;
         property IsMyProp3Stored: Boolean read FMyProp3Stored;
@@ -1899,26 +1898,26 @@ begin
       MyProp := MyProp + [Value];
     end;
 
+    procedure MainModule.AddMyProp2(const Value: System.Integer);
+    begin
+      MyProp2 := MyProp2 + [Value];
+    end;
+
+    procedure MainModule.AddMyProp3(const Value: System.Integer);
+    begin
+      MyProp3 := MyProp3 + [Value];
+    end;
+
     procedure MainModule.SetMyProp(const Value: System.TArray<System.Integer>);
     begin
       FMyProp := Value;
       FMyPropStored := True;
     end;
 
-    procedure MainModule.AddMyProp2(const Value: System.Integer);
-    begin
-      MyProp2 := MyProp2 + [Value];
-    end;
-
     procedure MainModule.SetMyProp2(const Value: System.TArray<System.Integer>);
     begin
       FMyProp2 := Value;
       FMyProp2Stored := True;
-    end;
-
-    procedure MainModule.AddMyProp3(const Value: System.Integer);
-    begin
-      MyProp3 := MyProp3 + [Value];
     end;
 
     procedure MainModule.SetMyProp3(const Value: System.TArray<System.Integer>);
@@ -2008,7 +2007,7 @@ begin
       private
         FMyProperty: Blue.Print.Types.TDynamicProperty<System.Integer>;
       public
-        procedure AddMyProperty(const Name: String; const Value: System.Integer);
+        procedure AddMyProperty(const Name: System.String; const Value: System.Integer);
     ''',
     FConfiguration.Units[0]);
 end;
@@ -2373,9 +2372,9 @@ begin
     begin
       var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
 
-      FImporter.CreateMethod(InterfaceType, 'JJJ', nil);
-      FImporter.CreateMethod(InterfaceType, 'ZZZ', nil);
-      FImporter.CreateMethod(InterfaceType, 'AAA', nil);
+      FImporter.CreateServiceMethod(InterfaceType, 'JJJ', nil);
+      FImporter.CreateServiceMethod(InterfaceType, 'ZZZ', nil);
+      FImporter.CreateServiceMethod(InterfaceType, 'AAA', nil);
     end;
 
   FImporter.Import(FConfiguration);
@@ -2410,7 +2409,7 @@ begin
     begin
       var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
 
-      var MyMethod := FImporter.CreateMethod(InterfaceType, 'MyMethod', nil);
+      var MyMethod := FImporter.CreateServiceMethod(InterfaceType, 'MyMethod', nil);
 
       FImporter.CreateParameter(MyMethod, 'MyParameter', InterfaceType);
     end;
@@ -2570,7 +2569,7 @@ begin
     begin
       var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
 
-      FImporter.CreateMethod(InterfaceType, 'MyProcedure', InterfaceType);
+      FImporter.CreateServiceMethod(InterfaceType, 'MyProcedure', InterfaceType);
     end;
 
   FImporter.Import(FConfiguration);
@@ -3014,7 +3013,6 @@ begin
         FMyProperty: Blue.Print.Types.TDynamicProperty<MyUnit.MainModule>;
       public
         destructor Destroy; override;
-
     ''',
     FConfiguration.Units[0]);
 end;
@@ -3054,7 +3052,7 @@ begin
     begin
       var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
 
-      var MyMethod := FImporter.CreateMethod(InterfaceType, 'MyMethod', nil);
+      var MyMethod := FImporter.CreateServiceMethod(InterfaceType, 'MyMethod', nil);
 
       FImporter.CreateGetAttribute(MyMethod);
     end;
@@ -3154,7 +3152,6 @@ begin
         FMyProperty: System.TArray<MyUnit.MainModule>;
       public
         destructor Destroy; override;
-
     ''',
     FConfiguration.Units[0]);
 end;
@@ -3551,7 +3548,7 @@ end;
 procedure TSchemaImporterTest.WhenCreateAMethodMustReturnTheClassCreated;
 begin
   var InterfaceType := TTypeInterfaceDefinition.Create;
-  var MyMethod := FImporter.CreateMethod(InterfaceType, 'MyMethod', nil);
+  var MyMethod := FImporter.CreateServiceMethod(InterfaceType, 'MyMethod', nil);
 
   Assert.IsNotNil(MyMethod);
 
@@ -4074,7 +4071,6 @@ begin
         FMyProperty: System.TArray<MyUnit.MainModule>;
       public
         destructor Destroy; override;
-
         function AddMyProperty: MyUnit.MainModule;
       published
         property myProperty: System.TArray<MyUnit.MainModule> read FMyProperty write FMyProperty;
@@ -4288,7 +4284,7 @@ begin
 
     { MainModule }
 
-    procedure MainModule.AddMyProperty(const Name: String; const Value: System.Integer);
+    procedure MainModule.AddMyProperty(const Name: System.String; const Value: System.Integer);
     begin
     ''',
     FConfiguration.Units[0]);
@@ -4349,11 +4345,11 @@ begin
     begin
       var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
 
-      FImporter.CreateMethod(InterfaceType, 'MyProcedure', nil);
+      FImporter.CreateServiceMethod(InterfaceType, 'MyProcedure', nil);
 
-      FImporter.CreateMethod(InterfaceType, 'MyProcedure2', nil);
+      FImporter.CreateServiceMethod(InterfaceType, 'MyProcedure2', nil);
 
-      FImporter.CreateMethod(InterfaceType, 'MyProcedure3', nil);
+      FImporter.CreateServiceMethod(InterfaceType, 'MyProcedure3', nil);
     end;
 
   FImporter.Import(FConfiguration);
@@ -4504,7 +4500,6 @@ begin
         FMyProperty2: System.TArray<MyUnit.MainModule>;
       public
         destructor Destroy; override;
-
         function AddMyProperty: MyUnit.MainModule;
         function AddMyProperty2: MyUnit.MainModule;
       published
@@ -4573,7 +4568,6 @@ begin
         FMyProperty: System.TArray<MyUnit.MainModule>;
       public
         destructor Destroy; override;
-
         function AddMyProperty: MyUnit.MainModule;
       published
         property MyProperty: System.TArray<MyUnit.MainModule> read FMyProperty write FMyProperty;
@@ -4968,7 +4962,7 @@ begin
     procedure (Schema: TSchema)
     begin
       var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
-      FImporter.CreateMethod(InterfaceType, 'MyProcedure', nil);
+      FImporter.CreateServiceMethod(InterfaceType, 'MyProcedure', nil);
     end;
 
   FImporter.Import(FConfiguration);
@@ -5114,7 +5108,7 @@ begin
     procedure (Schema: TSchema)
     begin
       var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
-      FImporter.CreateMethod(InterfaceType, 'MyProcedure', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      FImporter.CreateServiceMethod(InterfaceType, 'MyProcedure', FImporter.BuildInTypes[TBuildInType.IntegerType]);
     end;
 
   FImporter.Import(FConfiguration);
@@ -5125,6 +5119,7 @@ begin
         ['{100D96E2-C832-EAE7-CD9F-433D0A835F8B}']
         function MyProcedure: System.Integer;
       end;
+
     ''',
     FConfiguration.Units[0]);
 end;
@@ -5136,7 +5131,7 @@ begin
     begin
       var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
 
-      var MyMethod := FImporter.CreateMethod(InterfaceType, 'MyMethod', nil);
+      var MyMethod := FImporter.CreateServiceMethod(InterfaceType, 'MyMethod', nil);
 
       FImporter.CreateParameter(MyMethod, 'Parameter1', FImporter.BuildInTypes[TBuildInType.IntegerType]);
       FImporter.CreateParameter(MyMethod, 'Parameter2', FImporter.BuildInTypes[TBuildInType.StringType]);
@@ -5162,7 +5157,7 @@ begin
     begin
       var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
 
-      var MyMethod := FImporter.CreateMethod(InterfaceType, 'MyMethod', nil);
+      var MyMethod := FImporter.CreateServiceMethod(InterfaceType, 'MyMethod', nil);
       MyMethod.IsOverloaded := True;
     end;
 
@@ -5892,7 +5887,6 @@ begin
         FMyProperty: MyUnit.MainModule.MyArray;
       public
         destructor Destroy; override;
-
         function AddMyProperty: MyUnit.MainModule;
       published
         property MyProperty: MyUnit.MainModule.MyArray read FMyProperty write FMyProperty;
@@ -6216,7 +6210,6 @@ begin
         FMyProperty: MyUnit.MainModule.MyAlias;
       public
         destructor Destroy; override;
-
         function AddMyProperty: MyUnit.MainModule;
       published
         property MyProperty: MyUnit.MainModule.MyAlias read FMyProperty write FMyProperty;
@@ -6327,8 +6320,7 @@ begin
         FMyDynamic: Blue.Print.Types.TDynamicProperty<MyUnit.MainModule>;
       public
         destructor Destroy; override;
-
-        function AddMyDynamic(const Name: String): MyUnit.MainModule;
+        function AddMyDynamic(const Name: System.String): MyUnit.MainModule;
       published
         property MyDynamic: Blue.Print.Types.TDynamicProperty<MyUnit.MainModule> read FMyDynamic write FMyDynamic;
       end;
@@ -6345,7 +6337,7 @@ begin
       inherited;
     end;
 
-    function MainModule.AddMyDynamic(const Name: String): MyUnit.MainModule;
+    function MainModule.AddMyDynamic(const Name: System.String): MyUnit.MainModule;
     begin
       Result := MyUnit.MainModule.Create;
 
@@ -6383,7 +6375,7 @@ begin
       private
         FMyDynamic: Blue.Print.Types.TDynamicProperty<System.Integer>;
       public
-        procedure AddMyDynamic(const Name: String; const Value: System.Integer);
+        procedure AddMyDynamic(const Name: System.String; const Value: System.Integer);
       published
         property MyDynamic: Blue.Print.Types.TDynamicProperty<System.Integer> read FMyDynamic write FMyDynamic;
       end;
@@ -6392,7 +6384,7 @@ begin
 
     { MainModule }
 
-    procedure MainModule.AddMyDynamic(const Name: String; const Value: System.Integer);
+    procedure MainModule.AddMyDynamic(const Name: System.String; const Value: System.Integer);
     begin
       MyDynamic := MyDynamic + [TDynamicPair<System.Integer>.Create(Name, Value)];
     end;

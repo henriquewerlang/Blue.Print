@@ -36,12 +36,11 @@ type
       FBooleanStored: Boolean;
       FJSONSchema: Blue.Print.JSON.Draft4.Schema.JSONSchema;
       FJSONSchemaStored: Boolean;
-      procedure SetBoolean(const Value: System.Boolean);
       function GetJSONSchema: Blue.Print.JSON.Draft4.Schema.JSONSchema;
+      procedure SetBoolean(const Value: System.Boolean);
       procedure SetJSONSchema(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema);
     public
       destructor Destroy; override;
-
       property IsBooleanStored: Boolean read FBooleanStored;
       property IsJSONSchemaStored: Boolean read FJSONSchemaStored;
     published
@@ -61,9 +60,7 @@ type
       procedure SetSchemaArray(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.schemaArray);
     public
       destructor Destroy; override;
-
       function AddSchemaArray: Blue.Print.JSON.Draft4.Schema.JSONSchema;
-
       property IsJSONSchemaStored: Boolean read FJSONSchemaStored;
       property IsSchemaArrayStored: Boolean read FSchemaArrayStored;
     published
@@ -78,12 +75,11 @@ type
       FBooleanStored: Boolean;
       FJSONSchema: Blue.Print.JSON.Draft4.Schema.JSONSchema;
       FJSONSchemaStored: Boolean;
-      procedure SetBoolean(const Value: System.Boolean);
       function GetJSONSchema: Blue.Print.JSON.Draft4.Schema.JSONSchema;
+      procedure SetBoolean(const Value: System.Boolean);
       procedure SetJSONSchema(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema);
     public
       destructor Destroy; override;
-
       property IsBooleanStored: Boolean read FBooleanStored;
       property IsJSONSchemaStored: Boolean read FJSONSchemaStored;
     published
@@ -96,8 +92,7 @@ type
       FAdditionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.JSON.Draft4.Schema.JSONSchema>;
     public
       destructor Destroy; override;
-
-      function AddAdditionalProperties(const Name: String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
+      function AddAdditionalProperties(const Name: System.String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
     published
       property additionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.JSON.Draft4.Schema.JSONSchema> read FAdditionalProperties write FAdditionalProperties;
     end;
@@ -107,8 +102,7 @@ type
       FAdditionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.JSON.Draft4.Schema.JSONSchema>;
     public
       destructor Destroy; override;
-
-      function AddAdditionalProperties(const Name: String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
+      function AddAdditionalProperties(const Name: System.String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
     published
       property additionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.JSON.Draft4.Schema.JSONSchema> read FAdditionalProperties write FAdditionalProperties;
     end;
@@ -118,8 +112,7 @@ type
       FAdditionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.JSON.Draft4.Schema.JSONSchema>;
     public
       destructor Destroy; override;
-
-      function AddAdditionalProperties(const Name: String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
+      function AddAdditionalProperties(const Name: System.String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
     published
       property additionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.JSON.Draft4.Schema.JSONSchema> read FAdditionalProperties write FAdditionalProperties;
     end;
@@ -140,9 +133,7 @@ type
         procedure SetStringArray(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.stringArray);
       public
         destructor Destroy; override;
-
         procedure AddStringArray(const Value: System.String);
-
         property IsJSONSchemaStored: Boolean read FJSONSchemaStored;
         property IsStringArrayStored: Boolean read FStringArrayStored;
       published
@@ -153,8 +144,7 @@ type
       FAdditionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType.TAdditionalPropertiesType>;
     public
       destructor Destroy; override;
-
-      function AddAdditionalProperties(const Name: String): Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType.TAdditionalPropertiesType;
+      function AddAdditionalProperties(const Name: System.String): Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType.TAdditionalPropertiesType;
     published
       property additionalProperties: Blue.Print.Types.TDynamicProperty<Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType.TAdditionalPropertiesType> read FAdditionalProperties write FAdditionalProperties;
     end;
@@ -166,11 +156,10 @@ type
       FArrayStored: Boolean;
       FSimpleTypes: Blue.Print.JSON.Draft4.Schema.JSONSchema.simpleTypes;
       FSimpleTypesStored: Boolean;
-      procedure SetSimpleTypes(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.simpleTypes);
       procedure SetArray(const Value: System.TArray<Blue.Print.JSON.Draft4.Schema.JSONSchema.simpleTypes>);
+      procedure SetSimpleTypes(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.simpleTypes);
     public
       procedure AddArray(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.simpleTypes);
-
       property IsSimpleTypesStored: Boolean read FSimpleTypesStored;
       property IsArrayStored: Boolean read FArrayStored;
     published
@@ -257,61 +246,59 @@ type
     FTypeStored: Boolean;
     FUniqueItems: System.Boolean;
     FUniqueItemsStored: Boolean;
-    procedure SetId(const Value: System.String);
-    procedure SetSchema(const Value: System.String);
-    procedure SetTitle(const Value: System.String);
-    procedure SetDescription(const Value: System.String);
-    procedure SetDefault(const Value: System.Rtti.TValue);
-    procedure SetMultipleOf(const Value: System.Double);
-    procedure SetMaximum(const Value: System.Double);
-    procedure SetExclusiveMaximum(const Value: System.Boolean);
-    procedure SetMinimum(const Value: System.Double);
-    procedure SetExclusiveMinimum(const Value: System.Boolean);
-    procedure SetMaxLength(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveInteger);
-    function GetMinLength: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0;
-    procedure SetMinLength(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0);
-    procedure SetPattern(const Value: System.String);
     function GetAdditionalItems: Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalItemsType;
-    procedure SetAdditionalItems(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalItemsType);
-    function GetItems: Blue.Print.JSON.Draft4.Schema.JSONSchema.TItemsType;
-    procedure SetItems(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TItemsType);
-    procedure SetMaxItems(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveInteger);
-    function GetMinItems: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0;
-    procedure SetMinItems(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0);
-    procedure SetUniqueItems(const Value: System.Boolean);
-    procedure SetMaxProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveInteger);
-    function GetMinProperties: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0;
-    procedure SetMinProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0);
-    procedure SetRequired(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.stringArray);
     function GetAdditionalProperties: Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalPropertiesType;
-    procedure SetAdditionalProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalPropertiesType);
     function GetDefinitions: Blue.Print.JSON.Draft4.Schema.JSONSchema.TDefinitionsType;
-    procedure SetDefinitions(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TDefinitionsType);
-    function GetProperties: Blue.Print.JSON.Draft4.Schema.JSONSchema.TPropertiesType;
-    procedure SetProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TPropertiesType);
-    function GetPatternProperties: Blue.Print.JSON.Draft4.Schema.JSONSchema.TPatternPropertiesType;
-    procedure SetPatternProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TPatternPropertiesType);
     function GetDependencies: Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType;
-    procedure SetDependencies(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType);
-    procedure SetEnum(const Value: System.TArray<System.Rtti.TValue>);
+    function GetItems: Blue.Print.JSON.Draft4.Schema.JSONSchema.TItemsType;
+    function GetMinItems: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0;
+    function GetMinLength: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0;
+    function GetMinProperties: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0;
+    function GetNot: Blue.Print.JSON.Draft4.Schema.JSONSchema;
+    function GetPatternProperties: Blue.Print.JSON.Draft4.Schema.JSONSchema.TPatternPropertiesType;
+    function GetProperties: Blue.Print.JSON.Draft4.Schema.JSONSchema.TPropertiesType;
     function GetType: Blue.Print.JSON.Draft4.Schema.JSONSchema.TTypeType;
-    procedure SetType(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TTypeType);
-    procedure SetFormat(const Value: System.String);
+    procedure SetAdditionalItems(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalItemsType);
+    procedure SetAdditionalProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalPropertiesType);
     procedure SetAllOf(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.schemaArray);
     procedure SetAnyOf(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.schemaArray);
-    procedure SetOneOf(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.schemaArray);
-    function GetNot: Blue.Print.JSON.Draft4.Schema.JSONSchema;
+    procedure SetDefault(const Value: System.Rtti.TValue);
+    procedure SetDefinitions(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TDefinitionsType);
+    procedure SetDependencies(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType);
+    procedure SetDescription(const Value: System.String);
+    procedure SetEnum(const Value: System.TArray<System.Rtti.TValue>);
+    procedure SetExclusiveMaximum(const Value: System.Boolean);
+    procedure SetExclusiveMinimum(const Value: System.Boolean);
+    procedure SetFormat(const Value: System.String);
+    procedure SetId(const Value: System.String);
+    procedure SetItems(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TItemsType);
+    procedure SetMaximum(const Value: System.Double);
+    procedure SetMaxItems(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveInteger);
+    procedure SetMaxLength(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveInteger);
+    procedure SetMaxProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveInteger);
+    procedure SetMinimum(const Value: System.Double);
+    procedure SetMinItems(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0);
+    procedure SetMinLength(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0);
+    procedure SetMinProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0);
+    procedure SetMultipleOf(const Value: System.Double);
     procedure SetNot(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema);
+    procedure SetOneOf(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.schemaArray);
+    procedure SetPattern(const Value: System.String);
+    procedure SetPatternProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TPatternPropertiesType);
+    procedure SetProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TPropertiesType);
     procedure SetRef(const Value: System.String);
+    procedure SetRequired(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.stringArray);
+    procedure SetSchema(const Value: System.String);
+    procedure SetTitle(const Value: System.String);
+    procedure SetType(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TTypeType);
+    procedure SetUniqueItems(const Value: System.Boolean);
   public
     destructor Destroy; override;
-
-    procedure AddRequired(const Value: System.String);
-    procedure AddEnum(const Value: System.Rtti.TValue);
     function AddAllOf: Blue.Print.JSON.Draft4.Schema.JSONSchema;
     function AddAnyOf: Blue.Print.JSON.Draft4.Schema.JSONSchema;
+    procedure AddEnum(const Value: System.Rtti.TValue);
     function AddOneOf: Blue.Print.JSON.Draft4.Schema.JSONSchema;
-
+    procedure AddRequired(const Value: System.String);
     property IsIdStored: Boolean read FIdStored;
     property IsSchemaStored: Boolean read FSchemaStored;
     property IsTitleStored: Boolean read FTitleStored;
@@ -429,10 +416,311 @@ begin
   inherited;
 end;
 
+function JSONSchema.AddAllOf: Blue.Print.JSON.Draft4.Schema.JSONSchema;
+begin
+  Result := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
+
+  allOf := allOf + [Result];
+end;
+
+function JSONSchema.AddAnyOf: Blue.Print.JSON.Draft4.Schema.JSONSchema;
+begin
+  Result := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
+
+  anyOf := anyOf + [Result];
+end;
+
+procedure JSONSchema.AddEnum(const Value: System.Rtti.TValue);
+begin
+  enum := enum + [Value];
+end;
+
+function JSONSchema.AddOneOf: Blue.Print.JSON.Draft4.Schema.JSONSchema;
+begin
+  Result := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
+
+  oneOf := oneOf + [Result];
+end;
+
+procedure JSONSchema.AddRequired(const Value: System.String);
+begin
+  required := required + [Value];
+end;
+
+function JSONSchema.GetAdditionalItems: Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalItemsType;
+begin
+  if not Assigned(FAdditionalItems) then
+    additionalItems := Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalItemsType.Create;
+
+  Result := FAdditionalItems;
+end;
+
+function JSONSchema.GetAdditionalProperties: Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalPropertiesType;
+begin
+  if not Assigned(FAdditionalProperties) then
+    additionalProperties := Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalPropertiesType.Create;
+
+  Result := FAdditionalProperties;
+end;
+
+function JSONSchema.GetDefinitions: Blue.Print.JSON.Draft4.Schema.JSONSchema.TDefinitionsType;
+begin
+  if not Assigned(FDefinitions) then
+    definitions := Blue.Print.JSON.Draft4.Schema.JSONSchema.TDefinitionsType.Create;
+
+  Result := FDefinitions;
+end;
+
+function JSONSchema.GetDependencies: Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType;
+begin
+  if not Assigned(FDependencies) then
+    dependencies := Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType.Create;
+
+  Result := FDependencies;
+end;
+
+function JSONSchema.GetItems: Blue.Print.JSON.Draft4.Schema.JSONSchema.TItemsType;
+begin
+  if not Assigned(FItems) then
+    items := Blue.Print.JSON.Draft4.Schema.JSONSchema.TItemsType.Create;
+
+  Result := FItems;
+end;
+
+function JSONSchema.GetMinItems: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0;
+begin
+  if not Assigned(FMinItems) then
+    minItems := Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0.Create;
+
+  Result := FMinItems;
+end;
+
+function JSONSchema.GetMinLength: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0;
+begin
+  if not Assigned(FMinLength) then
+    minLength := Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0.Create;
+
+  Result := FMinLength;
+end;
+
+function JSONSchema.GetMinProperties: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0;
+begin
+  if not Assigned(FMinProperties) then
+    minProperties := Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0.Create;
+
+  Result := FMinProperties;
+end;
+
+function JSONSchema.GetNot: Blue.Print.JSON.Draft4.Schema.JSONSchema;
+begin
+  if not Assigned(FNot) then
+    &not := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
+
+  Result := FNot;
+end;
+
+function JSONSchema.GetPatternProperties: Blue.Print.JSON.Draft4.Schema.JSONSchema.TPatternPropertiesType;
+begin
+  if not Assigned(FPatternProperties) then
+    patternProperties := Blue.Print.JSON.Draft4.Schema.JSONSchema.TPatternPropertiesType.Create;
+
+  Result := FPatternProperties;
+end;
+
+function JSONSchema.GetProperties: Blue.Print.JSON.Draft4.Schema.JSONSchema.TPropertiesType;
+begin
+  if not Assigned(FProperties) then
+    properties := Blue.Print.JSON.Draft4.Schema.JSONSchema.TPropertiesType.Create;
+
+  Result := FProperties;
+end;
+
+function JSONSchema.GetType: Blue.Print.JSON.Draft4.Schema.JSONSchema.TTypeType;
+begin
+  if not Assigned(FType) then
+    &type := Blue.Print.JSON.Draft4.Schema.JSONSchema.TTypeType.Create;
+
+  Result := FType;
+end;
+
+procedure JSONSchema.SetAdditionalItems(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalItemsType);
+begin
+  FAdditionalItems := Value;
+  FAdditionalItemsStored := True;
+end;
+
+procedure JSONSchema.SetAdditionalProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalPropertiesType);
+begin
+  FAdditionalProperties := Value;
+  FAdditionalPropertiesStored := True;
+end;
+
+procedure JSONSchema.SetAllOf(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.schemaArray);
+begin
+  FAllOf := Value;
+  FAllOfStored := True;
+end;
+
+procedure JSONSchema.SetAnyOf(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.schemaArray);
+begin
+  FAnyOf := Value;
+  FAnyOfStored := True;
+end;
+
+procedure JSONSchema.SetDefault(const Value: System.Rtti.TValue);
+begin
+  FDefault := Value;
+  FDefaultStored := True;
+end;
+
+procedure JSONSchema.SetDefinitions(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TDefinitionsType);
+begin
+  FDefinitions := Value;
+  FDefinitionsStored := True;
+end;
+
+procedure JSONSchema.SetDependencies(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType);
+begin
+  FDependencies := Value;
+  FDependenciesStored := True;
+end;
+
+procedure JSONSchema.SetDescription(const Value: System.String);
+begin
+  FDescription := Value;
+  FDescriptionStored := True;
+end;
+
+procedure JSONSchema.SetEnum(const Value: System.TArray<System.Rtti.TValue>);
+begin
+  FEnum := Value;
+  FEnumStored := True;
+end;
+
+procedure JSONSchema.SetExclusiveMaximum(const Value: System.Boolean);
+begin
+  FExclusiveMaximum := Value;
+  FExclusiveMaximumStored := True;
+end;
+
+procedure JSONSchema.SetExclusiveMinimum(const Value: System.Boolean);
+begin
+  FExclusiveMinimum := Value;
+  FExclusiveMinimumStored := True;
+end;
+
+procedure JSONSchema.SetFormat(const Value: System.String);
+begin
+  FFormat := Value;
+  FFormatStored := True;
+end;
+
 procedure JSONSchema.SetId(const Value: System.String);
 begin
   FId := Value;
   FIdStored := True;
+end;
+
+procedure JSONSchema.SetItems(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TItemsType);
+begin
+  FItems := Value;
+  FItemsStored := True;
+end;
+
+procedure JSONSchema.SetMaximum(const Value: System.Double);
+begin
+  FMaximum := Value;
+  FMaximumStored := True;
+end;
+
+procedure JSONSchema.SetMaxItems(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveInteger);
+begin
+  FMaxItems := Value;
+  FMaxItemsStored := True;
+end;
+
+procedure JSONSchema.SetMaxLength(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveInteger);
+begin
+  FMaxLength := Value;
+  FMaxLengthStored := True;
+end;
+
+procedure JSONSchema.SetMaxProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveInteger);
+begin
+  FMaxProperties := Value;
+  FMaxPropertiesStored := True;
+end;
+
+procedure JSONSchema.SetMinimum(const Value: System.Double);
+begin
+  FMinimum := Value;
+  FMinimumStored := True;
+end;
+
+procedure JSONSchema.SetMinItems(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0);
+begin
+  FMinItems := Value;
+  FMinItemsStored := True;
+end;
+
+procedure JSONSchema.SetMinLength(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0);
+begin
+  FMinLength := Value;
+  FMinLengthStored := True;
+end;
+
+procedure JSONSchema.SetMinProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0);
+begin
+  FMinProperties := Value;
+  FMinPropertiesStored := True;
+end;
+
+procedure JSONSchema.SetMultipleOf(const Value: System.Double);
+begin
+  FMultipleOf := Value;
+  FMultipleOfStored := True;
+end;
+
+procedure JSONSchema.SetNot(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema);
+begin
+  FNot := Value;
+  FNotStored := True;
+end;
+
+procedure JSONSchema.SetOneOf(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.schemaArray);
+begin
+  FOneOf := Value;
+  FOneOfStored := True;
+end;
+
+procedure JSONSchema.SetPattern(const Value: System.String);
+begin
+  FPattern := Value;
+  FPatternStored := True;
+end;
+
+procedure JSONSchema.SetPatternProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TPatternPropertiesType);
+begin
+  FPatternProperties := Value;
+  FPatternPropertiesStored := True;
+end;
+
+procedure JSONSchema.SetProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TPropertiesType);
+begin
+  FProperties := Value;
+  FPropertiesStored := True;
+end;
+
+procedure JSONSchema.SetRef(const Value: System.String);
+begin
+  FRef := Value;
+  FRefStored := True;
+end;
+
+procedure JSONSchema.SetRequired(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.stringArray);
+begin
+  FRequired := Value;
+  FRequiredStored := True;
 end;
 
 procedure JSONSchema.SetSchema(const Value: System.String);
@@ -447,317 +735,16 @@ begin
   FTitleStored := True;
 end;
 
-procedure JSONSchema.SetDescription(const Value: System.String);
-begin
-  FDescription := Value;
-  FDescriptionStored := True;
-end;
-
-procedure JSONSchema.SetDefault(const Value: System.Rtti.TValue);
-begin
-  FDefault := Value;
-  FDefaultStored := True;
-end;
-
-procedure JSONSchema.SetMultipleOf(const Value: System.Double);
-begin
-  FMultipleOf := Value;
-  FMultipleOfStored := True;
-end;
-
-procedure JSONSchema.SetMaximum(const Value: System.Double);
-begin
-  FMaximum := Value;
-  FMaximumStored := True;
-end;
-
-procedure JSONSchema.SetExclusiveMaximum(const Value: System.Boolean);
-begin
-  FExclusiveMaximum := Value;
-  FExclusiveMaximumStored := True;
-end;
-
-procedure JSONSchema.SetMinimum(const Value: System.Double);
-begin
-  FMinimum := Value;
-  FMinimumStored := True;
-end;
-
-procedure JSONSchema.SetExclusiveMinimum(const Value: System.Boolean);
-begin
-  FExclusiveMinimum := Value;
-  FExclusiveMinimumStored := True;
-end;
-
-procedure JSONSchema.SetMaxLength(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveInteger);
-begin
-  FMaxLength := Value;
-  FMaxLengthStored := True;
-end;
-
-function JSONSchema.GetMinLength: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0;
-begin
-  if not Assigned(FMinLength) then
-    minLength := Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0.Create;
-
-  Result := FMinLength;
-end;
-
-procedure JSONSchema.SetMinLength(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0);
-begin
-  FMinLength := Value;
-  FMinLengthStored := True;
-end;
-
-procedure JSONSchema.SetPattern(const Value: System.String);
-begin
-  FPattern := Value;
-  FPatternStored := True;
-end;
-
-function JSONSchema.GetAdditionalItems: Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalItemsType;
-begin
-  if not Assigned(FAdditionalItems) then
-    additionalItems := Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalItemsType.Create;
-
-  Result := FAdditionalItems;
-end;
-
-procedure JSONSchema.SetAdditionalItems(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalItemsType);
-begin
-  FAdditionalItems := Value;
-  FAdditionalItemsStored := True;
-end;
-
-function JSONSchema.GetItems: Blue.Print.JSON.Draft4.Schema.JSONSchema.TItemsType;
-begin
-  if not Assigned(FItems) then
-    items := Blue.Print.JSON.Draft4.Schema.JSONSchema.TItemsType.Create;
-
-  Result := FItems;
-end;
-
-procedure JSONSchema.SetItems(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TItemsType);
-begin
-  FItems := Value;
-  FItemsStored := True;
-end;
-
-procedure JSONSchema.SetMaxItems(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveInteger);
-begin
-  FMaxItems := Value;
-  FMaxItemsStored := True;
-end;
-
-function JSONSchema.GetMinItems: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0;
-begin
-  if not Assigned(FMinItems) then
-    minItems := Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0.Create;
-
-  Result := FMinItems;
-end;
-
-procedure JSONSchema.SetMinItems(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0);
-begin
-  FMinItems := Value;
-  FMinItemsStored := True;
-end;
-
-procedure JSONSchema.SetUniqueItems(const Value: System.Boolean);
-begin
-  FUniqueItems := Value;
-  FUniqueItemsStored := True;
-end;
-
-procedure JSONSchema.SetMaxProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveInteger);
-begin
-  FMaxProperties := Value;
-  FMaxPropertiesStored := True;
-end;
-
-function JSONSchema.GetMinProperties: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0;
-begin
-  if not Assigned(FMinProperties) then
-    minProperties := Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0.Create;
-
-  Result := FMinProperties;
-end;
-
-procedure JSONSchema.SetMinProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.positiveIntegerDefault0);
-begin
-  FMinProperties := Value;
-  FMinPropertiesStored := True;
-end;
-
-procedure JSONSchema.AddRequired(const Value: System.String);
-begin
-  required := required + [Value];
-end;
-
-procedure JSONSchema.SetRequired(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.stringArray);
-begin
-  FRequired := Value;
-  FRequiredStored := True;
-end;
-
-function JSONSchema.GetAdditionalProperties: Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalPropertiesType;
-begin
-  if not Assigned(FAdditionalProperties) then
-    additionalProperties := Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalPropertiesType.Create;
-
-  Result := FAdditionalProperties;
-end;
-
-procedure JSONSchema.SetAdditionalProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TAdditionalPropertiesType);
-begin
-  FAdditionalProperties := Value;
-  FAdditionalPropertiesStored := True;
-end;
-
-function JSONSchema.GetDefinitions: Blue.Print.JSON.Draft4.Schema.JSONSchema.TDefinitionsType;
-begin
-  if not Assigned(FDefinitions) then
-    definitions := Blue.Print.JSON.Draft4.Schema.JSONSchema.TDefinitionsType.Create;
-
-  Result := FDefinitions;
-end;
-
-procedure JSONSchema.SetDefinitions(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TDefinitionsType);
-begin
-  FDefinitions := Value;
-  FDefinitionsStored := True;
-end;
-
-function JSONSchema.GetProperties: Blue.Print.JSON.Draft4.Schema.JSONSchema.TPropertiesType;
-begin
-  if not Assigned(FProperties) then
-    properties := Blue.Print.JSON.Draft4.Schema.JSONSchema.TPropertiesType.Create;
-
-  Result := FProperties;
-end;
-
-procedure JSONSchema.SetProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TPropertiesType);
-begin
-  FProperties := Value;
-  FPropertiesStored := True;
-end;
-
-function JSONSchema.GetPatternProperties: Blue.Print.JSON.Draft4.Schema.JSONSchema.TPatternPropertiesType;
-begin
-  if not Assigned(FPatternProperties) then
-    patternProperties := Blue.Print.JSON.Draft4.Schema.JSONSchema.TPatternPropertiesType.Create;
-
-  Result := FPatternProperties;
-end;
-
-procedure JSONSchema.SetPatternProperties(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TPatternPropertiesType);
-begin
-  FPatternProperties := Value;
-  FPatternPropertiesStored := True;
-end;
-
-function JSONSchema.GetDependencies: Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType;
-begin
-  if not Assigned(FDependencies) then
-    dependencies := Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType.Create;
-
-  Result := FDependencies;
-end;
-
-procedure JSONSchema.SetDependencies(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType);
-begin
-  FDependencies := Value;
-  FDependenciesStored := True;
-end;
-
-procedure JSONSchema.AddEnum(const Value: System.Rtti.TValue);
-begin
-  enum := enum + [Value];
-end;
-
-procedure JSONSchema.SetEnum(const Value: System.TArray<System.Rtti.TValue>);
-begin
-  FEnum := Value;
-  FEnumStored := True;
-end;
-
-function JSONSchema.GetType: Blue.Print.JSON.Draft4.Schema.JSONSchema.TTypeType;
-begin
-  if not Assigned(FType) then
-    &type := Blue.Print.JSON.Draft4.Schema.JSONSchema.TTypeType.Create;
-
-  Result := FType;
-end;
-
 procedure JSONSchema.SetType(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.TTypeType);
 begin
   FType := Value;
   FTypeStored := True;
 end;
 
-procedure JSONSchema.SetFormat(const Value: System.String);
+procedure JSONSchema.SetUniqueItems(const Value: System.Boolean);
 begin
-  FFormat := Value;
-  FFormatStored := True;
-end;
-
-function JSONSchema.AddAllOf: Blue.Print.JSON.Draft4.Schema.JSONSchema;
-begin
-  Result := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
-
-  allOf := allOf + [Result];
-end;
-
-procedure JSONSchema.SetAllOf(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.schemaArray);
-begin
-  FAllOf := Value;
-  FAllOfStored := True;
-end;
-
-function JSONSchema.AddAnyOf: Blue.Print.JSON.Draft4.Schema.JSONSchema;
-begin
-  Result := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
-
-  anyOf := anyOf + [Result];
-end;
-
-procedure JSONSchema.SetAnyOf(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.schemaArray);
-begin
-  FAnyOf := Value;
-  FAnyOfStored := True;
-end;
-
-function JSONSchema.AddOneOf: Blue.Print.JSON.Draft4.Schema.JSONSchema;
-begin
-  Result := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
-
-  oneOf := oneOf + [Result];
-end;
-
-procedure JSONSchema.SetOneOf(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.schemaArray);
-begin
-  FOneOf := Value;
-  FOneOfStored := True;
-end;
-
-function JSONSchema.GetNot: Blue.Print.JSON.Draft4.Schema.JSONSchema;
-begin
-  if not Assigned(FNot) then
-    &not := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
-
-  Result := FNot;
-end;
-
-procedure JSONSchema.SetNot(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema);
-begin
-  FNot := Value;
-  FNotStored := True;
-end;
-
-procedure JSONSchema.SetRef(const Value: System.String);
-begin
-  FRef := Value;
-  FRefStored := True;
+  FUniqueItems := Value;
+  FUniqueItemsStored := True;
 end;
 
 { JSONSchema.TAdditionalItemsType }
@@ -769,18 +756,18 @@ begin
   inherited;
 end;
 
-procedure JSONSchema.TAdditionalItemsType.SetBoolean(const Value: System.Boolean);
-begin
-  FBoolean := Value;
-  FBooleanStored := True;
-end;
-
 function JSONSchema.TAdditionalItemsType.GetJSONSchema: Blue.Print.JSON.Draft4.Schema.JSONSchema;
 begin
   if not Assigned(FJSONSchema) then
     JSONSchema := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
 
   Result := FJSONSchema;
+end;
+
+procedure JSONSchema.TAdditionalItemsType.SetBoolean(const Value: System.Boolean);
+begin
+  FBoolean := Value;
+  FBooleanStored := True;
 end;
 
 procedure JSONSchema.TAdditionalItemsType.SetJSONSchema(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema);
@@ -801,6 +788,13 @@ begin
   inherited;
 end;
 
+function JSONSchema.TItemsType.AddSchemaArray: Blue.Print.JSON.Draft4.Schema.JSONSchema;
+begin
+  Result := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
+
+  schemaArray := schemaArray + [Result];
+end;
+
 function JSONSchema.TItemsType.GetJSONSchema: Blue.Print.JSON.Draft4.Schema.JSONSchema;
 begin
   if not Assigned(FJSONSchema) then
@@ -813,13 +807,6 @@ procedure JSONSchema.TItemsType.SetJSONSchema(const Value: Blue.Print.JSON.Draft
 begin
   FJSONSchema := Value;
   FJSONSchemaStored := True;
-end;
-
-function JSONSchema.TItemsType.AddSchemaArray: Blue.Print.JSON.Draft4.Schema.JSONSchema;
-begin
-  Result := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
-
-  schemaArray := schemaArray + [Result];
 end;
 
 procedure JSONSchema.TItemsType.SetSchemaArray(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.schemaArray);
@@ -837,18 +824,18 @@ begin
   inherited;
 end;
 
-procedure JSONSchema.TAdditionalPropertiesType.SetBoolean(const Value: System.Boolean);
-begin
-  FBoolean := Value;
-  FBooleanStored := True;
-end;
-
 function JSONSchema.TAdditionalPropertiesType.GetJSONSchema: Blue.Print.JSON.Draft4.Schema.JSONSchema;
 begin
   if not Assigned(FJSONSchema) then
     JSONSchema := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
 
   Result := FJSONSchema;
+end;
+
+procedure JSONSchema.TAdditionalPropertiesType.SetBoolean(const Value: System.Boolean);
+begin
+  FBoolean := Value;
+  FBooleanStored := True;
 end;
 
 procedure JSONSchema.TAdditionalPropertiesType.SetJSONSchema(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema);
@@ -867,7 +854,7 @@ begin
   inherited;
 end;
 
-function JSONSchema.TDefinitionsType.AddAdditionalProperties(const Name: String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
+function JSONSchema.TDefinitionsType.AddAdditionalProperties(const Name: System.String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
 begin
   Result := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
 
@@ -884,7 +871,7 @@ begin
   inherited;
 end;
 
-function JSONSchema.TPropertiesType.AddAdditionalProperties(const Name: String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
+function JSONSchema.TPropertiesType.AddAdditionalProperties(const Name: System.String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
 begin
   Result := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
 
@@ -901,7 +888,7 @@ begin
   inherited;
 end;
 
-function JSONSchema.TPatternPropertiesType.AddAdditionalProperties(const Name: String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
+function JSONSchema.TPatternPropertiesType.AddAdditionalProperties(const Name: System.String): Blue.Print.JSON.Draft4.Schema.JSONSchema;
 begin
   Result := Blue.Print.JSON.Draft4.Schema.JSONSchema.Create;
 
@@ -918,7 +905,7 @@ begin
   inherited;
 end;
 
-function JSONSchema.TDependenciesType.AddAdditionalProperties(const Name: String): Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType.TAdditionalPropertiesType;
+function JSONSchema.TDependenciesType.AddAdditionalProperties(const Name: System.String): Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType.TAdditionalPropertiesType;
 begin
   Result := Blue.Print.JSON.Draft4.Schema.JSONSchema.TDependenciesType.TAdditionalPropertiesType.Create;
 
@@ -932,6 +919,11 @@ begin
   FJSONSchema.Free;
 
   inherited;
+end;
+
+procedure JSONSchema.TDependenciesType.TAdditionalPropertiesType.AddStringArray(const Value: System.String);
+begin
+  stringArray := stringArray + [Value];
 end;
 
 function JSONSchema.TDependenciesType.TAdditionalPropertiesType.GetJSONSchema: Blue.Print.JSON.Draft4.Schema.JSONSchema;
@@ -948,11 +940,6 @@ begin
   FJSONSchemaStored := True;
 end;
 
-procedure JSONSchema.TDependenciesType.TAdditionalPropertiesType.AddStringArray(const Value: System.String);
-begin
-  stringArray := stringArray + [Value];
-end;
-
 procedure JSONSchema.TDependenciesType.TAdditionalPropertiesType.SetStringArray(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.stringArray);
 begin
   FStringArray := Value;
@@ -960,12 +947,6 @@ begin
 end;
 
 { JSONSchema.TTypeType }
-
-procedure JSONSchema.TTypeType.SetSimpleTypes(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.simpleTypes);
-begin
-  FSimpleTypes := Value;
-  FSimpleTypesStored := True;
-end;
 
 procedure JSONSchema.TTypeType.AddArray(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.simpleTypes);
 begin
@@ -976,6 +957,12 @@ procedure JSONSchema.TTypeType.SetArray(const Value: System.TArray<Blue.Print.JS
 begin
   FArray := Value;
   FArrayStored := True;
+end;
+
+procedure JSONSchema.TTypeType.SetSimpleTypes(const Value: Blue.Print.JSON.Draft4.Schema.JSONSchema.simpleTypes);
+begin
+  FSimpleTypes := Value;
+  FSimpleTypesStored := True;
 end;
 
 end.

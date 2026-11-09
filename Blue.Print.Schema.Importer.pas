@@ -15,6 +15,7 @@ type
   TTypeEnumerationDefinition = class;
   TTypeGenericDefinition = class;
   TTypeInterfaceDefinition = class;
+  TTypeMethodDefinition = class;
   TTypeModuleDefinition = class;
   TTypePropertyDefinition = class;
   TTypeReferenceDefinition = class;
@@ -106,6 +107,7 @@ type
   end;
 
   TBuildInType = (StringType, IntegerType, DoubleType, DateType, TimeType, DateTimeType, BooleanType, ArrayType, ValueType, DynamicPropertyType);
+  TMethodType = (Method, &Destructor, AddFunction, GetFunction, SetProcedure);
   TSchemaType = (Undefined, XSD, WSDL, JSONDraft4, OpenAPI20, OpenAPI30, OpenAPI31, OpenAPI32);
 
   TTypeAttributeDefinition = class
@@ -293,16 +295,23 @@ type
   private
     FProperties: TArray<TTypePropertyDefinition>;
     FFlat: Boolean;
+    FPrivateMethods: TArray<TTypeMethodDefinition>;
+    FPublicMethods: TArray<TTypeMethodDefinition>;
 
     function GetHasProperties: Boolean;
   public
     destructor Destroy; override;
 
     function AddProperty(const Name: String; const PropertyType: TTypeDefinition): TTypePropertyDefinition;
+    function AllMethods: TArray<TTypeMethodDefinition>;
+
+    procedure AddMethod(const Method: TTypeMethodDefinition; const PrivateMethod: Boolean);
 
     property Flat: Boolean read FFlat write FFlat;
     property HasProperties: Boolean read GetHasProperties;
-    property Properties: TArray<TTypePropertyDefinition> read FProperties write FProperties;
+    property PrivateMethods: TArray<TTypeMethodDefinition> read FPrivateMethods;
+    property Properties: TArray<TTypePropertyDefinition> read FProperties;
+    property PublicMethods: TArray<TTypeMethodDefinition> read FPublicMethods;
   end;
 
   TTypeParameterDefinition = class(TTypeCommonDefinition)
@@ -316,14 +325,23 @@ type
   private
     FIsOverloaded: Boolean;
     FParameters: TArray<TTypeParameterDefinition>;
+    FPropertyDefinition: TTypePropertyDefinition;
     FReturnValue: TTypeDefinition;
+    FMethodType: TMethodType;
+
+    function GetIsDestructor: Boolean;
+    function GetIsFunction: Boolean;
   public
     destructor Destroy; override;
 
     procedure AddParameter(const Parameter: TTypeParameterDefinition);
 
+    property IsDestructor: Boolean read GetIsDestructor;
+    property IsFunction: Boolean read GetIsFunction;
     property IsOverloaded: Boolean read FIsOverloaded write FIsOverloaded;
+    property MethodType: TMethodType read FMethodType;
     property Parameters: TArray<TTypeParameterDefinition> read FParameters;
+    property PropertyDefinition: TTypePropertyDefinition read FPropertyDefinition;
     property ReturnValue: TTypeDefinition read FReturnValue;
   end;
 
@@ -487,7 +505,6 @@ type
     function CreateFieldNameType(const PropertyDefinition: TTypePropertyDefinition; const FieldName: String): TTypeFieldNameAttribute;
     function CreateGetAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeGetAttribute;
     function CreateInterfaceType(const ParentModule: TTypeUnitDefinition; const Name: String): TTypeInterfaceDefinition;
-    function CreateMethod(const InterfaceDefinition: TTypeInterfaceDefinition; const Name: String; const ReturnType: TTypeDefinition): TTypeMethodDefinition;
     function CreateOptionsAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeOptionsAttribute;
     function CreateParameter(const MethodDefinition: TTypeMethodDefinition; const Name: String; const ParameterType: TTypeDefinition): TTypeParameterDefinition;
     function CreatePatchAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePatchAttribute;
@@ -495,6 +512,7 @@ type
     function CreatePostAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePostAttribute;
     function CreatePutAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePutAttribute;
     function CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Name, Namespace, Reference: String): TTypeReferenceDefinition;
+    function CreateServiceMethod(const InterfaceDefinition: TTypeInterfaceDefinition; const Name: String; const ReturnType: TTypeDefinition): TTypeMethodDefinition;
     function FindType(const Namespace, Name: String): TTypeDefinition;
     function FindTypeWithPrefix(const Fullname: String): TTypeDefinition;
     function GetPrefixName(const Namespace: String): String;
@@ -529,9 +547,14 @@ type
   private
     class destructor Destroy;
 
-    class function Comparer: TTypeCommonComparer<T>;
+    class function Comparer: IComparer<T>;
+  protected
+    function Compare(const Left, Right: T): Integer; virtual;
+  end;
 
-    function Compare(const Left, Right: T): Integer;
+  TTypeMethodComparer = class(TTypeCommonComparer<TTypeMethodDefinition>, IComparer<TTypeMethodDefinition>)
+  protected
+    function Compare(const Left, Right: TTypeMethodDefinition): Integer; override;
   end;
 
 { TSchemaImporter }
@@ -620,15 +643,6 @@ begin
   ParentModule.Interfaces := ParentModule.Interfaces + [Result];
 end;
 
-function TSchemaImporter.CreateMethod(const InterfaceDefinition: TTypeInterfaceDefinition; const Name: String; const ReturnType: TTypeDefinition): TTypeMethodDefinition;
-begin
-  Result := TTypeMethodDefinition.Create;
-  Result.FName := Name;
-  Result.FReturnValue := ReturnType;
-
-  InterfaceDefinition.AddMethod(Result);
-end;
-
 function TSchemaImporter.CreateOptionsAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeOptionsAttribute;
 begin
   Result := CreateTypeAttribute<TTypeOptionsAttribute>(MethodDefinition);
@@ -670,6 +684,15 @@ begin
   Result := CreateTypeDefinitionWithName<TTypeReferenceDefinition>(ParentModule, Name);
   Result.FNamespace := Namespace;
   Result.FReference := Reference;
+end;
+
+function TSchemaImporter.CreateServiceMethod(const InterfaceDefinition: TTypeInterfaceDefinition; const Name: String; const ReturnType: TTypeDefinition): TTypeMethodDefinition;
+begin
+  Result := TTypeMethodDefinition.Create;
+  Result.FName := Name;
+  Result.FReturnValue := ReturnType;
+
+  InterfaceDefinition.AddMethod(Result);
 end;
 
 class function TSchemaImporter.CreateStringListForItems: TStringList;
@@ -1009,17 +1032,6 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         Result := EmptyStr;
     end;
 
-    function FormatImplementation(const ModuleTypeDefinition: TTypeModuleDefinition): String;
-    begin
-      Result := FormatParentModuleName(ModuleTypeDefinition, False) + FormatModuleName(ModuleTypeDefinition);
-    end;
-
-    function FormatMethodImplementation(const ClassDefinition: TTypeClassDefinition): String;
-    begin
-      if Assigned(ClassDefinition) then
-        Result := FormatImplementation(ClassDefinition) + TYPE_NAME_SEPARATOR;
-    end;
-
     function FormatFullTypeName(TypeDefinition: TTypeDefinition): String;
     begin
       TypeDefinition := ResolveReferenceType(TypeDefinition);
@@ -1149,13 +1161,6 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := PropertyDefinition.Optional;
     end;
 
-    function NeedAddFunction(const PropertyDefinition: TTypePropertyDefinition): Boolean;
-    begin
-      var GenericType: TTypeDefinition;
-
-      Result := GetGenericType(PropertyDefinition.PropertyType, GenericType);
-    end;
-
     function FunctionAddNeedReturnType(const PropertyDefinition: TTypePropertyDefinition): Boolean;
     begin
       var GenericType: TTypeDefinition;
@@ -1163,19 +1168,6 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       GetGenericType(PropertyDefinition.PropertyType, GenericType);
 
       Result := GenericType.IsClassDefinition;
-    end;
-
-    function NeedDestructionProcedure(const PropertyDefinition: TTypePropertyDefinition): Boolean;
-    begin
-      Result := FunctionAddNeedReturnType(PropertyDefinition) or NeedGetFunction(PropertyDefinition);
-    end;
-
-    procedure CheckFieldNameAttribute(const PropertyDefinition: TTypePropertyDefinition);
-    begin
-      var PropertyName := PropertyDefinition.Name;
-
-      if not SameText(FormatPropertyName(PropertyDefinition), PropertyName) then
-        CreateFieldNameType(PropertyDefinition, PropertyName);
     end;
 
     function FormatPropertyTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
@@ -1188,69 +1180,9 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := RemoveInvalidCharecters('Get.' + FormatPropertyName(PropertyDefinition));
     end;
 
-    function FormatGetFunction(const PropertyDefinition: TTypePropertyDefinition; const ClassDefinitionType: TTypeClassDefinition): String;
-    begin
-      Result := Format('function %s%s: %s;', [FormatMethodImplementation(ClassDefinitionType), FormatGetFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
-    end;
-
     function FormatSetFunctionName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
       Result := RemoveInvalidCharecters('Set.' + FormatPropertyName(PropertyDefinition));
-    end;
-
-    function FormatAddFunctionName(const PropertyDefinition: TTypePropertyDefinition; const ClassDefinitionType: TTypeClassDefinition): String;
-
-      function NeedReturnType: Boolean;
-      begin
-        Result := FunctionAddNeedReturnType(PropertyDefinition);
-      end;
-
-      function FormatReturnTypeName: String;
-      begin
-        Result := FormatGenericItemTypeName(PropertyDefinition);
-      end;
-
-      function FormatReturnInformation: String;
-      begin
-        if NeedReturnType then
-          Result := ': ' + FormatReturnTypeName
-        else
-          Result := EmptyStr;
-      end;
-
-      function GetMethodDefinition: String;
-      begin
-        if NeedReturnType then
-          Result := 'function'
-        else
-          Result := 'procedure';
-      end;
-
-      function FormatFunctionName: String;
-      begin
-        var ParameterSeparator := EmptyStr;
-        Result := RemoveInvalidCharecters('Add.' + FormatPropertyName(PropertyDefinition));
-        var ValueParameter := EmptyStr;
-
-        if not NeedReturnType then
-        begin
-          ParameterSeparator := '; ';
-          ValueParameter := Format('const Value: %s', [FormatReturnTypeName]);
-        end;
-
-        if PropertyDefinition.PropertyType.IsDynamicPropertyDefinition then
-          Result := Result + Format('(const Name: String%s)', [ParameterSeparator + ValueParameter])
-        else if not NeedReturnType then
-          Result := Result + Format('(%s)', [ValueParameter]);
-      end;
-
-    begin
-      Result := Format('%s %s%s%s;', [GetMethodDefinition, FormatMethodImplementation(ClassDefinitionType), FormatFunctionName, FormatReturnInformation]);
-    end;
-
-    function FormatSetFunction(const PropertyDefinition: TTypePropertyDefinition; const ClassDefinitionType: TTypeClassDefinition): String;
-    begin
-      Result := Format('procedure %s%s(const Value: %s);', [FormatMethodImplementation(ClassDefinitionType), FormatSetFunctionName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
     end;
 
     function FormatPropertyReaderName(const PropertyDefinition: TTypePropertyDefinition): String;
@@ -1287,18 +1219,56 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         Result := EmptyStr;
     end;
 
+    function CreateMethod(const ClassDefinition: TTypeClassDefinition; const PropertyDefinition: TTypePropertyDefinition; const Name: String; const MethodType: TMethodType; const PrivateMethod: Boolean): TTypeMethodDefinition;
+    begin
+      Result := TTypeMethodDefinition.Create;
+      Result.FMethodType := MethodType;
+      Result.FName := Name;
+      Result.FPropertyDefinition := PropertyDefinition;
+
+      ClassDefinition.AddMethod(Result, PrivateMethod);
+    end;
+
+    procedure CheckPropertiesExtraImplementations(const ClassDefinition: TTypeClassDefinition; const PropertyDefinition: TTypePropertyDefinition);
+    begin
+      var PropertyName := PropertyDefinition.Name;
+      var PropertyType := ResolveReferenceType(PropertyDefinition.PropertyType);
+      var ReturnTypeDefintion: TTypeDefinition;
+
+      if not SameText(FormatPropertyName(PropertyDefinition), PropertyName) then
+        CreateFieldNameType(PropertyDefinition, PropertyName);
+
+      if GetGenericType(PropertyType, ReturnTypeDefintion) then
+      begin
+        var AddMethod := CreateMethod(ClassDefinition, PropertyDefinition, 'Add.' + PropertyDefinition.Name, TMethodType.AddFunction, False);
+
+        if PropertyType.IsDynamicPropertyDefinition then
+          CreateParameter(AddMethod, 'Name', BuildInTypes[TBuildInType.StringType]);
+
+        if ReturnTypeDefintion.IsClassDefinition then
+          AddMethod.FReturnValue := ReturnTypeDefintion
+        else
+          CreateParameter(AddMethod, 'Value', ReturnTypeDefintion);
+      end
+      else if NeedGetFunction(PropertyDefinition) then
+      begin
+        var GetMethod := CreateMethod(ClassDefinition, PropertyDefinition, FormatGetFunctionName(PropertyDefinition), TMethodType.GetFunction, True);
+        GetMethod.FReturnValue := PropertyType;
+      end;
+
+      if NeedSetFunction(PropertyDefinition) then
+      begin
+        var SetMethod := CreateMethod(ClassDefinition, PropertyDefinition, FormatSetFunctionName(PropertyDefinition), TMethodType.SetProcedure, True);
+
+        CreateParameter(SetMethod, 'Value', PropertyType);
+      end;
+    end;
+
     function SortProperties(const ClassDefinition: TTypeClassDefinition): TArray<TTypePropertyDefinition>;
     begin
       Result := Copy(ClassDefinition.Properties);
 
       TArray.Sort<TTypePropertyDefinition>(Result, TTypeCommonComparer<TTypePropertyDefinition>.Comparer);
-    end;
-
-    function SortMethods(const InterfaceDefinition: TTypeInterfaceDefinition): TArray<TTypeMethodDefinition>;
-    begin
-      Result := Copy(InterfaceDefinition.Methods);
-
-      TArray.Sort<TTypeMethodDefinition>(Result, TTypeCommonComparer<TTypeMethodDefinition>.Comparer);
     end;
 
     procedure GenerateAttributesDeclaration(const IndentationLevel: Integer; const CommonDefinition: TTypeCommonDefinition);
@@ -1312,6 +1282,120 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         AddLine(IndentationLevel, '[%s]', [Attributes.Text]);
 
       Attributes.Free;
+    end;
+
+    function SortMethods(const Methods: TArray<TTypeMethodDefinition>): TArray<TTypeMethodDefinition>;
+    begin
+      Result := Methods;
+
+      TArray.Sort<TTypeMethodDefinition>(Result, TTypeMethodComparer.Comparer);
+    end;
+
+    function FormatImplementation(const ModuleTypeDefinition: TTypeModuleDefinition): String;
+    begin
+      Result := FormatParentModuleName(ModuleTypeDefinition, False) + FormatModuleName(ModuleTypeDefinition);
+    end;
+
+    function FormatMethod(const Method: TTypeMethodDefinition; const ModuleTypeDefinition: TTypeModuleDefinition): String;
+
+      function GetParameterTypeName(const ParameterType: TTypeDefinition): String;
+      begin
+        Result := ': ' + FormatFullTypeName(ParameterType);
+      end;
+
+      function FormatParameters: String;
+      var
+        ParameterType: TTypeDefinition;
+
+      begin
+        if Assigned(Method.Parameters) then
+        begin
+          var ParameterPrefix: String;
+          var ParameterSeparator: String;
+          ParameterType := nil;
+          Result := EmptyStr;
+
+          for var Parameter in Method.Parameters do
+          begin
+            if ParameterType = Parameter.ParameterType then
+            begin
+              ParameterPrefix := EmptyStr;
+              ParameterSeparator := ',';
+            end
+            else
+            begin
+              ParameterPrefix := 'const ';
+              ParameterSeparator := ';';
+
+              if not Result.IsEmpty then
+                Result := Result + GetParameterTypeName(ParameterType);
+
+              ParameterType := Parameter.ParameterType;
+            end;
+
+            if not Result.IsEmpty then
+              Result := Result + ParameterSeparator + ' ';
+
+            Result := Result + ParameterPrefix + FormatParameterName(Parameter);
+          end;
+
+          Result := Format('(%s%s)', [Result, GetParameterTypeName(ParameterType)])
+        end
+        else
+          Result := EmptyStr;
+      end;
+
+      function GetMethodInstructions: String;
+      begin
+        Result := EmptyStr;
+
+        if not Assigned(ModuleTypeDefinition) then
+          if Method.IsDestructor then
+            Result := ' override;'
+          else if Method.IsOverloaded then
+            Result := ' overload;';
+      end;
+
+      function FormatImplementationName: String;
+      begin
+        if Assigned(ModuleTypeDefinition) then
+          Result := FormatImplementation(ModuleTypeDefinition) + TYPE_NAME_SEPARATOR
+        else
+          Result := EmptyStr;
+      end;
+
+      function GetMethodType: String;
+      begin
+        if Method.MethodType = TMethodType.Destructor then
+          Result := 'destructor'
+        else if Method.IsFunction then
+          Result := 'function'
+        else
+          Result := 'procedure';
+      end;
+
+      function GetReturnValue: String;
+      begin
+        if Method.IsFunction then
+          Result := GetParameterTypeName(Method.ReturnValue)
+        else
+          Result := EmptyStr;
+      end;
+
+    begin
+      Result := Format('%s %s%s%s%s;%s', [GetMethodType, FormatImplementationName, FormatMethodName(Method), FormatParameters, GetReturnValue, GetMethodInstructions]);
+    end;
+
+    procedure GenerateMethodsDeclaration(const IndentationLevel: Integer; const Methods: TArray<TTypeMethodDefinition>);
+    begin
+      for var Method in SortMethods(Methods) do
+      begin
+        GenerateAttributesDeclaration(IndentationLevel, Method);
+
+        AddLine(IndentationLevel, FormatMethod(Method, nil));
+      end;
+
+      AddWhiteLine;
     end;
 
     procedure GenerateFieldsDeclaration(const IndentationLevel: Integer; const ClassDefinition: TTypeClassDefinition);
@@ -1330,14 +1414,9 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
             AddLine(CurrentIndentation, '%s: Boolean;', [FormatStoredFieldName(PropertyDefinition)]);
         end;
 
-        for var PropertyDefinition in ClassDefinition.Properties do
-        begin
-          if NeedGetFunction(PropertyDefinition) then
-            AddLine(CurrentIndentation, FormatGetFunction(PropertyDefinition, nil));
+        GenerateMethodsDeclaration(CurrentIndentation, ClassDefinition.PrivateMethods);
 
-          if NeedSetFunction(PropertyDefinition) then
-            AddLine(CurrentIndentation, FormatSetFunction(PropertyDefinition, nil));
-        end;
+        RemoveLastLine;
       end;
     end;
 
@@ -1345,56 +1424,23 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
       function NeedPublicSection: Boolean;
       begin
-        for var PropertyDefinition in ClassDefinition.Properties do
-          if PropertyDefinition.Optional or NeedAddFunction(PropertyDefinition) or NeedGetFunction(PropertyDefinition) then
-            Exit(True);
+        Result := Assigned(ClassDefinition.PublicMethods);
 
-        Result := False;
-      end;
-
-      procedure GenerateAddFunctions(const CurrentIndentation: Integer);
-      begin
-        var NewLine := False;
-
-        for var PropertyDefinition in ClassDefinition.Properties do
-          if NeedAddFunction(PropertyDefinition) then
-          begin
-            AddLine(CurrentIndentation, FormatAddFunctionName(PropertyDefinition, nil));
-
-            NewLine := True;
-          end;
-
-        if NewLine then
-          AddWhiteLine;
+        if not Result then
+          for var PropertyDefinition in ClassDefinition.Properties do
+            if PropertyDefinition.Optional then
+              Exit(True);
       end;
 
       procedure GenerateStoredProperties(const CurrentIndentation: Integer);
       begin
-        var NewLine := False;
+        RemoveLastLine;
 
         for var PropertyDefinition in ClassDefinition.Properties do
           if PropertyDefinition.Optional then
-          begin
             AddLine(CurrentIndentation, 'property %s: Boolean read %s;', [FormatIsStoredProperty(PropertyDefinition), FormatStoredFieldName(PropertyDefinition)]);
 
-            NewLine := True;
-          end;
-
-        if NewLine then
-          AddWhiteLine;
-      end;
-
-      procedure GenerateDestroyProcedure(const CurrentIndentation: Integer);
-      begin
-        for var PropertyDefinition in ClassDefinition.Properties do
-          if NeedDestructionProcedure(PropertyDefinition) then
-          begin
-            AddLine(CurrentIndentation, 'destructor Destroy; override;');
-
-            AddWhiteLine;
-
-            Exit;
-          end;
+        AddWhiteLine;
       end;
 
     begin
@@ -1404,9 +1450,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       begin
         AddLine(IndentationLevel, 'public');
 
-        GenerateDestroyProcedure(CurrentIndentation);
-
-        GenerateAddFunctions(CurrentIndentation);
+        GenerateMethodsDeclaration(CurrentIndentation, ClassDefinition.PublicMethods);
 
         GenerateStoredProperties(CurrentIndentation);
 
@@ -1496,16 +1540,6 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       end;
     end;
 
-    function NeedImplementationSection(const ModuleDefinition: TTypeModuleDefinition): Boolean;
-    begin
-      if ModuleDefinition.IsClassDefinition then
-        for var PropertyDefinition in ModuleDefinition.AsClassDefinition.Properties do
-          if NeedGetFunction(PropertyDefinition) or NeedSetFunction(PropertyDefinition) or NeedAddFunction(PropertyDefinition) then
-            Exit(True);
-
-      Result := False;
-    end;
-
     procedure AddUsesList(const IndentationLevel: Integer);
     var
       UsesList: TStringList;
@@ -1529,7 +1563,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
           begin
             ParentModule := GetUnitDefinition(PropertyDefinition.PropertyType.ParentModule);
 
-            CheckFieldNameAttribute(PropertyDefinition);
+            CheckPropertiesExtraImplementations(ClassDefinition, PropertyDefinition);
 
             if (SYSTEM_UNIT_NAME <> ParentModule.Name) and (ParentModule <> UnitDefinition) then
               UsesList.Add(ParentModule.Name);
@@ -1537,6 +1571,15 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
             if PropertyDefinition.HasAttributes then
               UsesList.Add(SYSTEM_BLUE_PRINT_TYPES_UNIT_NAME);
           end;
+
+          for var MethodDefinition in ClassDefinition.AllMethods do
+            if Assigned(MethodDefinition.ReturnValue) and MethodDefinition.ReturnValue.IsClassDefinition then
+            begin
+              CreateMethod(ClassDefinition, nil, 'Destroy', TMethodType.Destructor, False);
+
+              Break;
+            end;
+
 
           CheckUses(ClassDefinition);
         end;
@@ -1591,111 +1634,94 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
     begin
       var IndentationLevel := 0;
 
-      if NeedImplementationSection(ModuleDefinition) then
+      if ModuleDefinition.IsClassDefinition then
       begin
-        AddLine(IndentationLevel, '{ %s }', [FormatImplementation(ModuleDefinition)]);
+        var Methods := SortMethods(ModuleDefinition.AsClassDefinition.AllMethods);
 
-        AddWhiteLine;
+        if Assigned(Methods) then
+        begin
+          AddLine(IndentationLevel, '{ %s }', [FormatImplementation(ModuleDefinition)]);
 
-        for var PropertyDefinition in ModuleDefinition.AsClassDefinition.Properties do
-          if NeedDestructionProcedure(PropertyDefinition) then
+          AddWhiteLine;
+
+          for var Method in Methods do
           begin
-            var CurrentIndentationLevel := Succ(IndentationLevel);
+            var PropertyDefinition := Method.PropertyDefinition;
 
-            AddLine(IndentationLevel, 'destructor %sDestroy;', [FormatMethodImplementation(ModuleDefinition.AsClassDefinition)]);
+            AddLine(IndentationLevel, FormatMethod(Method, ModuleDefinition));
 
             AddLine(IndentationLevel, 'begin');
 
-            for var FieldDefinition in ModuleDefinition.AsClassDefinition.Properties do
-            begin
-              if NeedGetFunction(FieldDefinition) then
+            case Method.MethodType of
+              TMethodType.Method: ;
+              TMethodType.Destructor:
               begin
-                AddLine(CurrentIndentationLevel, '%s.Free;', [FormatFieldName(FieldDefinition)]);
+                var CurrentIndentationLevel := Succ(IndentationLevel);
+
+                for var FieldDefinition in ModuleDefinition.AsClassDefinition.Properties do
+                begin
+                  if NeedGetFunction(FieldDefinition) then
+                  begin
+                    AddLine(CurrentIndentationLevel, '%s.Free;', [FormatFieldName(FieldDefinition)]);
+
+                    AddWhiteLine;
+                  end
+                  else if FunctionAddNeedReturnType(FieldDefinition) then
+                  begin
+                    var ObjectToDestroy := 'Item';
+
+                    if FieldDefinition.PropertyType.IsDynamicPropertyDefinition then
+                      ObjectToDestroy := ObjectToDestroy + '.Value';
+
+                    AddLine(CurrentIndentationLevel, 'for var Item in %s do', [FormatFieldName(FieldDefinition)]);
+
+                    AddLine(CurrentIndentationLevel, '  %s.Free;', [ObjectToDestroy]);
+
+                    AddWhiteLine;
+                  end;
+                end;
+
+                AddLine(CurrentIndentationLevel, 'inherited;');
+              end;
+
+              TMethodType.AddFunction:
+              begin
+                var VariableName: String;
+
+                if FunctionAddNeedReturnType(PropertyDefinition) then
+                begin
+                  VariableName := 'Result';
+
+                  AddLine(IndentationLevel, '  Result := %s.Create;', [FormatGenericItemTypeName(PropertyDefinition)]);
+
+                  AddWhiteLine;
+                end
+                else
+                  VariableName := 'Value';
+
+                if PropertyDefinition.PropertyType.IsDynamicPropertyDefinition then
+                  VariableName := Format('TDynamicPair<%s>.Create(Name, %s)', [FormatGenericItemTypeName(PropertyDefinition), VariableName]);
+
+                AddLine(IndentationLevel, '  %0:s := %0:s + [%1:s];', [FormatPropertyName(PropertyDefinition), VariableName]);
+              end;
+
+              TMethodType.GetFunction:
+              begin
+                AddLine(IndentationLevel, '  if not Assigned(%s) then', [FormatFieldName(PropertyDefinition)]);
+
+                AddLine(IndentationLevel, '    %s := %s.Create;', [FormatPropertyName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
 
                 AddWhiteLine;
-              end
-              else if FunctionAddNeedReturnType(FieldDefinition) then
+
+                AddLine(IndentationLevel, '  Result := %s;', [FormatFieldName(PropertyDefinition)]);
+              end;
+
+              TMethodType.SetProcedure:
               begin
-                var ObjectToDestroy := 'Item';
-
-                if FieldDefinition.PropertyType.IsDynamicPropertyDefinition then
-                  ObjectToDestroy := ObjectToDestroy + '.Value';
-
-                AddLine(CurrentIndentationLevel, 'for var Item in %s do', [FormatFieldName(FieldDefinition)]);
-
-                AddLine(CurrentIndentationLevel, '  %s.Free;', [ObjectToDestroy]);
-
-                AddWhiteLine;
+                AddLine(IndentationLevel, '  %s := Value;', [FormatFieldName(PropertyDefinition)]);
+                AddLine(IndentationLevel, '  %s := True;', [FormatStoredFieldName(PropertyDefinition)]);
               end;
             end;
-
-            AddLine(CurrentIndentationLevel, 'inherited;');
-
-            AddLine(IndentationLevel, 'end;');
-
-            AddWhiteLine;
-
-            Break;
-          end;
-
-        for var PropertyDefinition in ModuleDefinition.AsClassDefinition.Properties do
-        begin
-          if NeedGetFunction(PropertyDefinition) then
-          begin
-            AddLine(IndentationLevel, FormatGetFunction(PropertyDefinition, ModuleDefinition.AsClassDefinition));
-
-            AddLine(IndentationLevel, 'begin');
-
-            AddLine(IndentationLevel, '  if not Assigned(%s) then', [FormatFieldName(PropertyDefinition)]);
-
-            AddLine(IndentationLevel, '    %s := %s.Create;', [FormatPropertyName(PropertyDefinition), FormatPropertyTypeName(PropertyDefinition)]);
-
-            AddWhiteLine;
-
-            AddLine(IndentationLevel, '  Result := %s;', [FormatFieldName(PropertyDefinition)]);
-
-            AddLine(IndentationLevel, 'end;');
-
-            AddWhiteLine;
-          end;
-
-          if NeedAddFunction(PropertyDefinition) then
-          begin
-            var VariableName: String;
-
-            AddLine(IndentationLevel, FormatAddFunctionName(PropertyDefinition, ModuleDefinition.AsClassDefinition));
-
-            AddLine(IndentationLevel, 'begin');
-
-            if FunctionAddNeedReturnType(PropertyDefinition) then
-            begin
-              VariableName := 'Result';
-
-              AddLine(IndentationLevel, '  Result := %s.Create;', [FormatGenericItemTypeName(PropertyDefinition)]);
-
-              AddWhiteLine;
-            end
-            else
-              VariableName := 'Value';
-
-            if PropertyDefinition.PropertyType.IsDynamicPropertyDefinition then
-              VariableName := Format('TDynamicPair<%s>.Create(Name, %s)', [FormatGenericItemTypeName(PropertyDefinition), VariableName]);
-
-            AddLine(IndentationLevel, '  %0:s := %0:s + [%1:s];', [FormatPropertyName(PropertyDefinition), VariableName]);
-
-            AddLine(IndentationLevel, 'end;');
-
-            AddWhiteLine;
-          end;
-
-          if NeedSetFunction(PropertyDefinition) then
-          begin
-            AddLine(IndentationLevel, FormatSetFunction(PropertyDefinition, ModuleDefinition.AsClassDefinition));
-
-            AddLine(IndentationLevel, 'begin');
-
-            AddLine(IndentationLevel, '  %s := Value;', [FormatFieldName(PropertyDefinition)]);
-            AddLine(IndentationLevel, '  %s := True;', [FormatStoredFieldName(PropertyDefinition)]);
 
             AddLine(IndentationLevel, 'end;');
 
@@ -1706,81 +1732,6 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
       for var ClassDefinition in ModuleDefinition.Classes do
         GenerateImplementation(ClassDefinition);
-    end;
-
-    function FormatMethod(const Method: TTypeMethodDefinition): String;
-
-      function FormatParameters: String;
-      var
-        ParameterType: TTypeDefinition;
-
-        function GetParameterTypeName: String;
-        begin
-          Result := ': ' + FormatFullTypeName(ParameterType);
-        end;
-
-      begin
-        if Assigned(Method.Parameters) then
-        begin
-          var ParameterPrefix: String;
-          var ParameterSeparator: String;
-          ParameterType := nil;
-          Result := EmptyStr;
-
-          for var Parameter in Method.Parameters do
-          begin
-            if ParameterType = Parameter.ParameterType then
-            begin
-              ParameterPrefix := EmptyStr;
-              ParameterSeparator := ',';
-            end
-            else
-            begin
-              ParameterPrefix := 'const ';
-              ParameterSeparator := ';';
-
-              if not Result.IsEmpty then
-                Result := Result + GetParameterTypeName;
-
-              ParameterType := Parameter.ParameterType;
-            end;
-
-            if not Result.IsEmpty then
-              Result := Result + ParameterSeparator + ' ';
-
-            Result := Result + ParameterPrefix + FormatParameterName(Parameter);
-          end;
-
-          Result := Format('(%s%s)', [Result, GetParameterTypeName])
-        end
-        else
-          Result := EmptyStr;
-      end;
-
-      function GetMethodInstructions: String;
-      begin
-        if Method.IsOverloaded then
-          Result := ' overload;'
-        else
-          Result := EmptyStr;
-      end;
-
-    begin
-      var MethodType: String;
-      var ReturnValue: String;
-
-      if Assigned(Method.ReturnValue) then
-      begin
-        MethodType := 'function';
-        ReturnValue := ': ' + FormatFullTypeName(Method.ReturnValue);
-      end
-      else
-      begin
-        MethodType := 'procedure';
-        ReturnValue := EmptyStr;
-      end;
-
-      Result := Format('%s %s%s%s;%s', [MethodType, FormatMethodName(Method), FormatParameters, ReturnValue, GetMethodInstructions]);
     end;
 
     procedure GenerateInterfacesDeclaration(const IndentationLevel: Integer);
@@ -1795,12 +1746,9 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
         AddLine(CurrentIndentationLevel, GUIDValue);
 
-        for var Method in SortMethods(InterfaceDefinition) do
-        begin
-          GenerateAttributesDeclaration(CurrentIndentationLevel, Method);
+        GenerateMethodsDeclaration(CurrentIndentationLevel, InterfaceDefinition.Methods);
 
-          AddLine(CurrentIndentationLevel, FormatMethod(Method));
-        end;
+        RemoveLastLine;
 
         AddLine(IndentationLevel, 'end;');
 
@@ -2212,6 +2160,14 @@ end;
 
 { TTypeClassDefinition }
 
+procedure TTypeClassDefinition.AddMethod(const Method: TTypeMethodDefinition; const PrivateMethod: Boolean);
+begin
+  if PrivateMethod then
+    FPrivateMethods := FPrivateMethods + [Method]
+  else
+    FPublicMethods := FPublicMethods + [Method];
+end;
+
 function TTypeClassDefinition.AddProperty(const Name: String; const PropertyType: TTypeDefinition): TTypePropertyDefinition;
 begin
   Result := TTypePropertyDefinition.Create;
@@ -2221,10 +2177,18 @@ begin
   FProperties := FProperties + [Result];
 end;
 
+function TTypeClassDefinition.AllMethods: TArray<TTypeMethodDefinition>;
+begin
+  Result := PrivateMethods + PublicMethods;
+end;
+
 destructor TTypeClassDefinition.Destroy;
 begin
   for var PropertyDefinition in Properties do
     PropertyDefinition.Free;
+
+  for var Method in AllMethods do
+    Method.Free;
 
   inherited;
 end;
@@ -2365,6 +2329,16 @@ begin
   inherited;
 end;
 
+function TTypeMethodDefinition.GetIsDestructor: Boolean;
+begin
+  Result := MethodType = TMethodType.Destructor;
+end;
+
+function TTypeMethodDefinition.GetIsFunction: Boolean;
+begin
+  Result := (MethodType in [TMethodType.Method, TMethodType.AddFunction, TMethodType.GetFunction]) and Assigned(ReturnValue);
+end;
+
 { TTypeCommonComparer<T> }
 
 function TTypeCommonComparer<T>.Compare(const Left, Right: T): Integer;
@@ -2372,10 +2346,10 @@ begin
   Result := CompareText(Left.Name, Right.Name);
 end;
 
-class function TTypeCommonComparer<T>.Comparer: TTypeCommonComparer<T>;
+class function TTypeCommonComparer<T>.Comparer: IComparer<T>;
 begin
   if not Assigned(FComparer) then
-    FComparer := TTypeCommonComparer<T>.Create;
+    FComparer := Self.Create;
 
   Result := FComparer;
 end;
@@ -2468,6 +2442,19 @@ end;
 constructor TTypePatternPropertyAttribute.Create(const Pattern: String);
 begin
   inherited Create(Format('PatternProperty(''%s'')', [Pattern]));
+end;
+
+{ TTypeMethodComparer }
+
+function TTypeMethodComparer.Compare(const Left, Right: TTypeMethodDefinition): Integer;
+const
+  VALUE_TO_COMPARE: array[Boolean] of Integer = (1, 0);
+
+begin
+  Result := VALUE_TO_COMPARE[Left.IsDestructor] - VALUE_TO_COMPARE[Right.IsDestructor];
+
+  if Result = 0 then
+    Result := inherited Compare(Left, Right);
 end;
 
 end.
