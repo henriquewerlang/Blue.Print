@@ -144,12 +144,37 @@ type
     constructor Create;
   end;
 
+  TTypeOptionsAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create;
+  end;
+
   TTypeBodyAttribute = class(TTypeAttributeDefinition)
   public
     constructor Create;
   end;
 
-  TTypeOptionsAttribute = class(TTypeAttributeDefinition)
+  TTypeQueryAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create;
+  end;
+
+  TTypePathAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create;
+  end;
+
+  TTypePathNameAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create;
+  end;
+
+  TTypeFormURLEncodedAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create;
+  end;
+
+  TTypeHeaderAttribute = class(TTypeAttributeDefinition)
   public
     constructor Create;
   end;
@@ -509,14 +534,19 @@ type
     function CreateDynamicPropertyType(const ParentModule: TTypeModuleDefinition; const DynamicType: TTypeDefinition): TTypeDynamicPropertyDefinition;
     function CreateEnumeratorType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeEnumerationDefinition;
     function CreateFieldNameType(const PropertyDefinition: TTypePropertyDefinition; const FieldName: String): TTypeFieldNameAttribute;
+    function CreateFormURLEncodedAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypeFormURLEncodedAttribute;
     function CreateGetAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeGetAttribute;
+    function CreateHeaderAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypeHeaderAttribute;
     function CreateInterfaceType(const ParentModule: TTypeUnitDefinition; const Name: String): TTypeInterfaceDefinition;
     function CreateOptionsAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeOptionsAttribute;
     function CreateParameter(const MethodDefinition: TTypeMethodDefinition; const Name: String; const ParameterType: TTypeDefinition): TTypeParameterDefinition;
     function CreatePatchAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePatchAttribute;
+    function CreatePathAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypePathAttribute;
+    function CreatePathNameAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypePathNameAttribute;
     function CreatePatternPropertyAttribute(const PropertyDefinition: TTypePropertyDefinition; const Pattern: String): TTypePatternPropertyAttribute;
     function CreatePostAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePostAttribute;
     function CreatePutAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePutAttribute;
+    function CreateQueryAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypeQueryAttribute;
     function CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Name, Namespace, Reference: String): TTypeReferenceDefinition;
     function CreateServiceMethod(const InterfaceDefinition: TTypeInterfaceDefinition; const Name: String; const ReturnType: TTypeDefinition): TTypeMethodDefinition;
     function FindType(const Namespace, Name: String): TTypeDefinition;
@@ -642,9 +672,19 @@ begin
   PropertyDefinition.AddAttribute(Result);
 end;
 
+function TSchemaImporter.CreateFormURLEncodedAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypeFormURLEncodedAttribute;
+begin
+  Result := CreateTypeAttribute<TTypeFormURLEncodedAttribute>(ParameterDefinition);
+end;
+
 function TSchemaImporter.CreateGetAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeGetAttribute;
 begin
   Result := CreateTypeAttribute<TTypeGetAttribute>(MethodDefinition);
+end;
+
+function TSchemaImporter.CreateHeaderAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypeHeaderAttribute;
+begin
+  Result := CreateTypeAttribute<TTypeHeaderAttribute>(ParameterDefinition);
 end;
 
 function TSchemaImporter.CreateInterfaceType(const ParentModule: TTypeUnitDefinition; const Name: String): TTypeInterfaceDefinition;
@@ -673,6 +713,16 @@ begin
   Result := CreateTypeAttribute<TTypePatchAttribute>(MethodDefinition);
 end;
 
+function TSchemaImporter.CreatePathAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypePathAttribute;
+begin
+  Result := CreateTypeAttribute<TTypePathAttribute>(ParameterDefinition);
+end;
+
+function TSchemaImporter.CreatePathNameAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypePathNameAttribute;
+begin
+  Result := CreateTypeAttribute<TTypePathNameAttribute>(ParameterDefinition)
+end;
+
 function TSchemaImporter.CreatePatternPropertyAttribute(const PropertyDefinition: TTypePropertyDefinition; const Pattern: String): TTypePatternPropertyAttribute;
 begin
   Result := TTypePatternPropertyAttribute.Create(Pattern);
@@ -688,6 +738,11 @@ end;
 function TSchemaImporter.CreatePutAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePutAttribute;
 begin
   Result := CreateTypeAttribute<TTypePutAttribute>(MethodDefinition);
+end;
+
+function TSchemaImporter.CreateQueryAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypeQueryAttribute;
+begin
+  Result := CreateTypeAttribute<TTypeQueryAttribute>(ParameterDefinition);
 end;
 
 function TSchemaImporter.CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Name, Namespace, Reference: String): TTypeReferenceDefinition;
@@ -2489,6 +2544,41 @@ end;
 constructor TTypeBodyAttribute.Create;
 begin
   inherited Create('Body');
+end;
+
+{ TTypeQueryAttribute }
+
+constructor TTypeQueryAttribute.Create;
+begin
+  inherited Create('Query');
+end;
+
+{ TTypePathAttribute }
+
+constructor TTypePathAttribute.Create;
+begin
+  inherited Create('Path');
+end;
+
+{ TTypePathNameAttribute }
+
+constructor TTypePathNameAttribute.Create;
+begin
+  inherited Create('PathName');
+end;
+
+{ TTypeFormURLEncodedAttribute }
+
+constructor TTypeFormURLEncodedAttribute.Create;
+begin
+  inherited Create('FormURLEncoded');
+end;
+
+{ TTypeHeaderAttribute }
+
+constructor TTypeHeaderAttribute.Create;
+begin
+  inherited Create('Header');
 end;
 
 end.

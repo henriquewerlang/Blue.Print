@@ -523,7 +523,37 @@ type
     [Test]
     procedure MustAppendTheBodyAttributeToTheParameterHasExpected;
     [Test]
-    procedure WhenAParameterHasAnAttributeMustLoadTheAttributeInTheDeclaration;
+    procedure WhenAParameterHasABodyAttributeMustLoadTheAttributeInTheDeclaration;
+    [Test]
+    procedure WhenCreateTheQueryAttributeMustReturnTheClassInTheFunction;
+    [Test]
+    procedure TheQueryAttributeMustLoadTheDeclarationWithTheQueryHasExpected;
+    [Test]
+    procedure MustAppendTheQueryAttributeToTheParameterHasExpected;
+    [Test]
+    procedure WhenCreateThePathAttributeMustReturnTheClassInTheFunction;
+    [Test]
+    procedure ThePathAttributeMustLoadTheDeclarationWithThePathHasExpected;
+    [Test]
+    procedure MustAppendThePathAttributeToTheParameterHasExpected;
+    [Test]
+    procedure WhenCreateThePathNameAttributeMustReturnTheClassInTheFunction;
+    [Test]
+    procedure ThePathNameAttributeMustLoadTheDeclarationWithThePathNameHasExpected;
+    [Test]
+    procedure MustAppendThePathNameAttributeToTheParameterHasExpected;
+    [Test]
+    procedure WhenCreateTheFormURLEncodedAttributeMustReturnTheClassInTheFunction;
+    [Test]
+    procedure TheFormURLEncodedAttributeMustLoadTheDeclarationWithTheFormURLEncodedHasExpected;
+    [Test]
+    procedure MustAppendTheFormURLEncodedAttributeToTheParameterHasExpected;
+    [Test]
+    procedure WhenCreateTheHeaderAttributeMustReturnTheClassInTheFunction;
+    [Test]
+    procedure TheHeaderAttributeMustLoadTheDeclarationWithTheHeaderHasExpected;
+    [Test]
+    procedure MustAppendTheHeaderAttributeToTheParameterHasExpected;
   end;
 
   [TestFixture]
@@ -1256,6 +1286,17 @@ begin
   Method.Free;
 end;
 
+procedure TSchemaImporterTest.MustAppendTheFormURLEncodedAttributeToTheParameterHasExpected;
+begin
+  var Parameter := TTypeParameterDefinition.Create;
+
+  var Attribute := FImporter.CreateFormURLEncodedAttribute(Parameter);
+
+  Assert.AreEqual('FormURLEncoded', Attribute.Declaration);
+
+  Parameter.Free;
+end;
+
 procedure TSchemaImporterTest.MustAppendTheGetAttributeInTheMethod;
 begin
   var Method := TTypeMethodDefinition.Create;
@@ -1267,6 +1308,17 @@ begin
   Assert.AreEqual(Attribute, Method.Attributes[0]);
 
   Method.Free;
+end;
+
+procedure TSchemaImporterTest.MustAppendTheHeaderAttributeToTheParameterHasExpected;
+begin
+  var Parameter := TTypeParameterDefinition.Create;
+
+  var Attribute := FImporter.CreateHeaderAttribute(Parameter);
+
+  Assert.AreEqual('Header', Attribute.Declaration);
+
+  Parameter.Free;
 end;
 
 procedure TSchemaImporterTest.MustAppendTheMethodInTheMethodListOfTheInterfaceType;
@@ -1317,6 +1369,32 @@ begin
   Assert.AreEqual(Attribute, Method.Attributes[0]);
 
   Method.Free;
+end;
+
+procedure TSchemaImporterTest.MustAppendThePathAttributeToTheParameterHasExpected;
+begin
+  var Parameter := TTypeParameterDefinition.Create;
+
+  var Attribute := FImporter.CreatePathAttribute(Parameter);
+
+  Assert.AreEqual(1, Length(Parameter.Attributes));
+
+  Assert.AreEqual(Attribute, Parameter.Attributes[0]);
+
+  Parameter.Free;
+end;
+
+procedure TSchemaImporterTest.MustAppendThePathNameAttributeToTheParameterHasExpected;
+begin
+  var Parameter := TTypeParameterDefinition.Create;
+
+  var Attribute := FImporter.CreatePathNameAttribute(Parameter);
+
+  Assert.AreEqual(1, Length(Parameter.Attributes));
+
+  Assert.AreEqual(Attribute, Parameter.Attributes[0]);
+
+  Parameter.Free;
 end;
 
 procedure TSchemaImporterTest.MustAppendThePostAttributeInTheMethod;
@@ -1375,6 +1453,19 @@ begin
   Assert.AreEqual(Attribute, Method.Attributes[0]);
 
   Method.Free;
+end;
+
+procedure TSchemaImporterTest.MustAppendTheQueryAttributeToTheParameterHasExpected;
+begin
+  var Parameter := TTypeParameterDefinition.Create;
+
+  var Attribute := FImporter.CreateQueryAttribute(Parameter);
+
+  Assert.AreEqual(1, Length(Parameter.Attributes));
+
+  Assert.AreEqual(Attribute, Parameter.Attributes[0]);
+
+  Parameter.Free;
 end;
 
 procedure TSchemaImporterTest.MustAppendTheUnitNameBeforeTheTypeNameToAvoidDuplicateNames;
@@ -2312,6 +2403,19 @@ begin
   PropertyDefinition.Free;
 end;
 
+procedure TSchemaImporterTest.TheFormURLEncodedAttributeMustLoadTheDeclarationWithTheFormURLEncodedHasExpected;
+begin
+  var Parameter := TTypeParameterDefinition.Create;
+
+  var Attribute := FImporter.CreateFormURLEncodedAttribute(Parameter);
+
+  Assert.AreEqual(1, Length(Parameter.Attributes));
+
+  Assert.AreEqual(Attribute, Parameter.Attributes[0]);
+
+  Parameter.Free;
+end;
+
 procedure TSchemaImporterTest.TheFunctionFindTypeWithPrefixMustRaiseAnErrorIfNotFindTheTypeName;
 begin
   Assert.WillRaise(
@@ -2380,6 +2484,19 @@ begin
   Assert.AreEqual('Get', Attribute.Declaration);
 
   Method.Free;
+end;
+
+procedure TSchemaImporterTest.TheHeaderAttributeMustLoadTheDeclarationWithTheHeaderHasExpected;
+begin
+  var Parameter := TTypeParameterDefinition.Create;
+
+  var Attribute := FImporter.CreateHeaderAttribute(Parameter);
+
+  Assert.AreEqual(1, Length(Parameter.Attributes));
+
+  Assert.AreEqual(Attribute, Parameter.Attributes[0]);
+
+  Parameter.Free;
 end;
 
 procedure TSchemaImporterTest.TheKeyValueFromTypeMustBeTheNamespaceWithTheClassNameHasExpected;
@@ -2467,6 +2584,28 @@ begin
   Assert.AreEqual('Patch', Attribute.Declaration);
 
   Method.Free;
+end;
+
+procedure TSchemaImporterTest.ThePathAttributeMustLoadTheDeclarationWithThePathHasExpected;
+begin
+  var Parameter := TTypeParameterDefinition.Create;
+
+  var Attribute := FImporter.CreatePathAttribute(Parameter);
+
+  Assert.AreEqual('Path', Attribute.Declaration);
+
+  Parameter.Free;
+end;
+
+procedure TSchemaImporterTest.ThePathNameAttributeMustLoadTheDeclarationWithThePathNameHasExpected;
+begin
+  var Parameter := TTypeParameterDefinition.Create;
+
+  var Attribute := FImporter.CreatePathNameAttribute(Parameter);
+
+  Assert.AreEqual('PathName', Attribute.Declaration);
+
+  Parameter.Free;
 end;
 
 procedure TSchemaImporterTest.ThePostAttributeMustHaveThePostValueInTheAttributeDeclaration;
@@ -2592,6 +2731,17 @@ begin
   Assert.AreEqual('Put', Attribute.Declaration);
 
   Method.Free;
+end;
+
+procedure TSchemaImporterTest.TheQueryAttributeMustLoadTheDeclarationWithTheQueryHasExpected;
+begin
+  var Parameter := TTypeParameterDefinition.Create;
+
+  var Attribute := FImporter.CreateQueryAttribute(Parameter);
+
+  Assert.AreEqual('Query', Attribute.Declaration);
+
+  Parameter.Free;
 end;
 
 procedure TSchemaImporterTest.TheReturnValueFunctionMustFormatTheTypeNameLoadingAllNamePath;
@@ -3279,7 +3429,7 @@ begin
     end, EUnitConfigurationDuplicatedName);
 end;
 
-procedure TSchemaImporterTest.WhenAParameterHasAnAttributeMustLoadTheAttributeInTheDeclaration;
+procedure TSchemaImporterTest.WhenAParameterHasABodyAttributeMustLoadTheAttributeInTheDeclaration;
 begin
   FConverter.WhenExecuteConvert :=
     procedure (Schema: TSchema)
@@ -3976,6 +4126,50 @@ begin
   PropertyDefinition.Free;
 end;
 
+procedure TSchemaImporterTest.WhenCreateTheFormURLEncodedAttributeMustReturnTheClassInTheFunction;
+begin
+  var Parameter := TTypeParameterDefinition.Create;
+
+  var Attribute := FImporter.CreateFormURLEncodedAttribute(Parameter);
+
+  Assert.IsNotNil(Attribute);
+
+  Parameter.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateTheHeaderAttributeMustReturnTheClassInTheFunction;
+begin
+  var Parameter := TTypeParameterDefinition.Create;
+
+  var Attribute := FImporter.CreateHeaderAttribute(Parameter);
+
+  Assert.IsNotNil(Attribute);
+
+  Parameter.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateThePathAttributeMustReturnTheClassInTheFunction;
+begin
+  var Parameter := TTypeParameterDefinition.Create;
+
+  var Attribute := FImporter.CreatePathAttribute(Parameter);
+
+  Assert.IsNotNil(Attribute);
+
+  Parameter.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateThePathNameAttributeMustReturnTheClassInTheFunction;
+begin
+  var Parameter := TTypeParameterDefinition.Create;
+
+  var Attribute := FImporter.CreatePathNameAttribute(Parameter);
+
+  Assert.IsNotNil(Attribute);
+
+  Parameter.Free;
+end;
+
 procedure TSchemaImporterTest.WhenCreateThePatternPropertyMustLoadTheAttributeInTheProperty;
 begin
   var PropertyDefinition := TTypePropertyDefinition.Create;
@@ -4000,6 +4194,17 @@ begin
   Assert.AreEqual('PatternProperty(''My*Pattern'')', Attribute.Declaration);
 
   PropertyDefinition.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateTheQueryAttributeMustReturnTheClassInTheFunction;
+begin
+  var Parameter := TTypeParameterDefinition.Create;
+
+  var Attribute := FImporter.CreateQueryAttribute(Parameter);
+
+  Assert.IsNotNil(Attribute);
+
+  Parameter.Free;
 end;
 
 procedure TSchemaImporterTest.WhenCreateTheServiceInterfaceMustLoadTheTypeInTheMainNamespaceOfTheSchema;
