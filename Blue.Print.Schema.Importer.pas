@@ -189,6 +189,11 @@ type
     constructor Create(const Pattern: String);
   end;
 
+  TTypeRemoteNameAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create(const RemoteName: String);
+  end;
+
   TTypeCommonDefinition = class
   private
     FAttributes: TArray<TTypeAttributeDefinition>;
@@ -548,6 +553,7 @@ type
     function CreatePutAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePutAttribute;
     function CreateQueryAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypeQueryAttribute;
     function CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Name, Namespace, Reference: String): TTypeReferenceDefinition;
+    function CreateRemoteNameAttribute(const MethodDefinition: TTypeMethodDefinition; const Name: String): TTypeRemoteNameAttribute;
     function CreateServiceMethod(const InterfaceDefinition: TTypeInterfaceDefinition; const Name: String; const ReturnType: TTypeDefinition): TTypeMethodDefinition;
     function FindType(const Namespace, Name: String): TTypeDefinition;
     function FindTypeWithPrefix(const Fullname: String): TTypeDefinition;
@@ -750,6 +756,13 @@ begin
   Result := CreateTypeDefinitionWithName<TTypeReferenceDefinition>(ParentModule, Name);
   Result.FNamespace := Namespace;
   Result.FReference := Reference;
+end;
+
+function TSchemaImporter.CreateRemoteNameAttribute(const MethodDefinition: TTypeMethodDefinition; const Name: String): TTypeRemoteNameAttribute;
+begin
+  Result := TTypeRemoteNameAttribute.Create(Name);
+
+  MethodDefinition.AddAttribute(Result)
 end;
 
 function TSchemaImporter.CreateServiceMethod(const InterfaceDefinition: TTypeInterfaceDefinition; const Name: String; const ReturnType: TTypeDefinition): TTypeMethodDefinition;
@@ -2579,6 +2592,13 @@ end;
 constructor TTypeHeaderAttribute.Create;
 begin
   inherited Create('Header');
+end;
+
+{ TTypeRemoteNameAttribute }
+
+constructor TTypeRemoteNameAttribute.Create(const RemoteName: String);
+begin
+  inherited Create(Format('RemoteName(''%s'')', [RemoteName]));
 end;
 
 end.

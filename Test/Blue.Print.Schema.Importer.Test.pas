@@ -554,6 +554,12 @@ type
     procedure TheHeaderAttributeMustLoadTheDeclarationWithTheHeaderHasExpected;
     [Test]
     procedure MustAppendTheHeaderAttributeToTheParameterHasExpected;
+    [Test]
+    procedure WhenCreateTheRemoteNameAttributeMustReturnTheClassInTheFunction;
+    [Test]
+    procedure TheRemoteNameAttributeMustLoadTheDeclarationWithTheRemoteNameHasExpected;
+    [Test]
+    procedure MustAppendTheRemoteNameAttributeToThMethodHasExpected;
   end;
 
   [TestFixture]
@@ -1466,6 +1472,19 @@ begin
   Assert.AreEqual(Attribute, Parameter.Attributes[0]);
 
   Parameter.Free;
+end;
+
+procedure TSchemaImporterTest.MustAppendTheRemoteNameAttributeToThMethodHasExpected;
+begin
+  var Method := TTypeMethodDefinition.Create;
+
+  var Attribute := FImporter.CreateRemoteNameAttribute(Method, 'Name');
+
+  Assert.AreEqual(1, Length(Method.Attributes));
+
+  Assert.AreEqual(Attribute, Method.Attributes[0]);
+
+  Method.Free;
 end;
 
 procedure TSchemaImporterTest.MustAppendTheUnitNameBeforeTheTypeNameToAvoidDuplicateNames;
@@ -2742,6 +2761,17 @@ begin
   Assert.AreEqual('Query', Attribute.Declaration);
 
   Parameter.Free;
+end;
+
+procedure TSchemaImporterTest.TheRemoteNameAttributeMustLoadTheDeclarationWithTheRemoteNameHasExpected;
+begin
+  var Method := TTypeMethodDefinition.Create;
+
+  var Attribute := FImporter.CreateRemoteNameAttribute(Method, 'Name');
+
+  Assert.AreEqual('RemoteName(''Name'')', Attribute.Declaration);
+
+  Method.Free;
 end;
 
 procedure TSchemaImporterTest.TheReturnValueFunctionMustFormatTheTypeNameLoadingAllNamePath;
@@ -4205,6 +4235,17 @@ begin
   Assert.IsNotNil(Attribute);
 
   Parameter.Free;
+end;
+
+procedure TSchemaImporterTest.WhenCreateTheRemoteNameAttributeMustReturnTheClassInTheFunction;
+begin
+  var Method := TTypeMethodDefinition.Create;
+
+  var Attribute := FImporter.CreateRemoteNameAttribute(Method, 'Name');
+
+  Assert.IsNotNil(Attribute);
+
+  Method.Free;
 end;
 
 procedure TSchemaImporterTest.WhenCreateTheServiceInterfaceMustLoadTheTypeInTheMainNamespaceOfTheSchema;
