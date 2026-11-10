@@ -170,6 +170,12 @@ type
     procedure WhenThePathChangeTheNameOfTheMethodMustLoadTheRemoteNameAttribute;
     [Test]
     procedure TheRemoteNameOfTheMethodMustBeTheValueOfThePathItem;
+    [Test]
+    procedure WhenTheDefinitionHasServersLoadedMustLoadTheFirstValueInTheRemoteNameOfTheServiceInterface;
+    [Test]
+    procedure MustAddTheServerInformationInTheRemoteNameOfTheInterface;
+    [Test]
+    procedure WhenTheDefinitionDontHaveAnyServerInformationMustLoadTheRemoteNameOfTheInterfaceWithAnEmptyRemoteName;
   end;
 
 implementation
@@ -244,6 +250,17 @@ begin
   TFile.WriteAllText(FConfiguration.Units[0].SchemaFiles[0].FileName, GetDefinitionJSON);
 
   FImporter.Import(FConfiguration);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.MustAddTheServerInformationInTheRemoteNameOfTheInterface;
+begin
+  FDefinition.AddServers.url := 'MyServer';
+  FDefinition.AddServers.url := 'MyServer2';
+  FDefinition.AddServers.url := 'MyServer3';
+
+  ImportDefinition;
+
+  Assert.AreEqual('RemoteName(''MyServer'')', GetInterfaceService.Attributes[0].Declaration);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.MustAppendTheTypeCreatedInTheComponentsRequestBodiesInTheNamespaceHasExpected;
@@ -669,6 +686,13 @@ begin
   Assert.AreEqual(TTypeReferenceDefinition, GetInterfaceService.Methods[0].Parameters[0].ParameterType.ClassType);
 end;
 
+procedure TOpenAPI30SchemaConverterTest.WhenTheDefinitionDontHaveAnyServerInformationMustLoadTheRemoteNameOfTheInterfaceWithAnEmptyRemoteName;
+begin
+  Assert.WillNotRaise(ImportDefinition);
+
+  Assert.AreEqual('RemoteName('''')', GetInterfaceService.Attributes[0].Declaration);
+end;
+
 procedure TOpenAPI30SchemaConverterTest.WhenTheDefinitionHasPathsMustLoadTheMethodInTheInterfaceList;
 begin
   FDefinition.paths.AddPathItem('/MyPath').post;
@@ -680,6 +704,19 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(3, Length(GetInterfaceService.Methods));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheDefinitionHasServersLoadedMustLoadTheFirstValueInTheRemoteNameOfTheServiceInterface;
+begin
+  FDefinition.AddServers.url := 'MyServer';
+  FDefinition.AddServers.url := 'MyServer2';
+  FDefinition.AddServers.url := 'MyServer3';
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetInterfaceService.Attributes));
+
+  Assert.AreEqual(TTypeRemoteNameAttribute, GetInterfaceService.Attributes[0].ClassType);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheDeleteSchemaIsLoadedMustAppendTheDeleteAttributeInTheMethod;

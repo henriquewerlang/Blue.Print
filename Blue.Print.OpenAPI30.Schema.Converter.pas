@@ -204,6 +204,14 @@ var
     end;
   end;
 
+  function GetServerName: String;
+  begin
+    for var ServerInfo in Definition.servers do
+      Exit(ServerInfo.url);
+
+    Result := EmptyStr;
+  end;
+
 begin
   Definition := Schema.SchemaValue.AsType<OpenAPIDefinition>;
   Importer := Schema.Importer;
@@ -280,6 +288,8 @@ begin
     if not SameText(MethodDefinition.Name, MethodName.Substring(1)) then
       Importer.CreateRemoteNameAttribute(MethodDefinition, MethodName);
   end;
+
+  Importer.CreateRemoteNameAttribute(Schema.ServiceInterface, GetServerName);
 end;
 
 function TOpenAPI30SchemaConverter.LoadDefinition(const Schema: TSchema): OpenAPIDefinition;

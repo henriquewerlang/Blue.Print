@@ -560,6 +560,8 @@ type
     procedure TheRemoteNameAttributeMustLoadTheDeclarationWithTheRemoteNameHasExpected;
     [Test]
     procedure MustAppendTheRemoteNameAttributeToThMethodHasExpected;
+    [Test]
+    procedure WhenTheInterfaceServiceHaveAnAttributeMustLoadTheInformationInTheGeneratedUnit;
   end;
 
   [TestFixture]
@@ -5287,6 +5289,29 @@ begin
       MainInterface = interface
         ['{100D96E2-C832-EAE7-CD9F-433D0A835F8B}']
         procedure MyProcedure;
+      end;
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenTheInterfaceServiceHaveAnAttributeMustLoadTheInformationInTheGeneratedUnit;
+begin
+  FConfiguration.Units[0].SchemaFiles[0].ServiceInterfaceName := 'MainInterface';
+
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      if Schema.MainClass.Name = 'MainModule' then
+        FImporter.CreateRemoteNameAttribute(Schema.ServiceInterface, 'Remote');
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+      [RemoteName('Remote')]
+      MainInterface = interface
+        ['{100D96E2-C832-EAE7-CD9F-433D0A835F8B}']
       end;
     ''',
     FConfiguration.Units[0]);

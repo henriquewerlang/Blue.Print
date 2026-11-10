@@ -553,7 +553,7 @@ type
     function CreatePutAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePutAttribute;
     function CreateQueryAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypeQueryAttribute;
     function CreateReferenceType(const ParentModule: TTypeModuleDefinition; const Name, Namespace, Reference: String): TTypeReferenceDefinition;
-    function CreateRemoteNameAttribute(const MethodDefinition: TTypeMethodDefinition; const Name: String): TTypeRemoteNameAttribute;
+    function CreateRemoteNameAttribute(const TypeDefinition: TTypeCommonDefinition; const Name: String): TTypeRemoteNameAttribute;
     function CreateServiceMethod(const InterfaceDefinition: TTypeInterfaceDefinition; const Name: String; const ReturnType: TTypeDefinition): TTypeMethodDefinition;
     function FindType(const Namespace, Name: String): TTypeDefinition;
     function FindTypeWithPrefix(const Fullname: String): TTypeDefinition;
@@ -758,11 +758,11 @@ begin
   Result.FReference := Reference;
 end;
 
-function TSchemaImporter.CreateRemoteNameAttribute(const MethodDefinition: TTypeMethodDefinition; const Name: String): TTypeRemoteNameAttribute;
+function TSchemaImporter.CreateRemoteNameAttribute(const TypeDefinition: TTypeCommonDefinition; const Name: String): TTypeRemoteNameAttribute;
 begin
   Result := TTypeRemoteNameAttribute.Create(Name);
 
-  MethodDefinition.AddAttribute(Result)
+  TypeDefinition.AddAttribute(Result)
 end;
 
 function TSchemaImporter.CreateServiceMethod(const InterfaceDefinition: TTypeInterfaceDefinition; const Name: String; const ReturnType: TTypeDefinition): TTypeMethodDefinition;
@@ -1836,6 +1836,8 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
         var CurrentIndentationLevel := Succ(IndentationLevel);
         var GUIDValue := THashSHA2.GetHashString(InterfaceDefinition.Name);
         GUIDValue := Format('[''{%s-%s-%s-%s-%s}'']', [GUIDValue.Substring(0, 8), GUIDValue.Substring(8, 4), GUIDValue.Substring(12, 4), GUIDValue.Substring(16, 4), GUIDValue.Substring(20, 12)]).ToUpper;
+
+        GenerateAttributesDeclaration(IndentationLevel, InterfaceDefinition);
 
         AddLine(IndentationLevel, '%s = interface', [InterfaceDefinition.Name]);
 
