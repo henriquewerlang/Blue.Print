@@ -160,6 +160,12 @@ type
     procedure WhenTheContentOfARequestBodiesIsAReferenceMustAppendTheReferenceToTheTypesListWithTheNameOfRequestBodies;
     [Test]
     procedure WhenTheParameterIsABodyParameterMustLoadTheBodyAttributeInTheParameter;
+    [Test]
+    procedure WhenTheParameterIsHeaderTypeMustLoadTheHeaderAttributeInTheParameter;
+    [Test]
+    procedure WhenTheParameterIsPathTypeMustLoadThePathNameAttributeInTheParameter;
+    [Test]
+    procedure WhenTheParameterIsQueryTypeMustLoadTheQueryAttributeInTheParameter;
   end;
 
 implementation
@@ -728,6 +734,51 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(TTypeReferenceDefinition, GetInterfaceService.Methods[0].Parameters[0].ParameterType.ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheParameterIsHeaderTypeMustLoadTheHeaderAttributeInTheParameter;
+begin
+  var Parameter := FDefinition.paths.AddPathItem('/MyProc').put.AddParameters.Parameter;
+
+  Parameter.&in := 'header';
+  Parameter.name := 'MyParameter';
+  Parameter.schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.number;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetInterfaceService.Methods[0].Parameters[0].Attributes));
+
+  Assert.AreEqual(TTypeHeaderAttribute, GetInterfaceService.Methods[0].Parameters[0].Attributes[0].ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheParameterIsPathTypeMustLoadThePathNameAttributeInTheParameter;
+begin
+  var Parameter := FDefinition.paths.AddPathItem('/MyProc').put.AddParameters.Parameter;
+
+  Parameter.&in := 'path';
+  Parameter.name := 'MyParameter';
+  Parameter.schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.number;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetInterfaceService.Methods[0].Parameters[0].Attributes));
+
+  Assert.AreEqual(TTypePathNameAttribute, GetInterfaceService.Methods[0].Parameters[0].Attributes[0].ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheParameterIsQueryTypeMustLoadTheQueryAttributeInTheParameter;
+begin
+  var Parameter := FDefinition.paths.AddPathItem('/MyProc').put.AddParameters.Parameter;
+
+  Parameter.&in := 'query';
+  Parameter.name := 'MyParameter';
+  Parameter.schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.number;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetInterfaceService.Methods[0].Parameters[0].Attributes));
+
+  Assert.AreEqual(TTypeQueryAttribute, GetInterfaceService.Methods[0].Parameters[0].Attributes[0].ClassType);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheParameterSchemaGenerateATypeMustLoadTheTypeNameWithTheMethodNameAndParameterNamePlusTypeInTheName;

@@ -184,8 +184,17 @@ var
     end;
 
   begin
-    for var Parameter in Operation.parameters do
-      Importer.CreateParameter(MethodDefinition, Parameter.Parameter.name, CreateParameterType(Parameter.Parameter));
+    for var ParameterSchema in Operation.parameters do
+    begin
+      var ParameterDefinition := Importer.CreateParameter(MethodDefinition, ParameterSchema.Parameter.name, CreateParameterType(ParameterSchema.Parameter));
+
+      if ParameterSchema.Parameter.&in = 'header' then
+        Importer.CreateHeaderAttribute(ParameterDefinition)
+      else if ParameterSchema.Parameter.&in = 'path' then
+        Importer.CreatePathNameAttribute(ParameterDefinition)
+      else if ParameterSchema.Parameter.&in = 'query' then
+        Importer.CreateQueryAttribute(ParameterDefinition);
+    end;
 
     if Operation.IsRequestBodyStored then
     begin
