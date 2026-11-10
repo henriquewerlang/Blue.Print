@@ -230,9 +230,11 @@ begin
 
   for PathItem in Definition.paths.PathItem do
   begin
-    var MethodDefinition := Importer.CreateServiceMethod(Schema.ServiceInterface, PathItem.Key.Substring(1).Replace('/', '_'), nil);
+    var MethodName := PathItem.Key;
     var MethodSchema := PathItem.Value;
     var Operation: OpenAPIDefinition.Operation;
+
+    var MethodDefinition := Importer.CreateServiceMethod(Schema.ServiceInterface, MethodName.Substring(1).Replace('/', '_'), nil);
 
     if MethodSchema.IsPatchStored then
     begin
@@ -274,6 +276,9 @@ begin
       raise EPathItemWithoutOperation.Create(PathItem.Key);
 
     LoadOperationParameters(MethodDefinition, Operation);
+
+    if not SameText(MethodDefinition.Name, MethodName.Substring(1)) then
+      Importer.CreateRemoteNameAttribute(MethodDefinition, MethodName);
   end;
 end;
 

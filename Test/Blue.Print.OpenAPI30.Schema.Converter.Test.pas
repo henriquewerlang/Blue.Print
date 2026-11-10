@@ -166,6 +166,10 @@ type
     procedure WhenTheParameterIsPathTypeMustLoadThePathNameAttributeInTheParameter;
     [Test]
     procedure WhenTheParameterIsQueryTypeMustLoadTheQueryAttributeInTheParameter;
+    [Test]
+    procedure WhenThePathChangeTheNameOfTheMethodMustLoadTheRemoteNameAttribute;
+    [Test]
+    procedure TheRemoteNameOfTheMethodMustBeTheValueOfThePathItem;
   end;
 
 implementation
@@ -471,6 +475,15 @@ begin
 
   Assert.AreEqual('Open API 3.0/components/schemas', GetMainClass.Alias[0].TypeAlias.AsReferenceDefinition.Namespace);
   Assert.AreEqual('MyClass', GetMainClass.Alias[0].TypeAlias.AsReferenceDefinition.Reference);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.TheRemoteNameOfTheMethodMustBeTheValueOfThePathItem;
+begin
+  FDefinition.paths.AddPathItem('/MyProc/MyPath/MyMethod').post;
+
+  ImportDefinition;
+
+  Assert.AreEqual('RemoteName(''/MyProc/MyPath/MyMethod'')', GetInterfaceService.Methods[0].Attributes[1].Declaration)
 end;
 
 procedure TOpenAPI30SchemaConverterTest.TheSchemaTypeMustLoadThePropertyNameHasExpected;
@@ -802,6 +815,17 @@ begin
   Assert.AreEqual(1, Length(GetInterfaceService.Methods[0].Attributes));
 
   Assert.AreEqual(TTypePatchAttribute, GetInterfaceService.Methods[0].Attributes[0].ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenThePathChangeTheNameOfTheMethodMustLoadTheRemoteNameAttribute;
+begin
+  FDefinition.paths.AddPathItem('/MyProc/MyPath/MyMethod').post;
+
+  ImportDefinition;
+
+  Assert.AreEqual(2, Length(GetInterfaceService.Methods[0].Attributes));
+
+  Assert.AreEqual(TTypeRemoteNameAttribute, GetInterfaceService.Methods[0].Attributes[1].ClassType)
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenThePathHasMoreThanOneSlashMustReplaceByAnUnderline;
