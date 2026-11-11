@@ -182,6 +182,16 @@ type
     procedure WhenTheBodyParameterIsntRequiredMustLoadTheParamaterHasOptional;
     [Test]
     procedure WhenTheBodyParameterIsAReferenceTypeCantBeOptional;
+    [Test]
+    procedure WhenTheComponentIsAnArraySchemaMustLoadAnAliasWithTheNameOfTheComponent;
+    [Test]
+    procedure TheAliasTypeMustBeAnArrayDefinition;
+    [Test]
+    procedure TheArrayTypeMustBeTheTypeDefinedInTheSchemaHasExpected;
+    [Test]
+    procedure WhenTheArrayTypeIsAnObjectMustCreateTheTypeWithTheComponentNamePlusArrayTypeName;
+    [Test]
+    procedure WhenTheArrayItemsSchemaIsAReferenceMustLoadTheReferenceTypeHasExpected;
   end;
 
 implementation
@@ -430,6 +440,17 @@ begin
   Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Alias[0].TypeAlias.ClassType);
 end;
 
+procedure TOpenAPI30SchemaConverterTest.TheAliasTypeMustBeAnArrayDefinition;
+begin
+  var ArraySchema := FDefinition.components.schemas.AddPatternProperty('MyArray').Schema;
+  ArraySchema.items.Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
+  ArraySchema.&type := OpenAPIDefinition.Schema.TTypeType.array;
+
+  ImportDefinition;
+
+  Assert.AreEqual(TTypeArrayDefinition, GetMainClass.Alias[0].TypeAlias.ClassType);
+end;
+
 procedure TOpenAPI30SchemaConverterTest.TheAllOfPropertyMustLoadThePropertyTypeUsingTheSchemaInfoOfAllOfSchema;
 begin
   var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
@@ -439,6 +460,17 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.IntegerType], GetMainClass.Classes[0].Properties[0].PropertyType.AsClassDefinition.Properties[0].PropertyType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.TheArrayTypeMustBeTheTypeDefinedInTheSchemaHasExpected;
+begin
+  var ArraySchema := FDefinition.components.schemas.AddPatternProperty('MyArray').Schema;
+  ArraySchema.items.Schema.&type := OpenAPIDefinition.Schema.TTypeType.string;
+  ArraySchema.&type := OpenAPIDefinition.Schema.TTypeType.array;
+
+  ImportDefinition;
+
+  Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.StringType], GetMainClass.Alias[0].TypeAlias.AsGenericDefinition.GenericType);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.TheComponentSchemaEnumeratorMustBeLoadedInTheTypesList;
@@ -650,6 +682,31 @@ begin
   Schema.Free;
 end;
 
+procedure TOpenAPI30SchemaConverterTest.WhenTheArrayItemsSchemaIsAReferenceMustLoadTheReferenceTypeHasExpected;
+begin
+  FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Reference.AddString('$ref', '#/components/schemas/MyClass');
+
+  var ArraySchema := FDefinition.components.schemas.AddPatternProperty('MyArray').Schema;
+  ArraySchema.&type := OpenAPIDefinition.Schema.TTypeType.array;
+
+  ArraySchema.items.Reference.AddString('$ref', '#/components/schemas/MyClass');
+
+  ImportDefinition;
+
+  Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Alias[0].TypeAlias.AsGenericDefinition.GenericType.ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheArrayTypeIsAnObjectMustCreateTheTypeWithTheComponentNamePlusArrayTypeName;
+begin
+  var ArraySchema := FDefinition.components.schemas.AddPatternProperty('MyArray').Schema;
+  ArraySchema.items.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+  ArraySchema.&type := OpenAPIDefinition.Schema.TTypeType.array;
+
+  ImportDefinition;
+
+  Assert.AreEqual('.MyArrayArrayType', GetMainClass.Classes[0].Name);
+end;
+
 procedure TOpenAPI30SchemaConverterTest.WhenTheBodyParameterIsAReferenceTypeCantBeOptional;
 begin
   FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Reference.AddString('$ref', '#/components/schemas/MyClass');
@@ -675,6 +732,17 @@ begin
 
   Assert.IsTrue(GetInterfaceService.Methods[0].Parameters[0].IsOptional);
   Assert.IsFalse(GetInterfaceService.Methods[1].Parameters[0].IsOptional);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheComponentIsAnArraySchemaMustLoadAnAliasWithTheNameOfTheComponent;
+begin
+  var ArraySchema := FDefinition.components.schemas.AddPatternProperty('MyArray').Schema;
+  ArraySchema.items.Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
+  ArraySchema.&type := OpenAPIDefinition.Schema.TTypeType.array;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetMainClass.Alias));
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheComponentSchemaHasTheEnumPropertyLoadedMustAppendTheTypeInTheEnumeratorsList;

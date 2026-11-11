@@ -90,6 +90,18 @@ var
         Result := CreateSchemaType(ClassDefinition, Format('.%sType', [PropertyName]), PropertySchema.Schema);
     end;
 
+    function CreateArrayType: TTypeDefinition;
+    begin
+      var ArrayTypeName := Format('.%sArrayType', [TypeName]);
+
+      if SchemaType.items.IsReferenceStored then
+        Result := CreateReferenceType(ParentModule, ArrayTypeName, SchemaType.items.Reference)
+      else
+        Result := CreateSchemaType(ParentModule, ArrayTypeName, SchemaType.items.Schema);
+
+      Result := Importer.CreateArrayType(ParentModule, Result)
+    end;
+
   begin
     Result := Importer.BuildInTypes[TBuildInType.ValueType];
 
@@ -113,7 +125,7 @@ var
     end
     else if SchemaType.IsTypeStored then
       case SchemaType.&type of
-        OpenAPIDefinition.Schema.TTypeType.array: ;
+        OpenAPIDefinition.Schema.TTypeType.array: Result := CreateArrayType;
         OpenAPIDefinition.Schema.TTypeType.boolean: Result := Importer.BuildInTypes[TBuildInType.BooleanType];
         OpenAPIDefinition.Schema.TTypeType.integer: Result := Importer.BuildInTypes[TBuildInType.IntegerType];
         OpenAPIDefinition.Schema.TTypeType.number: Result := Importer.BuildInTypes[TBuildInType.DoubleType];
