@@ -173,20 +173,30 @@ var
         Result := CreateSchemaType(Schema.MainClass, TypeName, ParameterSchema.schema.Schema);
     end;
 
-    function LoadBodyType: TTypeDefinition;
+    procedure LoadBodyParameter;
     begin
-      var TypeName := FormatTypeName(BODY_PARAMETER_NAME);
+      if Operation.IsRequestBodyStored then
+      begin
+        var ParameterType: TTypeDefinition;
+        var TypeName := FormatTypeName(BODY_PARAMETER_NAME);
 
-      if Operation.requestBody.IsReferenceStored then
-        Result := CreateReferenceType(Schema.MainClass, TypeName, Operation.requestBody.Reference)
-      else
-        Result := CreateRequestBodySchemaType(Schema.MainClass, TypeName, Operation.requestBody.RequestBody);
+        if Operation.requestBody.IsReferenceStored then
+          ParameterType := CreateReferenceType(Schema.MainClass, TypeName, Operation.requestBody.Reference)
+        else
+          ParameterType := CreateRequestBodySchemaType(Schema.MainClass, TypeName, Operation.requestBody.RequestBody);
+
+        var Parameter := Importer.CreateParameter(MethodDefinition, BODY_PARAMETER_NAME, ParameterType);
+        Parameter.IsOptional := not ParameterType.IsReferenceDefinition and not Operation.requestBody.RequestBody.Required;
+
+        Importer.CreateBodyAttribute(Parameter);
+      end;
     end;
 
   begin
     for var ParameterSchema in Operation.parameters do
     begin
       var ParameterDefinition := Importer.CreateParameter(MethodDefinition, ParameterSchema.Parameter.name, CreateParameterType(ParameterSchema.Parameter));
+      ParameterDefinition.IsOptional := not ParameterSchema.Parameter.required;
 
       if ParameterSchema.Parameter.&in = 'header' then
         Importer.CreateHeaderAttribute(ParameterDefinition)
@@ -196,12 +206,7 @@ var
         Importer.CreateQueryAttribute(ParameterDefinition);
     end;
 
-    if Operation.IsRequestBodyStored then
-    begin
-      var Parameter := Importer.CreateParameter(MethodDefinition, BODY_PARAMETER_NAME, LoadBodyType);
-
-      Importer.CreateBodyAttribute(Parameter);
-    end;
+    LoadBodyParameter;
   end;
 
   function GetServerName: String;

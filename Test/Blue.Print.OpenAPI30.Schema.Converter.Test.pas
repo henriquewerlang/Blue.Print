@@ -176,6 +176,12 @@ type
     procedure MustAddTheServerInformationInTheRemoteNameOfTheInterface;
     [Test]
     procedure WhenTheDefinitionDontHaveAnyServerInformationMustLoadTheRemoteNameOfTheInterfaceWithAnEmptyRemoteName;
+    [Test]
+    procedure WhenTheParameterIsntRequiredMustLoadTheParameterHasOptional;
+    [Test]
+    procedure WhenTheBodyParameterIsntRequiredMustLoadTheParamaterHasOptional;
+    [Test]
+    procedure WhenTheBodyParameterIsAReferenceTypeCantBeOptional;
   end;
 
 implementation
@@ -644,6 +650,33 @@ begin
   Schema.Free;
 end;
 
+procedure TOpenAPI30SchemaConverterTest.WhenTheBodyParameterIsAReferenceTypeCantBeOptional;
+begin
+  FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Reference.AddString('$ref', '#/components/schemas/MyClass');
+
+  FDefinition.paths.AddPathItem('/MyProc').post.requestBody.RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Reference.AddString('$ref', '#/components/schemas/MyClass');
+
+  ImportDefinition;
+
+  Assert.IsFalse(GetInterfaceService.Methods[0].Parameters[0].IsOptional);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheBodyParameterIsntRequiredMustLoadTheParamaterHasOptional;
+begin
+  var RequestBody := FDefinition.paths.AddPathItem('/MyProc').post.requestBody.RequestBody;
+  RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+  RequestBody.required := False;
+
+  RequestBody := FDefinition.paths.AddPathItem('/MyProc2').post.requestBody.RequestBody;
+  RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+  RequestBody.required := True;
+
+  ImportDefinition;
+
+  Assert.IsTrue(GetInterfaceService.Methods[0].Parameters[0].IsOptional);
+  Assert.IsFalse(GetInterfaceService.Methods[1].Parameters[0].IsOptional);
+end;
+
 procedure TOpenAPI30SchemaConverterTest.WhenTheComponentSchemaHasTheEnumPropertyLoadedMustAppendTheTypeInTheEnumeratorsList;
 begin
   FDefinition.components.schemas.AddPatternProperty('MyEnumerator').Schema.AddEnum('Value');
@@ -799,6 +832,23 @@ begin
   Assert.AreEqual(1, Length(GetInterfaceService.Methods[0].Parameters[0].Attributes));
 
   Assert.AreEqual(TTypeHeaderAttribute, GetInterfaceService.Methods[0].Parameters[0].Attributes[0].ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheParameterIsntRequiredMustLoadTheParameterHasOptional;
+begin
+  var Operation := FDefinition.paths.AddPathItem('/MyProc').put;
+  var ParameterSchema := Operation.AddParameters.Parameter;
+  ParameterSchema.name := 'MyParameter';
+  ParameterSchema.required := True;
+
+  ParameterSchema := Operation.AddParameters.Parameter;
+  ParameterSchema.name := 'MyParameter2';
+  ParameterSchema.required := False;
+
+  ImportDefinition;
+
+  Assert.IsFalse(GetInterfaceService.Methods[0].Parameters[0].IsOptional);
+  Assert.IsTrue(GetInterfaceService.Methods[0].Parameters[1].IsOptional);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheParameterIsPathTypeMustLoadThePathNameAttributeInTheParameter;
