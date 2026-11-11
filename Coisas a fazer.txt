@@ -2,11 +2,9 @@ O importador vai ser o centro e os tipos específicos vão importar os esquemas 
 * Tem que ver uma forma de um específico acionar o importador para importar o arquivo de dependência.
 
 Tratamento de parâmetros não requeridos para adicionar vários procedimentos sem os parâmetros como foi implementado anteriormente
+Verificar no Open API 3.0 os parâmetros não requeridos
 
 As propriedades IsStored em ordem alfabética também
 
-Verificar no Open API 3.0 os parâmetros não requeridos
-
-Tem que colocar os attributos de Body e de FormData para o novo tipo de content que tem na API da MoniSat
-
-RemoteName precisa para o Open API 3.0
+Tem que colocar os attributos de FormData para o novo tipo de content que tem na API da MoniSat
+* Creio que vai precisar de uma reforma no Remote novamente, para comportar isso. Na API deles, precisa ser enviado fotos de documentos pessoais e dos veículos

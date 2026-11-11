@@ -351,14 +351,15 @@ type
 
   TTypeParameterDefinition = class(TTypeCommonDefinition)
   private
+    FIsOptional: Boolean;
     FParameterType: TTypeDefinition;
   public
+    property IsOptional: Boolean read FIsOptional write FIsOptional;
     property ParameterType: TTypeDefinition read FParameterType;
   end;
 
   TTypeMethodDefinition = class(TTypeCommonDefinition)
   private
-    FIsOverloaded: Boolean;
     FParameters: TArray<TTypeParameterDefinition>;
     FPropertyDefinition: TTypePropertyDefinition;
     FReturnValue: TTypeDefinition;
@@ -373,7 +374,6 @@ type
 
     property IsDestructor: Boolean read GetIsDestructor;
     property IsFunction: Boolean read GetIsFunction;
-    property IsOverloaded: Boolean read FIsOverloaded write FIsOverloaded;
     property MethodType: TMethodType read FMethodType;
     property Parameters: TArray<TTypeParameterDefinition> read FParameters;
     property PropertyDefinition: TTypePropertyDefinition read FPropertyDefinition;
@@ -1383,7 +1383,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := FormatParentModuleName(ModuleTypeDefinition, False) + FormatModuleName(ModuleTypeDefinition);
     end;
 
-    function FormatMethod(const Method: TTypeMethodDefinition; const ModuleTypeDefinition: TTypeModuleDefinition): String;
+    function FormatMethod(const MethodDefinition: TTypeMethodDefinition; const ModuleTypeDefinition: TTypeModuleDefinition; const ParameterLoadCount: NativeInt = -1): String;
 
       function GetParameterTypeName(const ParameterType: TTypeDefinition): String;
       begin
@@ -1392,6 +1392,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
       function FormatParameters: String;
       var
+        ParameterDefinition: TTypeParameterDefinition;
         ParameterType: TTypeDefinition;
 
         function GetAttributes(const Parameter: TTypeParameterDefinition): String;
@@ -1402,53 +1403,74 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
             Result := Result + ' ';
         end;
 
-      begin
-        if Assigned(Method.Parameters) then
+        function GetLoadParametersCount: NativeInt;
         begin
-          var ParameterPrefix: String;
-          var ParameterSeparator: String;
-          ParameterType := nil;
-          Result := EmptyStr;
+          if ParameterLoadCount = -1 then
+            Result := Length(MethodDefinition.Parameters)
+          else
+            Result := ParameterLoadCount;
+        end;
 
-          for var Parameter in Method.Parameters do
+      begin
+        var ParameterPrefix: String;
+        var ParameterSeparator: String;
+        ParameterType := nil;
+        Result := EmptyStr;
+
+        for var A := 0 to Pred(GetLoadParametersCount) do
+        begin
+          ParameterDefinition := MethodDefinition.Parameters[A];
+
+          if ParameterType = ParameterDefinition.ParameterType then
           begin
-            if ParameterType = Parameter.ParameterType then
-            begin
-              ParameterPrefix := EmptyStr;
-              ParameterSeparator := ',';
-            end
-            else
-            begin
-              ParameterPrefix := 'const ';
-              ParameterSeparator := ';';
-
-              if not Result.IsEmpty then
-                Result := Result + GetParameterTypeName(ParameterType);
-
-              ParameterType := Parameter.ParameterType;
-            end;
+            ParameterPrefix := EmptyStr;
+            ParameterSeparator := ',';
+          end
+          else
+          begin
+            ParameterPrefix := 'const ';
+            ParameterSeparator := ';';
 
             if not Result.IsEmpty then
-              Result := Result + ParameterSeparator + ' ';
+              Result := Result + GetParameterTypeName(ParameterType);
 
-            Result := Result + ParameterPrefix + GetAttributes(Parameter) + FormatParameterName(Parameter);
+            ParameterType := ParameterDefinition.ParameterType;
           end;
 
+          if not Result.IsEmpty then
+            Result := Result + ParameterSeparator + ' ';
+
+          Result := Result + ParameterPrefix + GetAttributes(ParameterDefinition) + FormatParameterName(ParameterDefinition);
+        end;
+
+        if not Result.IsEmpty then
           Result := Format('(%s%s)', [Result, GetParameterTypeName(ParameterType)])
-        end
-        else
-          Result := EmptyStr;
       end;
 
       function GetMethodInstructions: String;
+
+        function IsOverloaded: Boolean;
+        begin
+          for var ParameterDefinition in MethodDefinition.Parameters do
+            if ParameterDefinition.IsOptional then
+              Exit(True);
+
+          Result := False;
+        end;
+
       begin
         Result := EmptyStr;
 
         if not Assigned(ModuleTypeDefinition) then
-          if Method.IsDestructor then
-            Result := ' override;'
-          else if Method.IsOverloaded then
-            Result := ' overload;';
+        begin
+          if MethodDefinition.IsDestructor then
+            Result := 'override'
+          else if IsOverloaded then
+            Result := 'overload';
+
+          if not Result.IsEmpty then
+            Result := Format(' %s;', [Result]);
+        end;
       end;
 
       function FormatImplementationName: String;
@@ -1461,9 +1483,9 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
       function GetMethodType: String;
       begin
-        if Method.MethodType = TMethodType.Destructor then
+        if MethodDefinition.MethodType = TMethodType.Destructor then
           Result := 'destructor'
-        else if Method.IsFunction then
+        else if MethodDefinition.IsFunction then
           Result := 'function'
         else
           Result := 'procedure';
@@ -1471,23 +1493,36 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
       function GetReturnValue: String;
       begin
-        if Method.IsFunction then
-          Result := GetParameterTypeName(Method.ReturnValue)
+        if MethodDefinition.IsFunction then
+          Result := GetParameterTypeName(MethodDefinition.ReturnValue)
         else
           Result := EmptyStr;
       end;
 
     begin
-      Result := Format('%s %s%s%s%s;%s', [GetMethodType, FormatImplementationName, FormatMethodName(Method), FormatParameters, GetReturnValue, GetMethodInstructions]);
+      Result := Format('%s %s%s%s%s;%s', [GetMethodType, FormatImplementationName, FormatMethodName(MethodDefinition), FormatParameters, GetReturnValue, GetMethodInstructions]);
     end;
 
     procedure GenerateMethodsDeclaration(const IndentationLevel: Integer; const Methods: TArray<TTypeMethodDefinition>);
-    begin
-      for var Method in SortMethods(Methods) do
-      begin
-        GenerateAttributesDeclaration(IndentationLevel, Method);
+    var
+      MethodDefinition: TTypeMethodDefinition;
 
-        AddLine(IndentationLevel, FormatMethod(Method, nil));
+      function GetFirstOptionalParameter: Integer;
+      begin
+        Result := 0;
+
+        for var ParameterDefinition in MethodDefinition.Parameters do
+          if not ParameterDefinition.IsOptional then
+            Inc(Result);
+      end;
+
+    begin
+      for MethodDefinition in SortMethods(Methods) do
+      begin
+        GenerateAttributesDeclaration(IndentationLevel, MethodDefinition);
+
+        for var LastParameter := GetFirstOptionalParameter to Length(MethodDefinition.Parameters) do
+          AddLine(IndentationLevel, FormatMethod(MethodDefinition, nil, LastParameter));
       end;
 
       AddWhiteLine;

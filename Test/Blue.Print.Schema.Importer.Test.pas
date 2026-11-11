@@ -515,8 +515,6 @@ type
     [Test]
     procedure WhenCreateMoreThanOneEnumeratorMustResetTheControlsToNotMixTheEnumeratorsValues;
     [Test]
-    procedure WhenTheMethodHasTheOverloadPropertyWithTheTrueValueMustDeclareTheMethodWithTheOverloadInstruction;
-    [Test]
     procedure WhenCreateTheBodyAttributeMustReturnTheClassInTheFunction;
     [Test]
     procedure TheBodyAttributeMustLoadTheDeclarationWithTheBodyHasExpected;
@@ -562,6 +560,10 @@ type
     procedure MustAppendTheRemoteNameAttributeToThMethodHasExpected;
     [Test]
     procedure WhenTheInterfaceServiceHaveAnAttributeMustLoadTheInformationInTheGeneratedUnit;
+    [Test]
+    procedure WhenTheMethodOfAnInterfaceServiceHasAParameterOptionalMustDeclareThenOverloadDirective;
+    [Test]
+    procedure WhenTheMethodHasMoreThanOneParameterOptionalMustDeclareAllVariationsOfTheMethod;
   end;
 
   [TestFixture]
@@ -5490,7 +5492,7 @@ begin
     FConfiguration.Units[0]);
 end;
 
-procedure TSchemaImporterTest.WhenTheMethodHasTheOverloadPropertyWithTheTrueValueMustDeclareTheMethodWithTheOverloadInstruction;
+procedure TSchemaImporterTest.WhenTheMethodHasMoreThanOneParameterOptionalMustDeclareAllVariationsOfTheMethod;
 begin
   FConverter.WhenExecuteConvert :=
     procedure (Schema: TSchema)
@@ -5498,7 +5500,9 @@ begin
       var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
 
       var MyMethod := FImporter.CreateServiceMethod(InterfaceType, 'MyMethod', nil);
-      MyMethod.IsOverloaded := True;
+
+      FImporter.CreateParameter(MyMethod, 'Parameter', FImporter.BuildInTypes[TBuildInType.IntegerType]).IsOptional := True;
+      FImporter.CreateParameter(MyMethod, 'Parameter2', FImporter.BuildInTypes[TBuildInType.IntegerType]).IsOptional := True;
     end;
 
   FImporter.Import(FConfiguration);
@@ -5508,7 +5512,32 @@ begin
       MainInterface = interface
         ['{100D96E2-C832-EAE7-CD9F-433D0A835F8B}']
         procedure MyMethod; overload;
+        procedure MyMethod(const Parameter: System.Integer); overload;
+        procedure MyMethod(const Parameter, Parameter2: System.Integer); overload;
       end;
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenTheMethodOfAnInterfaceServiceHasAParameterOptionalMustDeclareThenOverloadDirective;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
+
+      var MyMethod := FImporter.CreateServiceMethod(InterfaceType, 'MyMethod', nil);
+
+      FImporter.CreateParameter(MyMethod, 'Parameter', FImporter.BuildInTypes[TBuildInType.IntegerType]).IsOptional := True;
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+      MainInterface = interface
+        ['{100D96E2-C832-EAE7-CD9F-433D0A835F8B}']
+        procedure MyMethod; overload;
     ''',
     FConfiguration.Units[0]);
 end;
