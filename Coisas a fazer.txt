@@ -12,3 +12,7 @@ Tem que colocar os attributos de FormData para o novo tipo de content que tem na
 Implementar o esquema que se existir apenas um AllOf tem que ligar direto o tipo, sem criar uma subclasse ou coisa parecida
 
 Carregar os retornos das APIs no Open API 3.0
+
+Quando o parâmetro for Query, criar uma classe com todos os parâmetros para não precisa criar várias versões overload por causa de parâmetros não requeridos
+
+Tem que declarar os atributos nos procedimentos overloaded que foi esquecido

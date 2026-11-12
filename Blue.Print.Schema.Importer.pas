@@ -1550,12 +1550,12 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     begin
       for MethodDefinition in SortMethods(Methods) do
-      begin
-        GenerateAttributesDeclaration(IndentationLevel, MethodDefinition);
-
         for var LastParameter := GetFirstOptionalParameter to Length(MethodDefinition.Parameters) do
+        begin
+          GenerateAttributesDeclaration(IndentationLevel, MethodDefinition);
+
           AddLine(IndentationLevel, FormatMethod(MethodDefinition, nil, LastParameter));
-      end;
+        end;
 
       AddWhiteLine;
     end;
