@@ -586,6 +586,12 @@ type
     procedure MustAppendTheFlatAttributeToTheParameterHasExpected;
     [Test]
     procedure WhenTheClassHasAttributesMustLoadTheAttributesDeclarationsHasExpected;
+    [Test]
+    procedure WhenExistsAnPropertyConfigurationToChangeThePropertyNameMustChangeTheNameHasExpected;
+    [Test]
+    procedure WhenThePropertyTypeIsTheDynamicPropertyTypeCantLoadTheFieldNameAttributeIfTheNameIsInvalid;
+    [Test]
+    procedure WhenThePropertyConfigurationIsntFoundMustRaiseAnError;
   end;
 
   [TestFixture]
@@ -820,50 +826,50 @@ end;
 
 procedure TSchemaImporterTest.CantDuplicateTheUsesList;
 begin
-//  FConverter.WhenExecuteConvert :=
-//    procedure (Schema: TSchema)
-//    begin
-//      var MainClass := Schema.MainClass;
-//
-//      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.ValueType]);
-//
-//      MainClass.AddProperty('MyProperty2', FImporter.BuildInTypes[TBuildInType.ValueType]);
-//
-//      MainClass.AddProperty('MyProperty3', FImporter.BuildInTypes[TBuildInType.ValueType]);
-//    end;
-//
-//  FImporter.Import(FConfiguration);
-//
-//  CompareUnitDeclaration(
-//    '''
-//    unit MyUnit;
-//
-//    interface
-//
-//    {$M+}
-//
-//    uses System.Rtti;
-//
-//    type
-//      MainModule = class;
-//
-//      MainModule = class
-//      private
-//        FMyProperty: System.Rtti.TValue;
-//        FMyProperty2: System.Rtti.TValue;
-//        FMyProperty3: System.Rtti.TValue;
-//      published
-//        property MyProperty: System.Rtti.TValue read FMyProperty write FMyProperty;
-//        property MyProperty2: System.Rtti.TValue read FMyProperty2 write FMyProperty2;
-//        property MyProperty3: System.Rtti.TValue read FMyProperty3 write FMyProperty3;
-//      end;
-//
-//    implementation
-//
-//    end.
-//
-//    ''',
-//    FConfiguration.Units[0]);
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      var MainClass := Schema.MainClass;
+
+      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.ValueType]);
+
+      MainClass.AddProperty('MyProperty2', FImporter.BuildInTypes[TBuildInType.ValueType]);
+
+      MainClass.AddProperty('MyProperty3', FImporter.BuildInTypes[TBuildInType.ValueType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    uses System.Rtti;
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProperty: System.Rtti.TValue;
+        FMyProperty2: System.Rtti.TValue;
+        FMyProperty3: System.Rtti.TValue;
+      published
+        property MyProperty: System.Rtti.TValue read FMyProperty write FMyProperty;
+        property MyProperty2: System.Rtti.TValue read FMyProperty2 write FMyProperty2;
+        property MyProperty3: System.Rtti.TValue read FMyProperty3 write FMyProperty3;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.CompareUnitDeclaration(const UnitDeclaration: String; const UnitConfiguration: TUnitConfiguration);
@@ -3107,181 +3113,181 @@ end;
 
 procedure TSchemaImporterTest.WhenAClassHasSubClassesMustLoadTheImplementationsOfGetFunctionFromTheSubClassesToo;
 begin
-//  FConverter.WhenExecuteConvert :=
-//    procedure (Schema: TSchema)
-//
-//      function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
-//      begin
-//        Result := FImporter.CreateClassType(Parent, Name);
-//      end;
-//
-//    begin
-//      var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', Schema.MainClass)));
-//
-//      ClassDefinition.AddProperty('MyProp', Schema.MainClass);
-//    end;
-//
-//  FImporter.Import(FConfiguration);
-//
-//  CompareUnitDeclaration(
-//    '''
-//    unit MyUnit;
-//
-//    interface
-//
-//    {$M+}
-//
-//    type
-//      MainModule = class;
-//
-//      MainModule = class
-//      public type
-//        TMyClass = class;
-//
-//        TMyClass = class
-//        public type
-//          TMyClass2 = class;
-//
-//          TMyClass2 = class
-//          public type
-//            TMyClass3 = class;
-//
-//            TMyClass3 = class
-//            private
-//              FMyProp: MyUnit.MainModule;
-//              function GetMyProp: MyUnit.MainModule;
-//            public
-//              destructor Destroy; override;
-//            published
-//              property MyProp: MyUnit.MainModule read GetMyProp write FMyProp;
-//            end;
-//          end;
-//        end;
-//      end;
-//
-//    implementation
-//
-//    { MainModule.TMyClass.TMyClass2.TMyClass3 }
-//
-//    destructor MainModule.TMyClass.TMyClass2.TMyClass3.Destroy;
-//    begin
-//      FMyProp.Free;
-//
-//      inherited;
-//    end;
-//
-//    function MainModule.TMyClass.TMyClass2.TMyClass3.GetMyProp: MyUnit.MainModule;
-//    begin
-//      if not Assigned(FMyProp) then
-//        MyProp := MyUnit.MainModule.Create;
-//
-//      Result := FMyProp;
-//    end;
-//
-//    end.
-//
-//    ''',
-//    FConfiguration.Units[0]);
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+
+      function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
+      begin
+        Result := FImporter.CreateClassType(Parent, Name);
+      end;
+
+    begin
+      var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', Schema.MainClass)));
+
+      ClassDefinition.AddProperty('MyProp', Schema.MainClass);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        TMyClass = class;
+
+        TMyClass = class
+        public type
+          TMyClass2 = class;
+
+          TMyClass2 = class
+          public type
+            TMyClass3 = class;
+
+            TMyClass3 = class
+            private
+              FMyProp: MyUnit.MainModule;
+              function GetMyProp: MyUnit.MainModule;
+            public
+              destructor Destroy; override;
+            published
+              property MyProp: MyUnit.MainModule read GetMyProp write FMyProp;
+            end;
+          end;
+        end;
+      end;
+
+    implementation
+
+    { MainModule.TMyClass.TMyClass2.TMyClass3 }
+
+    destructor MainModule.TMyClass.TMyClass2.TMyClass3.Destroy;
+    begin
+      FMyProp.Free;
+
+      inherited;
+    end;
+
+    function MainModule.TMyClass.TMyClass2.TMyClass3.GetMyProp: MyUnit.MainModule;
+    begin
+      if not Assigned(FMyProp) then
+        MyProp := MyUnit.MainModule.Create;
+
+      Result := FMyProp;
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenAClassHasSubClassesMustLoadTheImplementationsOfSetFunctionFromTheSubClassesToo;
 begin
-//  FConverter.WhenExecuteConvert :=
-//    procedure (Schema: TSchema)
-//
-//      function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
-//      begin
-//        Result := FImporter.CreateClassType(Parent, Name);
-//      end;
-//
-//    begin
-//      var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', Schema.MainClass)));
-//
-//      ClassDefinition.AddProperty('MyProp', FImporter.BuildInTypes[TBuildInType.IntegerType]).Optional := True;
-//    end;
-//
-//  FImporter.Import(FConfiguration);
-//
-//  CompareUnitDeclaration(
-//    '''
-//    unit MyUnit;
-//
-//    interface
-//
-//    {$M+}
-//
-//    type
-//      MainModule = class;
-//
-//      MainModule = class
-//      public type
-//        TMyClass = class;
-//
-//        TMyClass = class
-//        public type
-//          TMyClass2 = class;
-//
-//          TMyClass2 = class
-//          public type
-//            TMyClass3 = class;
-//
-//            TMyClass3 = class
-//            private
-//              FMyProp: System.Integer;
-//              FMyPropStored: Boolean;
-//              procedure SetMyProp(const Value: System.Integer);
-//            public
-//              property IsMyPropStored: Boolean read FMyPropStored;
-//            published
-//              property MyProp: System.Integer read FMyProp write SetMyProp stored FMyPropStored;
-//            end;
-//          end;
-//        end;
-//      end;
-//
-//    implementation
-//
-//    { MainModule.TMyClass.TMyClass2.TMyClass3 }
-//
-//    procedure MainModule.TMyClass.TMyClass2.TMyClass3.SetMyProp(const Value: System.Integer);
-//    begin
-//      FMyProp := Value;
-//      FMyPropStored := True;
-//    end;
-//
-//    end.
-//
-//    ''',
-//    FConfiguration.Units[0]);
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+
+      function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
+      begin
+        Result := FImporter.CreateClassType(Parent, Name);
+      end;
+
+    begin
+      var ClassDefinition := AddClass('TMyClass3', AddClass('TMyClass2', AddClass('TMyClass', Schema.MainClass)));
+
+      ClassDefinition.AddProperty('MyProp', FImporter.BuildInTypes[TBuildInType.IntegerType]).Optional := True;
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        TMyClass = class;
+
+        TMyClass = class
+        public type
+          TMyClass2 = class;
+
+          TMyClass2 = class
+          public type
+            TMyClass3 = class;
+
+            TMyClass3 = class
+            private
+              FMyProp: System.Integer;
+              FMyPropStored: Boolean;
+              procedure SetMyProp(const Value: System.Integer);
+            public
+              property IsMyPropStored: Boolean read FMyPropStored;
+            published
+              property MyProp: System.Integer read FMyProp write SetMyProp stored FMyPropStored;
+            end;
+          end;
+        end;
+      end;
+
+    implementation
+
+    { MainModule.TMyClass.TMyClass2.TMyClass3 }
+
+    procedure MainModule.TMyClass.TMyClass2.TMyClass3.SetMyProp(const Value: System.Integer);
+    begin
+      FMyProp := Value;
+      FMyPropStored := True;
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenAClassTypeDefinitionIsFlatMustAppendTheFlatAttributeInTheClassDeclaration;
 begin
-//  FConverter.WhenExecuteConvert :=
-//    procedure (Schema: TSchema)
-//    begin
-//      FImporter.CreateClassType(Schema.MainClass, 'MyClass').Flat := True;
-//
-//      FImporter.CreateClassType(Schema.MainClass, 'MyClass2');
-//    end;
-//
-//  FImporter.Import(FConfiguration);
-//
-//  LinesCompareUnitDeclaration(
-//    '''
-//      MainModule = class
-//      public type
-//        MyClass = class;
-//        MyClass2 = class;
-//
-//        [Flat]
-//        MyClass = class
-//        end;
-//
-//        MyClass2 = class
-//        end;
-//    ''',
-//    FConfiguration.Units[0]);
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      FImporter.CreateFlatAttribute(FImporter.CreateClassType(Schema.MainClass, 'MyClass'));
+
+      FImporter.CreateClassType(Schema.MainClass, 'MyClass2');
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+      MainModule = class
+      public type
+        MyClass = class;
+        MyClass2 = class;
+
+        [Flat]
+        MyClass = class
+        end;
+
+        MyClass2 = class
+        end;
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenAddDuplicateTypeInTheTypesListMustRaiseAnError;
@@ -3775,46 +3781,46 @@ end;
 
 procedure TSchemaImporterTest.WhenConfigureATypeConfigurationToChangeTheNameOfOneTypeMustChangeTheDeclarationInTheUnitGenereted;
 begin
-//  var TypeConfiguration := TTypeConfiguration.Create;
-//  TypeConfiguration.Name := 'my:MyClass';
-//  TypeConfiguration.ChangeName := 'TAnotherName';
-//
-//  FConfiguration.TypeConfiguration := [TypeConfiguration];
-//
-//  FConverter.WhenExecuteConvert :=
-//    procedure (Schema: TSchema)
-//    begin
-//      if Schema.MainClass.Name = 'MainModule' then
-//        FImporter.AddType('My Namespace', FImporter.CreateClassType(Schema.MainClass, 'MyClass'));
-//    end;
-//
-//  FImporter.Import(FConfiguration);
-//
-//  CompareUnitDeclaration(
-//    '''
-//    unit MyUnit;
-//
-//    interface
-//
-//    {$M+}
-//
-//    type
-//      MainModule = class;
-//
-//      MainModule = class
-//      public type
-//        TAnotherName = class;
-//
-//        TAnotherName = class
-//        end;
-//      end;
-//
-//    implementation
-//
-//    end.
-//
-//    ''',
-//    FConfiguration.Units[0]);
+  var TypeConfiguration := TTypeConfiguration.Create;
+  TypeConfiguration.Name := 'my:MyClass';
+  TypeConfiguration.ChangeName := 'TAnotherName';
+
+  FConfiguration.TypeConfiguration := [TypeConfiguration];
+
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      if Schema.MainClass.Name = 'MainModule' then
+        FImporter.AddType('My Namespace', FImporter.CreateClassType(Schema.MainClass, 'MyClass'));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        TAnotherName = class;
+
+        TAnotherName = class
+        end;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenConvertingTheSchemaFileMustUseTheRightConverterForEveryFileHasExpected;
@@ -4493,58 +4499,58 @@ end;
 
 procedure TSchemaImporterTest.WhenDeclareThePropertyAddFunctionMustFormatTheNameToFixTheLowerCaseFirstCharactere;
 begin
-//  FConverter.WhenExecuteConvert :=
-//    procedure (Schema: TSchema)
-//    begin
-//      Schema.MainClass.AddProperty('myProperty', FImporter.CreateArrayType(Schema.MainClass, Schema.MainClass));
-//    end;
-//
-//  FImporter.Import(FConfiguration);
-//
-//  CompareUnitDeclaration(
-//    '''
-//    unit MyUnit;
-//
-//    interface
-//
-//    {$M+}
-//
-//    type
-//      MainModule = class;
-//
-//      MainModule = class
-//      private
-//        FMyProperty: System.TArray<MyUnit.MainModule>;
-//      public
-//        destructor Destroy; override;
-//        function AddMyProperty: MyUnit.MainModule;
-//      published
-//        property myProperty: System.TArray<MyUnit.MainModule> read FMyProperty write FMyProperty;
-//      end;
-//
-//    implementation
-//
-//    { MainModule }
-//
-//    destructor MainModule.Destroy;
-//    begin
-//      for var Item in FMyProperty do
-//        Item.Free;
-//
-//      inherited;
-//    end;
-//
-//    function MainModule.AddMyProperty: MyUnit.MainModule;
-//    begin
-//      Result := MyUnit.MainModule.Create;
-//
-//      myProperty := myProperty + [Result];
-//    end;
-//
-//    end.
-//
-//    ''',
-//    FConfiguration.Units[0]);
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      Schema.MainClass.AddProperty('myProperty', FImporter.CreateArrayType(Schema.MainClass, Schema.MainClass));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyProperty: System.TArray<MyUnit.MainModule>;
+      public
+        destructor Destroy; override;
+        function AddMyProperty: MyUnit.MainModule;
+      published
+        property myProperty: System.TArray<MyUnit.MainModule> read FMyProperty write FMyProperty;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    destructor MainModule.Destroy;
+    begin
+      for var Item in FMyProperty do
+        Item.Free;
+
+      inherited;
+    end;
+
+    function MainModule.AddMyProperty: MyUnit.MainModule;
+    begin
+      Result := MyUnit.MainModule.Create;
+
+      myProperty := myProperty + [Result];
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenDeclareThePropertyFieldMustFormatTheNameToFixTheLowerCaseFirstCharactere;
@@ -4732,6 +4738,51 @@ begin
 
     procedure MainModule.AddMyProperty(const Name: System.String; const Value: System.Integer);
     begin
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenExistsAnPropertyConfigurationToChangeThePropertyNameMustChangeTheNameHasExpected;
+begin
+  var PropertyConfiguration := TPropertyConfiguration.Create;
+  PropertyConfiguration.TypeName := 'my:MainModule';
+  PropertyConfiguration.Name := 'MyProperty';
+  PropertyConfiguration.ChangeName := 'ChangeName';
+
+  FConfiguration.PropertyConfiguration := [PropertyConfiguration];
+
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      var MainClass := Schema.MainClass;
+
+      MainClass.AddProperty('MyProperty', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FChangeName: System.Integer;
+      published
+        property ChangeName: System.Integer read FChangeName write FChangeName;
+      end;
+
+    implementation
+
+    end.
+
     ''',
     FConfiguration.Units[0]);
 end;
@@ -5082,40 +5133,40 @@ end;
 
 procedure TSchemaImporterTest.WhenTheClassHasAnAliasDeclaredMustBuildTheUnitWithTheDefinitionHasExpected;
 begin
-//  FConverter.WhenExecuteConvert :=
-//    procedure (Schema: TSchema)
-//    begin
-//      FImporter.CreateAliasType(Schema.MainClass, 'Alias', FImporter.BuildInTypes[TBuildInType.IntegerType]);
-//      FImporter.CreateAliasType(Schema.MainClass, 'Alias2', FImporter.BuildInTypes[TBuildInType.IntegerType]);
-//      FImporter.CreateAliasType(Schema.MainClass, 'Alias3', FImporter.BuildInTypes[TBuildInType.IntegerType]);
-//    end;
-//
-//  FImporter.Import(FConfiguration);
-//
-//  CompareUnitDeclaration(
-//    '''
-//    unit MyUnit;
-//
-//    interface
-//
-//    {$M+}
-//
-//    type
-//      MainModule = class;
-//
-//      MainModule = class
-//      public type
-//        Alias = System.Integer;
-//        Alias2 = System.Integer;
-//        Alias3 = System.Integer;
-//      end;
-//
-//    implementation
-//
-//    end.
-//
-//    ''',
-//    FConfiguration.Units[0]);
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      FImporter.CreateAliasType(Schema.MainClass, 'Alias', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      FImporter.CreateAliasType(Schema.MainClass, 'Alias2', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      FImporter.CreateAliasType(Schema.MainClass, 'Alias3', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        Alias = System.Integer;
+        Alias2 = System.Integer;
+        Alias3 = System.Integer;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenTheClassHasAttributesMustLoadTheAttributesDeclarationsHasExpected;
@@ -5801,81 +5852,97 @@ end;
 
 procedure TSchemaImporterTest.WhenTheParentClassHasSpecialCharacteresMustFormatTheClassNameHasExpected;
 begin
-//  FConverter.WhenExecuteConvert :=
-//    procedure (Schema: TSchema)
-//
-//      function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
-//      begin
-//        Result := FImporter.CreateClassType(Parent, Name);
-//      end;
-//
-//    begin
-//      var ClassDefinition := AddClass('TMyClass3', AddClass('my.special-class;name', AddClass('TMyClass', Schema.MainClass)));
-//
-//      ClassDefinition.AddProperty('MyProp', ClassDefinition);
-//    end;
-//
-//  FImporter.Import(FConfiguration);
-//
-//  CompareUnitDeclaration(
-//    '''
-//    unit MyUnit;
-//
-//    interface
-//
-//    {$M+}
-//
-//    type
-//      MainModule = class;
-//
-//      MainModule = class
-//      public type
-//        TMyClass = class;
-//
-//        TMyClass = class
-//        public type
-//          TMySpecialClassName = class;
-//
-//          TMySpecialClassName = class
-//          public type
-//            TMyClass3 = class;
-//
-//            TMyClass3 = class
-//            private
-//              FMyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3;
-//              function GetMyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3;
-//            public
-//              destructor Destroy; override;
-//            published
-//              property MyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3 read GetMyProp write FMyProp;
-//            end;
-//          end;
-//        end;
-//      end;
-//
-//    implementation
-//
-//    { MainModule.TMyClass.TMySpecialClassName.TMyClass3 }
-//
-//    destructor MainModule.TMyClass.TMySpecialClassName.TMyClass3.Destroy;
-//    begin
-//      FMyProp.Free;
-//
-//      inherited;
-//    end;
-//
-//    function MainModule.TMyClass.TMySpecialClassName.TMyClass3.GetMyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3;
-//    begin
-//      if not Assigned(FMyProp) then
-//        MyProp := MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3.Create;
-//
-//      Result := FMyProp;
-//    end;
-//
-//    end.
-//
-//    ''',
-//    FConfiguration.Units[0]);
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+
+      function AddClass(const Name: String; const Parent: TTypeModuleDefinition): TTypeClassDefinition;
+      begin
+        Result := FImporter.CreateClassType(Parent, Name);
+      end;
+
+    begin
+      var ClassDefinition := AddClass('TMyClass3', AddClass('my.special-class;name', AddClass('TMyClass', Schema.MainClass)));
+
+      ClassDefinition.AddProperty('MyProp', ClassDefinition);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        TMyClass = class;
+
+        TMyClass = class
+        public type
+          TMySpecialClassName = class;
+
+          TMySpecialClassName = class
+          public type
+            TMyClass3 = class;
+
+            TMyClass3 = class
+            private
+              FMyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3;
+              function GetMyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3;
+            public
+              destructor Destroy; override;
+            published
+              property MyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3 read GetMyProp write FMyProp;
+            end;
+          end;
+        end;
+      end;
+
+    implementation
+
+    { MainModule.TMyClass.TMySpecialClassName.TMyClass3 }
+
+    destructor MainModule.TMyClass.TMySpecialClassName.TMyClass3.Destroy;
+    begin
+      FMyProp.Free;
+
+      inherited;
+    end;
+
+    function MainModule.TMyClass.TMySpecialClassName.TMyClass3.GetMyProp: MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3;
+    begin
+      if not Assigned(FMyProp) then
+        MyProp := MyUnit.MainModule.TMyClass.TMySpecialClassName.TMyClass3.Create;
+
+      Result := FMyProp;
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenThePropertyConfigurationIsntFoundMustRaiseAnError;
+begin
+  var PropertyConfiguration := TPropertyConfiguration.Create;
+  PropertyConfiguration.TypeName := 'my:MainModule';
+  PropertyConfiguration.Name := 'AnotherMyProperty';
+  PropertyConfiguration.ChangeName := 'ChangeName';
+
+  FConfiguration.PropertyConfiguration := [PropertyConfiguration];
+
+  Assert.WillRaise(
+    procedure
+    begin
+      FImporter.Import(FConfiguration);
+    end, EPropertyConfigurationNotFound);
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyHasAnArrayTypeOfAConcretTypeMustCreateTheAddProcedureWithAParameterOsTheArrayType;
@@ -5925,41 +5992,41 @@ end;
 
 procedure TSchemaImporterTest.WhenThePropertyHasAnSpecialCharacterMustAppendTheAmpersandBeforeTheClassName;
 begin
-//  FConverter.WhenExecuteConvert :=
-//    procedure (Schema: TSchema)
-//    begin
-//      Schema.MainClass.AddProperty('if', FImporter.BuildInTypes[TBuildInType.IntegerType]);
-//    end;
-//
-//  FImporter.Import(FConfiguration);
-//
-//  CompareUnitDeclaration(
-//    '''
-//    unit MyUnit;
-//
-//    interface
-//
-//    {$M+}
-//
-//    uses Blue.Print.Types;
-//
-//    type
-//      MainModule = class;
-//
-//      MainModule = class
-//      private
-//        FIf: System.Integer;
-//      published
-//        [FieldName('if')]
-//        property &if: System.Integer read FIf write FIf;
-//      end;
-//
-//    implementation
-//
-//    end.
-//
-//    ''',
-//    FConfiguration.Units[0]);
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      Schema.MainClass.AddProperty('if', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    uses Blue.Print.Types;
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FIf: System.Integer;
+      published
+        [FieldName('if')]
+        property &if: System.Integer read FIf write FIf;
+      end;
+
+    implementation
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenThePropertyHasAReferenceTypeMustFindTheReferenceAndLoadThePropertyValue;
@@ -6495,6 +6562,51 @@ begin
       Result := MyUnit.MainModule.Create;
 
       MyProperty := MyProperty + [Result];
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenThePropertyTypeIsTheDynamicPropertyTypeCantLoadTheFieldNameAttributeIfTheNameIsInvalid;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      Schema.MainClass.AddProperty('.MyDynamic.', FImporter.CreateDynamicPropertyType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.IntegerType]));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      private
+        FMyDynamic: Blue.Print.Types.TDynamicProperty<System.Integer>;
+      public
+        procedure AddMyDynamic(const Name: System.String; const Value: System.Integer);
+      published
+        property MyDynamic: Blue.Print.Types.TDynamicProperty<System.Integer> read FMyDynamic write FMyDynamic;
+      end;
+
+    implementation
+
+    { MainModule }
+
+    procedure MainModule.AddMyDynamic(const Name: System.String; const Value: System.Integer);
+    begin
+      MyDynamic := MyDynamic + [TDynamicPair<System.Integer>.Create(Name, Value)];
     end;
 
     end.

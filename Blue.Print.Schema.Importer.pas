@@ -7,6 +7,7 @@ interface
 uses System.Classes, System.SysUtils, System.Rtti, System.Generics.Collections;
 
 type
+  TPropertyConfiguration = class;
   TSchemaImporter = class;
   TTypeAliasDefinition = class;
   TTypeAttributeDefinition = class;
@@ -104,6 +105,11 @@ type
   ETypeDuplicateNameInTheNamespace = class(Exception)
   public
     constructor Create(const Namespace: String; const TypeDefinition: TTypeDefinition);
+  end;
+
+  EPropertyConfigurationNotFound = class(Exception)
+  public
+    constructor Create(const Configuration: TPropertyConfiguration);
   end;
 
   TBuildInType = (StringType, IntegerType, DoubleType, DateType, TimeType, DateTimeType, BooleanType, ArrayType, ValueType, DynamicPropertyType);
@@ -471,6 +477,17 @@ type
     property Name: String read FName write FName;
   end;
 
+  TPropertyConfiguration = class
+  private
+    FChangeName: String;
+    FName: String;
+    FTypeName: String;
+  published
+    property TypeName: String read FTypeName write FTypeName;
+    property Name: String read FName write FName;
+    property ChangeName: String read FChangeName write FChangeName;
+  end;
+
   TConfiguration = class
   private
     FAppendProperties: TArray<TAppendProperty>;
@@ -478,12 +495,14 @@ type
     FUnits: TArray<TUnitConfiguration>;
     FOutputFolder: String;
     FTypeConfiguration: TArray<TTypeConfiguration>;
+    FPropertyConfiguration: TArray<TPropertyConfiguration>;
   public
     destructor Destroy; override;
   published
     property AppendProperties: TArray<TAppendProperty> read FAppendProperties write FAppendProperties;
     property Namespaces: TArray<TNamespaceConfiguration> read FNamespaces write FNamespaces;
     property OutputFolder: String read FOutputFolder write FOutputFolder;
+    property PropertyConfiguration: TArray<TPropertyConfiguration> read FPropertyConfiguration write FPropertyConfiguration;
     property TypeConfiguration: TArray<TTypeConfiguration> read FTypeConfiguration write FTypeConfiguration;
     property Units: TArray<TUnitConfiguration> read FUnits write FUnits;
   end;
@@ -1346,7 +1365,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       var PropertyType := ResolveReferenceType(PropertyDefinition.PropertyType);
       var ReturnTypeDefintion: TTypeDefinition;
 
-      if not SameText(FormatPropertyName(PropertyDefinition), PropertyName) then
+      if not SameText(FormatPropertyName(PropertyDefinition), PropertyName) and not PropertyType.IsDynamicPropertyDefinition then
         CreateFieldNameType(PropertyDefinition, PropertyName);
 
       if GetGenericType(PropertyType, ReturnTypeDefintion) then
@@ -1741,7 +1760,6 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
               Break;
             end;
 
-
           CheckUses(ClassDefinition);
         end;
       end;
@@ -1970,6 +1988,17 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
     end;
   end;
 
+  function FindPropertyConfiguration(const PropertyConfiguration: TPropertyConfiguration): TTypePropertyDefinition;
+  begin
+    var PropertyTypeDefinition := FindTypeWithPrefix(PropertyConfiguration.TypeName);
+
+    for var PropertyDefinition in PropertyTypeDefinition.AsClassDefinition.Properties do
+      if PropertyDefinition.Name = PropertyConfiguration.Name then
+        Exit(PropertyDefinition);
+
+    raise EPropertyConfigurationNotFound.Create(PropertyConfiguration);
+  end;
+
 begin
   CheckConfiguration;
 
@@ -2007,6 +2036,9 @@ begin
 
   for var TypeConfiguration in Configuration.TypeConfiguration do
     FindTypeWithPrefix(TypeConfiguration.Name).FName := TypeConfiguration.ChangeName;
+
+  for var PropertyConfiguration in Configuration.PropertyConfiguration do
+    FindPropertyConfiguration(PropertyConfiguration).FName := PropertyConfiguration.ChangeName;
 
   for var UnitDefinition in Units.Values do
     GenerateUnitDeclaration(UnitDefinition);
@@ -2129,6 +2161,9 @@ begin
 
   for var Configuration in TypeConfiguration do
     Configuration.Free;
+
+  for var PropertyConfiguration in PropertyConfiguration do
+    PropertyConfiguration.Free;
 
   inherited;
 end;
@@ -2688,6 +2723,13 @@ end;
 constructor TTypeFlatAttribute.Create;
 begin
   inherited Create('Flat');
+end;
+
+{ EPropertyConfigurationNotFound }
+
+constructor EPropertyConfigurationNotFound.Create(const Configuration: TPropertyConfiguration);
+begin
+  inherited CreateFmt('The property configuration for type "%s" and property name "%s" not found!', [Configuration.TypeName, Configuration.Name]);
 end;
 
 end.
