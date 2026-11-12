@@ -160,12 +160,26 @@ var
   end;
 
   function CreateRequestBodySchemaType(const ParentModule: TTypeClassDefinition; const TypeName: String; const RequestBodySchema: OpenAPIDefinition.RequestBody): TTypeDefinition;
-  begin
-    for var ContentType in RequestBodySchema.content.additionalProperties do
-      if (ContentType.Key = CONTENTTYPE_APPLICATION_JSON) or (ContentType.Key = CONTENTTYPE_MULTIPART_FORM_DATA) then
-        Exit(CreateMediaSchemaType(Schema.MainClass, TypeName, ContentType.Value));
 
-    raise EInvalidContentType.Create(TypeName);
+    function LoadContentMediaType(const ContentTypeName: String; const AttributeFunction: TFunc<TTypeCommonDefinition, TTypeAttributeDefinition>; var BodyType: TTypeDefinition): Boolean;
+    begin
+      BodyType := nil;
+      Result := False;
+
+      for var ContentType in RequestBodySchema.content.additionalProperties do
+      begin
+        Result := ContentType.Key = ContentTypeName;
+
+        if Result then
+          BodyType := CreateMediaSchemaType(Schema.MainClass, TypeName, ContentType.Value);
+      end;
+    end;
+
+  begin
+    if not LoadContentMediaType(CONTENTTYPE_APPLICATION_JSON, nil{Importer.CreateJSONAttribute}, Result)
+      and not LoadContentMediaType(CONTENTTYPE_MULTIPART_FORM_DATA, nil{Importer.CreateMultiPartFormDataAttribute}, Result)
+      and not LoadContentMediaType(CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED, nil{Importer.CreateFormURLEncodedAttribute}, Result) then
+      raise EInvalidContentType.Create(TypeName);
   end;
 
   procedure LoadOperationParameters(const MethodDefinition: TTypeMethodDefinition; const Operation: OpenAPIDefinition.Operation);
@@ -211,7 +225,7 @@ var
       ParameterDefinition.IsOptional := not ParameterSchema.Parameter.required;
 
       if ParameterSchema.Parameter.&in = 'header' then
-        Importer.CreateHeaderAttribute(ParameterDefinition)
+        Importer.CreateHeaderValueAttribute(ParameterDefinition, ParameterSchema.Parameter.name)
       else if ParameterSchema.Parameter.&in = 'path' then
         Importer.CreatePathNameAttribute(ParameterDefinition)
       else if ParameterSchema.Parameter.&in = 'query' then

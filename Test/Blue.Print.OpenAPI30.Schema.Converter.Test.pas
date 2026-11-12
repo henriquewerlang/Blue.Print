@@ -192,6 +192,18 @@ type
     procedure WhenTheArrayTypeIsAnObjectMustCreateTheTypeWithTheComponentNamePlusArrayTypeName;
     [Test]
     procedure WhenTheArrayItemsSchemaIsAReferenceMustLoadTheReferenceTypeHasExpected;
+    [Test]
+    procedure WhenTheContentTypeOfARequestBodyIsFormURLEncodedCantRaiseAnyError;
+    [Test]
+    procedure MustLoadTheSchemaTypeOfURLEncodedContentHasExpected;
+    [Test]
+    procedure MustAppendTheFormURLEncondedAttributeForTheTypeCreateWhenTheContentTypeIsFormURLEncoded;
+    [Test]
+    procedure WhenTheContentTypeHasMoreThanOneTypeTheApplicationJSONMustBeThePriority;
+    [Test]
+    procedure WhenTheContentTypeIsApplicationJSONMustLoadTheAttributeJSONInTheClassGenereted;
+    [Test]
+    procedure WhenTheContentTypeIsMultiPartFormDataMustLoadTheAttributeMultiPartFormDataInTheClassGenereted;
   end;
 
 implementation
@@ -277,6 +289,17 @@ begin
   ImportDefinition;
 
   Assert.AreEqual('RemoteName(''MyServer'')', GetInterfaceService.Attributes[0].Declaration);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.MustAppendTheFormURLEncondedAttributeForTheTypeCreateWhenTheContentTypeIsFormURLEncoded;
+begin
+  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetMainClass.Classes[0].Attributes));
+
+  Assert.AreEqual(TTypeFormURLEncodedAttribute, GetMainClass.Classes[0].Attributes[0].ClassType);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.MustAppendTheTypeCreatedInTheComponentsRequestBodiesInTheNamespaceHasExpected;
@@ -381,6 +404,15 @@ begin
   ImportDefinition;
 
   Assert.AreEqual('MyClass2', GetMainClass.Classes[0].Properties[0].PropertyType.AsReferenceDefinition.Reference);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.MustLoadTheSchemaTypeOfURLEncodedContentHasExpected;
+begin
+  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetMainClass.Classes));
 end;
 
 procedure TOpenAPI30SchemaConverterTest.Setup;
@@ -776,6 +808,32 @@ begin
   Assert.AreEqual('.MyProc_BodyType', GetInterfaceService.Methods[0].Parameters[0].ParameterType.Name);
 end;
 
+procedure TOpenAPI30SchemaConverterTest.WhenTheContentTypeHasMoreThanOneTypeTheApplicationJSONMustBeThePriority;
+begin
+  var RequestBody := FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content;
+
+  RequestBody.AddAdditionalProperties(CONTENTTYPE_MULTIPART_FORM_DATA).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.boolean;
+  RequestBody.AddAdditionalProperties(CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
+  RequestBody.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetMainClass.Classes));
+
+  Assert.AreEqual('MyBody', GetMainClass.Classes[0].Name);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheContentTypeIsApplicationJSONMustLoadTheAttributeJSONInTheClassGenereted;
+begin
+  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetMainClass.Classes[0].Attributes));
+
+  Assert.AreEqual(TTypeJSONAttribute, GetMainClass.Classes[0].Attributes[0].ClassType);
+end;
+
 procedure TOpenAPI30SchemaConverterTest.WhenTheContentTypeIsAReferenceMustLoadTheReferenceTypeInTheParameterType;
 begin
   FDefinition.components.schemas.AddPatternProperty('MyClass').Schema.properties.AddAdditionalProperties('MyProp').Reference.AddString('$ref', '#/components/schemas/MyClass');
@@ -785,6 +843,24 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(TTypeReferenceDefinition, GetInterfaceService.Methods[0].Parameters[0].ParameterType.ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheContentTypeIsMultiPartFormDataMustLoadTheAttributeMultiPartFormDataInTheClassGenereted;
+begin
+  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties(CONTENTTYPE_MULTIPART_FORM_DATA).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+
+  ImportDefinition;
+
+  Assert.AreEqual(1, Length(GetMainClass.Classes[0].Attributes));
+
+  Assert.AreEqual(TTypeMultiPartFormDataAttribute, GetMainClass.Classes[0].Attributes[0].ClassType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheContentTypeOfARequestBodyIsFormURLEncodedCantRaiseAnyError;
+begin
+  FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_X_WWW_FORM_URLENCODED).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+
+  Assert.WillNotRaise(ImportDefinition);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheDefinitionDontHaveAnyServerInformationMustLoadTheRemoteNameOfTheInterfaceWithAnEmptyRemoteName;
@@ -892,14 +968,16 @@ begin
   var Parameter := FDefinition.paths.AddPathItem('/MyProc').put.AddParameters.Parameter;
 
   Parameter.&in := 'header';
-  Parameter.name := 'MyParameter';
+  Parameter.name := 'MyHeader';
   Parameter.schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.number;
 
   ImportDefinition;
 
   Assert.AreEqual(1, Length(GetInterfaceService.Methods[0].Parameters[0].Attributes));
 
-  Assert.AreEqual(TTypeHeaderAttribute, GetInterfaceService.Methods[0].Parameters[0].Attributes[0].ClassType);
+  Assert.AreEqual(TTypeHeaderValueAttribute, GetInterfaceService.Methods[0].Parameters[0].Attributes[0].ClassType);
+
+  Assert.AreEqual('HeaderValue(''MyHeader'')', GetInterfaceService.Methods[0].Parameters[0].Attributes[0].Declaration);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheParameterIsntRequiredMustLoadTheParameterHasOptional;

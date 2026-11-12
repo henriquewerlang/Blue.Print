@@ -789,7 +789,9 @@ begin
 
   ImportDefinition;
 
-  Assert.IsTrue(GetMainClass.Properties[0].PropertyType.AsClassDefinition.Flat);
+  Assert.AreEqual(1, Length(GetMainClass.Properties[0].PropertyType.AsClassDefinition.Attributes));
+
+  Assert.AreEqual(TTypeFlatAttribute, GetMainClass.Properties[0].PropertyType.AsClassDefinition.Attributes[0].ClassType);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenCreateAnAnyOfClassMustMarkTheClassHasFlat;
@@ -800,7 +802,9 @@ begin
 
   ImportDefinition;
 
-  Assert.IsTrue(GetMainClass.Properties[0].PropertyType.AsClassDefinition.Flat);
+  Assert.AreEqual(1, Length(GetMainClass.Properties[0].PropertyType.AsClassDefinition.Attributes));
+
+  Assert.AreEqual(TTypeFlatAttribute, GetMainClass.Properties[0].PropertyType.AsClassDefinition.Attributes[0].ClassType);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenCreateAnOneOfClassMustMarkTheClassHasFlat;
@@ -811,7 +815,9 @@ begin
 
   ImportDefinition;
 
-  Assert.IsTrue(GetMainClass.Properties[0].PropertyType.AsClassDefinition.Flat);
+  Assert.AreEqual(1, Length(GetMainClass.Properties[0].PropertyType.AsClassDefinition.Attributes));
+
+  Assert.AreEqual(TTypeFlatAttribute, GetMainClass.Properties[0].PropertyType.AsClassDefinition.Attributes[0].ClassType);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenDeclareAClassInTheSchemaTheClassNameMustBeLoadedWithTheNameInTheDefinitionsField;

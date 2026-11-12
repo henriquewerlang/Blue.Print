@@ -174,24 +174,39 @@ type
     constructor Create;
   end;
 
-  TTypeHeaderAttribute = class(TTypeAttributeDefinition)
+  TTypeJSONAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create;
+  end;
+
+  TTypeMultiPartFormDataAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create;
+  end;
+
+  TTypeHeaderValueAttribute = class(TTypeAttributeDefinition)
   public
     constructor Create;
   end;
 
   TTypeFieldNameAttribute = class(TTypeAttributeDefinition)
   public
-    constructor Create(const FieldName: String);
+    constructor Create;
   end;
 
   TTypePatternPropertyAttribute = class(TTypeAttributeDefinition)
   public
-    constructor Create(const Pattern: String);
+    constructor Create;
   end;
 
   TTypeRemoteNameAttribute = class(TTypeAttributeDefinition)
   public
-    constructor Create(const RemoteName: String);
+    constructor Create;
+  end;
+
+  TTypeFlatAttribute = class(TTypeAttributeDefinition)
+  public
+    constructor Create;
   end;
 
   TTypeCommonDefinition = class
@@ -328,9 +343,8 @@ type
 
   TTypeClassDefinition = class(TTypeModuleDefinition)
   private
-    FProperties: TArray<TTypePropertyDefinition>;
-    FFlat: Boolean;
     FPrivateMethods: TArray<TTypeMethodDefinition>;
+    FProperties: TArray<TTypePropertyDefinition>;
     FPublicMethods: TArray<TTypeMethodDefinition>;
 
     function GetHasProperties: Boolean;
@@ -342,7 +356,6 @@ type
 
     procedure AddMethod(const Method: TTypeMethodDefinition; const PrivateMethod: Boolean);
 
-    property Flat: Boolean read FFlat write FFlat;
     property HasProperties: Boolean read GetHasProperties;
     property PrivateMethods: TArray<TTypeMethodDefinition> read FPrivateMethods;
     property Properties: TArray<TTypePropertyDefinition> read FProperties;
@@ -517,6 +530,7 @@ type
     class function CreateStringListForItems: TStringList;
 
     function CreateTypeAttribute<T: TTypeAttributeDefinition, constructor>(const TypeDefinition: TTypeCommonDefinition): T;
+    function CreateTypeAttributeWithValue<T: TTypeAttributeDefinition, constructor>(const TypeDefinition: TTypeCommonDefinition; const Value: String): T;
     function CreateTypeDefinition<T: TTypeDefinition, constructor>(const ParentModule: TTypeModuleDefinition): T;
     function CreateTypeDefinitionWithName<T: TTypeDefinition, constructor>(const ParentModule: TTypeModuleDefinition; const Name: String): T;
     function FormatTypeNamespace(const Namespace, TypeName: String): String;
@@ -539,10 +553,13 @@ type
     function CreateDynamicPropertyType(const ParentModule: TTypeModuleDefinition; const DynamicType: TTypeDefinition): TTypeDynamicPropertyDefinition;
     function CreateEnumeratorType(const ParentModule: TTypeModuleDefinition; const Name: String): TTypeEnumerationDefinition;
     function CreateFieldNameType(const PropertyDefinition: TTypePropertyDefinition; const FieldName: String): TTypeFieldNameAttribute;
-    function CreateFormURLEncodedAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypeFormURLEncodedAttribute;
+    function CreateFlatAttribute(const TypeDefinition: TTypeCommonDefinition): TTypeFlatAttribute;
+    function CreateFormURLEncodedAttribute(const TypeDefinition: TTypeCommonDefinition): TTypeFormURLEncodedAttribute;
     function CreateGetAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeGetAttribute;
-    function CreateHeaderAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypeHeaderAttribute;
+    function CreateHeaderValueAttribute(const ParameterDefinition: TTypeParameterDefinition; const HeaderName: String): TTypeHeaderValueAttribute;
     function CreateInterfaceType(const ParentModule: TTypeUnitDefinition; const Name: String): TTypeInterfaceDefinition;
+    function CreateJSONAttribute(const TypeDefinition: TTypeCommonDefinition): TTypeAttributeDefinition;
+    function CreateMultiPartFormDataAttribute(const TypeDefinition: TTypeCommonDefinition): TTypeMultiPartFormDataAttribute;
     function CreateOptionsAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeOptionsAttribute;
     function CreateParameter(const MethodDefinition: TTypeMethodDefinition; const Name: String; const ParameterType: TTypeDefinition): TTypeParameterDefinition;
     function CreatePatchAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePatchAttribute;
@@ -673,14 +690,17 @@ end;
 
 function TSchemaImporter.CreateFieldNameType(const PropertyDefinition: TTypePropertyDefinition; const FieldName: String): TTypeFieldNameAttribute;
 begin
-  Result := TTypeFieldNameAttribute.Create(FieldName);
-
-  PropertyDefinition.AddAttribute(Result);
+  Result := CreateTypeAttributeWithValue<TTypeFieldNameAttribute>(PropertyDefinition, FieldName);
 end;
 
-function TSchemaImporter.CreateFormURLEncodedAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypeFormURLEncodedAttribute;
+function TSchemaImporter.CreateFlatAttribute(const TypeDefinition: TTypeCommonDefinition): TTypeFlatAttribute;
 begin
-  Result := CreateTypeAttribute<TTypeFormURLEncodedAttribute>(ParameterDefinition);
+  Result := CreateTypeAttribute<TTypeFlatAttribute>(TypeDefinition);
+end;
+
+function TSchemaImporter.CreateFormURLEncodedAttribute(const TypeDefinition: TTypeCommonDefinition): TTypeFormURLEncodedAttribute;
+begin
+  Result := CreateTypeAttribute<TTypeFormURLEncodedAttribute>(TypeDefinition);
 end;
 
 function TSchemaImporter.CreateGetAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeGetAttribute;
@@ -688,9 +708,9 @@ begin
   Result := CreateTypeAttribute<TTypeGetAttribute>(MethodDefinition);
 end;
 
-function TSchemaImporter.CreateHeaderAttribute(const ParameterDefinition: TTypeParameterDefinition): TTypeHeaderAttribute;
+function TSchemaImporter.CreateHeaderValueAttribute(const ParameterDefinition: TTypeParameterDefinition; const HeaderName: String): TTypeHeaderValueAttribute;
 begin
-  Result := CreateTypeAttribute<TTypeHeaderAttribute>(ParameterDefinition);
+  Result := CreateTypeAttributeWithValue<TTypeHeaderValueAttribute>(ParameterDefinition, HeaderName);
 end;
 
 function TSchemaImporter.CreateInterfaceType(const ParentModule: TTypeUnitDefinition; const Name: String): TTypeInterfaceDefinition;
@@ -698,6 +718,16 @@ begin
   Result := CreateTypeDefinitionWithName<TTypeInterfaceDefinition>(ParentModule, Name);
 
   ParentModule.Interfaces := ParentModule.Interfaces + [Result];
+end;
+
+function TSchemaImporter.CreateJSONAttribute(const TypeDefinition: TTypeCommonDefinition): TTypeAttributeDefinition;
+begin
+  Result := CreateTypeAttribute<TTypeJSONAttribute>(TypeDefinition);
+end;
+
+function TSchemaImporter.CreateMultiPartFormDataAttribute(const TypeDefinition: TTypeCommonDefinition): TTypeMultiPartFormDataAttribute;
+begin
+  Result := CreateTypeAttribute<TTypeMultiPartFormDataAttribute>(TypeDefinition);
 end;
 
 function TSchemaImporter.CreateOptionsAttribute(const MethodDefinition: TTypeMethodDefinition): TTypeOptionsAttribute;
@@ -731,9 +761,7 @@ end;
 
 function TSchemaImporter.CreatePatternPropertyAttribute(const PropertyDefinition: TTypePropertyDefinition; const Pattern: String): TTypePatternPropertyAttribute;
 begin
-  Result := TTypePatternPropertyAttribute.Create(Pattern);
-
-  PropertyDefinition.AddAttribute(Result);
+  Result := CreateTypeAttributeWithValue<TTypePatternPropertyAttribute>(PropertyDefinition, Pattern);
 end;
 
 function TSchemaImporter.CreatePostAttribute(const MethodDefinition: TTypeMethodDefinition): TTypePostAttribute;
@@ -760,9 +788,7 @@ end;
 
 function TSchemaImporter.CreateRemoteNameAttribute(const TypeDefinition: TTypeCommonDefinition; const Name: String): TTypeRemoteNameAttribute;
 begin
-  Result := TTypeRemoteNameAttribute.Create(Name);
-
-  TypeDefinition.AddAttribute(Result)
+  Result := CreateTypeAttributeWithValue<TTypeRemoteNameAttribute>(TypeDefinition, Name);
 end;
 
 function TSchemaImporter.CreateServiceMethod(const InterfaceDefinition: TTypeInterfaceDefinition; const Name: String; const ReturnType: TTypeDefinition): TTypeMethodDefinition;
@@ -789,6 +815,12 @@ begin
   Result := T.Create;
 
   TypeDefinition.AddAttribute(Result);
+end;
+
+function TSchemaImporter.CreateTypeAttributeWithValue<T>(const TypeDefinition: TTypeCommonDefinition; const Value: String): T;
+begin
+  Result := CreateTypeAttribute<T>(TypeDefinition);
+  Result.FDeclaration := Format(Result.FDeclaration, [Value]);
 end;
 
 function TSchemaImporter.CreateTypeDefinition<T>(const ParentModule: TTypeModuleDefinition): T;
@@ -1638,8 +1670,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
       for var ClassDefinition in ModuleDefinition.Classes do
       begin
-        if ClassDefinition.Flat then
-          AddLine(CurrentIndentation, '[Flat]');
+        GenerateAttributesDeclaration(CurrentIndentation, ClassDefinition);
 
         AddLine(CurrentIndentation, '%s', [FormatClassName(ClassDefinition)]);
 
@@ -2564,16 +2595,16 @@ end;
 
 { TTypeFieldNameAttribute }
 
-constructor TTypeFieldNameAttribute.Create(const FieldName: String);
+constructor TTypeFieldNameAttribute.Create;
 begin
-  inherited Create(Format('FieldName(''%s'')', [FieldName]));
+  inherited Create('FieldName(''%s'')');
 end;
 
 { TTypePatternPropertyAttribute }
 
-constructor TTypePatternPropertyAttribute.Create(const Pattern: String);
+constructor TTypePatternPropertyAttribute.Create;
 begin
-  inherited Create(Format('PatternProperty(''%s'')', [Pattern]));
+  inherited Create('PatternProperty(''%s'')');
 end;
 
 { TTypeMethodComparer }
@@ -2624,18 +2655,39 @@ begin
   inherited Create('FormURLEncoded');
 end;
 
-{ TTypeHeaderAttribute }
+{ TTypeHeaderValueAttribute }
 
-constructor TTypeHeaderAttribute.Create;
+constructor TTypeHeaderValueAttribute.Create;
 begin
-  inherited Create('Header');
+  inherited Create('HeaderValue(''%s'')');
 end;
 
 { TTypeRemoteNameAttribute }
 
-constructor TTypeRemoteNameAttribute.Create(const RemoteName: String);
+constructor TTypeRemoteNameAttribute.Create;
 begin
-  inherited Create(Format('RemoteName(''%s'')', [RemoteName]));
+  inherited Create('RemoteName(''%s'')');
+end;
+
+{ TTypeJSONAttribute }
+
+constructor TTypeJSONAttribute.Create;
+begin
+  inherited Create('JSON');
+end;
+
+{ TTypeMultiPartFormDataAttribute }
+
+constructor TTypeMultiPartFormDataAttribute.Create;
+begin
+  inherited Create('MultiPartFormData');
+end;
+
+{ TTypeFlatAttribute }
+
+constructor TTypeFlatAttribute.Create;
+begin
+  inherited Create('Flat');
 end;
 
 end.

@@ -183,7 +183,8 @@ const
   procedure LoadSchemaArray(const SchemaArray: JSONSchema.schemaArray; const PropertyNamePrefix: String);
   begin
     var ClassTypeDefinition := TypeDefinition.AsClassDefinition;
-    ClassTypeDefinition.Flat := True;
+
+    Importer.CreateFlatAttribute(ClassTypeDefinition);
 
     for var SchemaItem in SchemaArray do
       CreatePropertyFromSchema(ClassTypeDefinition, GetPropertyName(SchemaItem, PropertyNamePrefix, Length(ClassTypeDefinition.Properties)), SchemaItem).Optional := PropertyNamePrefix <> ALL_OF_PROPERTY;
