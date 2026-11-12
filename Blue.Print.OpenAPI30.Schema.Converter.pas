@@ -171,7 +171,11 @@ var
         Result := ContentType.Key = ContentTypeName;
 
         if Result then
+        begin
           BodyType := CreateMediaSchemaType(Schema.MainClass, TypeName, ContentType.Value);
+
+          Break;
+        end;
       end;
     end;
 

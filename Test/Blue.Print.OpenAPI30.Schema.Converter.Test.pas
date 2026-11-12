@@ -204,6 +204,8 @@ type
     procedure WhenTheContentTypeIsApplicationJSONMustLoadTheAttributeJSONInTheClassGenereted;
     [Test]
     procedure WhenTheContentTypeIsMultiPartFormDataMustLoadTheAttributeMultiPartFormDataInTheClassGenereted;
+    [Test]
+    procedure WhenExistsMoreThanOneContentTypeAndOneIsInvalidCantRaiseAnyError;
   end;
 
 implementation
@@ -646,6 +648,16 @@ begin
   ImportDefinition;
 
   Assert.AreEqual('MyBody', GetMainClass.Types[1].Name);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenExistsMoreThanOneContentTypeAndOneIsInvalidCantRaiseAnyError;
+begin
+  var RequestBody := FDefinition.components.requestBodies.AddPatternProperty('MyBody').RequestBody.content;
+
+  RequestBody.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+  RequestBody.AddAdditionalProperties('invalid/content').schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
+
+  Assert.WillNotRaise(ImportDefinition);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenHasASchemaObjectDeclaredInTheComponentsMustAppendTheClassInMainClassList;
