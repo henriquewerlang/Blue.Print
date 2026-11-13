@@ -20,6 +20,7 @@ type
   TTypeModuleDefinition = class;
   TTypePropertyDefinition = class;
   TTypeReferenceDefinition = class;
+  TTypeUnitDefinition = class;
   TUnitConfiguration = class;
 
   ENeedConfiguration = class(Exception)
@@ -235,7 +236,6 @@ type
     FParentModule: TTypeModuleDefinition;
 
     function GetIsAliasDefinition: Boolean;
-    function GetIsArrayDefinition: Boolean;
     function GetIsClassDefinition: Boolean;
     function GetIsDynamicPropertyDefinition: Boolean;
     function GetIsEnumeratorDefinition: Boolean;
@@ -250,9 +250,9 @@ type
     function AsGenericDefinition: TTypeGenericDefinition;
     function AsInterfaceDefinition: TTypeInterfaceDefinition;
     function AsReferenceDefinition: TTypeReferenceDefinition;
+    function AsUnitDefinition: TTypeUnitDefinition;
 
     property IsAliasDefinition: Boolean read GetIsAliasDefinition;
-    property IsArrayDefinition: Boolean read GetIsArrayDefinition;
     property IsClassDefinition: Boolean read GetIsClassDefinition;
     property IsDynamicPropertyDefinition: Boolean read GetIsDynamicPropertyDefinition;
     property IsEnumeratorDefinition: Boolean read GetIsEnumeratorDefinition;
@@ -1180,7 +1180,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       Result := FormatParentModuleName(TypeDefinition, True) + Result;
     end;
 
-    function GetGenericType(const TypeDefinition: TTypeDefinition; var GenericTypeDefinition: TTypeDefinition): Boolean;
+    function HasGenericType(const TypeDefinition: TTypeDefinition; var GenericTypeDefinition: TTypeDefinition): Boolean;
     begin
       GenericTypeDefinition := ResolveReferenceType(TypeDefinition);
       Result := GenericTypeDefinition.IsGenericDefinition;
@@ -1188,16 +1188,17 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       if Result then
         GenericTypeDefinition := ResolveReferenceType(GenericTypeDefinition.AsGenericDefinition.GenericType)
       else if GenericTypeDefinition.IsAliasDefinition then
-        Result := GetGenericType(GenericTypeDefinition.AsAliasDefinition.TypeAlias, GenericTypeDefinition);
+        Result := HasGenericType(GenericTypeDefinition.AsAliasDefinition.TypeAlias, GenericTypeDefinition);
+    end;
+
+    function GetGenericType(const TypeDefinition: TTypeDefinition): TTypeDefinition;
+    begin
+      HasGenericType(TypeDefinition, Result);
     end;
 
     function FormatGenericItemTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
     begin
-      var ArrayType: TTypeDefinition;
-
-      GetGenericType(PropertyDefinition.PropertyType, ArrayType);
-
-      Result := FormatFullTypeName(ArrayType);
+      Result := FormatFullTypeName(GetGenericType(PropertyDefinition.PropertyType));
     end;
 
     function FormatClassName(const ClassDefinition: TTypeClassDefinition): String;
@@ -1293,11 +1294,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
 
     function FunctionAddNeedReturnType(const PropertyDefinition: TTypePropertyDefinition): Boolean;
     begin
-      var GenericType: TTypeDefinition;
-
-      GetGenericType(PropertyDefinition.PropertyType, GenericType);
-
-      Result := GenericType.IsClassDefinition;
+      Result := GetGenericType(PropertyDefinition.PropertyType).IsClassDefinition;
     end;
 
     function FormatPropertyTypeName(const PropertyDefinition: TTypePropertyDefinition): String;
@@ -1363,22 +1360,22 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
     begin
       var PropertyName := PropertyDefinition.Name;
       var PropertyType := ResolveReferenceType(PropertyDefinition.PropertyType);
-      var ReturnTypeDefintion: TTypeDefinition;
+      var ReturnTypeDefinition: TTypeDefinition;
 
       if not SameText(FormatPropertyName(PropertyDefinition), PropertyName) and not PropertyType.IsDynamicPropertyDefinition then
         CreateFieldNameType(PropertyDefinition, PropertyName);
 
-      if GetGenericType(PropertyType, ReturnTypeDefintion) then
+      if HasGenericType(PropertyType, ReturnTypeDefinition) then
       begin
         var AddMethod := CreateMethod(ClassDefinition, PropertyDefinition, 'Add.' + PropertyDefinition.Name, TMethodType.AddFunction, False);
 
         if PropertyType.IsDynamicPropertyDefinition then
           CreateParameter(AddMethod, 'Name', BuildInTypes[TBuildInType.StringType]);
 
-        if ReturnTypeDefintion.IsClassDefinition then
-          AddMethod.FReturnValue := ReturnTypeDefintion
+        if ReturnTypeDefinition.IsClassDefinition then
+          AddMethod.FReturnValue := ReturnTypeDefinition
         else
-          CreateParameter(AddMethod, 'Value', ReturnTypeDefintion);
+          CreateParameter(AddMethod, 'Value', ReturnTypeDefinition);
       end
       else if NeedGetFunction(PropertyDefinition) then
       begin
@@ -1734,19 +1731,38 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
             Result := GetUnitDefinition(Module.ParentModule);
         end;
 
+        procedure AddUnit(const TypeDefinition: TTypeDefinition);
+        begin
+          var ParentModule: TTypeModuleDefinition;
+
+          if TypeDefinition.IsGenericDefinition then
+            ParentModule := GetUnitDefinition(GetGenericType(TypeDefinition).ParentModule)
+          else
+            ParentModule := GetUnitDefinition(TypeDefinition.ParentModule);
+
+          if (SYSTEM_UNIT_NAME <> ParentModule.Name) and (ParentModule <> UnitDefinition) then
+            UsesList.Add(ParentModule.Name);
+        end;
+
       begin
-        var ParentModule: TTypeModuleDefinition;
+        if Module.IsUnitDefinition then
+          for var InterfaceDefinition in Module.AsUnitDefinition.Interfaces do
+            for var MethodDefinition in InterfaceDefinition.Methods do
+            begin
+              for var ParameterDefinition in MethodDefinition.Parameters do
+                AddUnit(ParameterDefinition.ParameterType);
+
+              if Assigned(MethodDefinition.ReturnValue) then
+                AddUnit(MethodDefinition.ReturnValue);
+            end;
 
         for var ClassDefinition in Module.Classes do
         begin
           for var PropertyDefinition in ClassDefinition.Properties do
           begin
-            ParentModule := GetUnitDefinition(PropertyDefinition.PropertyType.ParentModule);
-
             CheckPropertiesExtraImplementations(ClassDefinition, PropertyDefinition);
 
-            if (SYSTEM_UNIT_NAME <> ParentModule.Name) and (ParentModule <> UnitDefinition) then
-              UsesList.Add(ParentModule.Name);
+            AddUnit(PropertyDefinition.PropertyType);
 
             if PropertyDefinition.HasAttributes then
               UsesList.Add(SYSTEM_BLUE_PRINT_TYPES_UNIT_NAME);
@@ -2252,14 +2268,14 @@ begin
   Result := Self as TTypeReferenceDefinition;
 end;
 
+function TTypeDefinition.AsUnitDefinition: TTypeUnitDefinition;
+begin
+  Result := Self as TTypeUnitDefinition;
+end;
+
 function TTypeDefinition.GetIsAliasDefinition: Boolean;
 begin
   Result := Self is TTypeAliasDefinition;
-end;
-
-function TTypeDefinition.GetIsArrayDefinition: Boolean;
-begin
-  Result := Self is TTypeArrayDefinition;
 end;
 
 function TTypeDefinition.GetIsClassDefinition: Boolean;

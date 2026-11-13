@@ -841,7 +841,7 @@ begin
 
   ImportDefinition;
 
-  Assert.IsTrue(GetMainClass.Alias[0].TypeAlias.IsArrayDefinition);
+  Assert.AreEqual(TTypeArrayDefinition, GetMainClass.Alias[0].TypeAlias.ClassType);
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenHaveMoreThanOnePatternPropertyMustAppendTheSequenceNumberInThePropertyName;

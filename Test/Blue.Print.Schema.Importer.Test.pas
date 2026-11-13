@@ -594,6 +594,12 @@ type
     procedure WhenThePropertyConfigurationIsntFoundMustRaiseAnError;
     [Test]
     procedure MustDeclareAllIsStoredPropertiesInAlphabeticalOrder;
+    [Test]
+    procedure WhenAMethodParameterUsesATypeFromAnotherUnitMustLoadTheUnitInTheUsesList;
+    [Test]
+    procedure WhenTheReturnTypeOfAMethodIsFromAnotherUnitMustLoadTheUnitInTheUsesList;
+    [Test]
+    procedure WhenTheArrayTypeIsFromAnotherUnitMustLoadTheUnitInTheUsesList;
   end;
 
   [TestFixture]
@@ -3179,67 +3185,67 @@ begin
       ClassDefinition.AddProperty('MyProp', Schema.MainClass);
     end;
 
-//  FImporter.Import(FConfiguration);
-//
-//  CompareUnitDeclaration(
-//    '''
-//    unit MyUnit;
-//
-//    interface
-//
-//    {$M+}
-//
-//    type
-//      MainModule = class;
-//
-//      MainModule = class
-//      public type
-//        TMyClass = class;
-//
-//        TMyClass = class
-//        public type
-//          TMyClass2 = class;
-//
-//          TMyClass2 = class
-//          public type
-//            TMyClass3 = class;
-//
-//            TMyClass3 = class
-//            private
-//              FMyProp: MyUnit.MainModule;
-//              function GetMyProp: MyUnit.MainModule;
-//            public
-//              destructor Destroy; override;
-//            published
-//              property MyProp: MyUnit.MainModule read GetMyProp write FMyProp;
-//            end;
-//          end;
-//        end;
-//      end;
-//
-//    implementation
-//
-//    { MainModule.TMyClass.TMyClass2.TMyClass3 }
-//
-//    destructor MainModule.TMyClass.TMyClass2.TMyClass3.Destroy;
-//    begin
-//      FMyProp.Free;
-//
-//      inherited;
-//    end;
-//
-//    function MainModule.TMyClass.TMyClass2.TMyClass3.GetMyProp: MyUnit.MainModule;
-//    begin
-//      if not Assigned(FMyProp) then
-//        MyProp := MyUnit.MainModule.Create;
-//
-//      Result := FMyProp;
-//    end;
-//
-//    end.
-//
-//    ''',
-//    FConfiguration.Units[0]);
+  FImporter.Import(FConfiguration);
+
+  CompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    type
+      MainModule = class;
+
+      MainModule = class
+      public type
+        TMyClass = class;
+
+        TMyClass = class
+        public type
+          TMyClass2 = class;
+
+          TMyClass2 = class
+          public type
+            TMyClass3 = class;
+
+            TMyClass3 = class
+            private
+              FMyProp: MyUnit.MainModule;
+              function GetMyProp: MyUnit.MainModule;
+            public
+              destructor Destroy; override;
+            published
+              property MyProp: MyUnit.MainModule read GetMyProp write FMyProp;
+            end;
+          end;
+        end;
+      end;
+
+    implementation
+
+    { MainModule.TMyClass.TMyClass2.TMyClass3 }
+
+    destructor MainModule.TMyClass.TMyClass2.TMyClass3.Destroy;
+    begin
+      FMyProp.Free;
+
+      inherited;
+    end;
+
+    function MainModule.TMyClass.TMyClass2.TMyClass3.GetMyProp: MyUnit.MainModule;
+    begin
+      if not Assigned(FMyProp) then
+        MyProp := MyUnit.MainModule.Create;
+
+      Result := FMyProp;
+    end;
+
+    end.
+
+    ''',
+    FConfiguration.Units[0]);
 end;
 
 procedure TSchemaImporterTest.WhenAClassHasSubClassesMustLoadTheImplementationsOfSetFunctionFromTheSubClassesToo;
@@ -3434,6 +3440,37 @@ begin
         [Get]
         procedure MyMethod;
       end;
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenAMethodParameterUsesATypeFromAnotherUnitMustLoadTheUnitInTheUsesList;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
+
+      var MyMethod := FImporter.CreateServiceMethod(InterfaceType, 'MyMethod', nil);
+
+      FImporter.CreateParameter(MyMethod, 'Parameter1', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      FImporter.CreateParameter(MyMethod, 'Parameter2', FImporter.BuildInTypes[TBuildInType.IntegerType]);
+      FImporter.CreateParameter(MyMethod, 'Parameter3', FImporter.BuildInTypes[TBuildInType.ValueType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    uses System.Rtti;
+
+    type
     ''',
     FConfiguration.Units[0]);
 end;
@@ -5147,6 +5184,31 @@ begin
     FConfiguration.Units[0]);
 end;
 
+procedure TSchemaImporterTest.WhenTheArrayTypeIsFromAnotherUnitMustLoadTheUnitInTheUsesList;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      Schema.MainClass.AddProperty('MyProp', FImporter.CreateArrayType(Schema.MainClass, FImporter.BuildInTypes[TBuildInType.ValueType]));
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    uses System.Rtti;
+
+    type
+    ''',
+    FConfiguration.Units[0]);
+end;
+
 procedure TSchemaImporterTest.WhenTheClassDefinitionHaveAPropertyMustDeclareThePropertyInTheUnit;
 begin
   FConverter.WhenExecuteConvert :=
@@ -6663,6 +6725,33 @@ begin
 
     end.
 
+    ''',
+    FConfiguration.Units[0]);
+end;
+
+procedure TSchemaImporterTest.WhenTheReturnTypeOfAMethodIsFromAnotherUnitMustLoadTheUnitInTheUsesList;
+begin
+  FConverter.WhenExecuteConvert :=
+    procedure (Schema: TSchema)
+    begin
+      var InterfaceType := FImporter.CreateInterfaceType(Schema.CurrentUnit, 'MainInterface');
+
+      FImporter.CreateServiceMethod(InterfaceType, 'MyMethod', FImporter.BuildInTypes[TBuildInType.ValueType]);
+    end;
+
+  FImporter.Import(FConfiguration);
+
+  LinesCompareUnitDeclaration(
+    '''
+    unit MyUnit;
+
+    interface
+
+    {$M+}
+
+    uses System.Rtti;
+
+    type
     ''',
     FConfiguration.Units[0]);
 end;
