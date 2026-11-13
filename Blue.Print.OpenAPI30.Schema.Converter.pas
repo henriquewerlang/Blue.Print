@@ -247,6 +247,29 @@ var
     Result := EmptyStr;
   end;
 
+  function LoadReturnType(const MethodDefinition: TTypeMethodDefinition; const Operation: OpenAPIDefinition.Operation): TTypeDefinition;
+
+    function LoadReturnCodeType(const ReturnCodeSchema: OpenAPIDefinition.Responses.TPatternProperty2Type): TTypeDefinition;
+    begin
+      Result := nil;
+
+      if ReturnCodeSchema.IsReferenceStored then
+        raise Exception.Create('Response Reference')
+      else
+        for var ContentSchema in ReturnCodeSchema.Response.content.additionalProperties do
+          if ContentSchema.Key = CONTENTTYPE_APPLICATION_JSON then
+            Result := CreateMediaSchemaType(Schema.MainClass, Format('.%sReturnType', [MethodDefinition.Name]), ContentSchema.Value);
+    end;
+
+  begin
+    Result := nil;
+
+    for var Response in Operation.responses.ReturnCodes do
+      case Response.Key.ToInteger of
+        0..299: Result := LoadReturnCodeType(Response.Value);
+      end;
+  end;
+
 begin
   Definition := Schema.SchemaValue.AsType<OpenAPIDefinition>;
   Importer := Schema.Importer;
@@ -317,6 +340,8 @@ begin
     end
     else
       raise EPathItemWithoutOperation.Create(PathItem.Key);
+
+    MethodDefinition.ReturnValue := LoadReturnType(MethodDefinition, Operation);
 
     LoadOperationParameters(MethodDefinition, Operation);
 

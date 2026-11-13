@@ -1,12 +1,9 @@
 O importador vai ser o centro e os tipos específicos vão importar os esquemas XSD ou JSON.
 * Tem que ver uma forma de um específico acionar o importador para importar o arquivo de dependência.
 
-Tratamento de parâmetros não requeridos para adicionar vários procedimentos sem os parâmetros como foi implementado anteriormente
-Verificar no Open API 3.0 os parâmetros não requeridos
-
 As propriedades IsStored em ordem alfabética também
 
-Tem que colocar os attributos de FormData para o novo tipo de content que tem na API da MoniSat
+Tem que colocar os attributos de FormData e URLEncode para o novo tipo de content que tem na API da MoniSat
 * Creio que vai precisar de uma reforma no Remote novamente, para comportar isso. Na API deles, precisa ser enviado fotos de documentos pessoais e dos veículos
 
 Implementar o esquema que se existir apenas um AllOf tem que ligar direto o tipo, sem criar uma subclasse ou coisa parecida
@@ -14,3 +11,5 @@ Implementar o esquema que se existir apenas um AllOf tem que ligar direto o tipo
 Carregar os retornos das APIs no Open API 3.0
 
 Quando o parâmetro for Query, criar uma classe com todos os parâmetros para não precisa criar várias versões overload por causa de parâmetros não requeridos
+
+Tem que criar a busca para as subclasses de um tipo, é o caso do Response do Open API 3.0 que gera um tipo chamado TPatternProperty2Type e seria interessante mudar o nome para TReturnCodeType

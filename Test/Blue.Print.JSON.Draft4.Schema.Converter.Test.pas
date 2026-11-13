@@ -209,6 +209,12 @@ type
     procedure WhenTheSchemaHasOnlyAnyOfInformationMustCreateTheTypeWithTheDefinitionNameHasExpected;
     [Test]
     procedure WhenAPropertyHasAnArrayTypeSchemaAndTheArrayItemIsASchemaDefinitionMustCreateTheClassOfArrayTypeWithThePropertyNamePlusArrayTypeInTheName;
+    [Test]
+    procedure WhenTheAdditionalPropertyHasAReferenceMustLoadTheDynamicTypeWithTheTypeReference;
+    [Test]
+    procedure WhenTheSchemaIsAReferenceCantLoadAnyOherInformationAboutTheSchema;
+    [Test]
+    procedure WhenTheSchemaHasPropertiesAndPatternPropertiesAndAdditionalPropertiesMustLoadAll;
   end;
 
 implementation
@@ -880,6 +886,18 @@ begin
   Schema.Free;
 end;
 
+procedure TJSONDraft4SchemaConverterTeste.WhenTheAdditionalPropertyHasAReferenceMustLoadTheDynamicTypeWithTheTypeReference;
+begin
+  FDefinition.definitions.AddAdditionalProperties('MyReference').&type.simpleTypes := JSONSchema.simpleTypes.integer;
+  var PropertySchema := AddProperty(FDefinition, 'MyProp', JSONSchema.simpleTypes.object);
+
+  PropertySchema.additionalProperties.JSONSchema.Ref := '#/definitions/MyReference';
+
+  ImportDefinition;
+
+  Assert.AreEqual(TTypeReferenceDefinition, GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties[0].PropertyType.AsGenericDefinition.GenericType.ClassType);
+end;
+
 procedure TJSONDraft4SchemaConverterTeste.WhenTheAllOfIsAReferenceMustLoadThePropertyTypeWithAReferenceTypeDefinition;
 begin
   var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
@@ -1344,6 +1362,17 @@ begin
   Assert.AreEqual(3, Length(GetMainClass.Classes[0].Properties));
 end;
 
+procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaHasPropertiesAndPatternPropertiesAndAdditionalPropertiesMustLoadAll;
+begin
+  FDefinition.additionalProperties.JSONSchema.&type.simpleTypes := JSONSchema.simpleTypes.integer;
+  FDefinition.patternProperties.AddAdditionalProperties('MyPattern').&type.simpleTypes := JSONSchema.simpleTypes.integer;
+  FDefinition.properties.AddAdditionalProperties('MyProp').&type.simpleTypes := JSONSchema.simpleTypes.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual(3, Length(GetMainClass.Properties));
+end;
+
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaHaveTheAllOfPropertyLoadedMustCreateAClassDefinitionForTheProperty;
 begin
   var PropertySchema := FDefinition.properties.AddAdditionalProperties('MyProperty');
@@ -1388,6 +1417,24 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(1, Length(GetMainClass.Properties[0].PropertyType.AsClassDefinition.Properties));
+end;
+
+procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaIsAReferenceCantLoadAnyOherInformationAboutTheSchema;
+begin
+  var Reference := FDefinition.definitions.AddAdditionalProperties('MyReference');
+  Reference.Ref := '#';
+
+  Reference.AddEnum('Value');
+
+  AddProperty(Reference, 'MyProperty', JSONSchema.simpleTypes.integer);
+
+  Assert.WillNotRaise(ImportDefinition);
+
+  Assert.AreEqual(0, Length(GetMainClass.Classes));
+
+  Assert.AreEqual(0, Length(GetMainClass.Enumerations));
+
+  Assert.AreEqual(0, Length(GetMainClass.Properties));
 end;
 
 procedure TJSONDraft4SchemaConverterTeste.WhenTheSchemaIsAReferenceMustCreateTheReferenceType;

@@ -396,7 +396,7 @@ type
     property MethodType: TMethodType read FMethodType;
     property Parameters: TArray<TTypeParameterDefinition> read FParameters;
     property PropertyDefinition: TTypePropertyDefinition read FPropertyDefinition;
-    property ReturnValue: TTypeDefinition read FReturnValue;
+    property ReturnValue: TTypeDefinition read FReturnValue write FReturnValue;
   end;
 
   TTypeInterfaceDefinition = class(TTypeDefinition)

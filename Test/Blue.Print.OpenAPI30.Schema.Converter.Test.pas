@@ -206,6 +206,18 @@ type
     procedure WhenTheContentTypeIsMultiPartFormDataMustLoadTheAttributeMultiPartFormDataInTheClassGenereted;
     [Test]
     procedure WhenExistsMoreThanOneContentTypeAndOneIsInvalidCantRaiseAnyError;
+    [Test]
+    procedure WhenTheOperationHasAResponseWithContentTypeJSONMustLoadTheReturnInformationFromTheMethod;
+    [Test]
+    procedure WhenTheOperationResponseCodeIsntAStatusOKCodeCantLoadTheReturnValueFromTheMethod;
+    [Test]
+    procedure TheReturnValueMustBeTheContentTypeSchemaHasExpected;
+    [Test]
+    procedure MustLoadTheTypeSchemaWhenTheResponseContentIsApplicationJSONTypeHasExpected;
+    [Test]
+    procedure WhenCreateAnClassFromReturnCodeMustLoadTheNameWithTheMethodNamePlusTheReturnTypeName;
+    [Test]
+    procedure WhenTheResponseDontHaveAValidContentTypeForTheReturnMustLoadWithTheNilValue;
   end;
 
 implementation
@@ -417,6 +429,18 @@ begin
   Assert.AreEqual(1, Length(GetMainClass.Classes));
 end;
 
+procedure TOpenAPI30SchemaConverterTest.MustLoadTheTypeSchemaWhenTheResponseContentIsApplicationJSONTypeHasExpected;
+begin
+  var Operation := FDefinition.paths.AddPathItem('/MyProc').put;
+  var ReturnCode := Operation.responses.AddReturnCodes('200');
+  ReturnCode.Response.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.number;
+  ReturnCode.Response.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_XML).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.DoubleType], GetInterfaceService.Methods[0].ReturnValue);
+end;
+
 procedure TOpenAPI30SchemaConverterTest.Setup;
 
   function CreateNamespaceConfiguration(const Namespace, Prefix: String): TNamespaceConfiguration;
@@ -575,6 +599,17 @@ begin
   Assert.AreEqual('RemoteName(''/MyProc/MyPath/MyMethod'')', GetInterfaceService.Methods[0].Attributes[1].Declaration)
 end;
 
+procedure TOpenAPI30SchemaConverterTest.TheReturnValueMustBeTheContentTypeSchemaHasExpected;
+begin
+  var Operation := FDefinition.paths.AddPathItem('/MyProc').put;
+  var ReturnCode := Operation.responses.AddReturnCodes('200');
+  ReturnCode.Response.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.string;
+
+  ImportDefinition;
+
+  Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.StringType], GetInterfaceService.Methods[0].ReturnValue);
+end;
+
 procedure TOpenAPI30SchemaConverterTest.TheSchemaTypeMustLoadThePropertyNameHasExpected;
 begin
   var ClassSchema := FDefinition.components.schemas.AddPatternProperty('MyClass').Schema;
@@ -637,6 +672,17 @@ begin
   ImportDefinition;
 
   Assert.AreEqual(0, Length(GetMainClass.Alias));
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenCreateAnClassFromReturnCodeMustLoadTheNameWithTheMethodNamePlusTheReturnTypeName;
+begin
+  var Operation := FDefinition.paths.AddPathItem('/MyProc').put;
+  var ReturnCode := Operation.responses.AddReturnCodes('200');
+  ReturnCode.Response.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+
+  ImportDefinition;
+
+  Assert.AreEqual('.MyProcReturnType', GetInterfaceService.Methods[0].ReturnValue.Name);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenCreateAReferenceMustLoadTheReferenceTypeNameWithTheRequestBodiesName;
@@ -930,6 +976,17 @@ begin
   Assert.AreEqual(TTypeGetAttribute, GetInterfaceService.Methods[0].Attributes[0].ClassType);
 end;
 
+procedure TOpenAPI30SchemaConverterTest.WhenTheOperationHasAResponseWithContentTypeJSONMustLoadTheReturnInformationFromTheMethod;
+begin
+  var Operation := FDefinition.paths.AddPathItem('/MyProc').put;
+  var ReturnCode := Operation.responses.AddReturnCodes('200');
+  ReturnCode.Response.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
+
+  ImportDefinition;
+
+  Assert.AreEqual(FImporter.BuildInTypes[TBuildInType.IntegerType], GetInterfaceService.Methods[0].ReturnValue);
+end;
+
 procedure TOpenAPI30SchemaConverterTest.WhenTheOperationHasParametersMustLoadTheNameHasExpected;
 begin
   var Operation := FDefinition.paths.AddPathItem('/MyProc').put;
@@ -938,6 +995,17 @@ begin
   ImportDefinition;
 
   Assert.AreEqual('MyParameter', GetInterfaceService.Methods[0].Parameters[0].Name);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheOperationResponseCodeIsntAStatusOKCodeCantLoadTheReturnValueFromTheMethod;
+begin
+  var Operation := FDefinition.paths.AddPathItem('/MyProc').put;
+  var ReturnCode := Operation.responses.AddReturnCodes('400');
+  ReturnCode.Response.content.AddAdditionalProperties(CONTENTTYPE_APPLICATION_JSON).schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
+
+  ImportDefinition;
+
+  Assert.IsNil(GetInterfaceService.Methods[0].ReturnValue);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheOptionsSchemaIsLoadedMustAppendTheOptionsAttributeInTheMethod;
@@ -1277,6 +1345,17 @@ begin
   FDefinition.paths.AddPathItem('/MyProc').post.requestBody.RequestBody.content.AddAdditionalProperties('invalid/content').schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.integer;
 
   Assert.WillRaise(ImportDefinition, EInvalidContentType);
+end;
+
+procedure TOpenAPI30SchemaConverterTest.WhenTheResponseDontHaveAValidContentTypeForTheReturnMustLoadWithTheNilValue;
+begin
+  var Operation := FDefinition.paths.AddPathItem('/MyProc').put;
+  var ReturnCode := Operation.responses.AddReturnCodes('200');
+  ReturnCode.Response.content.AddAdditionalProperties('invalid/content').schema.Schema.&type := OpenAPIDefinition.Schema.TTypeType.object;
+
+  ImportDefinition;
+
+  Assert.IsNil(GetInterfaceService.Methods[0].ReturnValue);
 end;
 
 procedure TOpenAPI30SchemaConverterTest.WhenTheSchemaHasTheAllOfDefinitionMustLoadAClassTypeDefinitionForThePropertyType;

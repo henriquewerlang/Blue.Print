@@ -13,7 +13,7 @@ type
 
     function CreateSchemaType(const ParentClassDefinition: TTypeClassDefinition; const TypeName: String; const JSONSchemaType: JSONSchema): TTypeDefinition;
     function GetDefinitionsNamespace: String;
-    function GetReferenceSchemaName(JSONSchemaType: JSONSchema): String;
+    function GetReferenceSchemaName(const JSONSchemaType: JSONSchema): String;
 
     procedure Convert(const Schema: TSchema);
     procedure LoadSchema(const Schema: TSchema);
@@ -57,10 +57,16 @@ begin
   Result := Importer.BuildInTypes[TBuildInType.ValueType];
 
   if JSONSchemaType.IsRefStored then
+  begin
+    var Namespace: String;
+
     if JSONSchemaType.ref = '#' then
-      Result := Importer.CreateReferenceType(ParentClassDefinition, 'Reference', JSONDefinition.id, GetReferenceSchemaName(JSONSchemaType))
+      Namespace := JSONDefinition.id
     else
-      Result := Importer.CreateReferenceType(ParentClassDefinition, 'Reference', DefinitionsNamespace, GetReferenceSchemaName(JSONSchemaType))
+      Namespace := DefinitionsNamespace;
+
+    Exit(Importer.CreateReferenceType(ParentClassDefinition, EmptyStr, Namespace, GetReferenceSchemaName(JSONSchemaType)));
+  end
   else if JSONSchemaType.IsEnumStored then
     Result := Importer.CreateEnumeratorType(ParentClassDefinition, TypeName)
   else if JSONSchemaType.IsPropertiesStored then
@@ -86,7 +92,7 @@ begin
   Result := JSONDefinition.id + '/definitions'
 end;
 
-function TJSONDraft4SchemaConverter.GetReferenceSchemaName(JSONSchemaType: JSONSchema): String;
+function TJSONDraft4SchemaConverter.GetReferenceSchemaName(const JSONSchemaType: JSONSchema): String;
 begin
   if JSONSchemaType.ref = '#' then
     Result := MainClass.Name
@@ -132,12 +138,12 @@ const
     Result.Optional := IsOptional;
   end;
 
-  function CreatePropertyType(const ClassDefinition: TTypeClassDefinition; const PropertyName: String; const PropertyType: JSONSchema): TTypeDefinition;
+  function CreatePropertyType(const PropertyName: String; const PropertyTypeSchema: JSONSchema): TTypeDefinition;
   begin
-    Result := CreateSchemaType(ClassDefinition, Format('.%sType', [PropertyName]), PropertyType);
+    Result := CreateSchemaType(TypeDefinition.AsClassDefinition, Format('.%sType', [PropertyName]), PropertyTypeSchema);
   end;
 
-  function CreatePropertyFromSchema(const ClassDefinition: TTypeClassDefinition; const PropertyName: String; const PropertyType: JSONSchema): TTypePropertyDefinition;
+  function CreatePropertyFromSchema(const PropertyName: String; const PropertySchema: JSONSchema): TTypePropertyDefinition;
 
     function IsRequired: Boolean;
     begin
@@ -149,32 +155,29 @@ const
     end;
 
   begin
-    Result := CreateProperty(ClassDefinition, PropertyName, CreatePropertyType(ClassDefinition, PropertyName, PropertyType), not IsRequired);
+    Result := CreateProperty(TypeDefinition.AsClassDefinition, PropertyName, CreatePropertyType(PropertyName, PropertySchema), not IsRequired);
   end;
 
-  function CreateDynamicPropertyType(const ClassDefinition: TTypeClassDefinition; const PropertyName: String; const PropertyType: JSONSchema): TTypeDynamicPropertyDefinition;
+  function CreatePropertyWithDynamicPropertyType(const PropertyName: String; const DynamicPropertySchema: JSONSchema): TTypePropertyDefinition;
   begin
-    Result := Importer.CreateDynamicPropertyType(ClassDefinition, CreatePropertyType(ClassDefinition, PropertyName, PropertyType));
+    var PropertyType := Importer.CreateDynamicPropertyType(TypeDefinition.AsClassDefinition, CreatePropertyType(PropertyName, DynamicPropertySchema));
+
+    Result := CreateProperty(TypeDefinition.AsClassDefinition, PropertyName, PropertyType, False);
   end;
 
-  procedure DefineProperties(const ClassDefinition: TTypeClassDefinition; const JSONSchemaType: JSONSchema);
+  procedure DefineProperties(const TypeDefinition: TTypeDefinition; const JSONSchemaType: JSONSchema);
   begin
-    for var PropertySchema in JSONSchemaType.properties.additionalProperties do
-      CreatePropertyFromSchema(ClassDefinition, PropertySchema.Key, PropertySchema.Value);
+    if JSONSchemaType.IsPropertiesStored then
+      for var PropertySchema in JSONSchemaType.properties.additionalProperties do
+        CreatePropertyFromSchema(PropertySchema.Key, PropertySchema.Value);
 
     if JSONSchemaType.IsAdditionalPropertiesStored and JSONSchemaType.additionalProperties.IsJSONSchemaStored then
-    begin
-      var PropertyName := 'additionalProperties';
-
-      CreateProperty(ClassDefinition, PropertyName, CreateDynamicPropertyType(ClassDefinition, PropertyName, JSONSchemaType.additionalProperties.JSONSchema), False);
-    end;
+      CreatePropertyWithDynamicPropertyType('additionalProperties', JSONSchemaType.additionalProperties.JSONSchema);
 
     if JSONSchemaType.IsPatternPropertiesStored then
       for var PatternProperty in JSONSchemaType.patternProperties.additionalProperties do
       begin
-        var PropertyName := GetPropertyName(PatternProperty.Value, 'PatternProperty', Length(ClassDefinition.Properties));
-
-        var PropertyDefinition := CreateProperty(ClassDefinition, PropertyName, CreateDynamicPropertyType(ClassDefinition, PropertyName, PatternProperty.Value), False);
+        var PropertyDefinition := CreatePropertyWithDynamicPropertyType(GetPropertyName(PatternProperty.Value, 'PatternProperty', Length(TypeDefinition.AsClassDefinition.Properties)), PatternProperty.Value);
 
         Importer.CreatePatternPropertyAttribute(PropertyDefinition, PatternProperty.Key);
       end;
@@ -187,12 +190,12 @@ const
     Importer.CreateFlatAttribute(ClassTypeDefinition);
 
     for var SchemaItem in SchemaArray do
-      CreatePropertyFromSchema(ClassTypeDefinition, GetPropertyName(SchemaItem, PropertyNamePrefix, Length(ClassTypeDefinition.Properties)), SchemaItem).Optional := PropertyNamePrefix <> ALL_OF_PROPERTY;
+      CreatePropertyFromSchema(GetPropertyName(SchemaItem, PropertyNamePrefix, Length(ClassTypeDefinition.Properties)), SchemaItem).Optional := PropertyNamePrefix <> ALL_OF_PROPERTY;
   end;
 
 begin
   if JSONSchemaType.IsPropertiesStored or JSONSchemaType.IsAdditionalPropertiesStored or JSONSchemaType.IsPatternPropertiesStored then
-    DefineProperties(TypeDefinition.AsClassDefinition, JSONSchemaType)
+    DefineProperties(TypeDefinition, JSONSchemaType)
   else if JSONSchemaType.IsAllOfStored then
     LoadSchemaArray(JSONSchemaType.allOf, ALL_OF_PROPERTY)
   else if JSONSchemaType.IsAnyOfStored then

@@ -62,7 +62,7 @@ type
     public
       procedure AddString(const Name, Value: System.String);
     published
-      [PatternProperty('^\$ref$'), FieldName('string')]
+      [PatternProperty('^\$ref$')]
       property &string: Blue.Print.Types.TDynamicProperty<System.String> read FString write FString;
     end;
 
@@ -1702,23 +1702,23 @@ type
         property Reference: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Reference read GetReference write SetReference stored FReferenceStored;
       end;
     private
+      FAnotherDefinitions: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
       FDefault: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses.TDefaultType;
       FDefaultStored: Boolean;
-      FPatternProperty2: Blue.Print.Types.TDynamicProperty<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses.TPatternProperty2Type>;
-      FPatternProperty3: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue>;
+      FReturnCodes: Blue.Print.Types.TDynamicProperty<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses.TPatternProperty2Type>;
       function GetDefault: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses.TDefaultType;
       procedure SetDefault(const Value: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses.TDefaultType);
     public
       destructor Destroy; override;
-      function AddPatternProperty2(const Name: System.String): Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses.TPatternProperty2Type;
-      procedure AddPatternProperty3(const Name: System.String; const Value: System.Rtti.TValue);
+      procedure AddAnotherDefinitions(const Name: System.String; const Value: System.Rtti.TValue);
+      function AddReturnCodes(const Name: System.String): Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses.TPatternProperty2Type;
       property IsDefaultStored: Boolean read FDefaultStored;
     published
       property default: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses.TDefaultType read GetDefault write SetDefault stored FDefaultStored;
       [PatternProperty('^[1-5](?:\d{2}|XX)$')]
-      property PatternProperty2: Blue.Print.Types.TDynamicProperty<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses.TPatternProperty2Type> read FPatternProperty2 write FPatternProperty2;
+      property ReturnCodes: Blue.Print.Types.TDynamicProperty<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses.TPatternProperty2Type> read FReturnCodes write FReturnCodes;
       [PatternProperty('^x-')]
-      property PatternProperty3: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue> read FPatternProperty3 write FPatternProperty3;
+      property AnotherDefinitions: Blue.Print.Types.TDynamicProperty<System.Rtti.TValue> read FAnotherDefinitions write FAnotherDefinitions;
     end;
 
     SecurityRequirement = class
@@ -5365,22 +5365,22 @@ destructor OpenAPIDefinition.Responses.Destroy;
 begin
   FDefault.Free;
 
-  for var Item in FPatternProperty2 do
+  for var Item in FReturnCodes do
     Item.Value.Free;
 
   inherited;
 end;
 
-function OpenAPIDefinition.Responses.AddPatternProperty2(const Name: System.String): Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses.TPatternProperty2Type;
+procedure OpenAPIDefinition.Responses.AddAnotherDefinitions(const Name: System.String; const Value: System.Rtti.TValue);
+begin
+  AnotherDefinitions := AnotherDefinitions + [TDynamicPair<System.Rtti.TValue>.Create(Name, Value)];
+end;
+
+function OpenAPIDefinition.Responses.AddReturnCodes(const Name: System.String): Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses.TPatternProperty2Type;
 begin
   Result := Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses.TPatternProperty2Type.Create;
 
-  PatternProperty2 := PatternProperty2 + [TDynamicPair<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses.TPatternProperty2Type>.Create(Name, Result)];
-end;
-
-procedure OpenAPIDefinition.Responses.AddPatternProperty3(const Name: System.String; const Value: System.Rtti.TValue);
-begin
-  PatternProperty3 := PatternProperty3 + [TDynamicPair<System.Rtti.TValue>.Create(Name, Value)];
+  ReturnCodes := ReturnCodes + [TDynamicPair<Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses.TPatternProperty2Type>.Create(Name, Result)];
 end;
 
 function OpenAPIDefinition.Responses.GetDefault: Blue.Print.OpenAPI30.Schema.OpenAPIDefinition.Responses.TDefaultType;

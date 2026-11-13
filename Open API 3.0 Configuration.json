@@ -26,24 +26,14 @@
    ],
    "PropertyConfiguration": [
       {
-         "TypeName": "TOpenAPIDefinition.Parameter",
-         "Name": "PathParameter",
-         "FlatEnumerator": "in"
+         "TypeName": "OpenAPI30/defs:Responses",
+         "Name": "PatternProperty2",
+         "ChangeName": "ReturnCodes"
       },
       {
-         "TypeName": "TOpenAPIDefinition.Parameter",
-         "Name": "QueryParameter",
-         "FlatEnumerator": "in"
-      },
-      {
-         "TypeName": "TOpenAPIDefinition.Parameter",
-         "Name": "HeaderParameter",
-         "FlatEnumerator": "in"
-      },
-      {
-         "TypeName": "TOpenAPIDefinition.Parameter",
-         "Name": "CookieParameter",
-         "FlatEnumerator": "in"
+         "TypeName": "OpenAPI30/defs:Responses",
+         "Name": "PatternProperty3",
+         "ChangeName": "AnotherDefinitions"
       }
    ],
    "Units": [
