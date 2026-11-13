@@ -1617,7 +1617,7 @@ procedure TSchemaImporter.Import(const Configuration: TConfiguration);
       begin
         RemoveLastLine;
 
-        for var PropertyDefinition in ClassDefinition.Properties do
+        for var PropertyDefinition in SortProperties(ClassDefinition) do
           if PropertyDefinition.Optional then
             AddLine(CurrentIndentation, 'property %s: Boolean read %s;', [FormatIsStoredProperty(PropertyDefinition), FormatStoredFieldName(PropertyDefinition)]);
 

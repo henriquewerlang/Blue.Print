@@ -1,14 +1,10 @@
 O importador vai ser o centro e os tipos específicos vão importar os esquemas XSD ou JSON.
 * Tem que ver uma forma de um específico acionar o importador para importar o arquivo de dependência.
 
-As propriedades IsStored em ordem alfabética também
-
 Tem que colocar os attributos de FormData e URLEncode para o novo tipo de content que tem na API da MoniSat
 * Creio que vai precisar de uma reforma no Remote novamente, para comportar isso. Na API deles, precisa ser enviado fotos de documentos pessoais e dos veículos
 
 Implementar o esquema que se existir apenas um AllOf tem que ligar direto o tipo, sem criar uma subclasse ou coisa parecida
-
-Carregar os retornos das APIs no Open API 3.0
 
 Quando o parâmetro for Query, criar uma classe com todos os parâmetros para não precisa criar várias versões overload por causa de parâmetros não requeridos
 
