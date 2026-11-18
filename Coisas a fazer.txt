@@ -9,3 +9,9 @@ Implementar o esquema que se existir apenas um AllOf tem que ligar direto o tipo
 Quando o parâmetro for Query, criar uma classe com todos os parâmetros para não precisa criar várias versões overload por causa de parâmetros não requeridos
 
 Tem que criar a busca para as subclasses de um tipo, é o caso do Response do Open API 3.0 que gera um tipo chamado TPatternProperty2Type e seria interessante mudar o nome para TReturnCodeType
+
+Refatoração Serializador
+* Ter o serializador com todas as regras de serialização 
+* O leitor/escritor específico para cada tipo de texto (JSON, XML, YAML, Query, FormData, URLEncode, etc...)
+* Tem que ter uma função para iniciar a classe, para criar o IXMLDocument, o TJSONObject, etc...
+* As classes envolvidas tem que ser stateless 

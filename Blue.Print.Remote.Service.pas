@@ -64,7 +64,7 @@ type
     FCommunication: IHTTPCommunication;
     FContext: TRttiContext;
     FInterfaceType: TRttiInterfaceType;
-    FSerializer: IBluePrintSerializer;
+    FSerializer: IBluePrintSerializerOld;
     FURL: String;
     FLog: ILog;
 
@@ -78,7 +78,7 @@ type
     function GetRequestMethod(const Method: TRttiMethod): TRequestMethod;
     function GetPathParams(const Method: TRttiMethod; const Args: TArray<TValue>): String;
     function GetQueryParameters(const Method: TRttiMethod; const Args: TArray<TValue>): String;
-    function GetSerializer(const XML: Boolean): IBluePrintSerializer;
+    function GetSerializer(const XML: Boolean): IBluePrintSerializerOld;
     function GetSOAPActionName(const Method: TRttiMethod): String;
     function IsFormURLEncoded(const Method: TRttiMethod): Boolean;
     function IsSOAPRequest: Boolean;
@@ -102,17 +102,17 @@ type
 
     property InterfaceType: TRttiInterfaceType read FInterfaceType;
   public
-    constructor Create(const TypeInfo: PTypeInfo; const Serializer: IBluePrintSerializer);
+    constructor Create(const TypeInfo: PTypeInfo; const Serializer: IBluePrintSerializerOld);
 
     destructor Destroy; override;
 
-    class function CreateService<T: IInvokable>(const URL: String; const Serializer: IBluePrintSerializer = nil): T;
+    class function CreateService<T: IInvokable>(const URL: String; const Serializer: IBluePrintSerializerOld = nil): T;
 
     function GetService<T: IInvokable>(const URL: String): T;
 
     property Communication: IHTTPCommunication read FCommunication write FCommunication;
     property Log: ILog read FLog write FLog;
-    property Serializer: IBluePrintSerializer read FSerializer write FSerializer;
+    property Serializer: IBluePrintSerializerOld read FSerializer write FSerializer;
   end;
 
 implementation
@@ -151,7 +151,7 @@ begin
   Result := FURL + GetRemoteServiceName + GetRemoteMethodName(Method, Args) + GetPathParams(Method, Args) + GetQueryParameters(Method, Args);
 end;
 
-constructor TRemoteService.Create(const TypeInfo: PTypeInfo; const Serializer: IBluePrintSerializer);
+constructor TRemoteService.Create(const TypeInfo: PTypeInfo; const Serializer: IBluePrintSerializerOld);
 begin
   inherited Create(TypeInfo, {$IFDEF PAS2JS}@{$ENDIF}OnInvokeMethod);
 
@@ -162,7 +162,7 @@ begin
   FSerializer := Serializer;
 end;
 
-class function TRemoteService.CreateService<T>(const URL: String; const Serializer: IBluePrintSerializer): T;
+class function TRemoteService.CreateService<T>(const URL: String; const Serializer: IBluePrintSerializerOld): T;
 var
   RemoteService: TRemoteService;
 
@@ -323,7 +323,7 @@ begin
     Result := TRequestMethod.Post;
 end;
 
-function TRemoteService.GetSerializer(const XML: Boolean): IBluePrintSerializer;
+function TRemoteService.GetSerializer(const XML: Boolean): IBluePrintSerializerOld;
 begin
   if not Assigned(FSerializer) then
     if XML then

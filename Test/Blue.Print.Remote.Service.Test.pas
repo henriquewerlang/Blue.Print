@@ -17,7 +17,7 @@ type
     FLog: TLogMock;
     FLogInterface: ILog;
     FSerializer: TSerializerMock;
-    FSerializerInterface: IBluePrintSerializer;
+    FSerializerInterface: IBluePrintSerializerOld;
 
     function CreateRemoteService<T: IInvokable>: TRemoteService;
     function GetRemoteService<T: IInvokable>(const URL: String): T;
@@ -282,7 +282,7 @@ type
     property URL: String read FURL;
   end;
 
-  TSerializerMock = class(TBluePrintSerializer, IBluePrintSerializer)
+  TSerializerMock = class(TBluePrintSerializerOld, IBluePrintSerializerOld)
   private
     FDeserializeCalled: Boolean;
     FReturnValue: TValue;

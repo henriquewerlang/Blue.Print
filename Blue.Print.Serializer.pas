@@ -2,7 +2,7 @@
 
 interface
 
-uses System.SysUtils, System.Rtti, System.TypInfo, System.Generics.Collections, Blue.Print.Types, {$IFDEF PAS2JS}BrowserApi.Web, JSApi.JS{$ELSE}System.JSON, Xml.XMLIntf{$ENDIF};
+uses System.Classes, System.SysUtils, System.Rtti, System.TypInfo, System.Generics.Collections, Blue.Print.Types, {$IFDEF PAS2JS}BrowserApi.Web, JSApi.JS{$ELSE}System.JSON, Xml.XMLIntf{$ENDIF};
 
 type
 {$IFDEF PAS2JS}
@@ -25,7 +25,48 @@ type
   EInvalidEnumeratorName = class(Exception)
   end;
 
-  TBluePrintSerializer = class(TInterfacedObject)
+  EInvalidContentTypeForConverter = class(Exception)
+  public
+    constructor Create(const ContentType: String);
+  end;
+
+  IBluePrintConverter = interface
+    ['{71A40A0E-BCC9-4ED7-B356-398B6677D10D}']
+    function AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
+    function CreateObject(const RttiType: TRttiType): TValue;
+    function LoadStream(const SerializedObject: TValue): TStream;
+
+    procedure LoadPropertyValue(const SerializedProperty: TValue; const PropertyValue: TValue);
+  end;
+
+  IBluePrintSerializer = interface
+    ['{1BB17FD8-606E-4EE9-9463-6E8D15F1E2DE}']
+    function Serialize(const ContentType: String; const Value: TValue): TStream;
+  end;
+
+  TBluePrintSerializer = class(TInterfacedObject, IBluePrintSerializer)
+  private class var
+    FConverters: TDictionary<String, IBluePrintConverter>;
+    FRttiContext: TRttiContext;
+  private
+    class function GetConverter(const ContentType: String): IBluePrintConverter; static;
+
+    class procedure SetConverter(const ContentType: String; const Value: IBluePrintConverter); static;
+
+    function SerializeType(const Value: TValue): TValue;
+  public
+    class constructor Create;
+
+    class destructor Destroy;
+
+    class property Converters[const ContentType: String]: IBluePrintConverter read GetConverter write SetConverter;
+    class property RttiContext: TRttiContext read FRttiContext;
+
+    function Deserialize(const TypeInfo: TTypeInfo; const Value: TStream): TValue;
+    function Serialize(const ContentType: String; const Value: TValue): TStream;
+  end;
+
+  TBluePrintSerializerOld = class(TInterfacedObject)
   protected
     FContext: TRttiContext;
     FContentType: String;
@@ -52,7 +93,7 @@ type
     destructor Destroy; override;
   end;
 
-  TBluePrintJSONSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
+  TBluePrintJSONSerializer = class(TBluePrintSerializerOld, IBluePrintSerializerOld)
   private type
     TFlatType = (Number, Text, Bool, &Array, &Object, Enumerator);
   private
@@ -85,7 +126,7 @@ type
     procedure SerializeProperties(const RttiType: TRttiType; const Instance: TObject; const JSONObject: TJSONObject);
   end;
 
-  TBluePrintXMLSerializer = class(TBluePrintSerializer, IBluePrintSerializer)
+  TBluePrintXMLSerializer = class(TBluePrintSerializerOld, IBluePrintSerializerOld)
   private
     function GetFormatValue(const RttiMember: TRttiMember): String;
     function GetNamespaceValue(const RttiObject: TRttiObject; const Namespace: String): String;
@@ -111,7 +152,7 @@ type
 
 implementation
 
-uses System.Classes, System.DateUtils, {$IFDEF DCC}System.SysConst, System.RegularExpressions, Xml.XMLDoc, REST.Types{$ELSE}System.RTLConsts{$ENDIF};
+uses System.DateUtils, {$IFDEF DCC}System.SysConst, System.RegularExpressions, Xml.XMLDoc, REST.Types{$ELSE}System.RTLConsts{$ENDIF};
 
 {$IFDEF PAS2JS}
 type
@@ -160,9 +201,9 @@ type
     procedure SetArrayLength(const Value: NativeInt);
   end;
 
-{ TBluePrintSerializer }
+{ TBluePrintSerializerOld }
 
-function TBluePrintSerializer.CheckPropertyInstance(const Instance: TValue; const &Property: TRttiProperty): TValue;
+function TBluePrintSerializerOld.CheckPropertyInstance(const Instance: TValue; const &Property: TRttiProperty): TValue;
 begin
   Result := &Property.GetValue(Instance.AsObject);
 
@@ -174,14 +215,14 @@ begin
   end;
 end;
 
-constructor TBluePrintSerializer.Create;
+constructor TBluePrintSerializerOld.Create;
 begin
   inherited;
 
   FContext := TRTTIContext.Create;
 end;
 
-function TBluePrintSerializer.CreateObject(const RttiType: TRttiInstanceType): TObject;
+function TBluePrintSerializerOld.CreateObject(const RttiType: TRttiInstanceType): TObject;
 var
   ConstructorMethod: TRttiMethod;
 
@@ -193,7 +234,7 @@ begin
       Exit(ConstructorMethod.Invoke(RttiType.AsInstance.MetaclassType, []).AsObject);
 end;
 
-function TBluePrintSerializer.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
+function TBluePrintSerializerOld.Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;
 begin
   case TypeInfo.Kind of
 {$IFDEF DCC}
@@ -218,14 +259,14 @@ begin
   end;
 end;
 
-destructor TBluePrintSerializer.Destroy;
+destructor TBluePrintSerializerOld.Destroy;
 begin
   FContext.Free;
 
   inherited;
 end;
 
-function TBluePrintSerializer.FindPropertyByName(const RttiType: TRttiType; const PropertyName: String): TRttiProperty;
+function TBluePrintSerializerOld.FindPropertyByName(const RttiType: TRttiType; const PropertyName: String): TRttiProperty;
 var
   PatternProperty: PatternPropertyAttribute;
   PropertyRtti: TRttiProperty;
@@ -249,7 +290,7 @@ begin
   end;
 end;
 
-function TBluePrintSerializer.GetArrayElementType(const RttiType: TRttiType): TRttiType;
+function TBluePrintSerializerOld.GetArrayElementType(const RttiType: TRttiType): TRttiType;
 begin
 {$IFDEF DCC}
   if RttiType is TRttiArrayType then
@@ -259,17 +300,17 @@ begin
     Result := TRttiDynamicArrayType(RttiType).ElementType;
 end;
 
-function TBluePrintSerializer.GetContentType: String;
+function TBluePrintSerializerOld.GetContentType: String;
 begin
   Result := FContentType;
 end;
 
-function TBluePrintSerializer.GetEnumerationNames(const TypeInfo: PTypeInfo): TArray<String>;
+function TBluePrintSerializerOld.GetEnumerationNames(const TypeInfo: PTypeInfo): TArray<String>;
 begin
   Result := GetEnumerationNames(FContext.GetType(TypeInfo));
 end;
 
-function TBluePrintSerializer.GetEnumerationNames(const Enumeration: TRttiType): TArray<String>;
+function TBluePrintSerializerOld.GetEnumerationNames(const Enumeration: TRttiType): TArray<String>;
 var
   Attribute: EnumValueAttribute;
 
@@ -282,13 +323,13 @@ begin
     Result := (Enumeration as TRttiEnumerationType).GetNames;
 end;
 
-function TBluePrintSerializer.GetEnumerationValue(const EnumeratorType: TRttiType; const Value: String): TValue;
+function TBluePrintSerializerOld.GetEnumerationValue(const EnumeratorType: TRttiType; const Value: String): TValue;
 begin
   if not TryGetEnumeratorValue(EnumeratorType, Value, Result) then
     raise EInvalidEnumeratorName.CreateFmt('Invalid enumerator value name %s!', [Value]);
 end;
 
-function TBluePrintSerializer.GetFieldName(const RttiObject: TRttiNamedObject): String;
+function TBluePrintSerializerOld.GetFieldName(const RttiObject: TRttiNamedObject): String;
 var
   FieldName: FieldNameAttribute;
 
@@ -301,7 +342,7 @@ begin
     Result := RttiObject.Name;
 end;
 
-function TBluePrintSerializer.GetPublishedProperties(const RttiType: TRttiType): TArray<TRttiProperty>;
+function TBluePrintSerializerOld.GetPublishedProperties(const RttiType: TRttiType): TArray<TRttiProperty>;
 var
   &Property: TRttiProperty;
 
@@ -313,7 +354,7 @@ begin
       Result := Result + [&Property];
 end;
 
-function TBluePrintSerializer.Serialize(const Value: TValue): String;
+function TBluePrintSerializerOld.Serialize(const Value: TValue): String;
 begin
   FContentType := CONTENTTYPE_TEXT_PLAIN;
 
@@ -345,12 +386,12 @@ begin
   end;
 end;
 
-procedure TBluePrintSerializer.SetFormatSettings(const Value: TFormatSettings);
+procedure TBluePrintSerializerOld.SetFormatSettings(const Value: TFormatSettings);
 begin
   FFormatSettings := Value;
 end;
 
-function TBluePrintSerializer.TryGetEnumeratorValue(const EnumeratorType: TRttiType; const Value: String; var EnumeratorValue: TValue): Boolean;
+function TBluePrintSerializerOld.TryGetEnumeratorValue(const EnumeratorType: TRttiType; const Value: String; var EnumeratorValue: TValue): Boolean;
 var
   EnumName: String;
   OrdinalValue: Int64;
@@ -1444,6 +1485,97 @@ begin
 {$ELSE}
   DynArraySetLength(PPointer(GetReferenceToRawData)^, TypeInfo, 1, @Value);
 {$ENDIF}
+end;
+
+{ TBluePrintSerializer }
+
+class constructor TBluePrintSerializer.Create;
+begin
+  FConverters := TDictionary<String, IBluePrintConverter>.Create;
+  FRttiContext := TRttiContext.Create;
+end;
+
+function TBluePrintSerializer.Deserialize(const TypeInfo: TTypeInfo; const Value: TStream): TValue;
+begin
+
+end;
+
+class destructor TBluePrintSerializer.Destroy;
+begin
+  FConverters.Free;
+
+  FRttiContext.Free;
+end;
+
+class function TBluePrintSerializer.GetConverter(const ContentType: String): IBluePrintConverter;
+begin
+  Result := FConverters[ContentType];
+end;
+
+function TBluePrintSerializer.Serialize(const ContentType: String; const Value: TValue): TStream;
+
+  function GetFieldName(const RttiProperty: TRttiProperty): String;
+  begin
+    var FieldNameAttribute := RttiProperty.GetAttribute<FieldNameAttribute>;
+
+    if Assigned(FieldNameAttribute) then
+      Result := FieldNameAttribute.Name
+    else
+      Result := RttiProperty.Name;
+  end;
+
+begin
+  var Converter: IBluePrintConverter := nil;
+
+  if not FConverters.TryGetValue(ContentType, Converter) then
+    raise EInvalidContentTypeForConverter.Create(ContentType);
+
+  var RttiType := RttiContext.GetType(Value.TypeInfo);
+  var SerializedObject := Converter.CreateObject(RttiType);
+
+  for var RttiProperty in RttiType.GetProperties do
+  begin
+    var SerializedProperty := Converter.AppendProperty(SerializedObject, RttiProperty, GetFieldName(RttiProperty));
+
+    Converter.LoadPropertyValue(SerializedProperty, SerializeType(RttiProperty.GetValue(Value.AsObject)));
+  end;
+
+  Result := Converter.LoadStream(SerializedObject);
+
+  SerializedObject.AsObject.Free;
+end;
+
+function TBluePrintSerializer.SerializeType(const Value: TValue): TValue;
+
+  function GetEnumeratorNames: TArray<String>;
+  begin
+    var RttiEnumerator := TRttiEnumerationType(RttiContext.GetType(Value.TypeInfo));
+
+    var EnumeratorValuesAttribute := RttiEnumerator.GetAttribute<EnumValueAttribute>;
+
+    if Assigned(EnumeratorValuesAttribute) then
+      Result := EnumeratorValuesAttribute.Names
+    else
+      Result := RttiEnumerator.GetNames;
+  end;
+
+begin
+  case Value.Kind of
+    tkEnumeration: Result := GetEnumeratorNames[Value.AsOrdinal];
+    else Result := Value;
+  end;
+end;
+
+class procedure TBluePrintSerializer.SetConverter(const ContentType: String; const Value: IBluePrintConverter);
+begin
+  FConverters.AddOrSetValue(ContentType, Value);
+end;
+
+{ EInvalidContentTypeForConverter }
+
+constructor EInvalidContentTypeForConverter.Create(const ContentType: String);
+begin
+  inherited CreateFmt('The content type "%s" has no valid converter!', [ContentType]);
 end;
 
 end.

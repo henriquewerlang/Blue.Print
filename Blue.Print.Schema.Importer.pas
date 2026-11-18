@@ -2062,7 +2062,7 @@ end;
 
 procedure TSchemaImporter.Import(const ConfigurationFileName: String);
 
-  function GetSerializer: IBluePrintSerializer;
+  function GetSerializer: IBluePrintSerializerOld;
   begin
     Result := TBluePrintJSONSerializer.Create;
   end;

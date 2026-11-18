@@ -21,10 +21,10 @@ type
     FRequest: TWebRequest;
     FResponse: TWebResponse;
     FRttiContext: TRttiContext;
-    FSerializer: IBluePrintSerializer;
+    FSerializer: IBluePrintSerializerOld;
 
     function FindService(const ServiceName: String): TValue;
-    function GetSerializer: IBluePrintSerializer;
+    function GetSerializer: IBluePrintSerializerOld;
   protected
     // IGetWebAppServices
     function GetWebAppServices: IWebAppServices;
@@ -50,7 +50,7 @@ type
 
     destructor Destroy; override;
 
-    property Serializer: IBluePrintSerializer read GetSerializer write FSerializer;
+    property Serializer: IBluePrintSerializerOld read GetSerializer write FSerializer;
   published
     property Active: Boolean read FActive write FActive default True;
     property OnFindService: TFindService read FOnFindService write FOnFindService;
@@ -115,7 +115,7 @@ begin
   Result := Self;
 end;
 
-function TBluePrintWebModule.GetSerializer: IBluePrintSerializer;
+function TBluePrintWebModule.GetSerializer: IBluePrintSerializerOld;
 begin
   if not Assigned(FSerializer) then
     FSerializer := TBluePrintJsonSerializer.Create;

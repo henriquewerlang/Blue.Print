@@ -28,7 +28,7 @@ type
   TRequestMethod = (Delete, Get, Patch, Post, Put, Options);
   TResponseFile = {$IFDEF PAS2JS}TJSBlob{$ELSE}TStream{$ENDIF};
 
-  IBluePrintSerializer = interface
+  IBluePrintSerializerOld = interface
     ['{5848116B-902F-4FF8-BE8F-D53F586C400E}']
     function GetContentType: String;
     function Deserialize(const Value: String; const TypeInfo: PTypeInfo): TValue;

@@ -1074,7 +1074,7 @@ begin
 
   ForceDirectories(OutputPath);
 
-  TFile.WriteAllText(FileName, (TBluePrintJSONSerializer.Create as IBluePrintSerializer).Serialize(FConfiguration));
+  TFile.WriteAllText(FileName, (TBluePrintJSONSerializer.Create as IBluePrintSerializerOld).Serialize(FConfiguration));
 
   FImporter.Import(FileName);
 
@@ -1129,7 +1129,7 @@ begin
 
   TFile.WriteAllText(ConfigFileFolder + SchemaFileName, 'My schema');
 
-  TFile.WriteAllText(ConfigFileName, (TBluePrintJSONSerializer.Create as IBluePrintSerializer).Serialize(FConfiguration));
+  TFile.WriteAllText(ConfigFileName, (TBluePrintJSONSerializer.Create as IBluePrintSerializerOld).Serialize(FConfiguration));
 
   FImporter.Import(ConfigFileName);
 end;
@@ -5023,7 +5023,7 @@ begin
   FConfiguration.Units[1].SchemaFiles[0].SchemaType := TSchemaType.OpenAPI30;
   FConfiguration.Units[1].SchemaFiles[1].SchemaType := TSchemaType.OpenAPI30;
 
-  TFile.WriteAllText(FileName, (TBluePrintJSONSerializer.Create as IBluePrintSerializer).Serialize(FConfiguration));
+  TFile.WriteAllText(FileName, (TBluePrintJSONSerializer.Create as IBluePrintSerializerOld).Serialize(FConfiguration));
 
   FImporter.Import(FileName);
 

@@ -102,7 +102,7 @@ end;
 
 procedure TJSONDraft4SchemaConverter.LoadSchema(const Schema: TSchema);
 
-  function GetSerializer: IBluePrintSerializer;
+  function GetSerializer: IBluePrintSerializerOld;
   begin
     Result := TBluePrintJSONSerializer.Create;
   end;

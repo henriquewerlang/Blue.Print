@@ -111,7 +111,7 @@ type
     property ProcedureCalled: String read FProcedureCalled write FProcedureCalled;
   end;
 
-  TSerializerMock = class(TInterfacedObject, IBluePrintSerializer)
+  TSerializerMock = class(TInterfacedObject, IBluePrintSerializerOld)
   private
     FDeserializeValues: TList<TValue>;
     FSerializeValues: TList<TValue>;

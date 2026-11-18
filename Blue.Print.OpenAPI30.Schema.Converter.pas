@@ -354,7 +354,7 @@ end;
 
 function TOpenAPI30SchemaConverter.LoadDefinition(const Schema: TSchema): OpenAPIDefinition;
 
-  function GetSerializer: IBluePrintSerializer;
+  function GetSerializer: IBluePrintSerializerOld;
   begin
     Result := TBluePrintJSONSerializer.Create;
   end;

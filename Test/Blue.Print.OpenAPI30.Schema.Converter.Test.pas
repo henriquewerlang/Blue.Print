@@ -243,7 +243,7 @@ end;
 
 function TOpenAPI30SchemaConverterTest.GetDefinitionJSON: String;
 begin
-  var Serializer: IBluePrintSerializer := TBluePrintJSONSerializer.Create;
+  var Serializer: IBluePrintSerializerOld := TBluePrintJSONSerializer.Create;
 
   Result := Serializer.Serialize(FDefinition);
 end;
