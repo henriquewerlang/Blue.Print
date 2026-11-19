@@ -50,6 +50,8 @@ type
     procedure MustSerializeOnlyTheStoredProperties;
     [Test]
     procedure OnlyPublishedPropertiesCanBeSerialized;
+    [Test]
+    procedure MustRespectTheDeclarationOrderOfThePropertiesInTheGeneratedObject;
   end;
 
   TConverterMock = class(TInterfacedObject, IBluePrintConverter)
@@ -131,6 +133,13 @@ type
     property Field2: String read FField2 write FField2;
   end;
 
+  TMyClassDerived = class(TMyClassWithPublicProperty)
+  private
+    FField3: String;
+  published
+    property Field3: String read FField3 write FField3;
+  end;
+
 implementation
 
 uses System.SysUtils, System.Generics.Collections;
@@ -194,6 +203,17 @@ begin
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
   Assert.AreEqual('MyValue', Value.ValueFromIndex[1]);
+
+  MyClass.Free;
+end;
+
+procedure TBluePrintSerializerTest.MustRespectTheDeclarationOrderOfThePropertiesInTheGeneratedObject;
+begin
+  var MyClass := TMyClassDerived.Create;
+  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+
+  Assert.AreEqual('Property Field2', Value.Names[1]);
+  Assert.AreEqual('Property Field3', Value.Names[2]);
 
   MyClass.Free;
 end;

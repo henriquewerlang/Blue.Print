@@ -1560,7 +1560,7 @@ var
   begin
     Result := nil;
 
-    for var RttiProperty in RttiType.GetProperties do
+    for var RttiProperty in RttiType.GetPropertiesInDeclOrder do
       if RttiProperty.Visibility = mvPublished then
         Result := Result + [RttiProperty as TRttiInstanceProperty];
   end;
