@@ -1566,11 +1566,12 @@ begin
   var SerializedObject := Converter.CreateObject(RttiType);
 
   for RttiProperty in RttiType.GetProperties do
-  begin
-    var SerializedProperty := Converter.AppendProperty(SerializedObject, RttiProperty, GetFieldName(RttiProperty));
+    if IsStoredProp(Value.AsObject, TRttiInstanceProperty(RttiProperty).PropInfo) then
+    begin
+      var SerializedProperty := Converter.AppendProperty(SerializedObject, RttiProperty, GetFieldName(RttiProperty));
 
-    Converter.LoadPropertyValue(SerializedProperty, SerializePropertyValue(RttiProperty.GetValue(Value.AsObject)));
-  end;
+      Converter.LoadPropertyValue(SerializedProperty, SerializePropertyValue(RttiProperty.GetValue(Value.AsObject)));
+    end;
 
   Result := Converter.LoadStream(SerializedObject);
 

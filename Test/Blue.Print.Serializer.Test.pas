@@ -46,6 +46,8 @@ type
     procedure WhenThePropertyIsAnArrayTypeMustCreateTheArray;
     [Test]
     procedure MustLoadTheArrayItemsHasExpected;
+    [Test]
+    procedure MustSerializeOnlyTheStoredProperties;
   end;
 
   TConverterMock = class(TInterfacedObject, IBluePrintConverter)
@@ -103,6 +105,18 @@ type
     FMyArray: TArray<String>;
   published
     property MyArray: TArray<String> read FMyArray write FMyArray;
+  end;
+
+  TMyClassWithStoredProperty = class
+  private
+    FField1: String;
+    FField2: String;
+  public
+    StoredField1: Boolean;
+    StoredField2: Boolean;
+  published
+    property Field1: String read FField1 write FField1 stored StoredField1;
+    property Field2: String read FField2 write FField2 stored StoredField2;
   end;
 
 implementation
@@ -184,6 +198,19 @@ begin
   Assert.AreEqual('Property Field', Value.Names[1]);
   Assert.AreEqual('Property Field2', Value.Names[2]);
   Assert.AreEqual('Property Field3', Value.Names[3]);
+
+  MyClass.Free;
+end;
+
+procedure TBluePrintSerializerTest.MustSerializeOnlyTheStoredProperties;
+begin
+  var MyClass := TMyClassWithStoredProperty.Create;
+  MyClass.Field1 := 'Value';
+  MyClass.Field2 := 'Value2';
+  MyClass.StoredField2 := True;
+  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+
+  Assert.AreEqual('Property Field2=Value2', Value[1]);
 
   MyClass.Free;
 end;
