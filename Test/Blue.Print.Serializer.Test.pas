@@ -64,16 +64,19 @@ type
     procedure MustLoadTheFirstFlatPropertyInThePropertyValueHasExpected;
     [Test]
     procedure WhenTheFlatValueIsAnObjectMustSerializeTheObjectHasExpected;
+    [Test]
+    procedure WhenThePropertyValueIsntSerializedMustCallTheConvertValueFromTheConverterHasExpected;
   end;
 
   TConverterMock = class(TInterfacedObject, IBluePrintConverter)
   private
     function AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
+    function ConvertValue(const PropertyValue: TValue): TValue;
     function CreateArray: TValue;
     function CreateObject(const RttiType: TRttiType): TValue;
     function LoadStream(const SerializedObject: TValue): TStream;
 
-    procedure AppendArrayItem(const SerializedArray, ArrayItem: TValue);
+    procedure AppendArrayItem(const SerializedArray, SerializedValue: TValue);
     procedure LoadPropertyValue(const SerializedProperty: TValue; const PropertyValue: TValue);
   end;
 
@@ -222,6 +225,19 @@ type
     FField: TMyFlatClass;
   published
     property Field: TMyFlatClass read FField write FField;
+  end;
+
+  TMyClassWithSimpleTypes = class
+  private
+    FField: String;
+    FField2: Integer;
+    FField3: Double;
+    FField4: Int64;
+  published
+    property Field: String read FField write FField;
+    property Field2: Integer read FField2 write FField2;
+    property Field3: Double read FField3 write FField3;
+    property Field4: Int64 read FField4 write FField4;
   end;
 
 implementation
@@ -516,6 +532,19 @@ begin
   MyClass.Free;
 end;
 
+procedure TBluePrintSerializerTest.WhenThePropertyValueIsntSerializedMustCallTheConvertValueFromTheConverterHasExpected;
+begin
+  var MyClass := TMyClassWithSimpleTypes.Create;
+  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+
+  Assert.IsTrue(Value.Properties[0].Value.IsType<String>);
+  Assert.IsTrue(Value.Properties[1].Value.IsType<String>);
+  Assert.IsTrue(Value.Properties[2].Value.IsType<String>);
+  Assert.IsTrue(Value.Properties[3].Value.IsType<String>);
+
+  MyClass.Free;
+end;
+
 procedure TBluePrintSerializerTest.WhenThePropetyHasFieldNameAttributeMustLoadTheFieldNameWithTheValueOfTheAttribute;
 begin
   var MyClass := TMyClassWithFieldNameAttribute.Create;
@@ -538,11 +567,11 @@ end;
 
 { TConverterMock }
 
-procedure TConverterMock.AppendArrayItem(const SerializedArray, ArrayItem: TValue);
+procedure TConverterMock.AppendArrayItem(const SerializedArray, SerializedValue: TValue);
 begin
   var ArrayList := SerializedArray.AsType<TMockArray>;
 
-  ArrayList.Items := ArrayList.Items + [ArrayItem];
+  ArrayList.Items := ArrayList.Items + [SerializedValue];
 end;
 
 function TConverterMock.AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
@@ -557,6 +586,11 @@ begin
   end
   else
     Result := AppendProperty(SerializedObject.AsType<TValue>, RttiProperty, FieldName);
+end;
+
+function TConverterMock.ConvertValue(const PropertyValue: TValue): TValue;
+begin
+  Result := PropertyValue.ToString;
 end;
 
 function TConverterMock.CreateArray: TValue;

@@ -33,12 +33,13 @@ type
   IBluePrintConverter = interface
     ['{71A40A0E-BCC9-4ED7-B356-398B6677D10D}']
     function AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
+    function ConvertValue(const PropertyValue: TValue): TValue;
     function CreateArray: TValue;
     function CreateObject(const RttiType: TRttiType): TValue;
     function LoadStream(const SerializedObject: TValue): TStream;
 
-    procedure AppendArrayItem(const SerializedArray, ArrayItem: TValue);
-    procedure LoadPropertyValue(const SerializedProperty: TValue; const PropertyValue: TValue);
+    procedure AppendArrayItem(const SerializedArray, SerializedValue: TValue);
+    procedure LoadPropertyValue(const SerializedProperty, SerializedValue: TValue);
   end;
 
   IBluePrintSerializer = interface
@@ -1614,7 +1615,7 @@ begin
         SerializeProperties(Converter, PropertyValue, Result, PropertyType);
       end;
     end
-    else Result := PropertyValue;
+    else Result := Converter.ConvertValue(PropertyValue);
   end;
 end;
 
