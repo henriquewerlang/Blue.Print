@@ -15,3 +15,4 @@ Refatoração Serializador
 * O leitor/escritor específico para cada tipo de texto (JSON, XML, YAML, Query, FormData, URLEncode, etc...)
 * Tem que ter uma função para iniciar a classe, para criar o IXMLDocument, o TJSONObject, etc...
 * As classes envolvidas tem que ser stateless 
+* Propriedade com o attributo Flat não pode aparecer no valor serializado, caso do AllOf, que criar a propriedade para um tipo Flat, mas não pode aparecer o "AllOf", apenas a propriedades direto

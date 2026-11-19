@@ -4,17 +4,19 @@ interface
 
 {$SCOPEDENUMS ON}
 
-uses System.Rtti, System.Classes, Test.Insight.Framework, Blue.Print.Serializer, Blue.Print.Types;
+uses System.Rtti, System.Classes, System.Generics.Collections, Test.Insight.Framework, Blue.Print.Serializer, Blue.Print.Types;
 
 type
+  TMockObject = class;
+
   [TestFixture]
   TBluePrintSerializerTest = class
   private
-    FLog: TStringList;
+    FMockObject: TMockObject;
     FSerializer: IBluePrintSerializer;
 
     function CreateSerializer: IBluePrintSerializer;
-    function LoadReturn(const Stream: TStream): TStringList;
+    function LoadReturn(const Stream: TStream): TMockObject;
   public
     [SetupFixture]
     procedure SetupFixture;
@@ -52,6 +54,10 @@ type
     procedure OnlyPublishedPropertiesCanBeSerialized;
     [Test]
     procedure MustRespectTheDeclarationOrderOfThePropertiesInTheGeneratedObject;
+    [Test]
+    procedure WhenThePropertyIsAnObjectMustCreateTheObjectHasExpected;
+    [Test]
+    procedure WhenThePropertyIsAnObjectMustLoadThePropertiesFromTheAnotherClass;
   end;
 
   TConverterMock = class(TInterfacedObject, IBluePrintConverter)
@@ -63,6 +69,46 @@ type
 
     procedure AppendArrayItem(const SerializedArray, ArrayItem: TValue);
     procedure LoadPropertyValue(const SerializedProperty: TValue; const PropertyValue: TValue);
+  end;
+
+  TMockProperty = class
+  private
+    FName: String;
+    FValue: TValue;
+  public
+    destructor Destroy; override;
+
+    property Name: String read FName write FName;
+    property Value: TValue read FValue write FValue;
+  end;
+
+  TMockObject = class
+  private
+    FProperties: TArray<TMockProperty>;
+    FName: String;
+  public
+    destructor Destroy; override;
+
+    function AddProperty(const Name: String): TMockProperty;
+
+    property Name: String read FName write FName;
+    property Properties: TArray<TMockProperty> read FProperties write FProperties;
+  end;
+
+  TMockArray = class
+  private
+    FItems: TArray<TValue>;
+  public
+    property Items: TArray<TValue> read FItems write FItems;
+  end;
+
+  TMockStream = class(TStream)
+  private
+    FMockObject: TMockObject;
+  public
+    constructor Create(const MockObject: TMockObject);
+
+    property MockObject: TMockObject read FMockObject write FMockObject;
   end;
 
   TMyClass = class
@@ -140,9 +186,16 @@ type
     property Field3: String read FField3 write FField3;
   end;
 
+  TMyClassWithObjectProperty = class
+  private
+    FField: TMyClass;
+  published
+    property Field: TMyClass read FField write FField;
+  end;
+
 implementation
 
-uses System.SysUtils, System.Generics.Collections;
+uses System.SysUtils;
 
 type
   ENoRttiType = class(Exception)
@@ -161,11 +214,11 @@ begin
   var MyClass := TMyClass.Create;
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.IsFalse(Value.IsEmpty);
+  Assert.IsNotNil(Value);
 
-  Assert.GreaterThan(1, Value.Count);
+  Assert.AreEqual(1, Length(Value.Properties));
 
-  Assert.AreEqual('Property Field', Value.Names[1]);
+  Assert.AreEqual('Field', Value.Properties[0].Name);
 
   MyClass.Free;
 end;
@@ -175,12 +228,10 @@ begin
   Result := TBluePrintSerializer.Create;
 end;
 
-function TBluePrintSerializerTest.LoadReturn(const Stream: TStream): TStringList;
+function TBluePrintSerializerTest.LoadReturn(const Stream: TStream): TMockObject;
 begin
-  Result := FLog;
-  Stream.Position := 0;
-
-  Result.LoadFromStream(Stream);
+  FMockObject := TMockStream(Stream).MockObject;
+  Result := FMockObject;
 
   Stream.Free;
 end;
@@ -191,7 +242,13 @@ begin
   MyClass.MyArray := ['a', 'b', 'c'];
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.AreEqual('Array[a,b,c]', Value.ValueFromIndex[1]);
+  var MockArray := Value.Properties[0].Value.AsType<TMockArray>;
+
+  Assert.AreEqual(3, Length(MockArray.Items));
+
+  Assert.AreEqual('a', MockArray.Items[0].AsString);
+  Assert.AreEqual('b', MockArray.Items[1].AsString);
+  Assert.AreEqual('c', MockArray.Items[2].AsString);
 
   MyClass.Free;
 end;
@@ -202,7 +259,7 @@ begin
   MyClass.Field := 'MyValue';
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.AreEqual('MyValue', Value.ValueFromIndex[1]);
+  Assert.AreEqual('MyValue', Value.Properties[0].Value.AsString);
 
   MyClass.Free;
 end;
@@ -212,8 +269,8 @@ begin
   var MyClass := TMyClassDerived.Create;
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.AreEqual('Property Field2', Value.Names[1]);
-  Assert.AreEqual('Property Field3', Value.Names[2]);
+  Assert.AreEqual('Field2', Value.Properties[0].Name);
+  Assert.AreEqual('Field3', Value.Properties[1].Name);
 
   MyClass.Free;
 end;
@@ -223,13 +280,11 @@ begin
   var MyClass := TMyClassWithProperties.Create;
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.IsFalse(Value.IsEmpty);
+  Assert.AreEqual(3, Length(Value.Properties));
 
-  Assert.GreaterThan(3, Value.Count);
-
-  Assert.AreEqual('Property Field', Value.Names[1]);
-  Assert.AreEqual('Property Field2', Value.Names[2]);
-  Assert.AreEqual('Property Field3', Value.Names[3]);
+  Assert.AreEqual('Field', Value.Properties[0].Name);
+  Assert.AreEqual('Field2', Value.Properties[1].Name);
+  Assert.AreEqual('Field3', Value.Properties[2].Name);
 
   MyClass.Free;
 end;
@@ -242,7 +297,9 @@ begin
   MyClass.StoredField2 := True;
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.AreEqual('Property Field2=Value2', Value[1]);
+  Assert.AreEqual('Field2', Value.Properties[0].Name);
+
+  Assert.AreEqual('Value2', Value.Properties[0].Value.AsString);
 
   MyClass.Free;
 end;
@@ -252,14 +309,13 @@ begin
   var MyClass := TMyClassWithPublicProperty.Create;
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.AreEqual('Property Field2', Value.Names[1]);
+  Assert.AreEqual('Field2', Value.Properties[0].Name);
 
   MyClass.Free;
 end;
 
 procedure TBluePrintSerializerTest.Setup;
 begin
-  FLog := TStringList.Create;
   FSerializer := TBluePrintSerializer.Create;
 end;
 
@@ -272,7 +328,7 @@ procedure TBluePrintSerializerTest.TearDown;
 begin
   FSerializer := nil;
 
-  FLog.Free;
+  FMockObject.Free;
 end;
 
 procedure TBluePrintSerializerTest.WhenCreateTheObjectOfTheConverterMustPassTheRttiTypeInTheParameter;
@@ -293,9 +349,9 @@ begin
   var MyClass := TMyClass.Create;
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.IsFalse(Value.IsEmpty);
+  Assert.IsNotNil(Value);
 
-  Assert.AreEqual('CreateObject TMyClass', Value[0]);
+  Assert.AreEqual('TMyClass', Value.Name);
 
   MyClass.Free;
 end;
@@ -319,7 +375,7 @@ begin
   MyClass.MyEnumerator2 := TMyClassWithEnumerator.Enumerator2.Value3;
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.AreEqual('3', Value.ValueFromIndex[2]);
+  Assert.AreEqual('3', Value.Properties[1].Value.AsString);
 
   MyClass.Free;
 end;
@@ -330,7 +386,7 @@ begin
   MyClass.MyEnumerator := TMyClassWithEnumerator.Enumerator.Value3;
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.AreEqual('Value3', Value.ValueFromIndex[1]);
+  Assert.AreEqual('Value3', Value.Properties[0].Value.AsString);
 
   MyClass.Free;
 end;
@@ -340,7 +396,40 @@ begin
   var MyClass := TMyClassWithArray.Create;
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.AreEqual('Array[]', Value.ValueFromIndex[1]);
+  Assert.AreEqual(TMockArray, Value.Properties[0].Value.AsObject.ClassType);
+
+  MyClass.Free;
+end;
+
+procedure TBluePrintSerializerTest.WhenThePropertyIsAnObjectMustCreateTheObjectHasExpected;
+begin
+  var MyClass := TMyClassWithObjectProperty.Create;
+  MyClass.Field := TMyClass.Create;
+  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+
+  Assert.IsNotNil(Value.Properties[0].Value.AsType<TValue>.AsObject);
+
+  Assert.AreEqual('TMyClass', Value.Properties[0].Value.AsType<TValue>.AsType<TMockObject>.Name);
+
+  MyClass.Field.Free;
+
+  MyClass.Free;
+end;
+
+procedure TBluePrintSerializerTest.WhenThePropertyIsAnObjectMustLoadThePropertiesFromTheAnotherClass;
+begin
+  var MyClass := TMyClassWithObjectProperty.Create;
+  MyClass.Field := TMyClass.Create;
+  MyClass.Field.Field := 'abc';
+  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+
+  Assert.IsNotNil(Value.Properties[0].Value.AsType<TValue>.AsObject);
+
+  Assert.AreEqual(1, Length(Value.Properties[0].Value.AsType<TValue>.AsType<TMockObject>.Properties));
+  Assert.AreEqual('Field', Value.Properties[0].Value.AsType<TValue>.AsType<TMockObject>.Properties[0].Name);
+  Assert.AreEqual('abc', Value.Properties[0].Value.AsType<TValue>.AsType<TMockObject>.Properties[0].Value.AsString);
+
+  MyClass.Field.Free;
 
   MyClass.Free;
 end;
@@ -350,7 +439,7 @@ begin
   var MyClass := TMyClassWithFieldNameAttribute.Create;
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.AreEqual('Property AnotherField', Value.Names[1]);
+  Assert.AreEqual('AnotherField', Value.Properties[0].Name);
 
   MyClass.Free;
 end;
@@ -369,9 +458,9 @@ end;
 
 procedure TConverterMock.AppendArrayItem(const SerializedArray, ArrayItem: TValue);
 begin
-  var ArrayList := SerializedArray.AsType<TStringList>;
+  var ArrayList := SerializedArray.AsType<TMockArray>;
 
-  ArrayList.Add(ArrayItem.AsString);
+  ArrayList.Items := ArrayList.Items + [ArrayItem];
 end;
 
 function TConverterMock.AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
@@ -379,13 +468,18 @@ begin
   if not Assigned(RttiProperty) then
     raise ENoRttiProperty.Create('No property information');
 
-  var Log := SerializedObject.AsType<TStringList>;
-  Result := TValue.From(TPair<TStringList, Integer>.Create(Log, Pred(Log.AddPair('Property ' + FieldName, EmptyStr).Count)));
+  if SerializedObject.IsType<TMockObject> then
+  begin
+    var MockObject := SerializedObject.AsType<TMockObject>;
+    Result := MockObject.AddProperty(FieldName);
+  end
+  else
+    Result := AppendProperty(SerializedObject.AsType<TValue>, RttiProperty, FieldName);
 end;
 
 function TConverterMock.CreateArray: TValue;
 begin
-  Result := TStringList.Create;
+  Result := TMockArray.Create;
 end;
 
 function TConverterMock.CreateObject(const RttiType: TRttiType): TValue;
@@ -393,38 +487,67 @@ begin
   if not Assigned(RttiType) then
     raise ENoRttiType.Create('No RTTI Type loaded!');
 
-  var Log := TStringList.Create;
-  Log.Add('CreateObject ' + RttiType.Name);
-
-  Result := Log;
+  var MockObject := TMockObject.Create;
+  MockObject.Name := RttiType.Name;
+  Result := TValue.From(TValue.From(MockObject));
 end;
 
 procedure TConverterMock.LoadPropertyValue(const SerializedProperty: TValue; const PropertyValue: TValue);
 begin
-  var PropertyLog := SerializedProperty.AsType<TPair<TStringList, Integer>>;
-  var PropertyStringValue: String;
+  var PropertyMock := SerializedProperty.AsType<TMockProperty>;
 
-  if PropertyValue.IsType<TStringList> then
-  begin
-    var Values := PropertyValue.AsType<TStringList>;
-
-    PropertyStringValue := Format('Array[%s]', [Values.CommaText]);
-
-    Values.Free;
-  end
-  else if not PropertyValue.AsString.IsEmpty then
-    PropertyStringValue := PropertyValue.AsString
-  else
-    PropertyStringValue := 'Empty';
-
-  PropertyLog.Key.ValueFromIndex[PropertyLog.Value] := PropertyStringValue;
+  PropertyMock.Value := PropertyValue;
 end;
 
 function TConverterMock.LoadStream(const SerializedObject: TValue): TStream;
 begin
-  Result := TStringStream.Create;
+  Result := TMockStream.Create(SerializedObject.AsType<TValue>.AsType<TMockObject>);
+end;
 
-  SerializedObject.AsType<TStringList>.SaveToStream(Result);
+{ TMockObject }
+
+function TMockObject.AddProperty(const Name: String): TMockProperty;
+begin
+  Result := TMockProperty.Create;
+  Result.Name := Name;
+
+  Properties := Properties + [Result];
+end;
+
+destructor TMockObject.Destroy;
+begin
+  for var MockProperty in Properties do
+    MockProperty.Free;
+
+  inherited;
+end;
+
+{ TMockStream }
+
+constructor TMockStream.Create(const MockObject: TMockObject);
+begin
+  inherited Create;
+
+  FMockObject := MockObject;
+end;
+
+{ TMockProperty }
+
+destructor TMockProperty.Destroy;
+
+  procedure DestroyObject(const Value: TValue);
+  begin
+    if Value.IsObject then
+      Value.AsObject.Free
+  end;
+
+begin
+  if Value.TypeInfo = TypeInfo(TValue) then
+    DestroyObject(Value.AsType<TValue>);
+
+  DestroyObject(Value);
+
+  inherited;
 end;
 
 end.
