@@ -42,14 +42,20 @@ type
     procedure WhenThePropertyHasAnEnumeratorTypeMustLoadTheEnumeratorValueNameInThePropertyValue;
     [Test]
     procedure WhenTheEnumeratorHasTheEnumValueAttributeMustLoadTheValueInTheAttribute;
+    [Test]
+    procedure WhenThePropertyIsAnArrayTypeMustCreateTheArray;
+    [Test]
+    procedure MustLoadTheArrayItemsHasExpected;
   end;
 
   TConverterMock = class(TInterfacedObject, IBluePrintConverter)
   private
     function AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
+    function CreateArray: TValue;
     function CreateObject(const RttiType: TRttiType): TValue;
     function LoadStream(const SerializedObject: TValue): TStream;
 
+    procedure AppendArrayItem(const SerializedArray, ArrayItem: TValue);
     procedure LoadPropertyValue(const SerializedProperty: TValue; const PropertyValue: TValue);
   end;
 
@@ -90,6 +96,13 @@ type
   published
     property MyEnumerator: Enumerator read FMyEnumerator write FMyEnumerator;
     property MyEnumerator2: Enumerator2 read FMyEnumerator2 write FMyEnumerator2;
+  end;
+
+  TMyClassWithArray = class
+  private
+    FMyArray: TArray<String>;
+  published
+    property MyArray: TArray<String> read FMyArray write FMyArray;
   end;
 
 implementation
@@ -135,6 +148,17 @@ begin
   Result.LoadFromStream(Stream);
 
   Stream.Free;
+end;
+
+procedure TBluePrintSerializerTest.MustLoadTheArrayItemsHasExpected;
+begin
+  var MyClass := TMyClassWithArray.Create;
+  MyClass.MyArray := ['a', 'b', 'c'];
+  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+
+  Assert.AreEqual('Array[a,b,c]', Value.ValueFromIndex[1]);
+
+  MyClass.Free;
 end;
 
 procedure TBluePrintSerializerTest.MustLoadThePropertyValueInTheFieldHasExpected;
@@ -242,6 +266,16 @@ begin
   MyClass.Free;
 end;
 
+procedure TBluePrintSerializerTest.WhenThePropertyIsAnArrayTypeMustCreateTheArray;
+begin
+  var MyClass := TMyClassWithArray.Create;
+  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+
+  Assert.AreEqual('Array[]', Value.ValueFromIndex[1]);
+
+  MyClass.Free;
+end;
+
 procedure TBluePrintSerializerTest.WhenThePropetyHasFieldNameAttributeMustLoadTheFieldNameWithTheValueOfTheAttribute;
 begin
   var MyClass := TMyClassWithFieldNameAttribute.Create;
@@ -264,6 +298,13 @@ end;
 
 { TConverterMock }
 
+procedure TConverterMock.AppendArrayItem(const SerializedArray, ArrayItem: TValue);
+begin
+  var ArrayList := SerializedArray.AsType<TStringList>;
+
+  ArrayList.Add(ArrayItem.AsString);
+end;
+
 function TConverterMock.AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
 begin
   if not Assigned(RttiProperty) then
@@ -271,6 +312,11 @@ begin
 
   var Log := SerializedObject.AsType<TStringList>;
   Result := TValue.From(TPair<TStringList, Integer>.Create(Log, Pred(Log.AddPair('Property ' + FieldName, EmptyStr).Count)));
+end;
+
+function TConverterMock.CreateArray: TValue;
+begin
+  Result := TStringList.Create;
 end;
 
 function TConverterMock.CreateObject(const RttiType: TRttiType): TValue;
@@ -286,12 +332,23 @@ end;
 
 procedure TConverterMock.LoadPropertyValue(const SerializedProperty: TValue; const PropertyValue: TValue);
 begin
-  if not PropertyValue.AsString.IsEmpty then
-  begin
-    var PropertyLog := SerializedProperty.AsType<TPair<TStringList, Integer>>;
+  var PropertyLog := SerializedProperty.AsType<TPair<TStringList, Integer>>;
+  var PropertyStringValue: String;
 
-    PropertyLog.Key.ValueFromIndex[PropertyLog.Value] := PropertyValue.AsString;
-  end;
+  if PropertyValue.IsType<TStringList> then
+  begin
+    var Values := PropertyValue.AsType<TStringList>;
+
+    PropertyStringValue := Format('Array[%s]', [Values.CommaText]);
+
+    Values.Free;
+  end
+  else if not PropertyValue.AsString.IsEmpty then
+    PropertyStringValue := PropertyValue.AsString
+  else
+    PropertyStringValue := 'Empty';
+
+  PropertyLog.Key.ValueFromIndex[PropertyLog.Value] := PropertyStringValue;
 end;
 
 function TConverterMock.LoadStream(const SerializedObject: TValue): TStream;

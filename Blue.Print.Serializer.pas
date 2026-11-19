@@ -33,9 +33,11 @@ type
   IBluePrintConverter = interface
     ['{71A40A0E-BCC9-4ED7-B356-398B6677D10D}']
     function AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
+    function CreateArray: TValue;
     function CreateObject(const RttiType: TRttiType): TValue;
     function LoadStream(const SerializedObject: TValue): TStream;
 
+    procedure AppendArrayItem(const SerializedArray, ArrayItem: TValue);
     procedure LoadPropertyValue(const SerializedProperty: TValue; const PropertyValue: TValue);
   end;
 
@@ -52,8 +54,6 @@ type
     class function GetConverter(const ContentType: String): IBluePrintConverter; static;
 
     class procedure SetConverter(const ContentType: String; const Value: IBluePrintConverter); static;
-
-    function SerializeType(const Value: TValue): TValue;
   public
     class constructor Create;
 
@@ -1513,6 +1513,9 @@ begin
 end;
 
 function TBluePrintSerializer.Serialize(const ContentType: String; const Value: TValue): TStream;
+var
+  Converter: IBluePrintConverter;
+  RttiProperty: TRttiProperty;
 
   function GetFieldName(const RttiProperty: TRttiProperty): String;
   begin
@@ -1524,32 +1527,9 @@ function TBluePrintSerializer.Serialize(const ContentType: String; const Value: 
       Result := RttiProperty.Name;
   end;
 
-begin
-  var Converter: IBluePrintConverter := nil;
-
-  if not FConverters.TryGetValue(ContentType, Converter) then
-    raise EInvalidContentTypeForConverter.Create(ContentType);
-
-  var RttiType := RttiContext.GetType(Value.TypeInfo);
-  var SerializedObject := Converter.CreateObject(RttiType);
-
-  for var RttiProperty in RttiType.GetProperties do
-  begin
-    var SerializedProperty := Converter.AppendProperty(SerializedObject, RttiProperty, GetFieldName(RttiProperty));
-
-    Converter.LoadPropertyValue(SerializedProperty, SerializeType(RttiProperty.GetValue(Value.AsObject)));
-  end;
-
-  Result := Converter.LoadStream(SerializedObject);
-
-  SerializedObject.AsObject.Free;
-end;
-
-function TBluePrintSerializer.SerializeType(const Value: TValue): TValue;
-
   function GetEnumeratorNames: TArray<String>;
   begin
-    var RttiEnumerator := TRttiEnumerationType(RttiContext.GetType(Value.TypeInfo));
+    var RttiEnumerator := TRttiEnumerationType(RttiProperty.PropertyType);
 
     var EnumeratorValuesAttribute := RttiEnumerator.GetAttribute<EnumValueAttribute>;
 
@@ -1559,11 +1539,42 @@ function TBluePrintSerializer.SerializeType(const Value: TValue): TValue;
       Result := RttiEnumerator.GetNames;
   end;
 
-begin
-  case Value.Kind of
-    tkEnumeration: Result := GetEnumeratorNames[Value.AsOrdinal];
-    else Result := Value;
+  function SerializePropertyValue(const PropertyValue: TValue): TValue;
+  begin
+    var PropertyType := RttiContext.GetType(PropertyValue.TypeInfo);
+
+    case PropertyType.TypeKind of
+      tkArray, tkDynArray:
+      begin
+        Result := Converter.CreateArray;
+
+        for var A := 0 to Pred(PropertyValue.GetArrayLength) do
+          Converter.AppendArrayItem(Result, SerializePropertyValue(PropertyValue.GetArrayElement(A)));
+      end;
+      tkEnumeration: Result := GetEnumeratorNames[PropertyValue.AsOrdinal];
+      else Result := PropertyValue;
+    end;
   end;
+
+begin
+  Converter := nil;
+
+  if not FConverters.TryGetValue(ContentType, Converter) then
+    raise EInvalidContentTypeForConverter.Create(ContentType);
+
+  var RttiType := RttiContext.GetType(Value.TypeInfo);
+  var SerializedObject := Converter.CreateObject(RttiType);
+
+  for RttiProperty in RttiType.GetProperties do
+  begin
+    var SerializedProperty := Converter.AppendProperty(SerializedObject, RttiProperty, GetFieldName(RttiProperty));
+
+    Converter.LoadPropertyValue(SerializedProperty, SerializePropertyValue(RttiProperty.GetValue(Value.AsObject)));
+  end;
+
+  Result := Converter.LoadStream(SerializedObject);
+
+  SerializedObject.AsObject.Free;
 end;
 
 class procedure TBluePrintSerializer.SetConverter(const ContentType: String; const Value: IBluePrintConverter);
