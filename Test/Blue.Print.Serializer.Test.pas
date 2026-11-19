@@ -58,6 +58,12 @@ type
     procedure WhenThePropertyIsAnObjectMustCreateTheObjectHasExpected;
     [Test]
     procedure WhenThePropertyIsAnObjectMustLoadThePropertiesFromTheAnotherClass;
+    [Test]
+    procedure WhenThePropertyHasAFlatTypeAndTheFlatPropertiesIsntLoadedCantLoadThePropertyValue;
+    [Test]
+    procedure MustLoadTheFirstFlatPropertyInThePropertyValueHasExpected;
+    [Test]
+    procedure WhenTheFlatValueIsAnObjectMustSerializeTheObjectHasExpected;
   end;
 
   TConverterMock = class(TInterfacedObject, IBluePrintConverter)
@@ -193,6 +199,31 @@ type
     property Field: TMyClass read FField write FField;
   end;
 
+  [Flat]
+  TMyFlatClass = class
+  private
+    FFlatField: String;
+    FFlatFieldStored: Boolean;
+    FFlatField2: TMyClassWithProperties;
+    FFlatField2Stored: Boolean;
+    FFlatField3: String;
+    FFlatField3Stored: Boolean;
+    procedure SetFlatField(const Value: String);
+    procedure SetFlatField3(const Value: String);
+    procedure SetFlatField2(const Value: TMyClassWithProperties);
+  published
+    property FlatField: String read FFlatField write SetFlatField stored FFlatFieldStored;
+    property FlatField2: TMyClassWithProperties read FFlatField2 write SetFlatField2 stored FFlatField2Stored;
+    property FlatField3: String read FFlatField3 write SetFlatField3 stored FFlatField3Stored;
+  end;
+
+  TMyClassWithFlatProperty = class
+  private
+    FField: TMyFlatClass;
+  published
+    property Field: TMyFlatClass read FField write FField;
+  end;
+
 implementation
 
 uses System.SysUtils;
@@ -249,6 +280,21 @@ begin
   Assert.AreEqual('a', MockArray.Items[0].AsString);
   Assert.AreEqual('b', MockArray.Items[1].AsString);
   Assert.AreEqual('c', MockArray.Items[2].AsString);
+
+  MyClass.Free;
+end;
+
+procedure TBluePrintSerializerTest.MustLoadTheFirstFlatPropertyInThePropertyValueHasExpected;
+begin
+  var MyClass := TMyClassWithFlatProperty.Create;
+  MyClass.Field := TMyFlatClass.Create;
+  MyClass.Field.FlatField := 'aaa';
+  MyClass.Field.FlatField3 := 'zzz';
+  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+
+  Assert.AreEqual('aaa', Value.Properties[0].Value.AsString);
+
+  MyClass.Field.Free;
 
   MyClass.Free;
 end;
@@ -376,6 +422,42 @@ begin
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
   Assert.AreEqual('3', Value.Properties[1].Value.AsString);
+
+  MyClass.Free;
+end;
+
+procedure TBluePrintSerializerTest.WhenTheFlatValueIsAnObjectMustSerializeTheObjectHasExpected;
+begin
+  var MyClass := TMyClassWithFlatProperty.Create;
+  MyClass.Field := TMyFlatClass.Create;
+  MyClass.Field.FlatField2 := TMyClassWithProperties.Create;
+  MyClass.Field.FlatField2.Field2 := 'abc';
+  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+
+  var PropertyValue := Value.Properties[0].Value.AsType<TValue>;
+
+  Assert.IsTrue(PropertyValue.IsType<TMockObject>);
+
+  Assert.AreEqual(3, Length(PropertyValue.AsType<TMockObject>.Properties));
+
+  Assert.AreEqual('abc', PropertyValue.AsType<TMockObject>.Properties[1].Value.AsString);
+
+  MyClass.Field.FlatField2.Free;
+
+  MyClass.Field.Free;
+
+  MyClass.Free;
+end;
+
+procedure TBluePrintSerializerTest.WhenThePropertyHasAFlatTypeAndTheFlatPropertiesIsntLoadedCantLoadThePropertyValue;
+begin
+  var MyClass := TMyClassWithFlatProperty.Create;
+  MyClass.Field := TMyFlatClass.Create;
+  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+
+  Assert.IsNil(Value.Properties[0].Value.AsType<TValue>.AsObject);
+
+  MyClass.Field.Free;
 
   MyClass.Free;
 end;
@@ -548,6 +630,26 @@ begin
   DestroyObject(Value);
 
   inherited;
+end;
+
+{ TMyFlatClass }
+
+procedure TMyFlatClass.SetFlatField(const Value: String);
+begin
+  FFlatField := Value;
+  FFlatFieldStored := True;
+end;
+
+procedure TMyFlatClass.SetFlatField2(const Value: TMyClassWithProperties);
+begin
+  FFlatField2 := Value;
+  FFlatField2Stored := True;
+end;
+
+procedure TMyFlatClass.SetFlatField3(const Value: String);
+begin
+  FFlatField3 := Value;
+  FFlatField3Stored := True;
 end;
 
 end.
