@@ -48,6 +48,8 @@ type
     procedure MustLoadTheArrayItemsHasExpected;
     [Test]
     procedure MustSerializeOnlyTheStoredProperties;
+    [Test]
+    procedure OnlyPublishedPropertiesCanBeSerialized;
   end;
 
   TConverterMock = class(TInterfacedObject, IBluePrintConverter)
@@ -109,14 +111,24 @@ type
 
   TMyClassWithStoredProperty = class
   private
-    FField1: String;
+    FField: String;
     FField2: String;
   public
-    StoredField1: Boolean;
+    StoredField: Boolean;
     StoredField2: Boolean;
   published
-    property Field1: String read FField1 write FField1 stored StoredField1;
+    property Field: String read FField write FField stored StoredField;
     property Field2: String read FField2 write FField2 stored StoredField2;
+  end;
+
+  TMyClassWithPublicProperty = class
+  private
+    FField: String;
+    FField2: String;
+  public
+    property Field: String read FField write FField;
+  published
+    property Field2: String read FField2 write FField2;
   end;
 
 implementation
@@ -205,12 +217,22 @@ end;
 procedure TBluePrintSerializerTest.MustSerializeOnlyTheStoredProperties;
 begin
   var MyClass := TMyClassWithStoredProperty.Create;
-  MyClass.Field1 := 'Value';
+  MyClass.Field := 'Value';
   MyClass.Field2 := 'Value2';
   MyClass.StoredField2 := True;
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
   Assert.AreEqual('Property Field2=Value2', Value[1]);
+
+  MyClass.Free;
+end;
+
+procedure TBluePrintSerializerTest.OnlyPublishedPropertiesCanBeSerialized;
+begin
+  var MyClass := TMyClassWithPublicProperty.Create;
+  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+
+  Assert.AreEqual('Property Field2', Value.Names[1]);
 
   MyClass.Free;
 end;

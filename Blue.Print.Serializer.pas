@@ -1515,7 +1515,7 @@ end;
 function TBluePrintSerializer.Serialize(const ContentType: String; const Value: TValue): TStream;
 var
   Converter: IBluePrintConverter;
-  RttiProperty: TRttiProperty;
+  RttiProperty: TRttiInstanceProperty;
 
   function GetFieldName(const RttiProperty: TRttiProperty): String;
   begin
@@ -1556,6 +1556,15 @@ var
     end;
   end;
 
+  function GetPublishedProperties(const RttiType: TRttiType): TArray<TRttiInstanceProperty>;
+  begin
+    Result := nil;
+
+    for var RttiProperty in RttiType.GetProperties do
+      if RttiProperty.Visibility = mvPublished then
+        Result := Result + [RttiProperty as TRttiInstanceProperty];
+  end;
+
 begin
   Converter := nil;
 
@@ -1565,8 +1574,8 @@ begin
   var RttiType := RttiContext.GetType(Value.TypeInfo);
   var SerializedObject := Converter.CreateObject(RttiType);
 
-  for RttiProperty in RttiType.GetProperties do
-    if IsStoredProp(Value.AsObject, TRttiInstanceProperty(RttiProperty).PropInfo) then
+  for RttiProperty in GetPublishedProperties(RttiType) do
+    if IsStoredProp(Value.AsObject, RttiProperty.PropInfo) then
     begin
       var SerializedProperty := Converter.AppendProperty(SerializedObject, RttiProperty, GetFieldName(RttiProperty));
 
