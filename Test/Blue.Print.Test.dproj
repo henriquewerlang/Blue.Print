@@ -133,6 +133,8 @@
         <DCCReference Include="Blue.Print.OpenAPI30.Schema.Converter.Test.pas"/>
         <DCCReference Include="..\Blue.Print.OpenAPI30.Schema.Converter.pas"/>
         <DCCReference Include="..\Blue.Print.OpenAPI30.Schema.pas"/>
+        <DCCReference Include="Blue.Print.JSON.Converter.Test.pas"/>
+        <DCCReference Include="..\Blue.Print.JSON.Converter.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
