@@ -1333,9 +1333,40 @@ var
       GenerateProperties(ComplexType, Result);
     end;
 
+    function HasProperties: Boolean;
+
+      function FindProperty(const Node: IXMLNode): Boolean;
+      begin
+        var CurrentNode := Node;
+        Result := False;
+
+        while Assigned(CurrentNode) do
+        begin
+          if Supports(Node, IXMLElementDef) or Supports(Node, IXMLAttributeDef) or FindProperty(CurrentNode.ChildNodes.First) then
+            Exit(True);
+
+          CurrentNode := CurrentNode.NextSibling;
+        end;
+      end;
+
+    begin
+      Result := FindProperty(ComplexType.ChildNodes.First);
+    end;
+
   begin
     if ComplexType.DerivationMethod = dmSimpleExtension then
-      Result := CreateAlias(Module, MakeName(ComplexType), FindType(GetNameWithNamespace(ComplexType, ComplexType.BaseTypeName), Module))
+    begin
+      var BaseType := FindType(GetNameWithNamespace(ComplexType.BaseTypeName, ComplexType.NamespaceURI), Module);
+
+      if HasProperties then
+      begin
+        Result := CreateClassDefinition;
+
+        CreateProperty(Result.AsClassDefinition, 'Value', BaseType).AddXMLValueAttribute;
+      end
+      else
+        Result := CreateAlias(Module, MakeName(ComplexType), BaseType);
+    end
     else
       Result := CreateClassDefinition;
   end;
