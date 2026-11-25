@@ -618,7 +618,7 @@ begin
     begin
       SaveLog('Status Code: %d', [StatusCode]);
 
-      SaveLog(Communication.ResponseHeader.Text, []);
+      SaveLog(Communication.ResponseHeader.Text.Replace('%', '%%', [rfReplaceAll]), []);
 
       SaveLog(ContentString, []);
 
