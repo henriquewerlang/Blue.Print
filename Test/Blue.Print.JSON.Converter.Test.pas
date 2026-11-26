@@ -224,7 +224,7 @@ begin
   FConverter.LoadPropertyValue(FConverter.AppendProperty(JSONObject, nil, 'Field2'), FConverter.CreateValue(123));
   FConverter.LoadPropertyValue(FConverter.AppendProperty(JSONObject, nil, 'Field3'), FConverter.CreateValue(123.456));
 
-  var Stream := FConverter.LoadStream(JSONObject);
+  var Stream := FConverter.SaveToStream(JSONObject);
 
   Assert.IsNotNil(Stream);
 

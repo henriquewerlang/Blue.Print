@@ -34,9 +34,10 @@ type
     ['{71A40A0E-BCC9-4ED7-B356-398B6677D10D}']
     function AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
     function CreateArray: TValue;
+    function CreateMainObject(const RttiType: TRttiType): TValue;
     function CreateObject(const RttiType: TRttiType): TValue;
     function CreateValue(const Value: TValue): TValue;
-    function LoadStream(const SerializedObject: TValue): TStream;
+    function SaveToStream(const SerializedObject: TValue): TStream;
 
     procedure AppendArrayItem(const SerializedArray, SerializedValue: TValue);
     procedure LoadPropertyValue(const SerializedProperty, SerializedValue: TValue);
@@ -1539,14 +1540,14 @@ begin
     raise EInvalidContentTypeForConverter.Create(ContentType);
 
   var RttiType := RttiContext.GetType(Value.TypeInfo);
-  var SerializedObject := Converter.CreateObject(RttiType);
+  var SerializedObject := Converter.CreateMainObject(RttiType);
 
   SerializeProperties(Converter, Value, SerializedObject, RttiType);
 
-  Result := Converter.LoadStream(SerializedObject);
+  Result := Converter.SaveToStream(SerializedObject);
 
-//  if SerializedObject.IsObject then
-//    SerializedObject.AsObject.Free;
+  if SerializedObject.IsObject then
+    SerializedObject.AsObject.Free;
 end;
 
 procedure TBluePrintSerializer.SerializeProperties(const Converter: IBluePrintConverter; const Instance, SerializedObject: TValue; const RttiType: TRttiType);

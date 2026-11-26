@@ -17,7 +17,7 @@ type
     function CreateMainObject(const RttiType: TRttiType): TValue;
     function CreateObject(const RttiType: TRttiType): TValue;
     function CreateValue(const Value: TValue): TValue;
-    function LoadStream(const SerializedObject: TValue): TStream;
+    function SaveToStream(const SerializedObject: TValue): TStream;
 
     procedure AppendArrayItem(const SerializedArray, ArrayItem: TValue);
     procedure LoadPropertyValue(const SerializedProperty, SerializedValue: TValue);
@@ -74,7 +74,7 @@ begin
   SerializedProperty.AsType<TJSONPair>.JsonValue := SerializedValue.AsType<TJSONValue>;
 end;
 
-function TBluePrintJSONConverter.LoadStream(const SerializedObject: TValue): TStream;
+function TBluePrintJSONConverter.SaveToStream(const SerializedObject: TValue): TStream;
 begin
   Result := TStringStream.Create(SerializedObject.AsType<TJSONValue>.ToString);
 end;

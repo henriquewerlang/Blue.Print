@@ -19,10 +19,8 @@ type
     FSerializer: IBluePrintSerializer;
 
     function CreateSerializer: IBluePrintSerializer;
-    function LoadReturn(const Stream: TStream): TMockObject;
+    function Serialize(const Value: TValue): TMockObject;
   public
-    [SetupFixture]
-    procedure SetupFixture;
     [Setup]
     procedure Setup;
     [TearDown]
@@ -69,19 +67,45 @@ type
     procedure WhenTheFlatValueIsAnObjectMustSerializeTheObjectHasExpected;
     [Test]
     procedure WhenThePropertyValueIsntSerializedMustCallTheConvertValueFromTheConverterHasExpected;
+    [Test]
+    procedure WhenStartToSerializeAnObjectMustCallTheCreateMainObjectInTheInterfaceHasExpected;
+    [Test]
+    procedure WhenCallTheCreateMainObjectMustLoadTheRttiInfoHasExpected;
+    [Test]
+    procedure TheMainObjectMustBeSavedInTheStreamHasExpected;
+    [Test]
+    procedure IfTheMainObjectIsAnObjectTypeMustDestroyTheInstanceAfterSerialize;
+    [Test]
+    procedure WhenTheMainObjectIsntAnObjectCantTryToDetroyTheObject;
   end;
 
   TConverterMock = class(TInterfacedObject, IBluePrintConverter)
-  private
+  protected
     function AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
     function CreateArray: TValue;
+    function CreateMainObject(const RttiType: TRttiType): TValue;
     function CreateObject(const RttiType: TRttiType): TValue;
     function CreateValue(const Value: TValue): TValue;
     function GetMockValue(const Value: TValue): TMockValue;
-    function LoadStream(const SerializedObject: TValue): TStream;
+    function SaveToStream(const SerializedObject: TValue): TStream;
 
     procedure AppendArrayItem(const SerializedArray, SerializedValue: TValue);
     procedure LoadPropertyValue(const SerializedProperty: TValue; const PropertyValue: TValue);
+  end;
+
+  TConverterMockMainObject = class(TConverterMock, IBluePrintConverter)
+  private
+    FLoadTValue: Boolean;
+    FMainObjectCalled: Boolean;
+    FMainObjectSaved: Boolean;
+  protected
+    function CreateMainObject(const RttiType: TRttiType): TValue;
+    function SaveToStream(const SerializedObject: TValue): TStream;
+  public
+    constructor Create(const LoadTValue: Boolean = False);
+
+    property MainObjectCalled: Boolean read FMainObjectCalled write FMainObjectCalled;
+    property MainObjectSaved: Boolean read FMainObjectSaved write FMainObjectSaved;
   end;
 
   TMockValue = class
@@ -126,6 +150,13 @@ type
 
     property Name: String read FName write FName;
     property Properties: TArray<TMockProperty> read FProperties write FProperties;
+  end;
+
+  TMockMainObject = class(TMockObject)
+  public
+    destructor Destroy; override;
+  public class var
+    ObjectDestroyed: Boolean;
   end;
 
   TMockArray = class(TMockValue)
@@ -292,7 +323,7 @@ const
 procedure TBluePrintSerializerTest.AfterCreateTheObjectMustSerializeTheProperty;
 begin
   var MyClass := TMyClass.Create;
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   Assert.IsNotNil(Value);
 
@@ -308,19 +339,26 @@ begin
   Result := TBluePrintSerializer.Create;
 end;
 
-function TBluePrintSerializerTest.LoadReturn(const Stream: TStream): TMockObject;
+procedure TBluePrintSerializerTest.IfTheMainObjectIsAnObjectTypeMustDestroyTheInstanceAfterSerialize;
 begin
-  FMockObject := TMockStream(Stream).MockObject;
-  Result := FMockObject;
+  var Converter := TConverterMockMainObject.Create;
+  TBluePrintSerializer.Converters[BLUE_PRINT_TEST_CONTENT] := Converter;
+  TMockMainObject.ObjectDestroyed := False;
 
-  Stream.Free;
+  var MyClass := TMyClass.Create;
+
+  FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass).Free;
+
+  Assert.IsTrue(TMockMainObject.ObjectDestroyed);
+
+  MyClass.Free;
 end;
 
 procedure TBluePrintSerializerTest.MustLoadTheArrayItemsHasExpected;
 begin
   var MyClass := TMyClassWithArray.Create;
   MyClass.MyArray := ['a', 'b', 'c'];
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   var MockArray := Value.Properties[0].Value.AsArray;
 
@@ -339,7 +377,7 @@ begin
   MyClass.Field := TMyFlatClass.Create;
   MyClass.Field.FlatField := 'aaa';
   MyClass.Field.FlatField3 := 'zzz';
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   Assert.AreEqual('aaa', Value.Properties[0].Value.AsConvertedValue.Value);
 
@@ -352,7 +390,7 @@ procedure TBluePrintSerializerTest.MustLoadThePropertyValueInTheFieldHasExpected
 begin
   var MyClass := TMyClass.Create;
   MyClass.Field := 'MyValue';
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   Assert.AreEqual('MyValue', Value.Properties[0].Value.AsConvertedValue.Value);
 
@@ -362,7 +400,7 @@ end;
 procedure TBluePrintSerializerTest.MustRespectTheDeclarationOrderOfThePropertiesInTheGeneratedObject;
 begin
   var MyClass := TMyClassDerived.Create;
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   Assert.AreEqual('Field2', Value.Properties[0].Name);
   Assert.AreEqual('Field3', Value.Properties[1].Name);
@@ -373,7 +411,7 @@ end;
 procedure TBluePrintSerializerTest.MustSerializeAllPropertiesFromTheObject;
 begin
   var MyClass := TMyClassWithProperties.Create;
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   Assert.AreEqual(3, Length(Value.Properties));
 
@@ -390,7 +428,7 @@ begin
   MyClass.Field := 'Value';
   MyClass.Field2 := 'Value2';
   MyClass.StoredField2 := True;
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   Assert.AreEqual('Field2', Value.Properties[0].Name);
 
@@ -402,20 +440,27 @@ end;
 procedure TBluePrintSerializerTest.OnlyPublishedPropertiesCanBeSerialized;
 begin
   var MyClass := TMyClassWithPublicProperty.Create;
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   Assert.AreEqual('Field2', Value.Properties[0].Name);
 
   MyClass.Free;
 end;
 
-procedure TBluePrintSerializerTest.Setup;
+function TBluePrintSerializerTest.Serialize(const Value: TValue): TMockObject;
 begin
-  FSerializer := TBluePrintSerializer.Create;
+  var Stream := FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, Value);
+
+  FMockObject := TMockStream(Stream).MockObject;
+  Result := FMockObject;
+
+  Stream.Free;
 end;
 
-procedure TBluePrintSerializerTest.SetupFixture;
+procedure TBluePrintSerializerTest.Setup;
 begin
+  FMockObject := nil;
+  FSerializer := TBluePrintSerializer.Create;
   TBluePrintSerializer.Converters[BLUE_PRINT_TEST_CONTENT] := TConverterMock.Create;
 end;
 
@@ -426,6 +471,36 @@ begin
   FMockObject.Free;
 end;
 
+procedure TBluePrintSerializerTest.TheMainObjectMustBeSavedInTheStreamHasExpected;
+begin
+  var Converter := TConverterMockMainObject.Create;
+  TBluePrintSerializer.Converters[BLUE_PRINT_TEST_CONTENT] := Converter;
+
+  var MyClass := TMyClass.Create;
+
+  FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass).Free;
+
+  Assert.IsTrue(Converter.MainObjectSaved);
+
+  MyClass.Free;
+end;
+
+procedure TBluePrintSerializerTest.WhenCallTheCreateMainObjectMustLoadTheRttiInfoHasExpected;
+begin
+  var Converter := TConverterMockMainObject.Create;
+  TBluePrintSerializer.Converters[BLUE_PRINT_TEST_CONTENT] := Converter;
+
+  var MyClass := TMyClass.Create;
+
+  Assert.WillNotRaise(
+    procedure
+    begin
+      FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass).Free;
+    end);
+
+  MyClass.Free;
+end;
+
 procedure TBluePrintSerializerTest.WhenCreateTheObjectOfTheConverterMustPassTheRttiTypeInTheParameter;
 begin
   var MyClass := TMyClass.Create;
@@ -433,7 +508,7 @@ begin
   Assert.WillNotRaise(
     procedure
     begin
-      LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+      Serialize(MyClass);
     end);
 
   MyClass.Free;
@@ -442,7 +517,7 @@ end;
 procedure TBluePrintSerializerTest.WhenSerializeAnObjectMustCreateTheObjectFirst;
 begin
   var MyClass := TMyClass.Create;
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   Assert.IsNotNil(Value);
 
@@ -458,8 +533,22 @@ begin
   Assert.WillNotRaise(
     procedure
     begin
-      LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+      Serialize(MyClass);
     end);
+
+  MyClass.Free;
+end;
+
+procedure TBluePrintSerializerTest.WhenStartToSerializeAnObjectMustCallTheCreateMainObjectInTheInterfaceHasExpected;
+begin
+  var Converter := TConverterMockMainObject.Create;
+  TBluePrintSerializer.Converters[BLUE_PRINT_TEST_CONTENT] := Converter;
+
+  var MyClass := TMyClass.Create;
+
+  FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass).Free;
+
+  Assert.IsTrue(Converter.MainObjectCalled);
 
   MyClass.Free;
 end;
@@ -468,7 +557,7 @@ procedure TBluePrintSerializerTest.WhenTheEnumeratorHasTheEnumValueAttributeMust
 begin
   var MyClass := TMyClassWithEnumerator.Create;
   MyClass.MyEnumerator2 := TMyClassWithEnumerator.Enumerator2.Value3;
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   Assert.AreEqual('3', Value.Properties[1].Value.AsConvertedValue.Value);
 
@@ -481,7 +570,7 @@ begin
   MyClass.Field := TMyFlatClass.Create;
   MyClass.Field.FlatField2 := TMyClassWithProperties.Create;
   MyClass.Field.FlatField2.Field2 := 'abc';
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   var PropertyValue := Value.Properties[0].Value;
 
@@ -498,11 +587,26 @@ begin
   MyClass.Free;
 end;
 
+procedure TBluePrintSerializerTest.WhenTheMainObjectIsntAnObjectCantTryToDetroyTheObject;
+begin
+  var Converter := TConverterMockMainObject.Create(True);
+  TBluePrintSerializer.Converters[BLUE_PRINT_TEST_CONTENT] := Converter;
+  TMockMainObject.ObjectDestroyed := False;
+
+  var MyClass := TMyClass.Create;
+
+  Serialize(MyClass);
+
+  Assert.IsFalse(TMockMainObject.ObjectDestroyed);
+
+  MyClass.Free;
+end;
+
 procedure TBluePrintSerializerTest.WhenThePropertyHasAFlatTypeAndTheFlatPropertiesIsntLoadedCantLoadThePropertyValue;
 begin
   var MyClass := TMyClassWithFlatProperty.Create;
   MyClass.Field := TMyFlatClass.Create;
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   Assert.IsNil(Value.Properties[0].Value);
 
@@ -515,7 +619,7 @@ procedure TBluePrintSerializerTest.WhenThePropertyHasAnEnumeratorTypeMustLoadThe
 begin
   var MyClass := TMyClassWithEnumerator.Create;
   MyClass.MyEnumerator := TMyClassWithEnumerator.Enumerator.Value3;
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   Assert.AreEqual('Value3', Value.Properties[0].Value.AsConvertedValue.Value);
 
@@ -525,7 +629,7 @@ end;
 procedure TBluePrintSerializerTest.WhenThePropertyIsAnArrayTypeMustCreateTheArray;
 begin
   var MyClass := TMyClassWithArray.Create;
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   Assert.AreEqual(TMockArray, Value.Properties[0].Value.ClassType);
 
@@ -536,7 +640,7 @@ procedure TBluePrintSerializerTest.WhenThePropertyIsAnObjectMustCreateTheObjectH
 begin
   var MyClass := TMyClassWithObjectProperty.Create;
   MyClass.Field := TMyClass.Create;
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   Assert.IsNotNil(Value.Properties[0].Value);
 
@@ -554,7 +658,7 @@ begin
   var MyClass := TMyClassWithObjectProperty.Create;
   MyClass.Field := TMyClass.Create;
   MyClass.Field.Field := 'abc';
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   Assert.IsNotNil(Value.Properties[0].Value);
 
@@ -580,7 +684,7 @@ begin
   Assert.WillNotRaise(
     procedure
     begin
-      Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+      Value := Serialize(MyClass);
     end);
 
   Assert.AreEqual('abc', Value.Properties[0].Value.AsConvertedValue.Value);
@@ -595,7 +699,7 @@ end;
 procedure TBluePrintSerializerTest.WhenThePropetyHasFieldNameAttributeMustLoadTheFieldNameWithTheValueOfTheAttribute;
 begin
   var MyClass := TMyClassWithFieldNameAttribute.Create;
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  var Value := Serialize(MyClass);
 
   Assert.AreEqual('AnotherField', Value.Properties[0].Name);
 
@@ -640,6 +744,13 @@ begin
   Result := TMockArray.Create;
 end;
 
+function TConverterMock.CreateMainObject(const RttiType: TRttiType): TValue;
+begin
+  Result := CreateObject(RttiType);
+
+  Result := TValue.From(Result);
+end;
+
 function TConverterMock.CreateObject(const RttiType: TRttiType): TValue;
 begin
   if not Assigned(RttiType) then
@@ -670,7 +781,7 @@ begin
   PropertyMock.Value := GetMockValue(PropertyValue);
 end;
 
-function TConverterMock.LoadStream(const SerializedObject: TValue): TStream;
+function TConverterMock.SaveToStream(const SerializedObject: TValue): TStream;
 begin
   Result := TMockStream.Create(SerializedObject.AsType<TValue>.AsType<TMockObject>);
 end;
@@ -761,6 +872,51 @@ destructor TMockArray.Destroy;
 begin
   for var Item in Items do
     Item.Free;
+
+  inherited;
+end;
+
+{ TConverterMockMainObject }
+
+constructor TConverterMockMainObject.Create(const LoadTValue: Boolean);
+begin
+  inherited Create;
+
+  FLoadTValue := LoadTValue;
+end;
+
+function TConverterMockMainObject.CreateMainObject(const RttiType: TRttiType): TValue;
+begin
+  if not Assigned(RttiType) then
+    raise ENoRttiType.Create('No RTTI Type loaded!');
+
+  MainObjectCalled := True;
+  var MockObject := TMockMainObject.Create;
+  MockObject.Name := 'MyMockObject';
+
+  Result := MockObject;
+
+  if FLoadTValue then
+    Result := TValue.From(Result);
+end;
+
+function TConverterMockMainObject.SaveToStream(const SerializedObject: TValue): TStream;
+begin
+  var MainObject := SerializedObject;
+
+  if FLoadTValue then
+    MainObject := MainObject.AsType<TValue>;
+
+  MainObjectSaved := MainObject.AsType<TMockObject>.Name = 'MyMockObject';
+
+  Result := inherited SaveToStream(SerializedObject);
+end;
+
+{ TMockMainObject }
+
+destructor TMockMainObject.Destroy;
+begin
+  ObjectDestroyed := True;
 
   inherited;
 end;
