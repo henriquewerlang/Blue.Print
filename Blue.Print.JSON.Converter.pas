@@ -13,9 +13,10 @@ type
   TBluePrintJSONConverter = class(TInterfacedObject, IBluePrintConverter)
   private
     function AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
-    function ConvertValue(const PropertyValue: TValue): TValue;
     function CreateArray: TValue;
+    function CreateMainObject(const RttiType: TRttiType): TValue;
     function CreateObject(const RttiType: TRttiType): TValue;
+    function CreateValue(const Value: TValue): TValue;
     function LoadStream(const SerializedObject: TValue): TStream;
 
     procedure AppendArrayItem(const SerializedArray, ArrayItem: TValue);
@@ -42,25 +43,30 @@ begin
   JSONObject.AddPair(JSONPair);
 end;
 
-function TBluePrintJSONConverter.ConvertValue(const PropertyValue: TValue): TValue;
-begin
-  case PropertyValue.Kind of
-    tkString, tkUString, tkChar, tkWChar, tkLString, tkWString: Result := TJSONString.Create(PropertyValue.AsString);
-    tkInteger: Result := TJSONNumber.Create(PropertyValue.AsInteger);
-    tkInt64: Result := TJSONNumber.Create(PropertyValue.AsInt64);
-    tkFloat: Result := TJSONNumber.Create(PropertyValue.AsExtended);
-    else raise EInvalidValue.Create;
-  end;
-end;
-
 function TBluePrintJSONConverter.CreateArray: TValue;
 begin
   Result := TJSONArray.Create;
 end;
 
+function TBluePrintJSONConverter.CreateMainObject(const RttiType: TRttiType): TValue;
+begin
+
+end;
+
 function TBluePrintJSONConverter.CreateObject(const RttiType: TRttiType): TValue;
 begin
   Result := TJSONObject.Create;
+end;
+
+function TBluePrintJSONConverter.CreateValue(const Value: TValue): TValue;
+begin
+  case Value.Kind of
+    tkString, tkUString, tkChar, tkWChar, tkLString, tkWString: Result := TJSONString.Create(Value.AsString);
+    tkInteger: Result := TJSONNumber.Create(Value.AsInteger);
+    tkInt64: Result := TJSONNumber.Create(Value.AsInt64);
+    tkFloat: Result := TJSONNumber.Create(Value.AsExtended);
+    else raise EInvalidValue.Create;
+  end;
 end;
 
 procedure TBluePrintJSONConverter.LoadPropertyValue(const SerializedProperty, SerializedValue: TValue);

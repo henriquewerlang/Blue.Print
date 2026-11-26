@@ -33,9 +33,9 @@ type
   IBluePrintConverter = interface
     ['{71A40A0E-BCC9-4ED7-B356-398B6677D10D}']
     function AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
-    function ConvertValue(const PropertyValue: TValue): TValue;
     function CreateArray: TValue;
     function CreateObject(const RttiType: TRttiType): TValue;
+    function CreateValue(const Value: TValue): TValue;
     function LoadStream(const SerializedObject: TValue): TStream;
 
     procedure AppendArrayItem(const SerializedArray, SerializedValue: TValue);
@@ -56,7 +56,7 @@ type
 
     class procedure SetConverter(const ContentType: String; const Value: IBluePrintConverter); static;
 
-    function GetPublishedProperties(const Instance: TValue): TArray<TRttiInstanceProperty>;
+    function GetPublishedStoredProperties(const Instance: TValue): TArray<TRttiInstanceProperty>;
     function SerializePropertyValue(const Converter: IBluePrintConverter; const PropertyValue: TValue): TValue;
 
     procedure SerializeProperties(const Converter: IBluePrintConverter; const Instance, SerializedObject: TValue; const RttiType: TRttiType);
@@ -1518,7 +1518,7 @@ begin
   Result := FConverters[ContentType];
 end;
 
-function TBluePrintSerializer.GetPublishedProperties(const Instance: TValue): TArray<TRttiInstanceProperty>;
+function TBluePrintSerializer.GetPublishedStoredProperties(const Instance: TValue): TArray<TRttiInstanceProperty>;
 begin
   Result := nil;
   var RttiType := RttiContext.GetType(Instance.TypeInfo);
@@ -1545,8 +1545,8 @@ begin
 
   Result := Converter.LoadStream(SerializedObject);
 
-  if SerializedObject.IsObject then
-    SerializedObject.AsObject.Free;
+//  if SerializedObject.IsObject then
+//    SerializedObject.AsObject.Free;
 end;
 
 procedure TBluePrintSerializer.SerializeProperties(const Converter: IBluePrintConverter; const Instance, SerializedObject: TValue; const RttiType: TRttiType);
@@ -1562,7 +1562,7 @@ procedure TBluePrintSerializer.SerializeProperties(const Converter: IBluePrintCo
   end;
 
 begin
-  for var RttiProperty in GetPublishedProperties(Instance) do
+  for var RttiProperty in GetPublishedStoredProperties(Instance) do
   begin
     var SerializedProperty := Converter.AppendProperty(SerializedObject, RttiProperty, GetFieldName(RttiProperty));
 
@@ -1586,7 +1586,7 @@ function TBluePrintSerializer.SerializePropertyValue(const Converter: IBluePrint
 
   function SerializeFlatClass(const PropertyValue: TValue): TValue;
   begin
-    for var RttiProperty in GetPublishedProperties(PropertyValue) do
+    for var RttiProperty in GetPublishedStoredProperties(PropertyValue) do
       Exit(SerializePropertyValue(Converter, RttiProperty.GetValue(PropertyValue.AsObject)));
 
     Result := nil;
@@ -1603,7 +1603,7 @@ begin
       for var A := 0 to Pred(PropertyValue.GetArrayLength) do
         Converter.AppendArrayItem(Result, SerializePropertyValue(Converter, PropertyValue.GetArrayElement(A)));
     end;
-    tkEnumeration: Result := GetEnumeratorNames(PropertyType)[PropertyValue.AsOrdinal];
+    tkEnumeration: Result := Converter.CreateValue(GetEnumeratorNames(PropertyType)[PropertyValue.AsOrdinal]);
     tkClass:
     begin
       if PropertyType.HasAttribute<FlatAttribute> then
@@ -1615,7 +1615,7 @@ begin
         SerializeProperties(Converter, PropertyValue, Result, PropertyType);
       end;
     end
-    else Result := Converter.ConvertValue(PropertyValue);
+    else Result := Converter.CreateValue(PropertyValue);
   end;
 end;
 

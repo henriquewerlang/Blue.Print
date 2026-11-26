@@ -7,7 +7,10 @@ interface
 uses System.Rtti, System.Classes, System.Generics.Collections, Test.Insight.Framework, Blue.Print.Serializer, Blue.Print.Types;
 
 type
+  TMockArray = class;
+  TMockConvertedValue = class;
   TMockObject = class;
+  TMockValue = class;
 
   [TestFixture]
   TBluePrintSerializerTest = class
@@ -71,27 +74,48 @@ type
   TConverterMock = class(TInterfacedObject, IBluePrintConverter)
   private
     function AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
-    function ConvertValue(const PropertyValue: TValue): TValue;
     function CreateArray: TValue;
     function CreateObject(const RttiType: TRttiType): TValue;
+    function CreateValue(const Value: TValue): TValue;
+    function GetMockValue(const Value: TValue): TMockValue;
     function LoadStream(const SerializedObject: TValue): TStream;
 
     procedure AppendArrayItem(const SerializedArray, SerializedValue: TValue);
     procedure LoadPropertyValue(const SerializedProperty: TValue; const PropertyValue: TValue);
   end;
 
+  TMockValue = class
+  private
+    function GetAsArray: TMockArray;
+    function GetAsConvertedValue: TMockConvertedValue;
+    function GetAsObject: TMockObject;
+  public
+    property AsArray: TMockArray read GetAsArray;
+    property AsConvertedValue: TMockConvertedValue read GetAsConvertedValue;
+    property AsObject: TMockObject read GetAsObject;
+  end;
+
+  TMockConvertedValue = class(TMockValue)
+  private
+    FValue: String;
+  public
+    constructor Create(const ConvertedValue: String);
+
+    property Value: String read FValue;
+  end;
+
   TMockProperty = class
   private
     FName: String;
-    FValue: TValue;
+    FValue: TMockValue;
   public
     destructor Destroy; override;
 
     property Name: String read FName write FName;
-    property Value: TValue read FValue write FValue;
+    property Value: TMockValue read FValue write FValue;
   end;
 
-  TMockObject = class
+  TMockObject = class(TMockValue)
   private
     FProperties: TArray<TMockProperty>;
     FName: String;
@@ -104,11 +128,13 @@ type
     property Properties: TArray<TMockProperty> read FProperties write FProperties;
   end;
 
-  TMockArray = class
+  TMockArray = class(TMockValue)
   private
-    FItems: TArray<TValue>;
+    FItems: TArray<TMockValue>;
   public
-    property Items: TArray<TValue> read FItems write FItems;
+    destructor Destroy; override;
+
+    property Items: TArray<TMockValue> read FItems write FItems;
   end;
 
   TMockStream = class(TStream)
@@ -228,16 +254,20 @@ type
   end;
 
   TMyClassWithSimpleTypes = class
+  public type
+    TMyEnumerator = (Value, Value2, Value3);
   private
     FField: String;
     FField2: Integer;
     FField3: Double;
     FField4: Int64;
+    FField5: TMyEnumerator;
   published
     property Field: String read FField write FField;
     property Field2: Integer read FField2 write FField2;
     property Field3: Double read FField3 write FField3;
     property Field4: Int64 read FField4 write FField4;
+    property Field5: TMyEnumerator read FField5 write FField5;
   end;
 
 implementation
@@ -249,6 +279,9 @@ type
   end;
 
   ENoRttiProperty = class(Exception)
+  end;
+
+  ENotConvertedValue = class(Exception)
   end;
 
 const
@@ -289,13 +322,13 @@ begin
   MyClass.MyArray := ['a', 'b', 'c'];
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  var MockArray := Value.Properties[0].Value.AsType<TMockArray>;
+  var MockArray := Value.Properties[0].Value.AsArray;
 
   Assert.AreEqual(3, Length(MockArray.Items));
 
-  Assert.AreEqual('a', MockArray.Items[0].AsString);
-  Assert.AreEqual('b', MockArray.Items[1].AsString);
-  Assert.AreEqual('c', MockArray.Items[2].AsString);
+  Assert.AreEqual('a', MockArray.Items[0].AsConvertedValue.Value);
+  Assert.AreEqual('b', MockArray.Items[1].AsConvertedValue.Value);
+  Assert.AreEqual('c', MockArray.Items[2].AsConvertedValue.Value);
 
   MyClass.Free;
 end;
@@ -308,7 +341,7 @@ begin
   MyClass.Field.FlatField3 := 'zzz';
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.AreEqual('aaa', Value.Properties[0].Value.AsString);
+  Assert.AreEqual('aaa', Value.Properties[0].Value.AsConvertedValue.Value);
 
   MyClass.Field.Free;
 
@@ -321,7 +354,7 @@ begin
   MyClass.Field := 'MyValue';
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.AreEqual('MyValue', Value.Properties[0].Value.AsString);
+  Assert.AreEqual('MyValue', Value.Properties[0].Value.AsConvertedValue.Value);
 
   MyClass.Free;
 end;
@@ -361,7 +394,7 @@ begin
 
   Assert.AreEqual('Field2', Value.Properties[0].Name);
 
-  Assert.AreEqual('Value2', Value.Properties[0].Value.AsString);
+  Assert.AreEqual('Value2', Value.Properties[0].Value.AsConvertedValue.Value);
 
   MyClass.Free;
 end;
@@ -437,7 +470,7 @@ begin
   MyClass.MyEnumerator2 := TMyClassWithEnumerator.Enumerator2.Value3;
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.AreEqual('3', Value.Properties[1].Value.AsString);
+  Assert.AreEqual('3', Value.Properties[1].Value.AsConvertedValue.Value);
 
   MyClass.Free;
 end;
@@ -450,13 +483,13 @@ begin
   MyClass.Field.FlatField2.Field2 := 'abc';
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  var PropertyValue := Value.Properties[0].Value.AsType<TValue>;
+  var PropertyValue := Value.Properties[0].Value;
 
-  Assert.IsTrue(PropertyValue.IsType<TMockObject>);
+  Assert.AreEqual(TMockObject, PropertyValue.ClassType);
 
-  Assert.AreEqual(3, Length(PropertyValue.AsType<TMockObject>.Properties));
+  Assert.AreEqual(3, Length(PropertyValue.AsObject.Properties));
 
-  Assert.AreEqual('abc', PropertyValue.AsType<TMockObject>.Properties[1].Value.AsString);
+  Assert.AreEqual('abc', PropertyValue.AsObject.Properties[1].Value.AsConvertedValue.Value);
 
   MyClass.Field.FlatField2.Free;
 
@@ -471,7 +504,7 @@ begin
   MyClass.Field := TMyFlatClass.Create;
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.IsNil(Value.Properties[0].Value.AsType<TValue>.AsObject);
+  Assert.IsNil(Value.Properties[0].Value);
 
   MyClass.Field.Free;
 
@@ -484,7 +517,7 @@ begin
   MyClass.MyEnumerator := TMyClassWithEnumerator.Enumerator.Value3;
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.AreEqual('Value3', Value.Properties[0].Value.AsString);
+  Assert.AreEqual('Value3', Value.Properties[0].Value.AsConvertedValue.Value);
 
   MyClass.Free;
 end;
@@ -494,7 +527,7 @@ begin
   var MyClass := TMyClassWithArray.Create;
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.AreEqual(TMockArray, Value.Properties[0].Value.AsObject.ClassType);
+  Assert.AreEqual(TMockArray, Value.Properties[0].Value.ClassType);
 
   MyClass.Free;
 end;
@@ -505,9 +538,11 @@ begin
   MyClass.Field := TMyClass.Create;
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.IsNotNil(Value.Properties[0].Value.AsType<TValue>.AsObject);
+  Assert.IsNotNil(Value.Properties[0].Value);
 
-  Assert.AreEqual('TMyClass', Value.Properties[0].Value.AsType<TValue>.AsType<TMockObject>.Name);
+  Assert.AreEqual(TMockObject, Value.Properties[0].Value.ClassType);
+
+  Assert.AreEqual('TMyClass', Value.Properties[0].Value.AsObject.Name);
 
   MyClass.Field.Free;
 
@@ -521,11 +556,11 @@ begin
   MyClass.Field.Field := 'abc';
   var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
 
-  Assert.IsNotNil(Value.Properties[0].Value.AsType<TValue>.AsObject);
+  Assert.IsNotNil(Value.Properties[0].Value);
 
-  Assert.AreEqual(1, Length(Value.Properties[0].Value.AsType<TValue>.AsType<TMockObject>.Properties));
-  Assert.AreEqual('Field', Value.Properties[0].Value.AsType<TValue>.AsType<TMockObject>.Properties[0].Name);
-  Assert.AreEqual('abc', Value.Properties[0].Value.AsType<TValue>.AsType<TMockObject>.Properties[0].Value.AsString);
+  Assert.AreEqual(1, Length(Value.Properties[0].Value.AsObject.Properties));
+  Assert.AreEqual('Field', Value.Properties[0].Value.AsObject.Properties[0].Name);
+  Assert.AreEqual('abc', Value.Properties[0].Value.AsObject.Properties[0].Value.AsConvertedValue.Value);
 
   MyClass.Field.Free;
 
@@ -535,12 +570,24 @@ end;
 procedure TBluePrintSerializerTest.WhenThePropertyValueIsntSerializedMustCallTheConvertValueFromTheConverterHasExpected;
 begin
   var MyClass := TMyClassWithSimpleTypes.Create;
-  var Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+  MyClass.Field := 'abc';
+  MyClass.Field2 := 123;
+  MyClass.Field3 := 123.456;
+  MyClass.Field4 := 789;
+  MyClass.Field5 := TMyClassWithSimpleTypes.TMyEnumerator.Value2;
+  var Value: TMockObject;
 
-  Assert.IsTrue(Value.Properties[0].Value.IsType<String>);
-  Assert.IsTrue(Value.Properties[1].Value.IsType<String>);
-  Assert.IsTrue(Value.Properties[2].Value.IsType<String>);
-  Assert.IsTrue(Value.Properties[3].Value.IsType<String>);
+  Assert.WillNotRaise(
+    procedure
+    begin
+      Value := LoadReturn(FSerializer.Serialize(BLUE_PRINT_TEST_CONTENT, MyClass));
+    end);
+
+  Assert.AreEqual('abc', Value.Properties[0].Value.AsConvertedValue.Value);
+  Assert.AreEqual('123', Value.Properties[1].Value.AsConvertedValue.Value);
+  Assert.AreEqual(FloatToStr(123.456), Value.Properties[2].Value.AsConvertedValue.Value);
+  Assert.AreEqual('789', Value.Properties[3].Value.AsConvertedValue.Value);
+  Assert.AreEqual('Value2', Value.Properties[4].Value.AsConvertedValue.Value);
 
   MyClass.Free;
 end;
@@ -571,7 +618,7 @@ procedure TConverterMock.AppendArrayItem(const SerializedArray, SerializedValue:
 begin
   var ArrayList := SerializedArray.AsType<TMockArray>;
 
-  ArrayList.Items := ArrayList.Items + [SerializedValue];
+  ArrayList.Items := ArrayList.Items + [GetMockValue(SerializedValue)];
 end;
 
 function TConverterMock.AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
@@ -588,11 +635,6 @@ begin
     Result := AppendProperty(SerializedObject.AsType<TValue>, RttiProperty, FieldName);
 end;
 
-function TConverterMock.ConvertValue(const PropertyValue: TValue): TValue;
-begin
-  Result := PropertyValue.ToString;
-end;
-
 function TConverterMock.CreateArray: TValue;
 begin
   Result := TMockArray.Create;
@@ -605,14 +647,27 @@ begin
 
   var MockObject := TMockObject.Create;
   MockObject.Name := RttiType.Name;
-  Result := TValue.From(TValue.From(MockObject));
+  Result := MockObject;
+end;
+
+function TConverterMock.CreateValue(const Value: TValue): TValue;
+begin
+  Result := TMockConvertedValue.Create(Value.ToString);
+end;
+
+function TConverterMock.GetMockValue(const Value: TValue): TMockValue;
+begin
+  if Value.IsType<TMockValue> then
+    Result := Value.AsType<TMockValue>
+  else
+    raise ENotConvertedValue.Create('Must call convert value first!');
 end;
 
 procedure TConverterMock.LoadPropertyValue(const SerializedProperty: TValue; const PropertyValue: TValue);
 begin
   var PropertyMock := SerializedProperty.AsType<TMockProperty>;
 
-  PropertyMock.Value := PropertyValue;
+  PropertyMock.Value := GetMockValue(PropertyValue);
 end;
 
 function TConverterMock.LoadStream(const SerializedObject: TValue): TStream;
@@ -650,18 +705,8 @@ end;
 { TMockProperty }
 
 destructor TMockProperty.Destroy;
-
-  procedure DestroyObject(const Value: TValue);
-  begin
-    if Value.IsObject then
-      Value.AsObject.Free
-  end;
-
 begin
-  if Value.TypeInfo = TypeInfo(TValue) then
-    DestroyObject(Value.AsType<TValue>);
-
-  DestroyObject(Value);
+  FValue.Free;
 
   inherited;
 end;
@@ -684,6 +729,40 @@ procedure TMyFlatClass.SetFlatField3(const Value: String);
 begin
   FFlatField3 := Value;
   FFlatField3Stored := True;
+end;
+
+{ TMockConvertedValue }
+
+constructor TMockConvertedValue.Create(const ConvertedValue: String);
+begin
+  FValue := ConvertedValue;
+end;
+
+{ TMockValue }
+
+function TMockValue.GetAsArray: TMockArray;
+begin
+  Result := Self as TMockArray;
+end;
+
+function TMockValue.GetAsConvertedValue: TMockConvertedValue;
+begin
+  Result := Self as TMockConvertedValue;
+end;
+
+function TMockValue.GetAsObject: TMockObject;
+begin
+  Result := Self as TMockObject;
+end;
+
+{ TMockArray }
+
+destructor TMockArray.Destroy;
+begin
+  for var Item in Items do
+    Item.Free;
+
+  inherited;
 end;
 
 end.

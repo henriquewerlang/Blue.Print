@@ -146,7 +146,7 @@ end;
 
 procedure TBluePrintJSONConverterTest.WhenConvertValueUsingAStringMustLoadAJONStringClassWithTheValue;
 begin
-  var Value := FConverter.ConvertValue('My Value');
+  var Value := FConverter.CreateValue('My Value');
 
   Assert.IsFalse(Value.IsEmpty);
 
@@ -162,13 +162,13 @@ begin
   Assert.WillRaise(
     procedure
     begin
-      FConverter.ConvertValue(Self);
+      FConverter.CreateValue(Self);
     end, EInvalidValue);
 end;
 
 procedure TBluePrintJSONConverterTest.WhenConvertValueUsingADoubleMustLoadAJSONNumberWitheTheValueLoaded;
 begin
-  var Value := FConverter.ConvertValue(1234.5678);
+  var Value := FConverter.CreateValue(1234.5678);
 
   Assert.IsFalse(Value.IsEmpty);
 
@@ -181,7 +181,7 @@ end;
 
 procedure TBluePrintJSONConverterTest.WhenConvertValueUsingAnInteger64MustLoadAJSONNumberWitheTheValueLoaded;
 begin
-  var Value := FConverter.ConvertValue(Int64(1234));
+  var Value := FConverter.CreateValue(Int64(1234));
 
   Assert.IsFalse(Value.IsEmpty);
 
@@ -194,7 +194,7 @@ end;
 
 procedure TBluePrintJSONConverterTest.WhenConvertValueUsingAnIntegerMustLoadAJSONNumberWitheTheValueLoaded;
 begin
-  var Value := FConverter.ConvertValue(1234);
+  var Value := FConverter.CreateValue(1234);
 
   Assert.IsFalse(Value.IsEmpty);
 
@@ -220,9 +220,9 @@ procedure TBluePrintJSONConverterTest.WhenLoadTheStreamValueMustLoadTheJSONValue
 begin
   var JSONObject := FConverter.CreateObject(nil);
 
-  FConverter.LoadPropertyValue(FConverter.AppendProperty(JSONObject, nil, 'Field'), FConverter.ConvertValue('abc'));
-  FConverter.LoadPropertyValue(FConverter.AppendProperty(JSONObject, nil, 'Field2'), FConverter.ConvertValue(123));
-  FConverter.LoadPropertyValue(FConverter.AppendProperty(JSONObject, nil, 'Field3'), FConverter.ConvertValue(123.456));
+  FConverter.LoadPropertyValue(FConverter.AppendProperty(JSONObject, nil, 'Field'), FConverter.CreateValue('abc'));
+  FConverter.LoadPropertyValue(FConverter.AppendProperty(JSONObject, nil, 'Field2'), FConverter.CreateValue(123));
+  FConverter.LoadPropertyValue(FConverter.AppendProperty(JSONObject, nil, 'Field3'), FConverter.CreateValue(123.456));
 
   var Stream := FConverter.LoadStream(JSONObject);
 
