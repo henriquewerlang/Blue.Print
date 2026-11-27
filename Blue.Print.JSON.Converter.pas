@@ -13,10 +13,13 @@ type
   TBluePrintJSONConverter = class(TInterfacedObject, IBluePrintConverter)
   private
     function AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
+    function ConvertValue(const SerializedValue: TValue): TValue;
     function CreateArray: TValue;
     function CreateMainObject(const RttiType: TRttiType): TValue;
     function CreateObject(const RttiType: TRttiType): TValue;
     function CreateValue(const Value: TValue): TValue;
+    function GetFields(const SerializedObject: TValue): TArray<TFieldInfo>;
+    function LoadFromStream(const Stream: TStream): TValue;
     function SaveToStream(const SerializedObject: TValue): TStream;
 
     procedure AppendArrayItem(const SerializedArray, ArrayItem: TValue);
@@ -43,6 +46,11 @@ begin
   JSONObject.AddPair(JSONPair);
 end;
 
+function TBluePrintJSONConverter.ConvertValue(const SerializedValue: TValue): TValue;
+begin
+
+end;
+
 function TBluePrintJSONConverter.CreateArray: TValue;
 begin
   Result := TJSONArray.Create;
@@ -67,6 +75,16 @@ begin
     tkFloat: Result := TJSONNumber.Create(Value.AsExtended);
     else raise EInvalidValue.Create;
   end;
+end;
+
+function TBluePrintJSONConverter.GetFields(const SerializedObject: TValue): TArray<TFieldInfo>;
+begin
+
+end;
+
+function TBluePrintJSONConverter.LoadFromStream(const Stream: TStream): TValue;
+begin
+
 end;
 
 procedure TBluePrintJSONConverter.LoadPropertyValue(const SerializedProperty, SerializedValue: TValue);

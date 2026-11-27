@@ -30,6 +30,8 @@ type
     constructor Create(const ContentType: String);
   end;
 
+  TFieldInfo = TPair<String, TValue>;
+
   IBluePrintConverter = interface
     ['{71A40A0E-BCC9-4ED7-B356-398B6677D10D}']
     function AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
@@ -37,6 +39,9 @@ type
     function CreateMainObject(const RttiType: TRttiType): TValue;
     function CreateObject(const RttiType: TRttiType): TValue;
     function CreateValue(const Value: TValue): TValue;
+    function ConvertValue(const SerializedValue: TValue): TValue;
+    function GetFields(const SerializedObject: TValue): TArray<TFieldInfo>;
+    function LoadFromStream(const Stream: TStream): TValue;
     function SaveToStream(const SerializedObject: TValue): TStream;
 
     procedure AppendArrayItem(const SerializedArray, SerializedValue: TValue);
@@ -45,6 +50,7 @@ type
 
   IBluePrintSerializer = interface
     ['{1BB17FD8-606E-4EE9-9463-6E8D15F1E2DE}']
+    function Deserialize(const ContentType: String; const TypeInfo: PTypeInfo; const Stream: TStream): TValue;
     function Serialize(const ContentType: String; const Value: TValue): TStream;
   end;
 
@@ -60,6 +66,7 @@ type
     function GetPublishedStoredProperties(const Instance: TValue): TArray<TRttiInstanceProperty>;
     function SerializePropertyValue(const Converter: IBluePrintConverter; const PropertyValue: TValue): TValue;
 
+    procedure DeserializeProperties(const Converter: IBluePrintConverter; const Instance, SerializedObject: TValue; const RttiType: TRttiType);
     procedure SerializeProperties(const Converter: IBluePrintConverter; const Instance, SerializedObject: TValue; const RttiType: TRttiType);
   public
     class constructor Create;
@@ -69,7 +76,7 @@ type
     class property Converters[const ContentType: String]: IBluePrintConverter read GetConverter write SetConverter;
     class property RttiContext: TRttiContext read FRttiContext;
 
-    function Deserialize(const TypeInfo: TTypeInfo; const Value: TStream): TValue;
+    function Deserialize(const ContentType: String; const TypeInfo: PTypeInfo; const Stream: TStream): TValue;
     function Serialize(const ContentType: String; const Value: TValue): TStream;
   end;
 
@@ -1502,9 +1509,24 @@ begin
   FRttiContext := TRttiContext.Create;
 end;
 
-function TBluePrintSerializer.Deserialize(const TypeInfo: TTypeInfo; const Value: TStream): TValue;
+function TBluePrintSerializer.Deserialize(const ContentType: String; const TypeInfo: PTypeInfo; const Stream: TStream): TValue;
 begin
+  var Converter := GetConverter(ContentType);
+  var RttiType := RttiContext.GetType(TypeInfo);
+  var SerializedObject := Converter.LoadFromStream(Stream);
 
+  Result := RttiType.AsInstance.MetaclassType.Create;
+
+  DeserializeProperties(Converter, Result, SerializedObject, RttiType);
+
+  if SerializedObject.IsObject then
+    SerializedObject.AsObject.Free;
+end;
+
+procedure TBluePrintSerializer.DeserializeProperties(const Converter: IBluePrintConverter; const Instance, SerializedObject: TValue; const RttiType: TRttiType);
+begin
+  for var FieldInfo in Converter.GetFields(SerializedObject) do
+    RttiType.GetProperty(FieldInfo.Key).SetValue(Instance.AsObject, Converter.ConvertValue(FieldInfo.Value));
 end;
 
 class destructor TBluePrintSerializer.Destroy;
@@ -1516,7 +1538,8 @@ end;
 
 class function TBluePrintSerializer.GetConverter(const ContentType: String): IBluePrintConverter;
 begin
-  Result := FConverters[ContentType];
+  if not FConverters.TryGetValue(ContentType, Result) then
+    raise EInvalidContentTypeForConverter.Create(ContentType);
 end;
 
 function TBluePrintSerializer.GetPublishedStoredProperties(const Instance: TValue): TArray<TRttiInstanceProperty>;
@@ -1530,15 +1553,8 @@ begin
 end;
 
 function TBluePrintSerializer.Serialize(const ContentType: String; const Value: TValue): TStream;
-var
-  Converter: IBluePrintConverter;
-
 begin
-  Converter := nil;
-
-  if not FConverters.TryGetValue(ContentType, Converter) then
-    raise EInvalidContentTypeForConverter.Create(ContentType);
-
+  var Converter := GetConverter(ContentType);
   var RttiType := RttiContext.GetType(Value.TypeInfo);
   var SerializedObject := Converter.CreateMainObject(RttiType);
 

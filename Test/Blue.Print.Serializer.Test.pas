@@ -19,6 +19,7 @@ type
     FSerializer: IBluePrintSerializer;
 
     function CreateSerializer: IBluePrintSerializer;
+    function Deserialize<T>: T;
     function Serialize(const Value: TValue): TMockObject;
   public
     [Setup]
@@ -77,16 +78,34 @@ type
     procedure IfTheMainObjectIsAnObjectTypeMustDestroyTheInstanceAfterSerialize;
     [Test]
     procedure WhenTheMainObjectIsntAnObjectCantTryToDetroyTheObject;
+    [Test]
+    procedure IfTheConverterDontExistsMustRaiseErrorWhenDeserializeAnValue;
+    [Test]
+    procedure WhenDeserializeAnClassMustCreateTheObjectHasExpected;
+    [Test]
+    procedure MustLoadThePropertyWithTheValueHasExpected;
+    [Test]
+    procedure MustConvertThePropertyValueBeforeLoadTheValueInTheClassProperty;
+    [Test]
+    procedure MustLoadAllPropertiesFromTheClassWithTheValuesHasExpected;
+    [Test]
+    procedure MustDestroyTheSerializedObjectIfItIsAnObject;
+    [Test]
+    procedure IfTheMainObjectIsntAnObjectCantDestroyTheValue;
   end;
 
   TConverterMock = class(TInterfacedObject, IBluePrintConverter)
   protected
     function AppendProperty(const SerializedObject: TValue; const RttiProperty: TRttiProperty; const FieldName: String): TValue;
+    function ConvertValue(const SerializedValue: TValue): TValue;
     function CreateArray: TValue;
     function CreateMainObject(const RttiType: TRttiType): TValue;
     function CreateObject(const RttiType: TRttiType): TValue;
     function CreateValue(const Value: TValue): TValue;
+    function GetFields(const SerializedObject: TValue): TArray<TFieldInfo>;
+    function GetMockObject(const SerializedObject: TValue): TMockObject;
     function GetMockValue(const Value: TValue): TMockValue;
+    function LoadFromStream(const Stream: TStream): TValue;
     function SaveToStream(const SerializedObject: TValue): TStream;
 
     procedure AppendArrayItem(const SerializedArray, SerializedValue: TValue);
@@ -100,6 +119,7 @@ type
     FMainObjectSaved: Boolean;
   protected
     function CreateMainObject(const RttiType: TRttiType): TValue;
+    function LoadFromStream(const Stream: TStream): TValue;
     function SaveToStream(const SerializedObject: TValue): TStream;
   public
     constructor Create(const LoadTValue: Boolean = False);
@@ -301,6 +321,9 @@ type
     property Field5: TMyEnumerator read FField5 write FField5;
   end;
 
+const
+  BLUE_PRINT_TEST_CONTENT = 'BluePrint/Test';
+
 implementation
 
 uses System.SysUtils;
@@ -314,9 +337,6 @@ type
 
   ENotConvertedValue = class(Exception)
   end;
-
-const
-  BLUE_PRINT_TEST_CONTENT = 'BluePrint/Test';
 
 { TBluePrintSerializerTest }
 
@@ -339,6 +359,24 @@ begin
   Result := TBluePrintSerializer.Create;
 end;
 
+function TBluePrintSerializerTest.Deserialize<T>: T;
+begin
+  var Stream := TMockStream.Create(FMockObject);
+
+  Result := FSerializer.Deserialize(BLUE_PRINT_TEST_CONTENT, TypeInfo(T), Stream).AsType<T>;
+
+  Stream.Free;
+end;
+
+procedure TBluePrintSerializerTest.IfTheConverterDontExistsMustRaiseErrorWhenDeserializeAnValue;
+begin
+  Assert.WillRaise(
+    procedure
+    begin
+      FSerializer.Deserialize('invalid/content', nil, nil);
+    end, EInvalidContentTypeForConverter);
+end;
+
 procedure TBluePrintSerializerTest.IfTheMainObjectIsAnObjectTypeMustDestroyTheInstanceAfterSerialize;
 begin
   var Converter := TConverterMockMainObject.Create;
@@ -352,6 +390,65 @@ begin
   Assert.IsTrue(TMockMainObject.ObjectDestroyed);
 
   MyClass.Free;
+end;
+
+procedure TBluePrintSerializerTest.IfTheMainObjectIsntAnObjectCantDestroyTheValue;
+begin
+  var Converter := TConverterMockMainObject.Create(True);
+  TBluePrintSerializer.Converters[BLUE_PRINT_TEST_CONTENT] := Converter;
+  var MainObject := TMockMainObject.Create;
+  TMockMainObject.ObjectDestroyed := False;
+  var Stream := TMockStream.Create(MainObject);
+
+  FSerializer.Deserialize(BLUE_PRINT_TEST_CONTENT, TypeInfo(TMyClass), Stream).AsObject.Free;
+
+  Assert.IsFalse(TMockMainObject.ObjectDestroyed);
+
+  MainObject.Free;
+
+  Stream.Free;
+end;
+
+procedure TBluePrintSerializerTest.MustConvertThePropertyValueBeforeLoadTheValueInTheClassProperty;
+begin
+  FMockObject := TMockObject.Create;
+  FMockObject.AddProperty('Field').Value := TMockConvertedValue.Create('xxx');
+
+  var Value := Deserialize<TMyClass>;
+
+  Assert.AreEqual('xxx', Value.Field);
+
+  Value.Free;
+end;
+
+procedure TBluePrintSerializerTest.MustDestroyTheSerializedObjectIfItIsAnObject;
+begin
+  var Converter := TConverterMockMainObject.Create;
+  TBluePrintSerializer.Converters[BLUE_PRINT_TEST_CONTENT] := Converter;
+  TMockMainObject.ObjectDestroyed := False;
+  var Stream := TMockStream.Create(TMockMainObject.Create);
+
+  FSerializer.Deserialize(BLUE_PRINT_TEST_CONTENT, TypeInfo(TMyClass), Stream).AsObject.Free;
+
+  Assert.IsTrue(TMockMainObject.ObjectDestroyed);
+
+  Stream.Free;
+end;
+
+procedure TBluePrintSerializerTest.MustLoadAllPropertiesFromTheClassWithTheValuesHasExpected;
+begin
+  FMockObject := TMockObject.Create;
+  FMockObject.AddProperty('Field').Value := TMockConvertedValue.Create('aaa');
+  FMockObject.AddProperty('Field2').Value := TMockConvertedValue.Create('bbb');
+  FMockObject.AddProperty('Field3').Value := TMockConvertedValue.Create('ccc');
+
+  var Value := Deserialize<TMyClassWithProperties>;
+
+  Assert.AreEqual('aaa', Value.Field);
+  Assert.AreEqual('bbb', Value.Field2);
+  Assert.AreEqual('ccc', Value.Field3);
+
+  Value.Free;
 end;
 
 procedure TBluePrintSerializerTest.MustLoadTheArrayItemsHasExpected;
@@ -395,6 +492,18 @@ begin
   Assert.AreEqual('MyValue', Value.Properties[0].Value.AsConvertedValue.Value);
 
   MyClass.Free;
+end;
+
+procedure TBluePrintSerializerTest.MustLoadThePropertyWithTheValueHasExpected;
+begin
+  FMockObject := TMockObject.Create;
+  FMockObject.AddProperty('Field').Value := TMockConvertedValue.Create('abc');
+
+  var Value := Deserialize<TMyClass>;
+
+  Assert.AreEqual('abc', Value.Field);
+
+  Value.Free;
 end;
 
 procedure TBluePrintSerializerTest.MustRespectTheDeclarationOrderOfThePropertiesInTheGeneratedObject;
@@ -512,6 +621,17 @@ begin
     end);
 
   MyClass.Free;
+end;
+
+procedure TBluePrintSerializerTest.WhenDeserializeAnClassMustCreateTheObjectHasExpected;
+begin
+  FMockObject := TMockObject.Create;
+
+  var Value := Deserialize<TMyClass>;
+
+  Assert.IsNotNil(Value);
+
+  Value.Free;
 end;
 
 procedure TBluePrintSerializerTest.WhenSerializeAnObjectMustCreateTheObjectFirst;
@@ -730,13 +850,12 @@ begin
   if not Assigned(RttiProperty) then
     raise ENoRttiProperty.Create('No property information');
 
-  if SerializedObject.IsType<TMockObject> then
-  begin
-    var MockObject := SerializedObject.AsType<TMockObject>;
-    Result := MockObject.AddProperty(FieldName);
-  end
-  else
-    Result := AppendProperty(SerializedObject.AsType<TValue>, RttiProperty, FieldName);
+  Result := GetMockObject(SerializedObject).AddProperty(FieldName);
+end;
+
+function TConverterMock.ConvertValue(const SerializedValue: TValue): TValue;
+begin
+  Result := GetMockValue(SerializedValue).AsConvertedValue.Value;
 end;
 
 function TConverterMock.CreateArray: TValue;
@@ -766,12 +885,35 @@ begin
   Result := TMockConvertedValue.Create(Value.ToString);
 end;
 
+function TConverterMock.GetFields(const SerializedObject: TValue): TArray<TFieldInfo>;
+begin
+  Result := nil;
+
+  for var MockProperty in GetMockObject(SerializedObject).Properties do
+    Result := Result + [TFieldInfo.Create(MockProperty.Name, MockProperty.Value)];
+end;
+
+function TConverterMock.GetMockObject(const SerializedObject: TValue): TMockObject;
+begin
+  if not SerializedObject.IsType<TMockObject> then
+    Result := GetMockObject(SerializedObject.AsType<TValue>)
+  else
+    Result := SerializedObject.AsType<TMockObject>;
+end;
+
 function TConverterMock.GetMockValue(const Value: TValue): TMockValue;
 begin
   if Value.IsType<TMockValue> then
     Result := Value.AsType<TMockValue>
   else
     raise ENotConvertedValue.Create('Must call convert value first!');
+end;
+
+function TConverterMock.LoadFromStream(const Stream: TStream): TValue;
+begin
+  Result := TMockStream(Stream).MockObject;
+
+  Result := TValue.From(Result);
 end;
 
 procedure TConverterMock.LoadPropertyValue(const SerializedProperty: TValue; const PropertyValue: TValue);
@@ -898,6 +1040,14 @@ begin
 
   if FLoadTValue then
     Result := TValue.From(Result);
+end;
+
+function TConverterMockMainObject.LoadFromStream(const Stream: TStream): TValue;
+begin
+  Result := inherited LoadFromStream(Stream);
+
+  if not FLoadTValue then
+    Result := Result.AsType<TValue>.AsObject;
 end;
 
 function TConverterMockMainObject.SaveToStream(const SerializedObject: TValue): TStream;
